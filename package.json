@@ -1,8 +1,10 @@
 {
+	"publisher": "ylw",
 	"name": "ithome",
 	"displayName": "itHome",
 	"description": "test",
-	"version": "0.0.1",
+	"version": "0.0.2",
+	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
 	},
@@ -20,7 +22,7 @@
 				{
 					"id": "itHome",
 					"title": "itHome",
-					"icon": "./src/assets/icon.svg"
+					"icon": "assets/training.svg"
 				}
 			]
 		},
@@ -37,8 +39,8 @@
 				"command":"itHome.refresh",
 				"title": "刷新",
 				"icon":{
-					"dark":"./src/assets/refresh-light.svg",
-					"light": "./src/assets/refresh.svg"
+					"dark":"assets/refresh-light.svg",
+					"light": "assets/refresh.svg"
 				}
 			}
 		],
@@ -81,5 +83,9 @@
 	},
 	"dependencies": {
 		"axios": "^0.27.2"
+	},
+	"repository":{
+		"type":"git",
+		"url":"https://github.com/ylw1997/ithome.git"
 	}
 }
