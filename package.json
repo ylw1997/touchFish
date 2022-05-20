@@ -29,8 +29,11 @@
 		"views": {
 			"itHome":[
 				{
-					"name": "新闻列表",
+					"name": "IT之家",
 					"id": "view.newsList"
+				},{
+					"name": "快科技",
+					"id": "view.kkjList"
 				}
 			]
 		},

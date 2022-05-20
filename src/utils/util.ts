@@ -1,12 +1,12 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2022-05-19 14:46:42
+ * @LastEditTime: 2022-05-20 11:28:59
  * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\util.ts
+ * @FilePath: \hello-world\src\utils\util.ts
  * @Description: 
  */
-import { NewsItem } from "./type";
+import { NewsItem } from "../type/type";
 import { ThemeIcon, TreeItem } from 'vscode';
 
 /**

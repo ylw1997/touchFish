@@ -1,9 +1,9 @@
 /*
  * @Author: YangLiwei
- * @Date: 2022-05-18 15:26:15
- * @LastEditTime: 2022-05-18 16:23:03
+ * @Date: 2022-05-20 11:27:15
+ * @LastEditTime: 2022-05-20 11:27:22
  * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\api.ts
+ * @FilePath: \hello-world\src\api\ithome.ts
  * @Description: 
  */
 import axios from "axios";

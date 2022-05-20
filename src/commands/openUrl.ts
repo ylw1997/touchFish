@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2022-05-19 15:54:07
+ * @LastEditTime: 2022-05-20 11:28:28
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\commands\openUrl.ts
  * @Description: +
  */
 import * as vscode from 'vscode';
-import { getNewsDetail } from '../api';
+import { getNewsDetail } from '../api/ithome';
 
 // 是否已经创建webview
 let isCreatePanel = false;
