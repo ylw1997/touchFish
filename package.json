@@ -1,9 +1,9 @@
 {
 	"publisher": "ylw",
-	"name": "ithome",
+	"name": "touchfish",
 	"displayName": "摸鱼小工具",
 	"description": "摸鱼小工具",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -22,14 +22,14 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "itHome",
+					"id": "touchfish",
 					"title": "摸鱼小工具",
 					"icon": "assets/training.svg"
 				}
 			]
 		},
 		"views": {
-			"itHome": [
+			"touchfish": [
 				{
 					"name": "IT之家",
 					"id": "view.newsList"

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 14:17:06
- * @LastEditTime: 2022-05-20 16:32:28
+ * @LastEditTime: 2022-05-20 17:03:33
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\api\kjj.ts
  * @Description: 
@@ -9,7 +9,6 @@
 import axios from "axios";
 import { kkjNewsItem } from '../type/type';
 import { showNewsNumber } from '../config/index';
-import { getNewsDetail } from './ithome';
 import cheerio = require('cheerio');
 
 /**
@@ -40,11 +39,13 @@ export const getKKJNewsDetail = async (url:string)=>{
   const res = await axios.get(url);
   const $ = cheerio.load(res.data);
   const newsDetail = $('.news_info').html()?.trim();
-  return newsDetail?newsDetail:`<a href="${url}">文章请求出错,请直接访问查看!</a>`;  
+  return newsDetail?newsDetail.replace(/\/\//g,"https://"):`<a href="${url}">文章请求出错,请直接访问查看!</a>`;  
 };
 
-// getKKJNewsDetail('https://news.mydrivers.com/1/833/833415.htm').then(res=>{
-//   res.replace(/<img[^>]*>/g,'')
-//   console.log(res);
-// });
+// const test = ()=>{
+//   const str  = "//www.mydrivers.com/,//www.mytest.com/";
+//   const result = str.replace(/\/\//g,"https://");
+//   console.log(result);
+// };
 
+// test();
