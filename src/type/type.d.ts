@@ -1,9 +1,9 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:31:27
- * @LastEditTime: 2022-05-18 15:33:05
+ * @LastEditTime: 2022-05-20 15:13:07
  * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\type.d.ts
+ * @FilePath: \hello-world\src\type\type.d.ts
  * @Description: 
  */
 export interface NewsItem {
@@ -22,4 +22,10 @@ export interface NewsItem {
   "nd": number,
   "sid": number,
   "url": string
+}
+
+export interface kkjNewsItem {
+  "title": string,
+  "url": string,
+  "time": string,
 }

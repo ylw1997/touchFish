@@ -1,32 +1,55 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2022-05-20 11:28:59
+ * @LastEditTime: 2022-05-20 15:28:51
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\utils\util.ts
  * @Description: 
  */
-import { NewsItem } from "../type/type";
+import { NewsItem, kkjNewsItem } from '../type/type';
 import { ThemeIcon, TreeItem } from 'vscode';
+import { showNewsWordNumber } from '../config/index';
 
 /**
- * 转换数据
+ * 转换之家数据
  * @param dataList  数据列表
  * @returns  转换后的数据列表
  */
 export const formatData = (dataList: NewsItem[]): TreeItem[] => {
   let treeList: TreeItem[] = [];
-  for(let i in dataList){
+  for (let i in dataList) {
     let item = dataList[i];
-    let treeItem = new TreeItem(subStringBySize(item.title,20));
+    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
     // treeItem.description = item.description;
     treeItem.id = item.newsid.toString();
     treeItem.command = {
-          title: item.title,
-          command:"itHome.openUrl",
-          arguments: [item.title,item.postdate,item.newsid]
-        };
+      title: item.title,
+      command: "itHome.openUrl",
+      arguments: [item.title, item.postdate, item.newsid]
+    };
     treeItem.iconPath = new ThemeIcon("notebook-render-output");
+    treeList.push(treeItem);
+  }
+  return treeList;
+};
+
+/**
+ *  快科技新闻数据转换
+ * @param dataList  数据列表
+ * @returns 转换后的数据列表
+ */
+export const formatKKJData = (dataList: kkjNewsItem[]): TreeItem[] => {
+  let treeList: TreeItem[] = [];
+  for (let i in dataList) {
+    let item = dataList[i];
+    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
+    treeItem.id = item.title;
+    treeItem.command = {
+      title: item.title,
+      command: "kkj.openUrl",
+      arguments: [item.title, item.url]
+    };
+    treeItem.iconPath = new ThemeIcon("comment");
     treeList.push(treeItem);
   }
   return treeList;
@@ -39,8 +62,8 @@ export const formatData = (dataList: NewsItem[]): TreeItem[] => {
  * @returns  截取后的字符串
  */
 const subStringBySize = (str: string, size: number): string => {
-  if(str.length > size){
-    return str.substring(0,size)+'...';
+  if (str.length > size) {
+    return str.substring(0, size) + '...';
   }
   return str;
 };

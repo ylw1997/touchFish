@@ -1,13 +1,14 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2022-05-20 11:28:28
+ * @LastEditTime: 2022-05-20 15:51:18
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\commands\openUrl.ts
  * @Description: +
  */
 import * as vscode from 'vscode';
 import { getNewsDetail } from '../api/ithome';
+import { getKKJNewsDetail } from '../api/kjj';
 
 // 是否已经创建webview
 let isCreatePanel = false;
@@ -30,7 +31,7 @@ const createPanel = (): vscode.WebviewPanel => {
 };
 
 /**
- * 打开新闻详情
+ * 打开之家新闻详情
  */
 export const openUrl = vscode.commands.registerCommand('itHome.openUrl',async (title: string, time: string, id: number) => {
 
@@ -74,3 +75,47 @@ export const openUrl = vscode.commands.registerCommand('itHome.openUrl',async (t
   panel!.title = title;
 });
 
+
+/**
+ * 打开快科技新闻详情
+ */
+export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl',async (title: string, url: string) => {
+  
+    // 如果没有创建过webview,则创建一个
+    if (!isCreatePanel) {
+      panel = createPanel();
+    }
+    panel!.webview.html = "加载中....";
+    // 获取新闻详情
+    await getKKJNewsDetail(url).then(res => {
+      panel!.webview.html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Document</title>
+        <style>
+          p {
+            font-size: 18px;
+            line-height: 2;
+          }
+          img{
+            max-width: 60%;
+          }
+          .news_detail{
+            width: 75%;
+            margin-left: 12.5%;
+          }
+        </style>
+      </head>
+      <body>
+        <h1 style="text-align:center" >${title}</h1>
+        <div class="news_detail">${res}</div>
+      </body>
+      </html>
+    `;
+    });
+    panel!.title = title;
+  });

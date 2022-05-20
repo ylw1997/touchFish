@@ -1,9 +1,9 @@
 {
 	"publisher": "ylw",
 	"name": "ithome",
-	"displayName": "itHome",
-	"description": "test",
-	"version": "0.0.3",
+	"displayName": "摸鱼小工具",
+	"description": "摸鱼小工具",
+	"version": "0.0.6",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -13,7 +13,9 @@
 	],
 	"activationEvents": [
 		"onCommand:itHome.openUrl",
-		"onView:view.newsList"
+		"onCommand:kkj.openUrl",
+		"onView:view.newsList",
+		"onView:view.kkjList"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -21,17 +23,18 @@
 			"activitybar": [
 				{
 					"id": "itHome",
-					"title": "itHome",
+					"title": "摸鱼小工具",
 					"icon": "assets/training.svg"
 				}
 			]
 		},
 		"views": {
-			"itHome":[
+			"itHome": [
 				{
 					"name": "IT之家",
 					"id": "view.newsList"
-				},{
+				},
+				{
 					"name": "快科技",
 					"id": "view.kkjList"
 				}
@@ -39,10 +42,18 @@
 		},
 		"commands": [
 			{
-				"command":"itHome.refresh",
+				"command": "itHome.refresh",
 				"title": "刷新",
-				"icon":{
-					"dark":"assets/refresh-light.svg",
+				"icon": {
+					"dark": "assets/refresh-light.svg",
+					"light": "assets/refresh.svg"
+				}
+			},
+			{
+				"command": "kkj.refresh",
+				"title": "刷新",
+				"icon": {
+					"dark": "assets/refresh-light.svg",
 					"light": "assets/refresh.svg"
 				}
 			}
@@ -50,8 +61,13 @@
 		"menus": {
 			"view/title": [
 				{
-					"command":"itHome.refresh",
-					"when":"view == view.newsList",
+					"command": "itHome.refresh",
+					"when": "view == view.newsList",
+					"group": "navigation"
+				},
+				{
+					"command": "kkj.refresh",
+					"when": "view == view.kkjList",
 					"group": "navigation"
 				}
 			]
@@ -85,10 +101,11 @@
 		"webpack-cli": "^4.9.2"
 	},
 	"dependencies": {
-		"axios": "^0.27.2"
+		"axios": "^0.27.2",
+		"cheerio": "^1.0.0-rc.10"
 	},
-	"repository":{
-		"type":"git",
-		"url":"https://github.com/ylw1997/ithome.git"
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ylw1997/ithome.git"
 	}
 }
