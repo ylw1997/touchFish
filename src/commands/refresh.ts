@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2022-05-23 10:53:39
+ * @LastEditTime: 2022-05-23 11:44:24
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\commands\refresh.ts
  * @Description: 
@@ -20,7 +20,7 @@ export const refresh = (newsProvider:ItHomeProvider)=>{
   // 提供一个async 会触发vscode加载小横条
   return vscode.commands.registerCommand("itHome.refresh",async ()=>{
     await newsProvider.getData();
-    vscode.window.showInformationMessage("新闻已刷新!");
+    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
 
@@ -32,7 +32,7 @@ export const refresh = (newsProvider:ItHomeProvider)=>{
 export const kkjRefresh = (kkjProvider:KKJProvider)=>{
   return vscode.commands.registerCommand("kkj.refresh",async ()=>{
     await kkjProvider.getData();
-    vscode.window.showInformationMessage("新闻已刷新!");
+    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
 
@@ -44,6 +44,6 @@ export const kkjRefresh = (kkjProvider:KKJProvider)=>{
 export const clsRefresh = (clsProvider:ClsProvider)=>{
   return vscode.commands.registerCommand("cls.refresh",async ()=>{
     await clsProvider.getData();
-    vscode.window.showInformationMessage("新闻已刷新!");
+    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2022-05-23 11:02:18
+ * @LastEditTime: 2022-05-23 11:49:08
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\extension.ts
  * @Description: 
@@ -27,6 +27,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(refresh(newsProvider));
 	context.subscriptions.push(kkjRefresh(kkjProvider));
 	context.subscriptions.push(clsRefresh(clsProvider));
+	
+	//定时刷新新闻,每30秒刷新
+	setInterval(()=>{
+		vscode.commands.executeCommand('cls.refresh');
+		vscode.commands.executeCommand('kkj.refresh');
+		vscode.commands.executeCommand('itHome.refresh');
+		console.log('刷新财联社数据!');
+	},1000*30);
 
 	//注册打开新闻链接指令
 	context.subscriptions.push(openUrl);
