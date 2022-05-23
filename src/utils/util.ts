@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2022-05-23 11:12:21
+ * @LastEditTime: 2022-05-23 11:14:14
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\utils\util.ts
  * @Description: 
@@ -49,7 +49,7 @@ export const formatKKJData = (dataList: kkjNewsItem[]): TreeItem[] => {
       command: "kkj.openUrl",
       arguments: [item.title, item.url]
     };
-    treeItem.iconPath = new ThemeIcon("comment");
+    treeItem.iconPath = new ThemeIcon("book");
     treeList.push(treeItem);
   }
   return treeList;
