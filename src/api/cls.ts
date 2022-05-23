@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-23 09:15:58
- * @LastEditTime: 2022-05-23 11:09:20
+ * @LastEditTime: 2022-05-23 15:23:51
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\api\cls.ts
  * @Description: 
@@ -9,8 +9,6 @@
 import axios from "axios";
 import cheerio = require('cheerio');
 import { clsNewsItem } from "../type/type";
-import { showNewsWordNumber } from '../config/index';
-import { subStringBySize } from "../utils/util";
 
 export const getCLSNewsList = async () => {
   let newsList: clsNewsItem[] = [];
@@ -28,7 +26,7 @@ export const getCLSNewsList = async () => {
     title = title ? title.replace('【',"").replace('】',"") : content.split(',').shift()!.toString();
     if(title) {
       newsList.push({
-        title:time+' '+subStringBySize(title,showNewsWordNumber-5),
+        title:time+' '+title,
         time,
         content
       });

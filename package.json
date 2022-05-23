@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "摸鱼小工具",
 	"description": "摸鱼小工具",
-	"version": "0.0.12",
+	"version": "0.0.13",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
