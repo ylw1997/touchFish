@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 15:21:18
- * @LastEditTime: 2022-05-20 15:22:58
+ * @LastEditTime: 2022-05-23 11:11:20
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\Providers\kkjProvider.ts
  * @Description: 
@@ -10,6 +10,7 @@ import * as vscode from 'vscode';
 import { ProviderResult, TreeDataProvider } from 'vscode';
 import { getKKJNewsList } from '../api/kjj';
 import { formatKKJData } from '../utils/util';
+import { showNewsNumber } from '../config/index';
 
 export class KKJProvider implements TreeDataProvider<vscode.TreeItem> {
   private newsList: vscode.TreeItem[] = [];
@@ -23,7 +24,7 @@ export class KKJProvider implements TreeDataProvider<vscode.TreeItem> {
   async getData() {
     this.newsList = [];
     await getKKJNewsList().then(res => {
-      this.newsList = formatKKJData(res);
+      this.newsList = formatKKJData(res).slice(0,showNewsNumber);
     });
     this.update.fire();
   }

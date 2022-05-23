@@ -15,7 +15,8 @@
 		"onCommand:itHome.openUrl",
 		"onCommand:kkj.openUrl",
 		"onView:view.newsList",
-		"onView:view.kkjList"
+		"onView:view.kkjList",
+		"onView:view.clsList"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -37,6 +38,10 @@
 				{
 					"name": "快科技",
 					"id": "view.kkjList"
+				},
+				{
+					"name": "财联社",
+					"id": "view.clsList"
 				}
 			]
 		},
@@ -56,6 +61,14 @@
 					"dark": "assets/refresh-light.svg",
 					"light": "assets/refresh.svg"
 				}
+			},
+			{
+				"command": "cls.refresh",
+				"title": "刷新",
+				"icon": {
+					"dark": "assets/refresh-light.svg",
+					"light": "assets/refresh.svg"
+				}
 			}
 		],
 		"menus": {
@@ -68,6 +81,11 @@
 				{
 					"command": "kkj.refresh",
 					"when": "view == view.kkjList",
+					"group": "navigation"
+				},
+				{
+					"command": "cls.refresh",
+					"when": "view == view.clsList",
 					"group": "navigation"
 				}
 			]

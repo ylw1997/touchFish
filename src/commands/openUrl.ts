@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2022-05-20 15:51:18
+ * @LastEditTime: 2022-05-23 11:08:17
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\commands\openUrl.ts
  * @Description: +
@@ -119,3 +119,40 @@ export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl',async (t
     });
     panel!.title = title;
   });
+
+  /**
+   *  打开财联社新闻详情
+   * @param title  新闻标题
+   * @param content  新闻内容
+   */
+  export const openCLSUrl = vscode.commands.registerCommand('cls.openUrl',async (title: string, content: string) => {
+    // 如果没有创建过webview,则创建一个
+    if (!isCreatePanel) {
+      panel = createPanel();
+    }
+    panel!.webview.html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <title>Document</title>
+      <style>
+        .news_detail{
+          width: 75%;
+          margin-left: 12.5%;
+          font-size: 18px;
+          line-height: 2;
+        }
+      </style>
+    </head>
+    <body>
+      <h1 style="text-align:center" >${title}</h1>
+      <div class="news_detail">${content}</div>
+    </body>
+    </html>
+  `;
+    panel!.title = title;
+  });
+  

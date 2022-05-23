@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2022-05-20 15:44:35
+ * @LastEditTime: 2022-05-23 10:53:39
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\commands\refresh.ts
  * @Description: 
@@ -9,6 +9,7 @@
 import * as vscode from 'vscode';
 import { ItHomeProvider } from '../Providers/itHomeProvider';
 import { KKJProvider } from '../Providers/kkjProvider';
+import { ClsProvider } from '../Providers/clsProvider';
 
 /**
  * 刷新之家树列表
@@ -31,6 +32,18 @@ export const refresh = (newsProvider:ItHomeProvider)=>{
 export const kkjRefresh = (kkjProvider:KKJProvider)=>{
   return vscode.commands.registerCommand("kkj.refresh",async ()=>{
     await kkjProvider.getData();
+    vscode.window.showInformationMessage("新闻已刷新!");
+  });
+};
+
+/**
+ *  刷新财联社树列表
+ * @param clsProvider  数据提供者
+ * @returns  指令
+ */
+export const clsRefresh = (clsProvider:ClsProvider)=>{
+  return vscode.commands.registerCommand("cls.refresh",async ()=>{
+    await clsProvider.getData();
     vscode.window.showInformationMessage("新闻已刷新!");
   });
 };

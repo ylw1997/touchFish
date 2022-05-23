@@ -1,14 +1,13 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 14:17:06
- * @LastEditTime: 2022-05-20 17:03:33
+ * @LastEditTime: 2022-05-23 11:10:54
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\api\kjj.ts
  * @Description: 
  */
 import axios from "axios";
 import { kkjNewsItem } from '../type/type';
-import { showNewsNumber } from '../config/index';
 import cheerio = require('cheerio');
 
 /**
@@ -27,7 +26,7 @@ export const getKKJNewsList = async ()=>{
       time:$(item).find('span.t').text()
     });
   });
-  return newsList.slice(0,showNewsNumber);
+  return newsList;
 };
 
 /**
