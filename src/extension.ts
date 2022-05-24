@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2022-05-24 11:48:41
+ * @LastEditTime: 2022-05-24 17:27:02
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\extension.ts
  * @Description: 
@@ -14,6 +14,7 @@ import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
 import { KKJProvider } from './Providers/kkjProvider';
 import { printConfig, refreshTime, refrshConfig } from './config/index';
+import { openSetting } from './commands/commands';
 
 let timer: NodeJS.Timeout | null = null;
 
@@ -45,6 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(openUrl);
 	context.subscriptions.push(openKKJUrl);
 	context.subscriptions.push(openCLSUrl);
+	context.subscriptions.push(openSetting);
 }
 
 

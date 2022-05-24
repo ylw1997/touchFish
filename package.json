@@ -3,11 +3,19 @@
 	"name": "touchfish",
 	"displayName": "摸鱼小工具",
 	"description": "之家,快科技,财联社小工具",
-	"version": "0.0.17",
+	"version": "0.0.18",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
 	},
+	"license": "BSD-3-Clause",
+  "keywords": [
+    "ithome",
+		"快科技",
+		"it之家",
+		"财联社",
+		"cls"
+  ],
 	"categories": [
 		"Other"
 	],
@@ -60,9 +68,20 @@
 				{
 					"name": "财联社",
 					"id": "view.clsList"
+				},
+				{
+					"id": "view.setting",
+					"name": "设置",
+					"visibility": "collapsed"
 				}
 			]
 		},
+		"viewsWelcome": [
+			{
+				"view":"view.setting",
+				"contents": "[🛠打开配置页](command:touchfish.openConfigPage) \n 停止内卷,享受摸鱼!欢迎使用摸鱼小工具!😘😘😘😘😘😘😘😘"
+			}			
+		],
 		"commands": [
 			{
 				"command": "itHome.refresh",
