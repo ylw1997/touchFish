@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "摸鱼小工具",
 	"description": "之家,快科技,财联社小工具",
-	"version": "0.0.14",
+	"version": "0.0.15",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -18,6 +18,26 @@
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
+		"configuration":{
+			"title": "touchfish",
+			"properties": {
+				"touchfish.showNewsNumber":{
+					"type":"number",
+					"default":10,
+					"description": "每个新闻页显示多少条新闻"
+				},
+				"touchfish.showNewsWordNumber":{
+					"type":"number",
+					"default":25,
+					"description": "每条新闻显示多少字数"
+				},
+				"touchfish.refreshTime":{
+					"type":"number",
+					"default":30,
+					"description": "多少秒刷新一次新闻"
+				}
+			}
+		},
 		"viewsContainers": {
 			"activitybar": [
 				{

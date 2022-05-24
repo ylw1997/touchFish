@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2022-05-23 11:49:08
+ * @LastEditTime: 2022-05-24 11:05:22
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\extension.ts
  * @Description: 
@@ -13,6 +13,7 @@ import { refresh, kkjRefresh, clsRefresh } from './commands/refresh';
 import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
 import { KKJProvider } from './Providers/kkjProvider';
+import { refreshTime } from './config/index';
 
 export function activate(context: vscode.ExtensionContext) {
 	// 注册树列表提供者,需要在json文件中注册(activationEvents)
@@ -33,8 +34,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand('cls.refresh');
 		vscode.commands.executeCommand('kkj.refresh');
 		vscode.commands.executeCommand('itHome.refresh');
-		console.log('刷新财联社数据!');
-	},1000*30);
+		console.log('刷新新闻数据!',Date());
+	},1000*refreshTime);
 
 	//注册打开新闻链接指令
 	context.subscriptions.push(openUrl);
