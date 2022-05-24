@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2022-05-24 11:05:22
+ * @LastEditTime: 2022-05-24 11:48:41
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\extension.ts
  * @Description: 
@@ -13,7 +13,9 @@ import { refresh, kkjRefresh, clsRefresh } from './commands/refresh';
 import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
 import { KKJProvider } from './Providers/kkjProvider';
-import { refreshTime } from './config/index';
+import { printConfig, refreshTime, refrshConfig } from './config/index';
+
+let timer: NodeJS.Timeout | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
 	// 注册树列表提供者,需要在json文件中注册(activationEvents)
@@ -28,17 +30,39 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(refresh(newsProvider));
 	context.subscriptions.push(kkjRefresh(kkjProvider));
 	context.subscriptions.push(clsRefresh(clsProvider));
-	
-	//定时刷新新闻,每30秒刷新
-	setInterval(()=>{
-		vscode.commands.executeCommand('cls.refresh');
-		vscode.commands.executeCommand('kkj.refresh');
-		vscode.commands.executeCommand('itHome.refresh');
-		console.log('刷新新闻数据!',Date());
-	},1000*refreshTime);
+
+	//定时刷新新闻
+	printConfig();
+	intervalRefrshNews();
+
+	vscode.workspace.onDidChangeConfiguration(() => {
+		console.log('配置发生变化!');
+		refrshConfig();
+		intervalRefrshNews();
+	});
 
 	//注册打开新闻链接指令
 	context.subscriptions.push(openUrl);
 	context.subscriptions.push(openKKJUrl);
 	context.subscriptions.push(openCLSUrl);
 }
+
+
+// 定时刷新
+const intervalRefrshNews = () => {
+	if (timer) {
+		clearInterval(timer);
+	}
+	refreshNewsFunc();
+	timer = setInterval(() => {
+		refreshNewsFunc();
+		console.log('刷新新闻数据!', Date());
+	}, 1000 * refreshTime);
+};
+
+// 刷新新闻方法
+const refreshNewsFunc = () => {
+	vscode.commands.executeCommand('cls.refresh');
+	vscode.commands.executeCommand('kkj.refresh');
+	vscode.commands.executeCommand('itHome.refresh');
+};
