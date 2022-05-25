@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 14:17:06
- * @LastEditTime: 2022-05-23 11:10:54
+ * @LastEditTime: 2022-05-25 14:17:54
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\api\kjj.ts
  * @Description: 
@@ -23,7 +23,8 @@ export const getKKJNewsList = async ()=>{
     newsList.push({
       title:$(item).find('span.titl>a').text(),
       url:$(item).find('span.titl>a').attr('href')!,
-      time:$(item).find('span.t').text()
+      time:$(item).find('span.t').text(),
+      isTop:$(item).find('em.zhiding').length>0
     });
   });
   return newsList;
