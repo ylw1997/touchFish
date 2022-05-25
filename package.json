@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "摸鱼小工具",
 	"description": "之家,快科技,财联社小工具",
-	"version": "0.0.19",
+	"version": "0.0.20",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -31,12 +31,12 @@
 			"properties": {
 				"touchfish.showNewsNumber":{
 					"type":"number",
-					"default":12,
+					"default":10,
 					"description": "每个新闻页显示多少条新闻"
 				},
 				"touchfish.showNewsWordNumber":{
-					"type":"number",
-					"default":25,
+					"type":["null","number"],
+					"default":null,
 					"description": "每条新闻显示多少字数"
 				},
 				"touchfish.refreshTime":{

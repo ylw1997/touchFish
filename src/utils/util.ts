@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2022-05-24 10:12:06
+ * @LastEditTime: 2022-05-25 13:59:15
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\utils\util.ts
  * @Description: 
@@ -83,11 +83,14 @@ export const formatCLSData = (dataList:clsNewsItem[]):TreeItem[] => {
  * @param size  截取长度
  * @returns  截取后的字符串
  */
-export const subStringBySize = (str: string, size: number): string => {
-  if (str.length > size) {
+export const subStringBySize = (str: string, size: number|undefined): string => {
+  if(!size){
+    return str;
+  } else if (str.length > size) {
     return str.substring(0, size) + '...';
-  }
-  return str;
+  } else{
+    return str;
+  } 
 };
 
 /**

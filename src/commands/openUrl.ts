@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2022-05-23 11:08:17
+ * @LastEditTime: 2022-05-25 13:42:12
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\commands\openUrl.ts
  * @Description: +
@@ -86,8 +86,12 @@ export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl',async (t
       panel = createPanel();
     }
     panel!.webview.html = "加载中....";
+    let newsUrl = url;
+    if(title.includes('评测')){
+      newsUrl = url.replace('.htm','_all.htm');
+    }
     // 获取新闻详情
-    await getKKJNewsDetail(url).then(res => {
+    await getKKJNewsDetail(newsUrl).then(res => {
       panel!.webview.html = `
       <!DOCTYPE html>
       <html lang="en">
