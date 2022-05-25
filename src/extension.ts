@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2022-05-24 17:27:02
+ * @LastEditTime: 2022-05-25 10:56:53
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\extension.ts
  * @Description: 
@@ -47,6 +47,13 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(openKKJUrl);
 	context.subscriptions.push(openCLSUrl);
 	context.subscriptions.push(openSetting);
+}
+
+// this method is called when your extension is deactivated
+export function deactivate() {
+	if (timer) {
+		clearInterval(timer);
+	}
 }
 
 
