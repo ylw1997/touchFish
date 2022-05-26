@@ -1,12 +1,13 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2022-05-25 13:42:12
+ * @LastEditTime: 2022-05-26 15:34:56
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\commands\openUrl.ts
  * @Description: +
  */
 import * as vscode from 'vscode';
+import { getChipHellNewsDetail } from '../api/chipHell';
 import { getNewsDetail } from '../api/ithome';
 import { getKKJNewsDetail } from '../api/kjj';
 
@@ -33,7 +34,7 @@ const createPanel = (): vscode.WebviewPanel => {
 /**
  * 打开之家新闻详情
  */
-export const openUrl = vscode.commands.registerCommand('itHome.openUrl',async (title: string, time: string, id: number) => {
+export const openUrl = vscode.commands.registerCommand('itHome.openUrl', async (title: string, time: string, id: number) => {
 
   // 如果没有创建过webview,则创建一个
   if (!isCreatePanel) {
@@ -79,20 +80,20 @@ export const openUrl = vscode.commands.registerCommand('itHome.openUrl',async (t
 /**
  * 打开快科技新闻详情
  */
-export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl',async (title: string, url: string) => {
-  
-    // 如果没有创建过webview,则创建一个
-    if (!isCreatePanel) {
-      panel = createPanel();
-    }
-    panel!.webview.html = "加载中....";
-    let newsUrl = url;
-    if(title.includes('评测')){
-      newsUrl = url.replace('.htm','_all.htm');
-    }
-    // 获取新闻详情
-    await getKKJNewsDetail(newsUrl).then(res => {
-      panel!.webview.html = `
+export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl', async (title: string, url: string) => {
+
+  // 如果没有创建过webview,则创建一个
+  if (!isCreatePanel) {
+    panel = createPanel();
+  }
+  panel!.webview.html = "加载中....";
+  let newsUrl = url;
+  if (title.includes('评测')) {
+    newsUrl = url.replace('.htm', '_all.htm');
+  }
+  // 获取新闻详情
+  await getKKJNewsDetail(newsUrl).then(res => {
+    panel!.webview.html = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -120,21 +121,21 @@ export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl',async (t
       </body>
       </html>
     `;
-    });
-    panel!.title = title;
   });
+  panel!.title = title;
+});
 
-  /**
-   *  打开财联社新闻详情
-   * @param title  新闻标题
-   * @param content  新闻内容
-   */
-  export const openCLSUrl = vscode.commands.registerCommand('cls.openUrl',async (title: string, content: string) => {
-    // 如果没有创建过webview,则创建一个
-    if (!isCreatePanel) {
-      panel = createPanel();
-    }
-    panel!.webview.html = `
+/**
+ *  打开财联社新闻详情
+ * @param title  新闻标题
+ * @param content  新闻内容
+ */
+export const openCLSUrl = vscode.commands.registerCommand('cls.openUrl', async (title: string, content: string) => {
+  // 如果没有创建过webview,则创建一个
+  if (!isCreatePanel) {
+    panel = createPanel();
+  }
+  panel!.webview.html = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -157,6 +158,47 @@ export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl',async (t
     </body>
     </html>
   `;
-    panel!.title = title;
+  panel!.title = title;
+});
+
+
+// 打开chiphell新闻详情
+export const openCHUrl = vscode.commands.registerCommand('chiphell.openUrl', async (title: string, url: string) => {
+  // 如果没有创建过webview,则创建一个
+  if (!isCreatePanel) {
+    panel = createPanel();
+  }
+  panel!.webview.html = "加载中....";
+  // 获取新闻详情
+  await getChipHellNewsDetail(url).then(res => {
+    panel!.webview.html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <title>Document</title>
+      <style>
+        p {
+          font-size: 18px;
+          line-height: 2;
+        }
+        img{
+          max-width: 60%;
+        }
+        .news_detail{
+          width: 75%;
+          margin-left: 12.5%;
+        }
+      </style>
+    </head>
+    <body>
+      <h1 style="text-align:center" >${title}</h1>
+      <div class="news_detail">${res}</div>
+    </body>
+    </html>
+  `;
   });
-  
+  panel!.title = title;
+});

@@ -1,9 +1,9 @@
 {
 	"publisher": "ylw",
 	"name": "touchfish",
-	"displayName": "摸鱼小工具",
-	"description": "之家,快科技,财联社小工具",
-	"version": "1.0.0",
+	"displayName": "TouchFish",
+	"description": "之家,快科技,chiphell,财联社新闻实时查看",
+	"version": "1.2.0",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -14,7 +14,8 @@
 		"快科技",
 		"it之家",
 		"财联社",
-		"cls"
+		"cls",
+		"chiphell"
   ],
 	"categories": [
 		"Other"
@@ -22,7 +23,8 @@
 	"activationEvents": [
 		"onView:view.newsList",
 		"onView:view.kkjList",
-		"onView:view.clsList"
+		"onView:view.clsList",
+		"onView:view.chiphellList"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -41,7 +43,7 @@
 				},
 				"touchfish.refreshTime":{
 					"type":"number",
-					"default":30,
+					"default":60,
 					"description": "多少秒刷新一次新闻"
 				}
 			}
@@ -66,8 +68,13 @@
 					"id": "view.kkjList"
 				},
 				{
+					"name": "chipHell",
+					"id": "view.chiphellList"
+				},
+				{
 					"name": "财联社",
-					"id": "view.clsList"
+					"id": "view.clsList",
+					"visibility": "collapsed"
 				},
 				{
 					"id": "view.setting",
@@ -106,6 +113,14 @@
 					"dark": "assets/refresh-light.svg",
 					"light": "assets/refresh.svg"
 				}
+			},
+			{
+				"command": "chiphell.refresh",
+				"title": "刷新",
+				"icon": {
+					"dark": "assets/refresh-light.svg",
+					"light": "assets/refresh.svg"
+				}
 			}
 		],
 		"menus": {
@@ -123,6 +138,11 @@
 				{
 					"command": "cls.refresh",
 					"when": "view == view.clsList",
+					"group": "navigation"
+				},
+				{
+					"command": "chiphell.refresh",
+					"when": "view == view.chiphellList",
 					"group": "navigation"
 				}
 			]

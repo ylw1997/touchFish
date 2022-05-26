@@ -3,12 +3,12 @@
     <circle id="25d57361-85ab-493c-983d-4ea2846588b2" cx="150" cy="150" r="150"></circle>
   </defs>
   <g id="root" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-    <rect id="background" fill="#FFF" x="0" y="0" width="500" height="500"></rect>
+    <rect id="background"  x="0" y="0" width="500" height="500"></rect>
     <g id="Group" transform="translate(40.000000, 386.000000)">
       <rect id="Rectangle" x="0" y="0" width="420" height="60"></rect><text id="headerText.secondary"
         font-family="Cousine" font-size="58" font-style="normal" font-weight="700" line-spacing="58" fill="#539ddb"
         data-text-alignment="C">
-        <tspan x="156.86101913452148" y="45.5">ylw</tspan>
+        <tspan x="156.86101913452148" y="45.5">YLW</tspan>
       </text>
     </g>
     <g id="Shape" transform="translate(100.000000, 55.000000)">

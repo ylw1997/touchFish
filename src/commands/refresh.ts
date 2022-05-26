@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2022-05-23 11:44:24
+ * @LastEditTime: 2022-05-26 16:12:35
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\commands\refresh.ts
  * @Description: 
@@ -10,6 +10,7 @@ import * as vscode from 'vscode';
 import { ItHomeProvider } from '../Providers/itHomeProvider';
 import { KKJProvider } from '../Providers/kkjProvider';
 import { ClsProvider } from '../Providers/clsProvider';
+import { ChipHellProvider } from '../Providers/chipHellProvider';
 
 /**
  * 刷新之家树列表
@@ -44,6 +45,14 @@ export const kkjRefresh = (kkjProvider:KKJProvider)=>{
 export const clsRefresh = (clsProvider:ClsProvider)=>{
   return vscode.commands.registerCommand("cls.refresh",async ()=>{
     await clsProvider.getData();
+    // vscode.window.showInformationMessage("新闻已刷新!");
+  });
+};
+
+// 刷新chiphell文章列表
+export const refreshChipHellNews = (chiphellNewsProvider:ChipHellProvider)=>{
+  return vscode.commands.registerCommand("chiphell.refresh",async ()=>{
+    await chiphellNewsProvider.getData();
     // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:31:27
- * @LastEditTime: 2022-05-25 14:17:34
+ * @LastEditTime: 2022-05-26 15:15:49
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\type\type.d.ts
  * @Description: 
@@ -37,4 +37,10 @@ export interface clsNewsItem {
   title: string;
   time: string;
   content: string;
+}
+
+// chiphell 新闻定义
+export interface chiphellNewsItem {
+  title: string;
+  url: string;
 }

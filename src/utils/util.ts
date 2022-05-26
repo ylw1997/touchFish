@@ -1,12 +1,12 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2022-05-25 14:20:40
+ * @LastEditTime: 2022-05-26 15:26:52
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\utils\util.ts
  * @Description: 
  */
-import { NewsItem, kkjNewsItem, clsNewsItem } from '../type/type';
+import { NewsItem, kkjNewsItem, clsNewsItem, chiphellNewsItem } from '../type/type';
 import { ThemeIcon, TreeItem } from 'vscode';
 import { showNewsWordNumber } from '../config/index';
 
@@ -49,7 +49,7 @@ export const formatKKJData = (dataList: kkjNewsItem[]): TreeItem[] => {
       command: "kkj.openUrl",
       arguments: [item.title, item.url]
     };
-    treeItem.iconPath = item.isTop?new ThemeIcon("arrow-up"): new ThemeIcon("book");
+    treeItem.iconPath = item.isTop ? new ThemeIcon("arrow-up") : new ThemeIcon("notebook-render-output");
     treeList.push(treeItem);
   }
   return treeList;
@@ -60,7 +60,7 @@ export const formatKKJData = (dataList: kkjNewsItem[]): TreeItem[] => {
  * @param dataList  数据列表
  * @returns  转换后的数据列表
  */
-export const formatCLSData = (dataList:clsNewsItem[]):TreeItem[] => {
+export const formatCLSData = (dataList: clsNewsItem[]): TreeItem[] => {
   let treeList: TreeItem[] = [];
   for (let i in dataList) {
     let item = dataList[i];
@@ -78,19 +78,42 @@ export const formatCLSData = (dataList:clsNewsItem[]):TreeItem[] => {
 };
 
 /**
+ *  chiphell新闻数据转换
+ * @param dataList  数据列表
+ * @returns  转换后的数据列表
+ */
+export const formatChipHellData = (dataList: chiphellNewsItem[]): TreeItem[] => {
+  let treeList: TreeItem[] = [];
+  for (let i in dataList) {
+    let item = dataList[i];
+    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
+    treeItem.id = item.title;
+    treeItem.command = {
+      title: item.title,
+      command: "chiphell.openUrl",
+      arguments: [item.title, item.url]
+    };
+    treeItem.iconPath = new ThemeIcon("notebook-render-output");
+    treeList.push(treeItem);
+  }
+  return treeList;
+};
+
+
+/**
  *  截取字符串
  * @param str 字符串
  * @param size  截取长度
  * @returns  截取后的字符串
  */
-export const subStringBySize = (str: string, size: number|undefined): string => {
-  if(!size){
+export const subStringBySize = (str: string, size: number | undefined): string => {
+  if (!size) {
     return str;
   } else if (str.length > size) {
     return str.substring(0, size) + '...';
-  } else{
+  } else {
     return str;
-  } 
+  }
 };
 
 /**
