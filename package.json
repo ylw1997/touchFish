@@ -52,7 +52,7 @@
 			"activitybar": [
 				{
 					"id": "touchfish",
-					"title": "摸鱼小工具",
+					"title": "TouchFish",
 					"icon": "assets/training.svg"
 				}
 			]
