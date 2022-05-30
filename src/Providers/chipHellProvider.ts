@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:18:49
- * @LastEditTime: 2022-05-26 16:13:36
+ * @LastEditTime: 2022-05-30 09:46:32
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\Providers\chipHellProvider.ts
  * @Description: 
@@ -9,7 +9,7 @@
 import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
 import { getChipHellNews } from '../api/chipHell';
 import { showNewsNumber } from '../config';
-import { formatChipHellData } from '../utils/util';
+import { compareNews, formatChipHellData } from '../utils/util';
 
 export class ChipHellProvider implements TreeDataProvider<TreeItem> {
   private newsList: TreeItem[] = [];
@@ -21,9 +21,10 @@ export class ChipHellProvider implements TreeDataProvider<TreeItem> {
   }
 
   async getData() {
-    this.newsList = [];
+    // this.newsList = [];
     await getChipHellNews().then(res => {
-      this.newsList = formatChipHellData(res).slice(0, showNewsNumber);
+      let news = formatChipHellData(res).slice(0, showNewsNumber);
+      this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
     });
     this.update.fire();
   }

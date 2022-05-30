@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:21:22
- * @LastEditTime: 2022-05-20 15:27:34
+ * @LastEditTime: 2022-05-30 09:46:42
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\Providers\itHomeProvider.ts
  * @Description: 
  */
 import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
-import { formatData } from '../utils/util';
+import { compareNews, formatData } from '../utils/util';
 import { getNewsList } from '../api/ithome';
 import { showNewsNumber } from '../config';
 
@@ -24,9 +24,10 @@ export class ItHomeProvider implements TreeDataProvider<TreeItem>{
 	}
 
   async getData(){
-    this.newsList = [];
+    // this.newsList = [];
     await getNewsList().then(res=>{
-       this.newsList = formatData(res.data.newslist).slice(0,showNewsNumber);
+      let news = formatData(res.data.newslist).slice(0,showNewsNumber);
+      this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
     });
     this.update.fire();
   }

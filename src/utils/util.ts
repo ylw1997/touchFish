@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2022-05-26 15:26:52
+ * @LastEditTime: 2022-05-30 09:46:36
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\utils\util.ts
  * @Description: 
@@ -122,4 +122,18 @@ export const subStringBySize = (str: string, size: number | undefined): string =
  */
 export const sleep = (time: number) => {
   return new Promise(resolve => setTimeout(resolve, time));
+};
+
+
+//对比新老新闻列表
+export const compareNews = (oldList: TreeItem[], newList: TreeItem[], newIcon = 'bell-dot', oldIcon = "server-environment") => {
+  let oldIds = oldList.map(item => item.id);
+  newList.map(item => {
+    if (!oldIds.includes(item.id)) {
+      item.iconPath = new ThemeIcon(newIcon);
+    } else {
+      item.iconPath = new ThemeIcon(oldIcon);
+    }
+  });
+  return newList;
 };

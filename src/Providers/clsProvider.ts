@@ -1,15 +1,15 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-23 10:50:00
- * @LastEditTime: 2022-05-23 11:10:19
+ * @LastEditTime: 2022-05-30 09:12:24
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\Providers\clsProvider.ts
  * @Description: 
  */
 import * as vscode from 'vscode';
 import { getCLSNewsList } from '../api/cls';
-import { formatCLSData } from '../utils/util';
-import { ProviderResult } from 'vscode';
+import { compareNews, formatCLSData } from '../utils/util';
+import { ProviderResult, ThemeIcon, TreeItem } from 'vscode';
 import { showNewsNumber } from '../config/index';
 
 /**
@@ -25,9 +25,14 @@ export class ClsProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     }
 
     async getData() {
-        this.newsList = [];
+        // this.newsList = [];
         await getCLSNewsList().then(res => {
-            this.newsList = formatCLSData(res).slice(0,showNewsNumber);
+            // 当前页面的数据
+            let news = formatCLSData(res).slice(0,showNewsNumber);
+
+            this.newsList = compareNews(this.newsList,news);
+
+            // this.newsList = formatCLSData(res).slice(0,showNewsNumber);
         });
         this.update.fire();
     }

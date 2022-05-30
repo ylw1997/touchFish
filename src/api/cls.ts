@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-23 09:15:58
- * @LastEditTime: 2022-05-23 15:23:51
+ * @LastEditTime: 2022-05-30 09:17:46
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\api\cls.ts
  * @Description: 
@@ -28,7 +28,8 @@ export const getCLSNewsList = async () => {
       newsList.push({
         title:time+' '+title,
         time,
-        content
+        content,
+        id:time
       });
     }
   });

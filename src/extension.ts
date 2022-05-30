@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2022-05-26 16:14:28
+ * @LastEditTime: 2022-05-27 10:37:50
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\extension.ts
  * @Description: 
@@ -79,5 +79,5 @@ const refreshNewsFunc = () => {
 	vscode.commands.executeCommand('cls.refresh');
 	vscode.commands.executeCommand('kkj.refresh');
 	vscode.commands.executeCommand('itHome.refresh');
-	vscode.commands.executeCommand('chiphell.refresh');
+	// vscode.commands.executeCommand('chiphell.refresh');
 };
