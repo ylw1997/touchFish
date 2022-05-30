@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2022-05-30 09:46:36
+ * @LastEditTime: 2022-05-30 10:10:21
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\utils\util.ts
  * @Description: 
@@ -127,12 +127,21 @@ export const sleep = (time: number) => {
 
 //对比新老新闻列表
 export const compareNews = (oldList: TreeItem[], newList: TreeItem[], newIcon = 'bell-dot', oldIcon = "server-environment") => {
+  // 如果oldList为空，则直接返回newList
+  if (oldList.length === 0) {
+    return newList;
+  }
   let oldIds = oldList.map(item => item.id);
   newList.map(item => {
     if (!oldIds.includes(item.id)) {
       item.iconPath = new ThemeIcon(newIcon);
     } else {
-      item.iconPath = new ThemeIcon(oldIcon);
+      const topItem = new ThemeIcon("arrow-up");
+      if((item.iconPath as ThemeIcon).id !== topItem.id){
+        item.iconPath = new ThemeIcon(oldIcon);
+      }else{
+        item.iconPath = topItem;
+      }
     }
   });
   return newList;
