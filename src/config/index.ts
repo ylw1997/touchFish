@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 15:26:01
- * @LastEditTime: 2022-05-26 16:28:00
+ * @LastEditTime: 2022-05-30 10:39:00
  * @LastEditors: YangLiwei
  * @FilePath: \hello-world\src\config\index.ts
  * @Description: 
@@ -16,8 +16,10 @@ export let showNewsNumber: number = config.get('showNewsNumber') || 10;
 // 显示新闻字数 默认为25
 export let showNewsWordNumber: number|undefined = config.get('showNewsWordNumber');
 
-//多少秒刷新一次 刷新时间默认为60秒
+//多少秒刷新一次财联社 刷新时间默认为60秒
 export let refreshTime: number = config.get('refreshTime') || 60;
+
+export let refreshSlowTime: number = config.get('refreshSlowTime') || 300;
 
 // 刷新配置
 export const refrshConfig = () => {
@@ -25,6 +27,7 @@ export const refrshConfig = () => {
   showNewsNumber = newconfig.get('showNewsNumber') || 10;
   showNewsWordNumber = newconfig.get('showNewsWordNumber');
   refreshTime = newconfig.get('refreshTime') || 60;
+  refreshSlowTime = newconfig.get('refreshSlowTime') || 300;
   printConfig();
 };
 
@@ -32,4 +35,5 @@ export const printConfig = () => {
   console.log(`showNewsNumber:${showNewsNumber}`);
   console.log(`showNewsWordNumber:${showNewsWordNumber}`);
   console.log(`refreshTime:${refreshTime}`);
+  console.log(`refreshSlowTime:${refreshSlowTime}`);
 };

@@ -44,7 +44,12 @@
 				"touchfish.refreshTime":{
 					"type":"number",
 					"default":60,
-					"description": "多少秒刷新一次新闻"
+					"description": "多少秒刷新一次财联社"
+				},
+				"touchfish.refreshSlowTime":{
+					"type":"number",
+					"default":300,
+					"description": "多少秒刷新一次it之家和快科技新闻"
 				}
 			}
 		},
