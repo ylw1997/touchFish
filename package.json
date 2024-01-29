@@ -3,11 +3,14 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "之家,快科技,chiphell,财联社新闻实时查看",
-	"version": "1.7.0",
+	"version": "1.8.0",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
 	},
+	"activationEvents": [
+		"onView:touchfish"
+	],
 	"license": "BSD-3-Clause",
   "keywords": [
     "ithome",
@@ -172,7 +175,9 @@
 		"watch-tests": "tsc -p . -w --outDir out",
 		"pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
 		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js"
+		"test": "node ./out/test/runTest.js",
+		"build":"vsce package",
+		"publish":"vsce publish"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.2.0",
