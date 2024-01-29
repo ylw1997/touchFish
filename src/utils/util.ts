@@ -1,12 +1,12 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2022-05-30 10:10:21
- * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\utils\util.ts
+ * @LastEditTime: 2024-01-29 14:03:37
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\src\utils\util.ts
  * @Description: 
  */
-import { NewsItem, kkjNewsItem, clsNewsItem, chiphellNewsItem } from '../type/type';
+import { NewsItem, kkjNewsItem, clsNewsItem, chiphellNewsItem, v2exNewsItem } from '../type/type';
 import { ThemeIcon, TreeItem } from 'vscode';
 import { showNewsWordNumber } from '../config/index';
 
@@ -99,6 +99,24 @@ export const formatChipHellData = (dataList: chiphellNewsItem[]): TreeItem[] => 
   return treeList;
 };
 
+
+// v2ex新闻数据转换
+export const formatV2exData = (dataList: v2exNewsItem[]): TreeItem[] => {
+  let treeList: TreeItem[] = [];
+  for (let i in dataList) {
+    let item = dataList[i];
+    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
+    treeItem.id = item.title;
+    treeItem.command = {
+      title: item.title,
+      command: "v2ex.openUrl",
+      arguments: [item.title, item.url]
+    };
+    treeItem.iconPath = new ThemeIcon("notebook-render-output");
+    treeList.push(treeItem);
+  }
+  return treeList;
+};
 
 /**
  *  截取字符串

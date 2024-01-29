@@ -1,17 +1,17 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:21:22
- * @LastEditTime: 2024-01-29 09:38:57
+ * @LastEditTime: 2024-01-29 14:05:31
  * @LastEditors: yangliwei 1280426581@qq.com
- * @FilePath: \touchfish\src\Providers\itHomeProvider.ts
+ * @FilePath: \touchfish\src\Providers\v2exProvider.ts
  * @Description: 
  */
 import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
-import { compareNews, formatData } from '../utils/util';
-import { getNewsList } from '../api/ithome';
-import { showNewsNumber } from '../config';
+import { getV2exList } from '../api/v2ex';
+import { compareNews, formatV2exData } from '../utils/util';
+import { showNewsNumber } from '../config/index';
 
-export class ItHomeProvider implements TreeDataProvider<TreeItem>{
+export class V2exProvider implements TreeDataProvider<TreeItem>{
 
   private update = new EventEmitter<TreeItem | void>(); // 用于触发刷新
 	readonly onDidChangeTreeData = this.update.event;
@@ -25,8 +25,9 @@ export class ItHomeProvider implements TreeDataProvider<TreeItem>{
 
   async getData(){
     // this.newsList = [];
-    await getNewsList().then(res=>{
-      let news = formatData(res.data.newslist).slice(0,showNewsNumber);
+    console.log("v2ex");
+    await getV2exList().then(res=>{
+      const news = formatV2exData(res).slice(0,showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
     });
     this.update.fire();

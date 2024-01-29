@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "之家,快科技,chiphell,财联社新闻实时查看",
-	"version": "1.5.0",
+	"version": "1.7.0",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -19,12 +19,6 @@
   ],
 	"categories": [
 		"Other"
-	],
-	"activationEvents": [
-		"onView:view.newsList",
-		"onView:view.kkjList",
-		"onView:view.clsList",
-		"onView:view.chiphellList"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -80,6 +74,9 @@
 					"name": "财联社",
 					"id": "view.clsList",
 					"visibility": "collapsed"
+				},{
+					"id": "view.v2exList",
+					"name": "v2ex"
 				},
 				{
 					"id": "view.setting",
@@ -126,6 +123,14 @@
 					"dark": "assets/refresh-light.svg",
 					"light": "assets/refresh.svg"
 				}
+			},
+			{
+				"command": "v2ex.refresh",
+				"title": "刷新",
+				"icon": {
+					"dark": "assets/refresh-light.svg",
+					"light": "assets/refresh.svg"
+				}
 			}
 		],
 		"menus": {
@@ -148,6 +153,11 @@
 				{
 					"command": "chiphell.refresh",
 					"when": "view == view.chiphellList",
+					"group": "navigation"
+				},
+				{
+					"command": "v2ex.refresh",
+					"when": "view == view.v2exList",
 					"group": "navigation"
 				}
 			]

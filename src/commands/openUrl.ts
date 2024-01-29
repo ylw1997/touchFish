@@ -1,15 +1,16 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2022-05-26 15:34:56
- * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\commands\openUrl.ts
+ * @LastEditTime: 2024-01-29 14:43:11
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
  */
 import * as vscode from 'vscode';
 import { getChipHellNewsDetail } from '../api/chipHell';
 import { getNewsDetail } from '../api/ithome';
 import { getKKJNewsDetail } from '../api/kjj';
+import { getV2exDetail } from '../api/v2ex';
 
 // 是否已经创建webview
 let isCreatePanel = false;
@@ -191,10 +192,69 @@ export const openCHUrl = vscode.commands.registerCommand('chiphell.openUrl', asy
           width: 75%;
           margin-left: 12.5%;
         }
+        * {
+          color: var(--vscode-editor-foreground) !important;;
+        }
       </style>
     </head>
     <body>
       <h1 style="text-align:center" >${title}</h1>
+      <div class="news_detail">${res}</div>
+    </body>
+    </html>
+  `;
+  });
+  panel!.title = title;
+});
+
+
+// 打开v2ex新闻详情
+export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async (title: string, url: string) => {
+  // 如果没有创建过webview,则创建一个
+  if (!isCreatePanel) {
+    panel = createPanel();
+  }
+  panel!.webview.html = "加载中....";
+  // 获取新闻详情
+  await getV2exDetail(url).then(res => {
+    panel!.webview.html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        .topic_content {
+          font-size: 16px;
+        }
+        .cell {
+          padding: 10px;
+          font-size: 14px;
+          line-height: 150%;
+          text-align: left;
+          border-bottom: 1px solid var(--vscode-editorHint-foreground);
+        }
+        .tag ,.votes{
+          display: none;
+        }
+        img{
+          max-width: 60%;
+        }
+        .fr {
+          float: right;
+          text-align: right;
+        }
+        .news_detail{
+          width: 75%;
+          margin-left: 12.5%;
+          font-size: 18px;
+          line-height: 2;
+        }
+        * {
+          color: var(--vscode-editor-foreground) !important;
+        }
+      </style>
+    </head>
+    <body>
       <div class="news_detail">${res}</div>
     </body>
     </html>

@@ -1,9 +1,9 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2022-05-26 16:12:35
- * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\commands\refresh.ts
+ * @LastEditTime: 2024-01-29 14:47:24
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
  */
 import * as vscode from 'vscode';
@@ -11,6 +11,7 @@ import { ItHomeProvider } from '../Providers/itHomeProvider';
 import { KKJProvider } from '../Providers/kkjProvider';
 import { ClsProvider } from '../Providers/clsProvider';
 import { ChipHellProvider } from '../Providers/chipHellProvider';
+import { V2exProvider } from '../Providers/v2exProvider';
 
 /**
  * 刷新之家树列表
@@ -53,6 +54,14 @@ export const clsRefresh = (clsProvider:ClsProvider)=>{
 export const refreshChipHellNews = (chiphellNewsProvider:ChipHellProvider)=>{
   return vscode.commands.registerCommand("chiphell.refresh",async ()=>{
     await chiphellNewsProvider.getData();
+    // vscode.window.showInformationMessage("新闻已刷新!");
+  });
+};
+
+// 刷新v2ex文章列表
+export const refreshV2exNews = (v2exProvider:V2exProvider)=>{
+  return vscode.commands.registerCommand("v2ex.refresh",async ()=>{
+    await v2exProvider.getData();
     // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };

@@ -1,9 +1,9 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:31:27
- * @LastEditTime: 2022-05-30 09:17:45
- * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\type\type.d.ts
+ * @LastEditTime: 2024-01-29 13:52:45
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\src\type\type.d.ts
  * @Description: 
  */
 
@@ -44,4 +44,11 @@ export interface clsNewsItem {
 export interface chiphellNewsItem {
   title: string;
   url: string;
+}
+
+// v2ex 新闻定义
+export interface v2exNewsItem {
+  title: string;
+  url: string;
+  node: string;
 }
