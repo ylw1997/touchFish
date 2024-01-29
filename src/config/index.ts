@@ -1,9 +1,9 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 15:26:01
- * @LastEditTime: 2022-05-30 10:39:00
- * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\config\index.ts
+ * @LastEditTime: 2024-01-29 16:32:21
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\src\config\index.ts
  * @Description: 
  */
 
@@ -21,6 +21,18 @@ export let refreshTime: number = config.get('refreshTime') || 60;
 
 export let refreshSlowTime: number = config.get('refreshSlowTime') || 300;
 
+export let v2exTab: string = config.get('v2exTab') || "all";
+
+// 获取配置
+export const getConfigByKey = (key:string)=>{
+  return config.get(key);
+};
+
+// 设置配置
+export const setConfigByKey = (key:string,value:any)=>{
+  return config.update(key,value,true);
+};
+
 // 刷新配置
 export const refrshConfig = () => {
   const newconfig = vscode.workspace.getConfiguration('touchfish');
@@ -28,6 +40,7 @@ export const refrshConfig = () => {
   showNewsWordNumber = newconfig.get('showNewsWordNumber');
   refreshTime = newconfig.get('refreshTime') || 60;
   refreshSlowTime = newconfig.get('refreshSlowTime') || 300;
+  v2exTab = newconfig.get('v2exTab') || "all";
   printConfig();
 };
 
@@ -36,4 +49,5 @@ export const printConfig = () => {
   console.log(`showNewsWordNumber:${showNewsWordNumber}`);
   console.log(`refreshTime:${refreshTime}`);
   console.log(`refreshSlowTime:${refreshSlowTime}`);
+  console.log(`v2exTab:${v2exTab}`);
 };

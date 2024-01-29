@@ -2,8 +2,8 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "之家,快科技,chiphell,财联社新闻实时查看",
-	"version": "1.8.0",
+	"description": "ithome,it之家,快科技,chiphell,财联社,v2ex",
+	"version": "1.9.0",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -18,7 +18,8 @@
 		"it之家",
 		"财联社",
 		"cls",
-		"chiphell"
+		"chiphell",
+		"v2ex"
   ],
 	"categories": [
 		"Other"
@@ -47,6 +48,16 @@
 					"type":"number",
 					"default":300,
 					"description": "多少秒刷新一次it之家和快科技新闻"
+				},
+				"touchfish.v2exTab":{
+					"type":"string",
+					"default":"all",
+					"description": "v2ex默认tab"
+				},
+				"touchfish.autoRefresh":{
+					"type":"boolean",
+					"default":true,
+					"description": "是否自动刷新"
 				}
 			}
 		},
@@ -86,6 +97,7 @@
 					"name": "设置",
 					"visibility": "hidden"
 				}
+				
 			]
 		},
 		"viewsWelcome": [
@@ -98,42 +110,32 @@
 			{
 				"command": "itHome.refresh",
 				"title": "刷新",
-				"icon": {
-					"dark": "assets/refresh-light.svg",
-					"light": "assets/refresh.svg"
-				}
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "kkj.refresh",
 				"title": "刷新",
-				"icon": {
-					"dark": "assets/refresh-light.svg",
-					"light": "assets/refresh.svg"
-				}
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "cls.refresh",
 				"title": "刷新",
-				"icon": {
-					"dark": "assets/refresh-light.svg",
-					"light": "assets/refresh.svg"
-				}
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "chiphell.refresh",
 				"title": "刷新",
-				"icon": {
-					"dark": "assets/refresh-light.svg",
-					"light": "assets/refresh.svg"
-				}
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "v2ex.refresh",
 				"title": "刷新",
-				"icon": {
-					"dark": "assets/refresh-light.svg",
-					"light": "assets/refresh.svg"
-				}
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "v2ex.changeTab",
+				"title": "切换tab",
+				"icon": "$(pencil)"
 			}
 		],
 		"menus": {
@@ -160,6 +162,11 @@
 				},
 				{
 					"command": "v2ex.refresh",
+					"when": "view == view.v2exList",
+					"group": "navigation"
+				},
+				{
+					"command": "v2ex.changeTab",
 					"when": "view == view.v2exList",
 					"group": "navigation"
 				}

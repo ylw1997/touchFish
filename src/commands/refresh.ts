@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-01-29 14:47:24
+ * @LastEditTime: 2024-01-29 16:20:07
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -12,6 +12,7 @@ import { KKJProvider } from '../Providers/kkjProvider';
 import { ClsProvider } from '../Providers/clsProvider';
 import { ChipHellProvider } from '../Providers/chipHellProvider';
 import { V2exProvider } from '../Providers/v2exProvider';
+import { setConfigByKey } from '../config';
 
 /**
  * 刷新之家树列表
@@ -63,5 +64,28 @@ export const refreshV2exNews = (v2exProvider:V2exProvider)=>{
   return vscode.commands.registerCommand("v2ex.refresh",async ()=>{
     await v2exProvider.getData();
     // vscode.window.showInformationMessage("新闻已刷新!");
+  });
+};
+
+// 更改v2ex tab 
+export const changeV2exTab = (v2exProvider:V2exProvider)=>{
+  return vscode.commands.registerCommand("v2ex.changeTab",async ()=>{
+    const tab = await vscode.window.showQuickPick([
+      {label:"全部",description:"all"},
+      {label:"技术",description:"tech"},
+      {label:"创意",description:"creative"},
+      {label:"好玩",description:"play"},
+      {label:"Apple",description:"apple"},
+      {label:"酷工作",description:"jobs"},
+      {label:"交易",description:"deals"},
+      {label:"城市",description:"city"},
+      {label:"问与答",description:"qna"},
+      {label:"最热",description:"hot"},
+      {label:"R2",description:"r2"}
+    ]);
+    if(tab){
+      setConfigByKey("v2exTab",tab.description);
+      vscode.window.showInformationMessage(`v2ex tab changed to ${tab.label}`);
+    }
   });
 };
