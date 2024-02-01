@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-02-01 16:12:34
+ * @LastEditTime: 2024-02-01 17:18:54
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -313,7 +313,6 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
         -ms-flex-align: center;
         align-items: center
     }
-    
     .post-user_post-user-comp-info-top-name{
         color: #4b8dc3;
         margin-right: 8px;
@@ -339,7 +338,7 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
       color: #96999f;
       margin-left: 7px
   }
-  .index_bbs-post-web-quote-title-container,.post-wrapper_toggle-tool,.index_pagination,.index_br,.post-operate_post-operate-comp-wrapper{
+  .seo-dom,.index_bbs-post-web-quote-title-container,.post-wrapper_toggle-tool,.index_pagination,.index_br,.post-operate_post-operate-comp-wrapper{
     display:none;
   }
   .post-reply-list-user-info-top-time{
@@ -424,7 +423,10 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
   position: relative;
   padding: 10px 14px;
   background: var(--vscode-button-secondaryBackground)
-}        
+}     
+.todo-list{
+  margin:0 10px;
+}   
         .news_detail{
           width: 75%;
           margin-left: 12.5%;
