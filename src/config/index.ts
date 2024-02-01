@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 15:26:01
- * @LastEditTime: 2024-02-01 16:41:55
+ * @LastEditTime: 2024-02-01 17:43:01
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\config\index.ts
  * @Description: 
@@ -22,14 +22,9 @@ export let refreshTime: number|undefined = config.get('refreshTime');
 export let v2exTab: string|undefined = config.get('v2exTab');
 export let hupuTab: string|undefined = config.get('hupuTab');
 
-// 获取配置
-export const getConfigByKey = (key:string)=>{
-  return config.get(key);
-};
-
 // 设置配置
-export const setConfigByKey = (key:string,value:any)=>{
-  return config.update(key,value,true);
+export const setConfigByKey = async (key:string,value:any)=>{
+  return await config.update(key,value,true);
 };
 
 // 刷新配置
