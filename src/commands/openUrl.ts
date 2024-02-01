@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-01-29 14:43:11
+ * @LastEditTime: 2024-02-01 16:12:34
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -11,6 +11,7 @@ import { getChipHellNewsDetail } from '../api/chipHell';
 import { getNewsDetail } from '../api/ithome';
 import { getKKJNewsDetail } from '../api/kjj';
 import { getV2exDetail } from '../api/v2ex';
+import { getHupuDetail } from '../api/hupu';
 
 // 是否已经创建webview
 let isCreatePanel = false;
@@ -252,6 +253,190 @@ export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async
         * {
           color: var(--vscode-editor-foreground) !important;
         }
+      </style>
+    </head>
+    <body>
+      <div class="news_detail">${res}</div>
+    </body>
+    </html>
+  `;
+  });
+  panel!.title = title;
+});
+
+// 打开v2ex新闻详情
+export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async (title: string, url: string) => {
+  // 如果没有创建过webview,则创建一个
+  if (!isCreatePanel) {
+    panel = createPanel();
+  }
+  panel!.webview.html = "加载中....";
+  // 获取新闻详情
+  await getHupuDetail(url).then(res => {
+    panel!.webview.html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+      .post-user_post-user-comp {
+        min-height: 54px;
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-align: start;
+        align-items: flex-start
+    }
+      .post-user_post-user-comp-avatar-wrapper {
+        -ms-flex: 0 0 48px;
+        flex: 0 0 48px;
+        margin-right: 10px;
+        border-radius: 50%
+      }
+      .post-user_post-user-comp-info {
+        -ms-flex: 1 1 auto;
+        flex: 1 1 auto;
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-align: start;
+        align-items: flex-start;
+        -ms-flex-pack: distribute;
+        justify-content: space-around;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        font-weight: 400;
+        font-size: 14px;
+    }
+    
+    .post-user_post-user-comp-info-top {
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-align: center;
+        align-items: center
+    }
+    
+    .post-user_post-user-comp-info-top-name{
+        color: #4b8dc3;
+        margin-right: 8px;
+        line-height: 1
+    }
+
+    .post-user_post-user-comp-info-bottom {
+      line-height: 1.5;
+      margin-top: 7px
+  }
+  
+  .post-user_post-user-comp-info-bottom-title {
+      font-size: 14px;
+  }
+  
+  .post-user_post-user-comp-info-bottom-from {
+      font-size: 12px;
+      color: #96999f;
+      margin-left: 7px
+  }
+  
+  .post-user_post-user-comp-info-bottom-link {
+      color: #96999f;
+      margin-left: 7px
+  }
+  .index_bbs-post-web-quote-title-container,.post-wrapper_toggle-tool,.index_pagination,.index_br,.post-operate_post-operate-comp-wrapper{
+    display:none;
+  }
+  .post-reply-list-user-info-top-time{
+    margin: 0 10px;
+  }
+
+  .post-reply-list-wrapper {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--vscode-textBlockQuote-border);
+  }
+    
+    .post-user_post-user-comp-info-top-tip {
+        margin: 0 8px;
+        background: #d8d8d8;
+        border-radius: 9px;
+        color: #191c22;
+        font-size: 12px;
+        padding: 1px 6px;
+        cursor: default
+    }
+
+    .post-wrapper_bbs-post-wrapper.post-wrapper_light {
+      border: 1px solid var(--vscode-scrollbar-shadow);
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+      background: var(--vscode-input-background)
+  }
+
+      .post-reply-list_post-reply-list-wrapper .post-reply-list .post-reply-list-container {
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-align: start;
+        align-items: flex-start;
+        -ms-flex-pack: start;
+        justify-content: flex-start
+    }
+
+    .post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar-wrapper .avatar,.post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar-wrapper .avatar-placeholder img {
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      border-radius: 50%
+  }
+  .post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar {
+    -ms-flex: 0 0 36px;
+    flex: 0 0 36px;
+    width: 36px;
+    margin-right: 10px
+}
+.post-wrapper_bbs-post-wrapper-title {
+  height: 46px;
+  line-height: 46px;
+  padding-left: 19px;
+  font-family: PingFangSC-Semibold;
+  font-weight: 700;
+  font-size: 18px;
+  color: #191c22;
+  position: relative;
+  letter-spacing: 0;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  -ms-flex-pack: start;
+  justify-content: flex-start
+}
+.post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-content .post-reply-list-operate {
+  font-family: PingFangSC-Regular;
+  font-size: 14px;
+  color: #7b7e86;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+  margin-top: 16px;
+  margin-left: -10px
+}
+
+.index_bbs-thread-comp-container {
+  position: relative;
+  padding: 10px 14px;
+  background: var(--vscode-button-secondaryBackground)
+}        
+        .news_detail{
+          width: 75%;
+          margin-left: 12.5%;
+          line-height: 2;
+        }
+        div {
+          color: var(--vscode-editor-foreground) !important;
+        }
+        .index_bbs-thread-comp img,.index_bbs-thread-comp video {
+          max-width: 50%;
+        }
+
       </style>
     </head>
     <body>

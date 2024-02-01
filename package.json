@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,快科技,chiphell,财联社,v2ex",
-	"version": "1.9.0",
+	"version": "1.10.0",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -19,7 +19,9 @@
 		"财联社",
 		"cls",
 		"chiphell",
-		"v2ex"
+		"v2ex",
+		"hupu",
+		"虎扑步行街"
   ],
 	"categories": [
 		"Other"
@@ -41,18 +43,18 @@
 				},
 				"touchfish.refreshTime":{
 					"type":"number",
-					"default":60,
-					"description": "多少秒刷新一次财联社"
-				},
-				"touchfish.refreshSlowTime":{
-					"type":"number",
 					"default":300,
-					"description": "多少秒刷新一次it之家和快科技新闻"
+					"description": "多少秒自动刷新,默认300秒"
 				},
 				"touchfish.v2exTab":{
 					"type":"string",
 					"default":"all",
 					"description": "v2ex默认tab"
+				},
+				"touchfish.hupuTab":{
+					"type":"string",
+					"default":"all-gambia",
+					"description": "虎扑默认tab"
 				},
 				"touchfish.autoRefresh":{
 					"type":"boolean",
@@ -91,6 +93,9 @@
 				},{
 					"id": "view.v2exList",
 					"name": "v2ex"
+				},{
+					"id": "view.hupuList",
+					"name": "虎扑步行街"
 				},
 				{
 					"id": "view.setting",
@@ -136,6 +141,16 @@
 				"command": "v2ex.changeTab",
 				"title": "切换tab",
 				"icon": "$(pencil)"
+			},
+			{
+				"command": "hupu.refresh",
+				"title": "刷新",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "hupu.changeTab",
+				"title": "切换tab",
+				"icon": "$(pencil)"
 			}
 		],
 		"menus": {
@@ -168,6 +183,16 @@
 				{
 					"command": "v2ex.changeTab",
 					"when": "view == view.v2exList",
+					"group": "navigation"
+				},
+				{
+					"command": "hupu.refresh",
+					"when": "view == view.hupuList",
+					"group": "navigation"
+				},
+				{
+					"command": "hupu.changeTab",
+					"when": "view == view.hupuList",
 					"group": "navigation"
 				}
 			]

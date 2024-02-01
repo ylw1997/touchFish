@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2024-01-29 14:03:37
+ * @LastEditTime: 2024-02-01 11:30:14
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description: 
@@ -117,6 +117,24 @@ export const formatV2exData = (dataList: v2exNewsItem[]): TreeItem[] => {
   }
   return treeList;
 };
+
+export const formatHupuData = (dataList: chiphellNewsItem[]): TreeItem[] => {
+  let treeList: TreeItem[] = [];
+  for (let i in dataList) {
+    let item = dataList[i];
+    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
+    treeItem.id = item.title;
+    treeItem.command = {
+      title: item.title,
+      command: "hupu.openUrl",
+      arguments: [item.title, item.url]
+    };
+    treeItem.iconPath = new ThemeIcon("notebook-render-output");
+    treeList.push(treeItem);
+  }
+  return treeList;
+};
+
 
 /**
  *  截取字符串

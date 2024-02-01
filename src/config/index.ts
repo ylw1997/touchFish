@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 15:26:01
- * @LastEditTime: 2024-01-29 16:32:21
+ * @LastEditTime: 2024-02-01 16:41:55
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\config\index.ts
  * @Description: 
@@ -11,17 +11,16 @@ import * as vscode from 'vscode';
 const config = vscode.workspace.getConfiguration('touchfish');
 
 // 显示新闻数量 默认为10
-export let showNewsNumber: number = config.get('showNewsNumber') || 10;
+export let showNewsNumber: number|undefined = config.get('showNewsNumber');
 
 // 显示新闻字数 默认为25
 export let showNewsWordNumber: number|undefined = config.get('showNewsWordNumber');
 
 //多少秒刷新一次财联社 刷新时间默认为60秒
-export let refreshTime: number = config.get('refreshTime') || 60;
+export let refreshTime: number|undefined = config.get('refreshTime');
 
-export let refreshSlowTime: number = config.get('refreshSlowTime') || 300;
-
-export let v2exTab: string = config.get('v2exTab') || "all";
+export let v2exTab: string|undefined = config.get('v2exTab');
+export let hupuTab: string|undefined = config.get('hupuTab');
 
 // 获取配置
 export const getConfigByKey = (key:string)=>{
@@ -36,11 +35,11 @@ export const setConfigByKey = (key:string,value:any)=>{
 // 刷新配置
 export const refrshConfig = () => {
   const newconfig = vscode.workspace.getConfiguration('touchfish');
-  showNewsNumber = newconfig.get('showNewsNumber') || 10;
+  showNewsNumber = newconfig.get('showNewsNumber');
   showNewsWordNumber = newconfig.get('showNewsWordNumber');
-  refreshTime = newconfig.get('refreshTime') || 60;
-  refreshSlowTime = newconfig.get('refreshSlowTime') || 300;
-  v2exTab = newconfig.get('v2exTab') || "all";
+  refreshTime = newconfig.get('refreshTime');
+  v2exTab = newconfig.get('v2exTab');
+  hupuTab = newconfig.get('hupuTab');
   printConfig();
 };
 
@@ -48,6 +47,6 @@ export const printConfig = () => {
   console.log(`showNewsNumber:${showNewsNumber}`);
   console.log(`showNewsWordNumber:${showNewsWordNumber}`);
   console.log(`refreshTime:${refreshTime}`);
-  console.log(`refreshSlowTime:${refreshSlowTime}`);
   console.log(`v2exTab:${v2exTab}`);
+  console.log(`hupuTab:${hupuTab}`);
 };
