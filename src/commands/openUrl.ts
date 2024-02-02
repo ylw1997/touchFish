@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-02-01 17:18:54
+ * @LastEditTime: 2024-02-02 11:26:36
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -232,7 +232,7 @@ export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async
           font-size: 14px;
           line-height: 150%;
           text-align: left;
-          border-bottom: 1px solid var(--vscode-editorHint-foreground);
+          border-bottom: 1px solid var(--vscode-textBlockQuote-border);
         }
         .tag ,.votes{
           display: none;
@@ -279,6 +279,9 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
     <head>
       <meta charset="UTF-8">
       <style>
+      p{
+        font-size: 15px;
+      }
       .post-user_post-user-comp {
         min-height: 54px;
         display: -ms-flexbox;

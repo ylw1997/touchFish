@@ -2,8 +2,8 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "ithome,it之家,快科技,chiphell,财联社,v2ex",
-	"version": "1.10.2",
+	"description": "ithome,it之家,快科技,chiphell,财联社,v2ex,虎扑步行街新闻聚合插件",
+	"version": "1.10.3",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
