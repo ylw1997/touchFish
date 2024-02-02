@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-02-02 11:26:36
+ * @LastEditTime: 2024-02-02 11:47:38
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -364,6 +364,7 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
     }
 
     .post-wrapper_bbs-post-wrapper.post-wrapper_light {
+      padding: 0 14px;
       border: 1px solid var(--vscode-scrollbar-shadow);
       -webkit-box-sizing: border-box;
       box-sizing: border-box;
