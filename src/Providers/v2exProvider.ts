@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:21:22
- * @LastEditTime: 2024-02-01 17:42:21
+ * @LastEditTime: 2024-02-04 15:57:55
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\v2exProvider.ts
  * @Description: 
@@ -24,9 +24,9 @@ export class V2exProvider implements TreeDataProvider<TreeItem>{
 		this.getData();
 	}
 
-  async getData(){
+  async getData(tab?:string){
     const newconfig = vscode.workspace.getConfiguration('touchfish');
-    const v2exTab = newconfig.get('v2exTab') as string || defaultV2exTab;
+    const v2exTab = tab || newconfig.get('v2exTab') as string || defaultV2exTab;
     await getV2exList(v2exTab).then(res=>{
       const news = formatV2exData(res).slice(0,showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");

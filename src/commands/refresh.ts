@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-02-01 17:38:18
+ * @LastEditTime: 2024-02-04 15:58:01
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -94,8 +94,9 @@ export const changeV2exTab =  (v2exProvider:V2exProvider)=>{
       {label:"R2",description:"r2"}
     ]);
     if(tab){
+      await v2exProvider.getData(tab.description);
       await setConfigByKey("v2exTab",tab.description);
-      await vscode.commands.executeCommand('v2ex.refresh');
+      // await vscode.commands.executeCommand('v2ex.refresh');
       await vscode.window.showInformationMessage(`v2ex tab changed to ${tab.label}`);
     }
   });
@@ -115,8 +116,9 @@ export const changeHupuTab = (hupuProvider:HupuProvider)=>{
       {label:"职场区",description:"workplace"},
     ]);
     if(tab){
+      await hupuProvider.getData(tab.description);
       await setConfigByKey("hupuTab",tab.description);
-      await vscode.commands.executeCommand('hupu.refresh');
+      // await vscode.commands.executeCommand('hupu.refresh');
       await vscode.window.showInformationMessage(`v2ex tab changed to ${tab.label}`);
     }
   });

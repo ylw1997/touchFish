@@ -24,9 +24,9 @@ export class HupuProvider implements TreeDataProvider<TreeItem>{
 		this.getData();
 	}
 
-  async getData(){
+  async getData(tab?:string){
     const newconfig = vscode.workspace.getConfiguration('touchfish');
-    const v2exTab = newconfig.get('hupuTab') as string || defaultHupuTab;
+    const v2exTab = tab || newconfig.get('hupuTab') as string || defaultHupuTab;
     await getHupuList(v2exTab).then(res=>{
       const news = formatHupuData(res).slice(0,showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
