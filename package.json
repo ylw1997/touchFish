@@ -96,6 +96,9 @@
 				},{
 					"id": "view.hupuList",
 					"name": "虎扑步行街"
+				},{
+					"id":"view.ngaList",
+					"name": "nga晴风村"
 				},
 				{
 					"id": "view.setting",
@@ -151,6 +154,11 @@
 				"command": "hupu.changeTab",
 				"title": "切换tab",
 				"icon": "$(pencil)"
+			},
+			{
+				"command": "nga.refresh",
+				"title": "刷新",
+				"icon": "$(refresh)"
 			}
 		],
 		"menus": {
@@ -193,6 +201,10 @@
 				{
 					"command": "hupu.changeTab",
 					"when": "view == view.hupuList",
+					"group": "navigation"
+				},{
+					"command": "nga.refresh",
+					"when": "view == view.ngaList",
 					"group": "navigation"
 				}
 			]

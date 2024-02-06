@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-02-02 11:47:38
+ * @LastEditTime: 2024-02-06 17:51:28
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -12,6 +12,7 @@ import { getNewsDetail } from '../api/ithome';
 import { getKKJNewsDetail } from '../api/kjj';
 import { getV2exDetail } from '../api/v2ex';
 import { getHupuDetail } from '../api/hupu';
+import { getNgaNewsDetail } from '../api/nga';
 
 // 是否已经创建webview
 let isCreatePanel = false;
@@ -443,6 +444,61 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
           max-width: 50%;
         }
 
+      </style>
+    </head>
+    <body>
+      <div class="news_detail">${res}</div>
+    </body>
+    </html>
+  `;
+  });
+  panel!.title = title;
+});
+
+// 打开nga新闻详情
+export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (title: string, url: string) => {
+  // 如果没有创建过webview,则创建一个
+  if (!isCreatePanel) {
+    panel = createPanel();
+  }
+  panel!.webview.html = "加载中....";
+  // 获取新闻详情
+  await getNgaNewsDetail(url).then(res => {
+    panel!.webview.html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        .topic_content {
+          font-size: 16px;
+        }
+        .cell {
+          padding: 10px;
+          font-size: 14px;
+          line-height: 150%;
+          text-align: left;
+          border-bottom: 1px solid var(--vscode-textBlockQuote-border);
+        }
+        .tag ,.votes{
+          display: none;
+        }
+        img{
+          max-width: 60%;
+        }
+        .fr {
+          float: right;
+          text-align: right;
+        }
+        .news_detail{
+          width: 75%;
+          margin-left: 12.5%;
+          font-size: 18px;
+          line-height: 2;
+        }
+        * {
+          color: var(--vscode-editor-foreground) !important;
+        }
       </style>
     </head>
     <body>

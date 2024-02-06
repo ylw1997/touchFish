@@ -1,15 +1,15 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-02-01 16:41:31
+ * @LastEditTime: 2024-02-06 17:52:22
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
  */
 
 import * as vscode from 'vscode';
-import { openUrl, openKKJUrl, openCLSUrl, openCHUrl, openV2exUrl } from './commands/openUrl';
-import { refresh, kkjRefresh, clsRefresh, refreshChipHellNews, refreshV2exNews, changeV2exTab, refreshHupuNews, changeHupuTab } from './commands/refresh';
+import { openUrl, openKKJUrl, openCLSUrl, openCHUrl, openV2exUrl, openNgaUrl } from './commands/openUrl';
+import { refresh, kkjRefresh, clsRefresh, refreshChipHellNews, refreshV2exNews, changeV2exTab, refreshHupuNews, changeHupuTab, refreshNgaNews } from './commands/refresh';
 import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
 import { KKJProvider } from './Providers/kkjProvider';
@@ -19,6 +19,7 @@ import { ChipHellProvider } from './Providers/chipHellProvider';
 import { V2exProvider } from './Providers/v2exProvider';
 import { HupuProvider } from './Providers/hupuProvider';
 import { defaultRefreshTime } from './data/context';
+import { NgaProvider } from './Providers/ngaProvider';
 
 let timer: NodeJS.Timeout | null = null;
 
@@ -30,12 +31,14 @@ export function activate(context: vscode.ExtensionContext) {
 	const chiphellProvider = new ChipHellProvider();
 	const v2exProvicer = new V2exProvider();
 	const hupuProvider = new HupuProvider();
+	const ngaProvider = new NgaProvider();
 	vscode.window.registerTreeDataProvider("view.newsList", newsProvider);
 	vscode.window.registerTreeDataProvider("view.kkjList", kkjProvider);
 	vscode.window.registerTreeDataProvider("view.clsList", clsProvider);
 	vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
 	vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
 	vscode.window.registerTreeDataProvider("view.hupuList", hupuProvider);
+	vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
 
 	// 注册刷新指令
 	context.subscriptions.push(refresh(newsProvider));
@@ -46,6 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(changeV2exTab(v2exProvicer));
 	context.subscriptions.push(refreshHupuNews(hupuProvider));
 	context.subscriptions.push(changeHupuTab(hupuProvider));
+	context.subscriptions.push(refreshNgaNews(ngaProvider));
 	//定时刷新新闻
 	printConfig();
 	intervalRefrshNews();
@@ -57,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(openCHUrl);
 	context.subscriptions.push(openSetting);
 	context.subscriptions.push(openV2exUrl);
+	context.subscriptions.push(openNgaUrl);
 }
 
 // this method is called when your extension is deactivated
@@ -78,6 +83,7 @@ const refreshAll = () => {
 	vscode.commands.executeCommand('v2ex.refresh');
 	vscode.commands.executeCommand('hupu.refresh');
 	vscode.commands.executeCommand('chiphell.refresh');
+	vscode.commands.executeCommand('nga.refresh');
 };
 
 

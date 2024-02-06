@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2024-02-01 11:30:14
+ * @LastEditTime: 2024-02-06 17:53:30
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description: 
@@ -118,6 +118,7 @@ export const formatV2exData = (dataList: v2exNewsItem[]): TreeItem[] => {
   return treeList;
 };
 
+// 虎扑新闻数据转换
 export const formatHupuData = (dataList: chiphellNewsItem[]): TreeItem[] => {
   let treeList: TreeItem[] = [];
   for (let i in dataList) {
@@ -127,6 +128,28 @@ export const formatHupuData = (dataList: chiphellNewsItem[]): TreeItem[] => {
     treeItem.command = {
       title: item.title,
       command: "hupu.openUrl",
+      arguments: [item.title, item.url]
+    };
+    treeItem.iconPath = new ThemeIcon("notebook-render-output");
+    treeList.push(treeItem);
+  }
+  return treeList;
+};
+
+/**
+ *  nga新闻数据转换
+ * @param dataList  数据列表
+ * @returns  转换后的数据列表
+ */
+export const formatNgaData = (dataList: chiphellNewsItem[]): TreeItem[] => {
+  let treeList: TreeItem[] = [];
+  for (let i in dataList) {
+    let item = dataList[i];
+    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
+    treeItem.id = item.title;
+    treeItem.command = {
+      title: item.title,
+      command: "nga.openUrl",
       arguments: [item.title, item.url]
     };
     treeItem.iconPath = new ThemeIcon("notebook-render-output");

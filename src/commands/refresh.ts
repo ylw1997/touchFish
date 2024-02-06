@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-02-04 15:58:01
+ * @LastEditTime: 2024-02-06 15:45:50
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -14,6 +14,7 @@ import { ChipHellProvider } from '../Providers/chipHellProvider';
 import { V2exProvider } from '../Providers/v2exProvider';
 import { setConfigByKey } from '../config';
 import { HupuProvider } from '../Providers/hupuProvider';
+import { NgaProvider } from '../Providers/ngaProvider';
 
 /**
  * 刷新之家树列表
@@ -121,5 +122,13 @@ export const changeHupuTab = (hupuProvider:HupuProvider)=>{
       // await vscode.commands.executeCommand('hupu.refresh');
       await vscode.window.showInformationMessage(`v2ex tab changed to ${tab.label}`);
     }
+  });
+};
+
+// 刷新hupu文章列表
+export const refreshNgaNews = (ngaProvider:NgaProvider)=>{
+  return vscode.commands.registerCommand("nga.refresh",async ()=>{
+    await ngaProvider.getData();
+    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
