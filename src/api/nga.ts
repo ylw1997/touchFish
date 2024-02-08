@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-02-08 14:20:03
- * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+ * @LastEditTime: 2024-02-08 15:44:55
+ * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\nga.ts
  * @Description: 
  */
@@ -11,14 +11,32 @@ import { chiphellNewsItem } from '../type/type';
 import cheerio = require('cheerio');
 import { TextDecoder } from "util";
 import * as vscode from 'vscode';
+import { setConfigByKey } from "../config";
+
+export const  getOrSetNgaCookie = async () => {
+  const config = vscode.workspace.getConfiguration('touchfish');
+  let cookie = config.get('ngaCookie') as string | undefined;
+  // 如果没有就请输入cookie
+  if(!cookie){
+    cookie = await vscode.window.showInputBox({
+      placeHolder: "请输入nga的cookie",
+      prompt: "请输入nga的cookie",
+    });
+    if(cookie){
+      await setConfigByKey('ngaCookie', cookie);
+    }
+  }
+  return cookie;
+};
 
 // 获取新闻列表
 export const getNgaList = async (tab?:string) => {
   const resArr: chiphellNewsItem[] = [];
   try {
+    const cookie = await getOrSetNgaCookie() as string;
     const res = await axios.get("https://bbs.nga.cn/thread.php?fid=" + tab, {
       headers:{
-        "Cookie":"ngacn0comUserInfo=guagua1997%09guagua1997%0939%0939%09%0910%090%094%090%090%09;ngaPassportUid=65236143;ngaPassportUrlencodedUname=guagua1997;ngaPassportCid=X9hs6gam2dcv82epc9om8bsntln3tgo2dot7026u;Hm_lvt_01c4614f24e14020e036f4c3597aa059=1705285068,1706261644,1706681490,1707016612;ngacn0comUserInfoCheck=0300e96a44b3a8c9174c9e7b446d1ce6;ngacn0comInfoCheckTime=1707204630;lastpath=/read.php?tid=39227777; lastvisit=1707204862;bbsmisccookies=%7B%22uisetting%22%3A%7B0%3A%22b%22%2C1%3A1707205162%7D%2C%22pv_count_for_insad%22%3A%7B0%3A-38%2C1%3A1707238803%7D%2C%22insad_views%22%3A%7B0%3A1%2C1%3A1707238803%7D%7D;Hm_lpvt_01c4614f24e14020e036f4c3597aa059=1707204863"
+        "Cookie":cookie
       },
       responseType: "arraybuffer", // 关键步骤
       responseEncoding: "utf8",
@@ -36,8 +54,13 @@ export const getNgaList = async (tab?:string) => {
     });
     return resArr;
   } catch (error) {
-    // 弹出错误提示
-    vscode.window.showErrorMessage("获取nga新闻列表失败");
+    // 弹出错误确认框，请求失败，是否清除cookie，重新输入
+    const res = await vscode.window.showErrorMessage("获取nga新闻列表失败,是否清除cookie，重新输入", "是", "否");
+    if(res === "是"){
+      await setConfigByKey('ngaCookie', "");
+      await getOrSetNgaCookie();
+      vscode.window.showInformationMessage("请刷新列表重试！");
+    }
   }
   return resArr;
 };
@@ -47,10 +70,11 @@ export const getNgaList = async (tab?:string) => {
 export const getNgaNewsDetail = async (url: string) => {
   console.log(url);
   try {
+    const cookie = await getOrSetNgaCookie() as string;
     const { data } = await axios.get(
       "https://bbs.nga.cn"+url,{
         headers:{
-          "Cookie":"ngacn0comUserInfo=guagua1997%09guagua1997%0939%0939%09%0910%090%094%090%090%09;ngaPassportUid=65236143;ngaPassportUrlencodedUname=guagua1997;ngaPassportCid=X9hs6gam2dcv82epc9om8bsntln3tgo2dot7026u;Hm_lvt_01c4614f24e14020e036f4c3597aa059=1705285068,1706261644,1706681490,1707016612;ngacn0comUserInfoCheck=0300e96a44b3a8c9174c9e7b446d1ce6;ngacn0comInfoCheckTime=1707204630;lastpath=/read.php?tid=39227777; lastvisit=1707204862;bbsmisccookies=%7B%22uisetting%22%3A%7B0%3A%22b%22%2C1%3A1707205162%7D%2C%22pv_count_for_insad%22%3A%7B0%3A-38%2C1%3A1707238803%7D%2C%22insad_views%22%3A%7B0%3A1%2C1%3A1707238803%7D%7D;Hm_lpvt_01c4614f24e14020e036f4c3597aa059=1707204863"
+          "Cookie":cookie
         },
         responseType: "arraybuffer", // 关键步骤
         responseEncoding: "utf8",
