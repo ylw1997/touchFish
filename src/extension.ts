@@ -1,15 +1,15 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-02-06 17:52:22
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2024-02-08 14:33:58
+ * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
  */
 
 import * as vscode from 'vscode';
 import { openUrl, openKKJUrl, openCLSUrl, openCHUrl, openV2exUrl, openNgaUrl } from './commands/openUrl';
-import { refresh, kkjRefresh, clsRefresh, refreshChipHellNews, refreshV2exNews, changeV2exTab, refreshHupuNews, changeHupuTab, refreshNgaNews } from './commands/refresh';
+import { refresh, kkjRefresh, clsRefresh, refreshChipHellNews, refreshV2exNews, changeV2exTab, refreshHupuNews, changeHupuTab, refreshNgaNews, changeNgaTab } from './commands/refresh';
 import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
 import { KKJProvider } from './Providers/kkjProvider';
@@ -50,6 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(refreshHupuNews(hupuProvider));
 	context.subscriptions.push(changeHupuTab(hupuProvider));
 	context.subscriptions.push(refreshNgaNews(ngaProvider));
+	context.subscriptions.push(changeNgaTab(ngaProvider));
 	//定时刷新新闻
 	printConfig();
 	intervalRefrshNews();

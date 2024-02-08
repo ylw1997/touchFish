@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 15:26:01
- * @LastEditTime: 2024-02-01 17:43:01
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2024-02-08 14:33:06
+ * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
  * @FilePath: \touchfish\src\config\index.ts
  * @Description: 
  */
@@ -21,6 +21,7 @@ export let refreshTime: number|undefined = config.get('refreshTime');
 
 export let v2exTab: string|undefined = config.get('v2exTab');
 export let hupuTab: string|undefined = config.get('hupuTab');
+export let ngaTab: string|undefined = config.get('ngaTab');
 
 // 设置配置
 export const setConfigByKey = async (key:string,value:any)=>{
@@ -35,6 +36,7 @@ export const refrshConfig = () => {
   refreshTime = newconfig.get('refreshTime');
   v2exTab = newconfig.get('v2exTab');
   hupuTab = newconfig.get('hupuTab');
+  ngaTab = newconfig.get('ngaTab');
   printConfig();
 };
 

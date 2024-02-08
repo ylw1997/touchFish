@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-02-06 17:51:28
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2024-02-08 14:59:58
+ * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
  */
@@ -25,7 +25,7 @@ const createPanel = (): vscode.WebviewPanel => {
     'Hello World',
     "新闻",
     vscode.ViewColumn.One,
-    {}
+    { enableFindWidget: true, retainContextWhenHidden: true, enableScripts: false }
   );
   isCreatePanel = true;
   panel.dispose = () => {
@@ -470,25 +470,12 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
     <head>
       <meta charset="UTF-8">
       <style>
-        .topic_content {
-          font-size: 16px;
-        }
-        .cell {
-          padding: 10px;
-          font-size: 14px;
-          line-height: 150%;
-          text-align: left;
-          border-bottom: 1px solid var(--vscode-textBlockQuote-border);
-        }
-        .tag ,.votes{
-          display: none;
-        }
         img{
           max-width: 60%;
         }
-        .fr {
-          float: right;
-          text-align: right;
+        .postbox{
+          width:100%;
+          border-bottom: 1px solid var(--vscode-button-secondaryBackground);
         }
         .news_detail{
           width: 75%;
@@ -496,12 +483,37 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
           font-size: 18px;
           line-height: 2;
         }
+        .ngabtn{
+          position: absolute;
+          font-size: 15px;
+          right: 20px;
+          top: 20px;
+          background-color: var(--vscode-button-background);
+          max-width: 300px;
+          box-sizing: border-box;
+          display: flex;
+          width: 100%;
+          padding: 4px;
+          border-radius: 2px;
+          text-align: center;
+          cursor: pointer;
+          justify-content: center;
+          align-items: center;
+          border: 1px solid var(--vscode-button-border,transparent);
+          line-height: 18px;
+          text-decoration: none;
+          color: var(--vscode-button-foreground);
+        }
+        .ngabtn:hover{
+          background-color: var(--vscode-button-hoverBackground);
+        }
         * {
           color: var(--vscode-editor-foreground) !important;
         }
       </style>
     </head>
     <body>
+      <a class="ngabtn" href="${"https://bbs.nga.cn"+url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
     </html>

@@ -56,6 +56,11 @@
 					"default":"all-gambia",
 					"description": "虎扑默认tab"
 				},
+				"touchfish.ngaTab":{
+					"type":"string",
+					"default":"-7",
+					"description": "NGA默认tab"
+				},
 				"touchfish.autoRefresh":{
 					"type":"boolean",
 					"default":true,
@@ -159,6 +164,11 @@
 				"command": "nga.refresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
+			},
+			{
+				"command": "nga.changeTab",
+				"title": "切换tab",
+				"icon": "$(pencil)"
 			}
 		],
 		"menus": {
@@ -204,6 +214,10 @@
 					"group": "navigation"
 				},{
 					"command": "nga.refresh",
+					"when": "view == view.ngaList",
+					"group": "navigation"
+				},{
+					"command": "nga.changeTab",
 					"when": "view == view.ngaList",
 					"group": "navigation"
 				}

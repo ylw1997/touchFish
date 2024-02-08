@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-02-06 18:05:51
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2024-02-08 14:20:03
+ * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
  * @FilePath: \touchfish\src\api\nga.ts
  * @Description: 
  */
@@ -13,7 +13,7 @@ import { TextDecoder } from "util";
 import * as vscode from 'vscode';
 
 // 获取新闻列表
-export const getNgaList = async (tab = "-7955747") => {
+export const getNgaList = async (tab?:string) => {
   const resArr: chiphellNewsItem[] = [];
   try {
     const res = await axios.get("https://bbs.nga.cn/thread.php?fid=" + tab, {
@@ -57,7 +57,12 @@ export const getNgaNewsDetail = async (url: string) => {
       }
     );
     const datastr = new TextDecoder("gbk").decode(data);
-    const $ = cheerio.load(datastr);
+    let ngaContext = "";
+    // 把所有[img]./替换为[img]
+    datastr.replace(/\[img\].\//g, "[img]");
+    // 找到[img]开头[/img]结尾的字符串,替换为img标签,并src添加http://img4.nga.178.com
+    ngaContext = datastr.replace(/\[img\](.*?)\[\/img\]/g, '<img src="https://img.nga.178.com/attachments/$1" />');
+    const $ = cheerio.load(ngaContext);
     let content = $('#m_posts').html();
     return content;
   } catch (error) {

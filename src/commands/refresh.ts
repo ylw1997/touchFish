@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-02-06 15:45:50
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2024-02-08 14:26:24
+ * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
  */
@@ -120,7 +120,7 @@ export const changeHupuTab = (hupuProvider:HupuProvider)=>{
       await hupuProvider.getData(tab.description);
       await setConfigByKey("hupuTab",tab.description);
       // await vscode.commands.executeCommand('hupu.refresh');
-      await vscode.window.showInformationMessage(`v2ex tab changed to ${tab.label}`);
+      await vscode.window.showInformationMessage(`Hupu tab changed to ${tab.label}`);
     }
   });
 };
@@ -130,5 +130,29 @@ export const refreshNgaNews = (ngaProvider:NgaProvider)=>{
   return vscode.commands.registerCommand("nga.refresh",async ()=>{
     await ngaProvider.getData();
     // vscode.window.showInformationMessage("新闻已刷新!");
+  });
+};
+
+
+// 更改ngatab 
+export const changeNgaTab = (ngaProvider:NgaProvider)=>{
+  return vscode.commands.registerCommand("nga.changeTab",async ()=>{
+    const tab = await vscode.window.showQuickPick([
+      {label:"网事杂谈",description:"-7"},
+      {label:"晴风村",description:"-7955747"},
+      {label:"寂寞的车",description:"-343809"},
+      {label:"生命之杯",description:"-81981"},
+      {label:"漩涡书院",description:"524"},
+      {label:"国际新闻",description:"843"},
+      {label:"股票大时代",description:"706"},
+      {label:"音乐影视",description:"-576177"},
+      {label:"娱乐吃瓜",description:"-39223361"},
+      {label:"消费电子",description:"436"},
+    ]);
+    if(tab){
+      await ngaProvider.getData(tab.description);
+      await setConfigByKey("ngaTab",tab.description);
+      await vscode.window.showInformationMessage(`nga tab changed to ${tab.label}`);
+    }
   });
 };
