@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,快科技,chiphell,财联社,v2ex,虎扑步行街,nga新闻聚合插件",
-	"version": "1.11.0",
+	"version": "1.11.1",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -108,7 +108,7 @@
 					"name": "虎扑步行街"
 				},{
 					"id":"view.ngaList",
-					"name": "nga晴风村"
+					"name": "nga精英玩家俱乐部"
 				},
 				{
 					"id": "view.setting",

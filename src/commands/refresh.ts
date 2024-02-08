@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-02-08 14:26:24
- * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+ * @LastEditTime: 2024-02-08 19:22:23
+ * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
  */
