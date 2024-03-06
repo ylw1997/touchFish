@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-03-06 14:34:40
+ * @LastEditTime: 2024-03-06 16:19:55
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\nga.ts
  * @Description: 
@@ -35,6 +35,7 @@ export const getNgaList = async (tab?:string) => {
   try {
     const cookie = await getOrSetNgaCookie() as string;
     const res = await axios.get("https://bbs.nga.cn/thread.php?fid=" + tab, {
+      maxRedirects:50,
       headers:{
         "Cookie":cookie
       },
@@ -54,6 +55,7 @@ export const getNgaList = async (tab?:string) => {
     });
     return resArr;
   } catch (error) {
+    console.log("nga--->出错",error);
     // 弹出错误确认框，请求失败，是否清除cookie，重新输入
     const res = await vscode.window.showErrorMessage("获取nga新闻列表失败,是否清除cookie，重新输入", "是", "否");
     if(res === "是"){
@@ -73,6 +75,7 @@ export const getNgaNewsDetail = async (url: string) => {
     const cookie = await getOrSetNgaCookie() as string;
     const { data } = await axios.get(
       "https://bbs.nga.cn"+url,{
+        maxRedirects:50,
         headers:{
           "Cookie":cookie
         },
