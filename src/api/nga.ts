@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-02-08 15:44:55
+ * @LastEditTime: 2024-03-06 14:34:40
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\nga.ts
  * @Description: 
@@ -86,6 +86,18 @@ export const getNgaNewsDetail = async (url: string) => {
     datastr.replace(/\[img\].\//g, "[img]");
     // 找到[img]开头[/img]结尾的字符串,替换为img标签,并src添加http://img4.nga.178.com
     ngaContext = datastr.replace(/\[img\](.*?)\[\/img\]/g, '<img src="https://img.nga.178.com/attachments/$1" />');
+    // 删除 [pid= 开头 [/b] 结尾的字符串
+    ngaContext = ngaContext.replace(/\[pid=(.*?)\](.*?)\[\/b\]/g,"");
+    // 删除 [s:开头] 结尾的字符串
+    ngaContext = ngaContext.replace(/\[s:(.*?)\]/g,"");
+    // 替换[quote] 为 <div class="comment_c">
+    ngaContext = ngaContext.replace(/\[quote\]/g, '<div class="comment_c">');
+    // 替换 [/quote] 为 </div>
+    ngaContext = ngaContext.replace(/\[\/quote\]/g, '</div>');
+    // 删除 [tid开头 [/tid] 结尾的字符串
+    ngaContext = ngaContext.replace(/\[tid(.*?)\](.*?)\[\/tid\]/g,"");
+    // 删除 [b] 开头 [/b] 结尾的字符串
+    ngaContext = ngaContext.replace(/\[b\](.*?)\[\/b\]/g,"");
     const $ = cheerio.load(ngaContext);
     let content = $('#m_posts').html();
     return content;

@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-02-08 14:59:58
- * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+ * @LastEditTime: 2024-03-06 14:52:22
+ * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
  */
@@ -265,7 +265,7 @@ export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async
   panel!.title = title;
 });
 
-// 打开v2ex新闻详情
+// 打开虎扑新闻详情
 export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async (title: string, url: string) => {
   // 如果没有创建过webview,则创建一个
   if (!isCreatePanel) {
@@ -281,7 +281,7 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
       <meta charset="UTF-8">
       <style>
       p{
-        font-size: 15px;
+        font-size: 18px;
       }
       .post-user_post-user-comp {
         min-height: 54px;
@@ -424,6 +424,31 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
   margin-left: -10px
 }
 
+.ngabtn{
+  position: absolute;
+  font-size: 15px;
+  right: 20px;
+  top: 20px;
+  background-color: var(--vscode-button-background);
+  max-width: 300px;
+  box-sizing: border-box;
+  display: flex;
+  width: 300px;
+  padding: 4px;
+  border-radius: 2px;
+  text-align: center;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--vscode-button-border,transparent);
+  line-height: 18px;
+  text-decoration: none;
+  color: var(--vscode-button-foreground);
+}
+.ngabtn:hover{
+  background-color: var(--vscode-button-hoverBackground);
+}
+
 .index_bbs-thread-comp-container {
   position: relative;
   padding: 10px 14px;
@@ -447,6 +472,7 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
       </style>
     </head>
     <body>
+      <a class="ngabtn" href="${"https://bbs.hupu.com"+url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
     </html>
@@ -471,9 +497,17 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
       <meta charset="UTF-8">
       <style>
         img{
-          max-width: 60%;
+          max-width: 45%;
+          display: block;
+        }
+        #postcontent0 br {
+          display: block !important;
+        }
+        #post1strow0 .c2 {
+          flex-wrap: wrap;
         }
         .postbox{
+          margin: 15px 0;
           width:100%;
           border-bottom: 1px solid var(--vscode-button-secondaryBackground);
         }
@@ -481,7 +515,30 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
           width: 75%;
           margin-left: 12.5%;
           font-size: 18px;
-          line-height: 2;
+          line-height: 3;
+        }
+        .postInfo{
+          font-size: 16px;
+          margin-right: 20px;
+          width: 130px;
+          flex-shrink: 0;
+        }
+        .c2{
+          display:flex;
+        }
+        .posterinfo,.postrow span br,h3,.postbodysubtitle,.comment_c .postInfo,.small_colored_text_btn{
+          display:none
+        }
+        #hightlight_for_0{
+          display: flex;
+          flex-wrap: wrap;
+          width: 100%;
+        }
+        .comment_c{
+          background: var(--vscode-list-inactiveSelectionBackground);
+          padding: 10px;
+          margin-bottom: 5px;
+          margin-right: 5px;
         }
         .ngabtn{
           position: absolute;
@@ -492,7 +549,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
           max-width: 300px;
           box-sizing: border-box;
           display: flex;
-          width: 100%;
+          width: 300px;
           padding: 4px;
           border-radius: 2px;
           text-align: center;
@@ -513,6 +570,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
       </style>
     </head>
     <body>
+      <h1 style="text-align:center" >${title}</h1>
       <a class="ngabtn" href="${"https://bbs.nga.cn"+url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
