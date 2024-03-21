@@ -1,9 +1,9 @@
 <!--
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2022-05-26 17:01:04
- * @LastEditors: YangLiwei
- * @FilePath: \hello-world\README.md
+ * @LastEditTime: 2024-03-21 15:35:15
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\README.md
  * @Description: 
 -->
 
@@ -19,6 +19,10 @@
 > * 支持快科技新闻
 > * 支持财联社新闻
 > * 支持chiphell文章
+> * 支持v2ex文章
+> * 支持查看虎扑文章
+> * 支持查看nga文章
+> * 沉浸式主题
 
 
 ![详情](https://jf.jsyccloud.com:8082/bg_oss/jslalloss/image/cbe6132513544b1cb631447f75f6c393.png)

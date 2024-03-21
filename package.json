@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "自带沉浸式主题的ithome,it之家,快科技,chiphell,财联社,v2ex,虎扑步行街,nga新闻聚合插件",
-	"version": "1.20.1",
+	"version": "1.21.0",
 	"icon": "assets/logo.png",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -37,12 +37,12 @@
       {
         "label": "touchfish-dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/ylw-dark-color-theme.json"
+        "path": "./src/themes/ylw-dark-color-theme.json"
       },
       {
         "label": "touchfish-light",
         "uiTheme": "vs",
-        "path": "./themes/ylw-light-color-theme.json"
+        "path": "./src/themes/ylw-light-color-theme.json"
       }
     ],
 		"configuration":{
