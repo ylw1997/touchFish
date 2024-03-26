@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-02-08 19:22:23
+ * @LastEditTime: 2024-03-26 16:45:48
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -148,6 +148,8 @@ export const changeNgaTab = (ngaProvider:NgaProvider)=>{
       {label:"音乐影视",description:"-576177"},
       {label:"娱乐吃瓜",description:"-39223361"},
       {label:"消费电子",description:"436"},
+      {label:"Cosplay",description:"472"},
+      {label:"程序员职业交流",description:"-202020"},
     ]);
     if(tab){
       await ngaProvider.getData(tab.description);
