@@ -1,14 +1,14 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-03-06 16:19:55
+ * @LastEditTime: 2024-09-18 13:49:14
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\nga.ts
  * @Description: 
  */
 import axios from "axios";
-import { chiphellNewsItem } from '../type/type';
-import cheerio = require('cheerio');
+import { NewsItem } from '../type/type';
+import { load } from 'cheerio';
 import { TextDecoder } from "util";
 import * as vscode from 'vscode';
 import { setConfigByKey } from "../config";
@@ -31,7 +31,7 @@ export const  getOrSetNgaCookie = async () => {
 
 // 获取新闻列表
 export const getNgaList = async (tab?:string) => {
-  const resArr: chiphellNewsItem[] = [];
+  const resArr: NewsItem[] = [];
   try {
     const cookie = await getOrSetNgaCookie() as string;
     const res = await axios.get("https://bbs.nga.cn/thread.php?fid=" + tab, {
@@ -43,7 +43,7 @@ export const getNgaList = async (tab?:string) => {
       responseEncoding: "utf8",
     });
     const datastr = new TextDecoder("gbk").decode(res.data);
-    const $ = cheerio.load(datastr);
+    const $ = load(datastr);
     const newsList = $('#topicrows').find(".topic");
     newsList.each((_, element) => {
       const title = $(element).text();
@@ -101,10 +101,11 @@ export const getNgaNewsDetail = async (url: string) => {
     ngaContext = ngaContext.replace(/\[tid(.*?)\](.*?)\[\/tid\]/g,"");
     // 删除 [b] 开头 [/b] 结尾的字符串
     ngaContext = ngaContext.replace(/\[b\](.*?)\[\/b\]/g,"");
-    const $ = cheerio.load(ngaContext);
-    let content = $('#m_posts').html();
+    const $ = load(ngaContext);
+    const content = $('#m_posts').html();
     return content;
   } catch (error) {
+    console.log("获取详情出错",error);
     // 弹出错误提示
     vscode.window.showErrorMessage("获取nga新闻详情失败");
   }

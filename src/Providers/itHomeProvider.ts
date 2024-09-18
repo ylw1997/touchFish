@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:21:22
- * @LastEditTime: 2024-02-23 10:35:32
+ * @LastEditTime: 2024-09-18 14:15:27
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\itHomeProvider.ts
  * @Description: 
@@ -10,6 +10,7 @@ import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode
 import { compareNews, formatData } from '../utils/util';
 import { getNewsList } from '../api/ithome';
 import { showNewsNumber } from '../config';
+import { NewsItem } from '../type/type';
 
 export class ItHomeProvider implements TreeDataProvider<TreeItem>{
 
@@ -19,14 +20,13 @@ export class ItHomeProvider implements TreeDataProvider<TreeItem>{
   private newsList:TreeItem[] = [];
 
   constructor() {
-    
 		this.getData();
 	}
 
   async getData(){
-    // this.newsList = [];
     await getNewsList().then(res=>{
-      let news = formatData(res.data.newslist).slice(0,showNewsNumber);
+      const newsList = res.data.newslist.map((item:NewsItem)=>({...item,url:item.newsid}));
+      const news = formatData(newsList,"itHome.openUrl").slice(0,showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
     });
     this.update.fire();
@@ -36,7 +36,7 @@ export class ItHomeProvider implements TreeDataProvider<TreeItem>{
     return element;
   }
   
-  getChildren(element?: TreeItem): ProviderResult<TreeItem[]> {
+  getChildren(): ProviderResult<TreeItem[]> {
     return this.newsList;
   }
   

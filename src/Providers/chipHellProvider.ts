@@ -1,15 +1,15 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:18:49
- * @LastEditTime: 2022-05-30 09:46:32
- * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\Providers\chipHellProvider.ts
+ * @LastEditTime: 2024-09-18 14:19:42
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\src\Providers\chipHellProvider.ts
  * @Description: 
  */
 import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
 import { getChipHellNews } from '../api/chipHell';
 import { showNewsNumber } from '../config';
-import { compareNews, formatChipHellData } from '../utils/util';
+import { compareNews, formatData } from '../utils/util';
 
 export class ChipHellProvider implements TreeDataProvider<TreeItem> {
   private newsList: TreeItem[] = [];
@@ -23,7 +23,7 @@ export class ChipHellProvider implements TreeDataProvider<TreeItem> {
   async getData() {
     // this.newsList = [];
     await getChipHellNews().then(res => {
-      let news = formatChipHellData(res).slice(0, showNewsNumber);
+      const news = formatData(res,"chiphell.openUrl").slice(0, showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
     });
     this.update.fire();
@@ -33,7 +33,7 @@ export class ChipHellProvider implements TreeDataProvider<TreeItem> {
     return element;
   }
 
-  getChildren(element?: TreeItem): ProviderResult<TreeItem[]> {
+  getChildren(): ProviderResult<TreeItem[]> {
     return this.newsList;
   }
 

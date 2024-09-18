@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-03-26 16:45:48
+ * @LastEditTime: 2024-09-18 14:42:48
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -25,7 +25,6 @@ export const refresh = (newsProvider:ItHomeProvider)=>{
   // 提供一个async 会触发vscode加载小横条
   return vscode.commands.registerCommand("itHome.refresh",async ()=>{
     await newsProvider.getData();
-    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
 
@@ -37,7 +36,6 @@ export const refresh = (newsProvider:ItHomeProvider)=>{
 export const kkjRefresh = (kkjProvider:KKJProvider)=>{
   return vscode.commands.registerCommand("kkj.refresh",async ()=>{
     await kkjProvider.getData();
-    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
 
@@ -49,7 +47,6 @@ export const kkjRefresh = (kkjProvider:KKJProvider)=>{
 export const clsRefresh = (clsProvider:ClsProvider)=>{
   return vscode.commands.registerCommand("cls.refresh",async ()=>{
     await clsProvider.getData();
-    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
 
@@ -57,7 +54,6 @@ export const clsRefresh = (clsProvider:ClsProvider)=>{
 export const refreshChipHellNews = (chiphellNewsProvider:ChipHellProvider)=>{
   return vscode.commands.registerCommand("chiphell.refresh",async ()=>{
     await chiphellNewsProvider.getData();
-    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
 
@@ -65,7 +61,6 @@ export const refreshChipHellNews = (chiphellNewsProvider:ChipHellProvider)=>{
 export const refreshV2exNews = (v2exProvider:V2exProvider)=>{
   return vscode.commands.registerCommand("v2ex.refresh",async ()=>{
     await v2exProvider.getData();
-    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
 
@@ -73,7 +68,6 @@ export const refreshV2exNews = (v2exProvider:V2exProvider)=>{
 export const refreshHupuNews = (v2exProvider:HupuProvider)=>{
   return vscode.commands.registerCommand("hupu.refresh",async ()=>{
     await v2exProvider.getData();
-    // vscode.window.showInformationMessage("新闻已刷新!");
   });
 };
 
@@ -98,7 +92,7 @@ export const changeV2exTab =  (v2exProvider:V2exProvider)=>{
       await v2exProvider.getData(tab.description);
       await setConfigByKey("v2exTab",tab.description);
       // await vscode.commands.executeCommand('v2ex.refresh');
-      await vscode.window.showInformationMessage(`v2ex tab changed to ${tab.label}`);
+      await vscode.window.showInformationMessage(`v2ex 切换为 ${tab.label}`);
     }
   });
 };
@@ -120,7 +114,7 @@ export const changeHupuTab = (hupuProvider:HupuProvider)=>{
       await hupuProvider.getData(tab.description);
       await setConfigByKey("hupuTab",tab.description);
       // await vscode.commands.executeCommand('hupu.refresh');
-      await vscode.window.showInformationMessage(`Hupu tab changed to ${tab.label}`);
+      await vscode.window.showInformationMessage(`Hupu 切换为 ${tab.label}`);
     }
   });
 };
@@ -129,7 +123,7 @@ export const changeHupuTab = (hupuProvider:HupuProvider)=>{
 export const refreshNgaNews = (ngaProvider:NgaProvider)=>{
   return vscode.commands.registerCommand("nga.refresh",async ()=>{
     await ngaProvider.getData();
-    // vscode.window.showInformationMessage("新闻已刷新!");
+    
   });
 };
 
@@ -154,7 +148,7 @@ export const changeNgaTab = (ngaProvider:NgaProvider)=>{
     if(tab){
       await ngaProvider.getData(tab.description);
       await setConfigByKey("ngaTab",tab.description);
-      await vscode.window.showInformationMessage(`nga tab changed to ${tab.label}`);
+      await vscode.window.showInformationMessage(`nga 切换为 ${tab.label}`);
     }
   });
 };

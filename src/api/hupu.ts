@@ -1,14 +1,14 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 11:27:15
- * @LastEditTime: 2024-02-01 15:52:30
+ * @LastEditTime: 2024-09-18 13:59:09
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\hupu.ts
  * @Description: 
  */
 import axios from "axios";
-import cheerio = require('cheerio');
-import { chiphellNewsItem } from "../type/type";
+import {load} from 'cheerio';
+import { NewsItem } from '../type/type';
 
 // 获取新闻列表
 export const getHupuList = async (tab="all-gambia")=>{
@@ -17,8 +17,8 @@ export const getHupuList = async (tab="all-gambia")=>{
       'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
     }
   });
-  const resArr:chiphellNewsItem[] = []; 
-  const $ = cheerio.load(res.data);
+  const resArr:NewsItem[] = []; 
+  const $ = load(res.data);
   if(tab === "all-gambia"){
     const newsList = $('.text-list-model').find(".list-item");
     newsList.each((_,element)=>{
@@ -52,10 +52,10 @@ export const getHupuDetail = async (url:string)=>{
     }
   });
   //去掉css动态字符串
-  const reg = /__.\w*\"/g;
+  const reg = /__.\w*"/g;
   const reg2 = /__.\w*\s/g;
   const resData = res.data.replace(reg,'"').replace(reg2," ");
-  const $ = cheerio.load(resData);
+  const $ = load(resData);
   const content = $('.index_bbs-post-web-body-left-wrapper').html();
   return content;
 };

@@ -1,12 +1,12 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2024-02-06 17:53:30
+ * @LastEditTime: 2024-09-18 14:25:51
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description: 
  */
-import { NewsItem, kkjNewsItem, clsNewsItem, chiphellNewsItem, v2exNewsItem } from '../type/type';
+import { NewsCommandType, NewsItem } from '../type/type';
 import { ThemeIcon, TreeItem } from 'vscode';
 import { showNewsWordNumber } from '../config/index';
 
@@ -15,149 +15,22 @@ import { showNewsWordNumber } from '../config/index';
  * @param dataList  数据列表
  * @returns  转换后的数据列表
  */
-export const formatData = (dataList: NewsItem[]): TreeItem[] => {
-  let treeList: TreeItem[] = [];
-  for (let i in dataList) {
-    let item = dataList[i];
-    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
-    // treeItem.description = item.description;
-    treeItem.id = item.newsid.toString();
-    treeItem.command = {
-      title: item.title,
-      command: "itHome.openUrl",
-      arguments: [item.title, item.postdate, item.newsid]
-    };
-    treeItem.iconPath = new ThemeIcon("notebook-render-output");
-    treeList.push(treeItem);
-  }
-  return treeList;
-};
-
-/**
- *  快科技新闻数据转换
- * @param dataList  数据列表
- * @returns 转换后的数据列表
- */
-export const formatKKJData = (dataList: kkjNewsItem[]): TreeItem[] => {
-  let treeList: TreeItem[] = [];
-  for (let i in dataList) {
-    let item = dataList[i];
-    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
+export const formatData = (dataList: NewsItem[],command:NewsCommandType,iconPath="notebook-render-output"): TreeItem[] => {
+  const treeList: TreeItem[] = [];
+  for (const i in dataList) {
+    const item = dataList[i];
+    const treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
     treeItem.id = item.title;
     treeItem.command = {
       title: item.title,
-      command: "kkj.openUrl",
+      command,
       arguments: [item.title, item.url]
     };
-    treeItem.iconPath = item.isTop ? new ThemeIcon("arrow-up") : new ThemeIcon("notebook-render-output");
+    treeItem.iconPath = item.isTop ? new ThemeIcon("arrow-up") : new ThemeIcon(iconPath);
     treeList.push(treeItem);
   }
   return treeList;
 };
-
-/**
- * 财联社新闻数据转换
- * @param dataList  数据列表
- * @returns  转换后的数据列表
- */
-export const formatCLSData = (dataList: clsNewsItem[]): TreeItem[] => {
-  let treeList: TreeItem[] = [];
-  for (let i in dataList) {
-    let item = dataList[i];
-    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
-    treeItem.id = item.title;
-    treeItem.command = {
-      title: item.title,
-      command: "cls.openUrl",
-      arguments: [item.title, item.content]
-    };
-    treeItem.iconPath = new ThemeIcon("server-environment");
-    treeList.push(treeItem);
-  }
-  return treeList;
-};
-
-/**
- *  chiphell新闻数据转换
- * @param dataList  数据列表
- * @returns  转换后的数据列表
- */
-export const formatChipHellData = (dataList: chiphellNewsItem[]): TreeItem[] => {
-  let treeList: TreeItem[] = [];
-  for (let i in dataList) {
-    let item = dataList[i];
-    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
-    treeItem.id = item.title;
-    treeItem.command = {
-      title: item.title,
-      command: "chiphell.openUrl",
-      arguments: [item.title, item.url]
-    };
-    treeItem.iconPath = new ThemeIcon("notebook-render-output");
-    treeList.push(treeItem);
-  }
-  return treeList;
-};
-
-
-// v2ex新闻数据转换
-export const formatV2exData = (dataList: v2exNewsItem[]): TreeItem[] => {
-  let treeList: TreeItem[] = [];
-  for (let i in dataList) {
-    let item = dataList[i];
-    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
-    treeItem.id = item.title;
-    treeItem.command = {
-      title: item.title,
-      command: "v2ex.openUrl",
-      arguments: [item.title, item.url]
-    };
-    treeItem.iconPath = new ThemeIcon("notebook-render-output");
-    treeList.push(treeItem);
-  }
-  return treeList;
-};
-
-// 虎扑新闻数据转换
-export const formatHupuData = (dataList: chiphellNewsItem[]): TreeItem[] => {
-  let treeList: TreeItem[] = [];
-  for (let i in dataList) {
-    let item = dataList[i];
-    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
-    treeItem.id = item.title;
-    treeItem.command = {
-      title: item.title,
-      command: "hupu.openUrl",
-      arguments: [item.title, item.url]
-    };
-    treeItem.iconPath = new ThemeIcon("notebook-render-output");
-    treeList.push(treeItem);
-  }
-  return treeList;
-};
-
-/**
- *  nga新闻数据转换
- * @param dataList  数据列表
- * @returns  转换后的数据列表
- */
-export const formatNgaData = (dataList: chiphellNewsItem[]): TreeItem[] => {
-  let treeList: TreeItem[] = [];
-  for (let i in dataList) {
-    let item = dataList[i];
-    let treeItem = new TreeItem(subStringBySize(item.title, showNewsWordNumber));
-    treeItem.id = item.title;
-    treeItem.command = {
-      title: item.title,
-      command: "nga.openUrl",
-      arguments: [item.title, item.url]
-    };
-    treeItem.iconPath = new ThemeIcon("notebook-render-output");
-    treeList.push(treeItem);
-  }
-  return treeList;
-};
-
 
 /**
  *  截取字符串
@@ -190,7 +63,7 @@ export const compareNews = (oldList: TreeItem[], newList: TreeItem[], newIcon = 
   if (oldList.length === 0) {
     return newList;
   }
-  let oldIds = oldList.map(item => item.id);
+  const oldIds = oldList.map(item => item.id);
   newList.map(item => {
     if (!oldIds.includes(item.id)) {
       item.iconPath = new ThemeIcon(newIcon);

@@ -1,54 +1,19 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:31:27
- * @LastEditTime: 2024-01-29 13:52:45
+ * @LastEditTime: 2024-09-18 14:24:30
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\type\type.d.ts
  * @Description: 
  */
 
-// it之家新闻定义
+// 通用新闻定义
 export interface NewsItem {
-  "forbidcomment": boolean,
-  "kwdlist": string[],
-  "newsid": number,
-  "title": string,
-  "postdate": string,
-  "orderdate": string,
-  "description": string,
-  "image": string,
-  "hitcount": number,
-  "commentcount": number,
-  "hidecount": boolean,
-  "cid": number,
-  "nd": number,
-  "sid": number,
-  "url": string
-}
-// 快科技新闻定义
-export interface kkjNewsItem {
-  "title": string,
-  "url": string,
-  "time": string,
-  isTop: boolean;
-}
-// 财联社新闻定义
-export interface clsNewsItem {
-  title: string;
-  time: string;
-  content: string;
-  id:string;
+  title: string,
+  image?: string,
+  url: string,
+  isTop?: boolean;
+  [key: string]: unknown;
 }
 
-// chiphell 新闻定义
-export interface chiphellNewsItem {
-  title: string;
-  url: string;
-}
-
-// v2ex 新闻定义
-export interface v2exNewsItem {
-  title: string;
-  url: string;
-  node: string;
-}
+export type NewsCommandType = "itHome.openUrl" | "kkj.openUrl" | "cls.openUrl" | "chiphell.openUrl" | "v2ex.openUrl" | "hupu.openUrl" | "nga.openUrl"

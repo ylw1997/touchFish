@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-03-06 14:52:22
+ * @LastEditTime: 2024-09-18 11:54:07
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -37,7 +37,7 @@ const createPanel = (): vscode.WebviewPanel => {
 /**
  * 打开之家新闻详情
  */
-export const openUrl = vscode.commands.registerCommand('itHome.openUrl', async (title: string, time: string, id: number) => {
+export const openUrl = vscode.commands.registerCommand('itHome.openUrl', async (title: string, id: number) => {
 
   // 如果没有创建过webview,则创建一个
   if (!isCreatePanel) {
@@ -133,7 +133,7 @@ export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl', async (
  * @param title  新闻标题
  * @param content  新闻内容
  */
-export const openCLSUrl = vscode.commands.registerCommand('cls.openUrl', async (title: string, content: string) => {
+export const openCLSUrl = vscode.commands.registerCommand('cls.openUrl', async (title: string, url: string) => {
   // 如果没有创建过webview,则创建一个
   if (!isCreatePanel) {
     panel = createPanel();
@@ -157,7 +157,7 @@ export const openCLSUrl = vscode.commands.registerCommand('cls.openUrl', async (
     </head>
     <body>
       <h1 style="text-align:center" >${title}</h1>
-      <div class="news_detail">${content}</div>
+      <div class="news_detail">${url}</div>
     </body>
     </html>
   `;

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-09-18 11:35:34
+ * @LastEditTime: 2024-09-18 14:40:47
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
@@ -13,7 +13,7 @@ import { refresh, kkjRefresh, clsRefresh, refreshChipHellNews, refreshV2exNews, 
 import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
 import { KKJProvider } from './Providers/kkjProvider';
-import {  refreshTime, refrshConfig } from './config/index';
+import { refreshTime } from './config/index';
 import { openSetting } from './commands/commands';
 import { ChipHellProvider } from './Providers/chipHellProvider';
 import { V2exProvider } from './Providers/v2exProvider';
@@ -63,14 +63,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(openV2exUrl);
 	context.subscriptions.push(openNgaUrl);
 
-	// 配置改变时刷新新闻
-	vscode.workspace.onDidChangeConfiguration(e => {
-		if (e.affectsConfiguration('touchfish')) {
-			vscode.window.showInformationMessage('配置改变, 部分更改重启生效');
-			refrshConfig()
-			intervalRefrshNews();
-		}
-	});
 }
 
 // this method is called when your extension is deactivated
