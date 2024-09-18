@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-09-18 13:48:12
+ * @LastEditTime: 2024-09-18 15:43:06
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\chipHell.ts
  * @Description: 
@@ -11,23 +11,19 @@ import { NewsItem } from '../type/type';
 import {load} from 'cheerio';
 
 export const getChipHellNews = async () => {
-  const {data} =  await axios.get(
-    "https://www.chiphell.com/"
+  const res =  await axios.get(
+    "https://www.chiphell.com/forum.php?mod=rss&fid=319&auth=0&orderby=dateline"
   );
-  const $ = load(data);
+  const $ = load(res.data,{xmlMode: true});
   const newsList: NewsItem[] = [];
-  $('#threadulid').each((index,item)=>{
-    const element = $(item).find('li');
-    element.each((_,item)=>{
-      const title = $(item).find('li>div.tmpad>a.tm03').text();
-      const url = 'https://www.chiphell.com/'+ $(item).find('li>a.tm01').attr('href');
-      newsList.push({
-        title,
-        url
-      });
+  $("item").each((_,item)=>{
+    const title = $(item).find('title').text();
+    const url = $(item).find('link').text();
+    newsList.push({
+      title,
+      url
     });
-  }
-  );
+  })
   return newsList;
 };
 
