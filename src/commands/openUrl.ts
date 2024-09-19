@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-09-19 17:27:12
+ * @LastEditTime: 2024-09-19 17:40:49
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -690,7 +690,6 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
         }
         * {
           color: var(--vscode-editor-foreground) !important;
-          font-size: 18px;
           margin: 0;
           padding: 0;
         }
