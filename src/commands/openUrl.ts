@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-09-19 11:51:19
+ * @LastEditTime: 2024-09-19 17:27:12
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -184,10 +184,6 @@ export const openCHUrl = vscode.commands.registerCommand('chiphell.openUrl', asy
       <meta http-equiv="X-UA-Compatible" content="ie=edge">
       <title>Document</title>
       <style>
-        p {
-          font-size: 18px;
-          line-height: 2;
-        }
         img{
           max-width: 60%;
         }
@@ -197,6 +193,8 @@ export const openCHUrl = vscode.commands.registerCommand('chiphell.openUrl', asy
         }
         * {
           color: var(--vscode-editor-foreground) !important;;
+          font-size: 18px;
+          line-height: 2;
         }
       </style>
     </head>
@@ -473,7 +471,7 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
       </style>
     </head>
     <body>
-      <a class="ngabtn" href="${"https://bbs.hupu.com"+url}" >打开原文章</a>
+      <a class="ngabtn" href="${"https://bbs.hupu.com" + url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
     </html>
@@ -572,7 +570,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
     </head>
     <body>
       <h1 style="text-align:center" >${title}</h1>
-      <a class="ngabtn" href="${"https://bbs.nga.cn"+url}" >打开原文章</a>
+      <a class="ngabtn" href="${"https://bbs.nga.cn" + url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
     </html>
@@ -581,7 +579,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
   panel!.title = title;
 });
 
-// // 打开nga新闻详情
+// // 打开zhihu新闻详情
 export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', async (title: string, url: string) => {
   // 如果没有创建过webview,则创建一个
   if (!isCreatePanel) {
@@ -614,9 +612,11 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
       <style>
         .postbox{
           margin: 20px 0;
-          width:100%;
-          padding: 0 0 20px;
-          border-bottom: 1px solid var(--vscode-button-secondaryBackground);
+          width: 100%;
+          padding: 20px;
+          background: #24262d;
+          border-radius: 5px;
+          border: 1px solid #2f323b;
         }
         .postInfo{
           display: flex;
@@ -645,18 +645,19 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
           font-size: 16px !important;
         }
         .postcontent{
-          line-height: 2.4;
+          line-height: 3;
         }
         img{
-            max-width: 80%;
-            max-height: 500px;
-            object-fit: contain;
+            max-width: 50%;
             object-position: left;
+            background: #24262d;
+            border-radius: 5px;
         }
         .lazy{
           display: none;
         }
         .news_detail{
+          margin-top: 40px;
           width: 75%;
           margin-left: 12.5%;
           font-size: 18px;
@@ -697,7 +698,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
     </head>
     <body>
       <h1 style="text-align:center" >${title}</h1>
-      <a class="openBtn" href="${"https://www.zhihu.com/question/"+url}" >打开原文章</a>
+      <a class="openBtn" href="${"https://www.zhihu.com/question/" + url}" >打开原文章</a>
       <div class="news_detail">${resStr}</div>
     </body>
     </html>
