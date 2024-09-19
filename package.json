@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "自带沉浸式主题的ithome,it之家,快科技,chiphell,财联社,v2ex,虎扑步行街,nga,知乎摸鱼聚合插件",
-	"version": "2.6.0",
+	"version": "2.6.1",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -307,9 +307,5 @@
 	"dependencies": {
 		"axios": "^0.27.2",
 		"cheerio": "1.0.0-rc.11"
-	},
-	"repository": {
-		"type": "git",
-		"url": "http://47.114.48.201:9000/yangliwei/touchfish.git"
 	}
 }
