@@ -89,6 +89,10 @@
 				"touchfish.ngaCookie": {
 					"type": "string",
 					"description": "NGA cookie"
+				},
+				"touchfish.zhihuCookie": {
+					"type": "string",
+					"description": "知乎 cookie"
 				}
 			}
 		},
@@ -127,6 +131,10 @@
 				{
 					"id": "view.hupuList",
 					"name": "虎扑步行街"
+				},
+				{
+					"id": "view.zhihuList",
+					"name": "知乎"
 				},
 				{
 					"id": "view.ngaList",
@@ -182,6 +190,11 @@
 				"icon": "$(refresh)"
 			},
 			{
+				"command": "zhihu.refresh",
+				"title": "刷新",
+				"icon": "$(refresh)"
+			},
+			{
 				"command": "hupu.changeTab",
 				"title": "切换tab",
 				"icon": "$(pencil)"
@@ -232,6 +245,11 @@
 				{
 					"command": "hupu.refresh",
 					"when": "view == view.hupuList",
+					"group": "navigation"
+				},
+				{
+					"command": "zhihu.refresh",
+					"when": "view == view.zhihuList",
 					"group": "navigation"
 				},
 				{

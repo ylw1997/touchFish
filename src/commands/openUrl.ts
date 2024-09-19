@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-09-18 11:54:07
+ * @LastEditTime: 2024-09-19 11:51:19
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -13,6 +13,7 @@ import { getKKJNewsDetail } from '../api/kjj';
 import { getV2exDetail } from '../api/v2ex';
 import { getHupuDetail } from '../api/hupu';
 import { getNgaNewsDetail } from '../api/nga';
+import { getZhihuNewsDetail } from '../api/zhihu';
 
 // 是否已经创建webview
 let isCreatePanel = false;
@@ -25,7 +26,7 @@ const createPanel = (): vscode.WebviewPanel => {
     'Hello World',
     "新闻",
     vscode.ViewColumn.One,
-    { enableFindWidget: true, retainContextWhenHidden: true, enableScripts: false }
+    { enableFindWidget: true, retainContextWhenHidden: false, enableScripts: false }
   );
   isCreatePanel = true;
   panel.dispose = () => {
@@ -577,5 +578,129 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
     </html>
   `;
   });
+  panel!.title = title;
+});
+
+// // 打开nga新闻详情
+export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', async (title: string, url: string) => {
+  // 如果没有创建过webview,则创建一个
+  if (!isCreatePanel) {
+    panel = createPanel();
+  }
+  panel!.webview.html = "加载中....";
+  const res = await getZhihuNewsDetail(url);
+  const resStr = res.map(item => {
+    return `<div class="postbox">
+              <div class="postInfo">
+                <img class="posteravatar" src="${item.target.author.avatar_url}" alt=""></img>
+                <div class="posterinfo">
+                  <p class="postername" >${item.target.author.name}
+                    <span class="posterzan">${item.target.voteup_count} 人赞同了该回答</span>
+                  </p>
+                  <p>${item.target.author.headline}</p>
+                </div>
+              </div>
+              <div class="postcontent">
+                  ${item.target.content}
+              </div>
+            </div>
+   `
+  }).join("");
+  panel!.webview.html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        .postbox{
+          margin: 20px 0;
+          width:100%;
+          padding: 0 0 20px;
+          border-bottom: 1px solid var(--vscode-button-secondaryBackground);
+        }
+        .postInfo{
+          display: flex;
+          align-items: flex-start;
+          margin-bottom: 20px;
+        }
+        .posteravatar{
+          width: 64px;
+          height: 64px;
+          object-fit: cover;
+          margin-right: 20px;
+        }
+        .posterzan{
+          font-size: 15px;
+          font-weight: normal;
+          padding-left: 20px;
+        }
+        .posterinfo p{
+          font-size: 15px;
+          margin: 0;
+          padding: 0;
+          line-height: 2;
+        }
+        .postername{
+          font-weight: bold;
+          font-size: 16px !important;
+        }
+        .postcontent{
+          line-height: 2.4;
+        }
+        img{
+            max-width: 80%;
+            max-height: 500px;
+            object-fit: contain;
+            object-position: left;
+        }
+        .lazy{
+          display: none;
+        }
+        .news_detail{
+          width: 75%;
+          margin-left: 12.5%;
+          font-size: 18px;
+          line-height: 3;
+          background: var(--vscode-editor-background);
+        }
+        .openBtn{
+          position: absolute;
+          font-size: 15px;
+          right: 20px;
+          top: 20px;
+          background-color: var(--vscode-button-background);
+          max-width: 300px;
+          box-sizing: border-box;
+          display: flex;
+          width: 300px;
+          padding: 4px;
+          border-radius: 2px;
+          text-align: center;
+          cursor: pointer;
+          justify-content: center;
+          align-items: center;
+          border: 1px solid var(--vscode-button-border,transparent);
+          line-height: 18px;
+          text-decoration: none;
+          color: var(--vscode-button-foreground);
+        }
+        .openBtn:hover{
+          background-color: var(--vscode-button-hoverBackground);
+        }
+        * {
+          color: var(--vscode-editor-foreground) !important;
+          font-size: 18px;
+          margin: 0;
+          padding: 0;
+        }
+      </style>
+    </head>
+    <body>
+      <h1 style="text-align:center" >${title}</h1>
+      <a class="openBtn" href="${"https://www.zhihu.com/question/"+url}" >打开原文章</a>
+      <div class="news_detail">${resStr}</div>
+    </body>
+    </html>
+  `;
   panel!.title = title;
 });

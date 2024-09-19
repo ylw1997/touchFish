@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-09-18 14:42:48
+ * @LastEditTime: 2024-09-18 17:23:15
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -15,6 +15,7 @@ import { V2exProvider } from '../Providers/v2exProvider';
 import { setConfigByKey } from '../config';
 import { HupuProvider } from '../Providers/hupuProvider';
 import { NgaProvider } from '../Providers/ngaProvider';
+import { ZhihuProvider } from '../Providers/ZhihuProvider';
 
 /**
  * 刷新之家树列表
@@ -58,22 +59,30 @@ export const refreshChipHellNews = (chiphellNewsProvider:ChipHellProvider)=>{
 };
 
 // 刷新v2ex文章列表
-export const refreshV2exNews = (v2exProvider:V2exProvider)=>{
+export const refreshV2exNews = (provider:V2exProvider)=>{
   return vscode.commands.registerCommand("v2ex.refresh",async ()=>{
-    await v2exProvider.getData();
+    await provider.getData();
   });
 };
 
 // 刷新hupu文章列表
-export const refreshHupuNews = (v2exProvider:HupuProvider)=>{
+export const refreshHupuNews = (provider:HupuProvider)=>{
   return vscode.commands.registerCommand("hupu.refresh",async ()=>{
-    await v2exProvider.getData();
+    await provider.getData();
+  });
+};
+
+
+// 刷新知乎文章列表
+export const refreshZhihuNews = (provider:ZhihuProvider)=>{
+  return vscode.commands.registerCommand("zhihu.refresh",async ()=>{
+    await provider.getData();
   });
 };
 
 
 // 更改v2ex tab 
-export const changeV2exTab =  (v2exProvider:V2exProvider)=>{
+export const changeV2exTab =  (provider:V2exProvider)=>{
   return vscode.commands.registerCommand("v2ex.changeTab",async ()=>{
     const tab = await vscode.window.showQuickPick([
       {label:"全部",description:"all"},
@@ -89,7 +98,7 @@ export const changeV2exTab =  (v2exProvider:V2exProvider)=>{
       {label:"R2",description:"r2"}
     ]);
     if(tab){
-      await v2exProvider.getData(tab.description);
+      await provider.getData(tab.description);
       await setConfigByKey("v2exTab",tab.description);
       // await vscode.commands.executeCommand('v2ex.refresh');
       await vscode.window.showInformationMessage(`v2ex 切换为 ${tab.label}`);
@@ -98,7 +107,7 @@ export const changeV2exTab =  (v2exProvider:V2exProvider)=>{
 };
 
 // 更改v2ex tab 
-export const changeHupuTab = (hupuProvider:HupuProvider)=>{
+export const changeHupuTab = (provider:HupuProvider)=>{
   return vscode.commands.registerCommand("hupu.changeTab",async ()=>{
     const tab = await vscode.window.showQuickPick([
       {label:"步行街热帖",description:"all-gambia"},
@@ -111,7 +120,7 @@ export const changeHupuTab = (hupuProvider:HupuProvider)=>{
       {label:"职场区",description:"workplace"},
     ]);
     if(tab){
-      await hupuProvider.getData(tab.description);
+      await provider.getData(tab.description);
       await setConfigByKey("hupuTab",tab.description);
       // await vscode.commands.executeCommand('hupu.refresh');
       await vscode.window.showInformationMessage(`Hupu 切换为 ${tab.label}`);

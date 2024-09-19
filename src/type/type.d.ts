@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:31:27
- * @LastEditTime: 2024-09-18 14:24:30
+ * @LastEditTime: 2024-09-18 17:18:11
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\type\type.d.ts
  * @Description: 
@@ -16,4 +16,4 @@ export interface NewsItem {
   [key: string]: unknown;
 }
 
-export type NewsCommandType = "itHome.openUrl" | "kkj.openUrl" | "cls.openUrl" | "chiphell.openUrl" | "v2ex.openUrl" | "hupu.openUrl" | "nga.openUrl"
+export type NewsCommandType = "itHome.openUrl" | "kkj.openUrl" | "cls.openUrl" | "chiphell.openUrl" | "v2ex.openUrl" | "hupu.openUrl" | "nga.openUrl"|"zhihu.openUrl"
