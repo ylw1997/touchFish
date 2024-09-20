@@ -7,10 +7,9 @@
  * @Description: 
  */
 import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
-import { showNewsNumber } from '../config';
+import { ngaTab, showNewsNumber } from '../config';
 import { compareNews, formatData } from '../utils/util';
 import { getNgaList } from '../api/nga';
-import * as vscode from 'vscode';
 import { defaultNgaTab } from '../data/context';
 
 export class NgaProvider implements TreeDataProvider<TreeItem> {
@@ -23,9 +22,8 @@ export class NgaProvider implements TreeDataProvider<TreeItem> {
   }
 
   async getData(tab?:string) {
-    const newconfig = vscode.workspace.getConfiguration('touchfish');
-    const ngaTab = tab || newconfig.get('ngaTab') as string || defaultNgaTab;
-    await getNgaList(ngaTab).then(res => {
+    const nTab = tab || ngaTab || defaultNgaTab;
+    await getNgaList(nTab).then(res => {
       const news = formatData(res,"nga.openUrl").slice(0, showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
     });

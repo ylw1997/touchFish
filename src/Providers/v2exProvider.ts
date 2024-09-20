@@ -9,8 +9,7 @@
 import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
 import { getV2exList } from '../api/v2ex';
 import { compareNews, formatData } from '../utils/util';
-import { showNewsNumber } from '../config/index';
-import * as vscode from 'vscode';
+import { showNewsNumber, v2exTab } from '../config/index';
 import { defaultV2exTab } from '../data/context';
 
 export class V2exProvider implements TreeDataProvider<TreeItem>{
@@ -25,9 +24,8 @@ export class V2exProvider implements TreeDataProvider<TreeItem>{
 	}
 
   async getData(tab?:string){
-    const newconfig = vscode.workspace.getConfiguration('touchfish');
-    const v2exTab = tab || newconfig.get('v2exTab') as string || defaultV2exTab;
-    await getV2exList(v2exTab).then(res=>{
+    const vTab = tab || v2exTab || defaultV2exTab;
+    await getV2exList(vTab).then(res=>{
       const news = formatData(res,"v2ex.openUrl").slice(0,showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
     });

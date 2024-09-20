@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-09-18 17:23:15
+ * @LastEditTime: 2024-09-20 10:06:09
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -15,7 +15,7 @@ import { V2exProvider } from '../Providers/v2exProvider';
 import { setConfigByKey } from '../config';
 import { HupuProvider } from '../Providers/hupuProvider';
 import { NgaProvider } from '../Providers/ngaProvider';
-import { ZhihuProvider } from '../Providers/ZhihuProvider';
+import { ZhihuProvider } from '../Providers/zhihuProvider';
 
 /**
  * 刷新之家树列表
