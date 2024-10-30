@@ -1,9 +1,9 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:18:49
- * @LastEditTime: 2024-09-18 17:22:18
+ * @LastEditTime: 2024-10-30 11:54:38
  * @LastEditors: yangliwei 1280426581@qq.com
- * @FilePath: \touchfish\src\Providers\ZhihuProvider.ts
+ * @FilePath: \touchfish\src\Providers\zhihuProvider.ts
  * @Description: 
  */
 import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
@@ -21,6 +21,7 @@ export class ZhihuProvider implements TreeDataProvider<TreeItem> {
   }
 
   async getData() {
+    this.newsList = [];
     await getZhihuList().then(res => {
       const news = formatData(res,"zhihu.openUrl").slice(0, showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");

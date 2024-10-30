@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:21:22
- * @LastEditTime: 2024-09-18 14:31:05
+ * @LastEditTime: 2024-10-30 13:42:34
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\hupuProvider.ts
  * @Description: 
@@ -24,6 +24,7 @@ export class HupuProvider implements TreeDataProvider<TreeItem>{
 	}
 
   async getData(tab?:string){
+    this.newsList = [];
     const v2exTab = tab || hupuTab || defaultHupuTab;
     await getHupuList(v2exTab).then(res=>{
       const news = formatData(res,"hupu.openUrl").slice(0,showNewsNumber);

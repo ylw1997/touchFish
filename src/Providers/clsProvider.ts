@@ -25,7 +25,7 @@ export class ClsProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     }
 
     async getData() {
-        // this.newsList = [];
+        this.newsList = [];
         await getCLSNewsList().then(res => {
             // 当前页面的数据
             const news = formatData(res,"cls.openUrl","server-environment").slice(0,showNewsNumber);

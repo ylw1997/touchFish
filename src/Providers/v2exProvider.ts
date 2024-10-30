@@ -24,6 +24,7 @@ export class V2exProvider implements TreeDataProvider<TreeItem>{
 	}
 
   async getData(tab?:string){
+    this.newsList = [];
     const vTab = tab || v2exTab || defaultV2exTab;
     await getV2exList(vTab).then(res=>{
       const news = formatData(res,"v2ex.openUrl").slice(0,showNewsNumber);

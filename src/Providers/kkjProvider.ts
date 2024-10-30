@@ -22,6 +22,7 @@ export class KKJProvider implements TreeDataProvider<vscode.TreeItem> {
   }
 
   async getData() {
+    this.newsList = [];
     await getKKJNewsList().then(res => {
       const news = formatData(res,"kkj.openUrl").slice(0,showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");

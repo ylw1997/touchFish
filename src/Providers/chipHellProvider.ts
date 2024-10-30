@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:18:49
- * @LastEditTime: 2024-09-18 14:19:42
+ * @LastEditTime: 2024-10-30 11:54:09
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\chipHellProvider.ts
  * @Description: 
@@ -21,7 +21,7 @@ export class ChipHellProvider implements TreeDataProvider<TreeItem> {
   }
 
   async getData() {
-    // this.newsList = [];
+    this.newsList = [];
     await getChipHellNews().then(res => {
       const news = formatData(res,"chiphell.openUrl").slice(0, showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");

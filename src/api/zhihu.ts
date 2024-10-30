@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-09-19 11:01:28
+ * @LastEditTime: 2024-10-30 11:58:09
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description: 
@@ -58,13 +58,7 @@ export const getZhihuList = async () => {
     return resArr;
   } catch (error) {
     console.log("知乎--->出错", error);
-    // 弹出错误确认框，请求失败，是否清除cookie，重新输入
-    const res = await vscode.window.showErrorMessage("获取知乎新闻列表失败,是否清除cookie,重新输入", "是", "否");
-    if (res === "是") {
-      await setConfigByKey('zhihuCookie', "");
-      await getOrSetZhihuCookie();
-      vscode.window.showInformationMessage("请刷新列表重试！");
-    }
+    vscode.window.showInformationMessage("数据请求失败,请刷新列表重试！");
   }
   return resArr;
 };

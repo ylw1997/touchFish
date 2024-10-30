@@ -24,6 +24,7 @@ export class ItHomeProvider implements TreeDataProvider<TreeItem>{
 	}
 
   async getData(){
+    this.newsList = [];
     await getNewsList().then(res=>{
       const newsList = res.data.newslist.map((item:NewsItem)=>({...item,url:item.newsid}));
       const news = formatData(newsList,"itHome.openUrl").slice(0,showNewsNumber);

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-09-20 10:06:09
+ * @LastEditTime: 2024-10-30 13:40:55
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -61,14 +61,14 @@ export const refreshChipHellNews = (chiphellNewsProvider:ChipHellProvider)=>{
 // 刷新v2ex文章列表
 export const refreshV2exNews = (provider:V2exProvider)=>{
   return vscode.commands.registerCommand("v2ex.refresh",async ()=>{
-    await provider.getData();
+    await provider.getData(vscode.workspace.getConfiguration('touchfish').get('v2exTab'));
   });
 };
 
 // 刷新hupu文章列表
 export const refreshHupuNews = (provider:HupuProvider)=>{
   return vscode.commands.registerCommand("hupu.refresh",async ()=>{
-    await provider.getData();
+    await provider.getData(vscode.workspace.getConfiguration('touchfish').get('hupuTab'));
   });
 };
 
@@ -131,8 +131,7 @@ export const changeHupuTab = (provider:HupuProvider)=>{
 // 刷新hupu文章列表
 export const refreshNgaNews = (ngaProvider:NgaProvider)=>{
   return vscode.commands.registerCommand("nga.refresh",async ()=>{
-    await ngaProvider.getData();
-    
+    await ngaProvider.getData(vscode.workspace.getConfiguration('touchfish').get('ngaTab'));
   });
 };
 

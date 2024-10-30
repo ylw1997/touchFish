@@ -22,6 +22,7 @@ export class NgaProvider implements TreeDataProvider<TreeItem> {
   }
 
   async getData(tab?:string) {
+    this.newsList = [];
     const nTab = tab || ngaTab || defaultNgaTab;
     await getNgaList(nTab).then(res => {
       const news = formatData(res,"nga.openUrl").slice(0, showNewsNumber);

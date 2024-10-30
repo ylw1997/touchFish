@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-09-19 17:40:49
+ * @LastEditTime: 2024-10-30 14:05:31
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -68,6 +68,8 @@ export const openUrl = vscode.commands.registerCommand('itHome.openUrl', async (
           width: 75%;
           margin-left: 12.5%;
         }
+          *{
+        font-family:'Microsoft YaHei';}
       </style>
     </head>
     <body>
@@ -117,6 +119,8 @@ export const openKKJUrl = vscode.commands.registerCommand('kkj.openUrl', async (
             width: 75%;
             margin-left: 12.5%;
           }
+            *{
+          font-family:'Microsoft YaHei';}
         </style>
       </head>
       <body>
@@ -154,6 +158,8 @@ export const openCLSUrl = vscode.commands.registerCommand('cls.openUrl', async (
           font-size: 18px;
           line-height: 2;
         }
+          *{
+        font-family:'Microsoft YaHei';}
       </style>
     </head>
     <body>
@@ -195,6 +201,7 @@ export const openCHUrl = vscode.commands.registerCommand('chiphell.openUrl', asy
           color: var(--vscode-editor-foreground) !important;;
           font-size: 18px;
           line-height: 2;
+          font-family:'Microsoft YaHei';
         }
       </style>
     </head>
@@ -252,6 +259,7 @@ export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async
         }
         * {
           color: var(--vscode-editor-foreground) !important;
+          font-family:'Microsoft YaHei';
         }
       </style>
     </head>
@@ -467,7 +475,8 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
         .index_bbs-thread-comp img,.index_bbs-thread-comp video {
           max-width: 50%;
         }
-
+*{
+        font-family:'Microsoft YaHei';}
       </style>
     </head>
     <body>
@@ -565,6 +574,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
         }
         * {
           color: var(--vscode-editor-foreground) !important;
+          font-family:'Microsoft YaHei';
         }
       </style>
     </head>
@@ -692,6 +702,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
           color: var(--vscode-editor-foreground) !important;
           margin: 0;
           padding: 0;
+          font-family:'Microsoft YaHei';
         }
       </style>
     </head>

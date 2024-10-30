@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-09-18 17:22:32
+ * @LastEditTime: 2024-10-30 12:00:34
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
@@ -20,7 +20,7 @@ import { V2exProvider } from './Providers/v2exProvider';
 import { HupuProvider } from './Providers/hupuProvider';
 import { defaultRefreshTime } from './data/context';
 import { NgaProvider } from './Providers/ngaProvider';
-import { ZhihuProvider } from './Providers/ZhihuProvider';
+import { ZhihuProvider } from './Providers/zhihuProvider';
 
 let timer: NodeJS.Timeout | null = null;
 
