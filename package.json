@@ -14,7 +14,6 @@
 	"license": "BSD-3-Clause",
 	"keywords": [
 		"ithome",
-		"快科技",
 		"it之家",
 		"财联社",
 		"cls",
@@ -50,6 +49,11 @@
 		"configuration": {
 			"title": "touchfish",
 			"properties": {
+				"touchfish.mixTab": {
+					"type": "string",
+					"default": "ithome",
+					"description": "默认站点"
+				},
 				"touchfish.showNewsNumber": {
 					"type": "number",
 					"default": 10,
@@ -108,14 +112,17 @@
 			]
 		},
 		"views": {
+			"explorer": [
+				{
+					"type": "tree",
+					"id": "mixView",
+					"name": "TouchFish"
+				}
+			],
 			"touchfish": [
 				{
 					"name": "IT之家",
-					"id": "view.newsList"
-				},
-				{
-					"name": "快科技",
-					"id": "view.kkjList"
+					"id": "view.ithomeList"
 				},
 				{
 					"name": "chipHell",
@@ -123,8 +130,7 @@
 				},
 				{
 					"name": "财联社",
-					"id": "view.clsList",
-					"visibility": "collapsed"
+					"id": "view.clsList"
 				},
 				{
 					"id": "view.v2exList",
@@ -157,12 +163,12 @@
 		],
 		"commands": [
 			{
-				"command": "itHome.refresh",
-				"title": "刷新",
-				"icon": "$(refresh)"
+				"command": "mix.changeTab",
+				"title": "切换源",
+				"icon": "$(pencil)"
 			},
 			{
-				"command": "kkj.refresh",
+				"command": "itHome.refresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
 			},
@@ -216,12 +222,12 @@
 			"view/title": [
 				{
 					"command": "itHome.refresh",
-					"when": "view == view.newsList",
+					"when": "view == view.ithomeList",
 					"group": "navigation"
 				},
 				{
-					"command": "kkj.refresh",
-					"when": "view == view.kkjList",
+					"command": "mix.changeTab",
+					"when": "view == mixView",
 					"group": "navigation"
 				},
 				{

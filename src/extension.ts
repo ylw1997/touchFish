@@ -1,51 +1,50 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-10-30 12:00:34
+ * @LastEditTime: 2024-10-31 11:58:02
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
  */
 
 import * as vscode from 'vscode';
-import { openUrl, openKKJUrl, openCLSUrl, openCHUrl, openV2exUrl, openNgaUrl, openZhihuUrl } from './commands/openUrl';
-import { refresh, kkjRefresh, clsRefresh, refreshChipHellNews, refreshV2exNews, changeV2exTab, refreshHupuNews, changeHupuTab, refreshNgaNews, changeNgaTab, refreshZhihuNews } from './commands/refresh';
+import { openUrl, openCLSUrl, openCHUrl, openV2exUrl, openNgaUrl, openZhihuUrl } from './commands/openUrl';
+import { refresh, clsRefresh, refreshChipHellNews, refreshV2exNews, refreshHupuNews, refreshNgaNews, refreshZhihuNews } from './commands/refresh';
 import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
-import { KKJProvider } from './Providers/kkjProvider';
 import { refreshTime } from './config/index';
-import { openSetting } from './commands/commands';
+import { changeHupuTab, changeMixTab, changeNgaTab, changeV2exTab, openSetting } from './commands/commands';
 import { ChipHellProvider } from './Providers/chipHellProvider';
 import { V2exProvider } from './Providers/v2exProvider';
 import { HupuProvider } from './Providers/hupuProvider';
 import { defaultRefreshTime } from './data/context';
 import { NgaProvider } from './Providers/ngaProvider';
 import { ZhihuProvider } from './Providers/zhihuProvider';
+import { MixProvider } from './Providers/mixProvider';
 
 let timer: NodeJS.Timeout | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
 	// 注册树列表提供者,需要在json文件中注册(activationEvents)
-	const newsProvider = new ItHomeProvider();
-	const kkjProvider = new KKJProvider();
+	const mixProvider = new MixProvider();
+	const itHomeProvider = new ItHomeProvider();
 	const clsProvider = new ClsProvider();
 	const chiphellProvider = new ChipHellProvider();
 	const v2exProvicer = new V2exProvider();
 	const hupuProvider = new HupuProvider();
 	const ngaProvider = new NgaProvider();
 	const zhihuProvider = new ZhihuProvider();
-	vscode.window.registerTreeDataProvider("view.newsList", newsProvider);
-	vscode.window.registerTreeDataProvider("view.kkjList", kkjProvider);
+	vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
 	vscode.window.registerTreeDataProvider("view.clsList", clsProvider);
 	vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
 	vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
 	vscode.window.registerTreeDataProvider("view.hupuList", hupuProvider);
 	vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
 	vscode.window.registerTreeDataProvider("view.zhihuList", zhihuProvider);
+	vscode.window.registerTreeDataProvider("mixView", mixProvider);
 
 	// 注册刷新指令
-	context.subscriptions.push(refresh(newsProvider));
-	context.subscriptions.push(kkjRefresh(kkjProvider));
+	context.subscriptions.push(refresh(itHomeProvider));
 	context.subscriptions.push(clsRefresh(clsProvider));
 	context.subscriptions.push(refreshChipHellNews(chiphellProvider));
 	context.subscriptions.push(refreshV2exNews(v2exProvicer));
@@ -55,12 +54,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(refreshNgaNews(ngaProvider));
 	context.subscriptions.push(changeNgaTab(ngaProvider));
 	context.subscriptions.push(refreshZhihuNews(zhihuProvider));
+	context.subscriptions.push(changeMixTab(mixProvider));
 	//定时刷新新闻
 	intervalRefrshNews();
 
 	//注册打开新闻链接指令
 	context.subscriptions.push(openUrl);
-	context.subscriptions.push(openKKJUrl);
 	context.subscriptions.push(openCLSUrl);
 	context.subscriptions.push(openCHUrl);
 	context.subscriptions.push(openSetting);
@@ -83,7 +82,6 @@ const clearAllTimer = () => {
 
 const refreshAll = () => {
 	vscode.commands.executeCommand('cls.refresh');
-	vscode.commands.executeCommand('kkj.refresh');
 	vscode.commands.executeCommand('itHome.refresh');
 	vscode.commands.executeCommand('v2ex.refresh');
 	vscode.commands.executeCommand('hupu.refresh');

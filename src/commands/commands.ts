@@ -1,15 +1,114 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-24 16:18:31
- * @LastEditTime: 2022-05-24 17:23:23
- * @LastEditors: YangLiwei
- * @FilePath: \hello-world\src\commands\commands.ts
+ * @LastEditTime: 2024-10-31 11:44:56
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\src\commands\commands.ts
  * @Description: 
  */
 // 注册命令
 import { commands } from 'vscode';
+import { NgaProvider } from '../Providers/ngaProvider';
+import { setConfigByKey } from '../config';
+import * as vscode from 'vscode';
+import { V2exProvider } from '../Providers/v2exProvider';
+import { HupuProvider } from '../Providers/hupuProvider';
+import { MixProvider } from '../Providers/mixProvider';
 
 // 打开设置
 export const openSetting = commands.registerCommand('touchfish.openConfigPage', () => {
   commands.executeCommand('workbench.action.openSettings', '@ext:ylw.touchfish');
 });
+
+// 更改v2ex tab 
+export const changeV2exTab =  (provider:V2exProvider)=>{
+  return vscode.commands.registerCommand("v2ex.changeTab",async ()=>{
+    const tab = await vscode.window.showQuickPick([
+      {label:"全部",description:"all"},
+      {label:"技术",description:"tech"},
+      {label:"创意",description:"creative"},
+      {label:"好玩",description:"play"},
+      {label:"Apple",description:"apple"},
+      {label:"酷工作",description:"jobs"},
+      {label:"交易",description:"deals"},
+      {label:"城市",description:"city"},
+      {label:"问与答",description:"qna"},
+      {label:"最热",description:"hot"},
+      {label:"R2",description:"r2"}
+    ]);
+    if(tab){
+      await provider.getData(tab.description);
+      await setConfigByKey("v2exTab",tab.description);
+      // await vscode.commands.executeCommand('v2ex.refresh');
+      await vscode.window.showInformationMessage(`v2ex 切换为 ${tab.label}`);
+    }
+  });
+};
+
+// 更改v2ex tab 
+export const changeHupuTab = (provider:HupuProvider)=>{
+  return vscode.commands.registerCommand("hupu.changeTab",async ()=>{
+    const tab = await vscode.window.showQuickPick([
+      {label:"步行街热帖",description:"all-gambia"},
+      {label:"步行街主干道",description:"topic-daily"},
+      {label:"股票区",description:"stock"},
+      {label:"历史区",description:"history"},
+      {label:"健身区",description:"fit"},
+      {label:"恋爱区",description:"love"},
+      {label:"校园区",description:"school"},
+      {label:"职场区",description:"workplace"},
+    ]);
+    if(tab){
+      await provider.getData(tab.description);
+      await setConfigByKey("hupuTab",tab.description);
+      // await vscode.commands.executeCommand('hupu.refresh');
+      await vscode.window.showInformationMessage(`Hupu 切换为 ${tab.label}`);
+    }
+  });
+};
+
+// 更改ngatab 
+export const changeNgaTab = (ngaProvider:NgaProvider)=>{
+  return vscode.commands.registerCommand("nga.changeTab",async ()=>{
+    const tab = await vscode.window.showQuickPick([
+      {label:"网事杂谈",description:"-7"},
+      {label:"晴风村",description:"-7955747"},
+      {label:"寂寞的车",description:"-343809"},
+      {label:"生命之杯",description:"-81981"},
+      {label:"漩涡书院",description:"524"},
+      {label:"国际新闻",description:"843"},
+      {label:"股票大时代",description:"706"},
+      {label:"音乐影视",description:"-576177"},
+      {label:"娱乐吃瓜",description:"-39223361"},
+      {label:"消费电子",description:"436"},
+      {label:"Cosplay",description:"472"},
+      {label:"程序员职业交流",description:"-202020"},
+    ]);
+    if(tab){
+      await ngaProvider.getData(tab.description);
+      await setConfigByKey("ngaTab",tab.description);
+      await vscode.window.showInformationMessage(`nga 切换为 ${tab.label}`);
+    }
+  });
+};
+
+// 更改mixTab 
+export const changeMixTab = (mixProvider:MixProvider)=>{
+  return vscode.commands.registerCommand("mix.changeTab",async ()=>{
+    const tab = await vscode.window.showQuickPick([
+      {label:"IT之家",description:"ithome"},
+      {label:"NGA精英玩家俱乐部",description:"nga"},
+      {label:"ZHIHU知乎",description:"zhihu"},
+      {label:"HUPU虎扑",description:"hupu"},
+      {label:"V2EX",description:"v2ex"},
+      {label:"CLS财联社",description:"cls"},
+      {label:"KKJ快科技",description:"kkj"},
+      {label:"CH芯域",description:"chiphell"},
+    ])
+    if(tab){
+      await mixProvider.getData(tab.description);
+      await setConfigByKey("mixTab",tab.description);
+      await vscode.window.showInformationMessage(`mixTab 切换为 ${tab.label}`);
+    }
+  })
+}
