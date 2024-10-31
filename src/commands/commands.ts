@@ -102,7 +102,6 @@ export const changeMixTab = (mixProvider:MixProvider)=>{
       {label:"HUPU虎扑",description:"hupu"},
       {label:"V2EX",description:"v2ex"},
       {label:"CLS财联社",description:"cls"},
-      {label:"KKJ快科技",description:"kkj"},
       {label:"CH芯域",description:"chiphell"},
     ])
     if(tab){
