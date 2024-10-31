@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2024-10-30 13:40:55
+ * @LastEditTime: 2024-10-31 14:21:44
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description: 
@@ -14,6 +14,7 @@ import { V2exProvider } from '../Providers/v2exProvider';
 import { HupuProvider } from '../Providers/hupuProvider';
 import { NgaProvider } from '../Providers/ngaProvider';
 import { ZhihuProvider } from '../Providers/zhihuProvider';
+import { MixProvider } from '../Providers/mixProvider';
 
 /**
  * 刷新之家树列表
@@ -76,3 +77,9 @@ export const refreshNgaNews = (ngaProvider:NgaProvider)=>{
 };
 
 
+// 刷新mix文章列表
+export const refreshMixNews = (provider:MixProvider)=>{
+  return vscode.commands.registerCommand("mix.refresh",async ()=>{
+    await provider.getData(vscode.workspace.getConfiguration('touchfish').get('mixTab'));
+  });
+};

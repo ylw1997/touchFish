@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-10-31 11:58:02
+ * @LastEditTime: 2024-10-31 14:19:58
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
@@ -9,7 +9,7 @@
 
 import * as vscode from 'vscode';
 import { openUrl, openCLSUrl, openCHUrl, openV2exUrl, openNgaUrl, openZhihuUrl } from './commands/openUrl';
-import { refresh, clsRefresh, refreshChipHellNews, refreshV2exNews, refreshHupuNews, refreshNgaNews, refreshZhihuNews } from './commands/refresh';
+import { refresh, clsRefresh, refreshChipHellNews, refreshV2exNews, refreshHupuNews, refreshNgaNews, refreshZhihuNews, refreshMixNews } from './commands/refresh';
 import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
 import { refreshTime } from './config/index';
@@ -55,6 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(changeNgaTab(ngaProvider));
 	context.subscriptions.push(refreshZhihuNews(zhihuProvider));
 	context.subscriptions.push(changeMixTab(mixProvider));
+	context.subscriptions.push(refreshMixNews(mixProvider));
 	//定时刷新新闻
 	intervalRefrshNews();
 

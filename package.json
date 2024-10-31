@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "自带沉浸式主题的ithome,it之家,快科技,chiphell,财联社,v2ex,虎扑步行街,nga,知乎摸鱼聚合插件",
-	"version": "2.7.0",
+	"version": "3.0.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -52,7 +52,7 @@
 				"touchfish.mixTab": {
 					"type": "string",
 					"default": "ithome",
-					"description": "默认站点"
+					"description": "默认频道"
 				},
 				"touchfish.showNewsNumber": {
 					"type": "number",
@@ -116,7 +116,7 @@
 				{
 					"type": "tree",
 					"id": "mixView",
-					"name": "TouchFish"
+					"name": "TouchFish置顶频道"
 				}
 			],
 			"touchfish": [
@@ -164,8 +164,13 @@
 		"commands": [
 			{
 				"command": "mix.changeTab",
-				"title": "切换源",
+				"title": "切换频道",
 				"icon": "$(pencil)"
+			},
+			{
+				"command": "mix.refresh",
+				"title": "切换频道",
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "itHome.refresh",
@@ -227,6 +232,11 @@
 				},
 				{
 					"command": "mix.changeTab",
+					"when": "view == mixView",
+					"group": "navigation"
+				},
+				{
+					"command": "mix.refresh",
 					"when": "view == mixView",
 					"group": "navigation"
 				},

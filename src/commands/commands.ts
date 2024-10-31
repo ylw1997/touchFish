@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-24 16:18:31
- * @LastEditTime: 2024-10-31 11:44:56
+ * @LastEditTime: 2024-10-31 14:23:31
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\commands.ts
  * @Description: 
@@ -98,11 +98,11 @@ export const changeMixTab = (mixProvider:MixProvider)=>{
     const tab = await vscode.window.showQuickPick([
       {label:"IT之家",description:"ithome"},
       {label:"NGA精英玩家俱乐部",description:"nga"},
-      {label:"ZHIHU知乎",description:"zhihu"},
       {label:"HUPU虎扑",description:"hupu"},
-      {label:"V2EX",description:"v2ex"},
-      {label:"CLS财联社",description:"cls"},
       {label:"CH芯域",description:"chiphell"},
+      {label:"V2EX",description:"v2ex"},
+      {label:"ZHIHU知乎",description:"zhihu"},
+      {label:"CLS财联社",description:"cls"},
     ])
     if(tab){
       await mixProvider.getData(tab.description);
