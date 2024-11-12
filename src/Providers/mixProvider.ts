@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:21:22
- * @LastEditTime: 2024-10-31 14:02:30
+ * @LastEditTime: 2024-11-12 10:05:37
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\mixProvider.ts
  * @Description: 
@@ -32,14 +32,12 @@ export class MixProvider implements TreeDataProvider<TreeItem> {
   }
   async fetchAndProcessData(tabSource: string) {
     try {
-      let newsList = [];
       let formattedNews: TreeItem[] = [];
       switch (tabSource) {
         case "ithome":
           {
             const resIthome = await getNewsList();
-            newsList = resIthome.data.newslist.map((item: NewsItem) => ({ ...item, url: item.newsid }));
-            formattedNews = formatData(newsList, "itHome.openUrl").slice(0, showNewsNumber);
+            formattedNews = formatData(resIthome.data.newslist.map((item: NewsItem) => ({ ...item, url: item.newsid })), "itHome.openUrl").slice(0, showNewsNumber);
             break;
           }
         case "nga":
@@ -92,7 +90,6 @@ export class MixProvider implements TreeDataProvider<TreeItem> {
   async getData(tab?: string) {
     this.newsList = [];
     const temptab = tab || mixTab || defaultMixTab;
-    console.log(temptab, "tab");
     this.newsList = await this.fetchAndProcessData(temptab);
     this.update.fire();
   }
