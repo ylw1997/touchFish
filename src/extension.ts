@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-10-31 14:19:58
+ * @LastEditTime: 2024-11-12 15:48:31
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
@@ -21,6 +21,7 @@ import { defaultRefreshTime } from './data/context';
 import { NgaProvider } from './Providers/ngaProvider';
 import { ZhihuProvider } from './Providers/zhihuProvider';
 import { MixProvider } from './Providers/mixProvider';
+import { WeiboProvider } from './Providers/weiboProvider';
 
 let timer: NodeJS.Timeout | null = null;
 
@@ -34,6 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const hupuProvider = new HupuProvider();
 	const ngaProvider = new NgaProvider();
 	const zhihuProvider = new ZhihuProvider();
+	const weiboProvider = new WeiboProvider(context);
 	vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
 	vscode.window.registerTreeDataProvider("view.clsList", clsProvider);
 	vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
@@ -42,6 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
 	vscode.window.registerTreeDataProvider("view.zhihuList", zhihuProvider);
 	vscode.window.registerTreeDataProvider("mixView", mixProvider);
+	vscode.window.registerWebviewViewProvider("weibo", weiboProvider);
 
 	// 注册刷新指令
 	context.subscriptions.push(refresh(itHomeProvider));

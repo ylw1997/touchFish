@@ -108,6 +108,11 @@
 					"id": "touchfish",
 					"title": "TouchFish",
 					"icon": "assets/training.svg"
+				},
+				{
+					"id": "weibo",
+					"title": "TouchFish",
+					"icon": "assets/weibo.svg"
 				}
 			]
 		},
@@ -117,6 +122,13 @@
 					"type": "tree",
 					"id": "mixView",
 					"name": "TouchFish置顶频道"
+				}
+			],
+			"weibo":[
+				{
+					"type": "webview",
+					"name": "微博",
+					"id": "weibo"
 				}
 			],
 			"touchfish": [
