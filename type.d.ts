@@ -39,7 +39,7 @@ export type weiboItem = {
         width: number
       }
     }
-  }[];
+  };
   user: weiboUser;
   comments_count: number;
   pic_num: number;

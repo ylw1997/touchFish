@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-11-19 17:51:29
+ * @LastEditTime: 2024-11-20 14:40:40
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -9,14 +9,15 @@
  */
 
 import { useEffect, useState } from "react";
-import { Avatar, Button, Card, message, Space } from "antd";
+import { Avatar, Button, Card, Image, message, Space } from "antd";
 import { vscode } from "./utils/vscode";
 import { commandsType, weiboAJAX, weiboItem } from "../.././type";
 import "./style/index.less";
 import YImg from "./components/YImg";
 // import data from "./a.json";
 function App() {
-  const [list, setList] = useState<weiboItem[]>([]);
+  // const [list, setList] = useState<weiboItem[]>(data as any);
+  const [list, setList] = useState<weiboItem[]>();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -66,7 +67,7 @@ function App() {
                 key={item.id}
                 title={
                   <Space>
-                    <Avatar src={<YImg src={item.user.avatar_large} />} />
+                    <Avatar src={<YImg useImg src={item.user.avatar_large} />} />
                     <span>{item.user.screen_name}</span>
                   </Space>
                 }
@@ -76,6 +77,22 @@ function App() {
                   className="content"
                   dangerouslySetInnerHTML={{ __html: item.text }}
                 ></div>
+                <div className="imglist">
+                  <Image.PreviewGroup>
+                    {item.pic_ids &&
+                      item.pic_ids.map((pic: string) => {
+                        return (
+                          <YImg
+                            width={100}
+                            height={100}
+                            className="img-item"
+                            key={pic}
+                            src={item.pic_infos[pic].large.url}
+                          />
+                        );
+                      })}
+                  </Image.PreviewGroup>
+                </div>
               </Card>
             );
           })}
