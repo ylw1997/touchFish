@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-11-21 11:28:41
+ * @LastEditTime: 2024-11-21 11:35:09
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -98,7 +98,6 @@ function App() {
         activeKey={activeKey}
         onChange={onChange}
         centered
-        onTabClick={postmsg}
       ></Tabs>
       <Spin spinning={loading}>
         <div className="list">
