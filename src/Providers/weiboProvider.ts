@@ -1,14 +1,14 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2024-11-22 10:46:32
+ * @LastEditTime: 2024-11-22 16:18:13
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
  */
 import { WebviewView, WebviewViewProvider, ExtensionContext, Uri } from 'vscode';
-import { getWeiboData, getWeiboImg } from '../api/weibo';
+import { getWeiboComment, getWeiboData, getWeiboImg } from '../api/weibo';
 import { commandsType, weiboAJAX } from '../../type';
 export class WeiboProvider implements WebviewViewProvider {
   constructor(protected context: ExtensionContext) { }
@@ -51,6 +51,18 @@ export class WeiboProvider implements WebviewViewProvider {
             } as commandsType<string>)
             break;
           }
+        case "GETCOMMENT":
+          {
+            const res = await getWeiboComment(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDCOMMENT`,
+              payload: {
+                payload:message.payload,
+                ...res.data
+              }
+            } as commandsType<weiboAJAX>)
+            break;
+        }
       }
     })
 

@@ -1,14 +1,14 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2024-11-22 10:30:23
+ * @LastEditTime: 2024-11-22 14:22:17
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
  */
 export type commandsType<T> = {
-  command: "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" | string,
+  command: "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | string,
   payload: T
 };
 
@@ -20,13 +20,14 @@ export type weiboAJAX = {
   since_id_str: string,
   max_id_str: string,
   statuses: weiboItem[]
+  data:any
 }
 
 export type weiboItem = {
   id: number;
   text: string;
   text_raw: string;
-  source: string;
+  source?: string;
   pic_ids: string[];
   pic_infos: {
     [key: string]: {
@@ -54,6 +55,8 @@ export type weiboItem = {
       }
     }
   };
+  created_at: string;
+  region_name?: string;
   user: weiboUser;
   comments_count: number; // 评
   reposts_count:number; // 转

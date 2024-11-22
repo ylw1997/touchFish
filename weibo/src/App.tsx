@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-11-22 10:42:02
+ * @LastEditTime: 2024-11-22 16:23:27
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -33,6 +33,11 @@ import {
 } from "@ant-design/icons";
 // import data from "./a.json";
 import InfiniteScroll from "react-infinite-scroll-component";
+import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
+import _relativeTime from "dayjs/plugin/relativeTime";
+dayjs.locale("zh-cn");
+dayjs.extend(_relativeTime);
 
 const defTab = [
   {
@@ -58,6 +63,7 @@ function App() {
   const [list, setList] = useState<weiboItem[]>([]);
   const [tabs] = useState(defTab);
   const [loading, setLoading] = useState(false);
+  const [commitLoading, setCommitLoading] = useState(false);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const [total, setTotal] = useState(0);
   // 下次请求开始id
@@ -69,6 +75,42 @@ function App() {
     postmsg();
   }, []);
 
+  window.onmessage = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
+    if (ev.type == "message") {
+      const msg = ev.data;
+      switch (msg.command) {
+        case "SENDDATA": {
+          setLoading(false);
+          messageApi.destroy("GETDATA");
+          if (msg.payload) {
+            if (msg.payload.ok) {
+              setList([...list, ...msg.payload.statuses]);
+              setTotal(
+                msg.payload.total_number ? msg.payload.total_number : 999
+              );
+              setMaxId(msg.payload.max_id);
+            } else {
+              message.error("数据请求失败!", msg.payload.ok);
+            }
+          }
+          break;
+        }
+        case "SENDCOMMENT": {
+          messageApi.destroy("GETCOMMENT");
+          setCommitLoading(false);
+          if (msg.payload) {
+            if (msg.payload.ok) {
+              console.log("SENDCOMMENT", msg.payload);
+            } else {
+              message.error("数据请求失败!", msg.payload.ok);
+            }
+          }
+          break;
+        }
+      }
+    }
+  };
+
   // 请求数据
   const postmsg = () => {
     if (loading) {
@@ -76,6 +118,7 @@ function App() {
     }
     setLoading(true);
     messageApi.open({
+      key: "GETDATA",
       type: "loading",
       content: "加载中...",
       duration: 0,
@@ -91,31 +134,25 @@ function App() {
     vscode.postMessage(message);
   };
 
-  // 接收数据
-  window.addEventListener(
-    "message",
-    async (event: MessageEvent<commandsType<weiboAJAX>>) => {
-      const msg = event.data;
-      switch (msg.command) {
-        case "SENDDATA": {
-          setLoading(false);
-          messageApi.destroy();
-          if (msg.payload) {
-            if (msg.payload.ok) {
-              setList([...list, ...msg.payload.statuses]);
-              setTotal(
-                msg.payload.total_number ? msg.payload.total_number : 999
-              );
-              setMaxId(msg.payload.max_id);
-            } else {
-              message.error("数据请求失败!", msg.payload.ok);
-            }
-          }
-          break;
-        }
-      }
+  // 请求评论
+  const getComments = (id: number, uid: number) => {
+    console.log("getComments", id, uid);
+    if (commitLoading) {
+      return;
     }
-  );
+    setCommitLoading(true);
+    messageApi.open({
+      key: "GETCOMMENT",
+      type: "loading",
+      content: "加载中...",
+      duration: 0,
+    });
+    const message: commandsType<string> = {
+      command: "GETCOMMENT",
+      payload: `/statuses/buildComments?id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`,
+    };
+    vscode.postMessage(message);
+  };
 
   // 清空
   const clear = () => {
@@ -137,9 +174,6 @@ function App() {
 
   return (
     <>
-      {/* <Button type="primary" loading={loading} onClick={postmsg}>
-        刷新
-      </Button> */}
       {contextHolder}
       <Tabs
         className="tabs"
@@ -173,20 +207,12 @@ function App() {
                       />
                       <span>{item.user.screen_name}</span>
                     </Space>
-                    <Space size="middle" className="weibo-data">
-                      <span>
-                        <ShareAltOutlined /> {item.reposts_count}
-                      </span>
-                      <span>
-                        <MessageOutlined /> {item.comments_count}
-                      </span>
-                      <span>
-                        <HeartOutlined /> {item.attitudes_count}
-                      </span>
-                    </Space>
+                    <div className="info">
+                      <span>{dayjs(item.created_at).fromNow()}</span>{" "}
+                      <span>{item.region_name?.replace("发布于", "")}</span>
+                    </div>
                   </Flex>
                 }
-                hoverable
               >
                 <div
                   className="content"
@@ -195,23 +221,43 @@ function App() {
                 <div className="imglist">
                   <Image.PreviewGroup>
                     {item.pic_ids &&
+                      item.pic_infos &&
                       item.pic_ids.map((pic: string) => {
                         return (
-                          <YImg
-                            width={90}
-                            height={90}
-                            className="img-item"
-                            key={pic}
-                            src={
-                              item.pic_infos[pic].large.url
-                                ? item.pic_infos[pic].large.url
-                                : item.pic_infos[pic].bmiddle.url
-                            }
-                          />
+                          item.pic_infos[pic] && (
+                            <YImg
+                              width={90}
+                              height={90}
+                              className="img-item"
+                              key={pic}
+                              src={
+                                item.pic_infos[pic].large
+                                  ? item.pic_infos[pic].large.url
+                                  : item.pic_infos[pic].bmiddle.url
+                              }
+                            />
+                          )
                         );
                       })}
                   </Image.PreviewGroup>
                 </div>
+                <div className="info">
+                  <Flex justify="space-around" align="center">
+                    <span className="link">
+                      <ShareAltOutlined /> {item.reposts_count}
+                    </span>
+                    <span
+                      className="link"
+                      onClick={() => getComments(item.id, item.user.id)}
+                    >
+                      <MessageOutlined /> {item.comments_count}
+                    </span>
+                    <span className="link">
+                      <HeartOutlined /> {item.attitudes_count}
+                    </span>
+                  </Flex>
+                </div>
+                {/* 查看评论 */}
               </Card>
             );
           })}
