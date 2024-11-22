@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-11-22 16:23:27
+ * @LastEditTime: 2024-11-22 17:03:00
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -36,6 +36,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
+import { renderComments } from "./components/Comment";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -101,6 +102,20 @@ function App() {
           if (msg.payload) {
             if (msg.payload.ok) {
               console.log("SENDCOMMENT", msg.payload);
+              const { id } = (msg.payload as any).payload;
+              const data = msg.payload.data;
+              // 根据id在list中找到对应的item
+              setList(
+                list.map((item) => {
+                  if (item.id === id) {
+                    return {
+                      ...item,
+                      comments: data,
+                    };
+                  }
+                  return item;
+                })
+              );
             } else {
               message.error("数据请求失败!", msg.payload.ok);
             }
@@ -147,9 +162,13 @@ function App() {
       content: "加载中...",
       duration: 0,
     });
-    const message: commandsType<string> = {
+    const message: commandsType<{ url: string; id: number; uid: number }> = {
       command: "GETCOMMENT",
-      payload: `/statuses/buildComments?id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`,
+      payload: {
+        url: `/statuses/buildComments?id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`,
+        id,
+        uid,
+      },
     };
     vscode.postMessage(message);
   };
@@ -258,6 +277,12 @@ function App() {
                   </Flex>
                 </div>
                 {/* 查看评论 */}
+                {item.comments && (
+                  <>
+                    <Divider />
+                    {renderComments(item.comments)}
+                  </>
+                )}
               </Card>
             );
           })}

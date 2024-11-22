@@ -53,7 +53,7 @@ export class WeiboProvider implements WebviewViewProvider {
           }
         case "GETCOMMENT":
           {
-            const res = await getWeiboComment(message.payload);
+            const res = await getWeiboComment((message.payload as any).url);
             webviewView.webview.postMessage({
               command: `SENDCOMMENT`,
               payload: {
