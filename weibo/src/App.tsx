@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-11-22 10:21:53
+ * @LastEditTime: 2024-11-22 10:42:02
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -31,7 +31,7 @@ import {
   RedoOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
-import data from "./a.json";
+// import data from "./a.json";
 import InfiniteScroll from "react-infinite-scroll-component";
 
 const defTab = [
@@ -54,8 +54,8 @@ const defTab = [
 ];
 
 function App() {
-  const [list, setList] = useState<weiboItem[]>(data as any);
-  // const [list, setList] = useState<weiboItem[]>([]);
+  // const [list, setList] = useState<weiboItem[]>(data as any);
+  const [list, setList] = useState<weiboItem[]>([]);
   const [tabs] = useState(defTab);
   const [loading, setLoading] = useState(false);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
@@ -173,7 +173,7 @@ function App() {
                       />
                       <span>{item.user.screen_name}</span>
                     </Space>
-                    <Space size="middle" className="weibo-data" >
+                    <Space size="middle" className="weibo-data">
                       <span>
                         <ShareAltOutlined /> {item.reposts_count}
                       </span>
@@ -202,7 +202,11 @@ function App() {
                             height={90}
                             className="img-item"
                             key={pic}
-                            src={item.pic_infos[pic].largest.url}
+                            src={
+                              item.pic_infos[pic].large.url
+                                ? item.pic_infos[pic].large.url
+                                : item.pic_infos[pic].bmiddle.url
+                            }
                           />
                         );
                       })}

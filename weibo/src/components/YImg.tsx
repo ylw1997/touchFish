@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 17:38:50
- * @LastEditTime: 2024-11-20 14:28:26
+ * @LastEditTime: 2024-11-22 10:46:18
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -35,7 +35,6 @@ const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
           switch (msg.command) {
             case `SENDIMG:${src}`: {
               if (msg.payload) {
-                console.log(`SENDIMG:${src}`);
                 setImgSrc(msg.payload);
               }
               break;

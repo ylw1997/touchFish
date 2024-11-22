@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2024-11-22 09:11:40
+ * @LastEditTime: 2024-11-22 10:30:23
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -45,6 +45,11 @@ export type weiboItem = {
       bmiddle: {
         url: string;
         height: number
+        width: number
+      },
+      thumbnail:{
+        url: string;
+        height: number;
         width: number
       }
     }
