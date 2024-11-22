@@ -9,8 +9,22 @@ html,body{
   background-color: #1a1c22;
 }
 
+.tabs{
+  position: fixed;
+  z-index: 9;
+  width: 100%;
+  background: rgba(26, 28, 34, 0.5);
+  top: 0;
+  backdrop-filter: saturate(180%) blur(15px);
+}
 .list{
   padding: 3px;
+  min-height: 100px;
+  margin-top: 50px;
+  .weibo-data{
+    font-size: 15px;
+    color: #ccc;
+  }
 }
 
 .icon-link{
@@ -29,11 +43,14 @@ html,body{
 }
 
 .ant-card {
+  margin-bottom: 10px;
   .ant-card-head {
-    padding: 0 10px;
+    padding: 0 8px;
+    min-height: 45px;
+    font-weight: normal;
   }
   .ant-card-body {
-    padding: 10px
+    padding: 8px
   }
 }
 
@@ -50,5 +67,5 @@ html,body{
 }
 
 .ant-tabs >.ant-tabs-nav {
-  margin: 0 0 5px 0;
+  margin: 0;
 }

@@ -1,3 +1,12 @@
+/*
+ * @Author: yangliwei 1280426581@qq.com
+ * @Date: 2024-11-19 14:17:37
+ * @LastEditTime: 2024-11-22 09:11:40
+ * @LastEditors: yangliwei 1280426581@qq.com
+ * @FilePath: \touchfish\type.d.ts
+ * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
+ * @Description: 
+ */
 export type commandsType<T> = {
   command: "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" | string,
   payload: T
@@ -41,7 +50,9 @@ export type weiboItem = {
     }
   };
   user: weiboUser;
-  comments_count: number;
+  comments_count: number; // 评
+  reposts_count:number; // 转
+  attitudes_count:number; // 赞
   pic_num: number;
 }
 
