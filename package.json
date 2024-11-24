@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "自带沉浸式主题的ithome,it之家,快科技,chiphell,财联社,v2ex,虎扑步行街,nga,知乎摸鱼聚合插件",
-	"version": "3.0.0",
+	"version": "4.0.1",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -321,7 +321,7 @@
 		"@eslint/js": "^9.15.0",
 		"@types/mocha": "^10.0.9",
 		"@types/node": "22.9.1",
-		"@types/vscode": "^1.95.0",
+		"@types/vscode": "^1.67.0",
 		"@typescript-eslint/eslint-plugin": "^8.15.0",
 		"@typescript-eslint/parser": "^8.15.0",
 		"@vscode/test-electron": "^2.4.1",

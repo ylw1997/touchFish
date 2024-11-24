@@ -11,3 +11,17 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+
+weibo/src/**
+weibo/node_modules/**
+weibo/public/**
+weibo/.gitignore
+weibo/eslint.config.js
+weibo/index.html
+weibo/package.json
+weibo/README.md
+weibo/tsconfig.json
+weibo/tsconfig.app.json
+weibo/tsconfig.node.json
+weibo/vite.config.ts
+weibo/pnpm-lock.yaml
