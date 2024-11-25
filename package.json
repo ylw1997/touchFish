@@ -2,8 +2,8 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "自带沉浸式主题的ithome,it之家,快科技,chiphell,财联社,v2ex,虎扑步行街,nga,知乎摸鱼聚合插件",
-	"version": "4.0.2",
+	"description": "自带沉浸式主题的ithome,it之家,快科技,chiphell,财联社,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件",
+	"version": "4.1.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -26,7 +26,8 @@
 		"纯色主题",
 		"摸鱼",
 		"zhihu",
-		"知乎"
+		"知乎",
+		"微博"
 	],
 	"categories": [
 		"Other",
@@ -51,7 +52,7 @@
 			"properties": {
 				"touchfish.weiboCookie": {
 					"type": "string",
-					"description": "知乎cookie"
+					"description": "微博cookie"
 				},
 				"touchfish.mixTab": {
 					"type": "string",
@@ -115,7 +116,7 @@
 				},
 				{
 					"id": "weibo",
-					"title": "TouchFish微博",
+					"title": "TouchFish-Weibo",
 					"icon": "assets/weibo.svg"
 				}
 			]

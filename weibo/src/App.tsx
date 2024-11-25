@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-11-22 17:03:00
+ * @LastEditTime: 2024-11-25 15:39:44
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -73,7 +73,24 @@ function App() {
   const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
-    postmsg();
+    const res = vscode.getState() as any;
+    if (res) {
+      console.log("缓存", res);
+      if (res.activeKey) {
+        setActiveKey(res.activeKey);
+      }
+      if (res.list) {
+        setList(res.list);
+      }
+      if (res.max_id) {
+        setMaxId(res.max_id);
+      }
+      if (res.total) {
+        setTotal(res.total);
+      }
+    }else{
+      postmsg();
+    }
   }, []);
 
   window.onmessage = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
@@ -85,11 +102,17 @@ function App() {
           messageApi.destroy("GETDATA");
           if (msg.payload) {
             if (msg.payload.ok) {
-              setList([...list, ...msg.payload.statuses]);
-              setTotal(
-                msg.payload.total_number ? msg.payload.total_number : 999
-              );
+              const wlist = [...list, ...msg.payload.statuses];
+              setList(wlist);
+              const wtotal = msg.payload.total_number ? msg.payload.total_number : 999;
+              setTotal(wtotal);
               setMaxId(msg.payload.max_id);
+              vscode.setState({
+                list: wlist,
+                max_id:msg.payload.max_id,
+                total:wtotal,
+                activeKey,
+              })
             } else {
               message.error("数据请求失败!", msg.payload.ok);
             }
@@ -125,6 +148,7 @@ function App() {
       }
     }
   };
+
 
   // 请求数据
   const postmsg = () => {
