@@ -1,7 +1,7 @@
 <!--
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-11-25 15:48:12
+ * @LastEditTime: 2024-11-26 10:29:05
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\README.md
  * @Description: 
@@ -29,4 +29,4 @@
 
 ## 刷微博
 
-![详情](https://article.biliimg.com/bfs/new_dyn/e25a40b54f55695c2223cff184bb5034102411794.png@.webp)
+![详情](https://qmsznewmall.oss-cn-beijing.aliyuncs.com/image/8a45ecd52fa5467ab21eea5521a4b13f.png?Expires=4886188135&OSSAccessKeyId=LTAI5tEf5yAnmXfbgTa76miZ&Signature=M2Xeoc3f2y8y4Ejyers3i5UIuGA%3D)
