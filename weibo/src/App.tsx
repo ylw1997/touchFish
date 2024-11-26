@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-11-25 15:39:44
+ * @LastEditTime: 2024-11-26 10:00:50
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -88,7 +88,7 @@ function App() {
       if (res.total) {
         setTotal(res.total);
       }
-    }else{
+    } else {
       postmsg();
     }
   }, []);
@@ -104,15 +104,17 @@ function App() {
             if (msg.payload.ok) {
               const wlist = [...list, ...msg.payload.statuses];
               setList(wlist);
-              const wtotal = msg.payload.total_number ? msg.payload.total_number : 999;
+              const wtotal = msg.payload.total_number
+                ? msg.payload.total_number
+                : 999;
               setTotal(wtotal);
               setMaxId(msg.payload.max_id);
               vscode.setState({
                 list: wlist,
-                max_id:msg.payload.max_id,
-                total:wtotal,
+                max_id: msg.payload.max_id,
+                total: wtotal,
                 activeKey,
-              })
+              });
             } else {
               message.error("数据请求失败!", msg.payload.ok);
             }
@@ -149,7 +151,6 @@ function App() {
     }
   };
 
-
   // 请求数据
   const postmsg = () => {
     if (loading) {
@@ -175,7 +176,24 @@ function App() {
 
   // 请求评论
   const getComments = (id: number, uid: number) => {
-    console.log("getComments", id, uid);
+    // 如果有评论就去掉,如果没有就请求
+    const citem = list.find((item) => item.id === id);
+    if (citem?.comments) {
+      // 去掉评论
+      setList(
+        list.map((item) => {
+          if (item.id === id) {
+            return {
+              ...item,
+              comments: undefined,
+            };
+          }
+          return item;
+        })
+      );
+      return;
+    }
+    
     if (commitLoading) {
       return;
     }
