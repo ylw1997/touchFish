@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-11-26 10:00:50
+ * @LastEditTime: 2024-12-09 16:41:49
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -56,6 +56,10 @@ const defTab = [
   {
     key: "/groupstimeline?list_id=100097515513422",
     label: "好友",
+  },
+  {
+    key:"/hottimeline?group_id=102803&containerid=102803&extparam=discover%7Cnew_feed",
+    label: "热门",
   },
 ];
 
@@ -287,8 +291,8 @@ function App() {
                         return (
                           item.pic_infos[pic] && (
                             <YImg
-                              width={90}
-                              height={90}
+                              width={140}
+                              height={140}
                               className="img-item"
                               key={pic}
                               src={
