@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-12-09 16:41:49
+ * @LastEditTime: 2024-12-10 10:09:37
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -291,8 +291,8 @@ function App() {
                         return (
                           item.pic_infos[pic] && (
                             <YImg
-                              width={140}
-                              height={140}
+                              width={160}
+                              height={160}
                               className="img-item"
                               key={pic}
                               src={
