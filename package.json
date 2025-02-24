@@ -2,8 +2,8 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "自带沉浸式主题的ithome,it之家,chiphell,财联社,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件",
-	"version": "4.1.7",
+	"description": "ithome,it之家,chiphell,财联社,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件",
+	"version": "4.2.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -30,23 +30,10 @@
 		"微博"
 	],
 	"categories": [
-		"Other",
-		"Themes"
+		"Other"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
-		"themes": [
-			{
-				"label": "touchfish-dark",
-				"uiTheme": "vs-dark",
-				"path": "./themes/ylw-dark-color-theme.json"
-			},
-			{
-				"label": "touchfish-light",
-				"uiTheme": "vs",
-				"path": "./themes/ylw-light-color-theme.json"
-			}
-		],
 		"configuration": {
 			"title": "touchfish",
 			"properties": {

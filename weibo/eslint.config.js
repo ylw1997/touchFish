@@ -1,3 +1,12 @@
+/*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2024-11-18 11:49:59
+ * @LastEditTime: 2025-02-24 17:46:39
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \weibo\eslint.config.js
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -18,6 +27,7 @@ export default tseslint.config(
       'react-refresh': reactRefresh,
     },
     rules: {
+      '@typescript-eslint/no-unused-expressions': ['error', { allowShortCircuit: true, allowTernary: true }],
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',
