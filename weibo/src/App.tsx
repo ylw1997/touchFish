@@ -1,8 +1,8 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2024-12-10 10:09:37
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-03-06 15:56:29
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
@@ -31,7 +31,7 @@ import {
   RedoOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
-// import data from "./a.json";
+import data from "./a.json";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
@@ -64,8 +64,8 @@ const defTab = [
 ];
 
 function App() {
-  // const [list, setList] = useState<weiboItem[]>(data as any);
-  const [list, setList] = useState<weiboItem[]>([]);
+  const [list, setList] = useState<weiboItem[]>(data as any);
+  // const [list, setList] = useState<weiboItem[]>([]);
   const [tabs] = useState(defTab);
   const [loading, setLoading] = useState(false);
   const [commitLoading, setCommitLoading] = useState(false);
@@ -267,15 +267,16 @@ function App() {
                   <Flex justify="space-between" align="center">
                     <Space>
                       <Avatar
-                        size={28}
                         src={<YImg useImg src={item.user.avatar_large} />}
                       />
-                      <span>{item.user.screen_name}</span>
-                    </Space>
-                    <div className="info">
+                      <div>
+                        <span>{item.user.screen_name}</span>
+                        <div className="info">
                       <span>{dayjs(item.created_at).fromNow()}</span>{" "}
                       <span>{item.region_name?.replace("发布于", "")}</span>
                     </div>
+                      </div>
+                    </Space>
                   </Flex>
                 }
               >
@@ -291,8 +292,8 @@ function App() {
                         return (
                           item.pic_infos[pic] && (
                             <YImg
-                              width={160}
-                              height={160}
+                              width={item.pic_ids.length>1? 160:undefined}
+                              height={item.pic_ids.length>1? 160:undefined}
                               className="img-item"
                               key={pic}
                               src={
@@ -306,7 +307,7 @@ function App() {
                       })}
                   </Image.PreviewGroup>
                 </div>
-                <div className="info">
+                <div className="info mt10">
                   <Flex justify="space-around" align="center">
                     <span className="link">
                       <ShareAltOutlined /> {item.reposts_count}
