@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-10-30 11:58:09
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-03-06 15:08:07
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description: 
  */
@@ -49,9 +49,9 @@ export const getZhihuList = async () => {
         resList = resList.concat(res.data.data);
       }
     }
-    resList.forEach((element: { target: { question: { title: string; id: string; } } }) => {
+    resList.forEach((element: { target: { question: { title?: string; id: string; } } }) => {
       resArr.push({
-        title: element.target.question.title,
+        title: element.target.question.title ?? "",
         url: element.target.question.id,
       });
     });
@@ -67,23 +67,23 @@ export const getZhihuList = async () => {
 // 获取Zhihu文章详情
 export type ZhihuAnswers = {
   target_type: string;
-  target:{
-    author:{
-      name:string;
-      avatar_url:string;
-      headline:string;
+  target: {
+    author: {
+      name: string;
+      avatar_url: string;
+      headline: string;
     }
-    answer_type:string;
-    comment_count:number;
-    voteup_count:number;
-    content:string
-    excerpt:string;
+    answer_type: string;
+    comment_count: number;
+    voteup_count: number;
+    content: string
+    excerpt: string;
   }
 }
-export const getZhihuNewsDetail = async (url: string):Promise<ZhihuAnswers[]> => {
+export const getZhihuNewsDetail = async (url: string): Promise<ZhihuAnswers[]> => {
   try {
     const cookie = await getOrSetZhihuCookie() as string;
-    const answerUrl =`https://www.zhihu.com/api/v4/questions/${url}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`
+    const answerUrl = `https://www.zhihu.com/api/v4/questions/${url}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`
     const res = await axios.get(answerUrl, {
       headers: {
         "Cookie": cookie,
