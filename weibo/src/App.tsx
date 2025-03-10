@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-03-07 10:33:41
+ * @LastEditTime: 2025-03-10 16:52:33
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -31,7 +31,7 @@ import {
   RedoOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
-import data from "./a.json";
+// import data from "./a.json";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
@@ -64,8 +64,8 @@ const defTab = [
 ];
 
 function App() {
-  const [list, setList] = useState<weiboItem[]>(data as any);
-  // const [list, setList] = useState<weiboItem[]>([]);
+  // const [list, setList] = useState<weiboItem[]>(data as any);
+  const [list, setList] = useState<weiboItem[]>([]);
   const [tabs] = useState(defTab);
   const [loading, setLoading] = useState(false);
   const [commitLoading, setCommitLoading] = useState(false);
