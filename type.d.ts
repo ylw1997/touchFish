@@ -1,14 +1,14 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2024-11-26 09:27:04
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-04-14 17:39:26
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
  */
 export type commandsType<T> = {
-  command: "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | string,
+  command: "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SNEDLONGTEXT" | string,
   payload: T
 };
 
@@ -29,6 +29,7 @@ export type weiboItem = {
   text_raw: string;
   source?: string;
   pic_ids: string[];
+  mblogid: string;
   pic_infos: {
     [key: string]: {
       pic_id: string;

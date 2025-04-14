@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-03-10 16:52:33
+ * @LastEditTime: 2025-04-14 18:09:25
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -31,7 +31,7 @@ import {
   RedoOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
-// import data from "./a.json";
+import data from "./a.json";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
@@ -64,11 +64,12 @@ const defTab = [
 ];
 
 function App() {
-  // const [list, setList] = useState<weiboItem[]>(data as any);
-  const [list, setList] = useState<weiboItem[]>([]);
+  const [list, setList] = useState<weiboItem[]>(data as any);
+  // const [list, setList] = useState<weiboItem[]>([]);
   const [tabs] = useState(defTab);
   const [loading, setLoading] = useState(false);
   const [commitLoading, setCommitLoading] = useState(false);
+  const [longTextLoading, setLongTextLoading] = useState(false);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const [total, setTotal] = useState(0);
   // 下次请求开始id
@@ -95,6 +96,7 @@ function App() {
     } else {
       postmsg();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   window.onmessage = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
@@ -150,6 +152,31 @@ function App() {
             }
           }
           break;
+        }
+        case "SENDLONGTEXT": {
+          messageApi.destroy("GETLONGTEXT");
+          setLongTextLoading(false);
+          if (msg.payload) {
+            console.log("SENDLONGTEXT", msg.payload);
+            if (msg.payload.ok) {
+              console.log("展开长微博获取数据: ",msg.payload);
+              const mblogid = (msg.payload as any).payload;
+              // 找到该条微博
+              setList(
+                list.map((item) => {
+                  if (item.mblogid === mblogid) {
+                    return {
+                      ...item,
+                      text: (msg.payload as any).data.longTextContent,
+                    };
+                  }
+                  return item;
+                })
+              );
+            } else {
+              message.error("数据请求失败!", msg.payload.ok);
+            }
+          }
         }
       }
     }
@@ -219,6 +246,24 @@ function App() {
     vscode.postMessage(message);
   };
 
+  // 展开长微博
+  const expandLongWeibo = (id: string) => {
+    if (longTextLoading) {
+      return;
+    }
+    setLongTextLoading(true);
+    messageApi.open({
+      key: "GETLONGTEXT",
+      type: "loading",
+      content: "加载中...",
+      duration: 0,
+    });
+    const message: commandsType<string> = {
+      command: "GETLONGTEXT",
+      payload: id,
+    };
+    vscode.postMessage(message);
+  };
   // 清空
   const clear = () => {
     setList([]);
@@ -284,6 +329,14 @@ function App() {
                 <div
                   className="content"
                   dangerouslySetInnerHTML={{ __html: item.text }}
+                  onClick={(e)=>{
+                    if (e.target instanceof HTMLSpanElement) {
+                      if(e.target.classList.contains("expand")){
+                        console.log("展开",item.mblogid);
+                        expandLongWeibo(item.mblogid);
+                      }
+                    }
+                  }}
                 ></div>
                 <div className="imglist">
                   <Image.PreviewGroup>

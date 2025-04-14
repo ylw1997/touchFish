@@ -1,9 +1,9 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-02-24 17:46:39
+ * @LastEditTime: 2025-04-14 16:46:45
  * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \weibo\eslint.config.js
+ * @FilePath: \touchfish\weibo\eslint.config.js
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
  * @Description: 
  */
@@ -33,6 +33,7 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      '@typescript-eslint/no-explicit-any':"off"
     },
   },
 )

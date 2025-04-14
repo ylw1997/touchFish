@@ -1,8 +1,8 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2024-11-22 14:02:22
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-04-14 18:09:47
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
@@ -52,6 +52,17 @@ export const getWeiboImg = async (url: string) => {
 export const getWeiboComment = async (url: string) => {
   const cookie = await getOrSetZhihuCookie() as string;
   return await axios.get(`https://weibo.com/ajax${url}`, {
+    headers: {
+      "Cookie": cookie,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+    },
+  })
+}
+
+// 获取长微博
+export const getLongText = async (id: string) => {
+  const cookie = await getOrSetZhihuCookie() as string;
+  return await axios.get(`https://weibo.com/ajax/statuses/longtext?id=${id}`, {
     headers: {
       "Cookie": cookie,
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
