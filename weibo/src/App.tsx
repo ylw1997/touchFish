@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-04-14 18:12:39
+ * @LastEditTime: 2025-04-15 08:54:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -165,9 +165,12 @@ function App() {
               setList(
                 list.map((item) => {
                   if (item.mblogid === mblogid) {
+                    let text = (msg.payload as any).data.longTextContent;
+                    // \n 转成br
+                    text = text.replace(/\n/g, "<br/>");
                     return {
                       ...item,
-                      text: (msg.payload as any).data.longTextContent,
+                      text,
                     };
                   }
                   return item;
