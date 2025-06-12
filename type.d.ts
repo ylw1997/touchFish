@@ -7,8 +7,10 @@
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
  */
+export type CommandList = "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG"|'GETFOLLOW'|'SENDFOLLOW';
+
 export type commandsType<T> = {
-  command: "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG"|'GETFOLLOW'|'SENDFOLLOW',
+  command: CommandList,
   payload: T
 };
 

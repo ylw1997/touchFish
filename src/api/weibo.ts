@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-06-12 16:40:17
+ * @LastEditTime: 2025-06-12 16:59:06
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -11,12 +11,10 @@ import axios from "axios";
 import * as vscode from 'vscode';
 import { setConfigByKey } from "../config";
 
-axios.interceptors.response.use((value) => {
-  console.log("Weibo API Response:", value);
-  return value;
-},
+axios.interceptors.response.use((value) => value,
   (error) => {
     console.log("Weibo API Error:", error);
+    vscode.window.showErrorMessage(`请求失败:${error.message} -------> ${error.config.url}`);
   }
 )
 
