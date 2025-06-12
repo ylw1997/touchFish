@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-12 15:48:16
+ * @LastEditTime: 2025-06-12 16:48:02
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -129,7 +129,7 @@ function App() {
                 activeKey,
               });
             } else {
-              message.error("数据请求失败!", msg.payload.ok);
+              messageApi.error("数据请求失败!", msg.payload.ok);
             }
           }
           break;
@@ -155,7 +155,7 @@ function App() {
                 })
               );
             } else {
-              message.error("数据请求失败!", msg.payload.ok);
+              messageApi.error("数据请求失败!", msg.payload.ok);
             }
           }
           break;
@@ -184,7 +184,7 @@ function App() {
                 })
               );
             } else {
-              message.error("数据请求失败!", msg.payload.ok);
+              messageApi.error("数据请求失败!", msg.payload.ok);
             }
           }
           break;
@@ -204,7 +204,7 @@ function App() {
                 total: wtotal,
               });
             } else {
-              message.error("数据请求失败!", msg.payload.ok);
+              messageApi.error("数据请求失败!", msg.payload.ok);
             }
           }
           break;
@@ -215,7 +215,7 @@ function App() {
           if (msg.payload) {
             console.log("SENDFOLLOW",msg.payload);
             if (msg.payload.ok) {
-              message.success("关注成功!");
+              messageApi.success("关注成功!");
               // 根据id在list中找到对应的item
               if (curBlogId) {
                 setList(
@@ -231,7 +231,7 @@ function App() {
                 );
               }
             } else {
-              message.error("数据请求失败!", msg.payload.ok);
+              messageApi.error("数据请求失败!", msg.payload.ok);
             }
           }
           break;
