@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-12 17:53:49
+ * @LastEditTime: 2025-06-12 18:04:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -281,6 +281,7 @@ function App() {
   const onChange = (key: string) => {
     clearList();
     if (key !== "userblog") {
+      setActiveKey(key);
       if (tabs.findIndex((item) => item.key === "userblog") !== -1) {
         setTabs(defTab);
         setUserWeiboPage(1);
@@ -293,7 +294,6 @@ function App() {
         setPrevTabs("");
         return;
       }
-      setActiveKey(key);
       sendMessage("GETDATA", key);
     }
   };
