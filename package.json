@@ -145,10 +145,6 @@
 					"name": "虎扑步行街"
 				},
 				{
-					"id": "view.zhihuList",
-					"name": "知乎"
-				},
-				{
 					"id": "view.ngaList",
 					"name": "nga精英玩家俱乐部"
 				},
@@ -267,11 +263,6 @@
 				{
 					"command": "hupu.refresh",
 					"when": "view == view.hupuList",
-					"group": "navigation"
-				},
-				{
-					"command": "zhihu.refresh",
-					"when": "view == view.zhihuList",
 					"group": "navigation"
 				},
 				{

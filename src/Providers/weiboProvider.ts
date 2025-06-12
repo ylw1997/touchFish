@@ -1,14 +1,14 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-04-14 17:58:40
+ * @LastEditTime: 2025-06-12 11:22:05
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
  */
 import { WebviewView, WebviewViewProvider, ExtensionContext, Uri, window } from 'vscode';
-import { getLongText, getWeiboComment, getWeiboData, getWeiboImg } from '../api/weibo';
+import { getLongText, getUserWeibo, getWeiboComment, getWeiboData, getWeiboImg } from '../api/weibo';
 import { commandsType, weiboAJAX } from '../../type';
 import { setConfigByKey } from '../config';
 export class WeiboProvider implements WebviewViewProvider {
@@ -62,7 +62,7 @@ export class WeiboProvider implements WebviewViewProvider {
           {
             const res = await getWeiboImg(message.payload);
             webviewView.webview.postMessage({
-              command: `SENDIMG:${message.payload}`,
+              command: `SENDIMG:${message.payload}` as any,
               payload: res
             } as commandsType<string>)
             break;
@@ -84,6 +84,18 @@ export class WeiboProvider implements WebviewViewProvider {
             const res = await getLongText(message.payload);
             webviewView.webview.postMessage({
               command: `SENDLONGTEXT`,
+              payload: {
+                payload: message.payload,
+                ...res.data
+              }
+            } as commandsType<weiboAJAX>)
+            break;
+          }
+        case "GETUSERBLOG":
+          {
+            const res = await getUserWeibo(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDUSERBLOG`,
               payload: {
                 payload: message.payload,
                 ...res.data

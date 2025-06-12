@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-04-15 08:54:00
+ * @LastEditTime: 2025-06-12 14:21:39
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -58,7 +58,7 @@ const defTab = [
     label: "好友",
   },
   {
-    key:"/hottimeline?group_id=102803&containerid=102803&extparam=discover%7Cnew_feed",
+    key: "/hottimeline?group_id=102803&containerid=102803&extparam=discover%7Cnew_feed",
     label: "热门",
   },
 ];
@@ -66,7 +66,7 @@ const defTab = [
 function App() {
   // const [list, setList] = useState<weiboItem[]>(data as any);
   const [list, setList] = useState<weiboItem[]>([]);
-  const [tabs] = useState(defTab);
+  const [tabs, setTabs] = useState(defTab);
   const [loading, setLoading] = useState(false);
   const [commitLoading, setCommitLoading] = useState(false);
   const [longTextLoading, setLongTextLoading] = useState(false);
@@ -74,6 +74,9 @@ function App() {
   const [total, setTotal] = useState(0);
   // 下次请求开始id
   const [max_id, setMaxId] = useState<number>();
+  // 用户博客分页
+  const [curUserId, setCurUserId] = useState<number>();
+  const [userWeiboPage, setUserWeiboPage] = useState<number>(1);
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -96,7 +99,7 @@ function App() {
     } else {
       postmsg();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   window.onmessage = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
@@ -159,7 +162,7 @@ function App() {
           if (msg.payload) {
             console.log("SENDLONGTEXT", msg.payload);
             if (msg.payload.ok) {
-              console.log("展开长微博获取数据: ",msg.payload);
+              console.log("展开长微博获取数据: ", msg.payload);
               const mblogid = (msg.payload as any).payload;
               // 找到该条微博
               setList(
@@ -180,6 +183,27 @@ function App() {
               message.error("数据请求失败!", msg.payload.ok);
             }
           }
+          break;
+        }
+        case "SENDUSERBLOG": {
+          messageApi.destroy("GETUSERBLOG");
+          setLoading(false);
+          if (msg.payload) {
+            if (msg.payload.ok) {
+              const wlist = [...list, ...msg.payload.data.list];
+              setList(wlist);
+              const wtotal = msg.payload.data ? msg.payload.data.total : 999;
+              setTotal(wtotal);
+              vscode.setState({
+                list: wlist,
+                max_id: undefined,
+                total: wtotal,
+              });
+            } else {
+              message.error("数据请求失败!", msg.payload.ok);
+            }
+          }
+          break;
         }
       }
     }
@@ -191,21 +215,41 @@ function App() {
       return;
     }
     setLoading(true);
-    messageApi.open({
-      key: "GETDATA",
-      type: "loading",
-      content: "加载中...",
-      duration: 0,
-    });
-    const message: commandsType<string> = {
-      command: "GETDATA",
-      // 确认有值,并且不是全部关注,全部关注没有max_id
-      payload:
-        max_id && activeKey != defTab[0].key
-          ? `${activeKey}&max_id=${max_id}`
-          : activeKey,
-    };
-    vscode.postMessage(message);
+    if (activeKey === "userblog") {
+      messageApi.open({
+        key: "GETUSERBLOG",
+        type: "loading",
+        content: "加载中...",
+        duration: 0,
+      });
+      const page  = userWeiboPage +1;
+      const paramsStr = JSON.stringify({
+        uid: curUserId,
+        page,
+      });
+      setUserWeiboPage(page);
+      const message: commandsType<string> = {
+        command: "GETUSERBLOG",
+        payload: paramsStr, // 获取uid
+      };
+      vscode.postMessage(message);
+    } else {
+      messageApi.open({
+        key: "GETDATA",
+        type: "loading",
+        content: "加载中...",
+        duration: 0,
+      });
+      const message: commandsType<string> = {
+        command: "GETDATA",
+        // 确认有值,并且不是全部关注,全部关注没有max_id
+        payload:
+          max_id && activeKey != defTab[0].key
+            ? `${activeKey}&max_id=${max_id}`
+            : activeKey,
+      };
+      vscode.postMessage(message);
+    }
   };
 
   // 请求评论
@@ -227,7 +271,7 @@ function App() {
       );
       return;
     }
-    
+
     if (commitLoading) {
       return;
     }
@@ -267,6 +311,41 @@ function App() {
     };
     vscode.postMessage(message);
   };
+
+  // 查看博主微博
+  const getUserBlog = (screen_name: string, id: number) => {
+    setCurUserId(id);
+    setUserWeiboPage(1);
+    if (loading) {
+      return;
+    }
+    clear();
+    // 增加tab
+    setTabs([
+      ...tabs,
+      {
+        key: `userblog`,
+        label: `${screen_name}`,
+      },
+    ]);
+    setActiveKey(`userblog`);
+    setLoading(true);
+    messageApi.open({
+      key: "GETUSERBLOG",
+      type: "loading",
+      content: "加载中...",
+      duration: 0,
+    });
+    const paramsStr = JSON.stringify({
+      uid: id,
+      page: userWeiboPage,
+    });
+    const message: commandsType<string> = {
+      command: "GETUSERBLOG",
+      payload: paramsStr, // 获取uid
+    };
+    vscode.postMessage(message);
+  };
   // 清空
   const clear = () => {
     setList([]);
@@ -277,12 +356,24 @@ function App() {
   // 切换
   const onChange = (key: string) => {
     clear();
-    setActiveKey(key);
-    const message: commandsType<string> = {
-      command: "GETDATA",
-      payload: key,
-    };
-    vscode.postMessage(message);
+    if (key != "userblog") {
+      if (tabs.findIndex((item) => item.key === "userblog") !== -1) {
+        setTabs(defTab);
+        setUserWeiboPage(1);
+      }
+      messageApi.open({
+        key: "GETDATA",
+        type: "loading",
+        content: "加载中...",
+        duration: 0,
+      });
+      setActiveKey(key);
+      const message: commandsType<string> = {
+        command: "GETDATA",
+        payload: key,
+      };
+      vscode.postMessage(message);
+    }
   };
 
   return (
@@ -319,11 +410,20 @@ function App() {
                         src={<YImg useImg src={item.user.avatar_large} />}
                       />
                       <div>
-                        <span>{item.user.screen_name}</span>
+                        <span
+                          className={activeKey != "userblog" ? "nick-name" : ""}
+                          onClick={() => {
+                            if (activeKey != "userblog") {
+                              getUserBlog(item.user.screen_name, item.user.id);
+                            }
+                          }}
+                        >
+                          {item.user.screen_name}
+                        </span>
                         <div className="info">
-                      <span>{dayjs(item.created_at).fromNow()}</span>{" "}
-                      <span>{item.region_name?.replace("发布于", "")}</span>
-                    </div>
+                          <span>{dayjs(item.created_at).fromNow()}</span>{" "}
+                          <span>{item.region_name?.replace("发布于", "")}</span>
+                        </div>
                       </div>
                     </Space>
                   </Flex>
@@ -332,10 +432,10 @@ function App() {
                 <div
                   className="content"
                   dangerouslySetInnerHTML={{ __html: item.text }}
-                  onClick={(e)=>{
+                  onClick={(e) => {
                     if (e.target instanceof HTMLSpanElement) {
-                      if(e.target.classList.contains("expand")){
-                        console.log("展开",item.mblogid);
+                      if (e.target.classList.contains("expand")) {
+                        console.log("展开", item.mblogid);
                         expandLongWeibo(item.mblogid);
                       }
                     }
@@ -349,8 +449,8 @@ function App() {
                         return (
                           item.pic_infos[pic] && (
                             <YImg
-                              width={item.pic_ids.length>1? 160:undefined}
-                              height={item.pic_ids.length>1? 160:undefined}
+                              width={item.pic_ids.length > 1 ? 160 : undefined}
+                              height={item.pic_ids.length > 1 ? 160 : undefined}
                               className="img-item"
                               key={pic}
                               src={

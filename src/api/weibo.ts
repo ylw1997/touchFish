@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-04-14 18:09:47
+ * @LastEditTime: 2025-06-12 14:06:25
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -11,7 +11,7 @@ import axios from "axios";
 import * as vscode from 'vscode';
 import { setConfigByKey } from "../config";
 
-export const getOrSetZhihuCookie = async () => {
+export const getOrSetWeiboCookie = async () => {
   const config = vscode.workspace.getConfiguration('touchfish');
   let cookie = config.get('weiboCookie') as string | undefined;
   // 如果没有就请输入cookie
@@ -27,8 +27,8 @@ export const getOrSetZhihuCookie = async () => {
   return cookie;
 };
 
-export const getWeiboData = async (url:string) => {
-  const cookie = await getOrSetZhihuCookie() as string;
+export const getWeiboData = async (url: string) => {
+  const cookie = await getOrSetWeiboCookie() as string;
   return await axios.get(`https://weibo.com/ajax/feed${url}`, {
     headers: {
       "Cookie": cookie,
@@ -50,7 +50,7 @@ export const getWeiboImg = async (url: string) => {
 
 // 获取微博评论
 export const getWeiboComment = async (url: string) => {
-  const cookie = await getOrSetZhihuCookie() as string;
+  const cookie = await getOrSetWeiboCookie() as string;
   return await axios.get(`https://weibo.com/ajax${url}`, {
     headers: {
       "Cookie": cookie,
@@ -61,11 +61,24 @@ export const getWeiboComment = async (url: string) => {
 
 // 获取长微博
 export const getLongText = async (id: string) => {
-  const cookie = await getOrSetZhihuCookie() as string;
+  const cookie = await getOrSetWeiboCookie() as string;
   return await axios.get(`https://weibo.com/ajax/statuses/longtext?id=${id}`, {
     headers: {
       "Cookie": cookie,
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
     },
+  })
+}
+
+// 查看博主 https://weibo.com/ajax/statuses/mymblog?uid=5766179244&page=1&feature=0
+export const getUserWeibo = async (params: string) => {
+  const cookie = await getOrSetWeiboCookie() as string;
+  const parsedParams = JSON.parse(params);
+  console.log("getUserWeibo",parsedParams);
+  return await axios.get(`https://weibo.com/ajax/statuses/mymblog?uid=${parsedParams.uid}&page=${parsedParams.page}&feature=0`, {
+    headers: {
+      "Cookie": cookie,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+    }
   })
 }
