@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-12 17:38:36
+ * @LastEditTime: 2025-06-12 17:53:49
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -289,6 +289,8 @@ function App() {
       // 如果和前一个tab一致就不重复请求
       if (key === prevTabs) {
         setList(prevList);
+        setPrevList([]);
+        setPrevTabs("");
         return;
       }
       setActiveKey(key);
