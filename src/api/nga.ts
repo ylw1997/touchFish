@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2024-10-30 11:59:04
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-06-12 17:05:07
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\nga.ts
  * @Description: 
  */
@@ -64,7 +64,6 @@ export const getNgaList = async (tab?:string) => {
 
 // 获取nga文章详情
 export const getNgaNewsDetail = async (url: string) => {
-  console.log(url);
   try {
     const cookie = await getOrSetNgaCookie() as string;
     const { data } = await axios.get(

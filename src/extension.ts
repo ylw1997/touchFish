@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-06-12 14:13:59
+ * @LastEditTime: 2025-06-12 17:05:25
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
@@ -103,9 +103,7 @@ const intervalRefrshNews = () => {
 	refreshAll();
 	const newconfig = vscode.workspace.getConfiguration('touchfish');
 	const autoRefresh = newconfig.get('autoRefresh') as boolean;
-	console.log("autoRefresh",autoRefresh);
 	if(!autoRefresh){
-		console.log("自动刷新已关闭!");
 		return;
 	}
 	timer = setInterval(refreshAll, 1000 * (refreshTime||defaultRefreshTime));

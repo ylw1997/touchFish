@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-06-12 15:30:56
+ * @LastEditTime: 2025-06-12 17:04:38
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -37,7 +37,7 @@ export class WeiboProvider implements WebviewViewProvider {
         case "GETDATA":
           {
             let res = await getWeiboData(message.payload);
-            console.log("GETDATA", res.data);
+            // console.log("GETDATA", res.data);
             if (res.data.ok !== 1) {
               if (res.data.ok == -100) {
                 const cookie = await window.showInputBox({
