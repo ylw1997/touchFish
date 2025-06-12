@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-12 16:55:07
+ * @LastEditTime: 2025-06-12 17:38:36
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -46,7 +46,10 @@ const defTab = [
   { key: "/friendstimeline?list_id=110007515513422", label: "最新" },
   { key: "/groupstimeline?list_id=4563498095349254", label: "特别" },
   { key: "/groupstimeline?list_id=100097515513422", label: "好友" },
-  { key: "/hottimeline?group_id=102803&containerid=102803&extparam=discover%7Cnew_feed", label: "热门" },
+  {
+    key: "/hottimeline?group_id=102803&containerid=102803&extparam=discover%7Cnew_feed",
+    label: "热门",
+  },
 ];
 
 function App() {
@@ -64,6 +67,10 @@ function App() {
   const [userWeiboPage, setUserWeiboPage] = useState<number>(1);
   const [curBlogId, setCurBlogId] = useState<number>();
   const [messageApi, contextHolder] = message.useMessage();
+  // 保存查看用户微博前的tab和list
+  const [prevTabs, setPrevTabs] = useState<string>("");
+  const [prevList, setPrevList] = useState<weiboItem[]>([]);
+  const [scrollTop, setScrollTop] = useState<number>(0);
 
   // 初始化，尝试从缓存恢复
   useEffect(() => {
@@ -84,7 +91,8 @@ function App() {
     if (ev.type !== "message") return;
     const msg = ev.data;
     // 合并错误处理逻辑
-    const handleError = (payload: any) => messageApi.error("数据请求失败!", payload?.ok);
+    const handleError = (payload: any) =>
+      messageApi.error("数据请求失败!", payload?.ok);
 
     switch (msg.command) {
       case "SENDDATA": {
@@ -96,7 +104,12 @@ function App() {
           setList(wlist);
           setTotal(wtotal);
           setMaxId(msg.payload.max_id);
-          vscode.setState({ list: wlist, max_id: msg.payload.max_id, total: wtotal, activeKey });
+          vscode.setState({
+            list: wlist,
+            max_id: msg.payload.max_id,
+            total: wtotal,
+            activeKey,
+          });
         } else {
           handleError(msg.payload);
         }
@@ -108,7 +121,11 @@ function App() {
         if (msg.payload?.ok) {
           const { id } = (msg.payload as any).payload;
           const data = msg.payload.data;
-          setList(list.map(item => item.id === id ? { ...item, comments: data } : item));
+          setList(
+            list.map((item) =>
+              item.id === id ? { ...item, comments: data } : item
+            )
+          );
         } else {
           handleError(msg.payload);
         }
@@ -119,8 +136,15 @@ function App() {
         setLongTextLoading(false);
         if (msg.payload?.ok) {
           const mblogid = (msg.payload as any).payload;
-          const text = (msg.payload as any).data.longTextContent.replace(/\n/g, "<br/>");
-          setList(list.map(item => item.mblogid === mblogid ? { ...item, text } : item));
+          const text = (msg.payload as any).data.longTextContent.replace(
+            /\n/g,
+            "<br/>"
+          );
+          setList(
+            list.map((item) =>
+              item.mblogid === mblogid ? { ...item, text } : item
+            )
+          );
         } else {
           handleError(msg.payload);
         }
@@ -134,7 +158,7 @@ function App() {
           const wtotal = msg.payload.data?.total ?? 999;
           setList(wlist);
           setTotal(wtotal);
-          vscode.setState({ list: wlist, max_id: undefined, total: wtotal });
+          // vscode.setState({ list: wlist, max_id: undefined, total: wtotal });
         } else {
           handleError(msg.payload);
         }
@@ -146,7 +170,13 @@ function App() {
         if (msg.payload?.ok) {
           messageApi.success("关注成功!");
           if (curBlogId) {
-            setList(list.map(item => item.id === curBlogId ? { ...item, followBtnCode: undefined } : item));
+            setList(
+              list.map((item) =>
+                item.id === curBlogId
+                  ? { ...item, followBtnCode: undefined }
+                  : item
+              )
+            );
           }
         } else {
           handleError(msg.payload);
@@ -169,18 +199,16 @@ function App() {
       sendMessage("GETUSERBLOG", JSON.stringify({ uid: curUserId, page }));
     } else {
       // 普通tab
-      const payload = max_id && activeKey !== defTab[0].key
-        ? `${activeKey}&max_id=${max_id}`
-        : activeKey;
+      const payload =
+        max_id && activeKey !== defTab[0].key
+          ? `${activeKey}&max_id=${max_id}`
+          : activeKey;
       sendMessage("GETDATA", payload);
     }
   };
 
   // 统一发送消息
-  const sendMessage = (
-    command: CommandList,
-    payload: any
-  ) => {
+  const sendMessage = (command: CommandList, payload: any) => {
     messageApi.open({
       key: command,
       type: "loading",
@@ -193,9 +221,13 @@ function App() {
 
   // 评论展开/收起
   const toggleComments = (id: number, uid: number) => {
-    const citem = list.find(item => item.id === id);
+    const citem = list.find((item) => item.id === id);
     if (citem?.comments) {
-      setList(list.map(item => item.id === id ? { ...item, comments: undefined } : item));
+      setList(
+        list.map((item) =>
+          item.id === id ? { ...item, comments: undefined } : item
+        )
+      );
       return;
     }
     if (commitLoading) return;
@@ -216,9 +248,13 @@ function App() {
 
   // 查看博主微博
   const getUserBlog = (screen_name: string, id: number) => {
+    if (loading) return;
+    setPrevList(list)
+    setPrevTabs(activeKey)
+    setScrollTop(document.documentElement.scrollTop || document.body.scrollTop);
     setCurUserId(id);
     setUserWeiboPage(1);
-    if (loading) return;
+    setLoading(true);
     clearList();
     setTabs([...tabs, { key: `userblog`, label: `${screen_name}` }]);
     setActiveKey(`userblog`);
@@ -245,9 +281,15 @@ function App() {
   const onChange = (key: string) => {
     clearList();
     if (key !== "userblog") {
-      if (tabs.findIndex(item => item.key === "userblog") !== -1) {
+      if (tabs.findIndex((item) => item.key === "userblog") !== -1) {
         setTabs(defTab);
         setUserWeiboPage(1);
+        document.documentElement.scrollTop = scrollTop;
+      }
+      // 如果和前一个tab一致就不重复请求
+      if (key === prevTabs) {
+        setList(prevList);
+        return;
       }
       setActiveKey(key);
       sendMessage("GETDATA", key);
@@ -261,12 +303,16 @@ function App() {
       title={
         <Flex justify="space-between" align="center">
           <Space>
-            <Avatar size={40} src={<YImg useImg src={item.user.avatar_large} />} />
+            <Avatar
+              size={40}
+              src={<YImg useImg src={item.user.avatar_large} />}
+            />
             <div>
               <span
                 className={activeKey !== "userblog" ? "nick-name" : ""}
                 onClick={() => {
-                  if (activeKey !== "userblog") getUserBlog(item.user.screen_name, item.user.id);
+                  if (activeKey !== "userblog")
+                    getUserBlog(item.user.screen_name, item.user.id);
                 }}
               >
                 {item.user.screen_name}
@@ -293,8 +339,11 @@ function App() {
       <div
         className="content"
         dangerouslySetInnerHTML={{ __html: item.text }}
-        onClick={e => {
-          if (e.target instanceof HTMLSpanElement && e.target.classList.contains("expand")) {
+        onClick={(e) => {
+          if (
+            e.target instanceof HTMLSpanElement &&
+            e.target.classList.contains("expand")
+          ) {
             expandLongWeibo(item.mblogid);
           }
         }}
@@ -302,17 +351,24 @@ function App() {
       {/* 图片列表 */}
       <div className="imglist">
         <Image.PreviewGroup>
-          {item.pic_ids && item.pic_infos && item.pic_ids.map((pic: string) =>
-            item.pic_infos[pic] && (
-              <YImg
-                width={item.pic_ids.length > 1 ? 160 : undefined}
-                height={item.pic_ids.length > 1 ? 160 : undefined}
-                className="img-item"
-                key={pic}
-                src={item.pic_infos[pic].large ? item.pic_infos[pic].large.url : item.pic_infos[pic].bmiddle.url}
-              />
-            )
-          )}
+          {item.pic_ids &&
+            item.pic_infos &&
+            item.pic_ids.map(
+              (pic: string) =>
+                item.pic_infos[pic] && (
+                  <YImg
+                    width={item.pic_ids.length > 1 ? 160 : undefined}
+                    height={item.pic_ids.length > 1 ? 160 : undefined}
+                    className="img-item"
+                    key={pic}
+                    src={
+                      item.pic_infos[pic].large
+                        ? item.pic_infos[pic].large.url
+                        : item.pic_infos[pic].bmiddle.url
+                    }
+                  />
+                )
+            )}
         </Image.PreviewGroup>
       </div>
       {/* 操作栏 */}
@@ -321,7 +377,10 @@ function App() {
           <span className="link">
             <ShareAltOutlined /> {item.reposts_count}
           </span>
-          <span className="link" onClick={() => toggleComments(item.id, item.user.id)}>
+          <span
+            className="link"
+            onClick={() => toggleComments(item.id, item.user.id)}
+          >
             <MessageOutlined /> {item.comments_count}
           </span>
           <span className="link">
