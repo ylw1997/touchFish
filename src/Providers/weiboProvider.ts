@@ -1,14 +1,14 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-06-12 11:22:05
+ * @LastEditTime: 2025-06-12 15:30:56
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
  */
 import { WebviewView, WebviewViewProvider, ExtensionContext, Uri, window } from 'vscode';
-import { getLongText, getUserWeibo, getWeiboComment, getWeiboData, getWeiboImg } from '../api/weibo';
+import { followUser, getLongText, getUserWeibo, getWeiboComment, getWeiboData, getWeiboImg } from '../api/weibo';
 import { commandsType, weiboAJAX } from '../../type';
 import { setConfigByKey } from '../config';
 export class WeiboProvider implements WebviewViewProvider {
@@ -96,6 +96,18 @@ export class WeiboProvider implements WebviewViewProvider {
             const res = await getUserWeibo(message.payload);
             webviewView.webview.postMessage({
               command: `SENDUSERBLOG`,
+              payload: {
+                payload: message.payload,
+                ...res.data
+              }
+            } as commandsType<weiboAJAX>)
+            break;
+          }
+        case "GETFOLLOW":
+          {
+            const res = await followUser(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDFOLLOW`,
               payload: {
                 payload: message.payload,
                 ...res.data

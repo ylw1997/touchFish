@@ -8,7 +8,7 @@
  * @Description: 
  */
 export type commandsType<T> = {
-  command: "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG",
+  command: "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG"|'GETFOLLOW'|'SENDFOLLOW',
   payload: T
 };
 
@@ -64,6 +64,10 @@ export type weiboItem = {
   attitudes_count:number; // 赞
   pic_num: number;
   comments?:commentsItem[] // 评论
+  followBtnCode?:{ //  关注按钮
+    followcardid:string;
+    uid:string;
+  }
 }
 
 

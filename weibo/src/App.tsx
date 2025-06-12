@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-12 14:21:39
+ * @LastEditTime: 2025-06-12 15:48:16
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import {
   Avatar,
+  Button,
   Card,
   Divider,
   Flex,
@@ -70,6 +71,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [commitLoading, setCommitLoading] = useState(false);
   const [longTextLoading, setLongTextLoading] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const [total, setTotal] = useState(0);
   // 下次请求开始id
@@ -77,6 +79,8 @@ function App() {
   // 用户博客分页
   const [curUserId, setCurUserId] = useState<number>();
   const [userWeiboPage, setUserWeiboPage] = useState<number>(1);
+  // 当前blogId
+  const [curBlogId, setCurBlogId] = useState<number>();
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -205,6 +209,33 @@ function App() {
           }
           break;
         }
+        case "SENDFOLLOW": {
+          messageApi.destroy("GETFOLLOW");
+          setFollowLoading(false);
+          if (msg.payload) {
+            console.log("SENDFOLLOW",msg.payload);
+            if (msg.payload.ok) {
+              message.success("关注成功!");
+              // 根据id在list中找到对应的item
+              if (curBlogId) {
+                setList(
+                  list.map((item) => {
+                    if (item.id === curBlogId) {
+                      return {
+                        ...item,
+                        followBtnCode: undefined,
+                      };
+                    }
+                    return item;
+                  })
+                );
+              }
+            } else {
+              message.error("数据请求失败!", msg.payload.ok);
+            }
+          }
+          break;
+        }
       }
     }
   };
@@ -222,7 +253,7 @@ function App() {
         content: "加载中...",
         duration: 0,
       });
-      const page  = userWeiboPage +1;
+      const page = userWeiboPage + 1;
       const paramsStr = JSON.stringify({
         uid: curUserId,
         page,
@@ -346,6 +377,26 @@ function App() {
     };
     vscode.postMessage(message);
   };
+
+  // 关注博主
+  const followUser = (uid: string, blogId: number) => {
+    if (followLoading) {
+      return;
+    }
+    setFollowLoading(true);
+    setCurBlogId(blogId);
+    messageApi.open({
+      key: "GETFOLLOW",
+      type: "loading",
+      content: "加载中...",
+      duration: 0,
+    });
+    const message: commandsType<string> = {
+      command: "GETFOLLOW",
+      payload: uid,
+    };
+    vscode.postMessage(message);
+  };
   // 清空
   const clear = () => {
     setList([]);
@@ -426,6 +477,19 @@ function App() {
                         </div>
                       </div>
                     </Space>
+                    {item.followBtnCode ? (
+                      <Button
+                        color="primary"
+                        onClick={() =>
+                          followUser(item.followBtnCode!.uid, item.id)
+                        }
+                        variant="filled"
+                      >
+                        关注
+                      </Button>
+                    ) : (
+                      <></>
+                    )}
                   </Flex>
                 }
               >

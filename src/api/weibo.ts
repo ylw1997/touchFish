@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-06-12 14:06:25
+ * @LastEditTime: 2025-06-12 16:40:17
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -10,6 +10,15 @@
 import axios from "axios";
 import * as vscode from 'vscode';
 import { setConfigByKey } from "../config";
+
+axios.interceptors.response.use((value) => {
+  console.log("Weibo API Response:", value);
+  return value;
+},
+  (error) => {
+    console.log("Weibo API Error:", error);
+  }
+)
 
 export const getOrSetWeiboCookie = async () => {
   const config = vscode.workspace.getConfiguration('touchfish');
@@ -74,11 +83,28 @@ export const getLongText = async (id: string) => {
 export const getUserWeibo = async (params: string) => {
   const cookie = await getOrSetWeiboCookie() as string;
   const parsedParams = JSON.parse(params);
-  console.log("getUserWeibo",parsedParams);
+  console.log("getUserWeibo", parsedParams);
   return await axios.get(`https://weibo.com/ajax/statuses/mymblog?uid=${parsedParams.uid}&page=${parsedParams.page}&feature=0`, {
     headers: {
       "Cookie": cookie,
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+    }
+  })
+}
+
+// 关注博主 https://weibo.com/ajax/friendships/create friend_uid
+export const followUser = async (friend_uid: string) => {
+  const cookie = await getOrSetWeiboCookie() as string;
+  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? '';
+  return await axios.post(`https://weibo.com/ajax/friendships/create`, {
+    friend_uid: friend_uid+'',
+      lpage: "homeRecom",
+      page: "profile"
+  },{
+    headers: {
+      "Cookie": cookie,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+      'X-Xsrf-Token': xsrf,
     }
   })
 }
