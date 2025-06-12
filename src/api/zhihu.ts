@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-03-06 15:08:07
+ * @LastEditTime: 2025-04-15 09:53:48
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description: 
@@ -41,18 +41,18 @@ export const getZhihuList = async () => {
   const resArr: NewsItem[] = [];
   try {
     const cookie = await getOrSetZhihuCookie() as string;
-    let resList: { target: { question: { title: string; id: string; } } }[] = [];
+    let resList: { target: { question: { title?: string; id: string; } } }[] = [];
     // 判断resList长度是否大于 showNewsNumber,如果大于则截取,小于则继续请求
     if (showNewsNumber) {
       while (resList.length < showNewsNumber) {
         const res = await getZhihuData(cookie)
-        resList = resList.concat(res.data.data);
+        resList = resList.concat(res.data.data).filter((item) => !!item.target.question);
       }
     }
     resList.forEach((element: { target: { question: { title?: string; id: string; } } }) => {
       resArr.push({
-        title: element.target.question.title ?? "",
-        url: element.target.question.id,
+        title: element.target.question?.title ?? "",
+        url: element.target.question?.id,
       });
     });
     return resArr;
@@ -97,3 +97,17 @@ export const getZhihuNewsDetail = async (url: string): Promise<ZhihuAnswers[]> =
     return []
   }
 };
+
+export const getZhihuItemDetail = async (id:string)=>{
+  const cookie = await getOrSetZhihuCookie() as string;
+  const { data } = await axios.get(
+    `https://www.zhihu.com/question/${id}`, {
+      headers: {
+        "Cookie": cookie,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
+      },
+    }
+  );
+  return data
+}
