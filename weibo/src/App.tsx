@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-12 18:04:28
+ * @LastEditTime: 2025-06-16 15:00:08
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -249,8 +249,8 @@ function App() {
   // 查看博主微博
   const getUserBlog = (screen_name: string, id: number) => {
     if (loading) return;
-    setPrevList(list)
-    setPrevTabs(activeKey)
+    setPrevList(list);
+    setPrevTabs(activeKey);
     setScrollTop(document.documentElement.scrollTop || document.body.scrollTop);
     setCurUserId(id);
     setUserWeiboPage(1);
@@ -307,6 +307,7 @@ function App() {
           <Space>
             <Avatar
               size={40}
+              style={{ border: "none" }}
               src={<YImg useImg src={item.user.avatar_large} />}
             />
             <div>

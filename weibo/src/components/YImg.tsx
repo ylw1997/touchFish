@@ -1,13 +1,13 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 17:38:50
- * @LastEditTime: 2024-11-22 10:46:18
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-06-16 15:01:49
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { vscode } from "../utils/vscode";
 import { commandsType } from "../../../type";
 import { Image } from "antd";
@@ -19,36 +19,59 @@ interface YImgProps {
 }
 
 const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
-  const [imgSrc, setImgSrc] = useState<string | undefined>(src);
+  const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
+  const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (src) {
-      vscode.postMessage({
-        command: "GETIMG",
-        payload: src,
-      } as commandsType<string>);
-
-      window.addEventListener(
-        "message",
-        async (event: MessageEvent<commandsType<any>>) => {
-          const msg = event.data;
-          switch (msg.command) {
-            case `SENDIMG:${src}`: {
-              if (msg.payload) {
-                setImgSrc(msg.payload);
-              }
-              break;
-            }
+    const currentRef = imgRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && src) {
+            // 图片进入视口时加载
+            vscode.postMessage({
+              command: "GETIMG",
+              payload: src,
+            } as commandsType<string>);
+            // 停止观察
+            observer.unobserve(entry.target);
           }
-        }
-      );
-    }
-  }, []);
+        });
+      },
+      {
+        threshold: 0.1, // 当10%的元素可见时触发
+      }
+    );
 
-  return useImg ? (
-    <img src={imgSrc} {...props} />
-  ) : (
-    <Image src={imgSrc} {...props} />
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    const messageHandler = async (event: MessageEvent<commandsType<any>>) => {
+      const msg = event.data;
+      if (msg.command === `SENDIMG:${src}` && msg.payload) {
+        setImgSrc(msg.payload);
+      }
+    };
+
+    window.addEventListener("message", messageHandler);
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+      window.removeEventListener("message", messageHandler);
+    };
+  }, [src]);
+
+  return (
+    <div style={{ height: "inherit", display: "inline-block" }} ref={imgRef}>
+      {useImg ? (
+        <img src={imgSrc} {...props} />
+      ) : (
+        <Image src={imgSrc} {...props} />
+      )}
+    </div>
   );
 };
 
