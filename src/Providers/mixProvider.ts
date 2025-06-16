@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:21:22
- * @LastEditTime: 2024-11-12 10:05:37
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-06-16 14:19:11
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\mixProvider.ts
  * @Description: 
  */
@@ -14,7 +14,6 @@ import { NewsItem } from '../type/type';
 import { defaultHupuTab, defaultMixTab, defaultNgaTab, defaultV2exTab } from '../data/context';
 import { getNgaList } from '../api/nga';
 import * as vscode from 'vscode';
-import { getZhihuList } from '../api/zhihu';
 import { getHupuList } from '../api/hupu';
 import { getV2exList } from '../api/v2ex';
 import { getCLSNewsList } from '../api/cls';
@@ -45,12 +44,6 @@ export class MixProvider implements TreeDataProvider<TreeItem> {
             const ngaTabValue = (vscode.workspace.getConfiguration('touchfish').get('ngaTab') || ngaTab || defaultNgaTab) as string;
             const resNga = await getNgaList(ngaTabValue);
             formattedNews = formatData(resNga, "nga.openUrl").slice(0, showNewsNumber);
-            break;
-          }
-        case "zhihu":
-          {
-            const resZhihu = await getZhihuList();
-            formattedNews = formatData(resZhihu, "zhihu.openUrl").slice(0, showNewsNumber);
             break;
           }
         case "hupu":

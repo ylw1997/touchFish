@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-24 16:18:31
- * @LastEditTime: 2024-10-31 14:23:31
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-06-16 15:04:45
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\commands.ts
  * @Description: 
  */
@@ -101,7 +101,7 @@ export const changeMixTab = (mixProvider:MixProvider)=>{
       {label:"HUPU虎扑",description:"hupu"},
       {label:"CH芯域",description:"chiphell"},
       {label:"V2EX",description:"v2ex"},
-      {label:"ZHIHU知乎",description:"zhihu"},
+      // {label:"ZHIHU知乎",description:"zhihu"},
       {label:"CLS财联社",description:"cls"},
     ])
     if(tab){
