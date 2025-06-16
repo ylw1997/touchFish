@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-16 15:56:45
+ * @LastEditTime: 2025-06-16 17:03:13
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -298,107 +298,121 @@ function App() {
   };
 
   // 渲染微博卡片
-  const renderCard = (item: weiboItem) => (
-    <Card
-      key={item.id}
-      title={
-        <Flex justify="space-between" align="center">
-          <Space>
-            <Avatar
-              size={40}
-              style={{ border: "none" }}
-              src={<YImg useImg src={item.user.avatar_large} />}
-            />
-            <div>
-              <span
-                className={activeKey !== "userblog" ? "nick-name" : ""}
-                onClick={() => {
-                  if (activeKey !== "userblog")
-                    getUserBlog(item.user.screen_name, item.user.id);
-                }}
-              >
-                {item.user.screen_name}
-              </span>
-              <div className="info">
-                <span>{dayjs(item.created_at).fromNow()}</span>{" "}
-                <span>{item.region_name?.replace("发布于", "")}</span>
+  const renderCard = (item: weiboItem, is_child: boolean = false) => {
+    const defaultWidthHeight = is_child ? 140 : 160;
+    const defaultAvatarSize = is_child ? 32 : 40;
+    const defaultFontSize = is_child ? 14 : 16;
+    return (
+      <Card
+        key={item.id}
+        title={
+          <Flex justify="space-between" align="center">
+            <Space>
+              <Avatar
+                size={defaultAvatarSize}
+                style={{ border: "none" }}
+                src={<YImg useImg src={item.user.avatar_large} />}
+              />
+              <div>
+                <span
+                  className={activeKey !== "userblog" ? "nick-name" : ""}
+                  style={{ fontSize: defaultFontSize }}
+                  onClick={() => {
+                    if (activeKey !== "userblog")
+                      getUserBlog(item.user.screen_name, item.user.id);
+                  }}
+                >
+                  {item.user.screen_name}
+                </span>
+                <div className="info">
+                  <span>{dayjs(item.created_at).fromNow()}</span>{" "}
+                  <span>{item.region_name?.replace("发布于", "")}</span>
+                </div>
               </div>
-            </div>
-          </Space>
-          {item.followBtnCode && (
-            <Button
-              color="primary"
-              onClick={() => followUser(item.followBtnCode!.uid, item.id)}
-              variant="filled"
-            >
-              关注
-            </Button>
-          )}
-        </Flex>
-      }
-    >
-      {/* 微博正文 */}
-      <div
-        className="content"
-        dangerouslySetInnerHTML={{ __html: item.text }}
-        onClick={(e) => {
-          if (
-            e.target instanceof HTMLSpanElement &&
-            e.target.classList.contains("expand")
-          ) {
-            expandLongWeibo(item.mblogid);
-          }
-        }}
-      ></div>
-      {/* 图片列表 */}
-      <div className="imglist">
-        <Image.PreviewGroup>
-          {item.pic_ids &&
-            item.pic_infos &&
-            item.pic_ids.map(
-              (pic: string) =>
-                item.pic_infos[pic] && (
-                  <YImg
-                    width={item.pic_ids.length > 1 ? 160 : undefined}
-                    height={item.pic_ids.length > 1 ? 160 : undefined}
-                    className="img-item"
-                    key={pic}
-                    src={
-                      item.pic_infos[pic].large
-                        ? item.pic_infos[pic].large.url
-                        : item.pic_infos[pic].bmiddle.url
-                    }
-                  />
-                )
+            </Space>
+            {item.followBtnCode && (
+              <Button
+                color="primary"
+                onClick={() => followUser(item.followBtnCode!.uid, item.id)}
+                variant="filled"
+              >
+                关注
+              </Button>
             )}
-        </Image.PreviewGroup>
-      </div>
-      {/* 操作栏 */}
-      <div className="info mt10">
-        <Flex justify="space-around" align="center">
-          <span className="link">
-            <ShareAltOutlined /> {item.reposts_count}
-          </span>
-          <span
-            className="link"
-            onClick={() => toggleComments(item.id, item.user.id)}
-          >
-            <MessageOutlined /> {item.comments_count}
-          </span>
-          <span className="link">
-            <HeartOutlined /> {item.attitudes_count}
-          </span>
-        </Flex>
-      </div>
-      {/* 评论区 */}
-      {item.comments && (
-        <>
-          <Divider />
-          {renderComments(item.comments)}
-        </>
-      )}
-    </Card>
-  );
+          </Flex>
+        }
+      >
+        {/* 微博正文 */}
+        <div
+          className="content"
+          dangerouslySetInnerHTML={{ __html: item.text }}
+          onClick={(e) => {
+            if (
+              e.target instanceof HTMLSpanElement &&
+              e.target.classList.contains("expand")
+            ) {
+              expandLongWeibo(item.mblogid);
+            }
+          }}
+        ></div>
+        {/* 图片列表 */}
+        {item.pic_infos && item.pic_ids && (
+          <div className="imglist">
+            <Image.PreviewGroup>
+              {item.pic_ids.map(
+                (pic: string) =>
+                  item.pic_infos[pic] && (
+                    <YImg
+                      width={
+                        item.pic_ids.length > 1 ? defaultWidthHeight : undefined
+                      }
+                      height={
+                        item.pic_ids.length > 1 ? defaultWidthHeight : undefined
+                      }
+                      className="img-item"
+                      key={pic}
+                      src={
+                        item.pic_infos[pic].large
+                          ? item.pic_infos[pic].large.url
+                          : item.pic_infos[pic].bmiddle.url
+                      }
+                    />
+                  )
+              )}
+            </Image.PreviewGroup>
+          </div>
+        )}
+        {/* 转发微博 */}
+        {item.retweeted_status && renderCard(item.retweeted_status, true)}
+        {/* 操作栏 */}
+        {!is_child && (
+          <div className="info mt10">
+            <Flex justify="space-around" align="center">
+              <span className="link">
+                <ShareAltOutlined /> {item.reposts_count}
+              </span>
+              <span
+                className="link"
+                onClick={() => toggleComments(item.id, item.user.id)}
+              >
+                <MessageOutlined /> {item.comments_count}
+              </span>
+              <span className="link">
+                <HeartOutlined /> {item.attitudes_count}
+              </span>
+            </Flex>
+          </div>
+        )}
+        {/* 评论区 */}
+        {item.comments && (
+          <>
+            <Divider />
+            {renderComments(item.comments)}
+          </>
+        )}
+      </Card>
+    );
+  };
 
   return (
     <>
@@ -422,7 +436,7 @@ function App() {
           endMessage={<Divider plain>没有了🤐</Divider>}
           hasMore={list.length < total}
         >
-          {list?.map(renderCard)}
+          {list?.map((item) => renderCard(item, false))}
         </InfiniteScroll>
       </div>
       <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>

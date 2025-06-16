@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-06-12 11:20:28
+ * @LastEditTime: 2025-06-16 16:31:13
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -70,6 +70,7 @@ export type weiboItem = {
     followcardid:string;
     uid:string;
   }
+  retweeted_status?:weiboItem // 转发微博
 }
 
 
