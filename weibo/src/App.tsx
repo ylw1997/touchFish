@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-16 15:00:08
+ * @LastEditTime: 2025-06-16 15:56:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -94,7 +94,7 @@ function App() {
     const handleError = (payload: any) =>
       messageApi.error("数据请求失败!", payload?.ok);
 
-    switch (msg.command) {
+    switch (msg.command as CommandList) {
       case "SENDDATA": {
         setLoading(false);
         messageApi.destroy("GETDATA");
@@ -258,7 +258,6 @@ function App() {
     clearList();
     setTabs([...tabs, { key: `userblog`, label: `${screen_name}` }]);
     setActiveKey(`userblog`);
-    setLoading(true);
     sendMessage("GETUSERBLOG", JSON.stringify({ uid: id, page: 1 }));
   };
 
