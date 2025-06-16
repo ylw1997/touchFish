@@ -1,5 +1,9 @@
 import { Avatar, Button, Card, Divider, Flex, Image, Space } from "antd";
-import { HeartOutlined, MessageOutlined, ShareAltOutlined } from "@ant-design/icons";
+import {
+  HeartOutlined,
+  MessageOutlined,
+  ShareAltOutlined,
+} from "@ant-design/icons";
 import { weiboItem } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
@@ -91,8 +95,16 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
               (pic: string) =>
                 item.pic_infos[pic] && (
                   <YImg
-                    width={item.pic_ids.length > 1 ? defaultImgWidthHeight : undefined}
-                    height={item.pic_ids.length > 1 ? defaultImgWidthHeight : undefined}
+                    width={
+                      item.pic_ids.length > 1
+                        ? defaultImgWidthHeight
+                        : undefined
+                    }
+                    height={
+                      item.pic_ids.length > 1
+                        ? defaultImgWidthHeight
+                        : undefined
+                    }
                     className="img-item"
                     key={pic}
                     src={
@@ -119,33 +131,31 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         />
       )}
       {/* 操作栏 */}
-      {!is_child && (
-        <div className="info mt10">
-          <Flex justify="space-around" align="center">
-            <span className="link">
-              <ShareAltOutlined /> {item.reposts_count}
-            </span>
-            <span
-              className="link"
-              onClick={() => onToggleComments?.(item.id, item.user.id)}
-            >
-              <MessageOutlined /> {item.comments_count}
-            </span>
-            <span className="link">
-              <HeartOutlined /> {item.attitudes_count}
-            </span>
-          </Flex>
-        </div>
-      )}
+      <div className="info mt10">
+        <Flex justify="space-around" align="center">
+          <span className="link">
+            <ShareAltOutlined /> {item.reposts_count}
+          </span>
+          <span
+            className="link"
+            onClick={() => onToggleComments?.(item.id, item.user.id)}
+          >
+            <MessageOutlined /> {item.comments_count}
+          </span>
+          <span className="link">
+            <HeartOutlined /> {item.attitudes_count}
+          </span>
+        </Flex>
+      </div>
       {/* 评论区 */}
       {item.comments && (
         <>
           <Divider />
-          {renderComments(item.comments)}
+          {renderComments(item.comments, is_child)}
         </>
       )}
     </Card>
   );
 };
 
-export default WeiboCard; 
+export default WeiboCard;

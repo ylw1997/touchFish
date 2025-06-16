@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-16 17:09:31
+ * @LastEditTime: 2025-06-16 18:09:59
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -9,14 +9,7 @@
  */
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  Divider,
-  FloatButton,
-  message,
-  Skeleton,
-  Tabs,
-} from "antd";
+import { Card, Divider, FloatButton, message, Skeleton, Tabs } from "antd";
 import { vscode } from "./utils/vscode";
 import { CommandList, commandsType, weiboAJAX, weiboItem } from "../.././type";
 import "./style/index.less";
@@ -111,9 +104,22 @@ function App() {
           const { id } = (msg.payload as any).payload;
           const data = msg.payload.data;
           setList(
-            list.map((item) =>
-              item.id === id ? { ...item, comments: data } : item
-            )
+            list.map((item) => {
+              if (item.id == id) {
+                return { ...item, comments: data };
+              } else {
+                // 筛选包含retweeted_status的微博,找到retweeted_status的id,然后更新retweeted_status的comments
+                const retweeted_status = item.retweeted_status;
+                if (retweeted_status && retweeted_status.id == id) {
+                  return {
+                    ...item,
+                    retweeted_status: { ...retweeted_status, comments: data },
+                  };
+                } else {
+                  return item;
+                }
+              }
+            })
           );
         } else {
           handleError(msg.payload);
@@ -130,9 +136,21 @@ function App() {
             "<br/>"
           );
           setList(
-            list.map((item) =>
-              item.mblogid === mblogid ? { ...item, text } : item
-            )
+            list.map((item) => {
+              if (item.mblogid === mblogid) {
+                return { ...item, text };
+              } else {
+                const retweeted_status = item.retweeted_status;
+                if (retweeted_status && retweeted_status.mblogid === mblogid) {
+                  return {
+                    ...item,
+                    retweeted_status: { ...retweeted_status, text },
+                  };
+                } else {
+                  return item;
+                }
+              }
+            })
           );
         } else {
           handleError(msg.payload);

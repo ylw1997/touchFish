@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-03-07 10:34:40
+ * @LastEditTime: 2025-06-16 18:16:08
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -12,7 +12,8 @@ import { commentsItem } from "../../../type";
 import YImg from "./YImg";
 
 // 渲染评论
-export const renderComments = (comments: commentsItem[]) => {
+export const renderComments = (comments: commentsItem[],is_child = false) => {
+  const defaultAvatarSize = is_child ? 32 : 40;
   return (
     <List
       itemLayout="horizontal"
@@ -22,7 +23,7 @@ export const renderComments = (comments: commentsItem[]) => {
           <List.Item.Meta
             avatar={
               <Avatar
-                size={40}
+                size={defaultAvatarSize}
                 src={<YImg useImg src={item.user.avatar_large} />}
               />
             }
@@ -33,7 +34,7 @@ export const renderComments = (comments: commentsItem[]) => {
                   className="content"
                   dangerouslySetInnerHTML={{ __html: item.text }}
                 ></div>
-                {item.comments && item.comments.length > 0 && renderComments(item.comments)}
+                {item.comments && item.comments.length > 0 && renderComments(item.comments,is_child)}
               </>
             }
           />
