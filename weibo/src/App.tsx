@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-17 11:27:01
+ * @LastEditTime: 2025-06-17 17:51:16
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -9,9 +9,24 @@
  */
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Card, Divider, FloatButton, message, Skeleton, Tabs } from "antd";
+import {
+  Card,
+  Divider,
+  FloatButton,
+  message,
+  Skeleton,
+  Tabs,
+  Drawer,
+  Avatar,
+} from "antd";
 import { vscode } from "./utils/vscode";
-import { CommandList, commandsType, weiboAJAX, weiboItem } from "../.././type";
+import {
+  CommandList,
+  commandsType,
+  weiboAJAX,
+  weiboItem,
+  weiboUser,
+} from "../.././type";
 import "./style/index.less";
 import { RedoOutlined } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -19,6 +34,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
 import WeiboCard from "./components/WeiboCard";
+import YImg from "./components/YImg";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -37,18 +53,17 @@ const defTab = [
 function App() {
   // 状态管理
   const [list, setList] = useState<weiboItem[]>([]);
-  const [tabs, setTabs] = useState(defTab);
+  const [tabs] = useState(defTab);
   const [loading, setLoading] = useState(false);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const [total, setTotal] = useState(0);
   const [max_id, setMaxId] = useState<number>();
-  const [curUserId, setCurUserId] = useState<number>();
-  const [userWeiboPage, setUserWeiboPage] = useState<number>(1);
+  const [userWeiboPage, setUserWeiboPage] = useState<number>(0);
   const [curBlogId, setCurBlogId] = useState<number>();
   const [messageApi, contextHolder] = message.useMessage();
-  const [prevTabs, setPrevTabs] = useState<string>("");
-  const [prevList, setPrevList] = useState<weiboItem[]>([]);
-  const [scrollTop, setScrollTop] = useState<number>(0);
+  const [userDetailVisible, setUserDetailVisible] = useState(false);
+  const [userDetail, setUserDetail] = useState<weiboUser>();
+  const [userWeiboList, setUserWeiboList] = useState<weiboItem[]>([]);
 
   // 通用更新list工具
   const updateList = useCallback(
@@ -59,8 +74,14 @@ function App() {
       setList((list) =>
         list.map((item) => {
           if (matcher(item)) return updater(item);
-          if (item.retweeted_status && matcher(item.retweeted_status as weiboItem)) {
-            return { ...item, retweeted_status: updater(item.retweeted_status as weiboItem) };
+          if (
+            item.retweeted_status &&
+            matcher(item.retweeted_status as weiboItem)
+          ) {
+            return {
+              ...item,
+              retweeted_status: updater(item.retweeted_status as weiboItem),
+            };
           }
           return item;
         })
@@ -72,7 +93,13 @@ function App() {
   // 统一发送消息
   const sendMessage = useCallback(
     (command: CommandList, payload: any) => {
-      messageApi.open({ key: command, type: "loading", content: "加载中...", duration: 0 });
+      console.log("sendMessage", command, payload);
+      messageApi.open({
+        key: command,
+        type: "loading",
+        content: "加载中...",
+        duration: 0,
+      });
       vscode.postMessage({ command, payload });
     },
     [messageApi]
@@ -90,7 +117,12 @@ function App() {
           setList(wlist);
           setTotal(wtotal);
           setMaxId(payload.max_id);
-          vscode.setState({ list: wlist, max_id: payload.max_id, total: wtotal, activeKey });
+          vscode.setState({
+            list: wlist,
+            max_id: payload.max_id,
+            total: wtotal,
+            activeKey,
+          });
         } else {
           messageApi.error("数据请求失败!", payload?.ok);
         }
@@ -101,7 +133,10 @@ function App() {
         if (payload?.ok) {
           const { id } = payload.payload;
           const data = payload.data;
-          updateList((item) => item.id === id, (item) => ({ ...item, comments: data }));
+          updateList(
+            (item) => item.id === id,
+            (item) => ({ ...item, comments: data })
+          );
         } else {
           messageApi.error("评论请求失败!", payload?.ok);
         }
@@ -112,7 +147,10 @@ function App() {
         if (payload?.ok) {
           const mblogid = payload.payload;
           const text = payload.data.longTextContent.replace(/\n/g, "<br/>");
-          updateList((item) => item.mblogid === mblogid, (item) => ({ ...item, text }));
+          updateList(
+            (item) => item.mblogid === mblogid,
+            (item) => ({ ...item, text })
+          );
         } else {
           messageApi.error("长文本请求失败!", payload?.ok);
         }
@@ -121,9 +159,9 @@ function App() {
         messageApi.destroy("GETUSERBLOG");
         setLoading(false);
         if (payload?.ok) {
-          const wlist = [...list, ...payload.data.list];
+          const wlist = [...userWeiboList, ...payload.data.list];
           const wtotal = payload.data?.total ?? 999;
-          setList(wlist);
+          setUserWeiboList(wlist);
           setTotal(wtotal);
         } else {
           messageApi.error("用户微博请求失败!", payload?.ok);
@@ -135,14 +173,17 @@ function App() {
         if (payload?.ok) {
           messageApi.success("关注成功!");
           if (curBlogId) {
-            updateList((item) => item.id === curBlogId, (item) => ({ ...item, followBtnCode: undefined }));
+            updateList(
+              (item) => item.id === curBlogId,
+              (item) => ({ ...item, followBtnCode: undefined })
+            );
           }
         } else {
           messageApi.error("关注请求失败!", payload?.ok);
         }
       },
     }),
-    [list, activeKey, curBlogId, messageApi, updateList]
+    [list, activeKey, curBlogId, messageApi, updateList, userWeiboList]
   );
 
   // 统一处理消息响应
@@ -150,7 +191,9 @@ function App() {
     const handler = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
       if (ev.type !== "message") return;
       const msg = ev.data;
-      const fn = (handlers as Record<string, (payload: any) => void>)[msg.command as string];
+      const fn = (handlers as Record<string, (payload: any) => void>)[
+        msg.command as string
+      ];
       fn?.(msg.payload);
     };
     window.addEventListener("message", handler);
@@ -175,15 +218,12 @@ function App() {
   const fetchData = useCallback(() => {
     if (loading) return;
     setLoading(true);
-    if (activeKey === "userblog") {
-      const page = userWeiboPage + 1;
-      setUserWeiboPage(page);
-      sendMessage("GETUSERBLOG", JSON.stringify({ uid: curUserId, page }));
-    } else {
-      const payload = max_id && activeKey !== defTab[0].key ? `${activeKey}&max_id=${max_id}` : activeKey;
-      sendMessage("GETDATA", payload);
-    }
-  }, [loading, activeKey, userWeiboPage, curUserId, max_id, sendMessage]);
+    const payload =
+      max_id && activeKey !== defTab[0].key
+        ? `${activeKey}&max_id=${max_id}`
+        : activeKey;
+    sendMessage("GETDATA", payload);
+  }, [loading, activeKey, max_id, sendMessage]);
 
   // 清空列表
   const clearList = useCallback(() => {
@@ -197,12 +237,19 @@ function App() {
     (id: number, uid: number) => {
       const citem = list.find((item) => item.id === id);
       if (citem?.comments) {
-        updateList((item) => item.id === id, (item) => ({ ...item, comments: undefined }));
+        updateList(
+          (item) => item.id === id,
+          (item) => ({ ...item, comments: undefined })
+        );
         return;
       }
       if (loading) return;
       setLoading(true);
-      sendMessage("GETCOMMENT", { url: `/statuses/buildComments?id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`, id, uid });
+      sendMessage("GETCOMMENT", {
+        url: `/statuses/buildComments?id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`,
+        id,
+        uid,
+      });
     },
     [list, loading, sendMessage, updateList]
   );
@@ -219,20 +266,16 @@ function App() {
 
   // 查看博主微博
   const getUserBlog = useCallback(
-    (screen_name: string, id: number) => {
+    (userInfo: weiboUser) => {
       if (loading) return;
-      setPrevList(list);
-      setPrevTabs(activeKey);
-      setScrollTop(document.documentElement.scrollTop || document.body.scrollTop);
-      setCurUserId(id);
+      setUserDetail(userInfo);
+      setUserDetailVisible(true);
       setUserWeiboPage(1);
+      setUserWeiboList([]); // 新增：清空用户微博列表
       setLoading(true);
-      clearList();
-      setTabs([...tabs, { key: `userblog`, label: `${screen_name}` }]);
-      setActiveKey(`userblog`);
-      sendMessage("GETUSERBLOG", JSON.stringify({ uid: id, page: 1 }));
+      sendMessage("GETUSERBLOG", JSON.stringify({ uid: userInfo.id, page: 1 }));
     },
-    [loading, list, activeKey, tabs, sendMessage, clearList]
+    [loading, sendMessage]
   );
 
   // 关注博主
@@ -250,28 +293,104 @@ function App() {
   const onChange = useCallback(
     (key: string) => {
       clearList();
-      if (key !== "userblog") {
-        setActiveKey(key);
-        if (tabs.findIndex((item) => item.key === "userblog") !== -1) {
-          setTabs(defTab);
-          setUserWeiboPage(1);
-          document.documentElement.scrollTop = scrollTop;
-        }
-        if (key === prevTabs) {
-          setList(prevList);
-          setPrevList([]);
-          setPrevTabs("");
-          return;
-        }
-        sendMessage("GETDATA", key);
-      }
+      setActiveKey(key);
+      sendMessage("GETDATA", key);
     },
-    [clearList, tabs, scrollTop, prevTabs, prevList, sendMessage]
+    [clearList, sendMessage]
   );
 
+  const getUserBlogFunc = () => {
+    if (!loading && userDetail)
+      sendMessage(
+        "GETUSERBLOG",
+        JSON.stringify({
+          uid: userDetail.id,
+          page: userWeiboPage + 1,
+        })
+      );
+  };
   return (
     <>
       {contextHolder}
+      <Drawer
+        closable
+        open={userDetailVisible}
+        onClose={() => {
+          setUserDetailVisible(false);
+          setUserWeiboList([]);
+          setUserDetail(undefined);
+        }}
+        title={userDetail?.screen_name}
+        placement="bottom"
+        height="calc(100vh - 200px)"
+        loading={loading}
+        styles={{
+          body: {
+            padding: 0,
+            height: "100%",
+            minHeight: 0,
+            overflow: "auto",
+          },
+        }}
+      >
+        {userDetail && (
+          <div
+            id="user-blog"
+            style={{
+              height: "100%",
+              minHeight: 0,
+              overflow: "auto",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 16,
+              }}
+            >
+              <Avatar
+                size={80}
+                style={{ marginTop: 16 }}
+                src={<YImg useImg src={userDetail.avatar_large} />}
+              />
+              <div style={{ fontSize: 20, fontWeight: 500 }}>
+                {userDetail.screen_name}
+              </div>
+            </div>
+            <div style={{ width: "100%", marginTop: 24 }}>
+              <InfiniteScroll
+                scrollableTarget="user-blog"
+                dataLength={userWeiboList.length}
+                next={getUserBlogFunc}
+                loader={
+                  <Card>
+                    <Skeleton avatar paragraph={{ rows: 1 }} active />
+                  </Card>
+                }
+                endMessage={<Divider plain>没有了🤐</Divider>}
+                hasMore={userWeiboList.length < total}
+              >
+                {userWeiboList.map((item) => (
+                  <WeiboCard
+                    key={item.id}
+                    item={item}
+                    activeKey={"userblog"}
+                    onUserClick={getUserBlog}
+                    onFollow={followUser}
+                    onExpandLongWeibo={expandLongWeibo}
+                    onToggleComments={toggleComments}
+                  />
+                ))}
+              </InfiniteScroll>
+            </div>
+          </div>
+        )}
+      </Drawer>
       <Tabs
         className="tabs"
         items={tabs}

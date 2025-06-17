@@ -4,7 +4,7 @@ import {
   MessageOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
-import { weiboItem } from "../../../type";
+import { weiboItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
@@ -14,7 +14,7 @@ interface WeiboCardProps {
   item: weiboItem;
   is_child?: boolean;
   activeKey: string;
-  onUserClick?: (screen_name: string, id: number) => void;
+  onUserClick?: (userInfo:weiboUser) => void;
   onFollow?: (uid: string, blogId: number) => void;
   onExpandLongWeibo?: (id: string) => void;
   onToggleComments?: (id: number, uid: number) => void;
@@ -64,7 +64,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             style={titleStyles}
             onClick={() => {
               if (activeKey !== "userblog" && onUserClick) {
-                onUserClick(item.user.screen_name, item.user.id);
+                onUserClick(item.user);
               }
             }}
           >
