@@ -8,6 +8,7 @@ import { weiboItem } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
+import { CSSProperties } from "react";
 
 interface WeiboCardProps {
   item: weiboItem;
@@ -19,6 +20,20 @@ interface WeiboCardProps {
   onToggleComments?: (id: number, uid: number) => void;
 }
 
+// 提取常量配置
+const CARD_CONFIG = {
+  CHILD: {
+    imgSize: 150,
+    avatarSize: 32,
+    fontSize: 14,
+  },
+  PARENT: {
+    imgSize: 160,
+    avatarSize: 40,
+    fontSize: 16,
+  },
+} as const;
+
 const WeiboCard: React.FC<WeiboCardProps> = ({
   item,
   is_child = false,
@@ -28,52 +43,97 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   onExpandLongWeibo,
   onToggleComments,
 }) => {
-  const defaultImgWidthHeight = is_child ? 150 : 160;
-  const defaultAvatarSize = is_child ? 32 : 40;
-  const defaultFontSize = is_child ? 14 : 16;
+  const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
+
+  // 提取样式对象
+  const titleStyles: CSSProperties = {
+    fontSize: config.fontSize,
+  };
+
+  const renderTitle = () => (
+    <Flex justify="space-between" align="center">
+      <Space>
+        <Avatar
+          size={config.avatarSize}
+          style={{ border: "none" }}
+          src={<YImg useImg src={item.user.avatar_large} />}
+        />
+        <div>
+          <span
+            className={activeKey !== "userblog" ? "nick-name" : ""}
+            style={titleStyles}
+            onClick={() => {
+              if (activeKey !== "userblog" && onUserClick) {
+                onUserClick(item.user.screen_name, item.user.id);
+              }
+            }}
+          >
+            {item.user.screen_name}
+          </span>
+          <div className="info">
+            <span>{dayjs(item.created_at).fromNow()}</span>{" "}
+            <span>{item.region_name?.replace("发布于", "")}</span>
+          </div>
+        </div>
+      </Space>
+      {item.followBtnCode && (
+        <Button
+          color="primary"
+          onClick={() => onFollow?.(item.followBtnCode!.uid, item.id)}
+          variant="filled"
+        >
+          关注
+        </Button>
+      )}
+    </Flex>
+  );
+
+  const renderImages = () => {
+    if (!item.pic_infos || !item.pic_ids) return null;
+
+    return (
+      <div className="imglist">
+        <Image.PreviewGroup>
+          {item.pic_ids.map((pic: string) => {
+            const picInfo = item.pic_infos[pic];
+            if (!picInfo) return null;
+
+            const imgProps = {
+              width: item.pic_ids.length > 1 ? config.imgSize : undefined,
+              height: item.pic_ids.length > 1 ? config.imgSize : undefined,
+              className: "img-item",
+              key: pic,
+              src: picInfo.large ? picInfo.large.url : picInfo.bmiddle.url,
+            };
+
+            return <YImg {...imgProps} />;
+          })}
+        </Image.PreviewGroup>
+      </div>
+    );
+  };
+
+  const renderActionBar = () => (
+    <div className="info mt10">
+      <Flex justify="space-around" align="center">
+        <span className="link">
+          <ShareAltOutlined /> {item.reposts_count}
+        </span>
+        <span
+          className="link"
+          onClick={() => onToggleComments?.(item.id, item.user.id)}
+        >
+          <MessageOutlined /> {item.comments_count}
+        </span>
+        <span className="link">
+          <HeartOutlined /> {item.attitudes_count}
+        </span>
+      </Flex>
+    </div>
+  );
 
   return (
-    <Card
-      key={item.id}
-      title={
-        <Flex justify="space-between" align="center">
-          <Space>
-            <Avatar
-              size={defaultAvatarSize}
-              style={{ border: "none" }}
-              src={<YImg useImg src={item.user.avatar_large} />}
-            />
-            <div>
-              <span
-                className={activeKey !== "userblog" ? "nick-name" : ""}
-                style={{ fontSize: defaultFontSize }}
-                onClick={() => {
-                  if (activeKey !== "userblog" && onUserClick) {
-                    onUserClick(item.user.screen_name, item.user.id);
-                  }
-                }}
-              >
-                {item.user.screen_name}
-              </span>
-              <div className="info">
-                <span>{dayjs(item.created_at).fromNow()}</span>{" "}
-                <span>{item.region_name?.replace("发布于", "")}</span>
-              </div>
-            </div>
-          </Space>
-          {item.followBtnCode && (
-            <Button
-              color="primary"
-              onClick={() => onFollow?.(item.followBtnCode!.uid, item.id)}
-              variant="filled"
-            >
-              关注
-            </Button>
-          )}
-        </Flex>
-      }
-    >
-      {/* 微博正文 */}
+    <Card key={item.id} title={renderTitle()}>
       <div
         className="content"
         dangerouslySetInnerHTML={{ __html: item.text }}
@@ -86,39 +146,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             onExpandLongWeibo(item.mblogid);
           }
         }}
-      ></div>
-      {/* 图片列表 */}
-      {item.pic_infos && item.pic_ids && (
-        <div className="imglist">
-          <Image.PreviewGroup>
-            {item.pic_ids.map(
-              (pic: string) =>
-                item.pic_infos[pic] && (
-                  <YImg
-                    width={
-                      item.pic_ids.length > 1
-                        ? defaultImgWidthHeight
-                        : undefined
-                    }
-                    height={
-                      item.pic_ids.length > 1
-                        ? defaultImgWidthHeight
-                        : undefined
-                    }
-                    className="img-item"
-                    key={pic}
-                    src={
-                      item.pic_infos[pic].large
-                        ? item.pic_infos[pic].large.url
-                        : item.pic_infos[pic].bmiddle.url
-                    }
-                  />
-                )
-            )}
-          </Image.PreviewGroup>
-        </div>
-      )}
-      {/* 转发微博 */}
+      />
+      {renderImages()}
       {item.retweeted_status && (
         <WeiboCard
           item={item.retweeted_status}
@@ -130,28 +159,11 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           onToggleComments={onToggleComments}
         />
       )}
-      {/* 操作栏 */}
-      <div className="info mt10">
-        <Flex justify="space-around" align="center">
-          <span className="link">
-            <ShareAltOutlined /> {item.reposts_count}
-          </span>
-          <span
-            className="link"
-            onClick={() => onToggleComments?.(item.id, item.user.id)}
-          >
-            <MessageOutlined /> {item.comments_count}
-          </span>
-          <span className="link">
-            <HeartOutlined /> {item.attitudes_count}
-          </span>
-        </Flex>
-      </div>
-      {/* 评论区 */}
+      {renderActionBar()}
       {item.comments && (
         <>
           <Divider />
-          {renderComments(item.comments, is_child)}
+          {renderComments(item.comments, true)}
         </>
       )}
     </Card>

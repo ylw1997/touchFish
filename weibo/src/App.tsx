@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-16 18:09:59
+ * @LastEditTime: 2025-06-17 10:16:57
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -72,126 +72,141 @@ function App() {
   window.onmessage = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
     if (ev.type !== "message") return;
     const msg = ev.data;
-    // 合并错误处理逻辑
-    const handleError = (payload: any) =>
-      messageApi.error("数据请求失败!", payload?.ok);
-
+    
     switch (msg.command as CommandList) {
-      case "SENDDATA": {
-        setLoading(false);
-        messageApi.destroy("GETDATA");
-        if (msg.payload?.ok) {
-          const wlist = [...list, ...msg.payload.statuses];
-          const wtotal = msg.payload.total_number ?? 999;
-          setList(wlist);
-          setTotal(wtotal);
-          setMaxId(msg.payload.max_id);
-          vscode.setState({
-            list: wlist,
-            max_id: msg.payload.max_id,
-            total: wtotal,
-            activeKey,
-          });
-        } else {
-          handleError(msg.payload);
-        }
+      case "SENDDATA":
+        handleSendData(msg.payload);
         break;
-      }
-      case "SENDCOMMENT": {
-        messageApi.destroy("GETCOMMENT");
-        setCommitLoading(false);
-        if (msg.payload?.ok) {
-          const { id } = (msg.payload as any).payload;
-          const data = msg.payload.data;
-          setList(
-            list.map((item) => {
-              if (item.id == id) {
-                return { ...item, comments: data };
-              } else {
-                // 筛选包含retweeted_status的微博,找到retweeted_status的id,然后更新retweeted_status的comments
-                const retweeted_status = item.retweeted_status;
-                if (retweeted_status && retweeted_status.id == id) {
-                  return {
-                    ...item,
-                    retweeted_status: { ...retweeted_status, comments: data },
-                  };
-                } else {
-                  return item;
-                }
-              }
-            })
-          );
-        } else {
-          handleError(msg.payload);
-        }
+      case "SENDCOMMENT":
+        handleSendComment(msg.payload);
         break;
-      }
-      case "SENDLONGTEXT": {
-        messageApi.destroy("GETLONGTEXT");
-        setLongTextLoading(false);
-        if (msg.payload?.ok) {
-          const mblogid = (msg.payload as any).payload;
-          const text = (msg.payload as any).data.longTextContent.replace(
-            /\n/g,
-            "<br/>"
-          );
-          setList(
-            list.map((item) => {
-              if (item.mblogid === mblogid) {
-                return { ...item, text };
-              } else {
-                const retweeted_status = item.retweeted_status;
-                if (retweeted_status && retweeted_status.mblogid === mblogid) {
-                  return {
-                    ...item,
-                    retweeted_status: { ...retweeted_status, text },
-                  };
-                } else {
-                  return item;
-                }
-              }
-            })
-          );
-        } else {
-          handleError(msg.payload);
-        }
+      case "SENDLONGTEXT":
+        handleSendLongText(msg.payload);
         break;
-      }
-      case "SENDUSERBLOG": {
-        messageApi.destroy("GETUSERBLOG");
-        setLoading(false);
-        if (msg.payload?.ok) {
-          const wlist = [...list, ...msg.payload.data.list];
-          const wtotal = msg.payload.data?.total ?? 999;
-          setList(wlist);
-          setTotal(wtotal);
-          // vscode.setState({ list: wlist, max_id: undefined, total: wtotal });
-        } else {
-          handleError(msg.payload);
-        }
+      case "SENDUSERBLOG":
+        handleSendUserBlog(msg.payload);
         break;
-      }
-      case "SENDFOLLOW": {
-        messageApi.destroy("GETFOLLOW");
-        setFollowLoading(false);
-        if (msg.payload?.ok) {
-          messageApi.success("关注成功!");
-          if (curBlogId) {
-            setList(
-              list.map((item) =>
-                item.id === curBlogId
-                  ? { ...item, followBtnCode: undefined }
-                  : item
-              )
-            );
-          }
-        } else {
-          handleError(msg.payload);
-        }
+      case "SENDFOLLOW":
+        handleSendFollow(msg.payload);
         break;
-      }
       default:
         break;
+    }
+  };
+
+  // 处理数据请求响应
+  const handleSendData = (payload: any) => {
+    setLoading(false);
+    messageApi.destroy("GETDATA");
+    if (payload?.ok) {
+      const wlist = [...list, ...payload.statuses];
+      const wtotal = payload.total_number ?? 999;
+      setList(wlist);
+      setTotal(wtotal);
+      setMaxId(payload.max_id);
+      vscode.setState({
+        list: wlist,
+        max_id: payload.max_id,
+        total: wtotal,
+        activeKey,
+      });
+    } else {
+      messageApi.error("数据请求失败!", payload?.ok);
+    }
+  };
+
+  // 处理评论响应
+  const handleSendComment = (payload: any) => {
+    messageApi.destroy("GETCOMMENT");
+    setCommitLoading(false);
+    if (payload?.ok) {
+      const { id } = (payload as any).payload;
+      const data = payload.data;
+      setList(
+        list.map((item) => {
+          if (item.id === id) {
+            return { ...item, comments: data };
+          } else {
+            const retweeted_status = item.retweeted_status;
+            if (retweeted_status && retweeted_status.id === id) {
+              return {
+                ...item,
+                retweeted_status: { ...retweeted_status, comments: data },
+              };
+            } else {
+              return item;
+            }
+          }
+        })
+      );
+    } else {
+      messageApi.error("评论请求失败!", payload?.ok);
+    }
+  };
+
+  // 处理长文本响应
+  const handleSendLongText = (payload: any) => {
+    messageApi.destroy("GETLONGTEXT");
+    setLongTextLoading(false);
+    if (payload?.ok) {
+      const mblogid = (payload as any).payload;
+      const text = (payload as any).data.longTextContent.replace(
+        /\n/g,
+        "<br/>"
+      );
+      setList(
+        list.map((item) => {
+          if (item.mblogid === mblogid) {
+            return { ...item, text };
+          } else {
+            const retweeted_status = item.retweeted_status;
+            if (retweeted_status && retweeted_status.mblogid === mblogid) {
+              return {
+                ...item,
+                retweeted_status: { ...retweeted_status, text },
+              };
+            } else {
+              return item;
+            }
+          }
+        })
+      );
+    } else {
+      messageApi.error("长文本请求失败!", payload?.ok);
+    }
+  };
+
+  // 处理用户微博响应
+  const handleSendUserBlog = (payload: any) => {
+    messageApi.destroy("GETUSERBLOG");
+    setLoading(false);
+    if (payload?.ok) {
+      const wlist = [...list, ...payload.data.list];
+      const wtotal = payload.data?.total ?? 999;
+      setList(wlist);
+      setTotal(wtotal);
+    } else {
+      messageApi.error("用户微博请求失败!", payload?.ok);
+    }
+  };
+
+  // 处理关注响应
+  const handleSendFollow = (payload: any) => {
+    messageApi.destroy("GETFOLLOW");
+    setFollowLoading(false);
+    if (payload?.ok) {
+      messageApi.success("关注成功!");
+      if (curBlogId) {
+        setList(
+          list.map((item) =>
+            item.id === curBlogId
+              ? { ...item, followBtnCode: undefined }
+              : item
+          )
+        );
+      }
+    } else {
+      messageApi.error("关注请求失败!", payload?.ok);
     }
   };
 
