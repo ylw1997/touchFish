@@ -2,8 +2,8 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "ithome,it之家,chiphell,财联社,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件",
-	"version": "4.7.5",
+	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,微博摸鱼聚合插件",
+	"version": "4.8.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -15,8 +15,6 @@
 	"keywords": [
 		"ithome",
 		"it之家",
-		"财联社",
-		"cls",
 		"chiphell",
 		"v2ex",
 		"hupu",
@@ -25,8 +23,6 @@
 		"沉浸式主题",
 		"纯色主题",
 		"摸鱼",
-		"zhihu",
-		"知乎",
 		"微博"
 	],
 	"categories": [
@@ -87,10 +83,6 @@
 				"touchfish.ngaCookie": {
 					"type": "string",
 					"description": "NGA cookie"
-				},
-				"touchfish.zhihuCookie": {
-					"type": "string",
-					"description": "知乎 cookie"
 				}
 			}
 		},
@@ -111,6 +103,7 @@
 		"views": {
 			"explorer": [
 				{
+					"icon": "assets/training.svg",
 					"type": "tree",
 					"id": "mixView",
 					"name": "TouchFish置顶频道"
@@ -118,6 +111,7 @@
 			],
 			"weibo": [
 				{
+					"icon": "assets/weibo.svg",
 					"type": "webview",
 					"name": "微博",
 					"id": "weibo"
@@ -131,10 +125,6 @@
 				{
 					"name": "chipHell",
 					"id": "view.chiphellList"
-				},
-				{
-					"name": "财联社",
-					"id": "view.clsList"
 				},
 				{
 					"id": "view.v2exList",
@@ -178,11 +168,6 @@
 				"icon": "$(refresh)"
 			},
 			{
-				"command": "cls.refresh",
-				"title": "刷新",
-				"icon": "$(refresh)"
-			},
-			{
 				"command": "chiphell.refresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
@@ -199,11 +184,6 @@
 			},
 			{
 				"command": "hupu.refresh",
-				"title": "刷新",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "zhihu.refresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
 			},
@@ -238,11 +218,6 @@
 				{
 					"command": "mix.refresh",
 					"when": "view == mixView",
-					"group": "navigation"
-				},
-				{
-					"command": "cls.refresh",
-					"when": "view == view.clsList",
 					"group": "navigation"
 				},
 				{

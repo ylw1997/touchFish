@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-24 16:18:31
- * @LastEditTime: 2025-06-16 15:04:45
+ * @LastEditTime: 2025-06-17 15:10:34
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\commands.ts
  * @Description: 
@@ -102,7 +102,7 @@ export const changeMixTab = (mixProvider:MixProvider)=>{
       {label:"CH芯域",description:"chiphell"},
       {label:"V2EX",description:"v2ex"},
       // {label:"ZHIHU知乎",description:"zhihu"},
-      {label:"CLS财联社",description:"cls"},
+      // {label:"CLS财联社",description:"cls"},
     ])
     if(tab){
       await mixProvider.getData(tab.description);

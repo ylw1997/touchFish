@@ -1,16 +1,16 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-06-12 17:05:25
+ * @LastEditTime: 2025-06-17 15:07:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description: 
  */
 
 import * as vscode from 'vscode';
-import { openUrl, openCLSUrl, openCHUrl, openV2exUrl, openNgaUrl } from './commands/openUrl';
-import { refresh, clsRefresh, refreshChipHellNews, refreshV2exNews, refreshHupuNews, refreshNgaNews, refreshMixNews } from './commands/refresh';
-import { ClsProvider } from './Providers/clsProvider';
+import { openUrl, openCHUrl, openV2exUrl, openNgaUrl } from './commands/openUrl';
+import { refresh, refreshChipHellNews, refreshV2exNews, refreshHupuNews, refreshNgaNews, refreshMixNews } from './commands/refresh';
+// import { ClsProvider } from './Providers/clsProvider';
 import { ItHomeProvider } from './Providers/itHomeProvider';
 import { refreshTime } from './config/index';
 import { changeHupuTab, changeMixTab, changeNgaTab, changeV2exTab, openSetting } from './commands/commands';
@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// 注册树列表提供者,需要在json文件中注册(activationEvents)
 	const mixProvider = new MixProvider();
 	const itHomeProvider = new ItHomeProvider();
-	const clsProvider = new ClsProvider();
+	// const clsProvider = new ClsProvider();
 	const chiphellProvider = new ChipHellProvider();
 	const v2exProvicer = new V2exProvider();
 	const hupuProvider = new HupuProvider();
@@ -37,18 +37,22 @@ export function activate(context: vscode.ExtensionContext) {
 	// const zhihuProvider = new ZhihuProvider();
 	const weiboProvider = new WeiboProvider(context);
 	vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
-	vscode.window.registerTreeDataProvider("view.clsList", clsProvider);
+	// vscode.window.registerTreeDataProvider("view.clsList", clsProvider);
 	vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
 	vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
 	vscode.window.registerTreeDataProvider("view.hupuList", hupuProvider);
 	vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
 	// vscode.window.registerTreeDataProvider("view.zhihuList", zhihuProvider);
 	vscode.window.registerTreeDataProvider("mixView", mixProvider);
-	vscode.window.registerWebviewViewProvider("weibo", weiboProvider);
+	vscode.window.registerWebviewViewProvider("weibo", weiboProvider, {
+		webviewOptions: {
+			retainContextWhenHidden: true,
+		},
+	});
 
 	// 注册刷新指令
 	context.subscriptions.push(refresh(itHomeProvider));
-	context.subscriptions.push(clsRefresh(clsProvider));
+	// context.subscriptions.push(clsRefresh(clsProvider));
 	context.subscriptions.push(refreshChipHellNews(chiphellProvider));
 	context.subscriptions.push(refreshV2exNews(v2exProvicer));
 	context.subscriptions.push(changeV2exTab(v2exProvicer));
@@ -64,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	//注册打开新闻链接指令
 	context.subscriptions.push(openUrl);
-	context.subscriptions.push(openCLSUrl);
+	// context.subscriptions.push(openCLSUrl);
 	context.subscriptions.push(openCHUrl);
 	context.subscriptions.push(openSetting);
 	context.subscriptions.push(openV2exUrl);
@@ -85,7 +89,7 @@ const clearAllTimer = () => {
 };
 
 const refreshAll = () => {
-	vscode.commands.executeCommand('cls.refresh');
+	// vscode.commands.executeCommand('cls.refresh');
 	vscode.commands.executeCommand('itHome.refresh');
 	vscode.commands.executeCommand('v2ex.refresh');
 	vscode.commands.executeCommand('hupu.refresh');
@@ -103,8 +107,8 @@ const intervalRefrshNews = () => {
 	refreshAll();
 	const newconfig = vscode.workspace.getConfiguration('touchfish');
 	const autoRefresh = newconfig.get('autoRefresh') as boolean;
-	if(!autoRefresh){
+	if (!autoRefresh) {
 		return;
 	}
-	timer = setInterval(refreshAll, 1000 * (refreshTime||defaultRefreshTime));
+	timer = setInterval(refreshAll, 1000 * (refreshTime || defaultRefreshTime));
 };
