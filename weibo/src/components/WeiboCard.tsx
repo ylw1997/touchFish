@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, Divider, Flex, Image, Space } from "antd";
+import { Avatar, Button, Card, Flex, Image, Space } from "antd";
 import {
   HeartOutlined,
   MessageOutlined,
@@ -114,7 +114,12 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   };
 
   const renderActionBar = () => (
-    <div className="info mt10">
+    <div className="info mt10" style={{
+      borderTop: "1px solid rgb(255 255 255 / 10%)",
+      marginLeft: -10,
+      marginRight: -10,
+      padding: "10px",
+    }} >
       <Flex justify="space-around" align="center">
         <span className="link">
           <ShareAltOutlined /> {item.reposts_count}
@@ -133,7 +138,9 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   );
 
   return (
-    <Card key={item.id} title={renderTitle()}>
+    <Card key={item.id} title={renderTitle()} style={{
+      background:'#141414a6'
+    }} >
       <div
         className="content"
         dangerouslySetInnerHTML={{ __html: item.text }}
@@ -162,7 +169,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       {renderActionBar()}
       {item.comments && (
         <>
-          <Divider />
           {renderComments(item.comments, true)}
         </>
       )}

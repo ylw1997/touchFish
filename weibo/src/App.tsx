@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-17 17:51:16
+ * @LastEditTime: 2025-06-18 10:45:24
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -236,7 +236,10 @@ function App() {
   const toggleComments = useCallback(
     (id: number, uid: number) => {
       const citem = list.find((item) => item.id === id);
-      if (citem?.comments) {
+      if (
+        citem?.comments ||
+        (citem?.retweeted_status && citem.retweeted_status.comments)
+      ) {
         updateList(
           (item) => item.id === id,
           (item) => ({ ...item, comments: undefined })
@@ -325,11 +328,20 @@ function App() {
         height="calc(100vh - 200px)"
         loading={loading}
         styles={{
+          wrapper: {
+            background: "none",
+            borderRadius: "10px",
+            overflow: "hidden",
+          },
           body: {
             padding: 0,
             height: "100%",
             minHeight: 0,
             overflow: "auto",
+          },
+          content: {
+            background: "rgba(26, 28, 34, 0.5)",
+            backdropFilter: "saturate(180%) blur(15px)",
           },
         }}
       >
