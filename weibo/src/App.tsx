@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-18 14:39:27
+ * @LastEditTime: 2025-06-18 14:45:53
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -12,14 +12,12 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Divider,
   FloatButton,
-  message,
   Tabs,
   Drawer,
   Avatar,
 } from "antd";
 import { vscode } from "./utils/vscode";
 import {
-  CommandList,
   commandsType,
   weiboAJAX,
   weiboItem,
@@ -35,6 +33,7 @@ import WeiboCard from "./components/WeiboCard";
 import YImg from "./components/YImg";
 import { updateWeiboList } from "./utils/updateWeiboList";
 import { loaderFunc } from "./utils/loader";
+import { useVscodeMessage } from "./hooks/useVscodeMessage";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -60,10 +59,11 @@ function App() {
   const [max_id, setMaxId] = useState<number>();
   const [userWeiboPage, setUserWeiboPage] = useState<number>(0);
   const [curBlogId, setCurBlogId] = useState<number>();
-  const [messageApi, contextHolder] = message.useMessage();
   const [userDetailVisible, setUserDetailVisible] = useState(false);
   const [userDetail, setUserDetail] = useState<weiboUser>();
   const [userWeiboList, setUserWeiboList] = useState<weiboItem[]>([]);
+
+  const {sendMessage, contextHolder, messageApi} = useVscodeMessage()
 
   // 通用更新list工具（直接用updateWeiboList实现）
   const updateList = useCallback(
@@ -85,21 +85,6 @@ function App() {
       setUserWeiboList((list) => updateWeiboList(list, matcher, updater));
     },
     []
-  );
-
-  // 统一发送消息
-  const sendMessage = useCallback(
-    (command: CommandList, payload: any) => {
-      console.log("sendMessage", command, payload);
-      messageApi.open({
-        key: command,
-        type: "loading",
-        content: "加载中...",
-        duration: 0,
-      });
-      vscode.postMessage({ command, payload });
-    },
-    [messageApi]
   );
 
   // 处理函数集合
