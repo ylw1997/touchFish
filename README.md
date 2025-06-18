@@ -1,8 +1,8 @@
 <!--
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2024-11-26 10:29:05
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-06-18 17:26:23
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\README.md
  * @Description: 
 -->
@@ -17,16 +17,21 @@
 
 > * 支持it之家新闻
 > * 支持快科技新闻
-> * 支持财联社新闻
 > * 支持chiphell文章
 > * 支持v2ex文章
 > * 支持查看虎扑文章
 > * 支持查看nga文章
-> * 支持知乎查看推荐
 > * 沉浸式主题
 
 ![详情](https://jf.jsyccloud.com:8082/bg_oss/jslalloss/image/cbe6132513544b1cb631447f75f6c393.png)
 
 ## 刷微博
+> * 支持长微博
+> * 支持发微博
+> * 支持查看微博评论
+> * 支持关注博主
+> * 支持查看微博图片
+> * 支持图片懒加载,微博图片加载更快
+> * 支持查看全部,最新,特别关注,好友,热门等微博分类
 
-![详情](https://qmsznewmall.oss-cn-beijing.aliyuncs.com/image/8a45ecd52fa5467ab21eea5521a4b13f.png?Expires=4886188135&OSSAccessKeyId=LTAI5tEf5yAnmXfbgTa76miZ&Signature=M2Xeoc3f2y8y4Ejyers3i5UIuGA%3D)
+![详情](https://article.biliimg.com/bfs/new_dyn/d8656c1c6c4205c9dc36abf05806e153102411794.png@.webp)
