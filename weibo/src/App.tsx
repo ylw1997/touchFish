@@ -1,30 +1,23 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-18 15:22:46
+ * @LastEditTime: 2025-06-18 16:59:48
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
- * @Description: 
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
+ * @Description:
  */
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import {
-  Divider,
-  FloatButton,
-  Tabs,
-  Drawer,
-  Avatar,
-} from "antd";
+import { Divider, FloatButton, Tabs, Drawer, Avatar } from "antd";
 import { vscode } from "./utils/vscode";
-import {
-  commandsType,
-  weiboAJAX,
-  weiboItem,
-  weiboUser,
-} from "../.././type";
+import { commandsType, weiboAJAX, weiboItem, weiboUser } from "../.././type";
 import "./style/index.less";
-import { RedoOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  RedoOutlined,
+  VerticalAlignTopOutlined,
+} from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
@@ -34,6 +27,8 @@ import YImg from "./components/YImg";
 import { updateWeiboList } from "./utils/updateWeiboList";
 import { loaderFunc } from "./utils/loader";
 import { useVscodeMessage } from "./hooks/useVscodeMessage";
+import SendWeiboDrawer from "./components/SendWeiboDrawer";
+import { weiboSendParams } from "./types";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -62,8 +57,10 @@ function App() {
   const [userDetailVisible, setUserDetailVisible] = useState(false);
   const [userDetail, setUserDetail] = useState<weiboUser>();
   const [userWeiboList, setUserWeiboList] = useState<weiboItem[]>([]);
+  const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
 
-  const {sendMessage, contextHolder, messageApi} = useVscodeMessage()
+  const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
 
   // 通用更新list工具（直接用updateWeiboList实现）
   const updateList = useCallback(
@@ -177,6 +174,17 @@ function App() {
           }
         } else {
           messageApi.error("关注请求失败!", payload?.ok);
+        }
+      },
+      SENTNEWBLOGRESULT: (payload: any) => {
+        messageApi.destroy("GETNEWBLOGRESULT");
+        setSendLoading(false);
+        if (payload?.ok) {
+          messageApi.success("微博发送成功!");
+          setList((list) => [payload.data, ...list]);
+          setSendDrawerOpen(false);
+        } else {
+          messageApi.error("微博发送失败!", payload?.ok);
         }
       },
     }),
@@ -311,6 +319,17 @@ function App() {
     },
     [loading, sendMessage]
   );
+  // 发送微博功能
+  const handleSendWeibo = (content: string) => {
+    const obj: weiboSendParams = {
+      content: content,
+      visible: 0, // 默认公开
+      vote: "",
+      media: "",
+    };
+    setSendLoading(true);
+    sendMessage("GETNEWBLOGRESULT", JSON.stringify(obj), "发送中...");
+  };
 
   // tab切换
   const onChange = useCallback(
@@ -332,7 +351,7 @@ function App() {
         })
       );
   };
-  
+
   return (
     <>
       {contextHolder}
@@ -388,8 +407,14 @@ function App() {
               <Avatar
                 size={80}
                 style={{ marginTop: 16 }}
-                src={userDetail.avatar_large && <YImg useImg src={userDetail.avatar_large} />}
-              />
+                src={
+                  userDetail.avatar_hd && (
+                    <YImg useImg src={userDetail.avatar_hd} />
+                  )
+                }
+              >
+                {userDetail.screen_name}
+              </Avatar>
               <div style={{ fontSize: 20, fontWeight: 500 }}>
                 {userDetail.screen_name}
               </div>
@@ -450,16 +475,29 @@ function App() {
         </InfiniteScroll>
       </div>
       <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
-        <FloatButton.BackTop type="primary" visibilityHeight={0} />
+        <FloatButton.BackTop
+          visibilityHeight={500}
+          icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
+        />
+        <FloatButton
+          type="primary"
+          icon={<EditOutlined style={{ color: "#69b1ff" }} />}
+          onClick={() => setSendDrawerOpen(true)}
+        />
         <FloatButton
           onClick={() => {
             clearList();
             fetchData();
           }}
-          type="primary"
-          icon={<RedoOutlined />}
+          icon={<RedoOutlined style={{ color: "#f3cc62" }} />}
         />
       </FloatButton.Group>
+      <SendWeiboDrawer
+        loading={sendLoading}
+        open={sendDrawerOpen}
+        onClose={() => setSendDrawerOpen(false)}
+        onSend={handleSendWeibo}
+      />
     </>
   );
 }

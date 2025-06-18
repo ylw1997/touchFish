@@ -14,10 +14,10 @@ interface WeiboCardProps {
   item: weiboItem;
   is_child?: boolean;
   activeKey: string;
-  onUserClick?: (userInfo:weiboUser) => void;
+  onUserClick?: (userInfo: weiboUser) => void;
   onFollow?: (uid: string, blogId: number) => void;
   onExpandLongWeibo?: (id: string) => void;
-  onToggleComments?: (id: number, uid: number,is_retweeted:boolean) => void;
+  onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
 }
 
 // 提取常量配置
@@ -56,8 +56,10 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         <Avatar
           size={config.avatarSize}
           style={{ border: "none" }}
-          src={<YImg useImg src={item.user.avatar_hd} />}
-        />
+          src={item.user.avatar_hd && <YImg useImg src={item.user.avatar_hd} />}
+        >
+          {item.user.screen_name}
+        </Avatar>
         <div>
           <span
             className={activeKey !== "userblog" ? "nick-name" : ""}
@@ -114,19 +116,22 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   };
 
   const renderActionBar = () => (
-    <div className="info mt10" style={{
-      borderTop: "1px solid rgb(255 255 255 / 10%)",
-      marginLeft: -10,
-      marginRight: -10,
-      padding: "10px",
-    }} >
+    <div
+      className="info mt10"
+      style={{
+        borderTop: "1px solid rgb(255 255 255 / 10%)",
+        marginLeft: -10,
+        marginRight: -10,
+        padding: "10px",
+      }}
+    >
       <Flex justify="space-around" align="center">
         <span className="link">
           <ShareAltOutlined /> {item.reposts_count}
         </span>
         <span
           className="link"
-          onClick={() => onToggleComments?.(item.id, item.user.id,is_child)}
+          onClick={() => onToggleComments?.(item.id, item.user.id, is_child)}
         >
           <MessageOutlined /> {item.comments_count}
         </span>
@@ -138,9 +143,13 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   );
 
   return (
-    <Card key={item.id} title={renderTitle()} style={{
-      background:'#141414a6'
-    }} >
+    <Card
+      key={item.id}
+      title={renderTitle()}
+      style={{
+        background: "#141414a6",
+      }}
+    >
       <div
         className="content"
         dangerouslySetInnerHTML={{ __html: item.text }}
@@ -167,11 +176,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         />
       )}
       {renderActionBar()}
-      {item.comments && (
-        <>
-          {renderComments(item.comments, true)}
-        </>
-      )}
+      {item.comments && <>{renderComments(item.comments, true)}</>}
     </Card>
   );
 };
