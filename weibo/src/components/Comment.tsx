@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-06-16 18:16:08
+ * @LastEditTime: 2025-06-18 08:48:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -24,7 +24,7 @@ export const renderComments = (comments: commentsItem[],is_child = false) => {
             avatar={
               <Avatar
                 size={defaultAvatarSize}
-                src={<YImg useImg src={item.user.avatar_large} />}
+                src={<YImg useImg src={item.user.avatar_hd} />}
               />
             }
             title={<span>{item.user.screen_name}</span>}

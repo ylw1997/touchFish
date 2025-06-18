@@ -56,7 +56,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         <Avatar
           size={config.avatarSize}
           style={{ border: "none" }}
-          src={<YImg useImg src={item.user.avatar_large} />}
+          src={<YImg useImg src={item.user.avatar_hd} />}
         />
         <div>
           <span
