@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-18 14:45:53
+ * @LastEditTime: 2025-06-18 15:22:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -388,7 +388,7 @@ function App() {
               <Avatar
                 size={80}
                 style={{ marginTop: 16 }}
-                src={<YImg useImg src={userDetail.avatar_large} />}
+                src={userDetail.avatar_large && <YImg useImg src={userDetail.avatar_large} />}
               />
               <div style={{ fontSize: 20, fontWeight: 500 }}>
                 {userDetail.screen_name}

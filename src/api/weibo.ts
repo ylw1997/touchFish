@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-06-12 16:59:06
+ * @LastEditTime: 2025-06-18 15:45:37
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -103,6 +103,35 @@ export const followUser = async (friend_uid: string) => {
       "Cookie": cookie,
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
       'X-Xsrf-Token': xsrf,
+    }
+  })
+}
+
+
+// 发布微博 https://weibo.com/ajax/statuses/update 
+type weiboVisible = {
+  0: '公开',
+  1: '自己',
+  6: '好友圈',
+  10: '粉丝'
+}
+type weiboSendParams = {
+  content:string;
+  visible?: weiboVisible[keyof weiboVisible];
+  vote?: string;
+  media?: string;
+}
+
+export const sendWeibo = async (params: string) => { 
+  const cookie = await getOrSetWeiboCookie() as string;
+  const parsedParams = JSON.parse(params) as weiboSendParams;
+  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? '';
+  return await axios.post(`https://weibo.com/ajax/statuses/update`, parsedParams, {
+    headers: {
+      "Cookie": cookie,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+      'X-Xsrf-Token': xsrf,
+      'Content-Type':"application/x-www-form-urlencoded"
     }
   })
 }
