@@ -1,20 +1,18 @@
 /*
- * @Author: yangliwei 1280426581@qq.com
- * @Date: 2024-11-18 11:49:59
- * @LastEditTime: 2025-06-18 10:45:24
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-06-17 17:57:55
+ * @LastEditTime: 2025-06-18 14:39:27
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
- * Copyright (c) 2024 by yangliwei, All Rights Reserved.
- * @Description: 微博主页面，包含微博列表、评论、关注、长微博等功能
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
  */
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
-  Card,
   Divider,
   FloatButton,
   message,
-  Skeleton,
   Tabs,
   Drawer,
   Avatar,
@@ -35,6 +33,8 @@ import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
 import WeiboCard from "./components/WeiboCard";
 import YImg from "./components/YImg";
+import { updateWeiboList } from "./utils/updateWeiboList";
+import { loaderFunc } from "./utils/loader";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -65,27 +65,24 @@ function App() {
   const [userDetail, setUserDetail] = useState<weiboUser>();
   const [userWeiboList, setUserWeiboList] = useState<weiboItem[]>([]);
 
-  // 通用更新list工具
+  // 通用更新list工具（直接用updateWeiboList实现）
   const updateList = useCallback(
     (
       matcher: (item: weiboItem) => boolean,
       updater: (item: weiboItem) => weiboItem
     ) => {
-      setList((list) =>
-        list.map((item) => {
-          if (matcher(item)) return updater(item);
-          if (
-            item.retweeted_status &&
-            matcher(item.retweeted_status as weiboItem)
-          ) {
-            return {
-              ...item,
-              retweeted_status: updater(item.retweeted_status as weiboItem),
-            };
-          }
-          return item;
-        })
-      );
+      setList((list) => updateWeiboList(list, matcher, updater));
+    },
+    []
+  );
+
+  // 针对userWeiboList的更新工具
+  const updateUserWeiboList = useCallback(
+    (
+      matcher: (item: weiboItem) => boolean,
+      updater: (item: weiboItem) => weiboItem
+    ) => {
+      setUserWeiboList((list) => updateWeiboList(list, matcher, updater));
     },
     []
   );
@@ -133,10 +130,18 @@ function App() {
         if (payload?.ok) {
           const { id } = payload.payload;
           const data = payload.data;
-          updateList(
-            (item) => item.id === id,
-            (item) => ({ ...item, comments: data })
-          );
+          // 判断当前是主列表还是用户微博列表
+          if (userDetailVisible) {
+            updateUserWeiboList(
+              (item) => item.id === id,
+              (item) => ({ ...item, comments: data })
+            );
+          } else {
+            updateList(
+              (item) => item.id === id,
+              (item) => ({ ...item, comments: data })
+            );
+          }
         } else {
           messageApi.error("评论请求失败!", payload?.ok);
         }
@@ -147,10 +152,17 @@ function App() {
         if (payload?.ok) {
           const mblogid = payload.payload;
           const text = payload.data.longTextContent.replace(/\n/g, "<br/>");
-          updateList(
-            (item) => item.mblogid === mblogid,
-            (item) => ({ ...item, text })
-          );
+          if (userDetailVisible) {
+            updateUserWeiboList(
+              (item) => item.mblogid === mblogid,
+              (item) => ({ ...item, text })
+            );
+          } else {
+            updateList(
+              (item) => item.mblogid === mblogid,
+              (item) => ({ ...item, text })
+            );
+          }
         } else {
           messageApi.error("长文本请求失败!", payload?.ok);
         }
@@ -183,7 +195,16 @@ function App() {
         }
       },
     }),
-    [list, activeKey, curBlogId, messageApi, updateList, userWeiboList]
+    [
+      list,
+      activeKey,
+      curBlogId,
+      messageApi,
+      updateList,
+      userWeiboList,
+      updateUserWeiboList,
+      userDetailVisible,
+    ]
   );
 
   // 统一处理消息响应
@@ -232,17 +253,31 @@ function App() {
     setTotal(0);
   }, []);
 
-  // 评论展开/收起
-  const toggleComments = useCallback(
-    (id: number, uid: number) => {
-      const citem = list.find((item) => item.id === id);
-      if (
-        citem?.comments ||
-        (citem?.retweeted_status && citem.retweeted_status.comments)
-      ) {
-        updateList(
+  // 合并评论展开/收起方法，支持主列表和用户微博列表
+  const handleToggleComments = useCallback(
+    (id: number, uid: number, is_retweeted: boolean, isUserBlog = false) => {
+      const targetList = isUserBlog ? userWeiboList : list;
+      const updateTargetList = isUserBlog ? updateUserWeiboList : updateList;
+      const citem = targetList.find(
+        (item) => item.id === id || item.retweeted_status?.id === id
+      );
+      if (citem?.comments && !is_retweeted) {
+        updateTargetList(
           (item) => item.id === id,
           (item) => ({ ...item, comments: undefined })
+        );
+        return;
+      }
+      if (is_retweeted && citem?.retweeted_status?.comments) {
+        updateTargetList(
+          (item) => item.retweeted_status?.id === id,
+          (item) => ({
+            ...item,
+            retweeted_status: {
+              ...item.retweeted_status!,
+              comments: undefined,
+            },
+          })
         );
         return;
       }
@@ -254,11 +289,11 @@ function App() {
         uid,
       });
     },
-    [list, loading, sendMessage, updateList]
+    [userWeiboList, list, loading, sendMessage, updateUserWeiboList, updateList]
   );
 
-  // 展开长微博
-  const expandLongWeibo = useCallback(
+  // 合并长微博展开方法，支持主列表和用户微博列表
+  const handleExpandLongWeibo = useCallback(
     (id: string) => {
       if (loading) return;
       setLoading(true);
@@ -312,6 +347,7 @@ function App() {
         })
       );
   };
+  
   return (
     <>
       {contextHolder}
@@ -326,7 +362,6 @@ function App() {
         title={userDetail?.screen_name}
         placement="bottom"
         height="calc(100vh - 200px)"
-        loading={loading}
         styles={{
           wrapper: {
             background: "none",
@@ -379,11 +414,7 @@ function App() {
                 scrollableTarget="user-blog"
                 dataLength={userWeiboList.length}
                 next={getUserBlogFunc}
-                loader={
-                  <Card>
-                    <Skeleton avatar paragraph={{ rows: 1 }} active />
-                  </Card>
-                }
+                loader={loaderFunc()}
                 endMessage={<Divider plain>没有了🤐</Divider>}
                 hasMore={userWeiboList.length < total}
               >
@@ -394,8 +425,10 @@ function App() {
                     activeKey={"userblog"}
                     onUserClick={getUserBlog}
                     onFollow={followUser}
-                    onExpandLongWeibo={expandLongWeibo}
-                    onToggleComments={toggleComments}
+                    onExpandLongWeibo={handleExpandLongWeibo}
+                    onToggleComments={(id, uid, is_retweeted) =>
+                      handleToggleComments(id, uid, is_retweeted, true)
+                    }
                   />
                 ))}
               </InfiniteScroll>
@@ -414,11 +447,7 @@ function App() {
         <InfiniteScroll
           dataLength={list.length}
           next={fetchData}
-          loader={
-            <Card>
-              <Skeleton avatar paragraph={{ rows: 1 }} active />
-            </Card>
-          }
+          loader={loaderFunc(1)}
           endMessage={<Divider plain>没有了🤐</Divider>}
           hasMore={list.length < total}
         >
@@ -429,8 +458,8 @@ function App() {
               activeKey={activeKey}
               onUserClick={getUserBlog}
               onFollow={followUser}
-              onExpandLongWeibo={expandLongWeibo}
-              onToggleComments={toggleComments}
+              onExpandLongWeibo={handleExpandLongWeibo}
+              onToggleComments={handleToggleComments}
             />
           ))}
         </InfiniteScroll>

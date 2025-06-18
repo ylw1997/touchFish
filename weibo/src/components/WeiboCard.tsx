@@ -17,7 +17,7 @@ interface WeiboCardProps {
   onUserClick?: (userInfo:weiboUser) => void;
   onFollow?: (uid: string, blogId: number) => void;
   onExpandLongWeibo?: (id: string) => void;
-  onToggleComments?: (id: number, uid: number) => void;
+  onToggleComments?: (id: number, uid: number,is_retweeted:boolean) => void;
 }
 
 // 提取常量配置
@@ -126,7 +126,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </span>
         <span
           className="link"
-          onClick={() => onToggleComments?.(item.id, item.user.id)}
+          onClick={() => onToggleComments?.(item.id, item.user.id,is_child)}
         >
           <MessageOutlined /> {item.comments_count}
         </span>
