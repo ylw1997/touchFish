@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-18 16:59:48
+ * @LastEditTime: 2025-06-18 17:51:20
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -356,6 +356,7 @@ function App() {
     <>
       {contextHolder}
       <Drawer
+        destroyOnClose
         closable
         open={userDetailVisible}
         onClose={() => {
@@ -482,7 +483,7 @@ function App() {
         <FloatButton
           type="primary"
           icon={<EditOutlined style={{ color: "#69b1ff" }} />}
-          onClick={() => setSendDrawerOpen(true)}
+          onClick={() => setSendDrawerOpen((open)=> !open)}
         />
         <FloatButton
           onClick={() => {
