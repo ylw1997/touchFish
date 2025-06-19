@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-19 14:09:38
+ * @LastEditTime: 2025-06-19 15:38:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -314,15 +314,9 @@ function App() {
     [loading, sendMessage]
   );
   // 发送微博功能
-  const handleSendWeibo = (content: string) => {
-    const obj: weiboSendParams = {
-      content: content,
-      visible: 0, // 默认公开
-      vote: "",
-      media: "",
-    };
+  const handleSendWeibo = (content: weiboSendParams) => {
     setSendLoading(true);
-    sendMessage("GETNEWBLOGRESULT", JSON.stringify(obj), "发送中...");
+    sendMessage("GETNEWBLOGRESULT", JSON.stringify(content), "发送中...");
   };
   // 获取当前tab
   const curTab = useMemo(() => {
