@@ -454,6 +454,13 @@ function App() {
         onChange={onChange}
         centered
       />
+      <Tabs
+        className="tabs"
+        items={tabs}
+        activeKey={activeKey}
+        onChange={onChange}
+        centered
+      />
       <div className="list">
         <InfiniteScroll
           dataLength={list.length}
