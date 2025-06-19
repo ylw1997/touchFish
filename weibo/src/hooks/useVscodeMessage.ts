@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 14:42:01
- * @LastEditTime: 2025-06-18 16:32:19
+ * @LastEditTime: 2025-06-19 10:28:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\hooks\useVscodeMessage.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -18,6 +18,7 @@ export function useVscodeMessage() {
   // 统一发送消息
   const sendMessage = useCallback(
     (command: CommandList, payload: any, content = "加载中...") => {
+      console.log("发送消息", command, payload);
       messageApi.open({
         key: command,
         type: "loading",

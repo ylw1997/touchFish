@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-18 17:51:20
+ * @LastEditTime: 2025-06-19 11:03:24
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Divider, FloatButton, Tabs, Drawer, Avatar } from "antd";
+import { Divider, FloatButton, Tabs, Drawer, Avatar, TabsProps } from "antd";
 import { vscode } from "./utils/vscode";
 import { commandsType, weiboAJAX, weiboItem, weiboUser } from "../.././type";
 import "./style/index.less";
@@ -29,20 +29,9 @@ import { loaderFunc } from "./utils/loader";
 import { useVscodeMessage } from "./hooks/useVscodeMessage";
 import SendWeiboDrawer from "./components/SendWeiboDrawer";
 import { weiboSendParams } from "./types";
+import { defTab } from "./data/tabs";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
-
-// 默认tab配置
-const defTab = [
-  { key: "/unreadfriendstimeline?list_id=100017515513422", label: "全部" },
-  { key: "/friendstimeline?list_id=110007515513422", label: "最新" },
-  { key: "/groupstimeline?list_id=4563498095349254", label: "特别" },
-  { key: "/groupstimeline?list_id=100097515513422", label: "好友" },
-  {
-    key: "/hottimeline?group_id=102803&containerid=102803&extparam=discover%7Cnew_feed",
-    label: "热门",
-  },
-];
 
 function App() {
   // 状态管理
@@ -59,6 +48,8 @@ function App() {
   const [userWeiboList, setUserWeiboList] = useState<weiboItem[]>([]);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
+  // 子菜单key
+  const [subAcitiveKey, setSubActiveKey] = useState("");
 
   const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
 
@@ -101,6 +92,7 @@ function App() {
             max_id: payload.max_id,
             total: wtotal,
             activeKey,
+            subAcitiveKey,
           });
         } else {
           messageApi.error("数据请求失败!", payload?.ok);
@@ -197,6 +189,7 @@ function App() {
       userWeiboList,
       updateUserWeiboList,
       userDetailVisible,
+      subAcitiveKey,
     ]
   );
 
@@ -222,6 +215,7 @@ function App() {
       if (res.list) setList(res.list);
       if (res.max_id) setMaxId(res.max_id);
       if (res.total) setTotal(res.total);
+      if (res.subAcitiveKey) setSubActiveKey(res.subAcitiveKey);
     } else {
       fetchData();
     }
@@ -232,12 +226,11 @@ function App() {
   const fetchData = useCallback(() => {
     if (loading) return;
     setLoading(true);
+    const key = subAcitiveKey || activeKey;
     const payload =
-      max_id && activeKey !== defTab[0].key
-        ? `${activeKey}&max_id=${max_id}`
-        : activeKey;
+      max_id && key !== defTab[0].key ? `${key}&max_id=${max_id}` : key;
     sendMessage("GETDATA", payload);
-  }, [loading, activeKey, max_id, sendMessage]);
+  }, [loading, subAcitiveKey, activeKey, max_id, sendMessage]);
 
   // 清空列表
   const clearList = useCallback(() => {
@@ -330,15 +323,36 @@ function App() {
     setSendLoading(true);
     sendMessage("GETNEWBLOGRESULT", JSON.stringify(obj), "发送中...");
   };
+  // 获取当前tab
+  const curTab = useMemo(() => {
+    return tabs.find((item) => item.key === activeKey);
+  }, [activeKey, tabs]);
+
+  // 子菜单切换
+  const onSubChange = useCallback(
+    (key: string) => {
+      setSubActiveKey(key);
+      clearList();
+      sendMessage("GETDATA", key);
+    },
+    [clearList, sendMessage]
+  );
 
   // tab切换
   const onChange = useCallback(
     (key: string) => {
       clearList();
       setActiveKey(key);
-      sendMessage("GETDATA", key);
+      const curTab = tabs.find((item) => item.key === key);
+      if (curTab && curTab.childrenList && curTab.childrenList.length > 0) {
+        setSubActiveKey(curTab.childrenList?.[0]!.key || "");
+        sendMessage("GETDATA", curTab.childrenList?.[0]!.key || "");
+      } else {
+        setSubActiveKey("");
+        sendMessage("GETDATA", key);
+      }
     },
-    [clearList, sendMessage]
+    [clearList, sendMessage, tabs]
   );
 
   const getUserBlogFunc = () => {
@@ -449,19 +463,29 @@ function App() {
       </Drawer>
       <Tabs
         className="tabs"
-        items={tabs}
+        items={tabs as TabsProps["items"]}
         activeKey={activeKey}
         onChange={onChange}
         centered
       />
-      <Tabs
-        className="tabs"
-        items={tabs}
-        activeKey={activeKey}
-        onChange={onChange}
-        centered
-      />
-      <div className="list">
+      {curTab && curTab.childrenList && (
+        <Tabs
+          className="tabs"
+          items={curTab.childrenList as TabsProps["items"]}
+          activeKey={subAcitiveKey}
+          onChange={onSubChange}
+          centered
+          style={{
+            top: "46px",
+          }}
+        />
+      )}
+      <div
+        className="list"
+        style={{
+          marginTop: curTab && curTab.childrenList ? "100px" : "50px",
+        }}
+      >
         <InfiniteScroll
           dataLength={list.length}
           next={fetchData}
@@ -490,7 +514,7 @@ function App() {
         <FloatButton
           type="primary"
           icon={<EditOutlined style={{ color: "#69b1ff" }} />}
-          onClick={() => setSendDrawerOpen((open)=> !open)}
+          onClick={() => setSendDrawerOpen((open) => !open)}
         />
         <FloatButton
           onClick={() => {
