@@ -1,14 +1,14 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-06-19 15:39:03
+ * @LastEditTime: 2025-06-19 16:19:13
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import React, { useState } from "react";
-import { Drawer, Button, Input } from "antd";
+import React from "react";
+import { Drawer, Button, Input, Form, Select } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import { weiboSendParams } from "../types";
@@ -21,6 +21,14 @@ interface SendWeiboDrawerProps {
 }
 
 const { TextArea } = Input;
+const { Option } = Select;
+
+const visibleOptions = [
+  { label: "公开", value: 0 },
+  { label: "自己", value: 1 },
+  { label: "好友圈", value: 6 },
+  { label: "粉丝", value: 10 },
+];
 
 const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   open,
@@ -28,21 +36,24 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   onSend,
   loading = false,
 }) => {
-  const [content, setContent] = useState("");
+  const [form] = Form.useForm();
   const { messageApi, contextHolder } = useVscodeMessage();
 
   const handleSend = () => {
-    if (!content.trim()) {
-      messageApi.warning("请输入内容");
-      return;
-    }
-    onSend({
-      content,
-      visible: 0,
-      vote: "",
-      media: "",
-    });
-    setContent("");
+    form
+      .validateFields()
+      .then((values) => {
+        onSend({
+          content: values.content,
+          visible: values.visible,
+          vote: "",
+          media: "",
+        });
+        form.resetFields();
+      })
+      .catch(() => {
+        messageApi.warning("请填写完整信息");
+      });
   };
 
   return (
@@ -51,13 +62,12 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
       <Drawer
         title="发送微博"
         placement="top"
-        height={220}
+        height={'auto'}
         open={open}
         onClose={() => {
           onClose();
-          setContent("");
+          form.resetFields();
         }}
-        // mask={false}
         destroyOnClose
         extra={
           <Button
@@ -85,16 +95,35 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
           },
         }}
       >
-        <TextArea
-          rows={4}
-          maxLength={280}
-          showCount
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="此刻你想说点什么..."
-          disabled={loading}
-          style={{ background: "#14141482" }}
-        />
+        <Form form={form} layout="vertical" initialValues={{ visible: 0 }}>
+          <Form.Item
+            label="微博正文"
+            name="content"
+            rules={[{ required: true, message: "请输入微博内容" }]}
+          >
+            <TextArea
+              rows={4}
+              maxLength={280}
+              showCount
+              placeholder="此刻你想说点什么..."
+              disabled={loading}
+              style={{ background: "#14141482" }}
+            />
+          </Form.Item>
+          <Form.Item
+            label="对谁可见"
+            name="visible"
+            rules={[{ required: true, message: "请选择可见范围" }]}
+          >
+            <Select disabled={loading}>
+              {visibleOptions.map((opt) => (
+                <Option value={opt.value} key={opt.value}>
+                  {opt.label}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
       </Drawer>
     </>
   );

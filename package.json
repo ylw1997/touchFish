@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,微博摸鱼聚合插件",
-	"version": "4.11.1",
+	"version": "4.12.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -269,7 +269,8 @@
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js",
 		"build": "vsce package",
-		"publish": "vsce publish"
+		"publish": "vsce publish",
+		"build-publish": "npm --prefix ./weibo run build && npm run publish"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.15.0",

@@ -7,8 +7,7 @@
 			"type": "npm",
 			"script": "watch",
 			"problemMatcher": [
-				"$ts-webpack-watch",
-				"$tslint-webpack-watch"
+				"$tsc-watch"
 			],
 			"isBackground": true,
 			"presentation": {
@@ -38,6 +37,31 @@
 				"npm: watch-tests"
 			],
 			"problemMatcher": []
+		},
+		{
+			"label": "Weibo Build and Publish (Root)",
+			"type": "shell",
+			"dependsOn": ["Weibo Build (weibo)", "Weibo Publish (Root)"],
+			"dependsOrder": "sequence",
+			"group": "build"
+		},
+		{
+			"label": "Weibo Build (weibo)",
+			"type": "shell",
+			"command": "npm run build",
+			"options": {
+				"cwd": "${workspaceFolder}/weibo"
+			},
+			"group": "build"
+		},
+		{
+			"label": "Weibo Publish (Root)",
+			"type": "shell",
+			"command": "npm run publish",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"group": "build"
 		}
 	]
 }
