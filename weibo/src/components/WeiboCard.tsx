@@ -56,21 +56,21 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         <Avatar
           size={config.avatarSize}
           style={{ border: "none" }}
-          src={item.user.avatar_hd && <YImg useImg src={item.user.avatar_hd} />}
+          src={item.user?.avatar_hd && <YImg useImg src={item.user.avatar_hd} />}
         >
-          {item.user.screen_name}
+          {item.user?.screen_name}
         </Avatar>
         <div>
           <span
             className={activeKey !== "userblog" ? "nick-name" : ""}
             style={titleStyles}
             onClick={() => {
-              if (activeKey !== "userblog" && onUserClick) {
+              if (activeKey !== "userblog" && onUserClick && item.user) {
                 onUserClick(item.user);
               }
             }}
           >
-            {item.user.screen_name}
+            {item.user?.screen_name}
           </span>
           <div className="info">
             <span>{dayjs(item.created_at).fromNow()}</span>{" "}
@@ -131,7 +131,11 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </span>
         <span
           className="link"
-          onClick={() => onToggleComments?.(item.id, item.user.id, is_child)}
+          onClick={() => {
+            if (item.user?.id !== undefined) {
+              onToggleComments?.(item.id, item.user.id, is_child);
+            }
+          }}
         >
           <MessageOutlined /> {item.comments_count}
         </span>

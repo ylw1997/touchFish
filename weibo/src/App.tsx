@@ -1,14 +1,14 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-19 11:36:19
+ * @LastEditTime: 2025-06-19 14:09:38
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Divider, FloatButton, Tabs, Drawer, Avatar, TabsProps } from "antd";
 import { vscode } from "./utils/vscode";
 import { commandsType, weiboAJAX, weiboItem, weiboUser } from "../.././type";
@@ -46,6 +46,7 @@ function App() {
   const [userDetailVisible, setUserDetailVisible] = useState(false);
   const [userDetail, setUserDetail] = useState<weiboUser>();
   const [userWeiboList, setUserWeiboList] = useState<weiboItem[]>([]);
+  const [userWeiboTotal, setUserWeiboTotal] = useState(0);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
   // 子菜单key
@@ -148,7 +149,7 @@ function App() {
           const wlist = [...userWeiboList, ...payload.data.list];
           const wtotal = payload.data?.total ?? 999;
           setUserWeiboList(wlist);
-          setTotal(wtotal);
+          setUserWeiboTotal(wtotal);
         } else {
           messageApi.error("用户微博请求失败!", payload?.ok);
         }
@@ -356,6 +357,7 @@ function App() {
   );
 
   const getUserBlogFunc = () => {
+    console.log("getUserBlogFunc");
     if (!loading && userDetail)
       sendMessage(
         "GETUSERBLOG",
@@ -365,6 +367,9 @@ function App() {
         })
       );
   };
+
+  // 用于用户微博 InfiniteScroll 的 ref
+  const userBlogRef = useRef<HTMLDivElement>(null);
 
   return (
     <>
@@ -401,9 +406,11 @@ function App() {
       >
         {userDetail && (
           <div
+            ref={userBlogRef}
             id="user-blog"
             style={{
               height: "100%",
+              overflow: "auto",
             }}
           >
             <div
@@ -430,14 +437,15 @@ function App() {
                 {userDetail.screen_name}
               </div>
             </div>
-            <div style={{ width: "100%", marginTop: 24 }}>
+            {userBlogRef.current && (
               <InfiniteScroll
-                scrollableTarget="user-blog"
+                scrollableTarget={userBlogRef.current as any}
                 dataLength={userWeiboList.length}
                 next={getUserBlogFunc}
-                loader={loaderFunc()}
+                loader={loaderFunc(1)}
                 endMessage={<Divider plain>没有了🤐</Divider>}
-                hasMore={userWeiboList.length < total}
+                hasMore={userWeiboList.length < userWeiboTotal}
+                style={{ marginTop: 24 }}
               >
                 {userWeiboList.map((item) => (
                   <WeiboCard
@@ -453,7 +461,7 @@ function App() {
                   />
                 ))}
               </InfiniteScroll>
-            </div>
+            )}
           </div>
         )}
       </Drawer>

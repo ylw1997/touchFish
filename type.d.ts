@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-06-18 15:43:34
+ * @LastEditTime: 2025-06-19 13:34:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -60,7 +60,7 @@ export type weiboItem = {
   };
   created_at: string;
   region_name?: string;
-  user: weiboUser;
+  user?: weiboUser;
   comments_count: number; // 评
   reposts_count:number; // 转
   attitudes_count:number; // 赞
@@ -86,6 +86,6 @@ export type commentsItem = {
   text: string;
   id:string;
   source:string;
-  user: weiboUser;
+  user?: weiboUser;
   comments:commentsItem[]
 }

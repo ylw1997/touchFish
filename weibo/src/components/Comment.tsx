@@ -39,10 +39,10 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
               avatar={
                 <Avatar
                   size={defaultAvatarSize}
-                  src={ item.user.avatar_hd && <YImg useImg src={item.user.avatar_hd} />}
-                >{item.user.screen_name}</Avatar>
+                  src={ item.user?.avatar_hd && <YImg useImg src={item.user?.avatar_hd} />}
+                >{item.user?.screen_name}</Avatar>
               }
-              title={<span>{item.user.screen_name}</span>}
+              title={<span>{item.user?.screen_name}</span>}
               description={
                 <>
                   <div
