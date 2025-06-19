@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-19 11:03:24
+ * @LastEditTime: 2025-06-19 11:36:19
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -404,10 +404,6 @@ function App() {
             id="user-blog"
             style={{
               height: "100%",
-              minHeight: 0,
-              overflow: "auto",
-              display: "flex",
-              flexDirection: "column",
             }}
           >
             <div

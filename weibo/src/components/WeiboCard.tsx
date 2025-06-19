@@ -120,9 +120,9 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       className="info mt10"
       style={{
         borderTop: "1px solid rgb(255 255 255 / 10%)",
-        marginLeft: -10,
-        marginRight: -10,
-        padding: "10px",
+        marginLeft: '-8px',
+        marginRight: '-8px',
+        padding: "8px",
       }}
     >
       <Flex justify="space-around" align="center">

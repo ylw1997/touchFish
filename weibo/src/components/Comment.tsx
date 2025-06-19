@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-06-18 16:16:17
+ * @LastEditTime: 2025-06-19 11:48:22
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -30,7 +30,7 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
         renderItem={(item) => (
           <List.Item
             style={{
-              margin: "0px -10px",
+              margin: "0px -8px",
               padding: "8px",
               paddingBottom: "0px",
             }}
