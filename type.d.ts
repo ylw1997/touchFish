@@ -1,13 +1,13 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-06-19 13:34:04
+ * @LastEditTime: 2025-06-20 10:59:30
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
  */
-export type CommandList = "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG"|'GETFOLLOW'|'SENDFOLLOW'|'GETNEWBLOGRESULT'|'SENTNEWBLOGRESULT';
+export type CommandList = "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG"|'GETFOLLOW'|'SENDFOLLOW'|'GETNEWBLOGRESULT'|'SENTNEWBLOGRESULT'|'GETUPLOADIMGURL'|'SENDUPLOADIMGURL';
 
 export type commandsType<T> = {
   command: CommandList,
@@ -88,4 +88,13 @@ export type commentsItem = {
   source:string;
   user?: weiboUser;
   comments:commentsItem[]
+}
+
+export type uploadType = {
+  uid:string;
+  base64: string;
+  name: string;
+  type: string;
+  size: number;
+  originFileObj?: File;
 }

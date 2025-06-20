@@ -1,17 +1,19 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-06-19 16:19:13
+ * @LastEditTime: 2025-06-20 17:09:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 import React from "react";
-import { Drawer, Button, Input, Form, Select } from "antd";
-import { SendOutlined } from "@ant-design/icons";
+import { Drawer, Button, Input, Form, Select, Upload } from "antd";
+import { SendOutlined, PlusOutlined } from "@ant-design/icons";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import { weiboSendParams } from "../types";
+import { fileToBase64 } from "../utils";
+import { commandsType, uploadType } from "../../../type";
 
 interface SendWeiboDrawerProps {
   open: boolean;
@@ -37,7 +39,44 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   loading = false,
 }) => {
   const [form] = Form.useForm();
-  const { messageApi, contextHolder } = useVscodeMessage();
+  const { messageApi, contextHolder, sendMessage } = useVscodeMessage();
+  const [fileList, setFileList] = React.useState<any[]>([]);
+  const [loadingUpload, setLoadingUpload] = React.useState(false);
+  const [pictureList, setPictureList] = React.useState<
+    { type: string; pid: string }[]
+  >([]);
+
+  const msgHandle = React.useCallback(
+    async (event: MessageEvent<commandsType<any>>) => {
+      const msg = event.data;
+      if (msg.command === "SENDUPLOADIMGURL" && msg.payload) {
+        messageApi.destroy("GETUPLOADIMGURL");
+        setLoadingUpload(false);
+        if (msg.payload.code === "A00006") {
+          const obj = {
+            type: msg.payload.type,
+            pid: msg.payload.data.pics.pic_1.pid,
+          };
+          setPictureList((list) => [...list, obj]);
+        } else {
+          messageApi.error("上传失败");
+          const uid = msg.payload.uid;
+          setFileList((fileList) =>
+            fileList.filter((file) => file.uid !== uid)
+          );
+        }
+      }
+    },
+    [messageApi, setLoadingUpload, setPictureList, setFileList]
+  );
+
+  // 修复事件监听重复添加问题
+  React.useEffect(() => {
+    window.addEventListener("message", msgHandle);
+    return () => {
+      window.removeEventListener("message", msgHandle);
+    };
+  }, [msgHandle]);
 
   const handleSend = () => {
     form
@@ -48,12 +87,37 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
           visible: values.visible,
           vote: "",
           media: "",
+          pic_id: JSON.stringify(pictureList), // 这里可根据实际需求处理
         });
         form.resetFields();
+        setFileList([]);
       })
       .catch(() => {
         messageApi.warning("请填写完整信息");
       });
+  };
+
+  // 上传图片
+  const handleUpload = async (file: any) => {
+    const base64 = await fileToBase64(file);
+    const obj = {
+      base64,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    } as uploadType;
+    setLoadingUpload(true);
+    sendMessage("GETUPLOADIMGURL", JSON.stringify(obj));
+    return Promise.reject(obj);
+  };
+
+  const closeFunc = () => {
+    form.resetFields();
+    setFileList([]);
+    setPictureList([]);
+    setLoadingUpload(false);
+    messageApi.destroy("GETUPLOADIMGURL");
+    onClose();
   };
 
   return (
@@ -62,12 +126,9 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
       <Drawer
         title="发送微博"
         placement="top"
-        height={'auto'}
+        height={"auto"}
         open={open}
-        onClose={() => {
-          onClose();
-          form.resetFields();
-        }}
+        onClose={closeFunc}
         destroyOnClose
         extra={
           <Button
@@ -122,6 +183,24 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+          <Form.Item label="上传图片">
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              beforeUpload={handleUpload}
+              onChange={({ fileList }) => setFileList(fileList)}
+              multiple
+              maxCount={9}
+              disabled={loadingUpload}
+            >
+              {fileList.length >= 9 ? null : (
+                <div>
+                  <PlusOutlined />
+                  <div style={{ marginTop: 8 }}>上传</div>
+                </div>
+              )}
+            </Upload>
           </Form.Item>
         </Form>
       </Drawer>

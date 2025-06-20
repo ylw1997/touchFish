@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-06-19 15:00:31
+ * @LastEditTime: 2025-06-20 16:50:25
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -22,8 +22,9 @@ import {
   getWeiboData,
   getWeiboImg,
   sendWeibo,
+  uploadImage,
 } from "../api/weibo";
-import { commandsType, weiboAJAX } from "../../type";
+import { commandsType, uploadType, weiboAJAX } from "../../type";
 import { setConfigByKey } from "../config";
 export class WeiboProvider implements WebviewViewProvider {
   constructor(protected context: ExtensionContext) {}
@@ -126,6 +127,21 @@ export class WeiboProvider implements WebviewViewProvider {
               command: "SENTNEWBLOGRESULT",
               payload: {
                 payload: message.payload,
+                ...res.data,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case 'GETUPLOADIMGURL':{
+            const uploadObj = JSON.parse(message.payload) as uploadType;
+            const res = await uploadImage(uploadObj.base64);
+            console.log("res",res);
+            webviewView.webview.postMessage({
+              command: `SENDUPLOADIMGURL`,
+              payload: {
+                payload: uploadObj.uid,
+                uid: uploadObj.uid,
+                type: uploadObj.type,
                 ...res.data,
               },
             } as commandsType<weiboAJAX>);

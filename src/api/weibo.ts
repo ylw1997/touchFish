@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-06-18 15:45:37
+ * @LastEditTime: 2025-06-20 16:34:42
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -133,5 +133,23 @@ export const sendWeibo = async (params: string) => {
       'X-Xsrf-Token': xsrf,
       'Content-Type':"application/x-www-form-urlencoded"
     }
+  })
+}
+
+
+// 上传图片 https://picupload.weibo.com/interface/pic_upload.php?app=miniblog&s=json&p=1&data=1&url=weibo.com%2Fu%2F7515513422&markpos=1&logo=1&nick=ylwgg&file_source=4&_rid=ZoWn_8FNOXSvGid5
+export const uploadImage = async (file: string) => {
+  const cookie = await getOrSetWeiboCookie() as string;
+  // 将 base64 转为二进制 Buffer
+  const buffer = Buffer.isBuffer(file) ? file : Buffer.from(file.replace(/^data:image\/(png|jpeg|jpg);base64,/, ''), 'base64');
+  return await axios.request({
+    url: `https://picupload.weibo.com/interface/pic_upload.php?app=miniblog&p=1&data=1`,
+    method: "POST",
+    headers: {
+      "Cookie": cookie,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+      'Content-Type': "application/octet-stream"
+    },
+    data: buffer
   })
 }

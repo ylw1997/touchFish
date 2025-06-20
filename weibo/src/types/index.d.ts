@@ -9,4 +9,5 @@ export type weiboSendParams = {
   visible?: keyof weiboVisible;
   vote?: string;
   media?: string;
+  pic_id?: string;
 }
