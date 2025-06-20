@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-19 15:38:21
+ * @LastEditTime: 2025-06-20 19:12:37
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -525,7 +525,11 @@ function App() {
       <SendWeiboDrawer
         loading={sendLoading}
         open={sendDrawerOpen}
-        onClose={() => setSendDrawerOpen(false)}
+        onClose={() => {
+          setSendDrawerOpen(false)
+          setSendLoading(false);
+          messageApi.destroy("GETNEWBLOGRESULT");
+        }}
         onSend={handleSendWeibo}
       />
     </>

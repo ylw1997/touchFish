@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-06-20 17:09:28
+ * @LastEditTime: 2025-06-20 19:14:41
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -43,7 +43,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   const [fileList, setFileList] = React.useState<any[]>([]);
   const [loadingUpload, setLoadingUpload] = React.useState(false);
   const [pictureList, setPictureList] = React.useState<
-    { type: string; pid: string }[]
+    { type: string; pid: string;uid:string }[]
   >([]);
 
   const msgHandle = React.useCallback(
@@ -53,8 +53,10 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
         messageApi.destroy("GETUPLOADIMGURL");
         setLoadingUpload(false);
         if (msg.payload.code === "A00006") {
+          messageApi.success("上传图片成功!");
           const obj = {
             type: msg.payload.type,
+            uid: msg.payload.uid,
             pid: msg.payload.data.pics.pic_1.pid,
           };
           setPictureList((list) => [...list, obj]);
@@ -87,7 +89,12 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
           visible: values.visible,
           vote: "",
           media: "",
-          pic_id: JSON.stringify(pictureList), // 这里可根据实际需求处理
+          pic_id: JSON.stringify(pictureList.map(item=>{
+            return {
+              type:item.type,
+              pid:item.pid
+            }
+          })), // 这里可根据实际需求处理
         });
         form.resetFields();
         setFileList([]);
@@ -189,7 +196,15 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
               listType="picture-card"
               fileList={fileList}
               beforeUpload={handleUpload}
-              onChange={({ fileList }) => setFileList(fileList)}
+              onChange={({ fileList: newFileList }) => {
+                setFileList(newFileList);
+                // 删除pictureList中已被移除的图片
+                setPictureList((prevList) => {
+                  // 只保留还在fileList中的pid
+                  const remainNames = newFileList.map((f) => f.uid);
+                  return prevList.filter((item) => remainNames.includes(item.uid));
+                });
+              }}
               multiple
               maxCount={9}
               disabled={loadingUpload}
