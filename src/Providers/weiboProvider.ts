@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-06-20 16:50:25
+ * @LastEditTime: 2025-06-23 09:13:56
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -15,6 +15,7 @@ import {
   window,
 } from "vscode";
 import {
+  cancelfollowUser,
   followUser,
   getLongText,
   getUserWeibo,
@@ -142,6 +143,17 @@ export class WeiboProvider implements WebviewViewProvider {
                 payload: uploadObj.uid,
                 uid: uploadObj.uid,
                 type: uploadObj.type,
+                ...res.data,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case 'GETCANCELFOLLOW' :{
+            const res = await cancelfollowUser(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDCANCELFOLLOW`,
+              payload: {
+                payload: message.payload,
                 ...res.data,
               },
             } as commandsType<weiboAJAX>);

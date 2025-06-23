@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-20 19:12:37
+ * @LastEditTime: 2025-06-23 09:20:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -162,7 +162,14 @@ function App() {
           if (curBlogId) {
             updateList(
               (item) => item.id === curBlogId,
-              (item) => ({ ...item, followBtnCode: undefined })
+              (item) => ({
+                ...item,
+                followBtnCode: undefined,
+                user: {
+                  ...item.user,
+                  following: true,
+                } as weiboUser,
+              })
             );
           }
         } else {
@@ -178,6 +185,31 @@ function App() {
           setSendDrawerOpen(false);
         } else {
           messageApi.error("微博发送失败!", payload?.ok);
+        }
+      },
+      SENDCANCELFOLLOW: (payload: any) => {
+        messageApi.destroy("GETCANCELFOLLOW");
+        setLoading(false);
+        if (payload?.ok) {
+          messageApi.success("取消关注成功!");
+          if (curBlogId) {
+            updateList(
+              (item) => item.id === curBlogId,
+              (item) => ({
+                ...item,
+                followBtnCode: {
+                  uid: payload.payload,
+                  followcardid: curBlogId + "",
+                },
+                user: {
+                  ...item.user,
+                  following: false,
+                } as weiboUser,
+              })
+            );
+          }
+        } else {
+          messageApi.error("关注请求失败!", payload?.ok);
         }
       },
     }),
@@ -310,6 +342,16 @@ function App() {
       setLoading(true);
       setCurBlogId(blogId);
       sendMessage("GETFOLLOW", uid);
+    },
+    [loading, sendMessage]
+  );
+  // 取关博主
+  const cancelFollow = useCallback(
+    (id: number, blogId: number) => {
+      if (loading) return;
+      setLoading(true);
+      setCurBlogId(blogId);
+      sendMessage("GETCANCELFOLLOW", id);
     },
     [loading, sendMessage]
   );
@@ -498,6 +540,7 @@ function App() {
               activeKey={activeKey}
               onUserClick={getUserBlog}
               onFollow={followUser}
+              cancelFollow={cancelFollow}
               onExpandLongWeibo={handleExpandLongWeibo}
               onToggleComments={handleToggleComments}
             />
@@ -526,7 +569,7 @@ function App() {
         loading={sendLoading}
         open={sendDrawerOpen}
         onClose={() => {
-          setSendDrawerOpen(false)
+          setSendDrawerOpen(false);
           setSendLoading(false);
           messageApi.destroy("GETNEWBLOGRESULT");
         }}

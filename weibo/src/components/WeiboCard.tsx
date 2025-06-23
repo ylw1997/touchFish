@@ -16,6 +16,7 @@ interface WeiboCardProps {
   activeKey: string;
   onUserClick?: (userInfo: weiboUser) => void;
   onFollow?: (uid: string, blogId: number) => void;
+  cancelFollow?: (id: number,blogId: number) => void;
   onExpandLongWeibo?: (id: string) => void;
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
 }
@@ -40,6 +41,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   activeKey,
   onUserClick,
   onFollow,
+  cancelFollow,
   onExpandLongWeibo,
   onToggleComments,
 }) => {
@@ -56,7 +58,9 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         <Avatar
           size={config.avatarSize}
           style={{ border: "none" }}
-          src={item.user?.avatar_hd && <YImg useImg src={item.user.avatar_hd} />}
+          src={
+            item.user?.avatar_hd && <YImg useImg src={item.user.avatar_hd} />
+          }
         >
           {item.user?.screen_name}
         </Avatar>
@@ -78,7 +82,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </div>
         </div>
       </Space>
-      {item.followBtnCode && (
+      {item.followBtnCode ? (
         <Button
           color="primary"
           onClick={() => onFollow?.(item.followBtnCode!.uid, item.id)}
@@ -86,6 +90,16 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         >
           关注
         </Button>
+      ) : (
+        item.user?.following && (
+          <Button
+            color="danger"
+            onClick={() => cancelFollow?.(item.user!.id,item.id)}
+            variant="filled"
+          >
+            取关
+          </Button>
+        )
       )}
     </Flex>
   );
@@ -120,8 +134,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       className="info mt10"
       style={{
         borderTop: "1px solid rgb(255 255 255 / 10%)",
-        marginLeft: '-8px',
-        marginRight: '-8px',
+        marginLeft: "-8px",
+        marginRight: "-8px",
         padding: "8px",
       }}
     >
