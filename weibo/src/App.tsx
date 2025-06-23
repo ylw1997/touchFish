@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-23 09:20:46
+ * @LastEditTime: 2025-06-23 09:46:56
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -9,7 +9,15 @@
  */
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { Divider, FloatButton, Tabs, Drawer, Avatar, TabsProps } from "antd";
+import {
+  Divider,
+  FloatButton,
+  Tabs,
+  Drawer,
+  Avatar,
+  TabsProps,
+  Button,
+} from "antd";
 import { vscode } from "./utils/vscode";
 import { commandsType, weiboAJAX, weiboItem, weiboUser } from "../.././type";
 import "./style/index.less";
@@ -159,12 +167,19 @@ function App() {
         setLoading(false);
         if (payload?.ok) {
           messageApi.success("关注成功!");
+          if (userDetail) {
+            setUserDetail((item) => {
+              return {
+                ...item!,
+                following: true,
+              };
+            });
+          }
           if (curBlogId) {
             updateList(
               (item) => item.id === curBlogId,
               (item) => ({
                 ...item,
-                followBtnCode: undefined,
                 user: {
                   ...item.user,
                   following: true,
@@ -192,15 +207,19 @@ function App() {
         setLoading(false);
         if (payload?.ok) {
           messageApi.success("取消关注成功!");
+          if (userDetail) {
+            setUserDetail((item) => {
+              return {
+                ...item!,
+                following: false,
+              };
+            });
+          }
           if (curBlogId) {
             updateList(
               (item) => item.id === curBlogId,
               (item) => ({
                 ...item,
-                followBtnCode: {
-                  uid: payload.payload,
-                  followcardid: curBlogId + "",
-                },
                 user: {
                   ...item.user,
                   following: false,
@@ -213,17 +232,7 @@ function App() {
         }
       },
     }),
-    [
-      list,
-      activeKey,
-      curBlogId,
-      messageApi,
-      updateList,
-      userWeiboList,
-      updateUserWeiboList,
-      userDetailVisible,
-      subAcitiveKey,
-    ]
+    [messageApi, list, activeKey, subAcitiveKey, userDetailVisible, updateUserWeiboList, updateList, userWeiboList, userDetail, curBlogId]
   );
 
   // 统一处理消息响应
@@ -472,6 +481,23 @@ function App() {
               <div style={{ fontSize: 20, fontWeight: 500 }}>
                 {userDetail.screen_name}
               </div>
+              {!userDetail.following ? (
+                <Button
+                  color="primary"
+                  onClick={() => followUser(userDetail.id + "", userDetail.id)}
+                  variant="filled"
+                >
+                  关注
+                </Button>
+              ) : (
+                <Button
+                  color="danger"
+                  onClick={() => cancelFollow(userDetail.id, userDetail.id)}
+                  variant="filled"
+                >
+                  取关
+                </Button>
+              )}
             </div>
             {userBlogRef.current && (
               <InfiniteScroll
@@ -490,6 +516,7 @@ function App() {
                     activeKey={"userblog"}
                     onUserClick={getUserBlog}
                     onFollow={followUser}
+                    cancelFollow={cancelFollow}
                     onExpandLongWeibo={handleExpandLongWeibo}
                     onToggleComments={(id, uid, is_retweeted) =>
                       handleToggleComments(id, uid, is_retweeted, true)
@@ -541,6 +568,7 @@ function App() {
               onUserClick={getUserBlog}
               onFollow={followUser}
               cancelFollow={cancelFollow}
+              showActions={true}
               onExpandLongWeibo={handleExpandLongWeibo}
               onToggleComments={handleToggleComments}
             />

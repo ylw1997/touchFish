@@ -1,15 +1,17 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-06-19 11:48:22
+ * @LastEditTime: 2025-06-23 10:29:51
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import { List, Avatar } from "antd";
+import { List, Avatar, Flex } from "antd";
 import { commentsItem } from "../../../type";
 import YImg from "./YImg";
+import dayjs from "dayjs";
+import { HeartOutlined } from "@ant-design/icons";
 
 // 渲染评论
 export const renderComments = (comments: commentsItem[], is_child = false) => {
@@ -39,22 +41,49 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
               avatar={
                 <Avatar
                   size={defaultAvatarSize}
-                  src={ item.user?.avatar_hd && <YImg useImg src={item.user?.avatar_hd} />}
-                >{item.user?.screen_name}</Avatar>
+                  src={
+                    item.user?.avatar_hd && (
+                      <YImg useImg src={item.user?.avatar_hd} />
+                    )
+                  }
+                >
+                  {item.user?.screen_name}
+                </Avatar>
               }
-              title={<span>{item.user?.screen_name}</span>}
+              title={
+                <span>{item.user?.screen_name}</span>
+              }
               description={
                 <>
                   <div
                     className="content"
                     dangerouslySetInnerHTML={{ __html: item.text }}
                   ></div>
-                  <div style={{
-                    marginTop:'5px'
-                  }}>
+                  <Flex
+                    justify="space-between"
+                    style={{
+                      color: "#999",
+                      fontSize: "13px",
+                      fontWeight: "normal",
+                    }}
+                    align="center"
+                  >
+                    <span>
+                      {dayjs(item.created_at).format("M-DD HH:mm")}{" "}
+                      {item.source}
+                    </span>
+                    <span>
+                      <HeartOutlined /> {item.like_counts}{" "}
+                    </span>
+                  </Flex>
+                  <div
+                    style={{
+                      marginTop: "5px",
+                    }}
+                  >
                     {item.comments &&
-                    item.comments.length > 0 &&
-                    renderComments(item.comments, is_child)}
+                      item.comments.length > 0 &&
+                      renderComments(item.comments, is_child)}
                   </div>
                 </>
               }

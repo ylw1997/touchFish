@@ -16,9 +16,10 @@ interface WeiboCardProps {
   activeKey: string;
   onUserClick?: (userInfo: weiboUser) => void;
   onFollow?: (uid: string, blogId: number) => void;
-  cancelFollow?: (id: number,blogId: number) => void;
+  cancelFollow?: (id: number, blogId: number) => void;
   onExpandLongWeibo?: (id: string) => void;
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
+  showActions?: boolean;
 }
 
 // 提取常量配置
@@ -44,6 +45,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   cancelFollow,
   onExpandLongWeibo,
   onToggleComments,
+  showActions,
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
 
@@ -82,25 +84,24 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </div>
         </div>
       </Space>
-      {item.followBtnCode ? (
-        <Button
-          color="primary"
-          onClick={() => onFollow?.(item.followBtnCode!.uid, item.id)}
-          variant="filled"
-        >
-          关注
-        </Button>
-      ) : (
-        item.user?.following && (
+      {showActions &&
+        (!item.user?.following ? (
+          <Button
+            color="primary"
+            onClick={() => onFollow?.(item.user?.id + "", item.id)}
+            variant="filled"
+          >
+            关注
+          </Button>
+        ) : (
           <Button
             color="danger"
-            onClick={() => cancelFollow?.(item.user!.id,item.id)}
+            onClick={() => cancelFollow?.(item.user!.id, item.id)}
             variant="filled"
           >
             取关
           </Button>
-        )
-      )}
+        ))}
     </Flex>
   );
 

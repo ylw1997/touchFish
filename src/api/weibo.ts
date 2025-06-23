@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-06-20 19:39:24
+ * @LastEditTime: 2025-06-23 09:48:40
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -18,6 +18,7 @@ axios.interceptors.response.use(
     vscode.window.showErrorMessage(
       `请求失败:${error.message} -------> ${error.config.url}`
     );
+    return Promise.reject(error);
   }
 );
 

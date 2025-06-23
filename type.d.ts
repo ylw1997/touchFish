@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-06-20 19:34:09
+ * @LastEditTime: 2025-06-23 10:05:48
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -88,6 +88,8 @@ export type commentsItem = {
   id:string;
   source:string;
   user?: weiboUser;
+  created_at:string;
+  like_counts:number;
   comments:commentsItem[]
 }
 
