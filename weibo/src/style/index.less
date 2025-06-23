@@ -82,89 +82,68 @@ body {
   }
 }
 
+// 图片列表通用样式
+.imglist,
+.retweeted-status .imglist {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  .img-item,
+  .img-only-item {
+    object-fit: cover;
+    border-radius: 5px;
+  }
+}
+
+// 分辨率小于等于320px
 @media screen and (max-width: 320px) {
-  .imglist {
-    display: flex;
-    margin-top: 10px;
-    flex-wrap: wrap;
-    gap: 10px;
+  .imglist,
+  .retweeted-status .imglist {
     .img-item,
     .img-only-item {
-      object-fit: cover;
-      border-radius: 5px;
       width: 100%;
       height: 100%;
     }
   }
 }
 
-// 分辨率小于768px,大于320px时
-@media screen and (min-width: 321px) and (max-width: 768px) {
-  .imglist {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap;
+// 分辨率321-768px
+@media screen and (min-width: 321px) and (max-width: 680px) {
+  .imglist,
+  .retweeted-status .imglist {
     .img-item {
-      object-fit: cover;
-      border-radius: 5px;
       width: calc(50vw - 23px);
       height: calc(50vw - 25px);
     }
     .img-only-item {
-      object-fit: cover;
-      border-radius: 5px;
       width: 100%;
+      max-width: 500px;
     }
   }
-  .retweeted-status {
-    .imglist {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-      .img-item {
-        object-fit: cover;
-        border-radius: 5px;
-        width: calc(50vw - 32px);
-        height: calc(50vw - 32px);
-      }
-      .img-only-item {
-        object-fit: cover;
-        border-radius: 5px;
-        width: 100%;
-      }
+  .retweeted-status .imglist {
+    .img-item {
+      width: calc(50vw - 32px);
+      height: calc(50vw - 32px);
     }
   }
 }
 
-@media screen and (min-width: 769px) {
-  .imglist {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap;
+// 分辨率大于等于769px
+@media screen and (min-width: 681px) {
+  .imglist,
+  .retweeted-status .imglist {
     .img-item,
     .img-only-item {
-      object-fit: cover;
-      border-radius: 5px;
       width: calc(33.33vw - 19px);
       height: calc(33.33vw - 19px);
     }
   }
-  .retweeted-status {
-    .imglist {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-      .img-item,
-      .img-only-item {
-        object-fit: cover;
-        border-radius: 5px;
-        width: calc(33.33vw - 25px);
-        height: calc(33.33vw - 25px);
-      }
+  .retweeted-status .imglist {
+    .img-item,
+    .img-only-item {
+      width: calc(33.33vw - 25px);
+      height: calc(33.33vw - 25px);
     }
   }
 }
