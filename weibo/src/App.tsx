@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-23 09:46:56
+ * @LastEditTime: 2025-06-23 11:29:43
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -50,7 +50,6 @@ function App() {
   const [total, setTotal] = useState(0);
   const [max_id, setMaxId] = useState<number>();
   const [userWeiboPage, setUserWeiboPage] = useState<number>(0);
-  const [curBlogId, setCurBlogId] = useState<number>();
   const [userDetailVisible, setUserDetailVisible] = useState(false);
   const [userDetail, setUserDetail] = useState<weiboUser>();
   const [userWeiboList, setUserWeiboList] = useState<weiboItem[]>([]);
@@ -174,10 +173,8 @@ function App() {
                 following: true,
               };
             });
-          }
-          if (curBlogId) {
             updateList(
-              (item) => item.id === curBlogId,
+              (item) => item.user?.id === userDetail!.id,
               (item) => ({
                 ...item,
                 user: {
@@ -214,10 +211,8 @@ function App() {
                 following: false,
               };
             });
-          }
-          if (curBlogId) {
             updateList(
-              (item) => item.id === curBlogId,
+              (item) => item.user?.id === userDetail!.id,
               (item) => ({
                 ...item,
                 user: {
@@ -232,7 +227,7 @@ function App() {
         }
       },
     }),
-    [messageApi, list, activeKey, subAcitiveKey, userDetailVisible, updateUserWeiboList, updateList, userWeiboList, userDetail, curBlogId]
+    [messageApi, list, activeKey, subAcitiveKey, userDetailVisible, updateUserWeiboList, updateList, userWeiboList, userDetail]
   );
 
   // 统一处理消息响应
@@ -346,20 +341,18 @@ function App() {
 
   // 关注博主
   const followUser = useCallback(
-    (uid: string, blogId: number) => {
+    (uid: number) => {
       if (loading) return;
       setLoading(true);
-      setCurBlogId(blogId);
       sendMessage("GETFOLLOW", uid);
     },
     [loading, sendMessage]
   );
   // 取关博主
   const cancelFollow = useCallback(
-    (id: number, blogId: number) => {
+    (id: number) => {
       if (loading) return;
       setLoading(true);
-      setCurBlogId(blogId);
       sendMessage("GETCANCELFOLLOW", id);
     },
     [loading, sendMessage]
@@ -484,7 +477,7 @@ function App() {
               {!userDetail.following ? (
                 <Button
                   color="primary"
-                  onClick={() => followUser(userDetail.id + "", userDetail.id)}
+                  onClick={() => followUser(userDetail.id)}
                   variant="filled"
                 >
                   关注
@@ -492,7 +485,7 @@ function App() {
               ) : (
                 <Button
                   color="danger"
-                  onClick={() => cancelFollow(userDetail.id, userDetail.id)}
+                  onClick={() => cancelFollow(userDetail.id)}
                   variant="filled"
                 >
                   取关
@@ -578,6 +571,7 @@ function App() {
       <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
         <FloatButton.BackTop
           visibilityHeight={500}
+          duration={1000}
           icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
         />
         <FloatButton

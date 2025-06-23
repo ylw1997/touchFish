@@ -15,8 +15,8 @@ interface WeiboCardProps {
   is_child?: boolean;
   activeKey: string;
   onUserClick?: (userInfo: weiboUser) => void;
-  onFollow?: (uid: string, blogId: number) => void;
-  cancelFollow?: (id: number, blogId: number) => void;
+  onFollow?: (uid: number) => void;
+  cancelFollow?: (id: number) => void;
   onExpandLongWeibo?: (id: string) => void;
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
   showActions?: boolean;
@@ -85,10 +85,11 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </div>
       </Space>
       {showActions &&
+        item.user &&
         (!item.user?.following ? (
           <Button
             color="primary"
-            onClick={() => onFollow?.(item.user?.id + "", item.id)}
+            onClick={() => onFollow?.(item.user!.id)}
             variant="filled"
           >
             关注
@@ -96,7 +97,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         ) : (
           <Button
             color="danger"
-            onClick={() => cancelFollow?.(item.user!.id, item.id)}
+            onClick={() => cancelFollow?.(item.user!.id)}
             variant="filled"
           >
             取关
