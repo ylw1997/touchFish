@@ -82,14 +82,90 @@ body {
   }
 }
 
-.imglist {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-  .img-item {
-    object-fit: cover;
-    border-radius: 5px;
+@media screen and (max-width: 320px) {
+  .imglist {
+    display: flex;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+    .img-item,
+    .img-only-item {
+      object-fit: cover;
+      border-radius: 5px;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// 分辨率小于768px,大于320px时
+@media screen and (min-width: 321px) and (max-width: 768px) {
+  .imglist {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    .img-item {
+      object-fit: cover;
+      border-radius: 5px;
+      width: calc(50vw - 23px);
+      height: calc(50vw - 25px);
+    }
+    .img-only-item {
+      object-fit: cover;
+      border-radius: 5px;
+      width: 100%;
+    }
+  }
+  .retweeted-status {
+    .imglist {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      .img-item {
+        object-fit: cover;
+        border-radius: 5px;
+        width: calc(50vw - 32px);
+        height: calc(50vw - 32px);
+      }
+      .img-only-item {
+        object-fit: cover;
+        border-radius: 5px;
+        width: 100%;
+      }
+    }
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .imglist {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    .img-item,
+    .img-only-item {
+      object-fit: cover;
+      border-radius: 5px;
+      width: calc(33.33vw - 19px);
+      height: calc(33.33vw - 19px);
+    }
+  }
+  .retweeted-status {
+    .imglist {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      .img-item,
+      .img-only-item {
+        object-fit: cover;
+        border-radius: 5px;
+        width: calc(33.33vw - 25px);
+        height: calc(33.33vw - 25px);
+      }
+    }
   }
 }
 
@@ -116,7 +192,7 @@ body {
   }
 }
 
-.ant-message .ant-message-notice-wrapper .ant-message-notice-content{
+.ant-message .ant-message-notice-wrapper .ant-message-notice-content {
   background: rgb(126 126 126 / 50%);
   backdrop-filter: saturate(180%) blur(15px);
 }

@@ -11,12 +11,13 @@ import { renderComments } from "./Comment";
 import { CSSProperties } from "react";
 
 interface WeiboCardProps {
+  className?: string;
   item: weiboItem;
   is_child?: boolean;
   activeKey: string;
   onUserClick?: (userInfo: weiboUser) => void;
-  onFollow?: (uid: number) => void;
-  cancelFollow?: (id: number) => void;
+  onFollow?: (userInfo?: weiboUser) => void;
+  cancelFollow?: (userInfo?: weiboUser) => void;
   onExpandLongWeibo?: (id: string) => void;
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
   showActions?: boolean;
@@ -25,12 +26,10 @@ interface WeiboCardProps {
 // 提取常量配置
 const CARD_CONFIG = {
   CHILD: {
-    imgSize: 150,
     avatarSize: 32,
     fontSize: 14,
   },
   PARENT: {
-    imgSize: 160,
     avatarSize: 40,
     fontSize: 16,
   },
@@ -46,6 +45,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   onExpandLongWeibo,
   onToggleComments,
   showActions,
+  className,
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
 
@@ -89,7 +89,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         (!item.user?.following ? (
           <Button
             color="primary"
-            onClick={() => onFollow?.(item.user!.id)}
+            onClick={() => onFollow?.(item.user)}
             variant="filled"
           >
             关注
@@ -97,7 +97,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         ) : (
           <Button
             color="danger"
-            onClick={() => cancelFollow?.(item.user!.id)}
+            onClick={() => cancelFollow?.(item.user)}
             variant="filled"
           >
             取关
@@ -117,9 +117,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             if (!picInfo) return null;
 
             const imgProps = {
-              width: item.pic_ids.length > 1 ? config.imgSize : undefined,
-              height: item.pic_ids.length > 1 ? config.imgSize : undefined,
-              className: "img-item",
+              className: item.pic_ids.length > 1 ? "img-item" : "img-only-item",
               key: pic,
               src: picInfo.large ? picInfo.large.url : picInfo.bmiddle.url,
             };
@@ -169,6 +167,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       style={{
         background: "#141414a6",
       }}
+      className={className}
     >
       <div
         className="content"
@@ -186,11 +185,14 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       {renderImages()}
       {item.retweeted_status && (
         <WeiboCard
+          className="retweeted-status"
           item={item.retweeted_status}
           is_child={true}
           activeKey={activeKey}
           onUserClick={onUserClick}
           onFollow={onFollow}
+          cancelFollow={cancelFollow}
+          showActions={showActions}
           onExpandLongWeibo={onExpandLongWeibo}
           onToggleComments={onToggleComments}
         />

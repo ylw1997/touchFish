@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-23 11:29:43
+ * @LastEditTime: 2025-06-23 14:27:35
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -223,11 +223,21 @@ function App() {
             );
           }
         } else {
-          messageApi.error("关注请求失败!", payload?.ok);
+          messageApi.error("取消关注请求失败!", payload?.ok);
         }
       },
     }),
-    [messageApi, list, activeKey, subAcitiveKey, userDetailVisible, updateUserWeiboList, updateList, userWeiboList, userDetail]
+    [
+      messageApi,
+      list,
+      activeKey,
+      subAcitiveKey,
+      userDetailVisible,
+      updateUserWeiboList,
+      updateList,
+      userWeiboList,
+      userDetail,
+    ]
   );
 
   // 统一处理消息响应
@@ -341,19 +351,21 @@ function App() {
 
   // 关注博主
   const followUser = useCallback(
-    (uid: number) => {
-      if (loading) return;
+    (userInfo?: weiboUser) => {
+      if (loading || !userInfo) return;
       setLoading(true);
-      sendMessage("GETFOLLOW", uid);
+      setUserDetail(userInfo);
+      sendMessage("GETFOLLOW", userInfo.id);
     },
     [loading, sendMessage]
   );
   // 取关博主
   const cancelFollow = useCallback(
-    (id: number) => {
-      if (loading) return;
+    (userInfo?: weiboUser) => {
+      if (loading || !userInfo) return;
       setLoading(true);
-      sendMessage("GETCANCELFOLLOW", id);
+      setUserDetail(userInfo);
+      sendMessage("GETCANCELFOLLOW", userInfo.id);
     },
     [loading, sendMessage]
   );
@@ -477,7 +489,7 @@ function App() {
               {!userDetail.following ? (
                 <Button
                   color="primary"
-                  onClick={() => followUser(userDetail.id)}
+                  onClick={() => followUser(userDetail)}
                   variant="filled"
                 >
                   关注
@@ -485,7 +497,7 @@ function App() {
               ) : (
                 <Button
                   color="danger"
-                  onClick={() => cancelFollow(userDetail.id)}
+                  onClick={() => cancelFollow(userDetail)}
                   variant="filled"
                 >
                   取关
