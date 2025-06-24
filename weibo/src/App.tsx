@@ -1,22 +1,19 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-24 15:18:20
+ * @LastEditTime: 2025-06-24 16:13:01
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Divider,
   FloatButton,
   Tabs,
-  Drawer,
-  Avatar,
   TabsProps,
-  Button,
 } from "antd";
 import { vscode } from "./utils/vscode";
 import { commandsType, weiboAJAX, weiboItem, weiboUser } from "../.././type";
@@ -31,11 +28,11 @@ import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
 import WeiboCard from "./components/WeiboCard";
-import YImg from "./components/YImg";
 import { updateWeiboList } from "./utils/updateWeiboList";
 import { loaderFunc } from "./utils/loader";
 import { useVscodeMessage } from "./hooks/useVscodeMessage";
 import SendWeiboDrawer from "./components/SendWeiboDrawer";
+import UserDetailDrawer from "./components/UserDetailDrawer";
 import { weiboSendParams } from "./types";
 import { defTab } from "./data/tabs";
 dayjs.locale("zh-cn");
@@ -413,135 +410,30 @@ function App() {
     [clearList, sendMessage, tabs]
   );
 
-  const getUserBlogFunc = () => {
-    console.log("getUserBlogFunc");
-    if (!loading && userDetail)
-      sendMessage(
-        "GETUSERBLOG",
-        JSON.stringify({
-          uid: userDetail.id,
-          page: userWeiboPage + 1,
-        })
-      );
-  };
-
-  // 用于用户微博 InfiniteScroll 的 ref
-  const userBlogRef = useRef<HTMLDivElement>(null);
-
   return (
     <>
       {contextHolder}
-      <Drawer
-        destroyOnClose
-        closable
-        open={userDetailVisible}
+      <UserDetailDrawer
+        visible={userDetailVisible}
+        userDetail={userDetail}
+        userWeiboList={userWeiboList}
+        userWeiboTotal={userWeiboTotal}
         onClose={() => {
           setUserDetailVisible(false);
           setUserWeiboList([]);
           setUserDetail(undefined);
         }}
-        title={userDetail?.screen_name}
-        placement="bottom"
-        height="calc(100vh - 200px)"
-        styles={{
-          wrapper: {
-            background: "none",
-            borderRadius: "10px",
-            overflow: "hidden",
-          },
-          body: {
-            padding: 0,
-            height: "100%",
-            minHeight: 0,
-            overflow: "auto",
-          },
-          content: {
-            background: "rgba(26, 28, 34, 0.5)",
-            backdropFilter: "saturate(180%) blur(15px)",
-          },
+        onFollow={followUser}
+        onCancelFollow={cancelFollow}
+        onGetUserBlog={(uid, page) => {
+          sendMessage("GETUSERBLOG", JSON.stringify({ uid, page }));
         }}
-      >
-        {userDetail && (
-          <div
-            ref={userBlogRef}
-            id="user-blog"
-            style={{
-              height: "100%",
-              overflow: "auto",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 16,
-              }}
-            >
-              <Avatar
-                size={80}
-                style={{ marginTop: 16 }}
-                src={
-                  userDetail.avatar_hd && (
-                    <YImg useImg src={userDetail.avatar_hd} />
-                  )
-                }
-              >
-                {userDetail.screen_name}
-              </Avatar>
-              <div style={{ fontSize: 20, fontWeight: 500 }}>
-                {userDetail.screen_name}
-              </div>
-              {!userDetail.following ? (
-                <Button
-                  color="primary"
-                  onClick={() => followUser(userDetail)}
-                  variant="filled"
-                >
-                  关注
-                </Button>
-              ) : (
-                <Button
-                  color="danger"
-                  onClick={() => cancelFollow(userDetail)}
-                  variant="filled"
-                >
-                  取关
-                </Button>
-              )}
-            </div>
-            {userBlogRef.current && (
-              <InfiniteScroll
-                scrollableTarget={userBlogRef.current as any}
-                dataLength={userWeiboList.length}
-                next={getUserBlogFunc}
-                loader={loaderFunc(1)}
-                endMessage={<Divider plain>没有了🤐</Divider>}
-                hasMore={userWeiboList.length < userWeiboTotal}
-                style={{ marginTop: 24 }}
-              >
-                {userWeiboList.map((item) => (
-                  <WeiboCard
-                    key={item.id}
-                    item={item}
-                    activeKey={"userblog"}
-                    onUserClick={getUserBlog}
-                    onFollow={followUser}
-                    cancelFollow={cancelFollow}
-                    onExpandLongWeibo={handleExpandLongWeibo}
-                    onToggleComments={(id, uid, is_retweeted) =>
-                      handleToggleComments(id, uid, is_retweeted, true)
-                    }
-                    showActions={false}
-                    onCopyLink={copyLink}
-                  />
-                ))}
-              </InfiniteScroll>
-            )}
-          </div>
-        )}
-      </Drawer>
+        onToggleComments={handleToggleComments}
+        onExpandLongWeibo={handleExpandLongWeibo}
+        onCopyLink={copyLink}
+        userWeiboPage={userWeiboPage}
+        loading={loading}
+      />
       <Tabs
         className="tabs"
         items={tabs as TabsProps["items"]}
