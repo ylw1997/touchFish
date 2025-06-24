@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-06-23 09:48:40
+ * @LastEditTime: 2025-06-24 13:54:17
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -137,6 +137,25 @@ type weiboSendParams = {
   media?: string;
 };
 
+type weiboCommentParams = {
+  id: string; // 微博ID
+  comment: string; // 评论内容
+  pic_id?: string; // 图片ID ""
+  is_repost?: number; // 0
+  comment_ori?: number; //0
+  is_comment?: number; //0
+}
+
+type weiboRepostParams = {
+  id: string; // 微博ID
+  comment: string; // 转发评论内容
+  pic_id?: string; // 图片ID ""
+  is_repost?: number; //0
+  comment_ori?: number; //0
+  is_comment?: number; //0
+  visible?:number //0
+  share_id?: string; //""
+}
 export const sendWeibo = async (params: string) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
   const parsedParams = JSON.parse(params) as weiboSendParams;
@@ -192,6 +211,83 @@ export const cancelfollowUser = async (uid: string) => {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
         "X-Xsrf-Token": xsrf,
+      },
+    }
+  );
+};
+
+
+// like https://weibo.com/ajax/statuses/setLike {"id":"5181037522454301"}
+export const setLike = async (id: string) => {
+  const cookie = (await getOrSetWeiboCookie()) as string;
+  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
+  return await axios.post(
+    `https://weibo.com/ajax/statuses/setLike`,
+    { id },
+    {
+      headers: {
+        Cookie: cookie,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "X-Xsrf-Token": xsrf,
+      },
+    }
+  );
+};
+// cancelLike https://weibo.com/ajax/statuses/cancelLike {"id":"5181037522454301"}
+export const cancelLike = async (id: string) => {
+  const cookie = (await getOrSetWeiboCookie()) as string;
+  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
+  return await axios.post(
+    `https://weibo.com/ajax/statuses/cancelLike`,
+    { id },
+    {
+      headers: {
+        Cookie: cookie,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "X-Xsrf-Token": xsrf,
+      },
+    }
+  );
+};
+
+// 评论 
+export const createComments = async (params: string) => {
+  const cookie = (await getOrSetWeiboCookie()) as string;
+  const parsedParams = JSON.parse(params) as weiboCommentParams;
+  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
+  return await axios.post(
+    `https://weibo.com/ajax/comments/create`,
+    parsedParams,
+    {
+      headers: {
+        Cookie: cookie,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "X-Xsrf-Token": xsrf,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    }
+  );
+};
+
+
+// 转发
+export const createRepost = async (params: string) => {
+  const cookie = (await getOrSetWeiboCookie()) as string;
+  const parsedParams = JSON.parse(params) as weiboRepostParams;
+  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
+  return await axios.post(
+    `https://weibo.com/ajax/statuses/normal_repost`,
+    parsedParams,
+    {
+      headers: {
+        Cookie: cookie,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "X-Xsrf-Token": xsrf,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
     }
   );

@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-06-23 09:13:56
+ * @LastEditTime: 2025-06-24 14:20:06
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -24,6 +24,9 @@ import {
   getWeiboImg,
   sendWeibo,
   uploadImage,
+  createComments,
+  setLike,
+  cancelLike,
 } from "../api/weibo";
 import { commandsType, uploadType, weiboAJAX } from "../../type";
 import { setConfigByKey } from "../config";
@@ -152,6 +155,33 @@ export class WeiboProvider implements WebviewViewProvider {
             const res = await cancelfollowUser(message.payload);
             webviewView.webview.postMessage({
               command: `SENDCANCELFOLLOW`,
+              payload: {
+                payload: message.payload,
+                ...res.data,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETSETLIKE": {
+            const res = await setLike(message.payload);
+            webviewView.webview.postMessage({
+              command: "SENDSETLIKE",
+              payload: res.data,
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETCANCELLIKE": {
+            const res = await cancelLike(message.payload);
+            webviewView.webview.postMessage({
+              command: "SENDCANCELLIKE",
+              payload: res.data,
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETCREATECOMMENTS": {
+            const res = await createComments(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDCREATECOMMENTS`,
               payload: {
                 payload: message.payload,
                 ...res.data,
