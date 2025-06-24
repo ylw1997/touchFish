@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-23 14:27:35
+ * @LastEditTime: 2025-06-24 15:18:20
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -82,6 +82,13 @@ function App() {
     },
     []
   );
+
+  // 复制
+  const copyLink = useCallback((url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      messageApi.success("链接已复制到剪贴板");
+    });
+  }, [messageApi]);
 
   // 处理函数集合
   const handlers = useMemo(
@@ -526,6 +533,8 @@ function App() {
                     onToggleComments={(id, uid, is_retweeted) =>
                       handleToggleComments(id, uid, is_retweeted, true)
                     }
+                    showActions={false}
+                    onCopyLink={copyLink}
                   />
                 ))}
               </InfiniteScroll>
@@ -576,6 +585,7 @@ function App() {
               showActions={true}
               onExpandLongWeibo={handleExpandLongWeibo}
               onToggleComments={handleToggleComments}
+              onCopyLink={copyLink}
             />
           ))}
         </InfiniteScroll>

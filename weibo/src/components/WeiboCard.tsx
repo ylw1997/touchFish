@@ -1,5 +1,7 @@
-import { Avatar, Button, Card, Flex, Image, Space } from "antd";
+import { Avatar, Button, Card, Dropdown, Flex, Image, Space } from "antd";
 import {
+  DownCircleOutlined,
+  ExportOutlined,
   HeartOutlined,
   MessageOutlined,
   ShareAltOutlined,
@@ -21,6 +23,7 @@ interface WeiboCardProps {
   onExpandLongWeibo?: (id: string) => void;
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
   showActions?: boolean;
+  onCopyLink?: (url: string) => void;
 }
 
 // 提取常量配置
@@ -46,6 +49,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   onToggleComments,
   showActions,
   className,
+  onCopyLink,
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
 
@@ -141,7 +145,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     >
       <Flex justify="space-around" align="center">
         <span className="link">
-          <ShareAltOutlined /> {item.reposts_count}
+          <ExportOutlined /> {item.reposts_count}
         </span>
         <span
           className="link"
@@ -155,6 +159,27 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </span>
         <span className="link">
           <HeartOutlined /> {item.attitudes_count}
+        </span>
+        <span className="link">
+          <Dropdown
+            trigger={["click", "hover"]}
+            menu={{
+              items: [
+                {
+                  key: "share",
+                  label: "分享",
+                  icon: <ShareAltOutlined />,
+                  onClick: () => {
+                    onCopyLink?.(
+                      `https://weibo.com/${item.user?.id}/${item.mblogid}`
+                    );
+                  },
+                },
+              ],
+            }}
+          >
+            <DownCircleOutlined />
+          </Dropdown>
         </span>
       </Flex>
     </div>
@@ -195,6 +220,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           showActions={showActions}
           onExpandLongWeibo={onExpandLongWeibo}
           onToggleComments={onToggleComments}
+          onCopyLink={onCopyLink}
         />
       )}
       {renderActionBar()}
