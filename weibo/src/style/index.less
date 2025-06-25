@@ -13,14 +13,6 @@ body {
   outline: none;
 }
 
-.tabs {
-  position: fixed;
-  z-index: 9;
-  width: 100%;
-  background: rgba(26, 28, 34, 0.5);
-  top: 0;
-  backdrop-filter: saturate(180%) blur(15px);
-}
 .list {
   // padding: 3px;
   min-height: 100px;
@@ -89,29 +81,24 @@ body {
   gap: 10px;
   margin-top: 10px;
   flex-wrap: wrap;
+
   .img-item,
   .img-only-item {
     object-fit: cover;
     border-radius: 5px;
   }
-}
 
-// 分辨率小于等于320px
-@media screen and (max-width: 320px) {
-  .imglist,
-  .retweeted-status .imglist {
+  // 分辨率小于等于320px
+  @media screen and (max-width: 320px) {
     .img-item,
     .img-only-item {
       width: 100%;
       height: 100%;
     }
   }
-}
 
-// 分辨率321-768px
-@media screen and (min-width: 321px) and (max-width: 680px) {
-  .imglist,
-  .retweeted-status .imglist {
+  // 分辨率321-768px
+  @media screen and (min-width: 321px) and (max-width: 680px) {
     .img-item {
       width: calc(50vw - 23px);
       height: calc(50vw - 25px);
@@ -121,31 +108,36 @@ body {
       max-width: 500px;
     }
   }
-  .retweeted-status .imglist {
-    .img-item {
-      width: calc(50vw - 32px);
-      height: calc(50vw - 32px);
-    }
-  }
-}
 
-// 分辨率大于等于769px
-@media screen and (min-width: 681px) {
-  .imglist,
-  .retweeted-status .imglist {
+  // 分辨率大于等于769px
+  @media screen and (min-width: 681px) {
     .img-item,
     .img-only-item {
       width: calc(33.33vw - 19px);
       height: calc(33.33vw - 19px);
     }
   }
-  .retweeted-status .imglist {
-    .img-item,
-    .img-only-item {
-      width: calc(33.33vw - 25px);
-      height: calc(33.33vw - 25px);
-    }
-  }
+}
+
+// 提取公共背景模糊样式
+.backdrop-style {
+  background: rgba(26, 28, 34, 0.5);
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
+.ant-dropdown .ant-dropdown-menu,
+.ant-tabs-dropdown .ant-tabs-dropdown-menu,
+.ant-message .ant-message-notice-wrapper .ant-message-notice-content,
+.ant-select-dropdown {
+  .backdrop-style();
+}
+
+.tabs {
+  position: fixed;
+  z-index: 9;
+  width: 100%;
+  top: 0;
+  .backdrop-style();
 }
 
 .ant-image {
@@ -159,24 +151,21 @@ body {
   margin: 0;
 }
 
+.ant-tabs-nav-list {
+  padding: 0 10px;
+}
+
+.ant-tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin: 0 0 0 26px;
+}
+
 .ant-float-btn-group > .ant-float-btn {
-  background: rgb(126 126 126 / 50%);
-  backdrop-filter: saturate(180%) blur(15px);
+  .backdrop-style();
 
   &:hover {
-    background: rgb(126 126 126 / 70%);
+    background: rgba(26, 28, 34, 0.7);
   }
   .ant-float-btn-body {
     background: none;
   }
-}
-
-.ant-message .ant-message-notice-wrapper .ant-message-notice-content {
-  background: rgb(126 126 126 / 50%);
-  backdrop-filter: saturate(180%) blur(15px);
-}
-
-.ant-select-dropdown {
-  background: rgb(126 126 126 / 50%);
-  backdrop-filter: saturate(180%) blur(15px);
 }
