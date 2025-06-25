@@ -281,6 +281,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           onExpandLongWeibo={onExpandLongWeibo}
           onToggleComments={onToggleComments}
           onCopyLink={onCopyLink}
+          onCommentOrRepost={onCommentOrRepost}
           onLikeOrCancelLike={onLikeOrCancelLike}
         />
       )}
