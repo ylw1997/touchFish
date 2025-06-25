@@ -289,9 +289,9 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         <div
           style={{
             borderTop: "1px solid rgb(255 255 255 / 10%)",
-            marginLeft: -10,
-            marginRight: -10,
-            padding: "10px 10px 0",
+            marginLeft: "-8px",
+            marginRight: "-8px",
+            padding: "8px 8px 0px",
           }}
         >
           <Form form={form} onFinish={handleSubmit} layout="vertical">

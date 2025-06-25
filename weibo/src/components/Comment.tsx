@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-06-23 10:29:51
+ * @LastEditTime: 2025-06-25 15:20:39
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -20,9 +20,9 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
     <div
       style={{
         borderTop: "1px solid rgb(255 255 255 / 10%)",
-        marginLeft: -10,
-        marginRight: -10,
-        padding: "0 10px 0",
+        marginLeft: "-8px",
+        marginRight: "-8px",
+        padding: "8px 8px 0px",
       }}
     >
       <List
@@ -50,9 +50,7 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
                   {item.user?.screen_name}
                 </Avatar>
               }
-              title={
-                <span>{item.user?.screen_name}</span>
-              }
+              title={<span>{item.user?.screen_name}</span>}
               description={
                 <>
                   <div
