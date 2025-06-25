@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-25 14:46:33
+ * @LastEditTime: 2025-06-25 14:50:14
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -574,6 +574,7 @@ function App() {
         userWeiboPage={userWeiboPage}
         loading={loading}
         onCommentOrRepost={handleCommentOrRepost}
+        onLikeOrCancelLike={handleLike}
       />
       <Tabs
         className="tabs"

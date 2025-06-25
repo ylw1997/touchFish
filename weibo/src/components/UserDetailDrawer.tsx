@@ -1,10 +1,10 @@
-import React, { useRef } from 'react';
-import { Drawer, Avatar, Button, Divider } from 'antd';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import YImg from './YImg';
-import WeiboCard from './WeiboCard';
-import { loaderFunc } from '../utils/loader';
-import { weiboUser, weiboItem } from '../../../type';
+import React, { useRef } from "react";
+import { Drawer, Avatar, Button, Divider } from "antd";
+import InfiniteScroll from "react-infinite-scroll-component";
+import YImg from "./YImg";
+import WeiboCard from "./WeiboCard";
+import { loaderFunc } from "../utils/loader";
+import { weiboUser, weiboItem } from "../../../type";
 
 interface UserDetailDrawerProps {
   visible: boolean;
@@ -15,16 +15,22 @@ interface UserDetailDrawerProps {
   onFollow: (userInfo?: weiboUser) => void;
   onCancelFollow: (userInfo?: weiboUser) => void;
   onGetUserBlog: (uid: number, page: number) => void;
-  onToggleComments: (id: number, uid: number, is_retweeted: boolean, isUserBlog?: boolean) => void;
+  onToggleComments: (
+    id: number,
+    uid: number,
+    is_retweeted: boolean,
+    isUserBlog?: boolean
+  ) => void;
   onExpandLongWeibo: (id: string) => void;
   onCopyLink: (url: string) => void;
   userWeiboPage: number;
   loading: boolean;
-   onCommentOrRepost?: (
+  onCommentOrRepost?: (
     content: string,
     item: weiboItem,
     type: "comment" | "repost"
   ) => void;
+  onLikeOrCancelLike?: (item: weiboItem, type: "like" | "cancel") => void;
 }
 
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
@@ -41,7 +47,8 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   onCopyLink,
   userWeiboPage,
   loading,
-  onCommentOrRepost
+  onCommentOrRepost,
+  onLikeOrCancelLike,
 }) => {
   const userBlogRef = useRef<HTMLDivElement>(null);
 
@@ -62,19 +69,19 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
       height="calc(100vh - 200px)"
       styles={{
         wrapper: {
-          background: 'none',
-          borderRadius: '10px',
-          overflow: 'hidden',
+          background: "none",
+          borderRadius: "10px",
+          overflow: "hidden",
         },
         body: {
           padding: 0,
-          height: '100%',
+          height: "100%",
           minHeight: 0,
-          overflow: 'auto',
+          overflow: "auto",
         },
         content: {
-          background: 'rgba(26, 28, 34, 0.5)',
-          backdropFilter: 'saturate(180%) blur(15px)',
+          background: "rgba(26, 28, 34, 0.5)",
+          backdropFilter: "saturate(180%) blur(15px)",
         },
       }}
     >
@@ -83,16 +90,16 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
           ref={userBlogRef}
           id="user-blog"
           style={{
-            height: '100%',
-            overflow: 'auto',
+            height: "100%",
+            overflow: "auto",
           }}
         >
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
               gap: 16,
             }}
           >
@@ -152,6 +159,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                   showActions={false}
                   onCopyLink={onCopyLink}
                   onCommentOrRepost={onCommentOrRepost}
+                  onLikeOrCancelLike={onLikeOrCancelLike}
                 />
               ))}
             </InfiniteScroll>
