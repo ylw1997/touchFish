@@ -2,6 +2,7 @@ import { Avatar, Button, Card, Dropdown, Flex, Form, Image, Space } from "antd";
 import {
   DownCircleOutlined,
   ExportOutlined,
+  HeartFilled,
   HeartOutlined,
   MessageOutlined,
   ShareAltOutlined,
@@ -30,6 +31,7 @@ export interface WeiboCardProps {
     item: weiboItem,
     type: "comment" | "repost"
   ) => void;
+  onLikeOrCancelLike?: (item: weiboItem, type: "like" | "cancel") => void;
 }
 
 // 提取常量配置
@@ -57,6 +59,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   className,
   onCopyLink,
   onCommentOrRepost,
+  onLikeOrCancelLike,
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
 
@@ -135,11 +138,13 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
             const imgProps = {
               className: item.pic_ids.length > 1 ? "img-item" : "img-only-item",
-              key: pic,
               src: picInfo.large ? picInfo.large.url : picInfo.bmiddle.url,
             };
-
-            return <YImg {...imgProps} />;
+            return (
+              <div key={pic}>
+                <YImg {...imgProps} />
+              </div>
+            );
           })}
         </Image.PreviewGroup>
       </div>
@@ -194,9 +199,21 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         >
           <MessageOutlined /> {item.comments_count}
         </span>
-        <span className="link">
-          <HeartOutlined /> {item.attitudes_count}
-        </span>
+        {item.attitudes_status == 1 ? (
+          <span
+            className="link"
+            onClick={() => onLikeOrCancelLike?.(item, "cancel")}
+          >
+            <HeartFilled style={{ color: "red" }} /> {item.attitudes_count}
+          </span>
+        ) : (
+          <span
+            className="link"
+            onClick={() => onLikeOrCancelLike?.(item, "like")}
+          >
+            <HeartOutlined /> {item.attitudes_count}
+          </span>
+        )}
         <span className="link">
           <Dropdown
             trigger={["click", "hover"]}
@@ -264,6 +281,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           onExpandLongWeibo={onExpandLongWeibo}
           onToggleComments={onToggleComments}
           onCopyLink={onCopyLink}
+          onLikeOrCancelLike={onLikeOrCancelLike}
         />
       )}
       {renderActionBar()}

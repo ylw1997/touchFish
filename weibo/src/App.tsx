@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-25 14:02:31
+ * @LastEditTime: 2025-06-25 14:46:33
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -261,8 +261,78 @@ function App() {
           messageApi.error("取消关注请求失败!", payload?.ok);
         }
       },
+      SENDSETLIKE: (payload: any) => {
+        messageApi.destroy("GETSETLIKE");
+        setLoading(false);
+        if (payload?.ok) {
+          messageApi.success("点赞成功!");
+          if (!curItem) return;
+          if (userDetailVisible) {
+            updateUserWeiboList(
+              (item) => item.id === curItem.id,
+              (item) => ({
+                ...item,
+                attitudes_status: 1,
+                attitudes_count: item.attitudes_count + 1,
+              })
+            );
+          } else {
+            updateList(
+              (item) => item.id === curItem.id,
+              (item) => ({
+                ...item,
+                attitudes_status: 1,
+                attitudes_count: item.attitudes_count + 1,
+              })
+            );
+          }
+        } else {
+          messageApi.error("点赞失败!", payload?.ok);
+        }
+      },
+      SENDCANCELLIKE: (payload: any) => {
+        messageApi.destroy("GETCANCELLIKE");
+        setLoading(false);
+        if (payload?.ok) {
+          messageApi.success("取消点赞成功!");
+          if (!curItem) return;
+          if (userDetailVisible) {
+            updateUserWeiboList(
+              (item) => item.id === curItem.id,
+              (item) => ({
+                ...item,
+                attitudes_status: 0,
+                attitudes_count: item.attitudes_count - 1,
+              })
+            );
+          } else {
+            updateList(
+              (item) => item.id === curItem.id,
+              (item) => ({
+                ...item,
+                attitudes_status: 0,
+                attitudes_count: item.attitudes_count - 1,
+              })
+            );
+          }
+        } else {
+          messageApi.error("取消点赞失败!", payload?.ok);
+        }
+      },
     }),
-    [messageApi, list, activeKey, subAcitiveKey, userDetailVisible, updateUserWeiboList, updateList, curItem, sendMessage, userWeiboList, userDetail]
+    [
+      messageApi,
+      list,
+      activeKey,
+      subAcitiveKey,
+      userDetailVisible,
+      updateUserWeiboList,
+      updateList,
+      curItem,
+      sendMessage,
+      userWeiboList,
+      userDetail,
+    ]
   );
 
   // 统一处理消息响应
@@ -467,6 +537,19 @@ function App() {
     }
   };
 
+  // 点赞,取消点赞
+  const handleLike = (item: weiboItem, type: "like" | "cancel") => {
+    if (loading) return;
+    setLoading(true);
+    setCurItem(item);
+    if (type == "like") {
+      sendMessage("GETSETLIKE", item.id);
+    }
+    if (type == "cancel") {
+      sendMessage("GETCANCELLIKE", item.id);
+    }
+  };
+
   return (
     <>
       {contextHolder}
@@ -537,6 +620,7 @@ function App() {
               onToggleComments={handleToggleComments}
               onCopyLink={copyLink}
               onCommentOrRepost={handleCommentOrRepost}
+              onLikeOrCancelLike={handleLike}
             />
           ))}
         </InfiniteScroll>

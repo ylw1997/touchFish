@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-06-25 11:45:03
+ * @LastEditTime: 2025-06-25 14:20:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -16,6 +16,7 @@ import {
 } from "vscode";
 import {
   cancelfollowUser,
+  cancelLike,
   createComments,
   createRepost,
   followUser,
@@ -25,6 +26,7 @@ import {
   getWeiboData,
   getWeiboImg,
   sendWeibo,
+  setLike,
   uploadImage,
 } from "../api/weibo";
 import { commandsType, uploadType, weiboAJAX } from "../../type";
@@ -176,6 +178,28 @@ export class WeiboProvider implements WebviewViewProvider {
             const res = await createRepost(message.payload);
             webviewView.webview.postMessage({
               command: `SENDCREATEREPOST`,
+              payload: {
+                payload: message.payload,
+                ...res.data,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETSETLIKE": {
+            const res = await setLike(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDSETLIKE`,
+              payload: {
+                payload: message.payload,
+                ...res.data,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETCANCELLIKE": {
+            const res = await cancelLike(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDCANCELLIKE`,
               payload: {
                 payload: message.payload,
                 ...res.data,
