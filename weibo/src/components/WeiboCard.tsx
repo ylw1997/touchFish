@@ -108,7 +108,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         item.user &&
         (!item.user?.following ? (
           <Button
-            color="primary"
+            color="default"
             onClick={() => onFollow?.(item.user)}
             variant="filled"
           >
@@ -298,20 +298,27 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             <Form.Item
               label={commentTitle}
               name="content"
-              rules={[{ required: true, message: `请输入${commentTitle}内容` }]}
+              rules={[
+                {
+                  required: commentType == "comment" ? true : false,
+                  message: `请输入${commentTitle}内容`,
+                },
+              ]}
             >
               <TextArea
-                rows={2}
+                rows={3}
                 maxLength={140}
-                showCount
+                // showCount
                 placeholder={`请输入${commentTitle}内容`}
                 style={{ background: "#14141482" }}
               />
             </Form.Item>
             <Form.Item>
-              <Button variant="filled" htmlType="submit" type="primary">
-                {commentTitle}
-              </Button>
+              <Flex justify="end">
+                <Button variant="filled" htmlType="submit" color="default">
+                  {commentTitle}
+                </Button>
+              </Flex>
             </Form.Item>
           </Form>
         </div>

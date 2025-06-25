@@ -87,18 +87,24 @@ body {
     object-fit: cover;
     border-radius: 5px;
   }
+}
 
-  // 分辨率小于等于320px
-  @media screen and (max-width: 320px) {
+// 分辨率小于等于320px
+@media screen and (max-width: 320px) {
+  .imglist,
+  .retweeted-status .imglist {
     .img-item,
     .img-only-item {
       width: 100%;
       height: 100%;
     }
   }
+}
 
-  // 分辨率321-768px
-  @media screen and (min-width: 321px) and (max-width: 680px) {
+// 分辨率321-768px
+@media screen and (min-width: 321px) and (max-width: 680px) {
+  .imglist,
+  .retweeted-status .imglist {
     .img-item {
       width: calc(50vw - 23px);
       height: calc(50vw - 25px);
@@ -108,13 +114,29 @@ body {
       max-width: 500px;
     }
   }
+  .retweeted-status .imglist {
+    .img-item {
+      width: calc(50vw - 32px);
+      height: calc(50vw - 32px);
+    }
+  }
+}
 
-  // 分辨率大于等于769px
-  @media screen and (min-width: 681px) {
+// 分辨率大于等于769px
+@media screen and (min-width: 681px) {
+  .imglist,
+  .retweeted-status .imglist {
     .img-item,
     .img-only-item {
       width: calc(33.33vw - 19px);
       height: calc(33.33vw - 19px);
+    }
+  }
+  .retweeted-status .imglist {
+    .img-item,
+    .img-only-item {
+      width: calc(33.33vw - 25px);
+      height: calc(33.33vw - 25px);
     }
   }
 }
@@ -168,4 +190,8 @@ body {
   .ant-float-btn-body {
     background: none;
   }
+}
+
+.ant-form-item {
+  margin-bottom: 10px;
 }
