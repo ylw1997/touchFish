@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-06-23 10:05:48
+ * @LastEditTime: 2025-06-25 11:48:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -9,33 +9,34 @@
  */
 /**
  * CommandList 命令说明：
- * GETDATA           获取微博数据
- * SENDDATA          发送微博数据到前端
- * GETIMG            获取微博图片
- * SENDIMG           发送微博图片到前端
- * GETCOMMENT        获取微博评论
- * SENDCOMMENT       发送微博评论到前端
- * GETLONGTEXT       获取长微博内容
- * SENDLONGTEXT      发送长微博内容到前端
- * GETUSERBLOG       获取用户微博
- * SENDUSERBLOG      发送用户微博到前端
- * GETFOLLOW         关注用户
- * SENDFOLLOW        关注结果返回
- * GETNEWBLOGRESULT  发布微博
- * SENTNEWBLOGRESULT 发布微博结果返回
- * GETUPLOADIMGURL   上传图片
- * SENDUPLOADIMGURL  上传图片结果返回
- * GETCANCELFOLLOW   取关用户
- * SENDCANCELFOLLOW  取关结果返回
- * GETSETLIKE        点赞微博
- * SENDSETLIKE       点赞结果返回
- * GETCANCELLIKE     取消点赞微博
- * SENDCANCELLIKE    取消点赞结果返回
- * GETCREATECOMMENTS 发表评论
+ * GETDATA            获取微博数据
+ * SENDDATA           发送微博数据到前端
+ * GETIMG             获取微博图片
+ * SENDIMG            发送微博图片到前端
+ * GETCOMMENT         获取微博评论
+ * SENDCOMMENT        发送微博评论到前端
+ * GETLONGTEXT        获取长微博内容
+ * SENDLONGTEXT       发送长微博内容到前端
+ * GETUSERBLOG        获取用户微博
+ * SENDUSERBLOG       发送用户微博到前端
+ * GETFOLLOW          关注用户
+ * SENDFOLLOW         关注结果返回
+ * GETNEWBLOGRESULT   发布微博
+ * SENTNEWBLOGRESULT  发布微博结果返回
+ * GETUPLOADIMGURL    上传图片
+ * SENDUPLOADIMGURL   上传图片结果返回
+ * GETCANCELFOLLOW    取关用户
+ * SENDCANCELFOLLOW   取关结果返回
+ * GETSETLIKE         点赞微博
+ * SENDSETLIKE        点赞结果返回
+ * GETCANCELLIKE      取消点赞微博
+ * SENDCANCELLIKE     取消点赞结果返回
+ * GETCREATECOMMENTS  发表评论
  * SENDCREATECOMMENTS 发表评论结果返回
+ * GETCREATEREPOST    转发微博
+ * SENDCREATEREPOST   转发结果返回
  */
-// GETDATA 获取数据 SENDDDATA 发送数据 GETIMG 获取图片 SENDIMG 发送图片 
-export type CommandList = "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG"|'GETFOLLOW'|'SENDFOLLOW'|'GETNEWBLOGRESULT'|'SENTNEWBLOGRESULT'|'GETUPLOADIMGURL'|'SENDUPLOADIMGURL'|'GETCANCELFOLLOW'|'SENDCANCELFOLLOW'|'GETSETLIKE'|'SENDSETLIKE'|'GETCANCELLIKE'|'SENDCANCELLIKE'|'GETCREATECOMMENTS'|'SENDCREATECOMMENTS';
+export type CommandList = "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG"|'GETFOLLOW'|'SENDFOLLOW'|'GETNEWBLOGRESULT'|'SENTNEWBLOGRESULT'|'GETUPLOADIMGURL'|'SENDUPLOADIMGURL'|'GETCANCELFOLLOW'|'SENDCANCELFOLLOW'|'GETSETLIKE'|'SENDSETLIKE'|'GETCANCELLIKE'|'SENDCANCELLIKE'|'GETCREATECOMMENTS'|'SENDCREATECOMMENTS'|'GETCREATEREPOST'|'SENDCREATEREPOST';
 
 export type commandsType<T> = {
   command: CommandList,
@@ -128,4 +129,24 @@ export type uploadType = {
   type: string;
   size: number;
   originFileObj?: File;
+}
+
+export type weiboCommentParams = {
+  id: number; // 微博ID
+  comment: string; // 评论内容
+  pic_id?: string; // 图片ID ""
+  is_repost?: number; // 0
+  comment_ori?: number; //0
+  is_comment?: number; //0
+}
+
+export type weiboRepostParams = {
+  id: number; // 微博ID
+  comment: string; // 转发评论内容
+  pic_id?: string; // 图片ID ""
+  is_repost?: number; //0
+  comment_ori?: number; //0
+  is_comment?: number; //0
+  visible?:number //0
+  share_id?: string; //""
 }

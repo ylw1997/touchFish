@@ -20,6 +20,11 @@ interface UserDetailDrawerProps {
   onCopyLink: (url: string) => void;
   userWeiboPage: number;
   loading: boolean;
+   onCommentOrRepost?: (
+    content: string,
+    item: weiboItem,
+    type: "comment" | "repost"
+  ) => void;
 }
 
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
@@ -36,6 +41,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   onCopyLink,
   userWeiboPage,
   loading,
+  onCommentOrRepost
 }) => {
   const userBlogRef = useRef<HTMLDivElement>(null);
 
@@ -145,6 +151,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                   }
                   showActions={false}
                   onCopyLink={onCopyLink}
+                  onCommentOrRepost={onCommentOrRepost}
                 />
               ))}
             </InfiniteScroll>

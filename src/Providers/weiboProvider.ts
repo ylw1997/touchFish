@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-06-23 09:13:56
+ * @LastEditTime: 2025-06-25 11:45:03
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -16,6 +16,8 @@ import {
 } from "vscode";
 import {
   cancelfollowUser,
+  createComments,
+  createRepost,
   followUser,
   getLongText,
   getUserWeibo,
@@ -45,7 +47,7 @@ export class WeiboProvider implements WebviewViewProvider {
     );
 
     webviewView.webview.onDidReceiveMessage(
-      async (message: commandsType<string>) => {
+      async (message: commandsType<string | any>) => {
         switch (message.command) {
           case "GETDATA": {
             let res = await getWeiboData(message.payload);
@@ -133,10 +135,10 @@ export class WeiboProvider implements WebviewViewProvider {
             } as commandsType<weiboAJAX>);
             break;
           }
-          case 'GETUPLOADIMGURL':{
+          case "GETUPLOADIMGURL": {
             const uploadObj = JSON.parse(message.payload) as uploadType;
             const res = await uploadImage(uploadObj.base64);
-            console.log("res",res);
+            console.log("res", res);
             webviewView.webview.postMessage({
               command: `SENDUPLOADIMGURL`,
               payload: {
@@ -148,10 +150,32 @@ export class WeiboProvider implements WebviewViewProvider {
             } as commandsType<weiboAJAX>);
             break;
           }
-          case 'GETCANCELFOLLOW' :{
+          case "GETCANCELFOLLOW": {
             const res = await cancelfollowUser(message.payload);
             webviewView.webview.postMessage({
               command: `SENDCANCELFOLLOW`,
+              payload: {
+                payload: message.payload,
+                ...res.data,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETCREATECOMMENTS": {
+            const res = await createComments(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDCREATECOMMENTS`,
+              payload: {
+                payload: message.payload,
+                ...res.data,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETCREATEREPOST": {
+            const res = await createRepost(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDCREATEREPOST`,
               payload: {
                 payload: message.payload,
                 ...res.data,

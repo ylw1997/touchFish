@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-24 16:13:01
+ * @LastEditTime: 2025-06-25 14:02:31
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -9,14 +9,16 @@
  */
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import {
-  Divider,
-  FloatButton,
-  Tabs,
-  TabsProps,
-} from "antd";
+import { Divider, FloatButton, Tabs, TabsProps } from "antd";
 import { vscode } from "./utils/vscode";
-import { commandsType, weiboAJAX, weiboItem, weiboUser } from "../.././type";
+import {
+  commandsType,
+  weiboAJAX,
+  weiboCommentParams,
+  weiboItem,
+  weiboRepostParams,
+  weiboUser,
+} from "../.././type";
 import "./style/index.less";
 import {
   EditOutlined,
@@ -53,6 +55,7 @@ function App() {
   const [userWeiboTotal, setUserWeiboTotal] = useState(0);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
+  const [curItem, setCurItem] = useState<weiboItem>();
   // 子菜单key
   const [subAcitiveKey, setSubActiveKey] = useState("");
 
@@ -81,11 +84,14 @@ function App() {
   );
 
   // 复制
-  const copyLink = useCallback((url: string) => {
-    navigator.clipboard.writeText(url).then(() => {
-      messageApi.success("链接已复制到剪贴板");
-    });
-  }, [messageApi]);
+  const copyLink = useCallback(
+    (url: string) => {
+      navigator.clipboard.writeText(url).then(() => {
+        messageApi.success("链接已复制到剪贴板");
+      });
+    },
+    [messageApi]
+  );
 
   // 处理函数集合
   const handlers = useMemo(
@@ -130,6 +136,31 @@ function App() {
           }
         } else {
           messageApi.error("评论请求失败!", payload?.ok);
+        }
+      },
+      SENDCREATECOMMENTS: (payload: any) => {
+        messageApi.destroy("GETCREATECOMMENTS");
+        setLoading(false);
+        if (payload?.ok) {
+          messageApi.success("评论成功!");
+          if (curItem) {
+            sendMessage("GETCOMMENT", {
+              url: `/statuses/buildComments?id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
+              id: curItem.id,
+              uid: curItem.user?.id,
+            });
+          }
+        } else {
+          messageApi.error("评论失败!", payload?.ok);
+        }
+      },
+      SENDCREATEREPOST: (payload: any) => {
+        messageApi.destroy("GETCREATEREPOST");
+        setLoading(false);
+        if (payload?.ok) {
+          messageApi.success("转发成功!");
+        } else {
+          messageApi.error("转发失败!", payload?.ok);
         }
       },
       SENDLONGTEXT: (payload: any) => {
@@ -231,17 +262,7 @@ function App() {
         }
       },
     }),
-    [
-      messageApi,
-      list,
-      activeKey,
-      subAcitiveKey,
-      userDetailVisible,
-      updateUserWeiboList,
-      updateList,
-      userWeiboList,
-      userDetail,
-    ]
+    [messageApi, list, activeKey, subAcitiveKey, userDetailVisible, updateUserWeiboList, updateList, curItem, sendMessage, userWeiboList, userDetail]
   );
 
   // 统一处理消息响应
@@ -410,6 +431,42 @@ function App() {
     [clearList, sendMessage, tabs]
   );
 
+  // handleCommentOrRepost 评论或转发
+  const handleCommentOrRepost = (
+    comment: string,
+    item: weiboItem,
+    type: "comment" | "repost"
+  ) => {
+    if (loading) return;
+    setLoading(true);
+    if (type === "comment") {
+      const obj = {
+        comment,
+        id: item.id,
+        pic_id: "",
+        is_repost: 0,
+        comment_ori: 0,
+        is_comment: 0,
+      } as weiboCommentParams;
+      sendMessage("GETCREATECOMMENTS", obj);
+      setCurItem(item); //缓存当前微博,当收到回调时刷新
+    }
+
+    if (type === "repost") {
+      const obj = {
+        comment,
+        id: item.id,
+        pic_id: "",
+        is_repost: 0,
+        comment_ori: 0,
+        is_comment: 0,
+        visible: 0,
+        share_id: "",
+      } as weiboRepostParams;
+      sendMessage("GETCREATEREPOST", obj);
+    }
+  };
+
   return (
     <>
       {contextHolder}
@@ -433,6 +490,7 @@ function App() {
         onCopyLink={copyLink}
         userWeiboPage={userWeiboPage}
         loading={loading}
+        onCommentOrRepost={handleCommentOrRepost}
       />
       <Tabs
         className="tabs"
@@ -478,6 +536,7 @@ function App() {
               onExpandLongWeibo={handleExpandLongWeibo}
               onToggleComments={handleToggleComments}
               onCopyLink={copyLink}
+              onCommentOrRepost={handleCommentOrRepost}
             />
           ))}
         </InfiniteScroll>

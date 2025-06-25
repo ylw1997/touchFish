@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, Dropdown, Flex, Image, Space } from "antd";
+import { Avatar, Button, Card, Dropdown, Flex, Form, Image, Space } from "antd";
 import {
   DownCircleOutlined,
   ExportOutlined,
@@ -10,9 +10,10 @@ import { weiboItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
+import TextArea from "antd/es/input/TextArea";
 
-interface WeiboCardProps {
+export interface WeiboCardProps {
   className?: string;
   item: weiboItem;
   is_child?: boolean;
@@ -24,6 +25,11 @@ interface WeiboCardProps {
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
   showActions?: boolean;
   onCopyLink?: (url: string) => void;
+  onCommentOrRepost?: (
+    content: string,
+    item: weiboItem,
+    type: "comment" | "repost"
+  ) => void;
 }
 
 // 提取常量配置
@@ -50,8 +56,15 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   showActions,
   className,
   onCopyLink,
+  onCommentOrRepost,
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
+
+  const [form] = Form.useForm();
+
+  const [commentType, setCommentType] = useState<"comment" | "repost">();
+
+  const commentTitle = commentType === "comment" ? "评论" : "转发";
 
   // 提取样式对象
   const titleStyles: CSSProperties = {
@@ -144,12 +157,36 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       }}
     >
       <Flex justify="space-around" align="center">
-        <span className="link">
+        <span
+          className="link"
+          style={{
+            color:
+              commentType === "repost"
+                ? "var(--vscode-textLink-foreground)"
+                : "",
+          }}
+          onClick={() =>
+            commentType != "repost"
+              ? setCommentType("repost")
+              : setCommentType(undefined)
+          }
+        >
           <ExportOutlined /> {item.reposts_count}
         </span>
         <span
           className="link"
+          style={{
+            color:
+              commentType === "comment"
+                ? "var(--vscode-textLink-foreground)"
+                : "",
+          }}
           onClick={() => {
+            commentType != "comment"
+              ? item.comments
+                ? setCommentType(undefined)
+                : setCommentType("comment")
+              : setCommentType(undefined);
             if (item.user?.id !== undefined) {
               onToggleComments?.(item.id, item.user.id, is_child);
             }
@@ -184,6 +221,12 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       </Flex>
     </div>
   );
+
+  // 发布评论和转发
+  const handleSubmit = (values: any) => {
+    console.log(values, item);
+    onCommentOrRepost?.(values.content, item, commentType!);
+  };
 
   return (
     <Card
@@ -224,6 +267,37 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         />
       )}
       {renderActionBar()}
+      {commentType && (
+        <div
+          style={{
+            borderTop: "1px solid rgb(255 255 255 / 10%)",
+            marginLeft: -10,
+            marginRight: -10,
+            padding: "10px 10px 0",
+          }}
+        >
+          <Form form={form} onFinish={handleSubmit} layout="vertical">
+            <Form.Item
+              label={commentTitle}
+              name="content"
+              rules={[{ required: true, message: `请输入${commentTitle}内容` }]}
+            >
+              <TextArea
+                rows={2}
+                maxLength={140}
+                showCount
+                placeholder={`请输入${commentTitle}内容`}
+                style={{ background: "#14141482" }}
+              />
+            </Form.Item>
+            <Form.Item>
+              <Button variant="filled" htmlType="submit" type="primary">
+                {commentTitle}
+              </Button>
+            </Form.Item>
+          </Form>
+        </div>
+      )}
       {item.comments && <>{renderComments(item.comments, true)}</>}
     </Card>
   );

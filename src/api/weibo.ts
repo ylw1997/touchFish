@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-06-24 13:54:17
+ * @LastEditTime: 2025-06-25 14:05:27
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -10,6 +10,7 @@
 import axios from "axios";
 import * as vscode from "vscode";
 import { setConfigByKey } from "../config";
+import { weiboCommentParams, weiboRepostParams } from "../../type";
 
 axios.interceptors.response.use(
   (value) => value,
@@ -18,7 +19,12 @@ axios.interceptors.response.use(
     vscode.window.showErrorMessage(
       `请求失败:${error.message} -------> ${error.config.url}`
     );
-    return Promise.reject(error);
+    return Promise.resolve({
+      data: {
+        ok: 0,
+        msg: error.message,
+      },
+    });
   }
 );
 
@@ -137,25 +143,7 @@ type weiboSendParams = {
   media?: string;
 };
 
-type weiboCommentParams = {
-  id: string; // 微博ID
-  comment: string; // 评论内容
-  pic_id?: string; // 图片ID ""
-  is_repost?: number; // 0
-  comment_ori?: number; //0
-  is_comment?: number; //0
-}
 
-type weiboRepostParams = {
-  id: string; // 微博ID
-  comment: string; // 转发评论内容
-  pic_id?: string; // 图片ID ""
-  is_repost?: number; //0
-  comment_ori?: number; //0
-  is_comment?: number; //0
-  visible?:number //0
-  share_id?: string; //""
-}
 export const sendWeibo = async (params: string) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
   const parsedParams = JSON.parse(params) as weiboSendParams;
@@ -253,13 +241,12 @@ export const cancelLike = async (id: string) => {
 };
 
 // 评论 
-export const createComments = async (params: string) => {
+export const createComments = async (params: weiboCommentParams) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
-  const parsedParams = JSON.parse(params) as weiboCommentParams;
   const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(
     `https://weibo.com/ajax/comments/create`,
-    parsedParams,
+    params,
     {
       headers: {
         Cookie: cookie,
@@ -274,13 +261,12 @@ export const createComments = async (params: string) => {
 
 
 // 转发
-export const createRepost = async (params: string) => {
+export const createRepost = async (params: weiboRepostParams) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
-  const parsedParams = JSON.parse(params) as weiboRepostParams;
   const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(
     `https://weibo.com/ajax/statuses/normal_repost`,
-    parsedParams,
+    params,
     {
       headers: {
         Cookie: cookie,
