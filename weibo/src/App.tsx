@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-25 14:50:14
+ * @LastEditTime: 2025-06-26 11:03:55
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -113,7 +113,7 @@ function App() {
             subAcitiveKey,
           });
         } else {
-          messageApi.error("数据请求失败!", payload?.ok);
+          messageApi.error("数据请求失败!" + payload?.msg);
         }
       },
       SENDCOMMENT: (payload: any) => {
@@ -135,7 +135,7 @@ function App() {
             );
           }
         } else {
-          messageApi.error("评论请求失败!", payload?.ok);
+          messageApi.error("评论请求失败!" + payload?.msg);
         }
       },
       SENDCREATECOMMENTS: (payload: any) => {
@@ -151,7 +151,7 @@ function App() {
             });
           }
         } else {
-          messageApi.error("评论失败!", payload?.ok);
+          messageApi.error("评论失败!" + payload?.msg);
         }
       },
       SENDCREATEREPOST: (payload: any) => {
@@ -160,7 +160,7 @@ function App() {
         if (payload?.ok) {
           messageApi.success("转发成功!");
         } else {
-          messageApi.error("转发失败!", payload?.ok);
+          messageApi.error("转发失败!" + payload?.msg);
         }
       },
       SENDLONGTEXT: (payload: any) => {
@@ -181,7 +181,7 @@ function App() {
             );
           }
         } else {
-          messageApi.error("长文本请求失败!", payload?.ok);
+          messageApi.error("长文本请求失败!" + payload?.msg);
         }
       },
       SENDUSERBLOG: (payload: any) => {
@@ -193,7 +193,7 @@ function App() {
           setUserWeiboList(wlist);
           setUserWeiboTotal(wtotal);
         } else {
-          messageApi.error("用户微博请求失败!", payload?.ok);
+          messageApi.error("用户微博请求失败!" + payload?.msg);
         }
       },
       SENDFOLLOW: (payload: any) => {
@@ -220,7 +220,7 @@ function App() {
             );
           }
         } else {
-          messageApi.error("关注请求失败!", payload?.ok);
+          messageApi.error("关注请求失败!" + payload?.msg);
         }
       },
       SENTNEWBLOGRESULT: (payload: any) => {
@@ -231,7 +231,7 @@ function App() {
           setList((list) => [payload.data, ...list]);
           setSendDrawerOpen(false);
         } else {
-          messageApi.error("微博发送失败!", payload?.ok);
+          messageApi.error("微博发送失败!" + payload?.msg);
         }
       },
       SENDCANCELFOLLOW: (payload: any) => {
@@ -258,7 +258,7 @@ function App() {
             );
           }
         } else {
-          messageApi.error("取消关注请求失败!", payload?.ok);
+          messageApi.error("取消关注请求失败!" + payload?.msg);
         }
       },
       SENDSETLIKE: (payload: any) => {
@@ -287,7 +287,7 @@ function App() {
             );
           }
         } else {
-          messageApi.error("点赞失败!", payload?.ok);
+          messageApi.error("点赞失败!" + payload?.msg);
         }
       },
       SENDCANCELLIKE: (payload: any) => {
@@ -316,7 +316,7 @@ function App() {
             );
           }
         } else {
-          messageApi.error("取消点赞失败!", payload?.ok);
+          messageApi.error("取消点赞失败!" + payload?.msg);
         }
       },
     }),
