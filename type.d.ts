@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-06-25 14:15:34
+ * @LastEditTime: 2025-06-26 11:40:40
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -113,6 +113,24 @@ export type weiboUser = {
   following?:boolean
 }
 
+type commentsPicItemImg = {
+  url: string;
+  width: number;
+  height: number;
+  croped: boolean;
+cut_type: number;
+}
+
+type commentsPicItem = {
+  pic_ids:string[];
+  pic_infos:{[key:string]:{
+    large:commentsPicItemImg,
+    bmiddle:commentsPicItemImg,
+    thumbnail:commentsPicItemImg,
+    woriginal:commentsPicItemImg
+  }}
+}
+
 export type commentsItem = {
   text: string;
   id:string;
@@ -120,7 +138,8 @@ export type commentsItem = {
   user?: weiboUser;
   created_at:string;
   like_counts:number;
-  comments:commentsItem[]
+  comments:commentsItem[],
+  url_struct?:commentsPicItem[];
 }
 
 export type uploadType = {

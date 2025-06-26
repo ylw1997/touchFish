@@ -1,13 +1,13 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-06-25 15:20:39
+ * @LastEditTime: 2025-06-26 11:47:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import { List, Avatar, Flex } from "antd";
+import { List, Avatar, Flex, Image } from "antd";
 import { commentsItem } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
@@ -57,6 +57,29 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
                     className="content"
                     dangerouslySetInnerHTML={{ __html: item.text }}
                   ></div>
+                  {item.url_struct && item.url_struct.length > 0 && (
+                    <div className="imglist" style={{marginBottom:'10px'}} >
+                      <Image.PreviewGroup>
+                        {item.url_struct[0].pic_ids.map((pic) => {
+                          const picInfo = item.url_struct![0].pic_infos[pic];
+                          if (!picInfo) return null;
+                          const imgProps = {
+                            className: "img-item",
+                            width: "100px",
+                            height: "100px",
+                            src: picInfo.large
+                              ? picInfo.large.url
+                              : picInfo.bmiddle.url,
+                          };
+                          return (
+                            <div key={pic}>
+                              <YImg {...imgProps} />
+                            </div>
+                          );
+                        })}
+                      </Image.PreviewGroup>
+                    </div>
+                  )}
                   <Flex
                     justify="space-between"
                     style={{
