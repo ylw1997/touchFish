@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-06-26 11:03:55
+ * @LastEditTime: 2025-06-26 16:10:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -145,7 +145,7 @@ function App() {
           messageApi.success("评论成功!");
           if (curItem) {
             sendMessage("GETCOMMENT", {
-              url: `/statuses/buildComments?id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
+              url: `/statuses/buildComments?flow=1&id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
               id: curItem.id,
               uid: curItem.user?.id,
             });
