@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-06-20 19:14:41
+ * @LastEditTime: 2025-06-30 09:25:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import React from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Drawer, Button, Input, Form, Select, Upload } from "antd";
 import { SendOutlined, PlusOutlined } from "@ant-design/icons";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
@@ -40,13 +40,13 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
 }) => {
   const [form] = Form.useForm();
   const { messageApi, contextHolder, sendMessage } = useVscodeMessage();
-  const [fileList, setFileList] = React.useState<any[]>([]);
-  const [loadingUpload, setLoadingUpload] = React.useState(false);
-  const [pictureList, setPictureList] = React.useState<
-    { type: string; pid: string;uid:string }[]
+  const [fileList, setFileList] = useState<any[]>([]);
+  const [loadingUpload, setLoadingUpload] = useState(false);
+  const [pictureList, setPictureList] = useState<
+    { type: string; pid: string; uid: string }[]
   >([]);
 
-  const msgHandle = React.useCallback(
+  const msgHandle = useCallback(
     async (event: MessageEvent<commandsType<any>>) => {
       const msg = event.data;
       if (msg.command === "SENDUPLOADIMGURL" && msg.payload) {
@@ -69,11 +69,11 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
         }
       }
     },
-    [messageApi, setLoadingUpload, setPictureList, setFileList]
+    [messageApi]
   );
 
   // 修复事件监听重复添加问题
-  React.useEffect(() => {
+  useEffect(() => {
     window.addEventListener("message", msgHandle);
     return () => {
       window.removeEventListener("message", msgHandle);
@@ -84,20 +84,24 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
     form
       .validateFields()
       .then((values) => {
-        onSend({
+        const obj = {
           content: values.content,
           visible: values.visible,
           vote: "",
           media: "",
-          pic_id: JSON.stringify(pictureList.map(item=>{
-            return {
-              type:item.type,
-              pid:item.pid
-            }
-          })), // 这里可根据实际需求处理
-        });
+          pic_id: JSON.stringify(
+            pictureList.map((item) => {
+              return {
+                type: item.type,
+                pid: item.pid,
+              };
+            })
+          ), // 这里可根据实际需求处理
+        };
+        onSend(obj);
         form.resetFields();
         setFileList([]);
+        setPictureList([]);
       })
       .catch(() => {
         messageApi.warning("请填写完整信息");
@@ -112,6 +116,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
       name: file.name,
       type: file.type,
       size: file.size,
+      uid: file.uid,
     } as uploadType;
     setLoadingUpload(true);
     sendMessage("GETUPLOADIMGURL", JSON.stringify(obj));
@@ -202,7 +207,9 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
                 setPictureList((prevList) => {
                   // 只保留还在fileList中的pid
                   const remainNames = newFileList.map((f) => f.uid);
-                  return prevList.filter((item) => remainNames.includes(item.uid));
+                  return prevList.filter((item) =>
+                    remainNames.includes(item.uid)
+                  );
                 });
               }}
               multiple
