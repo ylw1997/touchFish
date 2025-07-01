@@ -18,7 +18,6 @@ export interface WeiboCardProps {
   className?: string;
   item: weiboItem;
   is_child?: boolean;
-  activeKey: string;
   onUserClick?: (userInfo: weiboUser) => void;
   onFollow?: (userInfo?: weiboUser) => void;
   cancelFollow?: (userInfo?: weiboUser) => void;
@@ -49,7 +48,6 @@ const CARD_CONFIG = {
 const WeiboCard: React.FC<WeiboCardProps> = ({
   item,
   is_child = false,
-  activeKey,
   onUserClick,
   onFollow,
   cancelFollow,
@@ -88,10 +86,10 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </Avatar>
         <div>
           <span
-            className={activeKey !== "userblog" ? "nick-name" : ""}
+            className={"nick-name"}
             style={titleStyles}
             onClick={() => {
-              if (activeKey !== "userblog" && onUserClick && item.user) {
+              if (onUserClick && item.user) {
                 onUserClick(item.user);
               }
             }}
@@ -273,7 +271,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           className="retweeted-status"
           item={item.retweeted_status}
           is_child={true}
-          activeKey={activeKey}
           onUserClick={onUserClick}
           onFollow={onFollow}
           cancelFollow={cancelFollow}
@@ -309,7 +306,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
               <TextArea
                 rows={3}
                 maxLength={140}
-                // showCount
                 placeholder={`请输入${commentTitle}内容`}
                 style={{ background: "#14141482" }}
               />
@@ -324,7 +320,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </Form>
         </div>
       )}
-      {item.comments && <>{renderComments(item.comments, true)}</>}
+      {item.comments && <>{renderComments(item.comments, true,onUserClick)}</>}
     </Card>
   );
 };

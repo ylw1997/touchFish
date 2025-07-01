@@ -1,20 +1,24 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-06-30 10:52:56
+ * @LastEditTime: 2025-07-01 16:34:08
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
 import { List, Avatar, Flex, Image } from "antd";
-import { commentsItem } from "../../../type";
+import { commentsItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { HeartOutlined } from "@ant-design/icons";
 
 // 渲染评论
-export const renderComments = (comments: commentsItem[], is_child = false) => {
+export const renderComments = (
+  comments: commentsItem[],
+  is_child = false,
+  onUserClick?: (userInfo: weiboUser) => void
+) => {
   const defaultAvatarSize = is_child ? 32 : 40;
   return (
     <div
@@ -50,7 +54,18 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
                   {item.user?.screen_name}
                 </Avatar>
               }
-              title={<span>{item.user?.screen_name}</span>}
+              title={
+                <span
+                  className={"nick-name"}
+                  onClick={() => {
+                    if (onUserClick && item.user) {
+                      onUserClick(item.user);
+                    }
+                  }}
+                >
+                  {item.user?.screen_name}
+                </span>
+              }
               description={
                 <>
                   <div
@@ -58,10 +73,11 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
                     dangerouslySetInnerHTML={{ __html: item.text }}
                   ></div>
                   {item.url_struct && item.url_struct.length > 0 && (
-                    <div className="imglist" style={{marginBottom:'10px'}} >
+                    <div className="imglist" style={{ marginBottom: "10px" }}>
                       <Image.PreviewGroup>
                         {item.url_struct[0]?.pic_ids?.map((pic) => {
-                          const picInfo = item.url_struct?.[0]?.pic_infos?.[pic];
+                          const picInfo =
+                            item.url_struct?.[0]?.pic_infos?.[pic];
                           if (!picInfo) return null;
                           const imgProps = {
                             className: "img-item",
@@ -104,7 +120,7 @@ export const renderComments = (comments: commentsItem[], is_child = false) => {
                   >
                     {item.comments &&
                       item.comments.length > 0 &&
-                      renderComments(item.comments, is_child)}
+                      renderComments(item.comments, is_child, onUserClick)}
                   </div>
                 </>
               }

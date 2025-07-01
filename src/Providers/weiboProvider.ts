@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-06-25 14:20:32
+ * @LastEditTime: 2025-07-01 16:21:56
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -53,7 +53,6 @@ export class WeiboProvider implements WebviewViewProvider {
         switch (message.command) {
           case "GETDATA": {
             let res = await getWeiboData(message.payload);
-            // console.log("GETDATA", res.data);
             if (res.data.ok !== 1) {
               if (res.data.ok == -100) {
                 const cookie = await window.showInputBox({
@@ -70,7 +69,10 @@ export class WeiboProvider implements WebviewViewProvider {
             }
             webviewView.webview.postMessage({
               command: "SENDDATA",
-              payload: res.data,
+              payload: {
+                ...res.data,
+                source: message.source,
+              },
             } as commandsType<weiboAJAX>);
             break;
           }
@@ -79,6 +81,7 @@ export class WeiboProvider implements WebviewViewProvider {
             webviewView.webview.postMessage({
               command: `SENDIMG:${message.payload}` as any,
               payload: res,
+              // source:message.source,  特殊情况不能加
             } as commandsType<string>);
             break;
           }
@@ -89,6 +92,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -100,6 +104,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -111,6 +116,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -122,6 +128,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -133,6 +140,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -148,6 +156,7 @@ export class WeiboProvider implements WebviewViewProvider {
                 uid: uploadObj.uid,
                 type: uploadObj.type,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -159,6 +168,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -170,6 +180,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -181,6 +192,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -192,6 +204,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;
@@ -203,6 +216,7 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: {
                 payload: message.payload,
                 ...res.data,
+                source: message.source,
               },
             } as commandsType<weiboAJAX>);
             break;

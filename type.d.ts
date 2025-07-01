@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-06-30 10:52:14
+ * @LastEditTime: 2025-07-01 10:48:48
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
@@ -40,7 +40,8 @@ export type CommandList = "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOM
 
 export type commandsType<T> = {
   command: CommandList,
-  payload: T
+  payload: T,
+  source?: string
 };
 
 export type weiboAJAX = {
