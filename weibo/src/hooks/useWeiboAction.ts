@@ -28,6 +28,42 @@ const useWeiboAction = (source: string) => {
   const [sendLoading, setSendLoading] = useState(false);
   const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
 
+  // 统一消息提示
+  const showMessage = useCallback(
+    (type: "success" | "error", content: string, key?: string) => {
+      if (key) messageApi.destroy(key);
+      messageApi[type](content);
+    },
+    [messageApi]
+  );
+
+  // 更新微博列表项
+  const updateWeiboItem = useCallback(
+    (id: number, updater: (item: weiboItem) => weiboItem) => {
+      setList((prev) =>
+        prev.map((item) => (item.id === id ? updater(item) : item))
+      );
+    },
+    []
+  );
+
+  // 更新用户关注状态
+  const updateUserFollowStatus = useCallback(
+    (userId: number, following: boolean) => {
+      setList((prev) =>
+        prev.map((item) =>
+          item.user?.id === userId
+            ? { ...item, user: { ...item.user, following } as weiboUser }
+            : item
+        )
+      );
+      setUserDetail((prev) =>
+        prev?.id === userId ? { ...prev, following } : prev
+      );
+    },
+    [setUserDetail]
+  );
+
   // 更新微博列表
   const updateList = useCallback(
     (
@@ -49,10 +85,10 @@ const useWeiboAction = (source: string) => {
         setList(wlist);
         setTotal(wtotal);
       } else if (payload?.source === source) {
-        messageApi.error("用户微博请求失败!" + payload?.msg);
+        showMessage("error", "用户微博请求失败!" + payload?.msg);
       }
     },
-    [list, messageApi, source]
+    [list, messageApi, showMessage, source]
   );
 
   const handleSendData = useCallback(
@@ -65,10 +101,10 @@ const useWeiboAction = (source: string) => {
         setTotal(wtotal);
         setMaxId(payload.max_id);
       } else if (payload?.source === source) {
-        messageApi.error("数据请求失败!" + payload?.msg);
+        showMessage("error", "数据请求失败!" + payload?.msg);
       }
     },
-    [list, messageApi, source, setMaxId]
+    [messageApi, source, list, showMessage]
   );
 
   const handleSendComment = useCallback(
@@ -82,17 +118,17 @@ const useWeiboAction = (source: string) => {
           (item) => ({ ...item, comments: data })
         );
       } else if (payload?.source === source) {
-        messageApi.error("评论请求失败!" + payload?.msg);
+        showMessage("error", "评论请求失败!" + payload?.msg);
       }
     },
-    [messageApi, source, updateList]
+    [messageApi, source, updateList, showMessage]
   );
 
   const handleSendCreateComments = useCallback(
     (payload: payloadType) => {
       messageApi.destroy("GETCREATECOMMENTS");
       if (payload?.ok && payload.source === source) {
-        messageApi.success("评论成功!");
+        showMessage("success", "评论成功!");
         if (curItem) {
           sendMessage(
             "GETCOMMENT",
@@ -106,22 +142,22 @@ const useWeiboAction = (source: string) => {
           );
         }
       } else if (payload?.source === source) {
-        messageApi.error("评论失败!" + payload?.msg);
+        showMessage("error", "评论失败!" + payload?.msg);
       }
     },
-    [messageApi, source, sendMessage, curItem]
+    [messageApi, source, showMessage, curItem, sendMessage]
   );
 
   const handleSendCreateRepost = useCallback(
     (payload: payloadType) => {
       messageApi.destroy("GETCREATEREPOST");
       if (payload?.ok && payload.source === source) {
-        messageApi.success("转发成功!");
+        showMessage("success", "转发成功!");
       } else if (payload?.source === source) {
-        messageApi.error("转发失败!" + payload?.msg);
+        showMessage("error", "转发失败!" + payload?.msg);
       }
     },
-    [messageApi, source]
+    [messageApi, showMessage, source]
   );
 
   const handleSendLongText = useCallback(
@@ -135,32 +171,25 @@ const useWeiboAction = (source: string) => {
           (item) => ({ ...item, text })
         );
       } else if (payload?.source === source) {
-        messageApi.error("长文本请求失败!" + payload?.msg);
+        showMessage("error", "长文本请求失败!" + payload?.msg);
       }
     },
-    [messageApi, source, updateList]
+    [messageApi, showMessage, source, updateList]
   );
 
   const handleSendFollow = useCallback(
     (payload: payloadType) => {
       messageApi.destroy("GETFOLLOW");
       if (payload?.ok && payload.source === source) {
-        messageApi.success("关注成功!");
         if (userDetail) {
-          setUserDetail((prev) => (prev ? { ...prev, following: true } : prev));
-          updateList(
-            (item) => item.user?.id === userDetail!.id,
-            (item) => ({
-              ...item,
-              user: { ...item.user, following: true } as weiboUser,
-            })
-          );
+          showMessage("success", "关注成功!");
+          updateUserFollowStatus(userDetail.id, true);
         }
       } else if (payload?.source === source) {
-        messageApi.error("关注请求失败!" + payload?.msg);
+        showMessage("error", "关注请求失败!" + payload?.msg);
       }
     },
-    [messageApi, source, updateList, userDetail]
+    [messageApi, showMessage, source, updateUserFollowStatus, userDetail]
   );
 
   const handleSendNewBlogResult = useCallback(
@@ -168,81 +197,66 @@ const useWeiboAction = (source: string) => {
       messageApi.destroy("GETNEWBLOGRESULT");
       setSendLoading(false);
       if (payload?.ok && payload.source === source) {
-        messageApi.success("微博发送成功!");
+        showMessage("success", "微博发送成功!");
         setList((prev) => [payload.data, ...prev]);
       } else if (payload?.source === source) {
-        messageApi.error("微博发送失败!" + payload?.msg);
+        showMessage("error", "微博发送失败!" + payload?.msg);
       }
     },
-    [messageApi, source, setSendLoading]
+    [messageApi, source, showMessage]
   );
 
   const handleSendCancelFollow = useCallback(
     (payload: payloadType) => {
       messageApi.destroy("GETCANCELFOLLOW");
       if (payload?.ok && payload.source === source) {
-        messageApi.success("取消关注成功!");
         if (userDetail) {
-          setUserDetail((prev) =>
-            prev ? { ...prev, following: false } : prev
-          );
-          updateList(
-            (item) => item.user?.id === userDetail!.id,
-            (item) => ({
-              ...item,
-              user: { ...item.user, following: false } as weiboUser,
-            })
-          );
+          showMessage("success", "取消关注成功!");
+          updateUserFollowStatus(userDetail.id, false);
         }
       } else if (payload?.source === source) {
-        messageApi.error("取消关注请求失败!" + payload?.msg);
+        showMessage("error", "取消关注请求失败!" + payload?.msg);
       }
     },
-    [messageApi, source, updateList, userDetail]
+    [messageApi, showMessage, source, updateUserFollowStatus, userDetail]
   );
 
   const handleSendSetLike = useCallback(
     (payload: payloadType) => {
       messageApi.destroy("GETSETLIKE");
       if (payload?.ok && payload.source === source) {
-        messageApi.success("点赞成功!");
         if (curItem) {
-          updateList(
-            (item) => item.id === curItem.id,
-            (item) => ({
-              ...item,
-              attitudes_status: 1,
-              attitudes_count: item.attitudes_count + 1,
-            })
-          );
+          showMessage("success", "点赞成功!");
+          updateWeiboItem(curItem.id, (item) => ({
+            ...item,
+            attitudes_status: 1,
+            attitudes_count: item.attitudes_count + 1,
+          }));
         }
       } else if (payload?.source === source) {
-        messageApi.error("点赞失败!" + payload?.msg);
+        showMessage("error", "点赞失败!" + payload?.msg);
       }
     },
-    [messageApi, source, updateList, curItem]
+    [messageApi, source, curItem, showMessage, updateWeiboItem]
   );
 
   const handleSendCancelLike = useCallback(
     (payload: payloadType) => {
       messageApi.destroy("GETCANCELLIKE");
       if (payload?.ok && payload.source === source) {
-        messageApi.success("取消点赞成功!");
         if (curItem) {
-          updateList(
-            (item) => item.id === curItem.id,
-            (item) => ({
-              ...item,
-              attitudes_status: 0,
-              attitudes_count: item.attitudes_count - 1,
-            })
-          );
+          showMessage("success", "取消点赞成功!");
+          updateWeiboItem(curItem.id, (item) => ({
+            ...item,
+            attitudes_status: 0,
+            attitudes_count: item.attitudes_count - 1,
+          }));
         }
       } else if (payload?.source === source) {
-        messageApi.error("取消点赞失败!" + payload?.msg);
+        showMessage("error", "取消点赞失败!" + payload?.msg);
       }
     },
-    [messageApi, source, updateList, curItem]
+    [messageApi, source, curItem, showMessage, updateWeiboItem]
   );
 
   const handlers = useMemo(
@@ -307,10 +321,10 @@ const useWeiboAction = (source: string) => {
   const copyLink = useCallback(
     (url: string) => {
       navigator.clipboard.writeText(url).then(() => {
-        messageApi.success("链接已复制到剪贴板");
+        showMessage("success", "链接已复制到剪贴板");
       });
     },
-    [messageApi]
+    [showMessage]
   );
 
   // 合并评论展开/收起方法，支持主列表和用户微博列表
