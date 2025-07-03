@@ -1,11 +1,11 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-07-01 10:48:48
+ * @LastEditTime: 2025-07-03 17:18:01
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
- * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
- * @Description: 
+ * Copyright (c) 2024 by yangliwei, All Rights Reserved.
+ * @Description:
  */
 /**
  * CommandList 命令说明：
@@ -36,24 +36,56 @@
  * GETCREATEREPOST    转发微博
  * SENDCREATEREPOST   转发结果返回
  */
-export type CommandList = "GETDATA" | "SENDDATA" | "GETIMG" | "SENDIMG" |"GETCOMMENT"| "SENDCOMMENT" | "GETLONGTEXT" | "SENDLONGTEXT" | "GETUSERBLOG"| "SENDUSERBLOG"|'GETFOLLOW'|'SENDFOLLOW'|'GETNEWBLOGRESULT'|'SENTNEWBLOGRESULT'|'GETUPLOADIMGURL'|'SENDUPLOADIMGURL'|'GETCANCELFOLLOW'|'SENDCANCELFOLLOW'|'GETSETLIKE'|'SENDSETLIKE'|'GETCANCELLIKE'|'SENDCANCELLIKE'|'GETCREATECOMMENTS'|'SENDCREATECOMMENTS'|'GETCREATEREPOST'|'SENDCREATEREPOST';
+export type CommandList =
+  | "GETDATA"
+  | "SENDDATA"
+  | "GETIMG"
+  | "SENDIMG"
+  | "GETCOMMENT"
+  | "SENDCOMMENT"
+  | "GETLONGTEXT"
+  | "SENDLONGTEXT"
+  | "GETUSERBLOG"
+  | "SENDUSERBLOG"
+  | "GETFOLLOW"
+  | "SENDFOLLOW"
+  | "GETNEWBLOGRESULT"
+  | "SENTNEWBLOGRESULT"
+  | "GETUPLOADIMGURL"
+  | "SENDUPLOADIMGURL"
+  | "GETCANCELFOLLOW"
+  | "SENDCANCELFOLLOW"
+  | "GETSETLIKE"
+  | "SENDSETLIKE"
+  | "GETCANCELLIKE"
+  | "SENDCANCELLIKE"
+  | "GETCREATECOMMENTS"
+  | "SENDCREATECOMMENTS"
+  | "GETCREATEREPOST"
+  | "SENDCREATEREPOST";
 
 export type commandsType<T> = {
-  command: CommandList,
-  payload: T,
-  source?: string
+  command: CommandList;
+  payload: T;
+  source?: string;
 };
 
-export type weiboAJAX = {
-  ok: number,
-  since_id: number,
-  max_id: number,
-  total_number: number,
-  since_id_str: string,
-  max_id_str: string,
-  statuses: weiboItem[]
-  data:any
+export interface payloadType extends weiboAJAX {
+  source: string;
+  msg?: string;
 }
+
+export type weiboAJAX = {
+  ok: number;
+  since_id: number;
+  max_id: number;
+  total_number: number;
+  since_id_str: string;
+  max_id_str: string;
+  statuses: weiboItem[];
+  data: any;
+  payload:any
+};
 
 export type weiboItem = {
   id: number;
@@ -70,87 +102,88 @@ export type weiboItem = {
         url: string;
         height: number;
         width: number;
-      },
+      };
       large: {
         url: string;
         height: number;
         width: number;
-      },
+      };
       bmiddle: {
         url: string;
-        height: number
-        width: number
-      },
-      thumbnail:{
+        height: number;
+        width: number;
+      };
+      thumbnail: {
         url: string;
         height: number;
-        width: number
-      }
-    }
+        width: number;
+      };
+    };
   };
   created_at: string;
   region_name?: string;
   user?: weiboUser;
   comments_count: number; // 评
-  reposts_count:number; // 转
-  attitudes_count:number; // 赞
+  reposts_count: number; // 转
+  attitudes_count: number; // 赞
   attitudes_status: number;
   pic_num: number;
-  comments?:commentsItem[] // 评论
-  followBtnCode?:{ //  关注按钮
-    followcardid:string;
-    uid:string;
-  }
-  retweeted_status?:weiboItem // 转发微博
-}
-
-
+  comments?: commentsItem[]; // 评论
+  followBtnCode?: {
+    //  关注按钮
+    followcardid: string;
+    uid: string;
+  };
+  retweeted_status?: weiboItem; // 转发微博
+};
 
 export type weiboUser = {
   id: number;
   screen_name: string;
   avatar_hd?: string;
   avatar_large?: string;
-  following?:boolean
-}
+  following?: boolean;
+};
 
 type commentsPicItemImg = {
   url: string;
   width: number;
   height: number;
   croped: boolean;
-cut_type: number;
-}
+  cut_type: number;
+};
 
 type commentsPicItem = {
-  pic_ids?:string[];
-  pic_infos:{[key:string]:{
-    large:commentsPicItemImg,
-    bmiddle:commentsPicItemImg,
-    thumbnail:commentsPicItemImg,
-    woriginal:commentsPicItemImg
-  }}
-}
+  pic_ids?: string[];
+  pic_infos: {
+    [key: string]: {
+      large: commentsPicItemImg;
+      bmiddle: commentsPicItemImg;
+      thumbnail: commentsPicItemImg;
+      woriginal: commentsPicItemImg;
+    };
+  };
+};
 
 export type commentsItem = {
   text: string;
-  id:string;
-  source:string;
+  id: string;
+  source: string;
   user?: weiboUser;
-  created_at:string;
-  like_counts:number;
-  comments:commentsItem[],
-  url_struct?:commentsPicItem[];
-}
+  created_at: string;
+  like_counts: number;
+  comments: commentsItem[];
+  url_struct?: commentsPicItem[];
+};
 
 export type uploadType = {
-  uid:string;
+  uid: string;
   base64: string;
   name: string;
   type: string;
   size: number;
   originFileObj?: File;
-}
+};
 
 export type weiboCommentParams = {
   id: number; // 微博ID
@@ -159,7 +192,7 @@ export type weiboCommentParams = {
   is_repost?: number; // 0
   comment_ori?: number; //0
   is_comment?: number; //0
-}
+};
 
 export type weiboRepostParams = {
   id: number; // 微博ID
@@ -168,6 +201,6 @@ export type weiboRepostParams = {
   is_repost?: number; //0
   comment_ori?: number; //0
   is_comment?: number; //0
-  visible?:number //0
+  visible?: number; //0
   share_id?: string; //""
-}
+};
