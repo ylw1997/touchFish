@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-01 16:16:48
+ * @LastEditTime: 2025-07-03 16:38:31
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -11,7 +11,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Divider, FloatButton, Tabs, TabsProps } from "antd";
 import { vscode } from "./utils/vscode";
-import { commandsType, weiboAJAX, weiboUser } from "../.././type";
 import "./style/index.less";
 import {
   EditOutlined,
@@ -38,8 +37,6 @@ function App() {
     setList,
     total,
     setTotal,
-    updateList,
-    sendMessage,
     copyLink,
     contextHolder,
     messageApi,
@@ -48,7 +45,6 @@ function App() {
     setMaxId,
     handleToggleComments,
     handleExpandLongWeibo,
-    curItem,
     userDetailVisible,
     setUserDetailVisible,
     userDetail,
@@ -69,235 +65,6 @@ function App() {
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   // 子菜单key
   const [subAcitiveKey, setSubActiveKey] = useState("");
-
-  // 处理函数集合
-  const handlers = useMemo(
-    () => ({
-      SENDUSERBLOG: () => {
-        messageApi.destroy("GETUSERBLOG");
-      },
-      SENDDATA: (payload: any) => {
-        messageApi.destroy("GETDATA");
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            const wlist = [...list, ...payload.statuses];
-            const wtotal = payload.total_number ?? 999;
-            setList(wlist);
-            setTotal(wtotal);
-            setMaxId(payload.max_id);
-            vscode.setState({
-              list: wlist,
-              max_id: payload.max_id,
-              total: wtotal,
-              activeKey,
-              subAcitiveKey,
-            });
-          }
-        } else {
-          messageApi.error("数据请求失败!" + payload?.msg);
-        }
-      },
-      SENDCOMMENT: (payload: any) => {
-        messageApi.destroy("GETCOMMENT");
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            const { id } = payload.payload;
-            const data = payload.data;
-            updateList(
-              (item) => item.id === id,
-              (item) => ({ ...item, comments: data })
-            );
-          }
-        } else {
-          messageApi.error("评论请求失败!" + payload?.msg);
-        }
-      },
-      SENDCREATECOMMENTS: (payload: any) => {
-        messageApi.destroy("GETCREATECOMMENTS");
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            messageApi.success("评论成功!");
-            if (curItem) {
-              sendMessage(
-                "GETCOMMENT",
-                {
-                  url: `/statuses/buildComments?flow=1&id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
-                  id: curItem.id,
-                  uid: curItem.user?.id,
-                },
-                "请求评论中...",
-                APPSOURCE
-              );
-            }
-          }
-        } else {
-          messageApi.error("评论失败!" + payload?.msg);
-        }
-      },
-      SENDCREATEREPOST: (payload: any) => {
-        messageApi.destroy("GETCREATEREPOST");
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            messageApi.success("转发成功!");
-          }
-        } else {
-          messageApi.error("转发失败!" + payload?.msg);
-        }
-      },
-      SENDLONGTEXT: (payload: any) => {
-        messageApi.destroy("GETLONGTEXT");
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            const mblogid = payload.payload;
-            const text = payload.data.longTextContent.replace(/\n/g, "<br/>");
-            updateList(
-              (item) => item.mblogid === mblogid,
-              (item) => ({ ...item, text })
-            );
-          }
-        } else {
-          messageApi.error("长文本请求失败!" + payload?.msg);
-        }
-      },
-      SENDFOLLOW: (payload: any) => {
-        messageApi.destroy("GETFOLLOW");
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            messageApi.success("关注成功!");
-            if (userDetail) {
-              setUserDetail((item) => {
-                return {
-                  ...item!,
-                  following: true,
-                };
-              });
-              updateList(
-                (item) => item.user?.id === userDetail!.id,
-                (item) => ({
-                  ...item,
-                  user: {
-                    ...item.user,
-                    following: true,
-                  } as weiboUser,
-                })
-              );
-            }
-          }
-        } else {
-          messageApi.error("关注请求失败!" + payload?.msg);
-        }
-      },
-      SENTNEWBLOGRESULT: (payload: any) => {
-        messageApi.destroy("GETNEWBLOGRESULT");
-        setSendLoading(false);
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            messageApi.success("微博发送成功!");
-            setList((list) => [payload.data, ...list]);
-            setSendDrawerOpen(false);
-          }
-        } else {
-          messageApi.error("微博发送失败!" + payload?.msg);
-        }
-      },
-      SENDCANCELFOLLOW: (payload: any) => {
-        messageApi.destroy("GETCANCELFOLLOW");
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            messageApi.success("取消关注成功!");
-            if (userDetail) {
-              setUserDetail((item) => {
-                return {
-                  ...item!,
-                  following: false,
-                };
-              });
-              updateList(
-                (item) => item.user?.id === userDetail!.id,
-                (item) => ({
-                  ...item,
-                  user: {
-                    ...item.user,
-                    following: false,
-                  } as weiboUser,
-                })
-              );
-            }
-          }
-        } else {
-          messageApi.error("取消关注请求失败!" + payload?.msg);
-        }
-      },
-      SENDSETLIKE: (payload: any) => {
-        messageApi.destroy("GETSETLIKE");
-        console.log("SENDSETLIKE", payload);
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            messageApi.success("点赞成功!");
-            if (!curItem) return;
-            updateList(
-              (item) => item.id === curItem.id,
-              (item) => ({
-                ...item,
-                attitudes_status: 1,
-                attitudes_count: item.attitudes_count + 1,
-              })
-            );
-          }
-        } else {
-          messageApi.error("点赞失败!" + payload?.msg);
-        }
-      },
-      SENDCANCELLIKE: (payload: any) => {
-        messageApi.destroy("GETCANCELLIKE");
-        if (payload?.ok) {
-          if (payload.source === APPSOURCE) {
-            messageApi.success("取消点赞成功!");
-            if (!curItem) return;
-            updateList(
-              (item) => item.id === curItem.id,
-              (item) => ({
-                ...item,
-                attitudes_status: 0,
-                attitudes_count: item.attitudes_count - 1,
-              })
-            );
-          }
-        } else {
-          messageApi.error("取消点赞失败!" + payload?.msg);
-        }
-      },
-    }),
-    [
-      messageApi,
-      list,
-      setList,
-      setTotal,
-      setMaxId,
-      activeKey,
-      subAcitiveKey,
-      updateList,
-      curItem,
-      sendMessage,
-      userDetail,
-      setUserDetail,
-      setSendLoading,
-    ]
-  );
-
-  // 统一处理消息响应
-  useEffect(() => {
-    const handler = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
-      if (ev.type !== "message") return;
-      const msg = ev.data;
-      const fn = (handlers as Record<string, (payload: any) => void>)[
-        msg.command as string
-      ];
-      fn?.(msg.payload);
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, [handlers]);
 
   // 初始化，尝试从缓存恢复
   useEffect(() => {

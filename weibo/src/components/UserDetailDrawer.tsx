@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Drawer, Avatar, Button, Divider } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
 import YImg from "./YImg";
 import WeiboCard from "./WeiboCard";
 import { loaderFunc } from "../utils/loader";
-import { commandsType, weiboAJAX, weiboUser } from "../../../type";
+import { weiboUser } from "../../../type";
 import useWeiboAction from "../hooks/useWeiboAction";
 interface UserDetailDrawerProps {
   visible: boolean;
@@ -17,7 +17,6 @@ interface UserDetailDrawerProps {
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   visible,
   userDetail,
-  setUserDetail,
   onClose,
   source,
 }) => {
@@ -36,9 +35,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     cancelFollow,
     followUser,
     userWeiboPage,
-    messageApi,
-    updateList,
-    curItem,
     setCurItem,
     setList,
     setTotal,
@@ -61,190 +57,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     }
   }, [sendMessage, userDetail, source, visible]);
 
-  // 处理函数集合
-  const handlers = useMemo(
-    () => ({
-      SENDUSERBLOG: (payload: any) => {
-        messageApi.destroy("GETUSERBLOG");
-        if (payload?.ok) {
-          if (payload.source === source) {
-            const wlist = [...userWeiboList, ...payload.data.list];
-            const wtotal = payload.data?.total ?? 999;
-            setList(wlist);
-            setTotal(wtotal);
-          }
-        } else {
-          messageApi.error("用户微博请求失败!" + payload?.msg);
-        }
-      },
-      SENDCOMMENT: (payload: any) => {
-        messageApi.destroy("GETCOMMENT");
-        if (payload?.ok) {
-          if (payload.source === source) {
-            const { id } = payload.payload;
-            const data = payload.data;
-            updateList(
-              (item) => item.id === id,
-              (item) => ({ ...item, comments: data })
-            );
-          }
-        } else {
-          messageApi.error("评论请求失败!" + payload?.msg);
-        }
-      },
-      SENDCREATECOMMENTS: (payload: any) => {
-        messageApi.destroy("GETCREATECOMMENTS");
-        if (payload?.ok) {
-          if (payload.source === source) {
-            if (curItem) {
-              sendMessage(
-                "GETCOMMENT",
-                {
-                  url: `/statuses/buildComments?flow=1&id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
-                  id: curItem.id,
-                  uid: curItem.user?.id,
-                },
-                "请求评论中...",
-                source
-              );
-            }
-          }
-        } else {
-          messageApi.error("评论失败!" + payload?.msg);
-        }
-      },
-      SENDCREATEREPOST: () => {
-        messageApi.destroy("GETCREATEREPOST");
-      },
-      SENDLONGTEXT: (payload: any) => {
-        messageApi.destroy("GETLONGTEXT");
-        if (payload?.ok) {
-          if (payload.source === source) {
-            const mblogid = payload.payload;
-            const text = payload.data.longTextContent.replace(/\n/g, "<br/>");
-            updateList(
-              (item) => item.mblogid === mblogid,
-              (item) => ({ ...item, text })
-            );
-          }
-        } else {
-          messageApi.error("长文本请求失败!" + payload?.msg);
-        }
-      },
-      SENDFOLLOW: (payload: any) => {
-        messageApi.destroy("GETFOLLOW");
-        if (payload?.ok) {
-          if (userDetail && payload.source === source) {
-            setUserDetail((item: any) => {
-              return {
-                ...item!,
-                following: true,
-              };
-            });
-            updateList(
-              (item) => item.user?.id === userDetail!.id,
-              (item) => ({
-                ...item,
-                user: {
-                  ...item.user,
-                  following: true,
-                } as weiboUser,
-              })
-            );
-          }
-        } else {
-          messageApi.error("关注请求失败!" + payload?.msg);
-        }
-      },
-      SENDCANCELFOLLOW: (payload: any) => {
-        messageApi.destroy("GETCANCELFOLLOW");
-        if (payload?.ok) {
-          if (userDetail && payload.source === source) {
-            setUserDetail((item: weiboUser) => {
-              return {
-                ...item!,
-                following: false,
-              };
-            });
-            updateList(
-              (item) => item.user?.id === userDetail!.id,
-              (item) => ({
-                ...item,
-                user: {
-                  ...item.user,
-                  following: false,
-                } as weiboUser,
-              })
-            );
-          }
-        } else {
-          messageApi.error("取消关注请求失败!" + payload?.msg);
-        }
-      },
-      SENDSETLIKE: (payload: any) => {
-        messageApi.destroy("GETSETLIKE");
-        if (payload?.ok) {
-          if (payload.source === source) {
-            if (!curItem) return;
-            updateList(
-              (item) => item.id === curItem.id,
-              (item) => ({
-                ...item,
-                attitudes_status: 1,
-                attitudes_count: item.attitudes_count + 1,
-              })
-            );
-          }
-        } else {
-          messageApi.error("点赞失败!" + payload?.msg);
-        }
-      },
-      SENDCANCELLIKE: (payload: any) => {
-        messageApi.destroy("GETCANCELLIKE");
-        if (payload?.ok) {
-          if (payload.source === source) {
-            if (!curItem) return;
-            updateList(
-              (item) => item.id === curItem.id,
-              (item) => ({
-                ...item,
-                attitudes_status: 0,
-                attitudes_count: item.attitudes_count - 1,
-              })
-            );
-          }
-        } else {
-          messageApi.error("取消点赞失败!" + payload?.msg);
-        }
-      },
-    }),
-    [
-      messageApi,
-      source,
-      userWeiboList,
-      setList,
-      setTotal,
-      updateList,
-      curItem,
-      sendMessage,
-      userDetail,
-      setUserDetail,
-    ]
-  );
 
-  // 统一处理消息响应
-  useEffect(() => {
-    const handler = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
-      if (ev.type !== "message") return;
-      const msg = ev.data;
-      const fn = (handlers as Record<string, (payload: any) => void>)[
-        msg.command as string
-      ];
-      fn?.(msg.payload);
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, [handlers]);
 
   const getUserBlogFunc = () => {
     if (visible && userDetail) {

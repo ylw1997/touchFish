@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   weiboCommentParams,
   weiboItem,
@@ -8,6 +8,7 @@ import {
 import { updateWeiboList } from "../utils/updateWeiboList";
 import { useVscodeMessage } from "./useVscodeMessage";
 import { weiboSendParams } from "../types";
+import { commandsType, weiboAJAX } from "../../../type";
 const useWeiboAction = (source: string) => {
   const [list, setList] = useState<weiboItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -30,6 +31,190 @@ const useWeiboAction = (source: string) => {
     },
     []
   );
+
+  // 处理函数集合
+  const handlers = useMemo(
+    () => ({
+      SENDUSERBLOG: (payload: any) => {
+        messageApi.destroy("GETUSERBLOG");
+        if (payload?.ok && payload.source === source) {
+          const wlist = [...list, ...payload.data.list];
+          const wtotal = payload.data?.total ?? 999;
+          setList(wlist);
+          setTotal(wtotal);
+        } else if (payload?.source === source) {
+          messageApi.error("用户微博请求失败!" + payload?.msg);
+        }
+      },
+      SENDDATA: (payload: any) => {
+        messageApi.destroy("GETDATA");
+        if (payload?.ok && payload.source === source) {
+          const wlist = [...list, ...payload.statuses];
+          const wtotal = payload.total_number ?? 999;
+          setList(wlist);
+          setTotal(wtotal);
+          setMaxId(payload.max_id);
+        } else if (payload?.source === source) {
+          messageApi.error("数据请求失败!" + payload?.msg);
+        }
+      },
+      SENDCOMMENT: (payload: any) => {
+        messageApi.destroy("GETCOMMENT");
+        if (payload?.ok && payload.source === source) {
+          const { id } = payload.payload;
+          const data = payload.data;
+          updateList(
+            (item) => item.id === id,
+            (item) => ({ ...item, comments: data })
+          );
+        } else if (payload?.source === source) {
+          messageApi.error("评论请求失败!" + payload?.msg);
+        }
+      },
+      SENDCREATECOMMENTS: (payload: any) => {
+        messageApi.destroy("GETCREATECOMMENTS");
+        if (payload?.ok && payload.source === source) {
+          messageApi.success("评论成功!");
+          if (curItem) {
+            sendMessage(
+              "GETCOMMENT",
+              {
+                url: `/statuses/buildComments?flow=1&id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
+                id: curItem.id,
+                uid: curItem.user?.id,
+              },
+              "请求评论中...",
+              source
+            );
+          }
+        } else if (payload?.source === source) {
+          messageApi.error("评论失败!" + payload?.msg);
+        }
+      },
+      SENDCREATEREPOST: (payload: any) => {
+        messageApi.destroy("GETCREATEREPOST");
+        if (payload?.ok && payload.source === source) {
+          messageApi.success("转发成功!");
+        } else if (payload?.source === source) {
+          messageApi.error("转发失败!" + payload?.msg);
+        }
+      },
+      SENDLONGTEXT: (payload: any) => {
+        messageApi.destroy("GETLONGTEXT");
+        if (payload?.ok && payload.source === source) {
+          const mblogid = payload.payload;
+          const text = payload.data.longTextContent.replace(/\n/g, "<br/>");
+          updateList(
+            (item) => item.mblogid === mblogid,
+            (item) => ({ ...item, text })
+          );
+        } else if (payload?.source === source) {
+          messageApi.error("长文本请求失败!" + payload?.msg);
+        }
+      },
+      SENDFOLLOW: (payload: any) => {
+        messageApi.destroy("GETFOLLOW");
+        if (payload?.ok && payload.source === source) {
+          messageApi.success("关注成功!");
+          if (userDetail) {
+            setUserDetail((prev) =>
+              prev ? { ...prev, following: true } : prev
+            );
+            updateList(
+              (item) => item.user?.id === userDetail!.id,
+              (item) => ({
+                ...item,
+                user: { ...item.user, following: true } as weiboUser,
+              })
+            );
+          }
+        } else if (payload?.source === source) {
+          messageApi.error("关注请求失败!" + payload?.msg);
+        }
+      },
+      SENTNEWBLOGRESULT: (payload: any) => {
+        messageApi.destroy("GETNEWBLOGRESULT");
+        setSendLoading(false);
+        if (payload?.ok && payload.source === source) {
+          messageApi.success("微博发送成功!");
+          setList((prev) => [payload.data, ...prev]);
+        } else if (payload?.source === source) {
+          messageApi.error("微博发送失败!" + payload?.msg);
+        }
+      },
+      SENDCANCELFOLLOW: (payload: any) => {
+        messageApi.destroy("GETCANCELFOLLOW");
+        if (payload?.ok && payload.source === source) {
+          messageApi.success("取消关注成功!");
+          if (userDetail) {
+            setUserDetail((prev) =>
+              prev ? { ...prev, following: false } : prev
+            );
+            updateList(
+              (item) => item.user?.id === userDetail!.id,
+              (item) => ({
+                ...item,
+                user: { ...item.user, following: false } as weiboUser,
+              })
+            );
+          }
+        } else if (payload?.source === source) {
+          messageApi.error("取消关注请求失败!" + payload?.msg);
+        }
+      },
+      SENDSETLIKE: (payload: any) => {
+        messageApi.destroy("GETSETLIKE");
+        if (payload?.ok && payload.source === source) {
+          messageApi.success("点赞成功!");
+          if (curItem) {
+            updateList(
+              (item) => item.id === curItem.id,
+              (item) => ({
+                ...item,
+                attitudes_status: 1,
+                attitudes_count: item.attitudes_count + 1,
+              })
+            );
+          }
+        } else if (payload?.source === source) {
+          messageApi.error("点赞失败!" + payload?.msg);
+        }
+      },
+      SENDCANCELLIKE: (payload: any) => {
+        messageApi.destroy("GETCANCELLIKE");
+        if (payload?.ok && payload.source === source) {
+          messageApi.success("取消点赞成功!");
+          if (curItem) {
+            updateList(
+              (item) => item.id === curItem.id,
+              (item) => ({
+                ...item,
+                attitudes_status: 0,
+                attitudes_count: item.attitudes_count - 1,
+              })
+            );
+          }
+        } else if (payload?.source === source) {
+          messageApi.error("取消点赞失败!" + payload?.msg);
+        }
+      },
+    }),
+    [messageApi, source, list, updateList, curItem, sendMessage, userDetail]
+  );
+
+  // 统一处理消息响应
+  useEffect(() => {
+    const handler = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
+      if (ev.type !== "message") return;
+      const msg = ev.data;
+      const fn = (handlers as Record<string, (payload: any) => void>)[
+        msg.command as string
+      ];
+      fn?.(msg.payload);
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [handlers]);
 
   // 请求数据（主列表/用户微博）
   const getListData = useCallback(
