@@ -271,7 +271,7 @@
 		"build": "vsce package",
 		"changelog": "standard-version",
 		"publish": "vsce publish",
-		"build-publish": "npm run changelog && npm --prefix ./weibo run build && npm run publish"
+		"build-publish": "npm --prefix ./weibo run build && npm run publish"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.15.0",

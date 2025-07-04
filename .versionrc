@@ -1,6 +1,6 @@
 {
   "header":"# 更新历史 \n\n",
-  "commitUrlFormat": "{{hash}}",
+  "commitUrlFormat": "https://yangliwei.top/{{hash}}",
   "types": [
       {"type": "feat", "section": "✨ Features | 新功能"},
       {"type": "fix", "section": "🐛 Bug Fixes | Bug 修复"},
