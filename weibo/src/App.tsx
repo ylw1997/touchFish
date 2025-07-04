@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-03 16:38:31
+ * @LastEditTime: 2025-07-04 09:01:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -133,6 +133,7 @@ function App() {
         }}
         setUserDetail={setUserDetail}
         source="userDetail"
+        preSource={APPSOURCE}
       />
       <Tabs
         className="tabs"
@@ -171,8 +172,8 @@ function App() {
               key={item.id}
               item={item}
               onUserClick={getUserBlog}
-              onFollow={followUser}
-              cancelFollow={cancelFollow}
+              onFollow={(userinfo) => followUser(userinfo, APPSOURCE)}
+              cancelFollow={(userinfo) => cancelFollow(userinfo, APPSOURCE)}
               showActions={true}
               onExpandLongWeibo={handleExpandLongWeibo}
               onToggleComments={handleToggleComments}

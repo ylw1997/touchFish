@@ -369,19 +369,19 @@ const useWeiboAction = (source: string) => {
 
   // 关注博主
   const followUser = useCallback(
-    (userInfo?: weiboUser) => {
+    (userInfo?: weiboUser, sourceStr = source) => {
       if (!userInfo) return;
       setUserDetail(userInfo);
-      sendMessage("GETFOLLOW", userInfo.id, "关注中...", source);
+      sendMessage("GETFOLLOW", userInfo.id, "关注中...", sourceStr);
     },
     [sendMessage, source]
   );
   // 取关博主
   const cancelFollow = useCallback(
-    (userInfo?: weiboUser) => {
+    (userInfo?: weiboUser, sourceStr = source) => {
       if (!userInfo) return;
       setUserDetail(userInfo);
-      sendMessage("GETCANCELFOLLOW", userInfo.id, "取关中...", source);
+      sendMessage("GETCANCELFOLLOW", userInfo.id, "取关中...", sourceStr);
     },
     [sendMessage, source]
   );

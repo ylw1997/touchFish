@@ -12,6 +12,7 @@ interface UserDetailDrawerProps {
   setUserDetail: (userDetail: any) => void;
   onClose: () => void;
   source: string;
+  preSource: string; // 上一个source
 }
 
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
@@ -19,6 +20,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   userDetail,
   onClose,
   source,
+  preSource,
 }) => {
   const userBlogRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +49,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   } = useWeiboAction(source);
 
   useEffect(() => {
-    if (visible && userDetail) {
+    if (visible && userDetail && userWeiboList?.length === 0) {
       sendMessage(
         "GETUSERBLOG",
         JSON.stringify({ uid: userDetail.id, page: 1 }),
@@ -55,9 +57,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         source
       );
     }
-  }, [sendMessage, userDetail, source, visible]);
-
-
+  }, [sendMessage, userDetail, source, visible, userWeiboList?.length]);
 
   const getUserBlogFunc = () => {
     if (visible && userDetail) {
@@ -143,7 +143,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               {!userDetail.following ? (
                 <Button
                   color="primary"
-                  onClick={() => followUser(userDetail)}
+                  onClick={() => followUser(userDetail, preSource)}
                   variant="filled"
                 >
                   关注
@@ -151,7 +151,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               ) : (
                 <Button
                   color="danger"
-                  onClick={() => cancelFollow(userDetail)}
+                  onClick={() => cancelFollow(userDetail, preSource)}
                   variant="filled"
                 >
                   取关
@@ -172,9 +172,11 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                   <WeiboCard
                     key={item.id}
                     item={item}
-                    onFollow={followUser}
+                    onFollow={(userinfo) => followUser(userinfo, preSource)}
                     onUserClick={getUserBlog}
-                    cancelFollow={cancelFollow}
+                    cancelFollow={(userinfo) =>
+                      cancelFollow(userinfo, preSource)
+                    }
                     onExpandLongWeibo={handleExpandLongWeibo}
                     onToggleComments={handleToggleComments}
                     showActions={false}
@@ -199,6 +201,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               }}
               setUserDetail={setSubUserDetail}
               source={`subUser-${subUserDetail?.id}`}
+              preSource={source}
             />
           )}
       </Drawer>
