@@ -241,6 +241,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   const handleSubmit = (values: any) => {
     console.log(values, item);
     onCommentOrRepost?.(values.content, item, commentType!);
+    // 清理评论
+    form.resetFields();
   };
 
   return (

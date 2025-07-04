@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-04 09:01:50
+ * @LastEditTime: 2025-07-04 17:47:53
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -10,7 +10,6 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Divider, FloatButton, Tabs, TabsProps } from "antd";
-import { vscode } from "./utils/vscode";
 import "./style/index.less";
 import {
   EditOutlined,
@@ -34,15 +33,12 @@ function App() {
   const APPSOURCE = "WEIBOAPP";
   const {
     list,
-    setList,
     total,
-    setTotal,
     copyLink,
     contextHolder,
     messageApi,
     clearList,
     max_id,
-    setMaxId,
     handleToggleComments,
     handleExpandLongWeibo,
     userDetailVisible,
@@ -66,21 +62,6 @@ function App() {
   // 子菜单key
   const [subAcitiveKey, setSubActiveKey] = useState("");
 
-  // 初始化，尝试从缓存恢复
-  useEffect(() => {
-    const res = vscode.getState() as any;
-    if (res) {
-      if (res.activeKey) setActiveKey(res.activeKey);
-      if (res.list) setList(res.list);
-      if (res.max_id) setMaxId(res.max_id);
-      if (res.total) setTotal(res.total);
-      if (res.subAcitiveKey) setSubActiveKey(res.subAcitiveKey);
-    } else {
-      fetchData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
     const key = subAcitiveKey || activeKey;
@@ -88,6 +69,12 @@ function App() {
       max_id && key !== defTab[0].key ? `${key}&max_id=${max_id}` : key;
     getListData(payload);
   }, [subAcitiveKey, activeKey, max_id, getListData]);
+
+  // 初始化，尝试从缓存恢复
+  useEffect(() => {
+    if (list.length === 0) fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 获取当前tab
   const curTab = useMemo(() => {

@@ -94,6 +94,10 @@ const useWeiboAction = (source: string) => {
       if (payload?.ok && payload.source === source) {
         messageApi.success("评论成功!");
         if (curItem) {
+          updateList(
+            (item) => item.id === curItem.id,
+            (item) => ({ ...item, comments_count: item.comments_count + 1 })
+          );
           sendMessage(
             "GETCOMMENT",
             {
@@ -109,7 +113,7 @@ const useWeiboAction = (source: string) => {
         messageApi.error("评论失败!" + payload?.msg);
       }
     },
-    [messageApi, source, sendMessage, curItem]
+    [messageApi, source, curItem, updateList, sendMessage]
   );
 
   const handleSendCreateRepost = useCallback(
@@ -284,7 +288,12 @@ const useWeiboAction = (source: string) => {
       ];
       fn?.(msg.payload);
     };
-    window.addEventListener("message", handler);
+    try {
+      window.addEventListener("message", handler);
+    } catch (error) {
+      console.error(error);
+    }
+    
     return () => window.removeEventListener("message", handler);
   }, [handlers]);
 
