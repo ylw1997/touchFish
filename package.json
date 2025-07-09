@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,微博摸鱼聚合插件",
-	"version": "5.0.5",
+	"version": "5.1.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.67.0"
@@ -33,6 +33,11 @@
 		"configuration": {
 			"title": "touchfish",
 			"properties": {
+				"touchfish.showImg": {
+					"type": "boolean",
+					"default": true,
+					"description": "是否显示图片(此选项暂时只支持微博)"
+				},
 				"touchfish.weiboCookie": {
 					"type": "string",
 					"description": "微博cookie"

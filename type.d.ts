@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-07-03 17:18:01
+ * @LastEditTime: 2025-07-09 17:32:41
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -204,3 +204,9 @@ export type weiboRepostParams = {
   visible?: number; //0
   share_id?: string; //""
 };
+
+declare global {
+  interface Window {
+    showImg?: boolean;
+  }
+}

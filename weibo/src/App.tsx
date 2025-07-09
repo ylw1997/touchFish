@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-04 17:47:53
+ * @LastEditTime: 2025-07-09 17:53:57
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -13,6 +13,7 @@ import { Divider, FloatButton, Tabs, TabsProps } from "antd";
 import "./style/index.less";
 import {
   EditOutlined,
+  PictureOutlined,
   RedoOutlined,
   VerticalAlignTopOutlined,
 } from "@ant-design/icons";
@@ -62,6 +63,9 @@ function App() {
   // 子菜单key
   const [subAcitiveKey, setSubActiveKey] = useState("");
 
+  // showImg
+  const [showImg, setShowImg] = useState(window.showImg);
+
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
     const key = subAcitiveKey || activeKey;
@@ -73,7 +77,7 @@ function App() {
   // 初始化，尝试从缓存恢复
   useEffect(() => {
     if (list.length === 0) fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 获取当前tab
@@ -167,6 +171,7 @@ function App() {
               onCopyLink={copyLink}
               onCommentOrRepost={handleCommentOrRepost}
               onLikeOrCancelLike={handleLike}
+              showImg={showImg}
             />
           ))}
         </InfiniteScroll>
@@ -188,6 +193,14 @@ function App() {
             fetchData();
           }}
           icon={<RedoOutlined style={{ color: "#f3cc62" }} />}
+        />
+        {/* 显示图片 */}
+        <FloatButton
+          onClick={() => {
+            messageApi.success(`图片已${showImg ? "隐藏" : "显示"}!`);
+            setShowImg((showImg) => !showImg);
+          }}
+          icon={<PictureOutlined style={{ color: "#d48806" }} />}
         />
       </FloatButton.Group>
       <SendWeiboDrawer

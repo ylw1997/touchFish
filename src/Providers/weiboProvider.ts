@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-07-01 16:21:56
+ * @LastEditTime: 2025-07-09 17:30:42
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -29,6 +29,7 @@ import {
   setLike,
   uploadImage,
 } from "../api/weibo";
+import * as vscode from "vscode";
 import { commandsType, uploadType, weiboAJAX } from "../../type";
 import { setConfigByKey } from "../config";
 export class WeiboProvider implements WebviewViewProvider {
@@ -225,6 +226,12 @@ export class WeiboProvider implements WebviewViewProvider {
       }
     );
 
+    const config = vscode.workspace.getConfiguration("touchfish");
+    let showImg = config.get("showImg") as boolean | undefined;
+    if (showImg === undefined) {
+      showImg = true;
+    }
+
     // 判断是否为开发环境
     const isDev =
       process.env.NODE_ENV === "development" ||
@@ -237,6 +244,9 @@ export class WeiboProvider implements WebviewViewProvider {
         <!doctype html>
                 <html lang="en">
           <head>
+          <script>
+          window.showImg = ${showImg}
+          </script>
             <script type="module">
         import RefreshRuntime from "http://localhost:5173/@react-refresh"
         RefreshRuntime.injectIntoGlobalHook(window)
@@ -264,6 +274,9 @@ export class WeiboProvider implements WebviewViewProvider {
         <!DOCTYPE html>
         <html lang="en">
           <head>
+           <script>
+          window.showImg = ${showImg}
+          </script>
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <title>test</title>
