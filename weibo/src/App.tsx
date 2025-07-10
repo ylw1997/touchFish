@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-09 17:53:57
+ * @LastEditTime: 2025-07-10 10:46:07
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -125,6 +125,7 @@ function App() {
         setUserDetail={setUserDetail}
         source="userDetail"
         preSource={APPSOURCE}
+        showImg={showImg}
       />
       <Tabs
         className="tabs"
