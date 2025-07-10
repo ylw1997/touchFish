@@ -13,6 +13,7 @@ interface UserDetailDrawerProps {
   onClose: () => void;
   source: string;
   preSource: string; // 上一个source
+  showImg?: boolean;
 }
 
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
@@ -21,6 +22,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   onClose,
   source,
   preSource,
+  showImg
 }) => {
   const userBlogRef = useRef<HTMLDivElement>(null);
 
@@ -183,6 +185,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                     onCopyLink={copyLink}
                     onCommentOrRepost={handleCommentOrRepost}
                     onLikeOrCancelLike={handleLike}
+                    showImg={showImg}
                   />
                 ))}
               </InfiniteScroll>
@@ -202,6 +205,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               setUserDetail={setSubUserDetail}
               source={`subUser-${subUserDetail?.id}`}
               preSource={source}
+              showImg={showImg}
             />
           )}
       </Drawer>
