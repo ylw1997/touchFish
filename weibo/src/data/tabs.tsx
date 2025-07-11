@@ -1,9 +1,9 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-19 09:40:05
- * @LastEditTime: 2025-06-19 10:00:22
+ * @LastEditTime: 2025-07-11 09:45:19
  * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\data\index.tsx
+ * @FilePath: \touchfish\weibo\src\data\tabs.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
@@ -29,7 +29,15 @@ export const defTab = [
         label: "榜单",
       },
       {
-        key: "/hottimeline?since_id=0&refresh=1&group_id=1028034388&containerid=102803_ctg1_4388_-_ctg1_4388&extparam=discover%7Cnew_feed&max_id=0&count=10",
+        key: "/hottimeline?group_id=1028035088&containerid=102803_ctg1_5088_-_ctg1_5088&extparam=discover%7Cnew_feed",
+        label: "数码",
+      },
+      {
+        key: "/hottimeline?group_id=1028032088&containerid=102803_ctg1_2088_-_ctg1_2088&extparam=discover%7Cnew_feed",
+        label: "科技",
+      },
+      {
+        key: "/hottimeline?group_id=1028034388&containerid=102803_ctg1_4388_-_ctg1_4388&extparam=discover%7Cnew_feed",
         label: "搞笑",
       },
       {
@@ -37,12 +45,32 @@ export const defTab = [
         label: "股市",
       },
       {
-        key: "/hottimeline?group_id=1028035088&containerid=102803_ctg1_5088_-_ctg1_5088&extparam=discover%7Cnew_feed",
-        label: "数码",
+        label: "财经",
+        key: "/hottimeline?group_id=1028036388&containerid=102803_ctg1_6388_-_ctg1_6388&extparam=discover%7Cnew_feed",
       },
       {
         key: "/hottimeline?group_id=1028035188&containerid=102803_ctg1_5188_-_ctg1_5188&extparam=discover%7Cnew_feed",
         label: "汽车",
+      },
+      {
+        labe: "旅游",
+        key: "/hottimeline?group_id=1028032588&containerid=102803_ctg1_2588_-_ctg1_2588&extparam=discover%7Cnew_feed",
+      },
+      {
+        label: "电影",
+        key: "/hottimeline?group_id=1028033288&containerid=102803_ctg1_3288_-_ctg1_3288&extparam=discover%7Cnew_feed",
+      },
+      {
+        label: "情感",
+        key: "/hottimeline?group_id=1028031988&containerid=102803_ctg1_1988_-_ctg1_1988&extparam=discover%7Cnew_feed",
+      },
+      {
+        label: "摄影",
+        key: "/hottimeline?group_id=1028034988&containerid=102803_ctg1_4988_-_ctg1_4988&extparam=discover%7Cnew_feed",
+      },
+      {
+        label: "音乐",
+        key: "/hottimeline?group_id=1028035288&containerid=102803_ctg1_5288_-_ctg1_5288&extparam=discover%7Cnew_feed",
       },
       {
         key: "/hottimeline?group_id=102803600165&containerid=102803_ctg1_600165_-_ctg1_600165&extparam=discover%7Cnew_feed",
