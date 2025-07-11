@@ -1,14 +1,14 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-10 15:00:03
+ * @LastEditTime: 2025-07-11 16:20:38
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
 import { Divider, FloatButton, Tabs, TabsProps } from "antd";
 import "./style/index.less";
 import {
@@ -23,10 +23,10 @@ import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
 import WeiboCard from "./components/WeiboCard";
 import { loaderFunc } from "./utils/loader";
-import SendWeiboDrawer from "./components/SendWeiboDrawer";
-import UserDetailDrawer from "./components/UserDetailDrawer";
 import { defTab } from "./data/tabs";
 import useWeiboAction from "./hooks/useWeiboAction";
+const SendWeiboDrawer = lazy(() => import("./components/SendWeiboDrawer"));
+const UserDetailDrawer = lazy(() => import("./components/UserDetailDrawer"));
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -64,11 +64,12 @@ function App() {
   const [subAcitiveKey, setSubActiveKey] = useState("");
 
   // showImg
-  const [showImg, setShowImg] = useState(window.showImg);
+  const [showImg, setShowImg] = useState(window.showImg != undefined ? window.showImg : true );
 
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
     const key = subAcitiveKey || activeKey;
+    
     const payload =
       max_id && key !== defTab[0].key ? `${key}&max_id=${max_id}` : key;
     getListData(payload);
@@ -95,7 +96,7 @@ function App() {
     [clearList, getListData]
   );
 
-  // tab切换
+  // tab��换
   const onChange = useCallback(
     (key: string) => {
       clearList();
@@ -115,6 +116,7 @@ function App() {
   return (
     <>
       {contextHolder}
+      <Suspense fallback={null}>
       <UserDetailDrawer
         visible={userDetailVisible}
         userDetail={userDetail}
@@ -127,6 +129,7 @@ function App() {
         preSource={APPSOURCE}
         showImg={showImg}
       />
+      </Suspense>
       <Tabs
         className="tabs"
         items={tabs as TabsProps["items"]}
@@ -204,6 +207,7 @@ function App() {
           icon={<PictureOutlined style={{ color: "#d48806" }} />}
         />
       </FloatButton.Group>
+      <Suspense fallback={null}>
       <SendWeiboDrawer
         loading={sendLoading}
         open={sendDrawerOpen}
@@ -214,6 +218,7 @@ function App() {
         }}
         onSend={handleSendWeibo}
       />
+      </Suspense>
     </>
   );
 }

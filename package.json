@@ -3,10 +3,10 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,微博摸鱼聚合插件",
-	"version": "5.3.0",
+	"version": "5.4.1",
 	"icon": "favicon.ico",
 	"engines": {
-		"vscode": "^1.67.0"
+		"vscode": "^1.102.0"
 	},
 	"activationEvents": [
 		"onView:touchfish"
@@ -279,26 +279,26 @@
 		"build-publish": "npm --prefix ./weibo run build && npm run publish"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.15.0",
+		"@eslint/js": "9.30.1",
 		"@types/mocha": "^10.0.9",
-		"@types/node": "22.9.1",
-		"@types/vscode": "^1.67.0",
-		"@typescript-eslint/eslint-plugin": "^8.15.0",
-		"@typescript-eslint/parser": "^8.15.0",
-		"@vscode/test-electron": "^2.4.1",
-		"eslint": "^9.15.0",
-		"globals": "^15.12.0",
-		"mocha": "^10.8.2",
-		"ts-loader": "^9.5.1",
-		"typescript": "^5.6.3",
+		"@types/node": "24.0.13",
+		"@types/vscode": "1.102.0",
+		"@typescript-eslint/eslint-plugin": "8.36.0",
+		"@typescript-eslint/parser": "8.36.0",
+		"@vscode/test-electron": "2.5.2",
+		"eslint": "9.30.1",
+		"globals": "16.3.0",
+		"mocha": "11.7.1",
+		"standard-version": "^9.5.0",
+		"ts-loader": "9.5.2",
+		"typescript": "5.8.3",
 		"typescript-eslint": "^8.15.0",
-		"webpack": "^5.96.1",
-		"webpack-cli": "^5.1.4"
+		"webpack": "5.100.0",
+		"webpack-cli": "6.0.1"
 	},
 	"dependencies": {
-		"axios": "^1.7.7",
-		"cheerio": "1.0.0",
-		"standard-version": "^9.5.0"
+		"axios": "1.10.0",
+		"cheerio": "1.1.0"
 	},
 	"repository": {}
 }

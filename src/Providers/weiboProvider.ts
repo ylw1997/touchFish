@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-07-09 17:30:42
+ * @LastEditTime: 2025-07-11 16:25:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -32,6 +32,7 @@ import {
 import * as vscode from "vscode";
 import { commandsType, uploadType, weiboAJAX } from "../../type";
 import { setConfigByKey } from "../config";
+import * as fs from "fs";
 export class WeiboProvider implements WebviewViewProvider {
   constructor(protected context: ExtensionContext) {}
 
@@ -40,14 +41,6 @@ export class WeiboProvider implements WebviewViewProvider {
       enableScripts: true,
       localResourceRoots: [this.context.extensionUri],
     };
-
-    const scriptUri = webviewView.webview.asWebviewUri(
-      Uri.joinPath(this.context.extensionUri, "weibo/dist/index.js")
-    );
-
-    const cssUri = webviewView.webview.asWebviewUri(
-      Uri.joinPath(this.context.extensionUri, "weibo/dist/index.css")
-    );
 
     webviewView.webview.onDidReceiveMessage(
       async (message: commandsType<string | any>) => {
@@ -269,25 +262,21 @@ export class WeiboProvider implements WebviewViewProvider {
         </html>
       `;
     } else {
-      // 生产环境，加载打包后的静态资源
-      htmlContent = `
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-           <script>
-          window.showImg = ${showImg}
-          </script>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>test</title>
-          </head>
-          <body>
-            <div id="root"></div>
-            <script src="${scriptUri}"></script>
-            <link rel="stylesheet" href="${cssUri}">
-          </body>
-        </html>
-      `;
+      const distPath = Uri.joinPath(this.context.extensionUri, "weibo", "dist");
+      const indexPath = Uri.joinPath(distPath, "index.html");
+      let html = fs.readFileSync(indexPath.fsPath, "utf-8");
+      html = html.replace(
+        /(href|src)="\/([^"]*)"/g,
+        (_, attr, path) =>
+          `${attr}="${webviewView.webview.asWebviewUri(
+            vscode.Uri.joinPath(distPath, path)
+          )}"`
+      );
+      html = html.replace(
+        "</head>",
+        `<script>window.showImg = ${showImg}</script></head>`
+      );
+      htmlContent = html;
     }
     webviewView.webview.html = htmlContent;
   }

@@ -9,9 +9,9 @@
 import axios from "axios";
 import { NewsItem } from '../type/type';
 import { load } from 'cheerio';
-import https = require('https');
+import * as https from 'https';
 
-let instance = axios.create({
+const instance = axios.create({
   httpsAgent: new https.Agent({  
   	//关闭验证 ,该方法有安全漏洞
     rejectUnauthorized: false
