@@ -1,14 +1,21 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-23 15:04:27
+ * @LastEditTime: 2025-07-23 15:55:16
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 
-import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  lazy,
+  Suspense,
+} from "react";
 import { Divider, FloatButton, Tabs, TabsProps } from "antd";
 import "./style/index.less";
 import {
@@ -67,12 +74,14 @@ function App() {
   const [subAcitiveKey, setSubActiveKey] = useState("");
 
   // showImg
-  const [showImg, setShowImg] = useState(window.showImg != undefined ? window.showImg : true );
+  const [showImg, setShowImg] = useState(
+    window.showImg != undefined ? window.showImg : true
+  );
 
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
     const key = subAcitiveKey || activeKey;
-    
+
     const payload =
       max_id && key !== defTab[0].key ? `${key}&max_id=${max_id}` : key;
     getListData(payload);
@@ -120,18 +129,18 @@ function App() {
     <>
       {contextHolder}
       <Suspense fallback={null}>
-      <UserDetailDrawer
-        visible={userDetailVisible}
-        userDetail={userDetail}
-        onClose={() => {
-          setUserDetailVisible(false);
-          setUserDetail(undefined);
-        }}
-        setUserDetail={setUserDetail}
-        source="userDetail"
-        preSource={APPSOURCE}
-        showImg={showImg}
-      />
+        <UserDetailDrawer
+          visible={userDetailVisible}
+          userDetail={userDetail}
+          onClose={() => {
+            setUserDetailVisible(false);
+            setUserDetail(undefined);
+          }}
+          setUserDetail={setUserDetail}
+          source="userDetail"
+          preSource={APPSOURCE}
+          showImg={showImg}
+        />
       </Suspense>
       <Tabs
         className="tabs"
@@ -188,16 +197,19 @@ function App() {
           visibilityHeight={500}
           duration={1000}
           icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
+          tooltip={{ title: "回到顶部", placement: "left" }}
         />
         {/* 搜索按钮 */}
         <FloatButton
           onClick={() => setSearchDrawerOpen(true)}
           icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
         />
         <FloatButton
           type="primary"
           icon={<EditOutlined style={{ color: "#69b1ff" }} />}
           onClick={() => setSendDrawerOpen((open) => !open)}
+          tooltip={{ title: "发布微博", placement: "left" }}
         />
         <FloatButton
           onClick={() => {
@@ -205,6 +217,7 @@ function App() {
             fetchData();
           }}
           icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+          tooltip={{ title: "刷新", placement: "left" }}
         />
         {/* 显示图片 */}
         <FloatButton
@@ -213,6 +226,10 @@ function App() {
             setShowImg((showImg) => !showImg);
           }}
           icon={<PictureOutlined style={{ color: "#13c2c2" }} />}
+          tooltip={{
+            title: `${showImg ? "隐藏" : "显示"}图片`,
+            placement: "left",
+          }}
         />
       </FloatButton.Group>
       <Suspense fallback={null}>
@@ -223,16 +240,16 @@ function App() {
         />
       </Suspense>
       <Suspense fallback={null}>
-      <SendWeiboDrawer
-        loading={sendLoading}
-        open={sendDrawerOpen}
-        onClose={() => {
-          setSendDrawerOpen(false);
-          setSendLoading(false);
-          messageApi.destroy("GETNEWBLOGRESULT");
-        }}
-        onSend={handleSendWeibo}
-      />
+        <SendWeiboDrawer
+          loading={sendLoading}
+          open={sendDrawerOpen}
+          onClose={() => {
+            setSendDrawerOpen(false);
+            setSendLoading(false);
+            messageApi.destroy("GETNEWBLOGRESULT");
+          }}
+          onSend={handleSendWeibo}
+        />
       </Suspense>
     </>
   );
