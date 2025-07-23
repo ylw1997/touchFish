@@ -258,7 +258,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       key={item.id}
       title={renderTitle()}
       style={{
-        background: "#141414a6",
+        background: "#191919",
       }}
       className={className}
     >
