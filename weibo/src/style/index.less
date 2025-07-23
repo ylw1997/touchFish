@@ -91,24 +91,24 @@ body {
 }
 
 // 分辨率小于等于320px
-@media screen and (max-width: 340px) {
+@media screen and (max-width: 320px) {
   .imglist,
   .retweeted-status .imglist {
     .img-item,
     .img-only-item {
-      width: calc(50vw - 22px);
-      height: calc(50vw - 22px);
+      width: 100vw;
+      height: 100vw;
     }
   }
 }
 
 // 分辨率321-768px
-@media screen and (min-width: 341px) and (max-width: 680px) {
+@media screen and (min-width: 341px) and (max-width: 540px) {
   .imglist,
   .retweeted-status .imglist {
     .img-item {
-      width: calc(33.33vw - 17px);
-      height: calc(33.33vw - 17px);
+      width: calc(50vw - 22px);
+      height: calc(50vw - 22px);
     }
     .img-only-item {
       width: calc(66.66vw - 25px);
@@ -118,27 +118,27 @@ body {
   }
   .retweeted-status .imglist {
     .img-item {
-      width: calc(33.33vw - 23px);
-      height: calc(33.33vw - 23px);
+      width: calc(50vw - 31px);
+      height: calc(50vw - 31px);
     }
   }
 }
 
 // 分辨率大于等于769px
-@media screen and (min-width: 681px) {
+@media screen and (min-width: 541px) {
   .imglist,
   .retweeted-status .imglist {
     .img-item,
     .img-only-item {
-      width: calc(25vw - 17px);
-      height: calc(25vw - 17px);
+      width: calc(33.33vw - 17px);
+      height: calc(33.33vw - 17px);
     }
   }
   .retweeted-status .imglist {
     .img-item,
     .img-only-item {
-      width: calc(25vw - 23px);
-      height: calc(25vw - 23px);
+      width: calc(33.33vw - 23px);
+      height: calc(33.33vw - 23px);
     }
   }
 }

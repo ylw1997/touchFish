@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-23 14:40:30
+ * @LastEditTime: 2025-07-23 15:04:27
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -189,6 +189,11 @@ function App() {
           duration={1000}
           icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
         />
+        {/* 搜索按钮 */}
+        <FloatButton
+          onClick={() => setSearchDrawerOpen(true)}
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+        />
         <FloatButton
           type="primary"
           icon={<EditOutlined style={{ color: "#69b1ff" }} />}
@@ -199,12 +204,7 @@ function App() {
             clearList();
             fetchData();
           }}
-          icon={<RedoOutlined style={{ color: "#f3cc62" }} />}
-        />
-        {/* 搜索按钮 */}
-        <FloatButton
-          onClick={() => setSearchDrawerOpen(true)}
-          icon={<SearchOutlined style={{ color: "#ff7875" }} />}
+          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
         />
         {/* 显示图片 */}
         <FloatButton
@@ -212,7 +212,7 @@ function App() {
             messageApi.success(`图片已${showImg ? "隐藏" : "显示"}!`);
             setShowImg((showImg) => !showImg);
           }}
-          icon={<PictureOutlined style={{ color: "#d48806" }} />}
+          icon={<PictureOutlined style={{ color: "#13c2c2" }} />}
         />
       </FloatButton.Group>
       <Suspense fallback={null}>
