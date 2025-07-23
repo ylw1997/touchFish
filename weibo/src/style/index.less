@@ -128,10 +128,14 @@ body {
 @media screen and (min-width: 541px) {
   .imglist,
   .retweeted-status .imglist {
-    .img-item,
-    .img-only-item {
+    .img-item {
       width: calc(33.33vw - 17px);
       height: calc(33.33vw - 17px);
+    }
+    .img-only-item {
+      width: calc(66.66vw - 25px);
+      max-width: 500px;
+      max-height: 500px;
     }
   }
   .retweeted-status .imglist {
