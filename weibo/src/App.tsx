@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-11 16:20:38
+ * @LastEditTime: 2025-07-23 14:40:30
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -15,6 +15,7 @@ import {
   EditOutlined,
   PictureOutlined,
   RedoOutlined,
+  SearchOutlined,
   VerticalAlignTopOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -27,6 +28,7 @@ import { defTab } from "./data/tabs";
 import useWeiboAction from "./hooks/useWeiboAction";
 const SendWeiboDrawer = lazy(() => import("./components/SendWeiboDrawer"));
 const UserDetailDrawer = lazy(() => import("./components/UserDetailDrawer"));
+const SearchDrawer = lazy(() => import("./components/SearchDrawer"));
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -60,6 +62,7 @@ function App() {
   const [tabs] = useState(defTab);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
+  const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   // 子菜单key
   const [subAcitiveKey, setSubActiveKey] = useState("");
 
@@ -198,6 +201,11 @@ function App() {
           }}
           icon={<RedoOutlined style={{ color: "#f3cc62" }} />}
         />
+        {/* 搜索按钮 */}
+        <FloatButton
+          onClick={() => setSearchDrawerOpen(true)}
+          icon={<SearchOutlined style={{ color: "#ff7875" }} />}
+        />
         {/* 显示图片 */}
         <FloatButton
           onClick={() => {
@@ -207,6 +215,13 @@ function App() {
           icon={<PictureOutlined style={{ color: "#d48806" }} />}
         />
       </FloatButton.Group>
+      <Suspense fallback={null}>
+        <SearchDrawer
+          open={searchDrawerOpen}
+          onClose={() => setSearchDrawerOpen(false)}
+          showUser={getUserBlog}
+        />
+      </Suspense>
       <Suspense fallback={null}>
       <SendWeiboDrawer
         loading={sendLoading}

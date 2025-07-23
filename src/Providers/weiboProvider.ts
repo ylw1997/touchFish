@@ -25,6 +25,7 @@ import {
   getWeiboComment,
   getWeiboData,
   getWeiboImg,
+  searchWeibo,
   sendWeibo,
   setLike,
   uploadImage,
@@ -207,6 +208,18 @@ export class WeiboProvider implements WebviewViewProvider {
             const res = await cancelLike(message.payload);
             webviewView.webview.postMessage({
               command: `SENDCANCELLIKE`,
+              payload: {
+                payload: message.payload,
+                ...res.data,
+                source: message.source,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETSEARCH": {
+            const res = await searchWeibo(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDSEARCH`,
               payload: {
                 payload: message.payload,
                 ...res.data,

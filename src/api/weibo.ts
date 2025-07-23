@@ -278,3 +278,15 @@ export const createRepost = async (params: weiboRepostParams) => {
     }
   );
 };
+
+// 搜索
+export const searchWeibo = async (keyword: string) => {
+  const cookie = (await getOrSetWeiboCookie()) as string;
+  return await axios.get(`https://weibo.com/ajax/side/search?q=${keyword}`, {
+    headers: {
+      Cookie: cookie,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+};
