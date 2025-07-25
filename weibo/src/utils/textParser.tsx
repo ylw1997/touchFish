@@ -37,7 +37,7 @@ export const parseWeiboText = (
       // 匹配 #话题#
       if (part.startsWith("#") && part.endsWith("#")) {
         return (
-          <Tag key={index} color="green">
+          <Tag key={index} color="cyan">
             {part.slice(1, -1)}
           </Tag>
         );

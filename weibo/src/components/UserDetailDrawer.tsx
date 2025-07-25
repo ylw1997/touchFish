@@ -154,7 +154,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 </Button>
               ) : (
                 <Button
-                  color="pink"
+                  color="red"
                   onClick={() => cancelFollow(userDetail, preSource)}
                   variant="filled"
                 >

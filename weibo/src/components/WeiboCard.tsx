@@ -1,3 +1,12 @@
+/*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-07-23 16:06:12
+ * @LastEditTime: 2025-07-25 17:02:31
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\weibo\src\components\WeiboCard.tsx
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
 import {
   Avatar,
   Button,
@@ -135,7 +144,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </Button>
         ) : (
           <Button
-            color="pink"
+            color="red"
             onClick={() => cancelFollow?.(item.user)}
             variant="filled"
           >
@@ -278,7 +287,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       <div className="content">
         {parseWeiboText(item.text_raw, getUserByName)}
         {item.isLongText && (
-          <Tag color="cyan" style={{ marginLeft: "8px" }}>
+          <Tag color="blue" style={{ marginLeft: "8px" }}>
             <a
               onClick={() => onExpandLongWeibo?.(item.mblogid)}
               target="_blank"
