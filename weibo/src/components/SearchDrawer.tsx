@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-07-23 14:55:26
+ * @LastEditTime: 2025-07-25 11:07:58
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -10,9 +10,10 @@
 import { Drawer, Button, Input, Form, List, Avatar, Divider } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
-import { useEffect, useState } from "react";
-import { commandsType, weiboUser } from "../../../type";
+import { useState } from "react";
+import { useMessageHandler } from "../hooks/useMessageHandler";
 import YImg from "./YImg";
+import { weiboUser } from "../../../type";
 
 interface SearchDrawerProps {
   open: boolean;
@@ -30,22 +31,19 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<weiboUser[]>([]);
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const message: commandsType<any> = event.data;
-      if (message.command === "SENDSEARCH") {
-        messageApi.destroy("GETSEARCH");
-        setLoading(false);
-        if (message.payload.ok === 1) {
-          setUsers(message.payload.data.users || []);
-        } else {
-          messageApi.error(message.payload.msg || "搜索失败");
-        }
+  const handlers = {
+    SENDSEARCH: (payload: any) => {
+      messageApi.destroy("GETSEARCH");
+      setLoading(false);
+      if (payload.ok === 1) {
+        setUsers(payload.data.users || []);
+      } else {
+        messageApi.error(payload.msg || "搜索失败");
       }
-    };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [messageApi]);
+    },
+  };
+
+  useMessageHandler(handlers);
 
   const handleSearch = () => {
     form

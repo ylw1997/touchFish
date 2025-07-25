@@ -1,19 +1,20 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-07-23 14:07:05
+ * @LastEditTime: 2025-07-25 11:09:10
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Drawer, Button, Input, Form, Select, Upload } from "antd";
 import { SendOutlined, PlusOutlined } from "@ant-design/icons";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import { weiboSendParams } from "../types";
 import { fileToBase64 } from "../utils";
-import { commandsType, uploadType } from "../../../type";
+import { useMessageHandler } from "../hooks/useMessageHandler";
+import { uploadType } from "../../../type";
 
 interface SendWeiboDrawerProps {
   open: boolean;
@@ -47,39 +48,29 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   >([]);
   const SENDSOURCE = 'SENDSOURCE'
 
-  const msgHandle = useCallback(
-    async (event: MessageEvent<commandsType<any>>) => {
-      const msg = event.data;
-      if (msg.command === "SENDUPLOADIMGURL" && msg.payload) {
-        messageApi.destroy("GETUPLOADIMGURL");
-        setLoadingUpload(false);
-        if (msg.payload.code === "A00006") {
-          messageApi.success("上传图片成功!");
-          const obj = {
-            type: msg.payload.type,
-            uid: msg.payload.uid,
-            pid: msg.payload.data.pics.pic_1.pid,
-          };
-          setPictureList((list) => [...list, obj]);
-        } else {
-          messageApi.error("上传失败");
-          const uid = msg.payload.uid;
-          setFileList((fileList) =>
-            fileList.filter((file) => file.uid !== uid)
-          );
-        }
+  const handlers = {
+    SENDUPLOADIMGURL: (payload: any) => {
+      messageApi.destroy("GETUPLOADIMGURL");
+      setLoadingUpload(false);
+      if (payload.code === "A00006") {
+        messageApi.success("上传图片成功!");
+        const obj = {
+          type: payload.type,
+          uid: payload.uid,
+          pid: payload.data.pics.pic_1.pid,
+        };
+        setPictureList((list) => [...list, obj]);
+      } else {
+        messageApi.error("上传失败");
+        const uid = payload.uid;
+        setFileList((fileList) =>
+          fileList.filter((file) => file.uid !== uid)
+        );
       }
     },
-    [messageApi]
-  );
+  };
 
-  // 修复事件监听重复添加问题
-  useEffect(() => {
-    window.addEventListener("message", msgHandle);
-    return () => {
-      window.removeEventListener("message", msgHandle);
-    };
-  }, [msgHandle]);
+  useMessageHandler(handlers);
 
   const handleSend = () => {
     form

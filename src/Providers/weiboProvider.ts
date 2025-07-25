@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-07-11 16:25:28
+ * @LastEditTime: 2025-07-25 11:11:48
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -131,7 +131,7 @@ export class WeiboProvider implements WebviewViewProvider {
           case "GETNEWBLOGRESULT": {
             const res = await sendWeibo(message.payload);
             webviewView.webview.postMessage({
-              command: "SENTNEWBLOGRESULT",
+              command: "SENDNEWBLOGRESULT",
               payload: {
                 payload: message.payload,
                 ...res.data,

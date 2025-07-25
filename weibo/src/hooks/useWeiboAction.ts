@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   payloadType,
   weiboCommentParams,
@@ -9,7 +9,7 @@ import {
 import { updateWeiboList } from "../utils/updateWeiboList";
 import { useVscodeMessage } from "./useVscodeMessage";
 import { weiboSendParams } from "../types";
-import { commandsType, weiboAJAX } from "../../../type";
+import { useMessageHandler } from "./useMessageHandler";
 const useWeiboAction = (source: string) => {
   // 微博列表相关状态
   const [list, setList] = useState<weiboItem[]>([]);
@@ -261,44 +261,15 @@ const useWeiboAction = (source: string) => {
       SENDCREATEREPOST: handleSendCreateRepost,
       SENDLONGTEXT: handleSendLongText,
       SENDFOLLOW: handleSendFollow,
-      SENTNEWBLOGRESULT: handleSendNewBlogResult,
+      SENDNEWBLOGRESULT: handleSendNewBlogResult,
       SENDCANCELFOLLOW: handleSendCancelFollow,
       SENDSETLIKE: handleSendSetLike,
       SENDCANCELLIKE: handleSendCancelLike,
     }),
-    [
-      handleSendUserBlog,
-      handleSendData,
-      handleSendComment,
-      handleSendCreateComments,
-      handleSendCreateRepost,
-      handleSendLongText,
-      handleSendFollow,
-      handleSendNewBlogResult,
-      handleSendCancelFollow,
-      handleSendSetLike,
-      handleSendCancelLike,
-    ]
+    [handleSendUserBlog, handleSendData, handleSendComment, handleSendCreateComments, handleSendCreateRepost, handleSendLongText, handleSendFollow, handleSendNewBlogResult, handleSendCancelFollow, handleSendSetLike, handleSendCancelLike]
   );
 
-  // 统一处理消息响应
-  useEffect(() => {
-    const handler = (ev: MessageEvent<commandsType<weiboAJAX>>) => {
-      if (ev.type !== "message") return;
-      const msg = ev.data;
-      const fn = (handlers as Record<string, (payload: any) => void>)[
-        msg.command as string
-      ];
-      fn?.(msg.payload);
-    };
-    try {
-      window.addEventListener("message", handler);
-    } catch (error) {
-      console.error(error);
-    }
-
-    return () => window.removeEventListener("message", handler);
-  }, [handlers]);
+  useMessageHandler(handlers);
 
   // 请求数据（主列表/用户微博）
   const getListData = useCallback(
@@ -398,7 +369,7 @@ const useWeiboAction = (source: string) => {
     [sendMessage, source]
   );
   // 发送微博功能
-  const handleSendWeibo = (content: weiboSendParams) => {
+  const handleSendWeibo = useCallback((content: weiboSendParams) => {
     setSendLoading(true);
     sendMessage(
       "GETNEWBLOGRESULT",
@@ -406,10 +377,10 @@ const useWeiboAction = (source: string) => {
       "发送中...",
       source
     );
-  };
+  }, [sendMessage, source]);
 
   // handleCommentOrRepost 评论或转发
-  const handleCommentOrRepost = (
+  const handleCommentOrRepost = useCallback((
     comment: string,
     item: weiboItem,
     type: "comment" | "repost"
@@ -440,10 +411,10 @@ const useWeiboAction = (source: string) => {
       } as weiboRepostParams;
       sendMessage("GETCREATEREPOST", obj, "转发微博中...", source);
     }
-  };
+  }, [sendMessage, source]);
 
   // 点赞,取消点赞
-  const handleLike = (item: weiboItem, type: "like" | "cancel") => {
+  const handleLike = useCallback((item: weiboItem, type: "like" | "cancel") => {
     setCurItem(item);
     if (type == "like") {
       sendMessage("GETSETLIKE", item.id, "正在点赞...", source);
@@ -451,7 +422,7 @@ const useWeiboAction = (source: string) => {
     if (type == "cancel") {
       sendMessage("GETCANCELLIKE", item.id, "取消点赞中...", source);
     }
-  };
+  }, [sendMessage, source]);
 
   return {
     getListData,

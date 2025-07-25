@@ -11,7 +11,7 @@ import { weiboItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
-import { CSSProperties, useEffect, useState } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 import TextArea from "antd/es/input/TextArea";
 
 export interface WeiboCardProps {
@@ -352,4 +352,4 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   );
 };
 
-export default WeiboCard;
+export default React.memo(WeiboCard);
