@@ -59,7 +59,10 @@ const useWeiboAction = (source: string) => {
     (payload: payloadType) => {
       messageApi.destroy("GETDATA");
       if (payload?.ok && payload.source === source) {
-        const wlist = [...list, ...payload.statuses];
+        const wlist = [
+          ...list,
+          ...payload.statuses.filter((item) => item.mblogtype !== 1),
+        ];
         const wtotal = payload.total_number ?? 999;
         setList(wlist);
         setTotal(wtotal);
@@ -293,7 +296,7 @@ const useWeiboAction = (source: string) => {
     } catch (error) {
       console.error(error);
     }
-    
+
     return () => window.removeEventListener("message", handler);
   }, [handlers]);
 
