@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-07-25 10:50:26
+ * @LastEditTime: 2025-07-25 15:38:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -37,6 +37,8 @@
  * SENDCREATEREPOST   转发结果返回
  * GETSEARCH          搜索微博
  * SENDSEARCH         搜索结果返回
+ * GETUSERBYNAME      根据用户名获取用户信息
+ * SENDUSERBYNAME     根据用户名获取用户信息结果返回
  */
 export type CommandList =
   | "GETDATA"
@@ -66,7 +68,9 @@ export type CommandList =
   | "GETCREATEREPOST"
   | "SENDCREATEREPOST"
   | "GETSEARCH"
-  | "SENDSEARCH";
+  | "SENDSEARCH"
+  | "GETUSERBYNAME"
+  | "SENDUSERBYNAME";
 
 export type commandsType<T> = {
   command: CommandList;
@@ -95,6 +99,7 @@ export type weiboItem = {
   id: number;
   text: string;
   text_raw: string;
+  isLongText: boolean;
   source?: string;
   pic_ids: string[];
   mblogid: string;
@@ -174,6 +179,7 @@ type commentsPicItem = {
 
 export type commentsItem = {
   text: string;
+  text_raw: string;
   id: string;
   source: string;
   user?: weiboUser;

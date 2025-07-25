@@ -290,3 +290,15 @@ export const searchWeibo = async (keyword: string) => {
     },
   });
 };
+
+// 根据用户名查询用户信息
+export const getUserByName = async (screen_name: string) => {
+  const cookie = (await getOrSetWeiboCookie()) as string;
+  return await axios.get(`https://weibo.com/ajax/user/popcard/get?screen_name=${screen_name}`, {
+    headers: {
+      Cookie: cookie,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+};

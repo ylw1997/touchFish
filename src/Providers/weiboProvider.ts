@@ -29,6 +29,7 @@ import {
   sendWeibo,
   setLike,
   uploadImage,
+  getUserByName,
 } from "../api/weibo";
 import * as vscode from "vscode";
 import { commandsType, uploadType, weiboAJAX } from "../../type";
@@ -220,6 +221,18 @@ export class WeiboProvider implements WebviewViewProvider {
             const res = await searchWeibo(message.payload);
             webviewView.webview.postMessage({
               command: `SENDSEARCH`,
+              payload: {
+                payload: message.payload,
+                ...res.data,
+                source: message.source,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETUSERBYNAME": {
+            const res = await getUserByName(message.payload);
+            webviewView.webview.postMessage({
+              command: `SENDUSERBYNAME`,
               payload: {
                 payload: message.payload,
                 ...res.data,

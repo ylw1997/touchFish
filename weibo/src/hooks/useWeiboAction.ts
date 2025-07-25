@@ -10,6 +10,7 @@ import { updateWeiboList } from "../utils/updateWeiboList";
 import { useVscodeMessage } from "./useVscodeMessage";
 import { weiboSendParams } from "../types";
 import { useMessageHandler } from "./useMessageHandler";
+
 const useWeiboAction = (source: string) => {
   // 微博列表相关状态
   const [list, setList] = useState<weiboItem[]>([]);
@@ -136,10 +137,9 @@ const useWeiboAction = (source: string) => {
       messageApi.destroy("GETLONGTEXT");
       if (payload?.ok && payload.source === source) {
         const mblogid = payload.payload;
-        const text = payload.data.longTextContent.replace(/\n/g, "<br/>");
         updateList(
           (item) => item.mblogid === mblogid,
-          (item) => ({ ...item, text })
+          (item) => ({ ...item, text_raw: payload.data.longTextContent, isLongText: false })
         );
       } else if (payload?.source === source) {
         messageApi.error("长文本请求失败!" + payload?.msg);
@@ -252,6 +252,22 @@ const useWeiboAction = (source: string) => {
     [messageApi, source, updateList, curItem]
   );
 
+  const handleSendUserByName = useCallback(
+    (payload: payloadType) => {
+      messageApi.destroy("GETUSERBYNAME");
+      if (payload?.ok && payload.source === source) {
+        setUserDetail({
+          ...payload.data,
+          avatar_hd: payload.data.avatar,
+        });
+        setUserDetailVisible(true);
+      } else if (payload?.source === source) {
+        messageApi.error("获取用户信息失败!" + payload?.msg);
+      }
+    },
+    [messageApi, source]
+  );
+
   const handlers = useMemo(
     () => ({
       SENDUSERBLOG: handleSendUserBlog,
@@ -265,8 +281,9 @@ const useWeiboAction = (source: string) => {
       SENDCANCELFOLLOW: handleSendCancelFollow,
       SENDSETLIKE: handleSendSetLike,
       SENDCANCELLIKE: handleSendCancelLike,
+      SENDUSERBYNAME: handleSendUserByName,
     }),
-    [handleSendUserBlog, handleSendData, handleSendComment, handleSendCreateComments, handleSendCreateRepost, handleSendLongText, handleSendFollow, handleSendNewBlogResult, handleSendCancelFollow, handleSendSetLike, handleSendCancelLike]
+    [handleSendUserBlog, handleSendData, handleSendComment, handleSendCreateComments, handleSendCreateRepost, handleSendLongText, handleSendFollow, handleSendNewBlogResult, handleSendCancelFollow, handleSendSetLike, handleSendCancelLike, handleSendUserByName]
   );
 
   useMessageHandler(handlers);
@@ -349,6 +366,13 @@ const useWeiboAction = (source: string) => {
     setUserDetail(userInfo);
     setUserDetailVisible(true);
   }, []);
+
+  const getUserByName = useCallback(
+    (username: string) => {
+      sendMessage("GETUSERBYNAME", username, "获取用户信息中...", source);
+    },
+    [sendMessage, source]
+  );
 
   // 关注博主
   const followUser = useCallback(
@@ -456,6 +480,7 @@ const useWeiboAction = (source: string) => {
     followUser,
     userWeiboPage,
     setUserWeiboPage,
+    getUserByName,
   };
 };
 

@@ -12,11 +12,13 @@ import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
 import React, { CSSProperties, useEffect, useState } from "react";
+import { parseWeiboText } from "../utils/textParser";
 import TextArea from "antd/es/input/TextArea";
 
 export interface WeiboCardProps {
   className?: string;
   item: weiboItem;
+  getUserByName: (username: string) => void;
   is_child?: boolean;
   onUserClick?: (userInfo: weiboUser) => void;
   onFollow?: (userInfo?: weiboUser) => void;
@@ -60,6 +62,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   onCommentOrRepost,
   onLikeOrCancelLike,
   showImg,
+  getUserByName,
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
 
@@ -262,19 +265,23 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       }}
       className={className}
     >
-      <div
-        className="content"
-        dangerouslySetInnerHTML={{ __html: item.text }}
-        onClick={(e) => {
-          if (
-            e.target instanceof HTMLSpanElement &&
-            e.target.classList.contains("expand") &&
-            onExpandLongWeibo
-          ) {
-            onExpandLongWeibo(item.mblogid);
-          }
-        }}
-      />
+      <div className="content">
+        {parseWeiboText(item.text_raw, getUserByName)}
+        {item.isLongText && (
+          <Button
+            size="small"
+            color="default"
+            variant="filled"
+            style={{
+              marginLeft: "8px",
+            }}
+            onClick={() => onExpandLongWeibo?.(item.mblogid)}
+          >
+            展开长微博
+          </Button>
+        )}
+      </div>
+
       {imgShow && renderImages()}
       {/* 如果showImg为false,出现一个显示图片按钮,点击显示 */}
       {!imgShow && item.pic_infos && (
@@ -307,6 +314,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           onCommentOrRepost={onCommentOrRepost}
           onLikeOrCancelLike={onLikeOrCancelLike}
           showImg={showImg}
+          getUserByName={getUserByName}
         />
       )}
       {renderActionBar()}
@@ -347,7 +355,9 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </Form>
         </div>
       )}
-      {item.comments && <>{renderComments(item.comments, true, onUserClick)}</>}
+      {item.comments && (
+        <>{renderComments(item.comments, true, getUserByName, onUserClick)}</>
+      )}
     </Card>
   );
 };

@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-07-01 16:34:08
+ * @LastEditTime: 2025-07-25 15:47:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -11,13 +11,15 @@ import { List, Avatar, Flex, Image } from "antd";
 import { commentsItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
+import { parseWeiboText } from "../utils/textParser";
 import { HeartOutlined } from "@ant-design/icons";
 
 // 渲染评论
 export const renderComments = (
   comments: commentsItem[],
   is_child = false,
-  onUserClick?: (userInfo: weiboUser) => void
+  getUserByName: (username: string) => void,
+  onUserClick?: (userInfo: weiboUser) => void,
 ) => {
   const defaultAvatarSize = is_child ? 32 : 40;
   return (
@@ -68,10 +70,7 @@ export const renderComments = (
               }
               description={
                 <>
-                  <div
-                    className="content"
-                    dangerouslySetInnerHTML={{ __html: item.text }}
-                  ></div>
+                  <div className="content">{parseWeiboText(item.text_raw,getUserByName)}</div>
                   {item.url_struct && item.url_struct.length > 0 && (
                     <div className="imglist" style={{ marginBottom: "10px" }}>
                       <Image.PreviewGroup>
@@ -120,7 +119,7 @@ export const renderComments = (
                   >
                     {item.comments &&
                       item.comments.length > 0 &&
-                      renderComments(item.comments, is_child, onUserClick)}
+                      renderComments(item.comments, is_child, getUserByName)}
                   </div>
                 </>
               }
