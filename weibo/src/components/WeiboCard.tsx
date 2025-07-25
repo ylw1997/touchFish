@@ -1,4 +1,14 @@
-import { Avatar, Button, Card, Dropdown, Flex, Form, Image, Space } from "antd";
+import {
+  Avatar,
+  Button,
+  Card,
+  Dropdown,
+  Flex,
+  Form,
+  Image,
+  Space,
+  Tag,
+} from "antd";
 import {
   DownCircleOutlined,
   ExportOutlined,
@@ -125,7 +135,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </Button>
         ) : (
           <Button
-            color="danger"
+            color="pink"
             onClick={() => cancelFollow?.(item.user)}
             variant="filled"
           >
@@ -268,17 +278,15 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       <div className="content">
         {parseWeiboText(item.text_raw, getUserByName)}
         {item.isLongText && (
-          <Button
-            size="small"
-            color="default"
-            variant="filled"
-            style={{
-              marginLeft: "8px",
-            }}
-            onClick={() => onExpandLongWeibo?.(item.mblogid)}
-          >
-            展开长微博
-          </Button>
+          <Tag color="cyan" style={{ marginLeft: "8px" }}>
+            <a
+              onClick={() => onExpandLongWeibo?.(item.mblogid)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              展开长微博
+            </a>
+          </Tag>
         )}
       </div>
 

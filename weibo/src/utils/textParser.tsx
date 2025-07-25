@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Tag } from "antd";
+import { Tag } from "antd";
 import emojiData from "../data/emoji.json";
 
 // 将表情数据转换为更易于查找的格式
@@ -37,8 +37,8 @@ export const parseWeiboText = (
       // 匹配 #话题#
       if (part.startsWith("#") && part.endsWith("#")) {
         return (
-          <Tag key={index} color="geekblue">
-            {part}
+          <Tag key={index} color="green">
+            {part.slice(1, -1)}
           </Tag>
         );
       }
@@ -46,21 +46,30 @@ export const parseWeiboText = (
       if (part.startsWith("@")) {
         const username = part.substring(1);
         return (
-          <a
-            key={index}
-            onClick={() => getUserByName?.(username)}
-            style={{ cursor: "pointer" }}
-          >
-            {part}
-          </a>
+          <Tag key={index} color="pink">
+            <a
+              key={index}
+              onClick={() => getUserByName?.(username)}
+              style={{ cursor: "pointer" }}
+            >
+              {part}
+            </a>
+          </Tag>
         );
       }
       // 匹配 http 链接
       if (part.startsWith("http")) {
         return (
-          <Button size="small" color="primary" variant="filled" href={part}>
-            网页链接
-          </Button>
+          <Tag key={index} color="blue">
+            <a
+              key={index}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              网页链接
+            </a>
+          </Tag>
         );
       }
       // 处理换行符并返回普通文本
@@ -82,6 +91,8 @@ export const openNewWindow = (url: string) => {
   if (newWindow) {
     newWindow.opener = null; // 防止新窗口可以访问原窗口
   } else {
-    console.error("Failed to open new window. Please allow pop-ups for this site.");
+    console.error(
+      "Failed to open new window. Please allow pop-ups for this site."
+    );
   }
 };
