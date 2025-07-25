@@ -1,50 +1,80 @@
-# React + TypeScript + Vite
+# TouchFish Weibo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> [!Important]
+>
+>  记住这个应用：`TouchFish Weibo` - 摸鱼，也要摸得专业！
 
-Currently, two official plugins are available:
+一个专为在 VS Code 中隐秘摸鱼刷微博设计的客户端，让你在编码的间隙，也能轻松掌握热点，关注动态，同时保持专业的工作姿态。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 特性
 
-## Expanding the ESLint configuration
+- **多 Feed 流**: 全面支持热门、关注、本地等多种微博 Feed
+- **完整微博体验**: 点赞、评论、转发、关注/取关，功能一应俱全
+- **沉浸式浏览**: 无限滚动加载，让你刷得停不下来
+- **深度交互**: 查看用户主页、展开长微博、浏览评论区
+- **发布与分享**: 支持发布图文微博，复制链接分享
+- **高度集成**: 专为 VS Code 设计的暗色主题，完美融入你的开发环境
+- **性能优化**: 组件懒加载、虚拟滚动，保证摸鱼体验如丝般顺滑
+- **保护隐私**: 可一键隐藏/显示所有图片，避免尴尬
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+> [!Note]
+> 本项目是 [TouchFish-vscode](https://github.com/Done-0/touchfish-vscode) 插件的前端部分，专为在 IDE 中无缝摸鱼而生。
+> 所有数据交互均通过 VS Code 插件转发，保障你的冲浪体验既安全又私密。
 
-- Configure the top-level `parserOptions` property like this:
+## 安利一下
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+我的 AI 赛博算命网站上线啦！ [玄学工坊](https://bazi.site) - https://bazi.site
+
+我的开源博客项目 [Jank](https://github.com/Done-0/Jank) - https://github.com/Done-0/Jank
+
+## 安装与开发
+
+### 1. 克隆仓库
+
+```bash
+git clone https://github.com/Done-0/touchfish-vscode.git
+cd touchfish-vscode/weibo
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### 2. 安装依赖
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+推荐使用 `pnpm` 进行依赖管理。
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+pnpm install
 ```
+
+### 3. 启动开发环境
+
+```bash
+pnpm dev
+```
+
+## 可用脚本
+
+| 命令           | 描述                             |
+| :------------- | :------------------------------- |
+| `pnpm dev`     | 启动本地开发服务器，开启热更新   |
+| `pnpm build`   | 将项目打包为生产环境代码         |
+| `pnpm lint`    | 使用 ESLint 检查代码规范         |
+| `pnpm preview` | 在本地预览生产环境的构建结果     |
+
+## 项目结构
+
+```
+src/
+├── components/    # UI 组件 (微博卡片、抽屉等)
+├── data/          # 静态数据 (如 Tab 配置)
+├── hooks/         # 自定义 React Hooks (核心逻辑)
+├── style/         # 全局样式文件
+├── types/         # TypeScript 类型定义
+└── utils/         # 通用工具函数
+```
+
+## 许可证
+
+本项目采用 MIT 许可证
+
+## 贡献
+
+欢迎提交 PR，为“摸鱼”事业添砖加瓦！
