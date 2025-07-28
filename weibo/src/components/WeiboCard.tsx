@@ -1,11 +1,11 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 16:06:12
- * @LastEditTime: 2025-07-25 17:02:31
+ * @LastEditTime: 2025-07-28 13:33:51
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\WeiboCard.tsx
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
- * @Description: 
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
+ * @Description:
  */
 import {
   Avatar,
@@ -24,6 +24,7 @@ import {
   HeartFilled,
   HeartOutlined,
   MessageOutlined,
+  PlayCircleFilled,
   ShareAltOutlined,
 } from "@ant-design/icons";
 import { weiboItem, weiboUser } from "../../../type";
@@ -33,6 +34,7 @@ import { renderComments } from "./Comment";
 import React, { CSSProperties, useEffect, useState } from "react";
 import { parseWeiboText } from "../utils/textParser";
 import TextArea from "antd/es/input/TextArea";
+import { openNewWindow } from "../utils";
 
 export interface WeiboCardProps {
   className?: string;
@@ -155,8 +157,25 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   );
 
   const renderImages = () => {
+    // 视频封面显示
+    if (item.page_info && item.page_info.object_type === "video") {
+      return (
+        <div className="imglist video-cover">
+          <YImg
+            className="img-only-item"
+            src={item.page_info.page_pic}
+            onClick={() => {
+              openNewWindow(item.page_info!.short_url);
+            }}
+            preview={{
+              visible: false,
+            }}
+          />
+          <PlayCircleFilled className="video-icon" />
+        </div>
+      );
+    }
     if (!item.pic_infos || !item.pic_ids) return null;
-
     return (
       <div className="imglist">
         <Image.PreviewGroup>
@@ -285,7 +304,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       className={className}
     >
       <div className="content">
-        {parseWeiboText(item.text_raw, getUserByName)}
+        {parseWeiboText(item, getUserByName)}
         {item.isLongText && (
           <Tag color="blue" style={{ marginLeft: "8px" }}>
             <a

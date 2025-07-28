@@ -221,3 +221,36 @@ body {
   margin-left: 5px;
   color: #5a7dad;
 }
+.video-cover {
+  position: relative;
+  display: inline-block;
+
+  .video-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease-in-out;
+    pointer-events: none;
+  }
+  .video-text{
+    font-size: 15px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    transition: all 0.2s ease-in-out;
+    opacity: 0;
+  }
+
+  &:hover {
+    .video-icon {
+      color: rgba(255, 255, 255, 0.2);
+    }
+    .video-text {
+      opacity: 1;
+    }
+  }
+}

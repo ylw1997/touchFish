@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-25 15:58:01
+ * @LastEditTime: 2025-07-28 09:25:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -131,7 +131,6 @@ function App() {
       {contextHolder}
       <Suspense fallback={null}>
         <UserDetailDrawer
-          getUserByName={getUserByName}
           visible={userDetailVisible}
           userDetail={userDetail}
           onClose={() => {

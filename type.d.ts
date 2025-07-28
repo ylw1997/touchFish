@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-07-25 15:38:00
+ * @LastEditTime: 2025-07-28 11:03:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -95,7 +95,29 @@ export type weiboAJAX = {
   payload:any
 };
 
-export type weiboItem = {
+export interface baseWeiboField {
+  id: number;
+  text: string;
+  text_raw: string;
+  page_info?:{
+    object_type: string  // "video" "hudongvote"
+    page_pic: Page_pic   // 视频封面
+    page_url: string
+    page_title: string
+    content1: string
+    content2: string,
+    media_info:{
+      format: "mp4",
+      stream_url: string // 视频链接
+      stream_url_hd: string // 高清视频链接
+      name: string // 视频名称
+      next_title: string // 标题
+    }
+    short_url: string // 短链接
+  }
+}
+
+export interface weiboItem extends baseWeiboField {
   id: number;
   text: string;
   text_raw: string;
@@ -177,10 +199,10 @@ type commentsPicItem = {
   };
 };
 
-export type commentsItem = {
+export interface commentsItem extends baseWeiboField {
   text: string;
   text_raw: string;
-  id: string;
+  id: number;
   source: string;
   user?: weiboUser;
   created_at: string;

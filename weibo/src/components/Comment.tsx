@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-07-25 15:47:00
+ * @LastEditTime: 2025-07-28 11:12:34
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -70,7 +70,7 @@ export const renderComments = (
               }
               description={
                 <>
-                  <div className="content">{parseWeiboText(item.text_raw,getUserByName)}</div>
+                  <div className="content">{parseWeiboText(item,getUserByName,true)}</div>
                   {item.url_struct && item.url_struct.length > 0 && (
                     <div className="imglist" style={{ marginBottom: "10px" }}>
                       <Image.PreviewGroup>

@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 17:38:50
- * @LastEditTime: 2025-06-16 15:01:49
+ * @LastEditTime: 2025-07-28 13:49:07
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -11,6 +11,7 @@ import { useState, useEffect, useRef } from "react";
 import { vscode } from "../utils/vscode";
 import { commandsType } from "../../../type";
 import { Image } from "antd";
+import { imageFallback } from "../data/imgFallback";
 
 interface YImgProps {
   src: string;
@@ -69,7 +70,7 @@ const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
       {useImg ? (
         <img src={imgSrc} {...props} />
       ) : (
-        <Image src={imgSrc} {...props} />
+        <Image src={imgSrc} {...props} fallback={imageFallback} />
       )}
     </div>
   );

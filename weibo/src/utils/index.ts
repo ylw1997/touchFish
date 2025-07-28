@@ -1,11 +1,11 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-20 11:08:45
- * @LastEditTime: 2025-06-20 14:53:45
+ * @LastEditTime: 2025-07-28 10:22:27
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\utils\index.ts
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
- * @Description: 
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
+ * @Description:
  */
 // file转baase64
 export const fileToBase64 = (file: File): Promise<string> => {
@@ -15,4 +15,14 @@ export const fileToBase64 = (file: File): Promise<string> => {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+};
+
+export const openNewWindow = (url: string) => {
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };

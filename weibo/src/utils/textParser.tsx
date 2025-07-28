@@ -1,6 +1,7 @@
 import React from "react";
 import { Tag } from "antd";
 import emojiData from "../data/emoji.json";
+import { baseWeiboField } from "../../../type";
 
 // 将表情数据转换为更易于查找的格式
 const emojiMap: { [key: string]: string } = emojiData.reduce((acc, item) => {
@@ -13,14 +14,15 @@ const regex =
   /(\[[^\]]+\]|#.*?#|@[\u4e00-\u9fa5a-zA-Z0-9_-]+|https?:\/\/[^\s]+)/g;
 
 export const parseWeiboText = (
-  text: string,
-  getUserByName: (username: string) => void
+  weiboItem: baseWeiboField,
+  getUserByName: (username: string) => void,
+  isComment = false
 ): React.ReactNode[] => {
-  if (!text) {
+  if (!weiboItem.text_raw) {
     return [];
   }
 
-  const parts = text.split(regex);
+  const parts = weiboItem.text_raw.split(regex);
 
   return parts
     .map((part, index) => {
@@ -59,6 +61,39 @@ export const parseWeiboText = (
       }
       // 匹配 http 链接
       if (part.startsWith("http")) {
+        if (isComment) {
+          return null;
+        }
+        // 判断是否是视频链接
+        if (weiboItem.page_info?.object_type === "video") {
+          return (
+            <Tag key={index} color="green">
+              <a
+                key={index}
+                href={part}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                视频链接
+              </a>
+            </Tag>
+          );
+        }
+        // 判断是否是投票链接hudongvote
+        if (weiboItem.page_info?.object_type === "hudongvote") {
+          return (
+            <Tag key={index} color="orange">
+              <a
+                key={index}
+                href={part}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                投票链接
+              </a>
+            </Tag>
+          );
+        }
         return (
           <Tag key={index} color="blue">
             <a
