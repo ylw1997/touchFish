@@ -70,7 +70,9 @@ export type CommandList =
   | "GETSEARCH"
   | "SENDSEARCH"
   | "GETUSERBYNAME"
-  | "SENDUSERBYNAME";
+  | "SENDUSERBYNAME"
+  | "GETVIDEO"
+  | "SENDVIDEO";
 
 export type commandsType<T> = {
   command: CommandList;

@@ -25,6 +25,7 @@ import {
   getWeiboComment,
   getWeiboData,
   getWeiboImg,
+  downloadVideoAsFile,
   searchWeibo,
   sendWeibo,
   setLike,
@@ -79,6 +80,22 @@ export class WeiboProvider implements WebviewViewProvider {
               payload: res,
               // source:message.source,  特殊情况不能加
             } as commandsType<string>);
+            break;
+          }
+          case "GETVIDEO": {
+            const videoUrl = message.payload;
+            try {
+              const videoPath = await downloadVideoAsFile(videoUrl);
+              const videoUri = Uri.file(videoPath);
+              const webviewUri = webviewView.webview.asWebviewUri(videoUri);
+              webviewView.webview.postMessage({
+                command: `SENDVIDEO:${videoUrl}`,
+                payload: webviewUri.toString(),
+              });
+            } catch (error) {
+              console.error('Failed to fetch video:', error);
+              window.showErrorMessage('获取视频失败!');
+            }
             break;
           }
           case "GETCOMMENT": {

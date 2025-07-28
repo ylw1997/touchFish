@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 17:38:50
- * @LastEditTime: 2025-07-28 13:49:07
+ * @LastEditTime: 2025-07-28 17:44:03
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -21,26 +21,33 @@ interface YImgProps {
 
 const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
-  const imgRef = useRef<HTMLDivElement>(null);
+  const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
+  const elementRef = useRef<HTMLDivElement>(null);
+  const isVideo = src.includes('.mp4');
 
   useEffect(() => {
-    const currentRef = imgRef.current;
+    const currentRef = elementRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && src) {
-            // 图片进入视口时加载
-            vscode.postMessage({
-              command: "GETIMG",
-              payload: src,
-            } as commandsType<string>);
-            // 停止观察
+            if (isVideo) {
+              vscode.postMessage({
+                command: "GETVIDEO",
+                payload: src,
+              } as commandsType<string>);
+            } else {
+              vscode.postMessage({
+                command: "GETIMG",
+                payload: src,
+              } as commandsType<string>);
+            }
             observer.unobserve(entry.target);
           }
         });
       },
       {
-        threshold: 0.1, // 当10%的元素可见时触发
+        threshold: 0.1,
       }
     );
 
@@ -53,6 +60,10 @@ const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
       if (msg.command === `SENDIMG:${src}` && msg.payload) {
         setImgSrc(msg.payload);
       }
+      if (msg.command === `SENDVIDEO:${src}` && msg.payload) {
+        console.log("SENDVIDEO", msg.payload);
+        setVideoSrc(msg.payload);
+      }
     };
 
     window.addEventListener("message", messageHandler);
@@ -63,11 +74,13 @@ const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
       }
       window.removeEventListener("message", messageHandler);
     };
-  }, [src]);
+  }, [src, isVideo]);
 
   return (
-    <div style={{ height: "inherit", display: "inline-block" }} ref={imgRef}>
-      {useImg ? (
+    <div style={{ height: "inherit", display: "inline-block" }} ref={elementRef}>
+      {isVideo ? (
+        <video src={videoSrc} controls {...props} />
+      ) : useImg ? (
         <img src={imgSrc} {...props} />
       ) : (
         <Image src={imgSrc} {...props} fallback={imageFallback} />

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 16:06:12
- * @LastEditTime: 2025-07-28 15:48:25
+ * @LastEditTime: 2025-07-28 17:57:43
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\WeiboCard.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -34,7 +34,6 @@ import { renderComments } from "./Comment";
 import React, { CSSProperties, useEffect, useState } from "react";
 import { parseWeiboText } from "../utils/textParser";
 import TextArea from "antd/es/input/TextArea";
-import { openNewWindow } from "../utils";
 
 export interface WeiboCardProps {
   className?: string;
@@ -94,6 +93,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   const commentTitle = commentType === "comment" ? "评论" : "转发";
 
   const [imgShow, setImgShow] = useState(showImg);
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     setImgShow(showImg);
@@ -158,20 +158,24 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
   const renderImages = () => {
     // 视频封面显示
-    if (item.page_info && (item.page_info.object_type === "video" || item.page_info.object_type === "live" )) {
+    if (item.page_info && item.page_info.object_type === "video") {
+      if (showVideo) {
+        return (
+          <div className="imglist video-cover">
+            <YImg
+              className="img-only-item video-item"
+              src={item.page_info.media_info.stream_url}
+            />
+          </div>
+        );
+      }
       return (
         <div className="imglist video-cover">
-          <YImg
-            className="img-only-item"
-            src={item.page_info.page_pic}
-            onClick={() => {
-              openNewWindow(item.page_info!.short_url);
-            }}
-            preview={{
-              visible: false,
-            }}
+          <YImg className="img-only-item" src={item.page_info.page_pic} useImg />
+          <PlayCircleFilled
+            className="video-icon"
+            onClick={() => setShowVideo(true)}
           />
-          <PlayCircleFilled className="video-icon" />
         </div>
       );
     }
