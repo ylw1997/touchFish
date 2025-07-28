@@ -65,7 +65,10 @@ export const parseWeiboText = (
           return null;
         }
         // 判断是否是视频链接
-        if (weiboItem.page_info?.object_type === "video") {
+        if (
+          weiboItem.page_info?.object_type === "video" ||
+          weiboItem.page_info?.object_type === "live"
+        ) {
           return (
             <Tag key={index} color="green">
               <a

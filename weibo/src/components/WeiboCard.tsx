@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 16:06:12
- * @LastEditTime: 2025-07-28 13:33:51
+ * @LastEditTime: 2025-07-28 15:48:25
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\WeiboCard.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -158,7 +158,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
   const renderImages = () => {
     // 视频封面显示
-    if (item.page_info && item.page_info.object_type === "video") {
+    if (item.page_info && (item.page_info.object_type === "video" || item.page_info.object_type === "live" )) {
       return (
         <div className="imglist video-cover">
           <YImg

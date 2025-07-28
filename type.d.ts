@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-07-28 11:03:32
+ * @LastEditTime: 2025-07-28 15:49:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -92,29 +92,29 @@ export type weiboAJAX = {
   max_id_str: string;
   statuses: weiboItem[];
   data: any;
-  payload:any
+  payload: any;
 };
 
 export interface baseWeiboField {
   id: number;
   text: string;
   text_raw: string;
-  page_info?:{
-    object_type: string  // "video" "hudongvote"
-    page_pic: Page_pic   // 视频封面
-    page_url: string
-    page_title: string
-    content1: string
-    content2: string,
-    media_info:{
-      format: "mp4",
-      stream_url: string // 视频链接
-      stream_url_hd: string // 高清视频链接
-      name: string // 视频名称
-      next_title: string // 标题
-    }
-    short_url: string // 短链接
-  }
+  page_info?: {
+    object_type: "video" | "hudongvote" | "live";
+    page_pic: Page_pic; // 视频封面
+    page_url: string;
+    page_title: string;
+    content1: string;
+    content2: string;
+    media_info: {
+      format: "mp4";
+      stream_url: string; // 视频链接
+      stream_url_hd: string; // 高清视频链接
+      name: string; // 视频名称
+      next_title: string; // 标题
+    };
+    short_url: string; // 短链接
+  };
 }
 
 export interface weiboItem extends baseWeiboField {
@@ -167,7 +167,7 @@ export interface weiboItem extends baseWeiboField {
     uid: string;
   };
   retweeted_status?: weiboItem; // 转发微博
-};
+}
 
 export type weiboUser = {
   id: number;
@@ -176,7 +176,7 @@ export type weiboUser = {
   avatar_large?: string;
   following?: boolean;
   followers_count?: number;
-  verified_reason?:string;
+  verified_reason?: string;
 };
 
 type commentsPicItemImg = {
@@ -209,7 +209,7 @@ export interface commentsItem extends baseWeiboField {
   like_counts: number;
   comments: commentsItem[];
   url_struct?: commentsPicItem[];
-};
+}
 
 export type uploadType = {
   uid: string;
