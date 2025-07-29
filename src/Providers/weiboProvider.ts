@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-07-25 11:11:48
+ * @LastEditTime: 2025-07-29 15:03:35
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -45,9 +45,24 @@ export class WeiboProvider implements WebviewViewProvider {
       localResourceRoots: [this.context.extensionUri],
     };
 
+    webviewView.onDidChangeVisibility(() => {
+      console.log("插件可见性变化", webviewView.visible);
+      if (webviewView.visible) {
+        const position = this.context.workspaceState.get('weiboScrollPosition', 0);
+        webviewView.webview.postMessage({
+          command: 'RESTORE_SCROLL_POSITION',
+          payload: position,
+        });
+      }
+    });
+
     webviewView.webview.onDidReceiveMessage(
       async (message: commandsType<string | any>) => {
         switch (message.command) {
+          case 'SAVE_SCROLL_POSITION': {
+            this.context.workspaceState.update('weiboScrollPosition', message.payload);
+            break;
+          }
           case "GETDATA": {
             let res = await getWeiboData(message.payload);
             if (res.data.ok !== 1) {

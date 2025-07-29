@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-29 09:33:37
+ * @LastEditTime: 2025-07-29 15:07:25
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -15,6 +15,7 @@ import {
   useMemo,
   lazy,
   Suspense,
+  useRef,
 } from "react";
 import { Divider, FloatButton, Tabs, TabsProps } from "antd";
 import "./style/index.less";
@@ -33,6 +34,8 @@ import WeiboCard from "./components/WeiboCard";
 import { loaderFunc } from "./utils/loader";
 import { defTab } from "./data/tabs";
 import useWeiboAction from "./hooks/useWeiboAction";
+import { vscode } from "./utils/vscode";
+import { debounce } from "./utils";
 const SendWeiboDrawer = lazy(() => import("./components/SendWeiboDrawer"));
 const UserDetailDrawer = lazy(() => import("./components/UserDetailDrawer"));
 const SearchDrawer = lazy(() => import("./components/SearchDrawer"));
@@ -64,7 +67,7 @@ function App() {
     cancelFollow,
     followUser,
     getListData,
-    getUserByName
+    getUserByName,
   } = useWeiboAction(APPSOURCE);
   // 状态管理
   const [tabs] = useState(defTab);
@@ -80,6 +83,46 @@ function App() {
   );
 
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const scrollableNodeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const message = event.data; // The JSON data our extension sent
+      switch (message.command) {
+        case 'RESTORE_SCROLL_POSITION':
+          if (scrollableNodeRef.current) {
+            scrollableNodeRef.current.scrollTop = message.payload;
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
+  // Save scroll position on scroll
+  useEffect(() => {
+    const scrollableNode = scrollableNodeRef.current;
+    if (!scrollableNode) return;
+
+    const handleScroll = debounce(() => {
+      console.log("保存滚动位置:", scrollableNode.scrollTop);
+      vscode.postMessage({
+        command: 'SAVE_SCROLL_POSITION',
+        payload: scrollableNode.scrollTop
+      });
+    }, 1000);
+
+    scrollableNode.addEventListener('scroll', handleScroll);
+
+    return () => {
+      scrollableNode.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const handlePlayVideo = (url?: string) => {
     if (!url) {
@@ -179,9 +222,15 @@ function App() {
         />
       )}
       <div
+        id="scrollableDiv"
+        ref={scrollableNodeRef}
         className="list"
         style={{
-          marginTop: curTab && curTab.childrenList ? "90px" : "44px",
+          paddingTop: curTab && curTab.childrenList ? "90px" : "44px",
+          height:
+            curTab && curTab.childrenList
+              ? "calc(100vh - 90px)"
+              : "calc(100vh - 44px)",
         }}
       >
         <InfiniteScroll
@@ -190,6 +239,7 @@ function App() {
           loader={loaderFunc(1)}
           endMessage={<Divider plain>没有了🤐</Divider>}
           hasMore={list.length < total}
+          scrollableTarget="scrollableDiv"
         >
           {list?.map((item) => (
             <WeiboCard
@@ -218,6 +268,7 @@ function App() {
           duration={1000}
           icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
           tooltip={{ title: "回到顶部", placement: "left" }}
+          target={() => scrollableNodeRef.current || window}
         />
         {/* 搜索按钮 */}
         <FloatButton

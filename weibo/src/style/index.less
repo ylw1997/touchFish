@@ -8,15 +8,16 @@ html,
 body {
   padding: 0;
   background-color: #1a1c22;
+  height: 100vh;
+  overflow: hidden;
 }
 *:focus {
   outline: none;
 }
 
 .list {
-  // padding: 3px;
+  overflow-y: auto;
   min-height: 100px;
-  margin-top: 50px;
 }
 .info {
   font-size: 12px;
@@ -239,7 +240,7 @@ body {
     transition: all 0.2s ease-in-out;
     // pointer-events: none;
   }
-  
+
   &:hover {
     .video-icon {
       color: rgba(255, 255, 255, 0.8);

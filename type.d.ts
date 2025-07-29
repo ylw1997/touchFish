@@ -72,7 +72,9 @@ export type CommandList =
   | "GETUSERBYNAME"
   | "SENDUSERBYNAME"
   | "GETVIDEO"
-  | "SENDVIDEO";
+  | "SENDVIDEO"
+  | "SAVE_SCROLL_POSITION"
+  | "RESTORE_SCROLL_POSITION";
 
 export type commandsType<T> = {
   command: CommandList;

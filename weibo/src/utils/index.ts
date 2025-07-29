@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-20 11:08:45
- * @LastEditTime: 2025-07-28 10:22:27
+ * @LastEditTime: 2025-07-29 15:07:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\utils\index.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -25,4 +25,12 @@ export const openNewWindow = (url: string) => {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+};
+
+export const debounce = (func: (...args: any[]) => void, delay: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), delay);
+  };
 };
