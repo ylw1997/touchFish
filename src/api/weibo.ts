@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-06-25 14:05:27
+ * @LastEditTime: 2025-07-29 15:51:48
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -18,7 +18,6 @@ import { Uri } from "vscode";
 axios.interceptors.response.use(
   (value) => value,
   (error) => {
-    console.log("Weibo API Error:", error);
     vscode.window.showErrorMessage(
       `请求失败:${error.message} -------> ${error.config.url}`
     );
@@ -123,7 +122,6 @@ export const getLongText = async (id: string) => {
 export const getUserWeibo = async (params: string) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
   const parsedParams = JSON.parse(params);
-  console.log("getUserWeibo", parsedParams);
   return await axios.get(
     `https://weibo.com/ajax/statuses/mymblog?uid=${parsedParams.uid}&page=${parsedParams.page}&feature=0`,
     {

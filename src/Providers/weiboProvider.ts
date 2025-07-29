@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-07-29 15:03:35
+ * @LastEditTime: 2025-07-29 15:51:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -46,7 +46,6 @@ export class WeiboProvider implements WebviewViewProvider {
     };
 
     webviewView.onDidChangeVisibility(() => {
-      console.log("插件可见性变化", webviewView.visible);
       if (webviewView.visible) {
         const position = this.context.workspaceState.get('weiboScrollPosition', 0);
         webviewView.webview.postMessage({
@@ -176,7 +175,6 @@ export class WeiboProvider implements WebviewViewProvider {
           case "GETUPLOADIMGURL": {
             const uploadObj = JSON.parse(message.payload) as uploadType;
             const res = await uploadImage(uploadObj.base64);
-            console.log("res", res);
             webviewView.webview.postMessage({
               command: `SENDUPLOADIMGURL`,
               payload: {
@@ -288,7 +286,7 @@ export class WeiboProvider implements WebviewViewProvider {
       process.env.NODE_ENV === "development" ||
       process.env.VSCODE_DEBUG_MODE === "true";
     let htmlContent = "";
-    console.log("isDev", isDev);
+    console.log("isDev判断是否为开发环境", isDev);
     if (isDev) {
       // 开发环境，直接加载本地Vite dev server
       htmlContent = `
