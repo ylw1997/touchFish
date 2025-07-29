@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 17:38:50
- * @LastEditTime: 2025-07-28 17:44:03
+ * @LastEditTime: 2025-07-28 18:17:54
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -79,7 +79,7 @@ const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
   return (
     <div style={{ height: "inherit", display: "inline-block" }} ref={elementRef}>
       {isVideo ? (
-        <video src={videoSrc} controls {...props} />
+        <video src={videoSrc} controls {...props} autoPlay muted />
       ) : useImg ? (
         <img src={imgSrc} {...props} />
       ) : (
