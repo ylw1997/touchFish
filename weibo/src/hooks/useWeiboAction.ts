@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, RefObject } from "react";
 import {
   payloadType,
   weiboCommentParams,
@@ -11,7 +11,7 @@ import { useVscodeMessage } from "./useVscodeMessage";
 import { weiboSendParams } from "../types";
 import { useMessageHandler } from "./useMessageHandler";
 
-const useWeiboAction = (source: string) => {
+const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivElement | null>) => {
   // 微博列表相关状态
   const [list, setList] = useState<weiboItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -269,6 +269,16 @@ const useWeiboAction = (source: string) => {
     [messageApi, source]
   );
 
+  const handleRestoreScrollPosition = useCallback(
+    (payload: number) => {
+      if (scrollableNodeRef?.current) {
+        console.log("恢复滚动位置:", payload);
+        scrollableNodeRef.current.scrollTop = payload;
+      }
+    },
+    [scrollableNodeRef]
+  );
+
   const handlers = useMemo(
     () => ({
       SENDUSERBLOG: handleSendUserBlog,
@@ -283,8 +293,9 @@ const useWeiboAction = (source: string) => {
       SENDSETLIKE: handleSendSetLike,
       SENDCANCELLIKE: handleSendCancelLike,
       SENDUSERBYNAME: handleSendUserByName,
+      RESTORE_SCROLL_POSITION: handleRestoreScrollPosition,
     }),
-    [handleSendUserBlog, handleSendData, handleSendComment, handleSendCreateComments, handleSendCreateRepost, handleSendLongText, handleSendFollow, handleSendNewBlogResult, handleSendCancelFollow, handleSendSetLike, handleSendCancelLike, handleSendUserByName]
+    [handleSendUserBlog, handleSendData, handleSendComment, handleSendCreateComments, handleSendCreateRepost, handleSendLongText, handleSendFollow, handleSendNewBlogResult, handleSendCancelFollow, handleSendSetLike, handleSendCancelLike, handleSendUserByName, handleRestoreScrollPosition]
   );
 
   useMessageHandler(handlers);

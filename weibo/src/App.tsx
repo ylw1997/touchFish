@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-29 15:07:25
+ * @LastEditTime: 2025-07-29 15:48:27
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -44,6 +44,7 @@ dayjs.extend(_relativeTime);
 
 function App() {
   const APPSOURCE = "WEIBOAPP";
+  const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const {
     list,
     total,
@@ -68,7 +69,7 @@ function App() {
     followUser,
     getListData,
     getUserByName,
-  } = useWeiboAction(APPSOURCE);
+  } = useWeiboAction(APPSOURCE, scrollableNodeRef);
   // 状态管理
   const [tabs] = useState(defTab);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
@@ -83,26 +84,6 @@ function App() {
   );
 
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
-  const scrollableNodeRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const message = event.data; // The JSON data our extension sent
-      switch (message.command) {
-        case 'RESTORE_SCROLL_POSITION':
-          if (scrollableNodeRef.current) {
-            scrollableNodeRef.current.scrollTop = message.payload;
-          }
-          break;
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, []);
 
   // Save scroll position on scroll
   useEffect(() => {
@@ -115,7 +96,7 @@ function App() {
         command: 'SAVE_SCROLL_POSITION',
         payload: scrollableNode.scrollTop
       });
-    }, 1000);
+    }, 500);
 
     scrollableNode.addEventListener('scroll', handleScroll);
 
