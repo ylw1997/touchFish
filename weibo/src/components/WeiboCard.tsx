@@ -167,7 +167,11 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       }
       return (
         <div className="imglist video-cover">
-          <YImg className="img-only-item" src={item.page_info.page_pic} useImg />
+          <YImg
+            className="img-only-item"
+            src={item.page_info.page_pic}
+            useImg
+          />
           <PlayCircleFilled
             className="video-icon"
             onClick={() => onPlayVideo?.(item.page_info?.media_info.stream_url)}
@@ -294,6 +298,10 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     form.resetFields();
   };
 
+  const hasVideo = (item.page_info &&
+            (item.page_info.object_type === "video" ||
+              item.page_info.object_type === "live"));
+
   return (
     <Card
       key={item.id}
@@ -320,21 +328,23 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
       {imgShow && renderImages()}
       {/* 如果showImg为false,出现一个显示图片按钮,点击显示 */}
-      {!imgShow && item.pic_infos && (
-        <Button
-          color="default"
-          variant="filled"
-          onClick={() => {
-            setImgShow(true);
-          }}
-          style={{
-            marginTop: "8px",
-          }}
-          size="middle"
-        >
-          显示图片
-        </Button>
-      )}
+      {!imgShow &&
+        (item.pic_infos ||
+          hasVideo) && (
+          <Button
+            color="default"
+            variant="filled"
+            onClick={() => {
+              setImgShow(true);
+            }}
+            style={{
+              marginTop: "8px",
+            }}
+            size="middle"
+          >
+            显示{hasVideo ? '视频' : '图片'}
+          </Button>
+        )}
       {item.retweeted_status && (
         <WeiboCard
           className="retweeted-status"
