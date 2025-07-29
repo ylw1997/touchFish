@@ -1,12 +1,3 @@
-/*
- * @Author: YangLiwei 1280426581@qq.com
- * @Date: 2025-07-23 16:06:12
- * @LastEditTime: 2025-07-28 17:57:43
- * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\components\WeiboCard.tsx
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
- * @Description:
- */
 import {
   Avatar,
   Button,
@@ -54,6 +45,9 @@ export interface WeiboCardProps {
   ) => void;
   onLikeOrCancelLike?: (item: weiboItem, type: "like" | "cancel") => void;
   showImg?: boolean;
+  onDownloadVideo?: (url: string) => void;
+  activeVideoUrl?: string | null;
+  onPlayVideo?: (url?: string) => void;
 }
 
 // 提取常量配置
@@ -83,6 +77,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   onLikeOrCancelLike,
   showImg,
   getUserByName,
+  activeVideoUrl,
+  onPlayVideo,
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
 
@@ -93,7 +89,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   const commentTitle = commentType === "comment" ? "评论" : "转发";
 
   const [imgShow, setImgShow] = useState(showImg);
-  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     setImgShow(showImg);
@@ -159,7 +154,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   const renderImages = () => {
     // 视频封面显示
     if (item.page_info && item.page_info.object_type === "video") {
-      if (showVideo) {
+      const isPlaying = activeVideoUrl === item.page_info.media_info.stream_url;
+      if (isPlaying) {
         return (
           <div className="imglist video-cover">
             <YImg
@@ -174,7 +170,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           <YImg className="img-only-item" src={item.page_info.page_pic} useImg />
           <PlayCircleFilled
             className="video-icon"
-            onClick={() => setShowVideo(true)}
+            onClick={() => onPlayVideo?.(item.page_info?.media_info.stream_url)}
           />
         </div>
       );
@@ -355,6 +351,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           onLikeOrCancelLike={onLikeOrCancelLike}
           showImg={showImg}
           getUserByName={getUserByName}
+          activeVideoUrl={activeVideoUrl}
+          onPlayVideo={onPlayVideo}
         />
       )}
       {renderActionBar()}

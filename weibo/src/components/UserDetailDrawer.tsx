@@ -14,6 +14,8 @@ interface UserDetailDrawerProps {
   source: string;
   preSource: string; // 上一个source
   showImg?: boolean;
+  activeVideoUrl?: string | null;
+  onPlayVideo?: (url?: string) => void;
 }
 
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
@@ -22,7 +24,9 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   onClose,
   source,
   preSource,
-  showImg
+  showImg,
+  activeVideoUrl,
+  onPlayVideo,
 }) => {
   const userBlogRef = useRef<HTMLDivElement>(null);
 
@@ -188,6 +192,8 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                     onLikeOrCancelLike={handleLike}
                     showImg={showImg}
                     getUserByName={getUserByName}
+                    activeVideoUrl={activeVideoUrl}
+                    onPlayVideo={onPlayVideo}
                   />
                 ))}
               </InfiniteScroll>
@@ -208,6 +214,8 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               source={`subUser-${subUserDetail?.id}`}
               preSource={source}
               showImg={showImg}
+              activeVideoUrl={activeVideoUrl}
+              onPlayVideo={onPlayVideo}
             />
           )}
       </Drawer>

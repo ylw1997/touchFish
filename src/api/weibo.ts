@@ -71,19 +71,28 @@ export const getWeiboImg = async (url: string) => {
 
 export const downloadVideoAsFile = async (url: string): Promise<string> => {
   const context = ContextManager.context;
-  const response = await axios.get(url, {
-    responseType: "arraybuffer",
-    headers: {
-      referer: "https://weibo.com/",
+  return await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: "正在加载视频...",
+      cancellable: false,
     },
-  });
-  const tempDir = Uri.joinPath(context.extensionUri, "temp");
-  if (!fs.existsSync(tempDir.fsPath)) {
-    fs.mkdirSync(tempDir.fsPath);
-  }
-  const tempFilePath = Uri.joinPath(tempDir, `${Date.now()}.mp4`);
-  fs.writeFileSync(tempFilePath.fsPath, response.data);
-  return tempFilePath.fsPath;
+    async () => {
+      const response = await axios.get(url, {
+        responseType: "arraybuffer",
+        headers: {
+          referer: "https://weibo.com/",
+        },
+      });
+      const tempDir = Uri.joinPath(context.extensionUri, "temp");
+      if (!fs.existsSync(tempDir.fsPath)) {
+        fs.mkdirSync(tempDir.fsPath);
+      }
+      const tempFilePath = Uri.joinPath(tempDir, `${Date.now()}.mp4`);
+      fs.writeFileSync(tempFilePath.fsPath, response.data);
+      return tempFilePath.fsPath;
+    }
+  );
 };
 
 // 获取微博评论

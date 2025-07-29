@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-28 09:25:50
+ * @LastEditTime: 2025-07-29 09:33:37
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -79,6 +79,20 @@ function App() {
     window.showImg != undefined ? window.showImg : true
   );
 
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+
+  const handlePlayVideo = (url?: string) => {
+    if (!url) {
+      setActiveVideoUrl(null); // 如果没有视频链接，则暂停
+      return;
+    }
+    if (activeVideoUrl === url) {
+      setActiveVideoUrl(null); // 如果是同一个视频，则暂停
+    } else {
+      setActiveVideoUrl(url); // 否则，播放新视频
+    }
+  };
+
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
     const key = subAcitiveKey || activeKey;
@@ -141,6 +155,8 @@ function App() {
           source="userDetail"
           preSource={APPSOURCE}
           showImg={showImg}
+          activeVideoUrl={activeVideoUrl}
+          onPlayVideo={handlePlayVideo}
         />
       </Suspense>
       <Tabs
@@ -190,6 +206,8 @@ function App() {
               onCommentOrRepost={handleCommentOrRepost}
               onLikeOrCancelLike={handleLike}
               showImg={showImg}
+              activeVideoUrl={activeVideoUrl}
+              onPlayVideo={handlePlayVideo}
             />
           ))}
         </InfiniteScroll>
