@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-07-29 15:51:48
+ * @LastEditTime: 2025-07-30 09:58:47
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -73,22 +73,55 @@ export const downloadVideoAsFile = async (url: string): Promise<string> => {
   return await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "正在加载视频...",
+      title: "正在加载视频",
       cancellable: false,
     },
-    async () => {
+    async (progress) => {
+      progress.report({ increment: 0, message: "准备下载" });
+      let lastReportedPercent = 0;
       const response = await axios.get(url, {
         responseType: "arraybuffer",
         headers: {
           referer: "https://weibo.com/",
         },
+        onDownloadProgress: (progressEvent) => {
+          const total = progressEvent.total;
+          if (total) {
+            const downloadPercent = Math.round(
+              (progressEvent.loaded * 100) / total
+            );
+            // 下载占总进度的95%
+            const overallPercent = Math.floor(downloadPercent * 0.95);
+            const increment = overallPercent - lastReportedPercent;
+            if (increment > 0) {
+              progress.report({
+                message: `下载中... ${downloadPercent}%`,
+                increment: increment,
+              });
+              lastReportedPercent = overallPercent;
+            }
+          }
+        },
       });
+
+      // 报告写入文件
+      const incrementToWrite = 98 - lastReportedPercent;
+      progress.report({ increment: incrementToWrite, message: "正在写入视频..." });
+
       const tempDir = Uri.joinPath(context.extensionUri, "temp");
       if (!fs.existsSync(tempDir.fsPath)) {
         fs.mkdirSync(tempDir.fsPath);
       }
       const tempFilePath = Uri.joinPath(tempDir, `${Date.now()}.mp4`);
       fs.writeFileSync(tempFilePath.fsPath, response.data);
+
+      // 报告完成
+      const incrementToComplete = 100 - 98;
+      progress.report({ increment: incrementToComplete, message: "视频加载完成!" });
+
+      // 短暂延迟，让用户看到“完成”
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       return tempFilePath.fsPath;
     }
   );

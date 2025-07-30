@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 17:38:50
- * @LastEditTime: 2025-07-29 15:50:45
+ * @LastEditTime: 2025-07-30 10:07:55
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -23,7 +23,7 @@ const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
   const elementRef = useRef<HTMLDivElement>(null);
-  const isVideo = src.includes('.mp4');
+  const isVideo = src.includes('video');
 
   useEffect(() => {
     const currentRef = elementRef.current;

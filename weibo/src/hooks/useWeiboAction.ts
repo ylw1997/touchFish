@@ -68,7 +68,6 @@ const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivEle
         setList(wlist);
         setTotal(wtotal);
         setMaxId(payload.max_id);
-        console.log("获取微博数据成功", payload);
       } else if (payload?.source === source) {
         messageApi.error("数据请求失败!" + payload?.msg);
       }
