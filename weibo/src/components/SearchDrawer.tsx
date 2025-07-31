@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-07-31 16:34:19
+ * @LastEditTime: 2025-07-31 17:05:06
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -9,7 +9,7 @@
  */
 import { Drawer, Button, Input, Form, List, Divider, Tag, Tabs } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, memo } from "react";
 import { useMessageHandler } from "../hooks/useMessageHandler";
 import { weiboUser } from "../../../type";
 import { WeiboUserItem } from "./WeiboUserItem";
@@ -17,6 +17,7 @@ import { parseArray } from "../utils";
 import WeiboCard from "./WeiboCard";
 import useWeiboAction from "../hooks/useWeiboAction";
 
+// Component Props
 interface SearchDrawerProps {
   open: boolean;
   onClose: () => void;
@@ -28,6 +29,7 @@ interface SearchDrawerProps {
   getUserBlog: (user: weiboUser) => void;
 }
 
+// Search Type Definition
 export interface SearchType {
   type: "3" | "60";
   card_type: 10 | 9;
@@ -35,7 +37,8 @@ export interface SearchType {
   field: string;
 }
 
-const SearchInfo = [
+// Search Configuration
+const SearchInfo: ReadonlyArray<SearchType> = [
   {
     type: "60",
     card_type: 9,
@@ -48,8 +51,43 @@ const SearchInfo = [
     text: "用户",
     field: "user",
   },
-] as SearchType[];
+];
 
+// Extracted and Memoized SearchList Component
+const SearchList = memo(
+  ({
+    searchType,
+    users,
+    weibos,
+    loading,
+    getUserBlog,
+    ...weiboCardProps
+  }: any) => {
+    if (searchType.type === "3") {
+      return (
+        <List
+          itemLayout="horizontal"
+          dataSource={users}
+          loading={loading}
+          renderItem={(item: weiboUser) => WeiboUserItem(item, getUserBlog)}
+        />
+      );
+    }
+
+    // Render Weibo list
+    return weibos.map((item: any) => (
+      <WeiboCard
+        key={item.id}
+        item={item}
+        onUserClick={getUserBlog}
+        {...weiboCardProps}
+        isH5
+      />
+    ));
+  }
+);
+
+// Main Drawer Component
 const SearchDrawer: React.FC<SearchDrawerProps> = ({
   open,
   onClose,
@@ -87,16 +125,11 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       messageApi.destroy("GETSEARCH");
       setLoading(false);
       if (payload.ok === 1) {
-        console.log(
-          payload,
-          payload.data.cards,
-          parseArray(payload.data.cards, searchType)
-        );
+        const parsedData = parseArray(payload.data.cards, searchType);
         if (searchType.type === "3") {
-          setUsers(parseArray(payload.data.cards, searchType));
+          setUsers(parsedData);
         } else if (searchType.type === "60") {
-          setWeibos(parseArray(payload.data.cards, searchType));
-          console.log(weibos);
+          setWeibos(parsedData);
         }
       } else {
         messageApi.error(payload.msg || "搜索失败");
@@ -106,8 +139,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       messageApi.destroy("GETHOTSEARCH");
       if (payload.ok === 1) {
         setHotSearch((payload.data.realtime || []).slice(0, 10));
-      } else {
-        messageApi.error(payload.msg || "获取热搜失败");
       }
     },
   };
@@ -120,78 +151,65 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     }
   }, [open, sendMessage]);
 
-  const handleSearch = (searchType: SearchType) => {
-    form
-      .validateFields()
-      .then((values) => {
-        setLoading(true);
-        const payload = `100103type=${searchType.type}&q=${values.keyword}&t=`;
-        sendMessage("GETSEARCH", payload, "正在搜索...", source);
-      })
-      .catch(() => {});
-  };
-
-  const closeFunc = () => {
-    form.resetFields();
-    clear();
-    onClose();
-  };
-  const clear = () => {
+  const clear = useCallback(() => {
     setUsers([]);
     setWeibos([]);
     setLoading(false);
-  };
+  }, [setWeibos]);
 
-  const SearchList = ({ searchType }: { searchType: SearchType }) => {
-    return (
-      <>
-        {searchType.type === "3" ? (
-          <List
-            itemLayout="horizontal"
-            dataSource={users}
-            loading={loading}
-            renderItem={(item) => WeiboUserItem(item, getUserBlog)}
-          />
-        ) : (
-          weibos.map((item) => (
-            <WeiboCard
-              key={item.id}
-              item={item}
-              onFollow={(userinfo) => followUser(userinfo, preSource)}
-              onUserClick={getUserBlog}
-              cancelFollow={(userinfo) => cancelFollow(userinfo, preSource)}
-              onExpandLongWeibo={handleExpandLongWeibo}
-              onToggleComments={handleToggleComments}
-              showActions={false}
-              onCopyLink={copyLink}
-              onCommentOrRepost={handleCommentOrRepost}
-              onLikeOrCancelLike={handleLike}
-              showImg={showImg}
-              getUserByName={getUserByName}
-              activeVideoUrl={activeVideoUrl}
-              onPlayVideo={onPlayVideo}
-              isH5
-            />
-          ))
-        )}
-      </>
-    );
-  };
+  const handleSearch = useCallback(
+    (currentSearchType: SearchType) => {
+      form
+        .validateFields()
+        .then((values) => {
+          if (!values.keyword) return;
+          clear();
+          setLoading(true);
+          const payload = `100103type=${currentSearchType.type}&q=${values.keyword}&t=`;
+          sendMessage("GETSEARCH", payload, "正在搜索...", source);
+        })
+        .catch(() => {});
+    },
+    [form, sendMessage, source, clear]
+  );
 
-  const handlerTabChange = (key: string) => {
-    const selectedType = SearchInfo.find((item) => item.type === key)!;
-    setSearchType(selectedType);
-    handleSearch(selectedType);
+  const closeFunc = useCallback(() => {
+    form.resetFields();
     clear();
+    onClose();
+  }, [form, clear, onClose]);
+
+  const handlerTabChange = useCallback(
+    (key: string) => {
+      const selectedType = SearchInfo.find((item) => item.type === key)!;
+      setSearchType(selectedType);
+      handleSearch(selectedType);
+    },
+    [handleSearch]
+  );
+
+  const weiboCardProps = {
+    onFollow: (userinfo: weiboUser) => followUser(userinfo, preSource),
+    cancelFollow: (userinfo: weiboUser) => cancelFollow(userinfo, preSource),
+    onExpandLongWeibo: handleExpandLongWeibo,
+    onToggleComments: handleToggleComments,
+    showActions: false,
+    onCopyLink: copyLink,
+    onCommentOrRepost: handleCommentOrRepost,
+    onLikeOrCancelLike: handleLike,
+    showImg,
+    getUserByName,
+    activeVideoUrl,
+    onPlayVideo,
   };
 
   return (
     <>
       {contextHolder}
       <Drawer
-        title="搜索微博"
+        title="微博搜索"
         placement="bottom"
-        height={"80vh"}
+        height={"90vh"}
         open={open}
         onClose={closeFunc}
         destroyOnHidden
@@ -254,20 +272,25 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             />
           </Form.Item>
         </Form>
-        {
-          <Tabs
-            defaultActiveKey={searchType.type}
-            centered
-            onChange={handlerTabChange}
-            items={SearchInfo.map((item) => {
-              return {
-                label: item.text,
-                key: item.type,
-                children: <SearchList searchType={searchType} />,
-              };
-            })}
-          />
-        }
+        <Tabs
+          defaultActiveKey={searchType.type}
+          centered
+          onChange={handlerTabChange}
+          items={SearchInfo.map((item) => ({
+            label: item.text,
+            key: item.type,
+            children: (
+              <SearchList
+                searchType={searchType}
+                users={users}
+                weibos={weibos}
+                loading={loading}
+                getUserBlog={getUserBlog}
+                {...weiboCardProps}
+              />
+            ),
+          }))}
+        />
       </Drawer>
     </>
   );
