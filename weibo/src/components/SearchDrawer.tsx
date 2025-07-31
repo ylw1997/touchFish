@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-07-31 17:49:04
+ * @LastEditTime: 2025-07-31 17:55:55
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -163,7 +163,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     SENDHOTSEARCH: (payload: any) => {
       messageApi.destroy("GETHOTSEARCH");
       if (payload.ok === 1) {
-        setHotSearch((payload.data.realtime || []).slice(0, 10));
+        setHotSearch((payload.data.realtime || []).slice(0, 20));
       }
     },
   };
