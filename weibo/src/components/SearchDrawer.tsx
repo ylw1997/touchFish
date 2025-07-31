@@ -1,13 +1,24 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-07-31 17:05:06
+ * @LastEditTime: 2025-07-31 17:49:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, Button, Input, Form, List, Divider, Tag, Tabs } from "antd";
+import {
+  Drawer,
+  Button,
+  Input,
+  Form,
+  List,
+  Divider,
+  Tag,
+  Tabs,
+  Empty,
+  Skeleton,
+} from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useEffect, useState, useCallback, memo } from "react";
 import { useMessageHandler } from "../hooks/useMessageHandler";
@@ -63,6 +74,16 @@ const SearchList = memo(
     getUserBlog,
     ...weiboCardProps
   }: any) => {
+    if (loading) {
+      return (
+        <Skeleton
+          active
+          style={{
+            marginTop: "10px",
+          }}
+        />
+      );
+    }
     if (searchType.type === "3") {
       return (
         <List
@@ -72,6 +93,10 @@ const SearchList = memo(
           renderItem={(item: weiboUser) => WeiboUserItem(item, getUserBlog)}
         />
       );
+    }
+
+    if (weibos.length === 0) {
+      return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
     }
 
     // Render Weibo list
