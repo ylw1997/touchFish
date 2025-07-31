@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-07-31 12:35:10
+ * @LastEditTime: 2025-07-31 13:42:47
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -45,7 +45,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     SENDHOTSEARCH: (payload: any) => {
       messageApi.destroy("GETHOTSEARCH");
       if (payload.ok === 1) {
-        setHotSearch((payload.data.realtime || []).slice(0, 10));
+        setHotSearch((payload.data.realtime || []).slice(0, 20));
       } else {
         messageApi.error(payload.msg || "获取热搜失败");
       }
@@ -107,11 +107,12 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
           {hotSearch.map((item: any, index: number) => (
               <Tag
                 className="hot-search-tag"
-                color={index < 3 ? "red" : ""}
+                color={index < 3 ? "red" : index < 10 ? "volcano" : "orange"}
                 onClick={() => {
                   form.setFieldsValue({ keyword: item.word });
                   handleSearch();
                 }}
+                title={item.word}
               >
                 {`${index + 1}. ${item.word}`}
               </Tag>
