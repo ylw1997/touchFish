@@ -26,7 +26,7 @@ import {
   getWeiboData,
   getWeiboImg,
   downloadVideoAsFile,
-  searchWeibo,
+  getWeiboSearch,
   sendWeibo,
   setLike,
   uploadImage,
@@ -255,7 +255,7 @@ export class WeiboProvider implements WebviewViewProvider {
             break;
           }
           case "GETSEARCH": {
-            const res = await searchWeibo(message.payload);
+            const res = await getWeiboSearch(message.payload);
             webviewView.webview.postMessage({
               command: `SENDSEARCH`,
               payload: {

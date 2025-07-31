@@ -26,9 +26,8 @@ import React, { CSSProperties, useEffect, useState } from "react";
 import { parseWeiboText } from "../utils/textParser";
 import TextArea from "antd/es/input/TextArea";
 
-export interface WeiboCardProps {
+export interface weiboBaseActions {
   className?: string;
-  item: weiboItem;
   getUserByName: (username: string) => void;
   is_child?: boolean;
   onUserClick?: (userInfo: weiboUser) => void;
@@ -48,6 +47,11 @@ export interface WeiboCardProps {
   onDownloadVideo?: (url: string) => void;
   activeVideoUrl?: string | null;
   onPlayVideo?: (url?: string) => void;
+}
+
+export interface WeiboCardProps extends weiboBaseActions {
+  item: weiboItem;
+  isH5?: boolean;
 }
 
 // 提取常量配置
@@ -79,6 +83,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   getUserByName,
   activeVideoUrl,
   onPlayVideo,
+  isH5 = false, // 是否是H5端
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
 
@@ -176,6 +181,26 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             className="video-icon"
             onClick={() => onPlayVideo?.(item.page_info?.media_info.stream_url)}
           />
+        </div>
+      );
+    }
+    if (isH5) {
+      if (!item.pics) return null;
+      return (
+        <div className="imglist h5image-list">
+          <Image.PreviewGroup>
+            {item.pics.map((pic: any) => {
+              const imgProps = {
+                className: item.pics!.length > 1 ? "img-item" : "img-only-item",
+                src: pic.url,
+              };
+              return (
+                <div key={pic.url}>
+                  <YImg {...imgProps} />
+                </div>
+              );
+            })}
+          </Image.PreviewGroup>
         </div>
       );
     }
@@ -298,9 +323,10 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     form.resetFields();
   };
 
-  const hasVideo = (item.page_info &&
-            (item.page_info.object_type === "video" ||
-              item.page_info.object_type === "live"));
+  const hasVideo =
+    item.page_info &&
+    (item.page_info.object_type === "video" ||
+      item.page_info.object_type === "live");
 
   return (
     <Card
@@ -311,40 +337,42 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       }}
       className={className}
     >
-      <div className="content">
-        {parseWeiboText(item, getUserByName)}
-        {item.isLongText && (
-          <Tag color="blue" style={{ marginLeft: "8px" }}>
-            <a
-              onClick={() => onExpandLongWeibo?.(item.mblogid)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              展开长微博
-            </a>
-          </Tag>
-        )}
-      </div>
+      {isH5 ? (
+        <div className="content" dangerouslySetInnerHTML={{ __html: item.text }}></div>
+      ) : (
+        <div className="content">
+          {parseWeiboText(item, getUserByName)}
+          {item.isLongText && (
+            <Tag color="blue" style={{ marginLeft: "8px" }}>
+              <a
+                onClick={() => onExpandLongWeibo?.(item.mblogid)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                展开长微博
+              </a>
+            </Tag>
+          )}
+        </div>
+      )}
 
       {imgShow && renderImages()}
       {/* 如果showImg为false,出现一个显示图片按钮,点击显示 */}
-      {!imgShow &&
-        (item.pic_infos ||
-          hasVideo) && (
-          <Button
-            color="default"
-            variant="filled"
-            onClick={() => {
-              setImgShow(true);
-            }}
-            style={{
-              marginTop: "8px",
-            }}
-            size="middle"
-          >
-            显示{hasVideo ? '视频' : '图片'}
-          </Button>
-        )}
+      {!imgShow && (item.pic_infos || hasVideo) && (
+        <Button
+          color="default"
+          variant="filled"
+          onClick={() => {
+            setImgShow(true);
+          }}
+          style={{
+            marginTop: "8px",
+          }}
+          size="middle"
+        >
+          显示{hasVideo ? "视频" : "图片"}
+        </Button>
+      )}
       {item.retweeted_status && (
         <WeiboCard
           className="retweeted-status"

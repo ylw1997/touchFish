@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-29 15:51:03
+ * @LastEditTime: 2025-07-31 16:15:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -287,7 +287,12 @@ function App() {
         <SearchDrawer
           open={searchDrawerOpen}
           onClose={() => setSearchDrawerOpen(false)}
-          showUser={getUserBlog}
+          getUserBlog={getUserBlog}
+          source="search"
+          preSource={APPSOURCE}
+          showImg={showImg}
+          activeVideoUrl={activeVideoUrl}
+          onPlayVideo={handlePlayVideo}
         />
       </Suspense>
       <Suspense fallback={null}>

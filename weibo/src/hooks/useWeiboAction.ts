@@ -139,7 +139,7 @@ const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivEle
         const mblogid = payload.payload;
         updateList(
           (item) => item.mblogid === mblogid,
-          (item) => ({ ...item, text_raw: payload.data.longTextContent, isLongText: false })
+          (item) => ({ ...item, text_raw: payload.data.longTextContent, isLongText: false,text: payload.data.longTextContent })
         );
       } else if (payload?.source === source) {
         messageApi.error("长文本请求失败!" + payload?.msg);

@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-07-31 11:51:04
+ * @LastEditTime: 2025-07-31 15:40:43
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -106,7 +106,10 @@ export const downloadVideoAsFile = async (url: string): Promise<string> => {
 
       // 报告写入文件
       const incrementToWrite = 98 - lastReportedPercent;
-      progress.report({ increment: incrementToWrite, message: "正在写入视频..." });
+      progress.report({
+        increment: incrementToWrite,
+        message: "正在写入视频...",
+      });
 
       const tempDir = Uri.joinPath(context.extensionUri, "temp");
       if (!fs.existsSync(tempDir.fsPath)) {
@@ -117,7 +120,10 @@ export const downloadVideoAsFile = async (url: string): Promise<string> => {
 
       // 报告完成
       const incrementToComplete = 100 - 98;
-      progress.report({ increment: incrementToComplete, message: "视频加载完成!" });
+      progress.report({
+        increment: incrementToComplete,
+        message: "视频加载完成!",
+      });
 
       // 短暂延迟，让用户看到“完成”
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -332,18 +338,6 @@ export const createRepost = async (params: weiboRepostParams) => {
   );
 };
 
-// 搜索
-export const searchWeibo = async (keyword: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  return await axios.get(`https://weibo.com/ajax/side/search?q=${keyword}`, {
-    headers: {
-      Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-    },
-  });
-};
-
 // 根据用户名查询用户信息
 export const getUserByName = async (screen_name: string) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
@@ -361,18 +355,27 @@ export const getUserByName = async (screen_name: string) => {
 
 // 获取热搜
 export const getHotSearch = async () => {
-  return await axios.get(
-    `https://weibo.com/ajax/side/hotSearch`,
-    {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      },
-    }
-  );
+  return await axios.get(`https://weibo.com/ajax/side/hotSearch`, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
 };
 
 // 微博H5搜索接口 https://m.weibo.cn/api/container/getIndex?containerid=100103type%3D3%26q%3D%E5%87%A1%E4%BA%BA%E4%BF%AE%E4%BB%99%E4%BC%A0%26t%3D&page_type=searchall
 //containerid=100103type=3&q=凡人修仙传&t=
 //type: 3 用户 60 热门
 //card_type: 9 微博 11 卡片包裹 10 用户
+export const getWeiboSearch = async (containerid: string) => {
+  const url = `https://m.weibo.cn/api/container/getIndex?containerid=${encodeURIComponent(
+    containerid
+  )}&page_type=searchall`;
+  console.log("Fetching Weibo Search Data:", url);
+  return await axios.get(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
+    },
+  });
+};
