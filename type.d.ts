@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-07-28 15:49:21
+ * @LastEditTime: 2025-07-31 11:23:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -39,6 +39,8 @@
  * SENDSEARCH         搜索结果返回
  * GETUSERBYNAME      根据用户名获取用户信息
  * SENDUSERBYNAME     根据用户名获取用户信息结果返回
+ * GETHOTSEARCH       获取热搜
+ * SENDHOTSEARCH      发送热搜
  */
 export type CommandList =
   | "GETDATA"
@@ -71,6 +73,8 @@ export type CommandList =
   | "SENDSEARCH"
   | "GETUSERBYNAME"
   | "SENDUSERBYNAME"
+  | "GETHOTSEARCH"
+  | "SENDHOTSEARCH"
   | "GETVIDEO"
   | "SENDVIDEO"
   | "SAVE_SCROLL_POSITION"
@@ -248,4 +252,11 @@ declare global {
   interface Window {
     showImg?: boolean;
   }
+}
+
+// 热搜
+export interface hotItem {
+  flag: number;
+  word: string;
+  num: number;
 }

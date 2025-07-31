@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-07-30 09:58:47
+ * @LastEditTime: 2025-07-31 11:51:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -358,3 +358,21 @@ export const getUserByName = async (screen_name: string) => {
     }
   );
 };
+
+// 获取热搜
+export const getHotSearch = async () => {
+  return await axios.get(
+    `https://weibo.com/ajax/side/hotSearch`,
+    {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+      },
+    }
+  );
+};
+
+// 微博H5搜索接口 https://m.weibo.cn/api/container/getIndex?containerid=100103type%3D3%26q%3D%E5%87%A1%E4%BA%BA%E4%BF%AE%E4%BB%99%E4%BC%A0%26t%3D&page_type=searchall
+//containerid=100103type=3&q=凡人修仙传&t=
+//type: 3 用户 60 热门
+//card_type: 9 微博 11 卡片包裹 10 用户

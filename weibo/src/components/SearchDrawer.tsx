@@ -1,16 +1,16 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-07-25 11:07:58
+ * @LastEditTime: 2025-07-31 12:35:10
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, Button, Input, Form, List, Avatar, Divider } from "antd";
+import { Drawer, Button, Input, Form, List, Avatar, Divider, Tag } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMessageHandler } from "../hooks/useMessageHandler";
 import YImg from "./YImg";
 import { weiboUser } from "../../../type";
@@ -30,6 +30,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const { contextHolder, sendMessage, messageApi } = useVscodeMessage();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<weiboUser[]>([]);
+  const [hotSearch, setHotSearch] = useState([]);
 
   const handlers = {
     SENDSEARCH: (payload: any) => {
@@ -41,9 +42,23 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         messageApi.error(payload.msg || "搜索失败");
       }
     },
+    SENDHOTSEARCH: (payload: any) => {
+      messageApi.destroy("GETHOTSEARCH");
+      if (payload.ok === 1) {
+        setHotSearch((payload.data.realtime || []).slice(0, 10));
+      } else {
+        messageApi.error(payload.msg || "获取热搜失败");
+      }
+    },
   };
 
   useMessageHandler(handlers);
+
+  useEffect(() => {
+    if (open) {
+      sendMessage("GETHOTSEARCH", null, "正在获取热搜...", "weibo");
+    }
+  }, [open, sendMessage]);
 
   const handleSearch = () => {
     form
@@ -87,6 +102,21 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
           },
         }}
       >
+        <Divider>微博热搜</Divider>
+        <div className="hot-search-grid">
+          {hotSearch.map((item: any, index: number) => (
+              <Tag
+                className="hot-search-tag"
+                color={index < 3 ? "red" : ""}
+                onClick={() => {
+                  form.setFieldsValue({ keyword: item.word });
+                  handleSearch();
+                }}
+              >
+                {`${index + 1}. ${item.word}`}
+              </Tag>
+          ))}
+        </div>
         <Form form={form} layout="vertical">
           <Form.Item
             label="搜索关键词,回车搜索"

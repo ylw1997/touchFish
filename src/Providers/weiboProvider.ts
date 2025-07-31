@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-07-29 15:51:26
+ * @LastEditTime: 2025-07-31 11:51:49
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -31,6 +31,7 @@ import {
   setLike,
   uploadImage,
   getUserByName,
+  getHotSearch,
 } from "../api/weibo";
 import * as vscode from "vscode";
 import { commandsType, uploadType, weiboAJAX } from "../../type";
@@ -47,9 +48,12 @@ export class WeiboProvider implements WebviewViewProvider {
 
     webviewView.onDidChangeVisibility(() => {
       if (webviewView.visible) {
-        const position = this.context.workspaceState.get('weiboScrollPosition', 0);
+        const position = this.context.workspaceState.get(
+          "weiboScrollPosition",
+          0
+        );
         webviewView.webview.postMessage({
-          command: 'RESTORE_SCROLL_POSITION',
+          command: "RESTORE_SCROLL_POSITION",
           payload: position,
         });
       }
@@ -58,8 +62,11 @@ export class WeiboProvider implements WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(
       async (message: commandsType<string | any>) => {
         switch (message.command) {
-          case 'SAVE_SCROLL_POSITION': {
-            this.context.workspaceState.update('weiboScrollPosition', message.payload);
+          case "SAVE_SCROLL_POSITION": {
+            this.context.workspaceState.update(
+              "weiboScrollPosition",
+              message.payload
+            );
             break;
           }
           case "GETDATA": {
@@ -107,8 +114,8 @@ export class WeiboProvider implements WebviewViewProvider {
                 payload: webviewUri.toString(),
               });
             } catch (error) {
-              console.error('Failed to fetch video:', error);
-              window.showErrorMessage('获取视频失败!');
+              console.error("Failed to fetch video:", error);
+              window.showErrorMessage("获取视频失败!");
             }
             break;
           }
@@ -263,6 +270,18 @@ export class WeiboProvider implements WebviewViewProvider {
             const res = await getUserByName(message.payload);
             webviewView.webview.postMessage({
               command: `SENDUSERBYNAME`,
+              payload: {
+                payload: message.payload,
+                ...res.data,
+                source: message.source,
+              },
+            } as commandsType<weiboAJAX>);
+            break;
+          }
+          case "GETHOTSEARCH": {
+            const res = await getHotSearch();
+            webviewView.webview.postMessage({
+              command: `SENDHOTSEARCH`,
               payload: {
                 payload: message.payload,
                 ...res.data,
