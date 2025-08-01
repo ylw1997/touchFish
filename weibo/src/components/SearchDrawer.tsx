@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-08-01 09:04:32
+ * @LastEditTime: 2025-08-01 10:33:47
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -20,7 +20,7 @@ import {
   Skeleton,
 } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import { useEffect, useState, useCallback, memo } from "react";
+import { useEffect, useState, useCallback, memo, useMemo } from "react";
 import { useMessageHandler } from "../hooks/useMessageHandler";
 import { weiboUser } from "../../../type";
 import { WeiboUserItem } from "./WeiboUserItem";
@@ -219,7 +219,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     [handleSearch]
   );
 
-  const weiboCardProps = {
+  const weiboCardProps = useMemo(() => ({
     onFollow: (userinfo: weiboUser) => followUser(userinfo, preSource),
     cancelFollow: (userinfo: weiboUser) => cancelFollow(userinfo, preSource),
     onExpandLongWeibo: handleExpandLongWeibo,
@@ -232,7 +232,20 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     getUserByName,
     activeVideoUrl,
     onPlayVideo,
-  };
+  }), [
+    followUser,
+    preSource,
+    cancelFollow,
+    handleExpandLongWeibo,
+    handleToggleComments,
+    copyLink,
+    handleCommentOrRepost,
+    handleLike,
+    showImg,
+    getUserByName,
+    activeVideoUrl,
+    onPlayVideo
+  ]);
 
   return (
     <>
