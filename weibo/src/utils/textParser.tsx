@@ -41,7 +41,7 @@ export const parseWeiboText = (
   weiboItem: baseWeiboField,
   getUserByName: (username: string) => void,
   onTopicClick: (topic: string) => void,
-  isComment = false,
+  isComment = false
 ): React.ReactNode[] => {
   const { text_raw, page_info } = weiboItem;
   if (!text_raw) {
@@ -69,7 +69,9 @@ export const parseWeiboText = (
     if (part.startsWith("[") && part.endsWith("]")) {
       const emojiUrl = emojiMap.get(part);
       if (emojiUrl) {
-        nodes.push(<img key={key} src={emojiUrl} alt={part} className="weibo-emoji" />);
+        nodes.push(
+          <img key={key} src={emojiUrl} alt={part} className="weibo-emoji" />
+        );
       } else {
         // 如果表情不在我们的 Map 中，则将其渲染为纯文本。
         nodes.push(part);
@@ -99,27 +101,32 @@ export const parseWeiboText = (
       );
     } else if (part.startsWith("http")) {
       if (isComment) {
-        continue; // 在评论中，我们不渲染链接。
+        // 渲染 空
+        nodes.push(null);
+      } else {
+        let linkText = "网页链接";
+        let color = "blue";
+        if (
+          page_info?.object_type === "video" ||
+          page_info?.object_type === "live"
+        ) {
+          linkText = "视频链接";
+          color = "green";
+        } else if (page_info?.object_type === "hudongvote") {
+          linkText = "投票链接";
+          color = "orange";
+        }
+        nodes.push(
+          <Tag
+            key={key}
+            color={color}
+            className="link-tag"
+            onClick={() => openNewWindow(part)}
+          >
+            {linkText}
+          </Tag>
+        );
       }
-      let linkText = "网页链接";
-      let color = "blue";
-      if (page_info?.object_type === "video" || page_info?.object_type === "live") {
-        linkText = "视频链接";
-        color = "green";
-      } else if (page_info?.object_type === "hudongvote") {
-        linkText = "投票链接";
-        color = "orange";
-      }
-      nodes.push(
-        <Tag
-          key={key}
-          color={color}
-          className="link-tag"
-          onClick={() => openNewWindow(part)}
-        >
-          {linkText}
-        </Tag>
-      );
     }
 
     lastIndex = index + part.length;

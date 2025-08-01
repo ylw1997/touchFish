@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-08-01 10:48:36
+ * @LastEditTime: 2025-08-01 16:38:56
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -176,6 +176,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     setUsers([]);
     setWeibos([]);
     setLoading(false);
+    setSearchType(SearchInfo[0]);
   }, [setWeibos]);
 
   const handleSearch = useCallback(
