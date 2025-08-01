@@ -38,6 +38,7 @@ interface SearchDrawerProps {
   activeVideoUrl?: string | null;
   onPlayVideo?: (url?: string) => void;
   getUserBlog: (user: weiboUser) => void;
+  initialKeyword?: string;
 }
 
 // Search Type Definition
@@ -122,6 +123,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   activeVideoUrl,
   onPlayVideo,
   getUserBlog,
+  initialKeyword,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -170,12 +172,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   useMessageHandler(handlers);
 
-  useEffect(() => {
-    if (open) {
-      sendMessage("GETHOTSEARCH", null, "正在获取热搜...", "weibo");
-    }
-  }, [open, sendMessage]);
-
   const clear = useCallback(() => {
     setUsers([]);
     setWeibos([]);
@@ -197,6 +193,16 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     },
     [form, sendMessage, source, clear]
   );
+
+  useEffect(() => {
+    if (open) {
+      sendMessage("GETHOTSEARCH", null, "正在获取热搜...", "weibo");
+      if (initialKeyword) {
+        form.setFieldsValue({ keyword: initialKeyword });
+        handleSearch(SearchInfo[0]);
+      }
+    }
+  }, [open, initialKeyword, form, handleSearch, sendMessage]);
 
   const closeFunc = useCallback(() => {
     form.resetFields();

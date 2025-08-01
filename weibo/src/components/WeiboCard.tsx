@@ -47,6 +47,7 @@ export interface weiboBaseActions {
   onDownloadVideo?: (url: string) => void;
   activeVideoUrl?: string | null;
   onPlayVideo?: (url?: string) => void;
+  onTopicClick?: (topic: string) => void;
 }
 
 export interface WeiboCardProps extends weiboBaseActions {
@@ -83,6 +84,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   getUserByName,
   activeVideoUrl,
   onPlayVideo,
+  onTopicClick,
   isH5 = false, // 是否是H5端
 }) => {
   const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
@@ -338,19 +340,21 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       className={className}
     >
       {isH5 ? (
-        <div className="content" dangerouslySetInnerHTML={{ __html: item.text }}></div>
+        <div
+          className="content"
+          dangerouslySetInnerHTML={{ __html: item.text }}
+        ></div>
       ) : (
         <div className="content">
-          {parseWeiboText(item, getUserByName)}
+          {parseWeiboText(item, getUserByName, onTopicClick)}
           {item.isLongText && (
-            <Tag color="blue" style={{ marginLeft: "8px" }}>
-              <a
-                onClick={() => onExpandLongWeibo?.(item.mblogid)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                展开长微博
-              </a>
+            <Tag
+              color="blue"
+              style={{ marginLeft: "8px" }}
+              className="link-tag"
+              onClick={() => onExpandLongWeibo?.(item.mblogid)}
+            >
+              展开长微博
             </Tag>
           )}
         </div>

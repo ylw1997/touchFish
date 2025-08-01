@@ -75,6 +75,7 @@ function App() {
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState<string | undefined>();
   // 子菜单key
   const [subAcitiveKey, setSubActiveKey] = useState("");
 
@@ -84,6 +85,11 @@ function App() {
   );
 
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+
+  const handleTopicClick = useCallback((topic: string) => {
+    setSearchDrawerOpen(true);
+    setSearchKeyword(topic);
+  }, []);
 
   // Save scroll position on scroll
   useEffect(() => {
@@ -180,6 +186,7 @@ function App() {
           showImg={showImg}
           activeVideoUrl={activeVideoUrl}
           onPlayVideo={handlePlayVideo}
+          onTopicClick={handleTopicClick}
         />
       </Suspense>
       <Tabs
@@ -238,6 +245,7 @@ function App() {
               showImg={showImg}
               activeVideoUrl={activeVideoUrl}
               onPlayVideo={handlePlayVideo}
+              onTopicClick={handleTopicClick}
             />
           ))}
         </InfiniteScroll>
@@ -286,13 +294,17 @@ function App() {
       <Suspense fallback={null}>
         <SearchDrawer
           open={searchDrawerOpen}
-          onClose={() => setSearchDrawerOpen(false)}
+          onClose={() => {
+            setSearchDrawerOpen(false);
+            setSearchKeyword(undefined);
+          }}
           getUserBlog={getUserBlog}
           source="search"
           preSource={APPSOURCE}
           showImg={showImg}
           activeVideoUrl={activeVideoUrl}
           onPlayVideo={handlePlayVideo}
+          initialKeyword={searchKeyword}
         />
       </Suspense>
       <Suspense fallback={null}>

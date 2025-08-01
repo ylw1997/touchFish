@@ -2,135 +2,134 @@ import React from "react";
 import { Tag } from "antd";
 import emojiData from "../data/emoji.json";
 import { baseWeiboField } from "../../../type";
+import { openNewWindow } from ".";
 
-// 将表情数据转换为更易于查找的格式
-const emojiMap: { [key: string]: string } = emojiData.reduce((acc, item) => {
-  acc[item.phrase] = item.url;
-  return acc;
-}, {} as { [key: string]: string });
+// 使用 Map 进行高效的表情查找。它仅在模块加载时创建一次。
+const emojiMap = new Map<string, string>(
+  emojiData.map((item) => [item.phrase, item.url])
+);
 
-// 匹配 #话题#、@用户、http链接、[表情]
+// 用于查找所有特殊实体（[表情]、#话题#、@用户 或 URL）的正则表达式。
 const regex =
   /(\[[^\]]+\]|#.*?#|@[\u4e00-\u9fa5a-zA-Z0-9_-]+|https?:\/\/[^\s]+)/g;
 
+/**
+ * 渲染文本字符串，将换行符转换成 <br> 标签。
+ * 它会将多个连续的换行符折叠成一个。
+ */
+const renderTextWithLineBreaks = (text: string, baseKey: string | number) => {
+  if (!text) return null;
+  const textParts = text.replace(/\n+/g, "\n").split("\n");
+  return (
+    <React.Fragment key={baseKey}>
+      {textParts.map((part, i) => (
+        <React.Fragment key={i}>
+          {part}
+          {i < textParts.length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </React.Fragment>
+  );
+};
+
+/**
+ * 解析微博原始文本，并将其转换为 React 节点数组。
+ * 它可以处理表情、话题、@用户和链接。
+ * 此版本使用 `matchAll` 以获得更好的性能和代码结构。
+ */
 export const parseWeiboText = (
   weiboItem: baseWeiboField,
   getUserByName: (username: string) => void,
+  onTopicClick?: (topic: string) => void,
   isComment = false
 ): React.ReactNode[] => {
-  if (!weiboItem.text_raw) {
+  const { text_raw, page_info } = weiboItem;
+  if (!text_raw) {
     return [];
   }
 
-  const parts = weiboItem.text_raw.split(regex);
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
 
-  return parts
-    .map((part, index) => {
-      if (!part) {
-        return null;
-      }
-      // 匹配 [表情]
-      if (part.startsWith("[") && part.endsWith("]")) {
-        const emojiUrl = emojiMap[part];
-        if (emojiUrl) {
-          return <img key={index} src={emojiUrl} alt={part} />;
-        }
-      }
-      // 匹配 #话题#
-      if (part.startsWith("#") && part.endsWith("#")) {
-        return (
-          <Tag key={index} color="cyan">
-            {part.slice(1, -1)}
-          </Tag>
-        );
-      }
-      // 匹配 @用户
-      if (part.startsWith("@")) {
-        const username = part.substring(1);
-        return (
-          <Tag key={index} color="pink">
-            <a
-              key={index}
-              onClick={() => getUserByName?.(username)}
-              style={{ cursor: "pointer" }}
-            >
-              {part}
-            </a>
-          </Tag>
-        );
-      }
-      // 匹配 http 链接
-      if (part.startsWith("http")) {
-        if (isComment) {
-          return null;
-        }
-        // 判断是否是视频链接
-        if (
-          weiboItem.page_info?.object_type === "video" ||
-          weiboItem.page_info?.object_type === "live"
-        ) {
-          return (
-            <Tag key={index} color="green">
-              <a
-                key={index}
-                href={part}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                视频链接
-              </a>
-            </Tag>
-          );
-        }
-        // 判断是否是投票链接hudongvote
-        if (weiboItem.page_info?.object_type === "hudongvote") {
-          return (
-            <Tag key={index} color="orange">
-              <a
-                key={index}
-                href={part}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                投票链接
-              </a>
-            </Tag>
-          );
-        }
-        return (
-          <Tag key={index} color="blue">
-            <a
-              key={index}
-              href={part}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              网页链接
-            </a>
-          </Tag>
-        );
-      }
-      // 处理换行符并返回普通文本
-      const textWithSingleBreaks = part.replace(/\n+/g, "\n");
-      const textParts = textWithSingleBreaks.split("\n");
-      return textParts.map((textPart, i) => (
-        <React.Fragment key={`${index}-${i}`}>
-          {textPart}
-          {i < textParts.length - 1 && <br />}
-        </React.Fragment>
-      ));
-    })
-    .filter(Boolean);
-};
+  // 使用 matchAll 查找所有特殊模式的出现。
+  const matches = text_raw.matchAll(regex);
 
-// 模仿window.open 打开新窗口
-export const openNewWindow = (url: string) => {
-  const newWindow = window.open(url, "_blank", "noopener,noreferrer");
-  if (newWindow) {
-    newWindow.opener = null; // 防止新窗口可以访问原窗口
-  } else {
-    console.error(
-      "Failed to open new window. Please allow pop-ups for this site."
-    );
+  for (const match of matches) {
+    const part = match[0];
+    const index = match.index!;
+
+    // 1. 添加匹配实体之前的纯文本。
+    if (index > lastIndex) {
+      const textBefore = text_raw.substring(lastIndex, index);
+      nodes.push(renderTextWithLineBreaks(textBefore, `text-${lastIndex}`));
+    }
+
+    // 2. 处理并添加匹配的实体。
+    const key = `match-${index}`;
+    if (part.startsWith("[") && part.endsWith("]")) {
+      const emojiUrl = emojiMap.get(part);
+      if (emojiUrl) {
+        nodes.push(<img key={key} src={emojiUrl} alt={part} className="weibo-emoji" />);
+      } else {
+        // 如果表情不在我们的 Map 中，则将其渲染为纯文本。
+        nodes.push(part);
+      }
+    } else if (part.startsWith("#") && part.endsWith("#")) {
+      nodes.push(
+        <Tag
+          key={key}
+          color="cyan"
+          className="link-tag"
+          onClick={() => onTopicClick?.(part)}
+        >
+          {part}
+        </Tag>
+      );
+    } else if (part.startsWith("@")) {
+      const username = part.substring(1);
+      nodes.push(
+        <Tag
+          key={key}
+          color="pink"
+          className="link-tag"
+          onClick={() => getUserByName?.(username)}
+        >
+          {part}
+        </Tag>
+      );
+    } else if (part.startsWith("http")) {
+      if (isComment) {
+        continue; // 在评论中，我们不渲染链接。
+      }
+      let linkText = "网页链接";
+      let color = "blue";
+      if (page_info?.object_type === "video" || page_info?.object_type === "live") {
+        linkText = "视频链接";
+        color = "green";
+      } else if (page_info?.object_type === "hudongvote") {
+        linkText = "投票链接";
+        color = "orange";
+      }
+      nodes.push(
+        <Tag
+          key={key}
+          color={color}
+          className="link-tag"
+          onClick={() => openNewWindow(part)}
+        >
+          {linkText}
+        </Tag>
+      );
+    }
+
+    lastIndex = index + part.length;
   }
+
+  // 3. 添加最后一次匹配后的所有剩余纯文本。
+  if (lastIndex < text_raw.length) {
+    const textAfter = text_raw.substring(lastIndex);
+    nodes.push(renderTextWithLineBreaks(textAfter, `text-${lastIndex}`));
+  }
+
+  return nodes.filter(Boolean);
 };

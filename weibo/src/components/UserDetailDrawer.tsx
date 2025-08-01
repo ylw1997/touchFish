@@ -16,6 +16,7 @@ interface UserDetailDrawerProps {
   showImg?: boolean;
   activeVideoUrl?: string | null;
   onPlayVideo?: (url?: string) => void;
+  onTopicClick?: (topic: string) => void;
 }
 
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
@@ -27,6 +28,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   showImg,
   activeVideoUrl,
   onPlayVideo,
+  onTopicClick,
 }) => {
   const userBlogRef = useRef<HTMLDivElement>(null);
 
@@ -194,6 +196,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                     getUserByName={getUserByName}
                     activeVideoUrl={activeVideoUrl}
                     onPlayVideo={onPlayVideo}
+                    onTopicClick={onTopicClick}
                   />
                 ))}
               </InfiniteScroll>
@@ -216,6 +219,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               showImg={showImg}
               activeVideoUrl={activeVideoUrl}
               onPlayVideo={onPlayVideo}
+              onTopicClick={onTopicClick}
             />
           )}
       </Drawer>
