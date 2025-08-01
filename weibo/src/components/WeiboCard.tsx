@@ -30,7 +30,7 @@ export interface weiboBaseActions {
   className?: string;
   getUserByName: (username: string) => void;
   is_child?: boolean;
-  onUserClick?: (userInfo: weiboUser) => void;
+  onUserClick: (userInfo: weiboUser) => void;
   onFollow?: (userInfo?: weiboUser) => void;
   cancelFollow?: (userInfo?: weiboUser) => void;
   onExpandLongWeibo?: (id: string) => void;
@@ -47,7 +47,7 @@ export interface weiboBaseActions {
   onDownloadVideo?: (url: string) => void;
   activeVideoUrl?: string | null;
   onPlayVideo?: (url?: string) => void;
-  onTopicClick?: (topic: string) => void;
+  onTopicClick: (topic: string) => void;
 }
 
 export interface WeiboCardProps extends weiboBaseActions {
@@ -346,7 +346,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         ></div>
       ) : (
         <div className="content">
-          {parseWeiboText(item, getUserByName, onTopicClick)}
+          {parseWeiboText(item, getUserByName,onTopicClick )}
           {item.isLongText && (
             <Tag
               color="blue"
@@ -395,6 +395,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           getUserByName={getUserByName}
           activeVideoUrl={activeVideoUrl}
           onPlayVideo={onPlayVideo}
+          onTopicClick={onTopicClick}
         />
       )}
       {renderActionBar()}
@@ -436,7 +437,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </div>
       )}
       {item.comments && (
-        <>{renderComments(item.comments, true, getUserByName, onUserClick)}</>
+        <>{renderComments(item.comments, true, getUserByName, onUserClick,onTopicClick)}</>
       )}
     </Card>
   );

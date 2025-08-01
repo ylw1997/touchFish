@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-07-28 11:12:34
+ * @LastEditTime: 2025-08-01 10:43:47
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -19,7 +19,8 @@ export const renderComments = (
   comments: commentsItem[],
   is_child = false,
   getUserByName: (username: string) => void,
-  onUserClick?: (userInfo: weiboUser) => void,
+  onUserClick: (userInfo: weiboUser) => void,
+  onTopicClick: (topic: string) => void
 ) => {
   const defaultAvatarSize = is_child ? 32 : 40;
   return (
@@ -70,7 +71,7 @@ export const renderComments = (
               }
               description={
                 <>
-                  <div className="content">{parseWeiboText(item,getUserByName,true)}</div>
+                  <div className="content">{parseWeiboText(item,getUserByName,onTopicClick,true)}</div>
                   {item.url_struct && item.url_struct.length > 0 && (
                     <div className="imglist" style={{ marginBottom: "10px" }}>
                       <Image.PreviewGroup>
@@ -119,7 +120,7 @@ export const renderComments = (
                   >
                     {item.comments &&
                       item.comments.length > 0 &&
-                      renderComments(item.comments, is_child, getUserByName)}
+                      renderComments(item.comments, is_child, getUserByName,onUserClick,onTopicClick)}
                   </div>
                 </>
               }

@@ -16,7 +16,7 @@ interface UserDetailDrawerProps {
   showImg?: boolean;
   activeVideoUrl?: string | null;
   onPlayVideo?: (url?: string) => void;
-  onTopicClick?: (topic: string) => void;
+  onTopicClick: (topic: string) => void;
 }
 
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({

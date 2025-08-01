@@ -40,8 +40,8 @@ const renderTextWithLineBreaks = (text: string, baseKey: string | number) => {
 export const parseWeiboText = (
   weiboItem: baseWeiboField,
   getUserByName: (username: string) => void,
-  onTopicClick?: (topic: string) => void,
-  isComment = false
+  onTopicClick: (topic: string) => void,
+  isComment = false,
 ): React.ReactNode[] => {
   const { text_raw, page_info } = weiboItem;
   if (!text_raw) {
