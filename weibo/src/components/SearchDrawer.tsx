@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-08-01 10:33:47
+ * @LastEditTime: 2025-08-01 10:48:36
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -257,6 +257,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         open={open}
         onClose={closeFunc}
         destroyOnHidden
+        zIndex={9999}
         styles={{
           wrapper: {
             background: "none",
