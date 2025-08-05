@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-08-05 17:29:01
+ * @LastEditTime: 2025-08-05 18:05:58
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -548,6 +548,9 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
   panel!.webview.html = "加载中....";
   const res = await getZhihuNewsDetail(url);
   const resStr = res.map(item => {
+    const commentAction = item.target.comment_count > 0
+      ? `<button class="comment-btn" data-answer-id="${item.target.id}">${item.target.comment_count} 条评论</button>`
+      : `<span>${item.target.comment_count} 条评论</span>`;
     return `<article class="answer">
               <header class="author-info">
                 <img class="avatar" src="${item.target.author.avatar_url}" alt="${item.target.author.name}'s avatar" loading="lazy">
@@ -561,7 +564,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
               </div>
               <footer class="actions">
                 <span class="vote-count">${item.target.voteup_count} 人赞同了该回答</span>
-                <button class="comment-btn" data-answer-id="${item.target.id}">查看评论</button>
+                ${commentAction}
               </footer>
               <div class="comment-container" id="comment-container-${item.target.id}"></div>
             </article>
