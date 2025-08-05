@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 15:26:01
- * @LastEditTime: 2024-10-31 11:52:38
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-08-05 16:24:43
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\config\index.ts
  * @Description: 
  */
@@ -22,7 +22,6 @@ export let refreshTime: number|undefined = config.get('refreshTime');
 export let v2exTab: string|undefined = config.get('v2exTab');
 export let hupuTab: string|undefined = config.get('hupuTab');
 export let ngaTab: string|undefined = config.get('ngaTab');
-export let mixTab: string|undefined = config.get('mixTab');
 
 // 设置配置
 export const setConfigByKey = async (key:string,value:string)=>{
@@ -38,5 +37,4 @@ export const refrshConfig = () => {
   v2exTab = newconfig.get('v2exTab');
   hupuTab = newconfig.get('hupuTab');
   ngaTab = newconfig.get('ngaTab');
-  mixTab = newconfig.get('mixTab');
 };

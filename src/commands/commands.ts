@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-24 16:18:31
- * @LastEditTime: 2025-06-17 15:10:34
+ * @LastEditTime: 2025-08-05 16:23:38
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\commands.ts
  * @Description: 
@@ -13,7 +13,6 @@ import { setConfigByKey } from '../config';
 import * as vscode from 'vscode';
 import { V2exProvider } from '../Providers/v2exProvider';
 import { HupuProvider } from '../Providers/hupuProvider';
-import { MixProvider } from '../Providers/mixProvider';
 
 // 打开设置
 export const openSetting = commands.registerCommand('touchfish.openConfigPage', () => {
@@ -91,23 +90,3 @@ export const changeNgaTab = (ngaProvider:NgaProvider)=>{
     }
   });
 };
-
-// 更改mixTab 
-export const changeMixTab = (mixProvider:MixProvider)=>{
-  return vscode.commands.registerCommand("mix.changeTab",async ()=>{
-    const tab = await vscode.window.showQuickPick([
-      {label:"IT之家",description:"ithome"},
-      {label:"NGA精英玩家俱乐部",description:"nga"},
-      {label:"HUPU虎扑",description:"hupu"},
-      {label:"CH芯域",description:"chiphell"},
-      {label:"V2EX",description:"v2ex"},
-      // {label:"ZHIHU知乎",description:"zhihu"},
-      // {label:"CLS财联社",description:"cls"},
-    ])
-    if(tab){
-      await mixProvider.getData(tab.description);
-      await setConfigByKey("mixTab",tab.description);
-      await vscode.window.showInformationMessage(`mixTab 切换为 ${tab.label}`);
-    }
-  })
-}

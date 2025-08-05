@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-08-05 11:31:58
+ * @LastEditTime: 2025-08-05 16:22:10
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description:
@@ -21,14 +21,12 @@ import {
   refreshV2exNews,
   refreshHupuNews,
   refreshNgaNews,
-  refreshMixNews,
   refreshZhihuNews
 } from "./commands/refresh";
 import { ItHomeProvider } from "./Providers/itHomeProvider";
 import { refreshTime } from "./config/index";
 import {
   changeHupuTab,
-  changeMixTab,
   changeNgaTab,
   changeV2exTab,
   openSetting,
@@ -39,33 +37,17 @@ import { HupuProvider } from "./Providers/hupuProvider";
 import { defaultRefreshTime } from "./data/context";
 import { NgaProvider } from "./Providers/ngaProvider";
 import { ZhihuProvider } from './Providers/zhihuProvider';
-import { MixProvider } from "./Providers/mixProvider";
 import { WeiboProvider } from "./Providers/weiboProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
 
-// import { getZhihuSignature } from "./utils/signature";
-
-// (async () => {
-//   try {
-//     const a = "101_3_3.0+";
-//     const b = "+AFCSc2wb_RmPTtdAxKxyQyok-YuztUisHw8=|1739262461";
-//     const url = `${a}/api/v4/questions/642426962/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop${b}`;
-//     console.log("知乎加密url:", url);
-//     const signatureResult = await getZhihuSignature(url);
-//     console.log("知乎签名:", signatureResult);
-//   } catch (error) {
-//     console.error("获取知乎签名失败:", error);
-//   }
-// })();
 
 let timer: NodeJS.Timeout | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
   ContextManager.initialize(context);
   // 注册树列表提供者,需要在json文件中注册(activationEvents)
-  const mixProvider = new MixProvider();
   const itHomeProvider = new ItHomeProvider();
   const chiphellProvider = new ChipHellProvider();
   const v2exProvicer = new V2exProvider();
@@ -79,7 +61,6 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.window.registerTreeDataProvider("view.hupuList", hupuProvider);
   vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
   vscode.window.registerTreeDataProvider("view.zhihuList", zhihuProvider);
-  vscode.window.registerTreeDataProvider("mixView", mixProvider);
   vscode.window.registerWebviewViewProvider("weibo", weiboProvider, {
     webviewOptions: {
       retainContextWhenHidden: true,
@@ -96,8 +77,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(refreshNgaNews(ngaProvider));
   context.subscriptions.push(changeNgaTab(ngaProvider));
   context.subscriptions.push(refreshZhihuNews(zhihuProvider));
-  context.subscriptions.push(changeMixTab(mixProvider));
-  context.subscriptions.push(refreshMixNews(mixProvider));
   //定时刷新新闻
   intervalRefrshNews();
 

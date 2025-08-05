@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件",
-	"version": "7.1.2",
+	"version": "7.2.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.102.0"
@@ -43,11 +43,6 @@
 					"type": "string",
 					"description": "微博cookie"
 				},
-				"touchfish.mixTab": {
-					"type": "string",
-					"default": "ithome",
-					"description": "默认频道"
-				},
 				"touchfish.showNewsNumber": {
 					"type": "number",
 					"default": 10,
@@ -69,17 +64,91 @@
 				"touchfish.v2exTab": {
 					"type": "string",
 					"default": "all",
-					"description": "v2ex默认tab"
+					"description": "v2ex默认tab",
+					"enum": [
+						"all",
+						"tech",
+						"creative",
+						"play",
+						"apple",
+						"jobs",
+						"deals",
+						"city",
+						"qna",
+						"hot",
+						"r2"
+					],
+					"enumDescriptions": [
+						"全部",
+						"技术",
+						"创意",
+						"好玩",
+						"Apple",
+						"酷工作",
+						"交易",
+						"城市",
+						"问与答",
+						"最热",
+						"R2"
+					]
 				},
 				"touchfish.hupuTab": {
 					"type": "string",
 					"default": "all-gambia",
-					"description": "虎扑默认tab"
+					"description": "虎扑默认tab",
+					"enum": [
+						"all-gambia",
+						"topic-daily",
+						"stock",
+						"history",
+						"fit",
+						"love",
+						"school",
+						"workplace"
+					],
+					"enumDescriptions": [
+						"步行街热帖",
+						"步行街主干道",
+						"股票区",
+						"历史区",
+						"健身区",
+						"恋爱区",
+						"校园区",
+						"职场区"
+					]
 				},
 				"touchfish.ngaTab": {
 					"type": "string",
 					"default": "-7",
-					"description": "NGA默认tab"
+					"description": "NGA默认tab",
+					"enum": [
+						"-7",
+						"-7955747",
+						"-343809",
+						"-81981",
+						"524",
+						"843",
+						"706",
+						"-576177",
+						"-39223361",
+						"436",
+						"472",
+						"-202020"
+					],
+					"enumDescriptions": [
+						"网事杂谈",
+						"晴风村",
+						"寂寞的车",
+						"生命之杯",
+						"漩涡书院",
+						"国际新闻",
+						"股票大时代",
+						"音乐影视",
+						"娱乐吃瓜",
+						"消费电子",
+						"Cosplay",
+						"程序员职业交流"
+					]
 				},
 				"touchfish.autoRefresh": {
 					"type": "boolean",
@@ -111,14 +180,6 @@
 			]
 		},
 		"views": {
-			"explorer": [
-				{
-					"icon": "assets/training.svg",
-					"type": "tree",
-					"id": "mixView",
-					"name": "TouchFish置顶频道"
-				}
-			],
 			"weibo": [
 				{
 					"icon": "assets/weibo.svg",
@@ -174,16 +235,6 @@
 		],
 		"commands": [
 			{
-				"command": "mix.changeTab",
-				"title": "切换频道",
-				"icon": "$(pencil)"
-			},
-			{
-				"command": "mix.refresh",
-				"title": "切换频道",
-				"icon": "$(refresh)"
-			},
-			{
 				"command": "itHome.refresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
@@ -234,16 +285,6 @@
 				{
 					"command": "itHome.refresh",
 					"when": "view == view.ithomeList",
-					"group": "navigation"
-				},
-				{
-					"command": "mix.changeTab",
-					"when": "view == mixView",
-					"group": "navigation"
-				},
-				{
-					"command": "mix.refresh",
-					"when": "view == mixView",
 					"group": "navigation"
 				},
 				{
