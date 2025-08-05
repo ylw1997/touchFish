@@ -27,7 +27,6 @@ export class MixProvider implements TreeDataProvider<TreeItem> {
   private newsList: TreeItem[] = [];
 
   constructor() {
-    this.getData();
   }
   async fetchAndProcessData(tabSource: string) {
     try {

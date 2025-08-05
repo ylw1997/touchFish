@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,微博摸鱼聚合插件",
-	"version": "6.5.2",
+	"version": "7.0.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.102.0"
@@ -88,6 +88,10 @@
 				"touchfish.ngaCookie": {
 					"type": "string",
 					"description": "NGA cookie"
+				},
+				"touchfish.zhihuCookie": {
+					"type": "string",
+					"description": "知乎 cookie"
 				}
 			}
 		},
@@ -125,28 +129,39 @@
 			"touchfish": [
 				{
 					"name": "IT之家",
-					"id": "view.ithomeList"
+					"id": "view.ithomeList",
+					"icon": "assets/training.svg"
 				},
 				{
 					"name": "chipHell",
-					"id": "view.chiphellList"
+					"id": "view.chiphellList",
+					"icon": "assets/training.svg"
 				},
 				{
 					"id": "view.v2exList",
-					"name": "v2ex"
+					"name": "v2ex",
+					"icon": "assets/training.svg"
 				},
 				{
 					"id": "view.hupuList",
-					"name": "虎扑步行街"
+					"name": "虎扑步行街",
+					"icon": "assets/training.svg"
+				},
+				{
+					"id": "view.zhihuList",
+					"name": "知乎",
+					"icon": "assets/training.svg"
 				},
 				{
 					"id": "view.ngaList",
-					"name": "nga精英玩家俱乐部"
+					"name": "nga精英玩家俱乐部",
+					"icon": "assets/training.svg"
 				},
 				{
 					"id": "view.setting",
 					"name": "设置",
-					"visibility": "hidden"
+					"visibility": "hidden",
+					"icon": "assets/training.svg"
 				}
 			]
 		},
@@ -169,6 +184,11 @@
 			},
 			{
 				"command": "itHome.refresh",
+				"title": "刷新",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "zhihu.refresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
 			},
@@ -226,6 +246,11 @@
 					"group": "navigation"
 				},
 				{
+					"command": "zhihu.refresh",
+					"when": "view == view.zhihuList",
+					"group": "navigation"
+				},
+				{
 					"command": "chiphell.refresh",
 					"when": "view == view.chiphellList",
 					"group": "navigation"
@@ -280,6 +305,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "9.30.1",
+		"@types/axios": "^0.14.4",
 		"@types/mocha": "^10.0.9",
 		"@types/node": "24.0.13",
 		"@types/vscode": "1.102.0",

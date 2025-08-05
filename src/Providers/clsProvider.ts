@@ -21,7 +21,6 @@ export class ClsProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     readonly onDidChangeTreeData = this.update.event;
 
     constructor() {
-        this.getData();
     }
 
     async getData() {

@@ -17,12 +17,12 @@ export class ZhihuProvider implements TreeDataProvider<TreeItem> {
   readonly onDidChangeTreeData = this.update.event;
 
   constructor() {
-    this.getData();
   }
 
   async getData() {
     this.newsList = [];
     await getZhihuList().then(res => {
+      if(!res) return;
       const news = formatData(res,"zhihu.openUrl").slice(0, showNewsNumber);
       this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
     });

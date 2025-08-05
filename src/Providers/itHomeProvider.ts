@@ -20,7 +20,6 @@ export class ItHomeProvider implements TreeDataProvider<TreeItem>{
   private newsList:TreeItem[] = [];
 
   constructor() {
-		this.getData();
 	}
 
   async getData(){

@@ -17,7 +17,6 @@ export class ChipHellProvider implements TreeDataProvider<TreeItem> {
   readonly onDidChangeTreeData = this.update.event;
 
   constructor() {
-    this.getData();
   }
 
   async getData() {
