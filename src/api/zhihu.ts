@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-05 13:50:49
+ * @LastEditTime: 2025-08-05 15:22:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -33,11 +33,11 @@ export const getOrSetZhihuCookie = async () => {
 export const getZhihuCookieByField = async (field: string) => {
   const cookie = (await getOrSetZhihuCookie()) as string;
   if (cookie) {
-    const cookieParts = cookie.split(';');
+    const cookieParts = cookie.split(";");
     for (const part of cookieParts) {
-      const [key, ...value] = part.split('=');
+      const [key, ...value] = part.split("=");
       if (key.trim() === field) {
-        return value.join('=');
+        return value.join("=");
       }
     }
   }
@@ -79,13 +79,15 @@ interface zhihuItem {
 export const getZhihuList = async () => {
   const resArr: NewsItem[] = [];
   try {
-    const cookie = await getOrSetZhihuCookie() as string;
+    const cookie = (await getOrSetZhihuCookie()) as string;
     let resList: zhihuItem[] = [];
     // 判断resList长度是否大于 showNewsNumber,如果大于则截取,小于则继续请求
     if (showNewsNumber) {
       while (resList.length < showNewsNumber) {
-        const res = await getZhihuData(cookie)
-        resList = resList.concat(res.data.data).filter((item) => !!item.target.question);
+        const res = await getZhihuData(cookie);
+        resList = resList
+          .concat(res.data.data)
+          .filter((item) => !!item.target.question);
       }
     }
     resList.forEach((element: zhihuItem) => {
@@ -116,6 +118,7 @@ export type ZhihuAnswers = {
     voteup_count: number;
     content: string;
     excerpt: string;
+    id: string;
   };
 };
 export const getZhihuNewsDetail = async (
@@ -143,14 +146,44 @@ export const getZhihuNewsDetail = async (
   }
 };
 
-export const getZhihuItemDetail = async (id: string) => {
+// 获取评论 https://www.zhihu.com/api/v4/comment_v5/answers/96218155860/root_comment?order_by=score&limit=20&offset=
+
+export interface ZhihuCommentItem {
+  content: string;
+  created_time: number;
+  id: number;
+  is_author: boolean;
+  likes_count: number;
+  reply_to_id: number;
+  type: number;
+  author: {
+    avatar_url: string;
+    id: number;
+    name: string;
+    url_token: string;
+  };
+  comment_tag: {
+    type: "ip_info" | "hot";
+    text: string;
+  }[];
+  child_comments: ZhihuCommentItem[];
+}
+export const getZhihuComment = async (
+  id: string
+): Promise<ZhihuCommentItem[]> => {
+  const xzse96 = await getZhihu96(
+    `/api/v4/comment_v5/answers/${id}/root_comment?order_by=score&limit=100&offset=`
+  );
   const cookie = (await getOrSetZhihuCookie()) as string;
-  const { data } = await axios.get(`https://www.zhihu.com/question/${id}`, {
+  const answerUrl = `https://www.zhihu.com/api/v4/comment_v5/answers/${id}/root_comment?order_by=score&limit=100&offset=`;
+  const res = await axios.get(answerUrl, {
     headers: {
       Cookie: cookie,
+      "x-zse-96": xzse96,
+      "x-zse-93": xzse93,
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
     },
   });
-  return data;
+  return res.data.data;
 };

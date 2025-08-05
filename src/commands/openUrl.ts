@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-08-05 14:12:27
+ * @LastEditTime: 2025-08-05 16:04:12
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -12,7 +12,7 @@ import { getNewsDetail } from '../api/ithome';
 import { getV2exDetail } from '../api/v2ex';
 import { getHupuDetail } from '../api/hupu';
 import { getNgaNewsDetail } from '../api/nga';
-import { getZhihuNewsDetail } from '../api/zhihu';
+import { getZhihuComment, getZhihuNewsDetail } from '../api/zhihu';
 
 // 是否已经创建webview
 let isCreatePanel = false;
@@ -25,7 +25,8 @@ const createPanel = (): vscode.WebviewPanel => {
     'Hello World',
     "新闻",
     vscode.ViewColumn.One,
-    { enableFindWidget: true, retainContextWhenHidden: false, enableScripts: false }
+    {     retainContextWhenHidden: true,
+    enableScripts: true, }
   );
   isCreatePanel = true;
   panel.dispose = () => {
@@ -560,7 +561,9 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
               </div>
               <footer class="actions">
                 <span class="vote-count">${item.target.voteup_count} 人赞同了该回答</span>
+                <button class="comment-btn" data-answer-id="${item.target.id}">查看评论</button>
               </footer>
+              <div class="comment-container" id="comment-container-${item.target.id}"></div>
             </article>
    `
   }).join("");
@@ -572,6 +575,64 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
       --vscode-button-background: #3a3d41;
       --vscode-button-hoverBackground: #4a4d51;
       --vscode-border-color: #2f323b;
+    }
+    .comment-btn {
+      margin-left: 10px;
+      padding: 5px 10px;
+      border: 1px solid var(--vscode-button-background);
+      background-color: var(--vscode-button-background);
+      color: var(--vscode-editor-foreground);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .comment-container {
+      margin-top: 15px;
+    }
+    .comment-card {
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-border-color);
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .comment-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .comment-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .comment-author-name {
+      font-weight: bold;
+    }
+    .comment-content {
+      line-height: 1.7;
+    }
+    .comment-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 15px;
+      color: var(--vscode-editor-foreground);
+      opacity: 0.6;
+    }
+    .comment-tags span {
+      margin-right: 10px;
+      background-color: var(--vscode-button-secondaryBackground);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .child-comments {
+      margin-top: 10px;
+    }
+    hr {
+      border: 1px solid var(--vscode-border-color);
     }
     body.vscode-light {
       --vscode-editor-background: #fff;
@@ -669,10 +730,76 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
         <a class="openBtn" href="https://www.zhihu.com/question/${url}">打开原文章</a>
         ${resStr}
       </div>
+      <script>
+        const vscode = acquireVsCodeApi();
+        document.querySelectorAll('.comment-btn').forEach(button => {
+          button.addEventListener('click', event => {
+            const answerId = event.target.dataset.answerId;
+            vscode.postMessage({ command: 'getZhihuComment', answerId });
+          });
+        });
+
+        window.addEventListener('message', event => {
+          const message = event.data;
+          if (message.command === 'showZhihuComments') {
+            const container = document.getElementById('comment-container-' + message.answerId);
+            if (!container) return;
+
+            container.innerHTML = message.comments.map(function(comment) {
+              const tags = comment.comment_tag.map(function(tag) {
+                return '<span>' + tag.text + '</span>';
+              }).join('');
+
+              const childComments = comment.child_comments.map(function(child) {
+                const tags = child.comment_tag.map(function(tag) {
+                  return '<span>' + tag.text + '</span>';
+                }).join('');
+                return '<div class="comment-card">' + 
+                         '<div class="comment-header">' + 
+                           '<img class="comment-avatar" src="' + child.author.avatar_url + '" alt="' + child.author.name + '&apos;s avatar" loading="lazy">' + 
+                           '<span class="comment-author-name">' + child.author.name + '</span>' + 
+                         '</div>' + 
+                         '<div class="comment-content">' + child.content + '</div>' + 
+                         '<div class="comment-footer">' + 
+                           '<div style="display: flex; align-items: center;">' + 
+                            '<div class="comment-tags">' + tags + '</div>' + 
+                            '<span>' + new Date(child.created_time * 1000).toLocaleString() + '</span>' + 
+                           '</div>' + 
+                           '<span>' + child.like_count + '赞同</span>' + 
+                         '</div>' + 
+                       '</div>';
+              }).join('');
+
+              return '<div class="comment-card">' + 
+                       '<div class="comment-header">' + 
+                         '<img class="comment-avatar" src="' + comment.author.avatar_url + '" alt="' + comment.author.name + '&apos;s avatar" loading="lazy">' + 
+                         '<span class="comment-author-name">' + comment.author.name + '</span>' + 
+                       '</div>' + 
+                       '<div class="comment-content">' + comment.content + '</div>' + 
+                       '<div class="comment-footer">' + 
+                         '<div style="display: flex; align-items: center;" >' + 
+                           '<div class="comment-tags">' + tags + '</div>' + 
+                           '<span>' + new Date(comment.created_time * 1000).toLocaleString() + '</span>' + 
+                         '</div>' + 
+                         '<span>' + comment.like_count + '赞同</span>' + 
+                       '</div>' + 
+                       '<div class="child-comments">' + childComments + '</div>' + 
+                     '</div>';
+            }).join('');
+          }
+        });
+      </script>
     </body>
     </html>
   `;
 
   panel!.webview.html = html;
   panel!.title = title;
+  panel!.webview.onDidReceiveMessage(async message => {
+    if (message.command === 'getZhihuComment') {
+      const comments = await getZhihuComment(message.answerId);
+      panel!.webview.postMessage({ command: 'showZhihuComments', comments, answerId: message.answerId });
+    }
+  });
 });
+
