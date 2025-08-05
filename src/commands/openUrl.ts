@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-08-05 16:04:12
+ * @LastEditTime: 2025-08-05 16:54:17
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -594,7 +594,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
       border-radius: 6px;
       padding: 15px;
       margin-bottom: 10px;
-      font-size: 15px;
+      font-size: 16px;
     }
     .comment-header {
       display: flex;
@@ -618,7 +618,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
       align-items: center;
       justify-content: space-between;
       margin-top: 10px;
-      font-size: 15px;
+      font-size: 16px;
       color: var(--vscode-editor-foreground);
       opacity: 0.6;
     }
@@ -650,6 +650,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
     .container {
       padding: 0 100px;
       margin: 0 auto;
+      max-width: 1000px;
     }
     .answer {
       margin-bottom: 30px;
@@ -683,7 +684,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
     }
     .content {
       line-height: 1.8;
-      font-size: 16px;
+      font-size: 17px;
     }
     .content img {
       max-width: 100%;
@@ -693,7 +694,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
     }
     .actions {
       margin-top: 15px;
-      font-size: 14px;
+      font-size: 16px;
       color: var(--vscode-editor-foreground);
       opacity: 0.7;
     }
