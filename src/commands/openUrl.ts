@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-08-05 16:54:17
+ * @LastEditTime: 2025-08-05 17:29:01
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -648,7 +648,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
       color: var(--vscode-editor-foreground);
     }
     .container {
-      padding: 0 100px;
+      padding: 0 200px;
       margin: 0 auto;
       max-width: 1000px;
     }
@@ -687,7 +687,7 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
       font-size: 17px;
     }
     .content img {
-      max-width: 100%;
+      max-width: 80%;
       height: auto;
       border-radius: 4px;
       margin: 10px 0;
@@ -710,9 +710,6 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
     }
     .openBtn:hover {
       background-color: var(--vscode-button-hoverBackground);
-    }
-    .lazy {
-    display: none;
     }
   `;
 

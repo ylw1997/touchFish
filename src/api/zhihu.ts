@@ -136,10 +136,38 @@ export const getZhihuNewsDetail = async (
         "x-zse-96": xzse96,
         "x-zse-93": xzse93,
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
       },
     });
-    return res.data.data;
+    const data: ZhihuAnswers[] = res.data.data;
+    // 解决图片懒加载问题
+    data.forEach((item) => {
+      if (item.target?.content) {
+        item.target.content = item.target.content.replace(
+          /<img[^>]*>/g,
+          (imgTag) => {
+            const dataSrcMatch = imgTag.match(/data-src="([^"]+)"/);
+            const dataOriginalMatch = imgTag.match(
+              /data-original="([^"]+)"/
+            );
+            const imageUrl = dataSrcMatch?.[1] || dataOriginalMatch?.[1];
+            if (imageUrl) {
+              let newImgTag = imgTag;
+              // 如果有 src 属性，替换它
+              if (newImgTag.includes("src=")) {
+                newImgTag = newImgTag.replace(/src="[^"]+"/, `src="${imageUrl}"`);
+              } else {
+                // 否则，添加 src 属性
+                newImgTag = newImgTag.replace("<img", `<img src="${imageUrl}"`);
+              }
+              return newImgTag;
+            }
+            return imgTag;
+          }
+        );
+      }
+    });
+    return data;
   } catch (error) {
     console.log("知乎--->出错", error);
     return [];
