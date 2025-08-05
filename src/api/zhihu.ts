@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-05 11:58:22
+ * @LastEditTime: 2025-08-05 13:50:49
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -9,7 +9,7 @@
 import axios from "axios";
 import { NewsItem } from "../type/type";
 import * as vscode from "vscode";
-import { setConfigByKey } from "../config";
+import { setConfigByKey, showNewsNumber } from "../config";
 import { getZhihuSignature } from "../utils/signature";
 
 const xzse93 = "101_3_3.0";
@@ -47,7 +47,7 @@ export const getZhihu96 = async (url: string) => {
   const b = await getZhihuCookieByField("d_c0");
   const burl = `${xzse93}+${url}+${b}`;
   const signatureResult = await getZhihuSignature(burl);
-  // console.log("知乎加密url:", burl);
+  console.log("知乎请求url:", burl);
   // console.log("知乎签名:", signatureResult);
   return signatureResult;
 };
@@ -75,23 +75,25 @@ const getZhihuData = async (cookie: string) => {
 interface zhihuItem {
   target: { question: { title?: string; id: string } };
 }
+// 获取新闻列表
 export const getZhihuList = async () => {
-  console.log("获取知乎列表");
   const resArr: NewsItem[] = [];
   try {
-    const cookie = (await getOrSetZhihuCookie()) as string;
+    const cookie = await getOrSetZhihuCookie() as string;
+    let resList: zhihuItem[] = [];
     // 判断resList长度是否大于 showNewsNumber,如果大于则截取,小于则继续请求
-    const res = await getZhihuData(cookie);
-    res.data.data
-      .filter((item: zhihuItem) => !!item.target.question)
-      .forEach(
-        (element: { target: { question: { title?: string; id: string } } }) => {
-          resArr.push({
-            title: element.target.question?.title ?? "",
-            url: element.target.question?.id,
-          });
-        }
-      );
+    if (showNewsNumber) {
+      while (resList.length < showNewsNumber) {
+        const res = await getZhihuData(cookie)
+        resList = resList.concat(res.data.data).filter((item) => !!item.target.question);
+      }
+    }
+    resList.forEach((element: zhihuItem) => {
+      resArr.push({
+        title: element.target.question?.title ?? "",
+        url: element.target.question?.id,
+      });
+    });
     return resArr;
   } catch (error) {
     console.log("知乎--->出错", error);

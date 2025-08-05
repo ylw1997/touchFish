@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2024-10-31 11:57:40
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-08-05 14:12:27
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
  */
@@ -547,120 +547,132 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
   panel!.webview.html = "加载中....";
   const res = await getZhihuNewsDetail(url);
   const resStr = res.map(item => {
-    return `<div class="postbox">
-              <div class="postInfo">
-                <img class="posteravatar" src="${item.target.author.avatar_url}" alt=""></img>
-                <div class="posterinfo">
-                  <p class="postername" >${item.target.author.name}
-                    <span class="posterzan">${item.target.voteup_count} 人赞同了该回答</span>
-                  </p>
-                  <p>${item.target.author.headline}</p>
+    return `<article class="answer">
+              <header class="author-info">
+                <img class="avatar" src="${item.target.author.avatar_url}" alt="${item.target.author.name}'s avatar" loading="lazy">
+                <div class="author-details">
+                  <p class="author-name">${item.target.author.name}</p>
+                  <p class="author-headline">${item.target.author.headline}</p>
                 </div>
+              </header>
+              <div class="content">
+                ${item.target.content}
               </div>
-              <div class="postcontent">
-                  ${item.target.content}
-              </div>
-            </div>
+              <footer class="actions">
+                <span class="vote-count">${item.target.voteup_count} 人赞同了该回答</span>
+              </footer>
+            </article>
    `
   }).join("");
-  panel!.webview.html = `
+
+  const css = `
+    :root {
+      --vscode-editor-background: #1e1e1e;
+      --vscode-editor-foreground: #d4d4d4;
+      --vscode-button-background: #3a3d41;
+      --vscode-button-hoverBackground: #4a4d51;
+      --vscode-border-color: #2f323b;
+    }
+    body.vscode-light {
+      --vscode-editor-background: #fff;
+      --vscode-editor-foreground: #000;
+      --vscode-button-background: #f0f0f0;
+      --vscode-button-hoverBackground: #e0e0e0;
+      --vscode-border-color: #e1e1e1;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: var(--vscode-editor-background);
+      color: var(--vscode-editor-foreground);
+    }
+    .container {
+      padding: 0 100px;
+      margin: 0 auto;
+    }
+    .answer {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-border-color);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .author-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      margin-right: 15px;
+    }
+    .author-name {
+      font-weight: bold;
+      font-size: 16px;
+      margin: 0;
+    }
+    .author-headline {
+      font-size: 14px;
+      color: var(--vscode-editor-foreground);
+      opacity: 0.7;
+      margin: 0;
+    }
+    .content {
+      line-height: 1.8;
+      font-size: 16px;
+    }
+    .content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .actions {
+      margin-top: 15px;
+      font-size: 14px;
+      color: var(--vscode-editor-foreground);
+      opacity: 0.7;
+    }
+    .openBtn {
+      display: inline-block;
+      padding: 10px 15px;
+      background-color: var(--vscode-button-background);
+      color: var(--vscode-editor-foreground);
+      text-decoration: none;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      transition: background-color 0.2s;
+    }
+    .openBtn:hover {
+      background-color: var(--vscode-button-hoverBackground);
+    }
+    .lazy {
+    display: none;
+    }
+  `;
+
+  const html = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <style>
-        .postbox{
-          margin: 20px 0;
-          width: 100%;
-          padding: 20px;
-          background: #24262d;
-          border-radius: 5px;
-          border: 1px solid #2f323b;
-        }
-        .postInfo{
-          display: flex;
-          align-items: flex-start;
-          margin-bottom: 20px;
-        }
-        .posteravatar{
-          width: 64px;
-          height: 64px;
-          object-fit: cover;
-          margin-right: 20px;
-        }
-        .posterzan{
-          font-size: 15px;
-          font-weight: normal;
-          padding-left: 20px;
-        }
-        .posterinfo p{
-          font-size: 15px;
-          margin: 0;
-          padding: 0;
-          line-height: 2;
-        }
-        .postername{
-          font-weight: bold;
-          font-size: 16px !important;
-        }
-        .postcontent{
-          line-height: 3;
-        }
-        img{
-            max-width: 50%;
-            object-position: left;
-            background: #24262d;
-            border-radius: 5px;
-        }
-        .lazy{
-          display: none;
-        }
-        .news_detail{
-          margin-top: 40px;
-          width: 75%;
-          margin-left: 12.5%;
-          font-size: 18px;
-          line-height: 3;
-          background: var(--vscode-editor-background);
-        }
-        .openBtn{
-          position: absolute;
-          font-size: 15px;
-          right: 20px;
-          top: 20px;
-          background-color: var(--vscode-button-background);
-          max-width: 300px;
-          box-sizing: border-box;
-          display: flex;
-          width: 300px;
-          padding: 4px;
-          border-radius: 2px;
-          text-align: center;
-          cursor: pointer;
-          justify-content: center;
-          align-items: center;
-          border: 1px solid var(--vscode-button-border,transparent);
-          line-height: 18px;
-          text-decoration: none;
-          color: var(--vscode-button-foreground);
-        }
-        .openBtn:hover{
-          background-color: var(--vscode-button-hoverBackground);
-        }
-        * {
-          color: var(--vscode-editor-foreground) !important;
-          margin: 0;
-          padding: 0;
-          font-family:'Microsoft YaHei';
-        }
-      </style>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${title}</title>
+      <style>${css}</style>
     </head>
     <body>
-      <h1 style="text-align:center" >${title}</h1>
-      <a class="openBtn" href="${"https://www.zhihu.com/question/" + url}" >打开原文章</a>
-      <div class="news_detail">${resStr}</div>
+      <div class="container">
+        <h1>${title}</h1>
+        <a class="openBtn" href="https://www.zhihu.com/question/${url}">打开原文章</a>
+        ${resStr}
+      </div>
     </body>
     </html>
   `;
+
+  panel!.webview.html = html;
   panel!.title = title;
 });
