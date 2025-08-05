@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-07-28 17:36:29
+ * @LastEditTime: 2025-08-05 09:32:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description:
@@ -43,6 +43,17 @@ import { WeiboProvider } from "./Providers/weiboProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
+
+import { getZhihuSignature } from './utils/signature';
+
+(async () => {
+    try {
+        const signatureResult = await getZhihuSignature("https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true");
+        console.log("知乎签名:", signatureResult);
+    } catch (error) {
+        console.error("获取知乎签名失败:", error);
+    }
+})();
 
 let timer: NodeJS.Timeout | null = null;
 
