@@ -3,7 +3,6 @@
 'use strict';
 
 const path = require('path');
-const CopyPlugin = require('copy-webpack-plugin');
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -13,11 +12,15 @@ const extensionConfig = {
   target: 'node', // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
 	mode: 'none', // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
 
-  entry: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
+  entry: {
+    extension: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
+    'zhihu-wrapper': './src/utils/zhihu-wrapper.js',
+    'zhihu': './src/utils/zhihu.js'
+  },
   output: {
     // the bundle is stored in the 'dist' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
     path: path.resolve(__dirname, 'dist'),
-    filename: 'extension.js',
+    filename: '[name].js',
     libraryTarget: 'commonjs2'
   },
   externals: {
@@ -41,14 +44,6 @@ const extensionConfig = {
       }
     ]
   },
-  plugins: [
-    new CopyPlugin({
-      patterns: [
-        { from: 'src/utils/zhihu.js', to: 'zhihu.js' },
-        { from: 'src/utils/zhihu-wrapper.js', to: 'zhihu-wrapper.js' },
-      ],
-    }),
-  ],
   devtool: 'nosources-source-map',
   infrastructureLogging: {
     level: "log", // enables logging required for problem matchers
