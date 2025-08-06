@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-08-05 16:22:10
+ * @LastEditTime: 2025-08-06 09:56:13
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description:
@@ -21,7 +21,8 @@ import {
   refreshV2exNews,
   refreshHupuNews,
   refreshNgaNews,
-  refreshZhihuNews
+  refreshZhihuNews,
+  changeZhihuTab
 } from "./commands/refresh";
 import { ItHomeProvider } from "./Providers/itHomeProvider";
 import { refreshTime } from "./config/index";
@@ -77,6 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(refreshNgaNews(ngaProvider));
   context.subscriptions.push(changeNgaTab(ngaProvider));
   context.subscriptions.push(refreshZhihuNews(zhihuProvider));
+  context.subscriptions.push(changeZhihuTab(zhihuProvider));
   //定时刷新新闻
   intervalRefrshNews();
 
@@ -111,7 +113,7 @@ const refreshAll = () => {
   vscode.commands.executeCommand("hupu.refresh");
   vscode.commands.executeCommand("chiphell.refresh");
   vscode.commands.executeCommand("nga.refresh");
-  vscode.commands.executeCommand('zhihu.refresh');
+  vscode.commands.executeCommand ('zhihu.refresh');
 };
 
 // 定时刷新

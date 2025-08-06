@@ -240,6 +240,11 @@
 				"icon": "$(refresh)"
 			},
 			{
+				"command": "zhihu.changeTab",
+				"title": "知乎热榜",
+				"icon": "$(rocket)"
+			},
+			{
 				"command": "zhihu.refresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
@@ -285,6 +290,11 @@
 				{
 					"command": "itHome.refresh",
 					"when": "view == view.ithomeList",
+					"group": "navigation"
+				},
+				{
+					"command": "zhihu.changeTab",
+					"when": "view == view.zhihuList",
 					"group": "navigation"
 				},
 				{

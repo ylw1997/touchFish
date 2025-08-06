@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-05 15:22:45
+ * @LastEditTime: 2025-08-06 09:48:44
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -76,26 +76,39 @@ interface zhihuItem {
   target: { question: { title?: string; id: string } };
 }
 // 获取新闻列表
-export const getZhihuList = async () => {
+export const getZhihuList = async (tab: "recommend" | "hot" = "recommend") => {
   const resArr: NewsItem[] = [];
   try {
-    const cookie = (await getOrSetZhihuCookie()) as string;
-    let resList: zhihuItem[] = [];
-    // 判断resList长度是否大于 showNewsNumber,如果大于则截取,小于则继续请求
-    if (showNewsNumber) {
-      while (resList.length < showNewsNumber) {
-        const res = await getZhihuData(cookie);
-        resList = resList
-          .concat(res.data.data)
-          .filter((item) => !!item.target.question);
+    if (tab === "recommend") {
+      const cookie = (await getOrSetZhihuCookie()) as string;
+      let resList: zhihuItem[] = [];
+      // 判断resList长度是否大于 showNewsNumber,如果大于则截取,小于则继续请求
+      if (showNewsNumber) {
+        while (resList.length < showNewsNumber) {
+          const res = await getZhihuData(cookie);
+          resList = resList
+            .concat(res.data.data)
+            .filter((item) => !!item.target.question);
+        }
       }
-    }
-    resList.forEach((element: zhihuItem) => {
-      resArr.push({
-        title: element.target.question?.title ?? "",
-        url: element.target.question?.id,
+      resList.forEach((element: zhihuItem) => {
+        resArr.push({
+          title: element.target.question?.title ?? "",
+          url: element.target.question?.id,
+        });
       });
-    });
+    } else {
+      const res = await getZhihuHot();
+      console.log("知乎hot",res);
+      res.forEach((element: any) => {
+        // element.url 'https://api.zhihu.com/questions/1935989980494262824'
+        const id =(element.target.url as string).split("/").pop();
+        resArr.push({
+          title: element.target.title,
+          url: id as string,
+        });
+      });
+    }
     return resArr;
   } catch (error) {
     console.log("知乎--->出错", error);
@@ -174,7 +187,7 @@ export const getZhihuNewsDetail = async (
   }
 };
 
-// 获取评论 https://www.zhihu.com/api/v4/comment_v5/answers/96218155860/root_comment?order_by=score&limit=20&offset=
+// 获取评论 https://www.zhihu.com/api/v4/comment_v5/answers/96218155860/root_comment?order_by=score&limit=20&offset= 
 
 export interface ZhihuCommentItem {
   content: string;
@@ -215,3 +228,20 @@ export const getZhihuComment = async (
   });
   return res.data.data;
 };
+
+
+// 知乎热榜  https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true
+
+export const getZhihuHot = async () => {
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const res = await axios.get(
+    "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true",
+    {
+      headers: {
+        "Cookie": cookie,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+      },
+    }
+  )
+  return res.data.data
+}
