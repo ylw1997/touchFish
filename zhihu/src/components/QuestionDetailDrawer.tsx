@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-08-07 17:16:20
+ * @LastEditTime: 2025-08-07 17:40:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -30,8 +30,10 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       title={title}
       onClose={onClose}
       open={open}
+      destroyOnHidden
       placement="bottom"
       height="calc(100vh - 200px)"
+      loading={questionData.length === 0 && open}
       styles={{
         wrapper: {
           background: "none",
