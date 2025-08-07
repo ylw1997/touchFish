@@ -25,3 +25,17 @@ weibo/tsconfig.app.json
 weibo/tsconfig.node.json
 weibo/vite.config.ts
 weibo/pnpm-lock.yaml
+
+zhihu/src/**
+zhihu/node_modules/**
+zhihu/public/**
+zhihu/.gitignore
+zhihu/eslint.config.js
+zhihu/index.html
+zhihu/package.json
+zhihu/README.md
+zhihu/tsconfig.json
+zhihu/tsconfig.app.json
+zhihu/tsconfig.node.json
+zhihu/vite.config.ts
+zhihu/pnpm-lock.yaml

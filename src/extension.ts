@@ -38,6 +38,7 @@ import { HupuProvider } from "./Providers/hupuProvider";
 import { defaultRefreshTime } from "./data/context";
 import { NgaProvider } from "./Providers/ngaProvider";
 import { ZhihuProvider } from './Providers/zhihuProvider';
+import { ZhihuWebProvider } from './Providers/zhihuWebProvider';
 import { WeiboProvider } from "./Providers/weiboProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
@@ -56,6 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
   const ngaProvider = new NgaProvider();
   const zhihuProvider = new ZhihuProvider();
   const weiboProvider = new WeiboProvider(context);
+  const zhihuWebProvider = new ZhihuWebProvider(context);
   vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
   vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
   vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
@@ -63,6 +65,11 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
   vscode.window.registerTreeDataProvider("view.zhihuList", zhihuProvider);
   vscode.window.registerWebviewViewProvider("weibo", weiboProvider, {
+    webviewOptions: {
+      retainContextWhenHidden: true,
+    },
+  });
+  vscode.window.registerWebviewViewProvider("zhihu", zhihuWebProvider, {
     webviewOptions: {
       retainContextWhenHidden: true,
     },

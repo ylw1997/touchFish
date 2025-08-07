@@ -176,6 +176,11 @@
 					"id": "weibo",
 					"title": "TouchFish-Weibo",
 					"icon": "assets/weibo.svg"
+				},
+				{
+					"id": "zhihu",
+					"title": "TouchFish-Zhihu",
+					"icon": "assets/zhihu.svg"
 				}
 			]
 		},
@@ -186,6 +191,14 @@
 					"type": "webview",
 					"name": "微博",
 					"id": "weibo"
+				}
+			],
+			"zhihu": [
+				{
+					"icon": "assets/zhihu.svg",
+					"type": "webview",
+					"name": "知乎",
+					"id": "zhihu"
 				}
 			],
 			"touchfish": [

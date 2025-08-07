@@ -17,5 +17,5 @@
 	"include": [
 		"src/**/*.ts"
 	],
-	"exclude": ["weibo"]
+	"exclude": ["weibo","zhihu"]
 }
