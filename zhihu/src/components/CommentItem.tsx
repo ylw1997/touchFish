@@ -2,6 +2,7 @@ import { Avatar, Card, Space, Tag, Typography } from "antd";
 import React from "react";
 import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../type";
+import { LikeOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
 
@@ -11,9 +12,10 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
       size="small"
       style={{ margin: "8px 0" }}
       styles={{
-        body:{
-          paddingTop: "8px", paddingBottom: "8px"
-        }
+        body: {
+          paddingTop: "8px",
+          paddingBottom: "8px",
+        },
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
@@ -22,7 +24,7 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
           {comment.author.name}
         </Text>
         <Text type="secondary" style={{ marginLeft: "auto" }}>
-          {dayjs(comment.created_time * 1000).fromNow()}
+         <LikeOutlined /> {comment.like_count}
         </Text>
       </div>
       <div
@@ -35,9 +37,10 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
             {tag.text}
           </Tag>
         ))}
-        <Text type="secondary">{comment.like_count} 赞</Text>
+        <Text type="secondary">
+          {dayjs(comment.created_time * 1000).fromNow()}
+        </Text>
       </Space>
-
       {comment.child_comments && comment.child_comments.length > 0 && (
         <>
           {comment.child_comments.map((childComment) => (

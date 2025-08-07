@@ -1,11 +1,4 @@
-import {
-  Avatar,
-  Card,
-  Flex,
-  Space,
-  List,
-  Typography,
-} from "antd";
+import { Avatar, Card, Flex, Space, List } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
@@ -14,9 +7,10 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import React, { useRef, useState, useEffect } from "react";
-import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
+import { Button } from "antd";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import CommentItem from "./CommentItem";
+import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
@@ -41,6 +35,12 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
   const getComments = () => {
     if (showComments) {
       setShowComments(false);
+      if (cardRef.current) {
+        const cardTop = cardRef.current.getBoundingClientRect().top;
+        if (cardTop < 0) {
+          cardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
       return;
     }
     setShowComments(true);
@@ -73,10 +73,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
           {item.author?.name}
         </Avatar>
         <div>
-          <span
-            className={"nick-name"}
-            style={{ fontSize: 16 }}
-          >
+          <span className={"nick-name"} style={{ fontSize: 16 }}>
             {item.author?.name}
           </span>
           <div className="info">
@@ -89,18 +86,34 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
 
   const actions = [
     <span className="link" key="voteup">
-      <LikeOutlined />  {item.voteup_count} 
+      <LikeOutlined /> {item.voteup_count}
     </span>,
     <span className="link" key="comment" onClick={getComments}>
-      <MessageOutlined /> {item.comment_count}
+      {showComments ? (
+        <span>
+          <UpOutlined /> 收起评论
+        </span>
+      ) : (
+        <span>
+          <MessageOutlined /> {item.comment_count}
+        </span>
+      )}
     </span>,
     <span className="link" key="expand" onClick={handleToggle}>
-      {expanded ? <><UpOutlined /> 收起</> : <><DownOutlined /> 阅读全文</>}
+      {expanded ? (
+        <>
+          <UpOutlined /> 收起
+        </>
+      ) : (
+        <>
+          <DownOutlined /> 阅读全文
+        </>
+      )}
     </span>,
   ];
 
   return (
-    <div ref={cardRef} style={{ scrollMarginTop: '50px' }}>
+    <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
       {contextHolder}
       <Card
         key={item.id}
@@ -111,14 +124,31 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
         actions={actions}
       >
         <div className="content">
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>{item.question!.title}</h2>
-          <div dangerouslySetInnerHTML={{ __html: expanded ? item.content : item.excerpt }}></div>
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>
+            {item.question!.title}
+          </h2>
+          <div
+            dangerouslySetInnerHTML={{
+              __html: expanded ? item.content : item.excerpt,
+            }}
+          ></div>
         </div>
         {showComments && (
           <List
             dataSource={comments}
             renderItem={(comment) => <CommentItem comment={comment} />}
-            header={<Typography.Title level={5}>评论</Typography.Title>}
+            header={
+              <Flex align="center" justify="space-between">
+                <h3>评论</h3>
+                <Button
+                  color="default"
+                  variant="filled"
+                  onClick={() => setShowComments(false)}
+                >
+                  <UpOutlined /> 收起评论
+                </Button>
+              </Flex>
+            }
           />
         )}
       </Card>
