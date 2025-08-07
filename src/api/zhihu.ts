@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-06 09:48:44
+ * @LastEditTime: 2025-08-07 09:16:05
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -99,7 +99,7 @@ export const getZhihuList = async (tab: "recommend" | "hot" = "recommend") => {
       });
     } else {
       const res = await getZhihuHot();
-      console.log("知乎hot",res);
+      // console.log("知乎hot",res);
       res.forEach((element: any) => {
         // element.url 'https://api.zhihu.com/questions/1935989980494262824'
         const id =(element.target.url as string).split("/").pop();

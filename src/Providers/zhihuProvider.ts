@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:18:49
- * @LastEditTime: 2025-08-06 09:58:11
+ * @LastEditTime: 2025-08-07 09:19:24
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuProvider.ts
  * @Description: 
@@ -23,11 +23,17 @@ export class ZhihuProvider implements TreeDataProvider<TreeItem> {
 
   async getData() {
     this.newsList = [];
-    await getZhihuList(this.tab).then(res => {
-      if(!res) return;
-      const news = formatData(res,"zhihu.openUrl").slice(0, showNewsNumber);
-      this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
-    });
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: "正在加载知乎数据...",
+      cancellable: false
+    }, async () => {
+      await getZhihuList(this.tab).then(res => {
+        if (!res) return;
+        const news = formatData(res, "zhihu.openUrl").slice(0, showNewsNumber);
+        this.newsList = compareNews(this.newsList, news, "bell-dot", "notebook-render-output");
+      });
+    })
     this.update.fire();
   }
 
