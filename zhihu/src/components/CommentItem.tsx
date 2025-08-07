@@ -2,6 +2,7 @@ import { Avatar, Card, Space, Tag, Typography } from "antd";
 import React from "react";
 import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../type";
+import { processCommentContent } from "../utils/textParser";
 import { LikeOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
@@ -28,8 +29,8 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
         </Text>
       </div>
       <div
-        dangerouslySetInnerHTML={{ __html: comment.content }}
-        style={{ marginTop: "8px", marginBottom: "8px" }}
+        dangerouslySetInnerHTML={{ __html: processCommentContent(comment.content) }}
+        style={{ margin: "8px 0" }}
       ></div>
       <Space>
         {comment.comment_tag?.map((tag) => (

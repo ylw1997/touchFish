@@ -1,4 +1,4 @@
-import { Avatar, Card, Flex, Space, List } from "antd";
+import { Avatar, Card, Flex, List } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
@@ -63,24 +63,22 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
   }, [item.id, messageApi]);
 
   const renderTitle = () => (
-    <Flex justify="space-between" align="center">
-      <Space>
-        <Avatar
+    <Flex align="self-start">
+      <Avatar
           size={40}
-          style={{ border: "none" }}
+          style={{ border: "none",flexShrink: 0 }}
           src={item.author?.avatar_url}
         >
           {item.author?.name}
         </Avatar>
-        <div>
+        <div style={{ marginLeft: 10 }} >
           <span className={"nick-name"} style={{ fontSize: 16 }}>
-            {item.author?.name}
+            {item.question!.title}
           </span>
           <div className="info">
-            <span>{dayjs.unix(item.created_time).fromNow()}</span>
+            <span>{item.author?.name} {dayjs.unix(item.created_time).fromNow()}</span>
           </div>
         </div>
-      </Space>
     </Flex>
   );
 
@@ -124,9 +122,6 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
         actions={actions}
       >
         <div className="content">
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>
-            {item.question!.title}
-          </h2>
           <div
             dangerouslySetInnerHTML={{
               __html: expanded ? item.content : item.excerpt,
