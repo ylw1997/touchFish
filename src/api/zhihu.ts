@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-07 11:40:26
+ * @LastEditTime: 2025-08-07 13:39:53
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -12,6 +12,7 @@ import * as vscode from "vscode";
 import { setConfigByKey, showNewsNumber } from "../config";
 import { getZhihuSignature } from "../utils/signature";
 import { ZhihuItemData } from "../../type";
+import { zhihuContentImage } from "../utils/util";
 
 const xzse93 = "101_3_3.0";
 export const getOrSetZhihuCookie = async () => {
@@ -152,6 +153,7 @@ export type ZhihuAnswers = {
     id: string;
   };
 };
+
 export const getZhihuNewsDetail = async (
   id: string
 ): Promise<ZhihuAnswers[]> => {
@@ -174,29 +176,7 @@ export const getZhihuNewsDetail = async (
     // 解决图片懒加载问题
     data.forEach((item) => {
       if (item.target?.content) {
-        item.target.content = item.target.content.replace(
-          /<img[^>]*>/g,
-          (imgTag) => {
-            const dataSrcMatch = imgTag.match(/data-src="([^"]+)"/);
-            const dataOriginalMatch = imgTag.match(/data-original="([^"]+)"/);
-            const imageUrl = dataSrcMatch?.[1] || dataOriginalMatch?.[1];
-            if (imageUrl) {
-              let newImgTag = imgTag;
-              // 如果有 src 属性，替换它
-              if (newImgTag.includes("src=")) {
-                newImgTag = newImgTag.replace(
-                  /src="[^"]+"/,
-                  `src="${imageUrl}"`
-                );
-              } else {
-                // 否则，添加 src 属性
-                newImgTag = newImgTag.replace("<img", `<img src="${imageUrl}"`);
-              }
-              return newImgTag;
-            }
-            return imgTag;
-          }
-        );
+        item.target.content = zhihuContentImage(item.target.content);
       }
     });
     return data;
@@ -271,7 +251,11 @@ export const getZhihuWebData = async (tab: "follow" | "recommend") => {
   const res =
     tab === "follow" ? await getZhihuFollowData() : await getZhihuData();
   res.data.data.forEach((element: { target?: ZhihuItemData }) => {
-    if (element.target && element.target.question ) resArr.push(element.target);
+    if (element.target && element.target.question && element.target.content)
+      resArr.push({
+        ...element.target,
+        content: zhihuContentImage(element.target.content),
+      });
   });
   return resArr;
 };

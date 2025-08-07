@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2025-06-20 14:00:16
+ * @LastEditTime: 2025-08-07 13:39:19
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description:
@@ -92,4 +92,24 @@ export const compareNews = (
     }
   });
   return newList;
+};
+
+export const zhihuContentImage = (content: string): string => {
+  return content.replace(/<img[^>]*>/g, (imgTag) => {
+    const dataSrcMatch = imgTag.match(/data-src="([^"]+)"/);
+    const dataOriginalMatch = imgTag.match(/data-original="([^"]+)"/);
+    const imageUrl = dataSrcMatch?.[1] || dataOriginalMatch?.[1];
+    if (imageUrl) {
+      let newImgTag = imgTag;
+      // 如果有 src 属性，替换它
+      if (newImgTag.includes("src=")) {
+        newImgTag = newImgTag.replace(/src="[^"]+"/, `src="${imageUrl}"`);
+      } else {
+        // 否则，添加 src 属性
+        newImgTag = newImgTag.replace("<img", `<img src="${imageUrl}"`);
+      }
+      return newImgTag;
+    }
+    return imgTag;
+  });
 };
