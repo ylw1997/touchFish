@@ -3,22 +3,33 @@ import {
   Card,
   Flex,
   Space,
-  Tag,
 } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
+  DownOutlined,
+  UpOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import type { ZhihuItemData } from "../../../type";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
 }
-
 const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
   const [expanded, setExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = () => {
+    if (expanded && cardRef.current) {
+      const cardTop = cardRef.current.getBoundingClientRect().top;
+      if (cardTop < 0) {
+        cardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+    setExpanded(!expanded);
+  };
 
   const renderTitle = () => (
     <Flex justify="space-between" align="center">
@@ -45,48 +56,34 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
     </Flex>
   );
 
-  const renderActionBar = () => (
-    <div
-      className="info mt10"
-      style={{
-        borderTop: "1px solid rgb(255 255 255 / 10%)",
-        marginLeft: "-8px",
-        marginRight: "-8px",
-        padding: "8px",
-      }}
-    >
-      <Flex justify="space-around" align="center">
-        <span className="link">
-          <LikeOutlined /> {item.voteup_count}
-        </span>
-        <span className="link">
-          <MessageOutlined /> {item.comment_count}
-        </span>
-      </Flex>
-    </div>
-  );
+  const actions = [
+    <span className="link" key="voteup">
+      <LikeOutlined />  {item.voteup_count} 
+    </span>,
+    <span className="link" key="comment">
+      <MessageOutlined /> {item.comment_count}
+    </span>,
+    <span className="link" key="expand" onClick={handleToggle}>
+      {expanded ? <><UpOutlined /> 收起</> : <><DownOutlined /> 阅读全文</>}
+    </span>,
+  ];
 
   return (
-    <Card
-      key={item.id}
-      title={renderTitle()}
-      style={{
-        background: "#191919",
-      }}
-    >
-      <div className="content">
-        <h2 style={{ fontSize: 18, marginBottom: 10 }}>{item.question!.title}</h2>
-        <div dangerouslySetInnerHTML={{ __html: expanded ? item.content : item.excerpt }}></div>
-        <Tag
-          color="blue"
-          className="link-tag"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? "收起" : "阅读全文"}
-        </Tag>
-      </div>
-      {renderActionBar()}
-    </Card>
+    <div ref={cardRef} style={{ scrollMarginTop: '50px' }}>
+      <Card
+        key={item.id}
+        title={renderTitle()}
+        style={{
+          background: "#191919",
+        }}
+        actions={actions}
+      >
+        <div className="content">
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>{item.question!.title}</h2>
+          <div dangerouslySetInnerHTML={{ __html: expanded ? item.content : item.excerpt }}></div>
+        </div>
+      </Card>
+    </div>
   );
 };
 
