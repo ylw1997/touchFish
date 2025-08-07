@@ -3,13 +3,14 @@ import {
   Card,
   Flex,
   Space,
+  Tag,
 } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import React from "react";
+import React, { useState } from "react";
 import type { ZhihuItemData } from "../../../type";
 
 export interface ZhihuItemProps {
@@ -17,6 +18,8 @@ export interface ZhihuItemProps {
 }
 
 const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
+  const [expanded, setExpanded] = useState(false);
+
   const renderTitle = () => (
     <Flex justify="space-between" align="center">
       <Space>
@@ -73,7 +76,14 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
     >
       <div className="content">
         <h2 style={{ fontSize: 18, marginBottom: 10 }}>{item.question!.title}</h2>
-        <div dangerouslySetInnerHTML={{ __html: item.excerpt }}></div>
+        <div dangerouslySetInnerHTML={{ __html: expanded ? item.content : item.excerpt }}></div>
+        <Tag
+          color="blue"
+          className="link-tag"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? "收起" : "阅读全文"}
+        </Tag>
       </div>
       {renderActionBar()}
     </Card>
