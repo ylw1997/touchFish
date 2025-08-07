@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-07 13:39:53
+ * @LastEditTime: 2025-08-07 17:09:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -230,6 +230,36 @@ export const getZhihuWebData = async (tab: "follow" | "recommend") => {
   const resArr: ZhihuItemData[] = [];
   const res =
     tab === "follow" ? await getZhihuFollowData() : await getZhihuData();
+  res.data.data.forEach((element: { target?: ZhihuItemData }) => {
+    if (element.target && element.target.question && element.target.content)
+      resArr.push({
+        ...element.target,
+        content: zhihuContentImage(element.target.content),
+      });
+  });
+  return resArr;
+};
+
+// web查看问题详情
+export const getZhihuWebDetail = async (
+  id: string
+): Promise<ZhihuItemData[]> => {
+  const xzse96 = await getZhihu96(
+    `/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`
+  );
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const answerUrl = `https://www.zhihu.com/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`;
+  const res = await axios.get(answerUrl, {
+    headers: {
+      Cookie: cookie,
+      "x-zse-96": xzse96,
+      "x-zse-93": xzse93,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+  const resArr: ZhihuItemData[] = [];
+  // 解决图片懒加载问题
   res.data.data.forEach((element: { target?: ZhihuItemData }) => {
     if (element.target && element.target.question && element.target.content)
       resArr.push({

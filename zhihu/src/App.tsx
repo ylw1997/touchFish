@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-07 11:28:37
+ * @LastEditTime: 2025-08-07 17:08:23
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -22,8 +22,11 @@ import { loaderFunc } from "./utils/loader";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
-import useZhihuAction from "./hooks/useZhihuAction";
+import QuestionDetailDrawer from "./components/QuestionDetailDrawer";
+import { useMessageHandler } from "./hooks/useMessageHandler";
+import { useVscodeMessage } from "./hooks/useVscodeMessage";
 import type { ZhihuItemData } from "../../type";
+import useZhihuAction from "./hooks/useZhihuAction";
 
 function App() {
   const APPSOURCE = "ZHIHUAPP";
@@ -32,6 +35,37 @@ function App() {
   const [tabs] = useState(defTab);
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
+  const [questionDetailDrawerOpen, setQuestionDetailDrawerOpen] =
+    useState(false);
+  const [questionData, setQuestionData] = useState<ZhihuItemData[]>([]);
+  const [questionTitle, setQuestionTitle] = useState("");
+  const { sendMessage, messageApi } = useVscodeMessage();
+
+  useMessageHandler({
+    sendZhihuQuestionDetail: (payload) => {
+      console.log("sendZhihuQuestionDetail", payload);
+      setQuestionData(payload.data);
+      messageApi.destroy("getZhihuQuestionDetail");
+    },
+  });
+
+  const openQuestionDetailDrawer = (questionId: string, title: string) => {
+    setQuestionDetailDrawerOpen(true);
+    setQuestionTitle(title);
+    sendMessage(
+      "getZhihuQuestionDetail",
+      questionId,
+      "获取问题详情中...",
+      "ZHIHUAPP"
+    );
+  };
+
+  const closeQuestionDetailDrawer = () => {
+    setQuestionDetailDrawerOpen(false);
+    setQuestionData([]);
+    setQuestionTitle("");
+  };
+
   const fetchData = useCallback(() => {
     getListData(activeKey);
   }, [activeKey, getListData]);
@@ -78,7 +112,11 @@ function App() {
           scrollableTarget="scrollableDiv"
         >
           {list.map((item: ZhihuItemData) => (
-            <ZhihuItem item={item} key={item.id} />
+            <ZhihuItem
+              item={item}
+              key={item.id}
+              openQuestionDetailDrawer={openQuestionDetailDrawer}
+            />
           ))}
         </InfiniteScroll>
       </div>
@@ -99,6 +137,12 @@ function App() {
           tooltip={{ title: "刷新", placement: "left" }}
         />
       </FloatButton.Group>
+      <QuestionDetailDrawer
+        open={questionDetailDrawerOpen}
+        onClose={closeQuestionDetailDrawer}
+        questionData={questionData}
+        title={questionTitle}
+      />
     </>
   );
 }

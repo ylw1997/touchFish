@@ -83,7 +83,9 @@ export type CommandList =
 export type ZhihuCommandList = 
   | "ZHIHU_GETDATA"
   | "ZHIHU_SENDDATA"
-  | "getZhihuComment";
+  | "getZhihuComment"
+  | "getZhihuQuestionDetail"
+  | "sendZhihuQuestionDetail";
 
 export type ZhihuCommandsType<T> = {
   command: ZhihuCommandList;

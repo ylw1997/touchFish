@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-07 11:27:10
+ * @LastEditTime: 2025-08-07 17:02:31
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -14,7 +14,7 @@ import {
   Uri,
 } from "vscode";
 import * as vscode from "vscode";
-import { getZhihuComment, getZhihuWebData } from "../api/zhihu";
+import { getZhihuComment, getZhihuWebData, getZhihuWebDetail } from "../api/zhihu";
 import * as fs from "fs";
 import { ZhihuCommandsType } from "../../type";
 export class ZhihuWebProvider implements WebviewViewProvider {
@@ -47,13 +47,28 @@ export class ZhihuWebProvider implements WebviewViewProvider {
               payload: {
                 data: comments,
                 answerId: message.payload,
+                source: message.source,
               }
+            });
+            break;
+          }
+          case "getZhihuQuestionDetail": {
+            const detail = await getZhihuWebDetail(message.payload);
+            webviewView.webview.postMessage({
+              command: "sendZhihuQuestionDetail",
+              payload: {
+                data: detail,
+                payload: message.payload,
+                source: message.source,
+              },
             });
             break;
           }
         }
       }
-    );
+    )
+      
+
 
     const config = vscode.workspace.getConfiguration("touchfish");
     let showImg = config.get("showImg") as boolean | undefined;

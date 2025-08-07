@@ -14,9 +14,15 @@ import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
+  openQuestionDetailDrawer?: (questionId: string, title: string) => void;
+  isDetail?: boolean;
 }
-const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
-  const [expanded, setExpanded] = useState(false);
+const ZhihuItem: React.FC<ZhihuItemProps> = ({
+  item,
+  openQuestionDetailDrawer,
+  isDetail,
+}) => {
+  const [expanded, setExpanded] = useState(isDetail ? true : false);
   const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
   const [showComments, setShowComments] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -31,25 +37,24 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
     },
   });
 
-  const handleToggle = () => {
-    if (expanded && cardRef.current) {
+  const backToView = ()=>{
+    if (cardRef.current) {
       const cardTop = cardRef.current.getBoundingClientRect().top;
       if (cardTop < 0) {
-        cardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        cardRef.current.scrollIntoView({ behavior: "auto", block: "start" });
       }
     }
+  }
+
+  const handleToggle = () => {
+    if (expanded) backToView()
     setExpanded(!expanded);
   };
 
   const getComments = () => {
     if (showComments) {
       setShowComments(false);
-      if (cardRef.current) {
-        const cardTop = cardRef.current.getBoundingClientRect().top;
-        if (cardTop < 0) {
-          cardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }
+      backToView()
       return;
     }
     setShowComments(true);
@@ -60,20 +65,29 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
   const renderTitle = () => (
     <Flex>
       <Avatar
-          size={40}
-          style={{ border: "none",flexShrink: 0 }}
-          src={item.author?.avatar_url}
+        size={40}
+        style={{ border: "none", flexShrink: 0 }}
+        src={item.author?.avatar_url}
+      >
+        {item.author?.name}
+      </Avatar>
+      <div style={{ marginLeft: 10 }}>
+        <span
+          className={"nick-name"}
+          style={{ fontSize: 16 }}
+          onClick={() =>
+            openQuestionDetailDrawer?.(item.question!.id, item.question!.title)
+          }
         >
-          {item.author?.name}
-        </Avatar>
-        <div style={{ marginLeft: 10 }} >
-          <span className={"nick-name"} style={{ fontSize: 16 }}>
-            {item.question!.title}
+          {isDetail ? item.author?.name : item.question!.title}
+        </span>
+        <div className="info">
+          <span>
+            {isDetail ? "" : item.author?.name}{" "}
+            {dayjs.unix(item.created_time).fromNow()}
           </span>
-          <div className="info">
-            <span>{item.author?.name} {dayjs.unix(item.created_time).fromNow()}</span>
-          </div>
         </div>
+      </div>
     </Flex>
   );
 
@@ -104,6 +118,8 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
       )}
     </span>,
   ];
+
+  if (isDetail) actions.pop();
 
   return (
     <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
