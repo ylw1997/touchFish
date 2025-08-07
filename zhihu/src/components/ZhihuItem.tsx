@@ -1,4 +1,4 @@
-import { Avatar, Card, Flex, List } from "antd";
+import { Avatar, Button, Card, Flex, List } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
@@ -6,8 +6,8 @@ import {
   UpOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import React, { useRef, useState, useEffect } from "react";
-import { Button } from "antd";
+import React, { useRef, useState } from "react";
+import { useMessageHandler } from "../hooks/useMessageHandler";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import CommentItem from "./CommentItem";
 import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
@@ -21,6 +21,15 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
   const [showComments, setShowComments] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
+
+  useMessageHandler({
+    zhihuComment: (payload) => {
+      if (payload.answerId === item.id) {
+        messageApi.destroy("getZhihuComment");
+        setComments(payload.data);
+      }
+    },
+  });
 
   const handleToggle = () => {
     if (expanded && cardRef.current) {
@@ -48,22 +57,8 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
     sendMessage("getZhihuComment", item.id, "获取评论中...", "ZHIHUAPP");
   };
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const message = event.data;
-      if (message.command === "zhihuComment" && message.answerId === item.id) {
-        messageApi.destroy("getZhihuComment");
-        setComments(message.data);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [item.id, messageApi]);
-
   const renderTitle = () => (
-    <Flex align="self-start">
+    <Flex>
       <Avatar
           size={40}
           style={{ border: "none",flexShrink: 0 }}

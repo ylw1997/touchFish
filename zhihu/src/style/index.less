@@ -47,6 +47,9 @@ body {
 
 .nick-name {
   color: #cccccc;
+  font-weight: bold;
+  word-break: break-all;
+  white-space: pre-wrap;
   &:hover {
     cursor: pointer;
     color: #1890ff;
@@ -71,21 +74,22 @@ body {
 }
 
 .ant-card {
-  margin-top: 8px;
+  margin-top: 10px;
   .ant-card-head {
-    padding: 5px 8px;
+    padding: 10px;
     min-height: 45px;
     font-weight: normal;
   }
   .ant-card-body {
-    padding: 8px;
+    padding: 15px 10px;
     padding-bottom: 0px;
     font-size: 15px;
   }
-}
-
-.ant-card .ant-card-actions>li {
-  margin: 8px 0;
+  .ant-card-actions {
+    li {
+      margin: 10px 0;
+    }
+  }
 }
 
 .ant-typography {

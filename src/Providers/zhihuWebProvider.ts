@@ -44,8 +44,10 @@ export class ZhihuWebProvider implements WebviewViewProvider {
             const comments = await getZhihuComment(message.payload);
             webviewView.webview.postMessage({
               command: "zhihuComment",
-              data: comments,
-              answerId: message.payload,
+              payload: {
+                data: comments,
+                answerId: message.payload,
+              }
             });
             break;
           }
