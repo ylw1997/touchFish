@@ -1,0 +1,292 @@
+* {
+  padding: 0;
+  margin: 0;
+  font-family: "Microsoft YaHei";
+}
+
+html,
+body {
+  padding: 0;
+  background-color: #1a1c22;
+  height: 100vh;
+  overflow: hidden;
+}
+*:focus {
+  outline: none;
+}
+
+.list {
+  overflow-y: auto;
+  min-height: 100px;
+}
+.info {
+  font-size: 12px;
+  color: #818181;
+}
+
+.mt10 {
+  margin-top: 10px;
+}
+
+.icon-link {
+  width: 1em;
+  height: 1em;
+  margin-right: 2px;
+  vertical-align: -2px;
+}
+
+.link,
+.expand {
+  cursor: pointer;
+  font-size: 15px;
+  color: #878787;
+  &:hover {
+    color: #1890ff;
+  }
+}
+
+.nick-name {
+  color: #cccccc;
+  &:hover {
+    cursor: pointer;
+    color: #1890ff;
+  }
+}
+
+.content {
+  font-size: 15px;
+  color: #cccccc;
+  line-height: 2;
+  word-break: break-all;
+  img {
+    width: 18px;
+    height: 18px;
+    vertical-align: -4px;
+    margin: 0 1px;
+  }
+}
+
+.ant-card {
+  margin-top: 8px;
+  .ant-card-head {
+    padding: 5px 8px;
+    min-height: 45px;
+    font-weight: normal;
+  }
+  .ant-card-body {
+    padding: 8px;
+    padding-bottom: 0px;
+  }
+}
+
+// 图片列表通用样式
+.imglist,
+.retweeted-status .imglist {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+
+  .img-item,
+  .img-only-item {
+    object-fit: cover;
+    border-radius: 5px;
+  }
+}
+
+// 分辨率小于等于320px
+@media screen and (max-width: 320px) {
+  .imglist,
+  .retweeted-status .imglist {
+    .img-item,
+    .img-only-item {
+      width: 100vw;
+      height: 100vw;
+    }
+  }
+}
+
+// 分辨率321-768px
+@media screen and (min-width: 341px) and (max-width: 540px) {
+  .imglist,
+  .retweeted-status .imglist {
+    .img-item {
+      width: calc(50vw - 22px);
+      height: calc(50vw - 22px);
+    }
+    .img-only-item {
+      width: calc(66.66vw - 25px);
+      max-width: 500px;
+      max-height: 500px;
+    }
+  }
+  .retweeted-status .imglist {
+    .img-item {
+      width: calc(50vw - 31px);
+      height: calc(50vw - 31px);
+    }
+  }
+  .h5image-list {
+    .img-item {
+      width: calc(50vw - 32px);
+      height: calc(50vw - 32px);
+    }
+  }
+}
+
+// 分辨率大于等于769px
+@media screen and (min-width: 541px) {
+  .imglist,
+  .retweeted-status .imglist {
+    .img-item {
+      width: calc(33.33vw - 17px);
+      height: calc(33.33vw - 17px);
+    }
+    .img-only-item {
+      width: calc(66.66vw - 25px);
+      max-width: 500px;
+      max-height: 500px;
+    }
+  }
+  .retweeted-status .imglist {
+    .img-item,
+    .img-only-item {
+      width: calc(33.33vw - 23px);
+      height: calc(33.33vw - 23px);
+    }
+  }
+
+  .h5image-list {
+    .img-item,
+    .img-only-item {
+      width: calc(33.33vw - 24px);
+      height: calc(33.33vw - 24px);
+    }
+  }
+}
+
+// 提取公共背景模糊样式
+.backdrop-style {
+  background: rgba(26, 28, 34, 0.5);
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
+.ant-dropdown .ant-dropdown-menu,
+.ant-tabs-dropdown .ant-tabs-dropdown-menu,
+.ant-message .ant-message-notice-wrapper .ant-message-notice-content,
+.ant-select-dropdown {
+  .backdrop-style();
+}
+
+.tabs {
+  position: fixed;
+  z-index: 9;
+  width: 100%;
+  top: 0;
+  .backdrop-style();
+}
+
+.ant-image {
+  margin: 0px;
+  &:not(:first-child) {
+    margin: 5px;
+  }
+}
+
+.ant-tabs > .ant-tabs-nav {
+  margin: 0;
+}
+
+.ant-tabs-nav-list {
+  padding: 0 10px;
+}
+
+.ant-tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin: 0 0 0 26px;
+}
+
+.ant-float-btn-group > .ant-float-btn {
+  .backdrop-style();
+
+  &:hover {
+    background: rgba(26, 28, 34, 0.7);
+  }
+  .ant-float-btn-body {
+    background: none;
+  }
+}
+
+.ant-form-item {
+  margin-bottom: 10px;
+}
+
+.ant-tag {
+  font-size: 14px;
+  a {
+    color: inherit;
+    &:hover {
+      color: inherit;
+      text-decoration: underline;
+    }
+  }
+}
+
+.weiboItemUrl {
+  font-size: 13px;
+  margin-left: 5px;
+  color: #5a7dad;
+}
+.video-cover {
+  position: relative;
+  display: inline-block;
+  min-width: 100px;
+  min-height: 100px;
+
+  .video-item {
+    width: 100%;
+  }
+
+  .video-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease-in-out;
+    // pointer-events: none;
+  }
+
+  &:hover {
+    .video-icon {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+.hot-search-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.hot-search-tag {
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
+
+  &:hover {
+    border-color: #ffffff6e;
+  }
+}
+
+.link-tag {
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+}

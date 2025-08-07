@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-07-31 16:49:24
+ * @LastEditTime: 2025-08-07 11:40:22
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -80,6 +80,16 @@ export type CommandList =
   | "SAVE_SCROLL_POSITION"
   | "RESTORE_SCROLL_POSITION";
 
+export type ZhihuCommandList = 
+  | "ZHIHU_GETDATA"
+  | "ZHIHU_SENDDATA";
+
+export type ZhihuCommandsType<T> = {
+  command: ZhihuCommandList;
+  payload: T;
+  source?: string;
+};
+
 export type commandsType<T> = {
   command: CommandList;
   payload: T;
@@ -90,6 +100,8 @@ export interface payloadType extends weiboAJAX {
   source: string;
   msg?: string;
 }
+
+
 
 export type weiboAJAX = {
   ok: number;
@@ -265,4 +277,27 @@ export interface hotItem {
   flag: number;
   word: string;
   num: number;
+}
+
+
+export interface ZhihuAuthor {
+  id: string;
+  name: string;
+  avatar_url: string;
+}
+
+export interface ZhihuQuestion {
+  id: string;
+  title: string;
+}
+
+export interface ZhihuItemData {
+  id: string;
+  author: ZhihuAuthor;
+  question?: ZhihuQuestion;
+  created_time: number;
+  voteup_count: number;
+  comment_count: number;
+  excerpt: string;
+  content: string;
 }

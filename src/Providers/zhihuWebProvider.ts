@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-07 10:03:42
+ * @LastEditTime: 2025-08-07 11:27:10
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -14,8 +14,9 @@ import {
   Uri,
 } from "vscode";
 import * as vscode from "vscode";
-import { commandsType } from "../../type";
+import { getZhihuWebData } from "../api/zhihu";
 import * as fs from "fs";
+import { ZhihuCommandsType } from "../../type";
 export class ZhihuWebProvider implements WebviewViewProvider {
   constructor(protected context: ExtensionContext) {}
 
@@ -26,9 +27,20 @@ export class ZhihuWebProvider implements WebviewViewProvider {
     };
 
     webviewView.webview.onDidReceiveMessage(
-      async (message: commandsType<string | any>) => {
-        // 在这里处理来自 webview 的消息
-        console.log("zhihuWebProvider接收到来自 webview 的消息:", message);
+      async (message: ZhihuCommandsType<string | any>) => {
+        switch (message.command) {
+          case "ZHIHU_GETDATA": {
+            const data = await getZhihuWebData(message.payload);
+            webviewView.webview.postMessage({
+              command: "ZHIHU_SENDDATA",
+              payload: {
+                data,
+                source: message.source,
+              },
+            } as ZhihuCommandsType<any>);
+            break;
+          }
+        }
       }
     );
 

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-07 09:16:05
+ * @LastEditTime: 2025-08-07 11:40:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -11,6 +11,7 @@ import { NewsItem } from "../type/type";
 import * as vscode from "vscode";
 import { setConfigByKey, showNewsNumber } from "../config";
 import { getZhihuSignature } from "../utils/signature";
+import { ZhihuItemData } from "../../type";
 
 const xzse93 = "101_3_3.0";
 export const getOrSetZhihuCookie = async () => {
@@ -52,12 +53,30 @@ export const getZhihu96 = async (url: string) => {
   return signatureResult;
 };
 
-const getZhihuData = async (cookie: string) => {
+const getZhihuData = async () => {
+  const cookie = (await getOrSetZhihuCookie()) as string;
   const xzse96 = await getZhihu96(
     "/api/v3/feed/topstory/recommend?limit=10&desktop=true"
   );
   return await axios.get(
     "https://www.zhihu.com/api/v3/feed/topstory/recommend?limit=10&desktop=true",
+    {
+      headers: {
+        Cookie: cookie,
+        "x-zse-96": xzse96,
+        "x-zse-93": xzse93,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+      },
+    }
+  );
+};
+
+const getZhihuFollowData = async () => {
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const xzse96 = await getZhihu96("/api/v3/moments?limit=10&desktop=true");
+  return await axios.get(
+    "https://www.zhihu.com/api/v3/moments?limit=10&desktop=true",
     {
       headers: {
         Cookie: cookie,
@@ -80,12 +99,11 @@ export const getZhihuList = async (tab: "recommend" | "hot" = "recommend") => {
   const resArr: NewsItem[] = [];
   try {
     if (tab === "recommend") {
-      const cookie = (await getOrSetZhihuCookie()) as string;
       let resList: zhihuItem[] = [];
       // 判断resList长度是否大于 showNewsNumber,如果大于则截取,小于则继续请求
       if (showNewsNumber) {
         while (resList.length < showNewsNumber) {
-          const res = await getZhihuData(cookie);
+          const res = await getZhihuData();
           resList = resList
             .concat(res.data.data)
             .filter((item) => !!item.target.question);
@@ -102,7 +120,7 @@ export const getZhihuList = async (tab: "recommend" | "hot" = "recommend") => {
       // console.log("知乎hot",res);
       res.forEach((element: any) => {
         // element.url 'https://api.zhihu.com/questions/1935989980494262824'
-        const id =(element.target.url as string).split("/").pop();
+        const id = (element.target.url as string).split("/").pop();
         resArr.push({
           title: element.target.title,
           url: id as string,
@@ -160,15 +178,16 @@ export const getZhihuNewsDetail = async (
           /<img[^>]*>/g,
           (imgTag) => {
             const dataSrcMatch = imgTag.match(/data-src="([^"]+)"/);
-            const dataOriginalMatch = imgTag.match(
-              /data-original="([^"]+)"/
-            );
+            const dataOriginalMatch = imgTag.match(/data-original="([^"]+)"/);
             const imageUrl = dataSrcMatch?.[1] || dataOriginalMatch?.[1];
             if (imageUrl) {
               let newImgTag = imgTag;
               // 如果有 src 属性，替换它
               if (newImgTag.includes("src=")) {
-                newImgTag = newImgTag.replace(/src="[^"]+"/, `src="${imageUrl}"`);
+                newImgTag = newImgTag.replace(
+                  /src="[^"]+"/,
+                  `src="${imageUrl}"`
+                );
               } else {
                 // 否则，添加 src 属性
                 newImgTag = newImgTag.replace("<img", `<img src="${imageUrl}"`);
@@ -187,7 +206,7 @@ export const getZhihuNewsDetail = async (
   }
 };
 
-// 获取评论 https://www.zhihu.com/api/v4/comment_v5/answers/96218155860/root_comment?order_by=score&limit=20&offset= 
+// 获取评论 https://www.zhihu.com/api/v4/comment_v5/answers/96218155860/root_comment?order_by=score&limit=20&offset=
 
 export interface ZhihuCommentItem {
   content: string;
@@ -229,7 +248,6 @@ export const getZhihuComment = async (
   return res.data.data;
 };
 
-
 // 知乎热榜  https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true
 
 export const getZhihuHot = async () => {
@@ -238,10 +256,22 @@ export const getZhihuHot = async () => {
     "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true",
     {
       headers: {
-        "Cookie": cookie,
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+        Cookie: cookie,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
       },
     }
-  )
-  return res.data.data
-}
+  );
+  return res.data.data;
+};
+
+// web知乎处理数据
+export const getZhihuWebData = async (tab: "follow" | "recommend") => {
+  const resArr: ZhihuItemData[] = [];
+  const res =
+    tab === "follow" ? await getZhihuFollowData() : await getZhihuData();
+  res.data.data.forEach((element: { target?: ZhihuItemData }) => {
+    if (element.target && element.target.question ) resArr.push(element.target);
+  });
+  return resArr;
+};
