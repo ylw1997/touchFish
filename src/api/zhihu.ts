@@ -11,7 +11,7 @@ import { NewsItem } from "../type/type";
 import * as vscode from "vscode";
 import { setConfigByKey, showNewsNumber } from "../config";
 import { getZhihuSignature } from "../utils/signature";
-import { ZhihuItemData } from "../../type";
+import { ZhihuCommentItem, ZhihuItemData } from "../../type";
 import { zhihuContentImage } from "../utils/util";
 
 const xzse93 = "101_3_3.0";
@@ -188,26 +188,6 @@ export const getZhihuNewsDetail = async (
 
 // 获取评论 https://www.zhihu.com/api/v4/comment_v5/answers/96218155860/root_comment?order_by=score&limit=20&offset=
 
-export interface ZhihuCommentItem {
-  content: string;
-  created_time: number;
-  id: number;
-  is_author: boolean;
-  likes_count: number;
-  reply_to_id: number;
-  type: number;
-  author: {
-    avatar_url: string;
-    id: number;
-    name: string;
-    url_token: string;
-  };
-  comment_tag: {
-    type: "ip_info" | "hot";
-    text: string;
-  }[];
-  child_comments: ZhihuCommentItem[];
-}
 export const getZhihuComment = async (
   id: string
 ): Promise<ZhihuCommentItem[]> => {

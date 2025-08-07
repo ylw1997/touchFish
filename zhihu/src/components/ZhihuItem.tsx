@@ -3,6 +3,8 @@ import {
   Card,
   Flex,
   Space,
+  List,
+  Typography,
 } from "antd";
 import {
   LikeOutlined,
@@ -11,15 +13,20 @@ import {
   UpOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import React, { useRef, useState } from "react";
-import type { ZhihuItemData } from "../../../type";
+import React, { useRef, useState, useEffect } from "react";
+import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
+import { useVscodeMessage } from "../hooks/useVscodeMessage";
+import CommentItem from "./CommentItem";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
 }
 const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
   const [expanded, setExpanded] = useState(false);
+  const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
+  const [showComments, setShowComments] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
 
   const handleToggle = () => {
     if (expanded && cardRef.current) {
@@ -30,6 +37,30 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
     }
     setExpanded(!expanded);
   };
+
+  const getComments = () => {
+    if (showComments) {
+      setShowComments(false);
+      return;
+    }
+    setShowComments(true);
+    if (comments.length > 0) return;
+    sendMessage("getZhihuComment", item.id, "获取评论中...", "ZHIHUAPP");
+  };
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const message = event.data;
+      if (message.command === "zhihuComment" && message.answerId === item.id) {
+        messageApi.destroy("getZhihuComment");
+        setComments(message.data);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [item.id, messageApi]);
 
   const renderTitle = () => (
     <Flex justify="space-between" align="center">
@@ -60,7 +91,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
     <span className="link" key="voteup">
       <LikeOutlined />  {item.voteup_count} 
     </span>,
-    <span className="link" key="comment">
+    <span className="link" key="comment" onClick={getComments}>
       <MessageOutlined /> {item.comment_count}
     </span>,
     <span className="link" key="expand" onClick={handleToggle}>
@@ -70,6 +101,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
 
   return (
     <div ref={cardRef} style={{ scrollMarginTop: '50px' }}>
+      {contextHolder}
       <Card
         key={item.id}
         title={renderTitle()}
@@ -82,6 +114,13 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({ item }) => {
           <h2 style={{ fontSize: 18, marginBottom: 10 }}>{item.question!.title}</h2>
           <div dangerouslySetInnerHTML={{ __html: expanded ? item.content : item.excerpt }}></div>
         </div>
+        {showComments && (
+          <List
+            dataSource={comments}
+            renderItem={(comment) => <CommentItem comment={comment} />}
+            header={<Typography.Title level={5}>评论</Typography.Title>}
+          />
+        )}
       </Card>
     </div>
   );

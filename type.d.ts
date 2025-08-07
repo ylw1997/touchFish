@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-08-07 11:40:22
+ * @LastEditTime: 2025-08-07 15:10:14
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -82,7 +82,8 @@ export type CommandList =
 
 export type ZhihuCommandList = 
   | "ZHIHU_GETDATA"
-  | "ZHIHU_SENDDATA";
+  | "ZHIHU_SENDDATA"
+  | "getZhihuComment";
 
 export type ZhihuCommandsType<T> = {
   command: ZhihuCommandList;
@@ -300,4 +301,25 @@ export interface ZhihuItemData {
   comment_count: number;
   excerpt: string;
   content: string;
+}
+
+export interface ZhihuCommentItem {
+  content: string;
+  created_time: number;
+  id: number;
+  is_author: boolean;
+  like_count: number;
+  reply_to_id: number;
+  type: number;
+  author: {
+    avatar_url: string;
+    id: number;
+    name: string;
+    url_token: string;
+  };
+  comment_tag: {
+    type: "ip_info" | "hot";
+    text: string;
+  }[];
+  child_comments: ZhihuCommentItem[];
 }

@@ -798,8 +798,8 @@ export const openZhihuUrl = vscode.commands.registerCommand('zhihu.openUrl', asy
   panel!.title = title;
   panel!.webview.onDidReceiveMessage(async message => {
     if (message.command === 'getZhihuComment') {
-      const comments = await getZhihuComment(message.answerId);
-      panel!.webview.postMessage({ command: 'showZhihuComments', comments, answerId: message.answerId });
+      const comments = await getZhihuComment(message.payload);
+      panel!.webview.postMessage({ command: 'zhihuComment', data: comments, answerId: message.payload });
     }
   });
 });

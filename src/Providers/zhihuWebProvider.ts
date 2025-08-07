@@ -14,7 +14,7 @@ import {
   Uri,
 } from "vscode";
 import * as vscode from "vscode";
-import { getZhihuWebData } from "../api/zhihu";
+import { getZhihuComment, getZhihuWebData } from "../api/zhihu";
 import * as fs from "fs";
 import { ZhihuCommandsType } from "../../type";
 export class ZhihuWebProvider implements WebviewViewProvider {
@@ -38,6 +38,15 @@ export class ZhihuWebProvider implements WebviewViewProvider {
                 source: message.source,
               },
             } as ZhihuCommandsType<any>);
+            break;
+          }
+          case "getZhihuComment": {
+            const comments = await getZhihuComment(message.payload);
+            webviewView.webview.postMessage({
+              command: "zhihuComment",
+              data: comments,
+              answerId: message.payload,
+            });
             break;
           }
         }
