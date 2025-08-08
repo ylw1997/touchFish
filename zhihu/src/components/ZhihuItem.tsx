@@ -68,13 +68,36 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
 
   const renderTitle = () => (
     <Flex>
-      <Avatar
+      {item.index != undefined ? (
+        <Avatar
+          size={40}
+          style={{
+            border: "none",
+            flexShrink: 0,
+            backgroundColor: "#fde3cf",
+            color: "#f56a00",
+            fontWeight: "bold",
+            fontSize: "20px",
+          }}
+        >
+          {item.index}
+        </Avatar>
+      ) : (
+        <Avatar
+          size={40}
+          style={{ border: "none", flexShrink: 0 }}
+          src={item.author?.avatar_url}
+        >
+          {item.author?.name}
+        </Avatar>
+      )}
+      {/* <Avatar
         size={40}
         style={{ border: "none", flexShrink: 0 }}
         src={item.author?.avatar_url}
       >
         {item.author?.name}
-      </Avatar>
+      </Avatar> */}
       <div style={{ marginLeft: 10 }}>
         <span
           className={"nick-name"}
@@ -96,7 +119,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   );
 
   const actions = [];
-  if (item.voteup_count) {
+  if (item.voteup_count != undefined) {
     actions.push(
       <span className="link" key="voteup">
         <LikeOutlined /> {item.voteup_count}
@@ -144,11 +167,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   return (
     <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
       {contextHolder}
-      <Card
-        key={item.id}
-        title={renderTitle()}
-        actions={actions}
-      >
+      <Card key={item.id} title={renderTitle()} actions={actions}>
         <div className="content">
           {item.content ? (
             <div

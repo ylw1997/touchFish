@@ -1,15 +1,14 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-08 10:00:43
+ * @LastEditTime: 2025-08-08 11:33:59
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
  */
 import axios from "axios";
-import { NewsItem } from "../type/type";
 import * as vscode from "vscode";
-import { setConfigByKey, showNewsNumber } from "../config";
+import { setConfigByKey } from "../config";
 import { getZhihuSignature } from "../utils/signature";
 import { ZhihuCommentItem, ZhihuHotItem, ZhihuItemData } from "../../type";
 import {
@@ -93,102 +92,6 @@ const getZhihuFollowData = async () => {
   );
 };
 
-// 获取新闻列表
-
-interface zhihuItem {
-  target: { question: { title?: string; id: string } };
-}
-// 获取新闻列表
-export const getZhihuList = async (tab: "recommend" | "hot" = "recommend") => {
-  const resArr: NewsItem[] = [];
-  try {
-    if (tab === "recommend") {
-      let resList: zhihuItem[] = [];
-      // 判断resList长度是否大于 showNewsNumber,如果大于则截取,小于则继续请求
-      if (showNewsNumber) {
-        while (resList.length < showNewsNumber) {
-          const res = await getZhihuData();
-          resList = resList
-            .concat(res.data.data)
-            .filter((item) => !!item.target.question);
-        }
-      }
-      resList.forEach((element: zhihuItem) => {
-        resArr.push({
-          title: element.target.question?.title ?? "",
-          url: element.target.question?.id,
-        });
-      });
-    } else {
-      const res = await getZhihuHot();
-      // console.log("知乎hot",res);
-      res.forEach((element: any) => {
-        // element.url 'https://api.zhihu.com/questions/1935989980494262824'
-        const id = (element.target.url as string).split("/").pop();
-        resArr.push({
-          title: element.target.title,
-          url: id as string,
-        });
-      });
-    }
-    return resArr;
-  } catch (error) {
-    console.log("知乎--->出错", error);
-    vscode.window.showInformationMessage("数据请求失败,请刷新列表重试！");
-  }
-  return resArr;
-};
-
-// 获取Zhihu文章详情
-export type ZhihuAnswers = {
-  target_type: string;
-  target: {
-    author: {
-      name: string;
-      avatar_url: string;
-      headline: string;
-    };
-    answer_type: string;
-    comment_count: number;
-    voteup_count: number;
-    content: string;
-    excerpt: string;
-    id: string;
-  };
-};
-
-export const getZhihuNewsDetail = async (
-  id: string
-): Promise<ZhihuAnswers[]> => {
-  try {
-    const xzse96 = await getZhihu96(
-      `/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`
-    );
-    const cookie = (await getOrSetZhihuCookie()) as string;
-    const answerUrl = `https://www.zhihu.com/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`;
-    const res = await axios.get(answerUrl, {
-      headers: {
-        Cookie: cookie,
-        "x-zse-96": xzse96,
-        "x-zse-93": xzse93,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      },
-    });
-    const data: ZhihuAnswers[] = res.data.data;
-    // 解决图片懒加载问题
-    data.forEach((item) => {
-      if (item.target?.content) {
-        item.target.content = zhihuContentImage(item.target.content);
-      }
-    });
-    return data;
-  } catch (error) {
-    console.log("知乎--->出错", error);
-    return [];
-  }
-};
-
 // 获取评论 https://www.zhihu.com/api/v4/comment_v5/answers/96218155860/root_comment?order_by=score&limit=20&offset=
 
 export const getZhihuComment = async (
@@ -220,7 +123,7 @@ export const getZhihuHot = async () => {
     {
       headers: {
         Cookie: cookie,
-        "x-api-version":'3.0.76',
+        "x-api-version": "3.0.76",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
       },
@@ -242,9 +145,9 @@ export const getZhihuWebData = async (tab: "follow" | "recommend" | "hot") => {
       break;
     case "hot": {
       const hotres = await getZhihuHot();
-      console.log(hotres);
-      hotres.forEach((item: { target: ZhihuHotItem }) => {
-        resArr.push(convertZhihuHotItemToZhihuItemData(item.target));
+      // console.log(hotres);
+      hotres.forEach((item: { target: ZhihuHotItem }, index: number) => {
+        resArr.push(convertZhihuHotItemToZhihuItemData(item.target, index + 1));
       });
       break;
     }

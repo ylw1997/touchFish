@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-07 17:37:01
+ * @LastEditTime: 2025-08-08 11:33:36
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\hooks\useZhihuAction.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -53,7 +53,7 @@ const useZhihuAction = (source: string) => {
     (payload: any) => {
       messageApi.destroy("ZHIHU_GETDATA");
       if (payload?.data && payload.source === source) {
-        console.log(payload.data);
+        // console.log(payload.data);
         setList((prev) => [...prev, ...payload.data]);
       } else if (payload?.source === source) {
         messageApi.error("数据请求失败!");

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-08-06 09:56:13
+ * @LastEditTime: 2025-08-08 11:18:48
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description:
@@ -12,8 +12,7 @@ import {
   openUrl,
   openCHUrl,
   openV2exUrl,
-  openNgaUrl,
-  openZhihuUrl
+  openNgaUrl
 } from "./commands/openUrl";
 import {
   refresh,
@@ -21,8 +20,6 @@ import {
   refreshV2exNews,
   refreshHupuNews,
   refreshNgaNews,
-  refreshZhihuNews,
-  changeZhihuTab
 } from "./commands/refresh";
 import { ItHomeProvider } from "./Providers/itHomeProvider";
 import { refreshTime } from "./config/index";
@@ -37,7 +34,6 @@ import { V2exProvider } from "./Providers/v2exProvider";
 import { HupuProvider } from "./Providers/hupuProvider";
 import { defaultRefreshTime } from "./data/context";
 import { NgaProvider } from "./Providers/ngaProvider";
-import { ZhihuProvider } from './Providers/zhihuProvider';
 import { ZhihuWebProvider } from './Providers/zhihuWebProvider';
 import { WeiboProvider } from "./Providers/weiboProvider";
 import ContextManager from "./utils/extensionContext";
@@ -55,7 +51,6 @@ export function activate(context: vscode.ExtensionContext) {
   const v2exProvicer = new V2exProvider();
   const hupuProvider = new HupuProvider();
   const ngaProvider = new NgaProvider();
-  const zhihuProvider = new ZhihuProvider();
   const weiboProvider = new WeiboProvider(context);
   const zhihuWebProvider = new ZhihuWebProvider(context);
   vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
@@ -63,7 +58,6 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
   vscode.window.registerTreeDataProvider("view.hupuList", hupuProvider);
   vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
-  vscode.window.registerTreeDataProvider("view.zhihuList", zhihuProvider);
   vscode.window.registerWebviewViewProvider("weibo", weiboProvider, {
     webviewOptions: {
       retainContextWhenHidden: true,
@@ -84,8 +78,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(changeHupuTab(hupuProvider));
   context.subscriptions.push(refreshNgaNews(ngaProvider));
   context.subscriptions.push(changeNgaTab(ngaProvider));
-  context.subscriptions.push(refreshZhihuNews(zhihuProvider));
-  context.subscriptions.push(changeZhihuTab(zhihuProvider));
   //定时刷新新闻
   intervalRefrshNews();
 
@@ -95,7 +87,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(openSetting);
   context.subscriptions.push(openV2exUrl);
   context.subscriptions.push(openNgaUrl);
-  context.subscriptions.push(openZhihuUrl);
 }
 
 // this method is called when your extension is deactivated

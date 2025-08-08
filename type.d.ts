@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-08-08 10:15:05
+ * @LastEditTime: 2025-08-08 11:24:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -305,6 +305,7 @@ export interface ZhihuItemData {
   content?: string;
   metrics_area?: string;
   image_area?: string;
+  index?: number;
 }
 
 export interface ZhihuCommentItem {

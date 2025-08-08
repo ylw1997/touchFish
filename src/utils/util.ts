@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2025-08-08 10:15:20
+ * @LastEditTime: 2025-08-08 11:24:44
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description:
@@ -116,7 +116,8 @@ export const zhihuContentImage = (content: string): string => {
 };
 
 export const convertZhihuHotItemToZhihuItemData = (
-  hotItem: ZhihuHotItem
+  hotItem: ZhihuHotItem,
+  index?: number
 ): ZhihuItemData => {
   const id = hotItem.link.url.split("/").pop() || "";
   return {
@@ -133,5 +134,6 @@ export const convertZhihuHotItemToZhihuItemData = (
     excerpt: hotItem.excerpt_area.text,
     metrics_area: hotItem.metrics_area.text,
     image_area: hotItem.image_area.url,
+    index,
   };
 };

@@ -223,11 +223,6 @@
 					"icon": "assets/training.svg"
 				},
 				{
-					"id": "view.zhihuList",
-					"name": "知乎",
-					"icon": "assets/training.svg"
-				},
-				{
 					"id": "view.ngaList",
 					"name": "nga精英玩家俱乐部",
 					"icon": "assets/training.svg"
@@ -249,16 +244,6 @@
 		"commands": [
 			{
 				"command": "itHome.refresh",
-				"title": "刷新",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "zhihu.changeTab",
-				"title": "切换推荐/热榜",
-				"icon": "$(arrow-swap)"
-			},
-			{
-				"command": "zhihu.refresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
 			},
@@ -303,16 +288,6 @@
 				{
 					"command": "itHome.refresh",
 					"when": "view == view.ithomeList",
-					"group": "navigation"
-				},
-				{
-					"command": "zhihu.changeTab",
-					"when": "view == view.zhihuList",
-					"group": "navigation"
-				},
-				{
-					"command": "zhihu.refresh",
-					"when": "view == view.zhihuList",
 					"group": "navigation"
 				},
 				{
