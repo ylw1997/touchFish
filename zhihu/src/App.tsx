@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-08 14:18:09
+ * @LastEditTime: 2025-08-08 15:05:05
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -26,6 +26,7 @@ import QuestionDetailDrawer from "./components/QuestionDetailDrawer";
 import type { ZhihuItemData } from "../../type";
 import useZhihuAction from "./hooks/useZhihuAction";
 import { debounce } from "./utils";
+import { vscode } from "./utils/vscode";
 
 function App() {
   const APPSOURCE = "ZHIHUAPP";
@@ -40,7 +41,6 @@ function App() {
     questionTitle,
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
-    sendMessage,
   } = useZhihuAction(APPSOURCE, scrollableNodeRef);
   const [tabs] = useState(defTab);
 
@@ -53,7 +53,10 @@ function App() {
     if (!scrollableDiv) return;
 
     const debouncedSave = debounce((scrollTop: number) => {
-      sendMessage("ZHIHU_SAVE_SCROLL_POSITION", scrollTop, "", APPSOURCE);
+      vscode.postMessage({
+        command: "ZHIHU_SAVE_SCROLL_POSITION",
+        payload: scrollTop,
+      });
     }, 500);
 
     const handleScroll = () => {
@@ -65,7 +68,7 @@ function App() {
     return () => {
       scrollableDiv.removeEventListener("scroll", handleScroll);
     };
-  }, [sendMessage]);
+  }, []);
 
   const fetchData = useCallback(() => {
     getListData(activeKey);
