@@ -85,7 +85,9 @@ export type ZhihuCommandList =
   | "ZHIHU_SENDDATA"
   | "getZhihuComment"
   | "getZhihuQuestionDetail"
-  | "sendZhihuQuestionDetail";
+  | "sendZhihuQuestionDetail"
+  | "ZHIHU_SAVE_SCROLL_POSITION"
+  | "ZHIHU_RESTORE_SCROLL_POSITION";
 
 export type ZhihuCommandsType<T> = {
   command: ZhihuCommandList;

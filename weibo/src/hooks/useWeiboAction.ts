@@ -271,7 +271,7 @@ const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivEle
   const handleRestoreScrollPosition = useCallback(
     (payload: number) => {
       if (scrollableNodeRef?.current) {
-        console.log("恢复滚动位置:", payload);
+        // console.log("恢复滚动位置:", payload);
         scrollableNodeRef.current.scrollTop = payload;
       }
     },

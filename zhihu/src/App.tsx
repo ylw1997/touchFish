@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-08 10:26:26
+ * @LastEditTime: 2025-08-08 14:18:09
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -25,9 +25,11 @@ dayjs.extend(_relativeTime);
 import QuestionDetailDrawer from "./components/QuestionDetailDrawer";
 import type { ZhihuItemData } from "../../type";
 import useZhihuAction from "./hooks/useZhihuAction";
+import { debounce } from "./utils";
 
 function App() {
   const APPSOURCE = "ZHIHUAPP";
+  const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const {
     list,
     contextHolder,
@@ -38,10 +40,32 @@ function App() {
     questionTitle,
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
-  } = useZhihuAction(APPSOURCE);
+    sendMessage,
+  } = useZhihuAction(APPSOURCE, scrollableNodeRef);
   const [tabs] = useState(defTab);
-  const scrollableNodeRef = useRef<HTMLDivElement>(null);
-  const [activeKey, setActiveKey] = useState<'hot'|"follow"|"recommend">(defTab[0].key);
+
+  const [activeKey, setActiveKey] = useState<"hot" | "follow" | "recommend">(
+    defTab[0].key
+  );
+
+  useEffect(() => {
+    const scrollableDiv = scrollableNodeRef.current;
+    if (!scrollableDiv) return;
+
+    const debouncedSave = debounce((scrollTop: number) => {
+      sendMessage("ZHIHU_SAVE_SCROLL_POSITION", scrollTop, "", APPSOURCE);
+    }, 500);
+
+    const handleScroll = () => {
+      debouncedSave(scrollableDiv.scrollTop);
+    };
+
+    scrollableDiv.addEventListener("scroll", handleScroll);
+
+    return () => {
+      scrollableDiv.removeEventListener("scroll", handleScroll);
+    };
+  }, [sendMessage]);
 
   const fetchData = useCallback(() => {
     getListData(activeKey);
@@ -55,7 +79,7 @@ function App() {
   const onChange = useCallback(
     (key: string) => {
       clearList();
-      setActiveKey(key as 'hot'|"follow"|"recommend");
+      setActiveKey(key as "hot" | "follow" | "recommend");
       getListData(key);
     },
     [clearList, getListData]

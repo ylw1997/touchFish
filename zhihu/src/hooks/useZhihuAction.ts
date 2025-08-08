@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-08 11:33:36
+ * @LastEditTime: 2025-08-08 14:18:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\hooks\useZhihuAction.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -13,13 +13,20 @@ import type { ZhihuItemData } from "../../../type";
 import { useMessageHandler } from "./useMessageHandler";
 import { useVscodeMessage } from "./useVscodeMessage";
 
-const useZhihuAction = (source: string) => {
+const useZhihuAction = (
+  source: string,
+  scrollableNodeRef: React.RefObject<HTMLDivElement | null>
+) => {
   const [list, setList] = useState<ZhihuItemData[]>([]);
   const [questionDetailDrawerOpen, setQuestionDetailDrawerOpen] =
     useState(false);
   const [questionData, setQuestionData] = useState<ZhihuItemData[]>([]);
   const [questionTitle, setQuestionTitle] = useState("");
   const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
+
+  const restoreScrollPosition = useCallback(() => {
+    sendMessage("ZHIHU_RESTORE_SCROLL_POSITION", undefined, "", source);
+  }, [sendMessage, source]);
 
   const clearList = useCallback(() => {
     setList([]);
@@ -74,8 +81,13 @@ const useZhihuAction = (source: string) => {
     () => ({
       ZHIHU_SENDDATA: handleSendData,
       sendZhihuQuestionDetail: handleSendZhihuQuestionDetail,
+      ZHIHU_RESTORE_SCROLL_POSITION: (payload: any) => {
+        if (scrollableNodeRef.current) {
+          scrollableNodeRef.current.scrollTop = payload;
+        }
+      },
     }),
-    [handleSendData, handleSendZhihuQuestionDetail]
+    [handleSendData, handleSendZhihuQuestionDetail, scrollableNodeRef]
   );
 
   useMessageHandler(handlers);
@@ -90,6 +102,8 @@ const useZhihuAction = (source: string) => {
     questionTitle,
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
+    restoreScrollPosition,
+    sendMessage
   };
 };
 

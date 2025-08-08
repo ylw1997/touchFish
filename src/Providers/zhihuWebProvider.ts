@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-07 17:02:31
+ * @LastEditTime: 2025-08-08 13:46:37
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -14,7 +14,11 @@ import {
   Uri,
 } from "vscode";
 import * as vscode from "vscode";
-import { getZhihuComment, getZhihuWebData, getZhihuWebDetail } from "../api/zhihu";
+import {
+  getZhihuComment,
+  getZhihuWebData,
+  getZhihuWebDetail,
+} from "../api/zhihu";
 import * as fs from "fs";
 import { ZhihuCommandsType } from "../../type";
 export class ZhihuWebProvider implements WebviewViewProvider {
@@ -25,6 +29,19 @@ export class ZhihuWebProvider implements WebviewViewProvider {
       enableScripts: true,
       localResourceRoots: [this.context.extensionUri],
     };
+
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        const position = this.context.workspaceState.get(
+          "zhihuScrollPosition",
+          0
+        );
+        webviewView.webview.postMessage({
+          command: "ZHIHU_RESTORE_SCROLL_POSITION",
+          payload: position,
+        });
+      }
+    });
 
     webviewView.webview.onDidReceiveMessage(
       async (message: ZhihuCommandsType<string | any>) => {
@@ -48,7 +65,7 @@ export class ZhihuWebProvider implements WebviewViewProvider {
                 data: comments,
                 answerId: message.payload,
                 source: message.source,
-              }
+              },
             });
             break;
           }
@@ -64,17 +81,16 @@ export class ZhihuWebProvider implements WebviewViewProvider {
             });
             break;
           }
+          case "ZHIHU_SAVE_SCROLL_POSITION": {
+            this.context.workspaceState.update(
+              "zhihuScrollPosition",
+              message.payload
+            );
+            break;
+          }
         }
       }
-    )
-      
-
-
-    const config = vscode.workspace.getConfiguration("touchfish");
-    let showImg = config.get("showImg") as boolean | undefined;
-    if (showImg === undefined) {
-      showImg = true;
-    }
+    );
 
     // 判断是否为开发环境
     const isDev =
@@ -88,9 +104,6 @@ export class ZhihuWebProvider implements WebviewViewProvider {
       <!doctype html>
                 <html lang="en">
           <head>
-          <script>
-          window.showImg = ${showImg}
-          </script>
             <script type="module">
         import RefreshRuntime from "http://localhost:5174/@react-refresh"
         RefreshRuntime.injectIntoGlobalHook(window)
@@ -122,10 +135,6 @@ export class ZhihuWebProvider implements WebviewViewProvider {
           `${attr}="${webviewView.webview.asWebviewUri(
             vscode.Uri.joinPath(distPath, path)
           )}"`
-      );
-      html = html.replace(
-        "</head>",
-        `<script>window.showImg = ${showImg}</script></head>`
       );
       htmlContent = html;
     }
