@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.0.6](https://yangliwei.top///compare/v8.0.5...v8.0.6) (2025-08-08)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **zhihu:** 重构评论组件布局和样式 ([81dc49b](https://yangliwei.top/81dc49bcc56f4539689591f2466dc1853695efc4))
+
+
+### 👷‍ Build System | 构建
+
+* 更新版本号至 8.0.6 ([ae4e8df](https://yangliwei.top/ae4e8dfe7d6cebee1a78483233e0d85ff012c4b3))
+
 ### [8.0.5](https://yangliwei.top///compare/v8.0.4...v8.0.5) (2025-08-08)
 
 
