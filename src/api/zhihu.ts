@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-08 11:33:59
+ * @LastEditTime: 2025-08-08 15:25:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -51,7 +51,7 @@ export const getZhihu96 = async (url: string) => {
   const b = await getZhihuCookieByField("d_c0");
   const burl = `${xzse93}+${url}+${b}`;
   const signatureResult = await getZhihuSignature(burl);
-  console.log("知乎请求url:", burl);
+  // console.log("知乎请求url:", burl);
   // console.log("知乎签名:", signatureResult);
   return signatureResult;
 };

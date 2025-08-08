@@ -91,13 +91,6 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
           {item.author?.name}
         </Avatar>
       )}
-      {/* <Avatar
-        size={40}
-        style={{ border: "none", flexShrink: 0 }}
-        src={item.author?.avatar_url}
-      >
-        {item.author?.name}
-      </Avatar> */}
       <div style={{ marginLeft: 10 }}>
         <span
           className={"nick-name"}

@@ -1,3 +1,12 @@
+/*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-08-07 14:55:56
+ * @LastEditTime: 2025-08-08 15:29:08
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\zhihu\src\components\CommentItem.tsx
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
 import { Avatar, Card, Space, Tag, Typography } from "antd";
 import React from "react";
 import dayjs from "dayjs";
@@ -11,7 +20,6 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
   return (
     <Card
       size="small"
-      style={{ margin: "8px 0" }}
       styles={{
         body: {
           paddingTop: "8px",
@@ -30,7 +38,7 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
       </div>
       <div
         dangerouslySetInnerHTML={{ __html: processCommentContent(comment.content) }}
-        style={{ margin: "8px 0" }}
+        style={{ margin: "8px 0",lineHeight: "2" }}
       ></div>
       <Space>
         {comment.comment_tag?.map((tag) => (
