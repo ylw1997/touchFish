@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-08-07 15:10:14
+ * @LastEditTime: 2025-08-08 10:15:05
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -296,13 +296,15 @@ export interface ZhihuQuestion {
 
 export interface ZhihuItemData {
   id: string;
-  author: ZhihuAuthor;
+  author?: ZhihuAuthor;
   question?: ZhihuQuestion;
-  created_time: number;
-  voteup_count: number;
-  comment_count: number;
+  created_time?: number;
+  voteup_count?: number;
+  comment_count?: number;
   excerpt: string;
-  content: string;
+  content?: string;
+  metrics_area?: string;
+  image_area?: string;
 }
 
 export interface ZhihuCommentItem {
@@ -324,4 +326,23 @@ export interface ZhihuCommentItem {
     text: string;
   }[];
   child_comments: ZhihuCommentItem[];
+}
+
+
+export interface ZhihuHotItem {
+	excerpt_area:{
+    text:string;
+  },
+  image_area:{
+    url:string;
+  },
+  link:{
+    url:string;
+  },
+  title_area:{
+    text:string;
+  },
+  metrics_area:{
+    text:string;
+  }
 }

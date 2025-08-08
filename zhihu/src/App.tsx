@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-07 17:36:36
+ * @LastEditTime: 2025-08-08 10:26:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -41,7 +41,7 @@ function App() {
   } = useZhihuAction(APPSOURCE);
   const [tabs] = useState(defTab);
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
-  const [activeKey, setActiveKey] = useState(defTab[0].key);
+  const [activeKey, setActiveKey] = useState<'hot'|"follow"|"recommend">(defTab[0].key);
 
   const fetchData = useCallback(() => {
     getListData(activeKey);
@@ -55,7 +55,7 @@ function App() {
   const onChange = useCallback(
     (key: string) => {
       clearList();
-      setActiveKey(key);
+      setActiveKey(key as 'hot'|"follow"|"recommend");
       getListData(key);
     },
     [clearList, getListData]
@@ -85,7 +85,7 @@ function App() {
           next={fetchData}
           loader={loaderFunc(1)}
           endMessage={<Divider plain>没有了🤐</Divider>}
-          hasMore={true}
+          hasMore={activeKey != "hot" ? true : false}
           scrollableTarget="scrollableDiv"
         >
           {list.map((item: ZhihuItemData) => (

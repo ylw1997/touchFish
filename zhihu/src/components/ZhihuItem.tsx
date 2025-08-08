@@ -4,9 +4,10 @@ import {
   MessageOutlined,
   DownOutlined,
   UpOutlined,
+  FireOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useMessageHandler } from "../hooks/useMessageHandler";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import CommentItem from "./CommentItem";
@@ -22,7 +23,10 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   openQuestionDetailDrawer,
   isDetail,
 }) => {
-  const [expanded, setExpanded] = useState(isDetail ? true : false);
+  const isLoneContent = useMemo(() => {
+    return item.content && item.content.length > 2000;
+  }, [item.content]);
+  const [expanded, setExpanded] = useState(!isLoneContent); //默认阅读全文
   const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
   const [showComments, setShowComments] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -37,24 +41,24 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     },
   });
 
-  const backToView = ()=>{
+  const backToView = () => {
     if (cardRef.current) {
       const cardTop = cardRef.current.getBoundingClientRect().top;
       if (cardTop < 0) {
         cardRef.current.scrollIntoView({ behavior: "auto", block: "start" });
       }
     }
-  }
+  };
 
   const handleToggle = () => {
-    if (expanded) backToView()
+    if (expanded) backToView();
     setExpanded(!expanded);
   };
 
   const getComments = () => {
     if (showComments) {
       setShowComments(false);
-      backToView()
+      backToView();
       return;
     }
     setShowComments(true);
@@ -84,42 +88,58 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         <div className="info">
           <span>
             {isDetail ? "" : item.author?.name}{" "}
-            {dayjs.unix(item.created_time).fromNow()}
+            {item.created_time ? dayjs.unix(item.created_time).fromNow() : ""}
           </span>
         </div>
       </div>
     </Flex>
   );
 
-  const actions = [
-    <span className="link" key="voteup">
-      <LikeOutlined /> {item.voteup_count}
-    </span>,
-    <span className="link" key="comment" onClick={getComments}>
-      {showComments ? (
-        <span>
-          <UpOutlined /> 收起评论
-        </span>
-      ) : (
-        <span>
-          <MessageOutlined /> {item.comment_count}
-        </span>
-      )}
-    </span>,
-    <span className="link" key="expand" onClick={handleToggle}>
-      {expanded ? (
-        <>
-          <UpOutlined /> 收起
-        </>
-      ) : (
-        <>
-          <DownOutlined /> 阅读全文
-        </>
-      )}
-    </span>,
-  ];
-
-  if (isDetail) actions.pop();
+  const actions = [];
+  if (item.voteup_count) {
+    actions.push(
+      <span className="link" key="voteup">
+        <LikeOutlined /> {item.voteup_count}
+      </span>
+    );
+  }
+  if (item.comment_count != undefined) {
+    actions.push(
+      <span className="link" key="comment" onClick={getComments}>
+        {showComments ? (
+          <span>
+            <UpOutlined /> 收起评论
+          </span>
+        ) : (
+          <span>
+            <MessageOutlined /> {item.comment_count}
+          </span>
+        )}
+      </span>
+    );
+  }
+  if (isLoneContent) {
+    actions.push(
+      <span className="link" key="expand" onClick={handleToggle}>
+        {expanded ? (
+          <>
+            <UpOutlined /> 收起
+          </>
+        ) : (
+          <>
+            <DownOutlined /> 阅读全文
+          </>
+        )}
+      </span>
+    );
+  }
+  if (item.metrics_area) {
+    actions.push(
+      <span key="metrics">
+        <FireOutlined /> {item.metrics_area}
+      </span>
+    );
+  }
 
   return (
     <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
@@ -127,17 +147,23 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       <Card
         key={item.id}
         title={renderTitle()}
-        style={{
-          background: "#191919",
-        }}
         actions={actions}
       >
         <div className="content">
-          <div
-            dangerouslySetInnerHTML={{
-              __html: expanded ? item.content : item.excerpt,
-            }}
-          ></div>
+          {item.content ? (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: expanded ? item.content : item.excerpt,
+              }}
+            ></div>
+          ) : (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: item.excerpt,
+              }}
+            ></div>
+          )}
+          {item.image_area ? <img src={item.image_area} /> : <></>}
         </div>
         {showComments && (
           <List

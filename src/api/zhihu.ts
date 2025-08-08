@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-07 17:09:26
+ * @LastEditTime: 2025-08-08 10:00:43
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -11,8 +11,11 @@ import { NewsItem } from "../type/type";
 import * as vscode from "vscode";
 import { setConfigByKey, showNewsNumber } from "../config";
 import { getZhihuSignature } from "../utils/signature";
-import { ZhihuCommentItem, ZhihuItemData } from "../../type";
-import { zhihuContentImage } from "../utils/util";
+import { ZhihuCommentItem, ZhihuHotItem, ZhihuItemData } from "../../type";
+import {
+  convertZhihuHotItemToZhihuItemData,
+  zhihuContentImage,
+} from "../utils/util";
 
 const xzse93 = "101_3_3.0";
 export const getOrSetZhihuCookie = async () => {
@@ -217,6 +220,7 @@ export const getZhihuHot = async () => {
     {
       headers: {
         Cookie: cookie,
+        "x-api-version":'3.0.76',
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
       },
@@ -226,10 +230,28 @@ export const getZhihuHot = async () => {
 };
 
 // web知乎处理数据
-export const getZhihuWebData = async (tab: "follow" | "recommend") => {
+export const getZhihuWebData = async (tab: "follow" | "recommend" | "hot") => {
   const resArr: ZhihuItemData[] = [];
-  const res =
-    tab === "follow" ? await getZhihuFollowData() : await getZhihuData();
+  let res = { data: { data: [] } };
+  switch (tab) {
+    case "follow":
+      res = await getZhihuFollowData();
+      break;
+    case "recommend":
+      res = await getZhihuData();
+      break;
+    case "hot": {
+      const hotres = await getZhihuHot();
+      console.log(hotres);
+      hotres.forEach((item: { target: ZhihuHotItem }) => {
+        resArr.push(convertZhihuHotItemToZhihuItemData(item.target));
+      });
+      break;
+    }
+  }
+  if (tab === "hot") {
+    return resArr;
+  }
   res.data.data.forEach((element: { target?: ZhihuItemData }) => {
     if (element.target && element.target.question && element.target.content)
       resArr.push({

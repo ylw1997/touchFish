@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2025-08-07 13:39:19
+ * @LastEditTime: 2025-08-08 10:15:20
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description:
@@ -9,6 +9,7 @@
 import { NewsCommandType, NewsItem } from "../type/type";
 import { ThemeIcon, TreeItem } from "vscode";
 import { showNewsWordNumber } from "../config/index";
+import { ZhihuHotItem, ZhihuItemData } from "../../type";
 
 /**
  * 转换之家数据
@@ -112,4 +113,25 @@ export const zhihuContentImage = (content: string): string => {
     }
     return imgTag;
   });
+};
+
+export const convertZhihuHotItemToZhihuItemData = (
+  hotItem: ZhihuHotItem
+): ZhihuItemData => {
+  const id = hotItem.link.url.split("/").pop() || "";
+  return {
+    id,
+    question: {
+      id,
+      title: hotItem.title_area.text,
+    },
+    author: {
+      id: "0",
+      name: "热榜",
+      avatar_url: "https://pica.zhimg.com/aadd7b895_s.jpg",
+    },
+    excerpt: hotItem.excerpt_area.text,
+    metrics_area: hotItem.metrics_area.text,
+    image_area: hotItem.image_area.url,
+  };
 };
