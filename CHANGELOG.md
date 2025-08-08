@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.0.5](https://yangliwei.top///compare/v8.0.4...v8.0.5) (2025-08-08)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **zhihu:** 优化知乎组件样式和功能 ([99b7c53](https://yangliwei.top/99b7c53ab7195223ae473b966ef8ef9ce11acbc1))
+
 ### [8.0.4](https://yangliwei.top///compare/v8.0.3...v8.0.4) (2025-08-08)
 
 
