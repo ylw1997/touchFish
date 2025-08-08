@@ -70,7 +70,8 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     <Flex>
       {item.index != undefined ? (
         <Avatar
-          size={40}
+        shape="square"
+          size={44}
           style={{
             border: "none",
             flexShrink: 0,
@@ -84,7 +85,8 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         </Avatar>
       ) : (
         <Avatar
-          size={40}
+        shape="square"
+          size={44}
           style={{ border: "none", flexShrink: 0 }}
           src={item.author?.avatar_url}
         >
@@ -187,7 +189,8 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
               <Flex align="center" justify="space-between">
                 <h3>评论</h3>
                 <Button
-                  type="link"
+                  color="default"
+                  variant="filled"
                   onClick={() => setShowComments(false)}
                 >
                   <UpOutlined /> 收起评论

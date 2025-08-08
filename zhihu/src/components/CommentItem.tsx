@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 14:55:56
- * @LastEditTime: 2025-08-08 16:58:05
+ * @LastEditTime: 2025-08-08 17:13:30
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\CommentItem.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -21,8 +21,8 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
     <List.Item style={{
       padding: '8px 0'
     }} >
-      <Flex gap="middle" style={{ width: '100%' }}>
-        <Avatar src={comment.author.avatar_url} />
+      <Flex gap={10} style={{ width: '100%' }}>
+        <Avatar src={comment.author.avatar_url} shape="square" />
         <div style={{ flex: 1 }}>
           <Text strong>{comment.author.name}</Text>
           <div
