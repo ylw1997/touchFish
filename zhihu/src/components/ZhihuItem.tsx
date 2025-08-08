@@ -179,14 +179,15 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         </div>
         {showComments && (
           <List
+            className="comment-list"
+            itemLayout="horizontal"
             dataSource={comments}
             renderItem={(comment) => <CommentItem comment={comment} />}
             header={
               <Flex align="center" justify="space-between">
                 <h3>评论</h3>
                 <Button
-                  color="default"
-                  variant="filled"
+                  type="link"
                   onClick={() => setShowComments(false)}
                 >
                   <UpOutlined /> 收起评论

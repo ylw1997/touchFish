@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 14:55:56
- * @LastEditTime: 2025-08-08 15:29:08
+ * @LastEditTime: 2025-08-08 16:54:53
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\CommentItem.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
  * @Description: 
  */
-import { Avatar, Card, Space, Tag, Typography } from "antd";
+import { Avatar, Flex, List, Space, Tag, Typography } from "antd";
 import React from "react";
 import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../type";
@@ -18,46 +18,43 @@ const { Text } = Typography;
 
 const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
   return (
-    <Card
-      size="small"
-      styles={{
-        body: {
-          paddingTop: "8px",
-          paddingBottom: "8px",
-        },
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <Avatar src={comment.author.avatar_url} size="small" />
-        <Text strong style={{ marginLeft: "8px" }}>
-          {comment.author.name}
-        </Text>
-        <Text type="secondary" style={{ marginLeft: "auto" }}>
-         <LikeOutlined /> {comment.like_count}
-        </Text>
-      </div>
-      <div
-        dangerouslySetInnerHTML={{ __html: processCommentContent(comment.content) }}
-        style={{ margin: "8px 0",lineHeight: "2" }}
-      ></div>
-      <Space>
-        {comment.comment_tag?.map((tag) => (
-          <Tag color={tag.type == "hot" ? "pink" : "blue"} key={tag.text}>
-            {tag.text}
-          </Tag>
-        ))}
-        <Text type="secondary">
-          {dayjs(comment.created_time * 1000).fromNow()}
-        </Text>
-      </Space>
-      {comment.child_comments && comment.child_comments.length > 0 && (
-        <>
-          {comment.child_comments.map((childComment) => (
-            <CommentItem key={childComment.id} comment={childComment} />
-          ))}
-        </>
-      )}
-    </Card>
+    <List.Item style={{
+      padding: '8px 0'
+    }} >
+      <Flex gap="middle" style={{ width: '100%' }}>
+        <Avatar src={comment.author.avatar_url} />
+        <div style={{ flex: 1 }}>
+          <Text strong>{comment.author.name}</Text>
+          <div
+            dangerouslySetInnerHTML={{ __html: processCommentContent(comment.content) }}
+            style={{ marginTop: '4px' }}
+          />
+          <Flex style={{ marginTop: '8px' }} justify="space-between">
+            <Space>
+              {comment.comment_tag?.map((tag) => (
+                <Tag color={tag.type === 'hot' ? 'pink' : 'blue'} key={tag.text}>
+                  {tag.text}
+                </Tag>
+              ))}
+              <Text type="secondary">
+                {dayjs(comment.created_time * 1000).fromNow()}
+              </Text>
+            </Space>
+             <Text type="secondary">
+                <LikeOutlined /> {comment.like_count}
+              </Text>
+          </Flex>
+          {comment.child_comments && comment.child_comments.length > 0 && (
+            <div style={{ marginTop: '10px',borderTop:'1px solid #fdfdfd1f' }}>
+              <List
+                dataSource={comment.child_comments}
+                renderItem={(child) => <CommentItem comment={child} />}
+              />
+            </div>
+          )}
+        </div>
+      </Flex>
+    </List.Item>
   );
 };
 
