@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 14:55:56
- * @LastEditTime: 2025-08-08 16:54:53
+ * @LastEditTime: 2025-08-08 16:58:05
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\CommentItem.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -27,7 +27,7 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
           <Text strong>{comment.author.name}</Text>
           <div
             dangerouslySetInnerHTML={{ __html: processCommentContent(comment.content) }}
-            style={{ marginTop: '4px' }}
+            style={{ marginTop: '4px',lineHeight: '2' }}
           />
           <Flex style={{ marginTop: '8px' }} justify="space-between">
             <Space>
