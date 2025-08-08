@@ -1,6 +1,23 @@
 # 更新历史 
 
 
+### [8.0.3](https://yangliwei.top///compare/v8.0.2...v8.0.3) (2025-08-08)
+
+
+### 🔧 Continuous Integration | CI 配置
+
+* 修改版本控制配置 ([0695d7d](https://yangliwei.top/0695d7deee7449d81c7b49783f73fef9b3af2fce))
+
+
+### 👷‍ Build System | 构建
+
+* **zhihu:** 更新 build-publish 脚本并添加版本控制 ([8686236](https://yangliwei.top/868623622c8c8634c390d76c791ca245c8415fb8))
+
+
+### 📝 Documentation | 文档
+
+* **README:** 更新 README 文档 ([5e2c8be](https://yangliwei.top/5e2c8bef58bde6c10e44fd53539c92a4c3f1f196))
+
 ### [8.0.2](https://yangliwei.top///compare/v1.0.0...v8.0.2) (2025-08-08)
 
 
