@@ -163,6 +163,7 @@ function App() {
           onClose={closeQuestionDetailDrawer}
           questionData={questionData}
           title={questionTitle}
+          handleVote={handleVote}
         />
       </Suspense>
       <SearchDrawer

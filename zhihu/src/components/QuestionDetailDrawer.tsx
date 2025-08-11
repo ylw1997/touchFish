@@ -17,6 +17,7 @@ interface QuestionDetailDrawerProps {
   onClose: () => void;
   questionData: ZhihuItemData[];
   title: string;
+  handleVote: (answerId: string) => void;
 }
 
 const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
@@ -24,6 +25,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   onClose,
   questionData,
   title,
+  handleVote,
 }) => {
   return (
     <Drawer
@@ -54,7 +56,9 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
     >
       <List
         dataSource={questionData}
-        renderItem={(item) => <ZhihuItem isDetail item={item} />}
+        renderItem={(item) => (
+          <ZhihuItem isDetail item={item} handleVote={handleVote} />
+        )}
       />
     </Drawer>
   );
