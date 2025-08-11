@@ -22,7 +22,10 @@ import { loaderFunc } from "./utils/loader";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
-import QuestionDetailDrawer from "./components/QuestionDetailDrawer";
+import { Suspense, lazy } from "react";
+const QuestionDetailDrawer = lazy(
+  () => import("./components/QuestionDetailDrawer")
+);
 import type { ZhihuItemData } from "../../type";
 import useZhihuAction from "./hooks/useZhihuAction";
 import { debounce } from "./utils";
@@ -141,12 +144,14 @@ function App() {
           tooltip={{ title: "刷新", placement: "left" }}
         />
       </FloatButton.Group>
-      <QuestionDetailDrawer
-        open={questionDetailDrawerOpen}
-        onClose={closeQuestionDetailDrawer}
-        questionData={questionData}
-        title={questionTitle}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        <QuestionDetailDrawer
+          open={questionDetailDrawerOpen}
+          onClose={closeQuestionDetailDrawer}
+          questionData={questionData}
+          title={questionTitle}
+        />
+      </Suspense>
     </>
   );
 }
