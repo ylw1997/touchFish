@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.1.1](https://yangliwei.top///compare/v8.1.0...v8.1.1) (2025-08-11)
+
+
+### ✨ Features | 新功能
+
+* **components:** 为 QuestionDetailDrawer 组件添加投票功能 ([700d215](https://yangliwei.top/700d2158a01b3cb4d222ac13451e983523d5886e))
+
+
+### 👷‍ Build System | 构建
+
+* 更新版本号至 8.1.1 ([558c2db](https://yangliwei.top/558c2dbe5eae83a8c43fa715923830577c672e4c))
+
 ## [8.1.0](https://yangliwei.top///compare/v8.0.7...v8.1.0) (2025-08-11)
 
 
