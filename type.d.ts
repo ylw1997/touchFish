@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-08-08 11:24:32
+ * @LastEditTime: 2025-08-11 15:57:42
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -80,13 +80,14 @@ export type CommandList =
   | "SAVE_SCROLL_POSITION"
   | "RESTORE_SCROLL_POSITION";
 
-export type ZhihuCommandList = 
+export type ZhihuCommandList =
   | "ZHIHU_GETDATA"
   | "ZHIHU_SENDDATA"
   | "getZhihuComment"
   | "getZhihuQuestionDetail"
   | "sendZhihuQuestionDetail"
   | "ZHIHU_SAVE_SCROLL_POSITION"
+  | "ZHIHU_VOTE_ANSWER"
   | "ZHIHU_RESTORE_SCROLL_POSITION";
 
 export type ZhihuCommandsType<T> = {
@@ -105,8 +106,6 @@ export interface payloadType extends weiboAJAX {
   source: string;
   msg?: string;
 }
-
-
 
 export type weiboAJAX = {
   ok: number;
@@ -151,11 +150,11 @@ export interface weiboItem extends baseWeiboField {
   pic_ids: string[];
   mblogid: string;
   mblogtype: number; // 微博类型 0:普通微博 1,热门或者广告 2,置顶
-  pics?:{
+  pics?: {
     pid: string;
     size: string;
     url: string;
-  }[]
+  }[];
   bid: string; // 微博ID
   pic_infos: {
     [key: string]: {
@@ -284,7 +283,6 @@ export interface hotItem {
   num: number;
 }
 
-
 export interface ZhihuAuthor {
   id: string;
   name: string;
@@ -308,6 +306,7 @@ export interface ZhihuItemData {
   metrics_area?: string;
   image_area?: string;
   index?: number;
+  vote_next_step?: "vote" | "unvote";
 }
 
 export interface ZhihuCommentItem {
@@ -331,21 +330,20 @@ export interface ZhihuCommentItem {
   child_comments: ZhihuCommentItem[];
 }
 
-
 export interface ZhihuHotItem {
-	excerpt_area:{
-    text:string;
-  },
-  image_area:{
-    url:string;
-  },
-  link:{
-    url:string;
-  },
-  title_area:{
-    text:string;
-  },
-  metrics_area:{
-    text:string;
-  }
+  excerpt_area: {
+    text: string;
+  };
+  image_area: {
+    url: string;
+  };
+  link: {
+    url: string;
+  };
+  title_area: {
+    text: string;
+  };
+  metrics_area: {
+    text: string;
+  };
 }

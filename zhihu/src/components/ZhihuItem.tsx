@@ -5,6 +5,7 @@ import {
   DownOutlined,
   UpOutlined,
   FireOutlined,
+  LikeFilled,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import React, { useMemo, useRef, useState } from "react";
@@ -12,6 +13,7 @@ import { useMessageHandler } from "../hooks/useMessageHandler";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import CommentItem from "./CommentItem";
 import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
+import { vscode } from "../utils/vscode";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
@@ -27,6 +29,8 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     return item.content && item.content.length > 2000;
   }, [item.content]);
   const [expanded, setExpanded] = useState(!isLoneContent); //默认阅读全文
+  const [voted, setVoted] = useState(item.vote_next_step === "unvote");
+  const [voteCount, setVoteCount] = useState(item.voteup_count);
   const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
   const [showComments, setShowComments] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -66,11 +70,25 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     sendMessage("getZhihuComment", item.id, "获取评论中...", "ZHIHUAPP");
   };
 
+  const handleVote = () => {
+    const newVoted = !voted;
+    const newVoteCount = newVoted ? (voteCount ?? 0) + 1 : (voteCount ?? 0) - 1;
+    setVoted(newVoted);
+    setVoteCount(newVoteCount);
+    vscode.postMessage({
+      command: "ZHIHU_VOTE_ANSWER",
+      payload: {
+        answerId: item.id,
+        type: newVoted ? "up" : "neutral",
+      },
+    });
+  };
+
   const renderTitle = () => (
     <Flex>
       {item.index != undefined ? (
         <Avatar
-        shape="square"
+          shape="square"
           size={44}
           style={{
             border: "none",
@@ -85,7 +103,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         </Avatar>
       ) : (
         <Avatar
-        shape="square"
+          shape="square"
           size={44}
           style={{ border: "none", flexShrink: 0 }}
           src={item.author?.avatar_url}
@@ -116,8 +134,9 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const actions = [];
   if (item.voteup_count != undefined) {
     actions.push(
-      <span className="link" key="voteup">
-        <LikeOutlined /> {item.voteup_count}
+      <span className="link" key="voteup" onClick={handleVote}>
+        {voted ? <LikeFilled style={{ color: "red" }} /> : <LikeOutlined />}{" "}
+        {voteCount}
       </span>
     );
   }

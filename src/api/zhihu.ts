@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-08 15:25:32
+ * @LastEditTime: 2025-08-11 16:16:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -193,4 +193,25 @@ export const getZhihuWebDetail = async (
       });
   });
   return resArr;
+};
+
+// 点赞 /api/v4/answers/1918268396996363949/voters
+
+export const voteZhihuAnswer = async (answerId: string,type:'up'|'down'|"neutral") => {
+  const url = `/api/v4/answers/${answerId}/voters`;
+  const xzse96 = await getZhihu96(url);
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const headers = {
+    Cookie: cookie,
+    "x-zse-96": xzse96,
+    "x-zse-93": xzse93,
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+  };
+
+  return await axios.post(
+    `https://www.zhihu.com${url}`,
+    { type },
+    { headers }
+  );
 };

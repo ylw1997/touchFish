@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-08 13:46:37
+ * @LastEditTime: 2025-08-11 16:29:30
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -18,6 +18,7 @@ import {
   getZhihuComment,
   getZhihuWebData,
   getZhihuWebDetail,
+  voteZhihuAnswer,
 } from "../api/zhihu";
 import * as fs from "fs";
 import { ZhihuCommandsType } from "../../type";
@@ -86,6 +87,12 @@ export class ZhihuWebProvider implements WebviewViewProvider {
               "zhihuScrollPosition",
               message.payload
             );
+            break;
+          }
+          case "ZHIHU_VOTE_ANSWER": {
+            const { answerId, type } = message.payload;
+           const res = await voteZhihuAnswer(answerId, type);
+           console.log("ZHIHU_VOTE_ANSWER",res);
             break;
           }
         }

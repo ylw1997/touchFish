@@ -56,6 +56,34 @@ const useZhihuAction = (
     setQuestionTitle("");
   };
 
+  const handleVote = (answerId: string) => {
+    setList((prevList) =>
+      prevList.map((item) => {
+        if (item.id === answerId) {
+          const newVoted = item.vote_next_step !== "unvote";
+          const newVoteCount = newVoted
+            ? (item.voteup_count ?? 0) + 1
+            : (item.voteup_count ?? 0) - 1;
+          sendMessage(
+            "ZHIHU_VOTE_ANSWER",
+            {
+              answerId: item.id,
+              voting: newVoted ? "vote" : "unvote",
+            },
+            "",
+            source
+          );
+          return {
+            ...item,
+            vote_next_step: newVoted ? "unvote" : "vote",
+            voteup_count: newVoteCount,
+          };
+        }
+        return item;
+      })
+    );
+  };
+
   const handleSendData = useCallback(
     (payload: any) => {
       messageApi.destroy("ZHIHU_GETDATA");
@@ -103,7 +131,8 @@ const useZhihuAction = (
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
     restoreScrollPosition,
-    sendMessage
+    sendMessage,
+    handleVote,
   };
 };
 
