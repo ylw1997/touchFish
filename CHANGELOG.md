@@ -1,6 +1,24 @@
 # 更新历史 
 
 
+## [8.1.0](https://yangliwei.top///compare/v8.0.7...v8.1.0) (2025-08-11)
+
+
+### 👷‍ Build System | 构建
+
+* 更新版本号至 8.0.7 ([7afb75f](https://yangliwei.top/7afb75f9949a1dad0db5a37592c87b2938860ffa))
+
+
+### ⚡ Performance Improvements | 性能优化
+
+* **zhihu:** 对 QuestionDetailDrawer 组件进行代码分割 ([07079cc](https://yangliwei.top/07079cc56297f4907726dec7d5c15b16f06f1384))
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 添加点赞功能 ([7b4c603](https://yangliwei.top/7b4c603aeaa830437807d638f27acc0968162c24))
+* **zhihu:** 添加搜索功能并优化知乎项 ([27c0fbb](https://yangliwei.top/27c0fbb12e588d3e608587c6166c0039bfa5177d))
+
 ### [8.0.7](https://yangliwei.top///compare/v8.0.6...v8.0.7) (2025-08-11)
 
 ### [8.0.6](https://yangliwei.top///compare/v8.0.5...v8.0.6) (2025-08-08)
