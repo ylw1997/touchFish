@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-11 16:16:50
+ * @LastEditTime: 2025-08-11 17:54:59
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -10,13 +10,14 @@ import axios from "axios";
 import * as vscode from "vscode";
 import { setConfigByKey } from "../config";
 import { getZhihuSignature } from "../utils/signature";
-import { ZhihuCommentItem, ZhihuHotItem, ZhihuItemData } from "../../type";
+import { ZhihuCommentItem, ZhihuHotItem, ZhihuItemData, ZhihuSearchItem } from "../../type";
 import {
   convertZhihuHotItemToZhihuItemData,
   zhihuContentImage,
 } from "../utils/util";
 
 const xzse93 = "101_3_3.0";
+const xapi = "3.0.91";
 export const getOrSetZhihuCookie = async () => {
   const config = vscode.workspace.getConfiguration("touchfish");
   let cookie = config.get("zhihuCookie") as string | undefined;
@@ -123,7 +124,7 @@ export const getZhihuHot = async () => {
     {
       headers: {
         Cookie: cookie,
-        "x-api-version": "3.0.76",
+        "x-api-version": xapi,
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
       },
@@ -197,7 +198,10 @@ export const getZhihuWebDetail = async (
 
 // 点赞 /api/v4/answers/1918268396996363949/voters
 
-export const voteZhihuAnswer = async (answerId: string,type:'up'|'down'|"neutral") => {
+export const voteZhihuAnswer = async (
+  answerId: string,
+  type: "up" | "down" | "neutral"
+) => {
   const url = `/api/v4/answers/${answerId}/voters`;
   const xzse96 = await getZhihu96(url);
   const cookie = (await getOrSetZhihuCookie()) as string;
@@ -209,9 +213,40 @@ export const voteZhihuAnswer = async (answerId: string,type:'up'|'down'|"neutral
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
   };
 
-  return await axios.post(
-    `https://www.zhihu.com${url}`,
-    { type },
-    { headers }
+  return await axios.post(`https://www.zhihu.com${url}`, { type }, { headers });
+};
+
+// 搜索接口 https://www.zhihu.com/api/v4/search_v3?gk_version=gz-gaokao&t=general&q=OpenAI%E5%8F%91%E5%B8%83GPT-5&correction=1&offset=0&limit=20&filter_fields=&lc_idx=0&show_all_topics=0&search_source=Normal
+export const searchZhihu = async (query: string): Promise<ZhihuItemData[]> => {
+  const encodedQuery = encodeURIComponent(query);
+  const url = `/api/v4/search_v3?t=general&q=${encodedQuery}&gk_version=gz-gaokao&correction=1&offset=0&limit=20&filter_fields=&lc_idx=0&show_all_topics=0&search_source=Normal`;
+  const xzse96 = await getZhihu96(url);
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const searchUrl = `https://www.zhihu.com${url}`;
+  const res = await axios.get(searchUrl, {
+    headers: {
+      Cookie: cookie,
+      "x-zse-96": xzse96,
+      "x-zse-93": xzse93,
+      "x-api-version": xapi,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+
+  const searchResults = res.data.data;
+  const filteredData = searchResults.filter(
+    (item: any) => item.type === "search_result"
   );
+
+  return filteredData.map((item: ZhihuSearchItem) => {
+    return {
+      ...item.object,
+      question: {
+        ...item.object.question,
+        title: item.object.title,
+      },
+      content: zhihuContentImage(item.object.content ?? ""),
+    };
+  });
 };

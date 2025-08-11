@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-08 15:05:05
+ * @LastEditTime: 2025-08-11 17:43:37
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -11,7 +11,11 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Divider, FloatButton, Tabs, type TabsProps } from "antd";
 import "./style/index.less";
-import { RedoOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
+import {
+  RedoOutlined,
+  VerticalAlignTopOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
@@ -19,6 +23,7 @@ import _relativeTime from "dayjs/plugin/relativeTime";
 import { defTab } from "./data/tabs";
 import ZhihuItem from "./components/ZhihuItem";
 import { loaderFunc } from "./utils/loader";
+import SearchDrawer from "./components/SearchDrawer";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -44,8 +49,10 @@ function App() {
     questionTitle,
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
+    handleVote,
   } = useZhihuAction(APPSOURCE, scrollableNodeRef);
   const [tabs] = useState(defTab);
+  const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
   const [activeKey, setActiveKey] = useState<"hot" | "follow" | "recommend">(
     defTab[0].key
@@ -123,6 +130,7 @@ function App() {
               item={item}
               key={item.id}
               openQuestionDetailDrawer={openQuestionDetailDrawer}
+              handleVote={handleVote}
             />
           ))}
         </InfiniteScroll>
@@ -134,6 +142,11 @@ function App() {
           icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
           tooltip={{ title: "回到顶部", placement: "left" }}
           target={() => scrollableNodeRef.current || window}
+        />
+        <FloatButton
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
+          onClick={() => setSearchDrawerOpen(true)}
         />
         <FloatButton
           onClick={() => {
@@ -152,6 +165,13 @@ function App() {
           title={questionTitle}
         />
       </Suspense>
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={() => setSearchDrawerOpen(false)}
+        source={APPSOURCE}
+        handleVote={handleVote}
+        openQuestionDetailDrawer={openQuestionDetailDrawer}
+      />
     </>
   );
 }

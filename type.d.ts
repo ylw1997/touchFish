@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-08-11 15:57:42
+ * @LastEditTime: 2025-08-11 17:30:31
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -88,6 +88,8 @@ export type ZhihuCommandList =
   | "sendZhihuQuestionDetail"
   | "ZHIHU_SAVE_SCROLL_POSITION"
   | "ZHIHU_VOTE_ANSWER"
+  | "ZHIHU_SEARCH"
+  | "ZHIHU_SEND_SEARCH_RESULTS"
   | "ZHIHU_RESTORE_SCROLL_POSITION";
 
 export type ZhihuCommandsType<T> = {
@@ -307,6 +309,7 @@ export interface ZhihuItemData {
   image_area?: string;
   index?: number;
   vote_next_step?: "vote" | "unvote";
+  title?: string;
 }
 
 export interface ZhihuCommentItem {
@@ -345,5 +348,15 @@ export interface ZhihuHotItem {
   };
   metrics_area: {
     text: string;
+  };
+}
+
+export interface ZhihuSearchItem {
+  type: "hot_timing" | "search_result";
+  object: ZhihuItemData;
+  index: number;
+  highlight?: {
+    description: string;
+    title: string;
   };
 }

@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-11 16:29:30
+ * @LastEditTime: 2025-08-11 17:28:07
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -19,6 +19,7 @@ import {
   getZhihuWebData,
   getZhihuWebDetail,
   voteZhihuAnswer,
+  searchZhihu,
 } from "../api/zhihu";
 import * as fs from "fs";
 import { ZhihuCommandsType } from "../../type";
@@ -93,6 +94,18 @@ export class ZhihuWebProvider implements WebviewViewProvider {
             const { answerId, type } = message.payload;
            const res = await voteZhihuAnswer(answerId, type);
            console.log("ZHIHU_VOTE_ANSWER",res);
+            break;
+          }
+          case "ZHIHU_SEARCH": {
+            const results = await searchZhihu(message.payload);
+            console.log("ZHIHU_SEARCH",results);
+            webviewView.webview.postMessage({
+              command: "ZHIHU_SEND_SEARCH_RESULTS",
+              payload: {
+                data: results,
+                source: message.source,
+              },
+            } as ZhihuCommandsType<any>);
             break;
           }
         }
