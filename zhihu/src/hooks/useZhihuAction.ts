@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-12 09:31:46
+ * @LastEditTime: 2025-08-12 10:51:12
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\hooks\useZhihuAction.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -23,6 +23,7 @@ const useZhihuAction = (
     useState(false);
   const [questionData, setQuestionData] = useState<ZhihuItemData[]>([]);
   const [questionTitle, setQuestionTitle] = useState("");
+  const [questionDetail, setQuestionDetail] = useState<string>("");
   const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
 
   const restoreScrollPosition = useCallback(() => {
@@ -55,6 +56,7 @@ const useZhihuAction = (
     setQuestionDetailDrawerOpen(false);
     setQuestionData([]);
     setQuestionTitle("");
+    setQuestionDetail("");
   };
 
   const voteHandler = (
@@ -106,7 +108,12 @@ const useZhihuAction = (
 
   const handleSendZhihuQuestionDetail = useCallback(
     (payload: any) => {
-      setQuestionData(payload.data);
+      if (payload.detail) {
+        setQuestionDetail(payload.detail);
+      }
+      if (payload.data) {
+        setQuestionData(payload.data);
+      }
       messageApi.destroy("getZhihuQuestionDetail");
     },
     [messageApi]
@@ -142,6 +149,7 @@ const useZhihuAction = (
     sendMessage,
     handleVote,
     voteHandler,
+    questionDetail,
   };
 };
 

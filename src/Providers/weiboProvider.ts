@@ -61,6 +61,7 @@ export class WeiboProvider implements WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage(
       async (message: commandsType<string | any>) => {
+        console.log("Weibo provider received a message:", message);
         switch (message.command) {
           case "SAVE_SCROLL_POSITION": {
             this.context.workspaceState.update(

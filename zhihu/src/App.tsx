@@ -52,6 +52,7 @@ function App() {
     closeQuestionDetailDrawer,
     handleVote,
     voteHandler,
+    questionDetail,
   } = useZhihuAction(APPSOURCE, scrollableNodeRef);
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -167,6 +168,7 @@ function App() {
           setQuestionData={setQuestionData}
           title={questionTitle}
           voteHandler={voteHandler}
+          questionDetail={questionDetail}
         />
       </Suspense>
       <SearchDrawer

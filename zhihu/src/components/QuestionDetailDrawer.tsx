@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-08-12 09:25:08
+ * @LastEditTime: 2025-08-12 14:18:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, List } from "antd";
+import { Drawer, List, Card } from "antd";
 import React from "react";
 import ZhihuItem from "./ZhihuItem";
 import type { ZhihuItemData } from "../../../type";
@@ -18,7 +18,12 @@ interface QuestionDetailDrawerProps {
   questionData: ZhihuItemData[];
   setQuestionData: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>;
   title: string;
-  voteHandler: (answerId: string, list: ZhihuItemData[], setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>) => void;
+  voteHandler: (
+    answerId: string,
+    list: ZhihuItemData[],
+    setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>
+  ) => void;
+  questionDetail: string;
 }
 
 const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
@@ -28,6 +33,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   setQuestionData,
   title,
   voteHandler,
+  questionDetail,
 }) => {
   return (
     <Drawer
@@ -56,10 +62,28 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
         },
       }}
     >
+      {questionDetail && (
+        <Card
+          style={{
+            background: "rgba(255, 255, 255, 0.1)",
+            border: "none",
+          }}
+        >
+          <div
+            className="question-detail-content"
+            style={{ color: "white" }}
+            dangerouslySetInnerHTML={{ __html: questionDetail }}
+          />
+        </Card>
+      )}
       <List
         dataSource={questionData}
         renderItem={(item) => (
-          <ZhihuItem isDetail item={item} handleVote={() => voteHandler(item.id, questionData, setQuestionData)} />
+          <ZhihuItem
+            isDetail
+            item={item}
+            handleVote={() => voteHandler(item.id, questionData, setQuestionData)}
+          />
         )}
       />
     </Drawer>
@@ -67,3 +91,4 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
 };
 
 export default QuestionDetailDrawer;
+

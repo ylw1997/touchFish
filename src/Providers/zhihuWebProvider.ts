@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-12 09:34:34
+ * @LastEditTime: 2025-08-12 14:15:51
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -20,6 +20,7 @@ import {
   getZhihuWebDetail,
   voteZhihuAnswer,
   searchZhihu,
+  getZhihuQuestionDetailFunc,
 } from "../api/zhihu";
 import * as fs from "fs";
 import { ZhihuCommandsType } from "../../type";
@@ -72,13 +73,15 @@ export class ZhihuWebProvider implements WebviewViewProvider {
             break;
           }
           case "getZhihuQuestionDetail": {
-            const detail = await getZhihuWebDetail(message.payload);
+            const answers = await getZhihuWebDetail(message.payload);
+            const detail = await getZhihuQuestionDetailFunc(message.payload);
             webviewView.webview.postMessage({
               command: "sendZhihuQuestionDetail",
               payload: {
-                data: detail,
+                data: answers,
                 payload: message.payload,
                 source: message.source,
+                detail,
               },
             });
             break;
@@ -129,7 +132,6 @@ export class ZhihuWebProvider implements WebviewViewProvider {
         window.$RefreshSig$ = () => (type) => type
         window.__vite_plugin_react_preamble_installed__ = true
         </script>
-
             <script type="module" src="http://localhost:5174/@vite/client"></script>
 
             <meta charset="UTF-8" />

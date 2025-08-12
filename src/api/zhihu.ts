@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-12 09:14:46
+ * @LastEditTime: 2025-08-12 14:15:39
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -256,4 +256,43 @@ export const searchZhihu = async (query: string): Promise<ZhihuItemData[]> => {
       };
     })
     .filter((item: ZhihuItemData) => item.type === "answer");
+};
+
+// 获取知乎问题详情 //https://www.zhihu.com/question/1932357580283437907
+
+export const getZhihuQuestionDetailFunc = async (
+  questionId: string
+): Promise<string> => {
+  const url = `https://www.zhihu.com/question/${questionId}`;
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const headers = {
+    Cookie: cookie,
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      console.error(`Request failed with status code ${response.status}`);
+      return "";
+    }
+
+    const html = await response.text();
+    const match = html.match(
+      /<script id="js-initialData" type="text\/json">(.*?)<\/script>/
+    );
+    if (match && match[1]) {
+      const json = JSON.parse(match[1]);
+      return json.initialState.entities.questions[questionId].detail;
+    }
+    return "";
+  } catch (error) {
+    console.error("An error occurred during fetch:", error);
+    return "";
+  }
 };
