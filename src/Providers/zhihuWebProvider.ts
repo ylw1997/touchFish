@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-12 09:21:11
+ * @LastEditTime: 2025-08-12 09:34:34
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -92,8 +92,7 @@ export class ZhihuWebProvider implements WebviewViewProvider {
           }
           case "ZHIHU_VOTE_ANSWER": {
             const { answerId, type } = message.payload;
-           const res = await voteZhihuAnswer(answerId, type);
-           console.log("ZHIHU_VOTE_ANSWER",res);
+            await voteZhihuAnswer(answerId, type);
             break;
           }
           case "ZHIHU_SEARCH": {

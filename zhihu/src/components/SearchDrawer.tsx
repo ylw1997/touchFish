@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-11 18:00:00
- * @LastEditTime: 2025-08-12 09:24:29
+ * @LastEditTime: 2025-08-12 09:36:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -93,6 +93,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
           },
           body: {
             padding: "10px",
+            paddingTop: "20px",
             overflowY: "auto",
           },
           content: {
@@ -136,7 +137,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             )}
           />
         ) : (
-          <Empty description="暂无搜索结果" />
+          <Empty description="暂无搜索结果" image={Empty.PRESENTED_IMAGE_SIMPLE} />
         )}
       </Drawer>
     </>
