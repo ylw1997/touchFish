@@ -1,6 +1,30 @@
 # 更新历史 
 
 
+### [8.1.2](https://yangliwei.top///compare/v8.1.1...v8.1.2) (2025-08-12)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **zhihu:** 修复搜索结果类型筛选和时间线刷新问题 ([ad33006](https://yangliwei.top/ad3300648840a34eb55f0c1f4f34f12c4394b126))
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **zhihu:** 优化搜索结果界面并调整投票功能 ([520c236](https://yangliwei.top/520c236ef085fc7a20f8d867af0b5a83c27dd79b))
+* **zhihu:** 重构点赞功能并优化搜索结果处理 ([e0d66b9](https://yangliwei.top/e0d66b97029142b46e4a8e63da5922dae5d90017))
+
+
+### 👷‍ Build System | 构建
+
+* 更新版本号至 8.1.2 ([8a3f948](https://yangliwei.top/8a3f94839b0fee44bcf61d518fa8c349b0144ed6))
+
+
+### ✨ Features | 新功能
+
+* **tabs:** 调整标签页顺序并设置新的默认标签页 ([68d93de](https://yangliwei.top/68d93debe6407e03c70926aeef0fde32a78137b2))
+* **zhihu:** 为 convertZhihuHotItemToZhihuItemData 函数添加 type 字段 ([e5b6589](https://yangliwei.top/e5b6589d5b1a0b5c1b7f23df6653bd7e746641cc))
+
 ### [8.1.1](https://yangliwei.top///compare/v8.1.0...v8.1.1) (2025-08-11)
 
 
