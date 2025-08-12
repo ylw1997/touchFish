@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2025-08-08 11:24:44
+ * @LastEditTime: 2025-08-12 09:44:35
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description:
@@ -135,5 +135,6 @@ export const convertZhihuHotItemToZhihuItemData = (
     metrics_area: hotItem.metrics_area.text,
     image_area: hotItem.image_area.url,
     index,
+    type: "answer",
   };
 };
