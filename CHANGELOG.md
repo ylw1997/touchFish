@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [8.2.0](https://yangliwei.top///compare/v8.1.2...v8.2.0) (2025-08-12)
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 添加知乎问题详情展示功能 ([f06316e](https://yangliwei.top/f06316edf09903d0c6c172a055a02556d287046e))
+
+
+### 👷‍ Build System | 构建
+
+* 调整 build-publish 脚本执行顺序 ([4d7ec39](https://yangliwei.top/4d7ec395a124c6fb8d31ef0bb94cacf178d62726))
+* 更新版本号至 8.2.0 ([c51e44e](https://yangliwei.top/c51e44e5c3e2264b73416d6a6aeba9be88dda3fd))
+
 ### [8.1.2](https://yangliwei.top///compare/v8.1.1...v8.1.2) (2025-08-12)
 
 
