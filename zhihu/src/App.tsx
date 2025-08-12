@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-11 17:43:37
+ * @LastEditTime: 2025-08-12 16:33:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -127,6 +127,7 @@ function App() {
           endMessage={<Divider plain>没有了🤐</Divider>}
           hasMore={activeKey != "hot" ? true : false}
           scrollableTarget="scrollableDiv"
+          scrollThreshold={0.95}
         >
           {list.map((item: ZhihuItemData) => (
             <ZhihuItem
