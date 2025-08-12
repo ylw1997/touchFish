@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-08-08 11:18:48
+ * @LastEditTime: 2025-08-12 09:09:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description:
@@ -111,7 +111,6 @@ const refreshAll = () => {
   vscode.commands.executeCommand("hupu.refresh");
   vscode.commands.executeCommand("chiphell.refresh");
   vscode.commands.executeCommand("nga.refresh");
-  vscode.commands.executeCommand ('zhihu.refresh');
 };
 
 // 定时刷新
