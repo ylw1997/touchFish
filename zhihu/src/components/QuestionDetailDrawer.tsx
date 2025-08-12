@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-08-11 10:45:25
+ * @LastEditTime: 2025-08-12 09:25:08
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -16,16 +16,18 @@ interface QuestionDetailDrawerProps {
   open: boolean;
   onClose: () => void;
   questionData: ZhihuItemData[];
+  setQuestionData: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>;
   title: string;
-  handleVote: (answerId: string) => void;
+  voteHandler: (answerId: string, list: ZhihuItemData[], setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>) => void;
 }
 
 const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   open,
   onClose,
   questionData,
+  setQuestionData,
   title,
-  handleVote,
+  voteHandler,
 }) => {
   return (
     <Drawer
@@ -57,7 +59,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       <List
         dataSource={questionData}
         renderItem={(item) => (
-          <ZhihuItem isDetail item={item} handleVote={handleVote} />
+          <ZhihuItem isDetail item={item} handleVote={() => voteHandler(item.id, questionData, setQuestionData)} />
         )}
       />
     </Drawer>

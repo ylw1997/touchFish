@@ -46,10 +46,12 @@ function App() {
     getListData,
     questionDetailDrawerOpen,
     questionData,
+    setQuestionData,
     questionTitle,
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
     handleVote,
+    voteHandler,
   } = useZhihuAction(APPSOURCE, scrollableNodeRef);
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -162,16 +164,17 @@ function App() {
           open={questionDetailDrawerOpen}
           onClose={closeQuestionDetailDrawer}
           questionData={questionData}
+          setQuestionData={setQuestionData}
           title={questionTitle}
-          handleVote={handleVote}
+          voteHandler={voteHandler}
         />
       </Suspense>
       <SearchDrawer
         open={searchDrawerOpen}
         onClose={() => setSearchDrawerOpen(false)}
         source={APPSOURCE}
-        handleVote={handleVote}
         openQuestionDetailDrawer={openQuestionDetailDrawer}
+        voteHandler={voteHandler}
       />
     </>
   );

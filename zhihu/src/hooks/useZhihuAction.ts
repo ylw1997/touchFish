@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-08 14:18:29
+ * @LastEditTime: 2025-08-12 09:31:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\hooks\useZhihuAction.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -12,6 +12,7 @@ import { useState, useCallback, useMemo } from "react";
 import type { ZhihuItemData } from "../../../type";
 import { useMessageHandler } from "./useMessageHandler";
 import { useVscodeMessage } from "./useVscodeMessage";
+import { vscode } from "../utils/vscode";
 
 const useZhihuAction = (
   source: string,
@@ -56,23 +57,25 @@ const useZhihuAction = (
     setQuestionTitle("");
   };
 
-  const handleVote = (answerId: string) => {
-    setList((prevList) =>
-      prevList.map((item) => {
+  const voteHandler = (
+    answerId: string,
+    list: ZhihuItemData[],
+    setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>
+  ) => {
+    setList(
+      list.map((item) => {
         if (item.id === answerId) {
           const newVoted = item.vote_next_step !== "unvote";
           const newVoteCount = newVoted
             ? (item.voteup_count ?? 0) + 1
             : (item.voteup_count ?? 0) - 1;
-          sendMessage(
-            "ZHIHU_VOTE_ANSWER",
-            {
+          vscode.postMessage({
+            command: "ZHIHU_VOTE_ANSWER",
+            payload: {
               answerId: item.id,
-              voting: newVoted ? "vote" : "unvote",
+              type: newVoted ? "up" : "neutral",
             },
-            "",
-            source
-          );
+          });
           return {
             ...item,
             vote_next_step: newVoted ? "unvote" : "vote",
@@ -82,6 +85,10 @@ const useZhihuAction = (
         return item;
       })
     );
+  };
+
+  const handleVote = (answerId: string) => {
+    voteHandler(answerId, list, setList);
   };
 
   const handleSendData = useCallback(
@@ -127,12 +134,14 @@ const useZhihuAction = (
     getListData,
     questionDetailDrawerOpen,
     questionData,
+    setQuestionData,
     questionTitle,
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
     restoreScrollPosition,
     sendMessage,
     handleVote,
+    voteHandler,
   };
 };
 

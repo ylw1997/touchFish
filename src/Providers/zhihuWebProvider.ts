@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-11 17:28:07
+ * @LastEditTime: 2025-08-12 09:21:11
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -98,7 +98,6 @@ export class ZhihuWebProvider implements WebviewViewProvider {
           }
           case "ZHIHU_SEARCH": {
             const results = await searchZhihu(message.payload);
-            console.log("ZHIHU_SEARCH",results);
             webviewView.webview.postMessage({
               command: "ZHIHU_SEND_SEARCH_RESULTS",
               payload: {

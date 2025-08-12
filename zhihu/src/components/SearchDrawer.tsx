@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-11 18:00:00
- * @LastEditTime: 2025-08-12 09:10:31
+ * @LastEditTime: 2025-08-12 09:24:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -28,16 +28,16 @@ interface SearchDrawerProps {
   open: boolean;
   onClose: () => void;
   source: string;
-  handleVote: (answerId: string) => void;
   openQuestionDetailDrawer: (questionId: string, title: string) => void;
+  voteHandler: (answerId: string, list: ZhihuItemData[], setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>) => void;
 }
 
 const SearchDrawer: React.FC<SearchDrawerProps> = ({
   open,
   onClose,
   source,
-  handleVote,
   openQuestionDetailDrawer,
+  voteHandler,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       messageApi.destroy("ZHIHU_SEARCH");
       setLoading(false);
       if (payload?.data && payload.source === source) {
-        console.log(payload.data);
         setSearchResults(payload.data);
       } else {
         messageApi.error("搜索失败!");
@@ -129,7 +128,9 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
               <ZhihuItem
                 item={item}
                 key={item.id}
-                handleVote={handleVote}
+                handleVote={() =>
+                  voteHandler(item.id, searchResults, setSearchResults)
+                }
                 openQuestionDetailDrawer={openQuestionDetailDrawer}
               />
             )}
