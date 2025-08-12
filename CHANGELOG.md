@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.2.1](https://yangliwei.top///compare/v8.2.0...v8.2.1) (2025-08-12)
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 调整滚动加载阈值 ([d464a25](https://yangliwei.top/d464a2504d63e82efe14f73bba0ffcd14a7c03ae))
+
+
+### 👷‍ Build System | 构建
+
+* 更新版本号至 8.2.1 ([8a215bf](https://yangliwei.top/8a215bfcb0b6b0631ef58d7dc4ef01ee5c9ba548))
+
 ## [8.2.0](https://yangliwei.top///compare/v8.1.2...v8.2.0) (2025-08-12)
 
 
