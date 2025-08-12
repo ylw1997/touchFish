@@ -1,17 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-19 09:40:05
- * @LastEditTime: 2025-07-28 15:59:55
+ * @LastEditTime: 2025-08-12 09:39:35
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\data\tabs.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 export const defTab = [
-  { key: "/unreadfriendstimeline?list_id=100017515513422&refresh=4&since_id=0&count=15", label: "全部" },
-  { key: "/friendstimeline?list_id=110007515513422&refresh=4&since_id=0&count=25", label: "最新" },
-  { key: "/groupstimeline?list_id=4563498095349254&refresh=4&since_id=0&count=25", label: "特别" },
-  { key: "/groupstimeline?list_id=100097515513422&refresh=4&since_id=0&count=25", label: "好友" },
   {
     key: "hot",
     label: "推荐",
@@ -78,4 +74,8 @@ export const defTab = [
       },
     ],
   },
+  { key: "/unreadfriendstimeline?list_id=100017515513422&refresh=4&since_id=0&count=15", label: "全部" },
+  { key: "/friendstimeline?list_id=110007515513422&refresh=4&since_id=0&count=25", label: "最新" },
+  { key: "/groupstimeline?list_id=4563498095349254&refresh=4&since_id=0&count=25", label: "特别" },
+  { key: "/groupstimeline?list_id=100097515513422&refresh=4&since_id=0&count=25", label: "好友" },
 ];

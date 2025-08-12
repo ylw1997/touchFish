@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-07-31 16:15:45
+ * @LastEditTime: 2025-08-12 09:40:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -72,7 +72,7 @@ function App() {
   } = useWeiboAction(APPSOURCE, scrollableNodeRef);
   // 状态管理
   const [tabs] = useState(defTab);
-  const [activeKey, setActiveKey] = useState(defTab[0].key);
+  const [activeKey, setActiveKey] = useState(defTab[1].key);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState<string | undefined>();
