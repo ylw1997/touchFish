@@ -2,8 +2,8 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件",
-	"version": "8.2.3",
+	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件,沉浸式主题",
+	"version": "8.3.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.102.0"
@@ -33,6 +33,28 @@
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
+		"themes": [
+			{
+				"label": "ylw-dark-theme",
+				"uiTheme": "vs-dark",
+				"path": "./themes/ylw-dark-color-theme.json"
+			},
+			{
+				"label": "ylw-dark-theme-2",
+				"uiTheme": "vs-dark",
+				"path": "./themes/ylw-dark-color-theme-2.json"
+			},
+			{
+				"label": "ylw-light-theme",
+				"uiTheme": "vs",
+				"path": "./themes/ylw-light-color-theme.json"
+			},
+			{
+				"label": "ylw-deep-dark-theme",
+				"uiTheme": "vs-dark",
+				"path": "./themes/ylw-deep-dark-theme.json"
+			}
+		],
 		"configuration": {
 			"title": "touchfish",
 			"properties": {

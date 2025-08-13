@@ -41,7 +41,7 @@
       "name": "unison punctuation",
       "scope": "punctuation.definition.delayed.unison,punctuation.definition.list.begin.unison,punctuation.definition.list.end.unison,punctuation.definition.ability.begin.unison,punctuation.definition.ability.end.unison,punctuation.operator.assignment.as.unison,punctuation.separator.pipe.unison,punctuation.separator.delimiter.unison,punctuation.definition.hash.unison",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -62,7 +62,7 @@
       "name": "support.variable.magic.python",
       "scope": "support.variable.magic.python",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -111,7 +111,7 @@
       "name": "variable.language.rust",
       "scope": "variable.language.rust",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -125,7 +125,7 @@
       "name": "regexp constant character-class",
       "scope": "constant.other.character-class.regexp",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -183,14 +183,14 @@
       "name": "deleted.diff",
       "scope": "markup.deleted.diff",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
       "name": "c++ function",
       "scope": "meta.function.c,meta.function.cpp",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -249,7 +249,7 @@
       "name": "java source",
       "scope": "source.java",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -284,7 +284,7 @@
       "name": "java variable.name",
       "scope": "meta.definition.variable.name.java",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -368,7 +368,7 @@
       "name": "js variable readwrite",
       "scope": "variable.other.readwrite,meta.object-literal.key,support.variable.property,support.variable.object.process,support.variable.object.node",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -395,7 +395,7 @@
       "name": "js/ts console",
       "scope": "support.type.object.console",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -444,7 +444,7 @@
       "name": "js dom variable",
       "scope": "support.variable.dom,support.variable.property.dom",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -577,7 +577,7 @@
       "name": "Variables",
       "scope": "variable",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -670,7 +670,7 @@
       "name": "Class name php",
       "scope": "variable.other.class.php",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -747,7 +747,7 @@
       "name": "[VSCODE-CUSTOM] toml support",
       "scope": "support.type.property-name.toml, support.type.property-name.table.toml, support.type.property-name.array.toml",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -810,7 +810,7 @@
       "name": "Tags",
       "scope": "entity.name.tag",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -845,7 +845,7 @@
       "name": "Headings",
       "scope": "markup.heading",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -859,7 +859,7 @@
       "name": "Units",
       "scope": "keyword.other.unit",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -894,14 +894,14 @@
       "name": "[VSCODE-CUSTOM] Markdown headings",
       "scope": "entity.name.section.markdown",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
       "name": "[VSCODE-CUSTOM] Markdown heading Punctuation Definition",
       "scope": "punctuation.definition.heading.markdown",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -961,7 +961,7 @@
         "punctuation.definition.metadata.markdown"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -970,14 +970,14 @@
         "beginning.punctuation.definition.list.markdown"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
       "name": "[VSCODE-CUSTOM] Markdown Punctuation Definition Link",
       "scope": "punctuation.definition.metadata.markdown",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1040,7 +1040,7 @@
       "name": "Embedded",
       "scope": "punctuation.section.embedded, variable.interpolation",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1067,7 +1067,7 @@
     {
       "scope": "invalid.illegal.unrecognized-tag.html",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1102,14 +1102,14 @@
       "name": "Source Json Meta Structure Dictionary Json > String Quoted Json",
       "scope": "source.json meta.structure.dictionary.json > string.quoted.json",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
       "name": "Source Json Meta Structure Dictionary Json > String Quoted Json > Punctuation String",
       "scope": "source.json meta.structure.dictionary.json > string.quoted.json > punctuation.string",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1130,14 +1130,14 @@
       "name": "[VSCODE-CUSTOM] JSON Property Name",
       "scope": "support.type.property-name.json",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
       "name": "[VSCODE-CUSTOM] JSON Punctuation for Property Name",
       "scope": "support.type.property-name.json punctuation",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1340,7 +1340,7 @@
       "name": "sass selector",
       "scope": "selector.sass",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1368,7 +1368,7 @@
       "name": "cs local variable",
       "scope": "entity.name.variable.local.cs",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1448,7 +1448,7 @@
         "meta.property.object"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1457,7 +1457,7 @@
         "variable.parameter.function.js"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1566,7 +1566,7 @@
         "constant.character.entity"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1594,7 +1594,7 @@
         "meta.symbol.clojure"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1613,7 +1613,7 @@
         "variable.parameter.function.coffee"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1631,7 +1631,7 @@
         "meta.scope.prerequisites.makefile"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1667,7 +1667,7 @@
         "meta.definition.variable.name.groovy"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1709,7 +1709,7 @@
         "text.bracketed"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1746,7 +1746,7 @@
         "constant.character.character-class.regexp.xi"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1858,7 +1858,7 @@
         "markup.heading.setext.2.markdown"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1913,14 +1913,14 @@
         "entity.name.variable.field.cs"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
       "name": "Deleted",
       "scope": "markup.deleted",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1971,7 +1971,7 @@
         "variable.other.constant.property"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -1987,7 +1987,7 @@
       "name": "c variable readwrite",
       "scope": "variable.other.readwrite.c",
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     },
     {
@@ -2027,7 +2027,7 @@
         "string.regexp"
       ],
       "settings": {
-        "foreground": "#e06c75"
+        "foreground": "#e1e1e1"
       }
     }
   ],
@@ -2091,7 +2091,6 @@
     "editorIndentGuide.background1": "#343a45",
     "editorLineNumber.foreground": "#9599A6",
     "editorLineNumber.activeForeground": "#E0E3EE",
-    "editorLink.activeForeground": "#f0f0f0",
     "editorMarkerNavigation.background": "#21252b",
     "editorOverviewRuler.border": "#1a1c22",
     "editorRuler.foreground": "#abb2bf26",
