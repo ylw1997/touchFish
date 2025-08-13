@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.2.3](https://github.com/ylw1997/touchFish/compare/v8.2.2...v8.2.3) (2025-08-13)
+
+
+### 📝 Documentation | 文档
+
+* **README:** 更新项目文档和图片 ([439369a](https://github.com/439369a21379e135501bfc61e9ab701578b11a3d))
+
+
+### 👷‍ Build System | 构建
+
+* 更新版本号至 8.2.3 ([1e5e716](https://github.com/1e5e71668bfb81c52a467f104605287c907c683f))
+
 ### [8.2.2](https://yangliwei.top///compare/v8.2.1...v8.2.2) (2025-08-13)
 
 
