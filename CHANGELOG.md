@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.2.2](https://yangliwei.top///compare/v8.2.1...v8.2.2) (2025-08-13)
+
+
+### 📝 Documentation | 文档
+
+* **README:** 更新产品介绍和功能展示 ([46ca22b](https://yangliwei.top/46ca22b4e157896cf274ebbf740155878e205644))
+
 ### [8.2.1](https://yangliwei.top///compare/v8.2.0...v8.2.1) (2025-08-12)
 
 
