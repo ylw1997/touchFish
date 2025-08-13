@@ -371,6 +371,7 @@
 		"crypto-js": "^4.2.0"
 	},
 	"repository": {
-		"url": "https://yangliwei.top"
+		"type": "git",
+		"url": "https://github.com/ylw1997/touchFish.git"
 	}
 }
