@@ -26,16 +26,20 @@
 
 #### 📰 新闻阅读
 
-![新闻阅读](https://jf.jsyccloud.com:8082/bg_oss/jslalloss/image/cbe6132513544b1cb631447f75f6c393.png)
+![新闻](https://oss.qmsznj.com/prod/2025/08/13/382058b5-0aca-49ec-ad1c-72bf77a7c190_20250813172501A270.png)
 
 #### 💬 刷知乎
 
-![知乎](https://oss.qmsznj.com/prod/2025/08/08/2aad237f-544d-4f62-93f3-2df99f14914e_20250808144332A822.png)
+![知乎](https://oss.qmsznj.com/prod/2025/08/13/b77683ce-b998-4a5e-85c9-561e99b37aa9_20250813172625A272.png)
 
 #### 💬 刷微博
 
-![刷微博](https://oss.qmsznj.com/prod/2025/07/01/04f83ce0-a66c-4070-9ee1-30824201d4a5_20250701164808A762.png)
+![刷微博](https://oss.qmsznj.com/prod/2025/08/13/14786899-ee21-46d9-925f-5395a009a505_20250813172610A271.png)
 
+
+### 🎮 VSCODE暗色主题
+
+![主题](https://oss.qmsznj.com/prod/2025/08/13/800c066c-bce9-4041-a6d0-fbb1bf459855_20250813173043A282.png)
 
 #### 📝 互动功能 (发布、评论、查看详情)
 
