@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-12 14:15:39
+ * @LastEditTime: 2025-08-13 10:12:05
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -295,4 +295,21 @@ export const getZhihuQuestionDetailFunc = async (
     console.error("An error occurred during fetch:", error);
     return "";
   }
+};
+
+// 关注问题 https://www.zhihu.com/api/v4/questions/538449801/followers post
+export const followQuestion = async (questionId: string) => {
+  const url = `/api/v4/questions/${questionId}/followers`;
+  const xzse96 = await getZhihu96(url);
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const path = `https://www.zhihu.com${url}`;
+  return await axios.post(path, {
+    headers: {
+      "x-zse-96": xzse96,
+      "x-zse-93": xzse93,
+      "X-Requested-With": "XMLHttpRequest",
+      Cookie: cookie,
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+  });
 };

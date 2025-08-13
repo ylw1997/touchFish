@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件",
-	"version": "8.2.1",
+	"version": "8.2.2",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.102.0"
@@ -18,6 +18,8 @@
 		"chiphell",
 		"v2ex",
 		"hupu",
+		"weibo",
+		"zhihu",
 		"虎扑步行街",
 		"nga",
 		"沉浸式主题",
