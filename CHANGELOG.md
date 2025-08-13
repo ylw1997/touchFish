@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.3.0](https://github.com/ylw1997/touchFish/compare/v8.2.3...v8.3.0) (2025-08-13)
+
+
+### ✨ Features | 新功能
+
+* **touchfish:** 添加沉浸式主题并更新版本号 ([a8f90d0](https://github.com/a8f90d04401a42e5aa53ffa36143f3de58f58f52))
+
 ### [8.2.3](https://github.com/ylw1997/touchFish/compare/v8.2.2...v8.2.3) (2025-08-13)
 
 
