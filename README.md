@@ -1,7 +1,7 @@
 
 <div align="center">
 
-<img src="./assets/logo.png" width="200" height="200" alt="TouchFish Logo">
+<img src="https://oss.qmsznj.com/prod/2025/08/13/ab941352-929e-4e5b-92c8-90e76b547f4c_20250813171917A269.png" width="200" height="200" alt="TouchFish Logo">
 
 **一款专为打工人设计的 VS Code 摸鱼神器，让你在编码的同时，尽享冲浪的乐趣。**
 
