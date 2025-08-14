@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.5.1](https://github.com/ylw1997/touchFish/compare/v8.5.0...v8.5.1) (2025-08-14)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **zhihu:** 简化人气问题标签文本 ([7a50323](https://github.com/7a50323f1273edb37e224a4539491da259d4b6de))
+
 ## [8.5.0](https://github.com/ylw1997/touchFish/compare/v8.4.0...v8.5.0) (2025-08-14)
 
 
