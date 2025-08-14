@@ -334,9 +334,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     <Card
       key={item.id}
       title={renderTitle()}
-      style={{
-        background: "#191919",
-      }}
       className={className}
     >
       {isH5 ? (

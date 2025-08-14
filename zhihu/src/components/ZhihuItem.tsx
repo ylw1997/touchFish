@@ -99,7 +99,6 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       <div style={{ marginLeft: 10 }}>
         <span
           className={"nick-name"}
-          style={{ fontSize: 16 }}
           onClick={() =>
             openQuestionDetailDrawer?.(item.question!.id, item.question!.title)
           }

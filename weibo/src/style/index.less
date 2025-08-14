@@ -65,9 +65,15 @@ body {
     margin: 0 1px;
   }
 }
-
+.ant-card-bordered {
+  transition: all 0.2s ease-in-out;
+  &:hover {
+    border: 1px solid #505050;
+  }
+}
 .ant-card {
   margin-top: 8px;
+  background: transparent;
   .ant-card-head {
     padding: 5px 8px;
     min-height: 45px;
