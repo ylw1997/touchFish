@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2025-08-12 09:44:35
+ * @LastEditTime: 2025-08-14 18:04:09
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description:
@@ -9,7 +9,7 @@
 import { NewsCommandType, NewsItem } from "../type/type";
 import { ThemeIcon, TreeItem } from "vscode";
 import { showNewsWordNumber } from "../config/index";
-import { ZhihuHotItem, ZhihuItemData } from "../../type";
+import { ZhihuHotItem, ZhihuHotQuestion, ZhihuItemData } from "../../type";
 
 /**
  * 转换之家数据
@@ -115,6 +115,7 @@ export const zhihuContentImage = (content: string): string => {
   });
 };
 
+// 转换知乎热榜
 export const convertZhihuHotItemToZhihuItemData = (
   hotItem: ZhihuHotItem,
   index?: number
@@ -136,5 +137,30 @@ export const convertZhihuHotItemToZhihuItemData = (
     image_area: hotItem.image_area.url,
     index,
     type: "answer",
+  };
+};
+
+// 转换知乎热门问题
+export const convertZhihuHotQuestionToZhihuItemData = (
+  hotQuestion: ZhihuHotQuestion
+): ZhihuItemData => {
+  const id = hotQuestion.question.id;
+  return {
+    id,
+    excerpt: hotQuestion.question.excerpt
+      ? hotQuestion.question.excerpt
+      : hotQuestion.reason,
+    content: hotQuestion.question.detail
+      ? hotQuestion.question.detail
+      : hotQuestion.reason,
+    type: "answer",
+    question: {
+      id,
+      title: hotQuestion.question.title,
+    },
+    author: {
+      ...hotQuestion.question.author,
+    },
+    metrics_area: `${hotQuestion.question.answer_count} 回答 · ${hotQuestion.question.visit_count} 浏览 · ${hotQuestion.question.follower_count} 关注`,
   };
 };

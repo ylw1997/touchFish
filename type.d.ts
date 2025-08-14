@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-08-12 08:55:44
+ * @LastEditTime: 2025-08-14 18:02:27
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -310,7 +310,7 @@ export interface ZhihuItemData {
   index?: number;
   vote_next_step?: "vote" | "unvote";
   title?: string;
-  type:"answer" | "article" | "topic";
+  type: "answer" | "article" | "topic";
 }
 
 export interface ZhihuCommentItem {
@@ -359,5 +359,25 @@ export interface ZhihuSearchItem {
   highlight?: {
     description: string;
     title: string;
+  };
+}
+
+// 知乎人气问题
+export interface ZhihuHotQuestion {
+  type: "personalized_question";
+  reason: string;
+  question: {
+    id: string;
+    title: string;
+    detail?: string;
+    excerpt?: string;
+    answer_count: number;
+    visit_count: number;
+    follower_count: number;
+    author: {
+      id: string;
+      name: string;
+      avatar_url: string;
+    };
   };
 }

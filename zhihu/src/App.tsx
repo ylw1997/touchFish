@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-12 16:33:21
+ * @LastEditTime: 2025-08-14 17:53:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -20,7 +20,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
-import { defTab } from "./data/tabs";
+import { defTab, type tabKeyType } from "./data/tabs";
 import ZhihuItem from "./components/ZhihuItem";
 import { loaderFunc } from "./utils/loader";
 import SearchDrawer from "./components/SearchDrawer";
@@ -57,7 +57,7 @@ function App() {
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
-  const [activeKey, setActiveKey] = useState<"hot" | "follow" | "recommend">(
+  const [activeKey, setActiveKey] = useState<tabKeyType>(
     defTab[0].key
   );
 

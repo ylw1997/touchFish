@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-13 10:12:05
+ * @LastEditTime: 2025-08-14 17:58:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -13,11 +13,13 @@ import { getZhihuSignature } from "../utils/signature";
 import {
   ZhihuCommentItem,
   ZhihuHotItem,
+  ZhihuHotQuestion,
   ZhihuItemData,
   ZhihuSearchItem,
 } from "../../type";
 import {
   convertZhihuHotItemToZhihuItemData,
+  convertZhihuHotQuestionToZhihuItemData,
   zhihuContentImage,
 } from "../utils/util";
 
@@ -139,7 +141,9 @@ export const getZhihuHot = async () => {
 };
 
 // web知乎处理数据
-export const getZhihuWebData = async (tab: "follow" | "recommend" | "hot") => {
+export const getZhihuWebData = async (
+  tab: "follow" | "recommend" | "hot" | "hot_question"
+) => {
   const resArr: ZhihuItemData[] = [];
   let res = { data: { data: [] } };
   switch (tab) {
@@ -157,8 +161,16 @@ export const getZhihuWebData = async (tab: "follow" | "recommend" | "hot") => {
       });
       break;
     }
+    case "hot_question": {
+      const hotQuestions = await getZhihuHotQuestions();
+      console.log("hot_question", hotQuestions);
+      hotQuestions.forEach((item: ZhihuHotQuestion) => {
+        resArr.push(convertZhihuHotQuestionToZhihuItemData(item));
+      });
+      break;
+    }
   }
-  if (tab === "hot") {
+  if (tab === "hot" || tab === "hot_question") {
     return resArr;
   }
   res.data.data.forEach((element: { target?: ZhihuItemData }) => {
@@ -312,4 +324,22 @@ export const followQuestion = async (questionId: string) => {
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     },
   });
+};
+
+// 人气问题 https://www.zhihu.com/api/v4/creators/question_route/pc_member_related/hot?page_source=pc_panel&limit=20&offset=0&recom_domain_score_ab=1
+export const getZhihuHotQuestions = async () => {
+  const url = "/api/v4/creators/question_route/pc_member_related/hot";
+  const xzse96 = await getZhihu96(url);
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const searchUrl = `https://www.zhihu.com${url}`;
+  const res = await axios.get(searchUrl, {
+    headers: {
+      "x-zse-96": xzse96,
+      "x-zse-93": xzse93,
+      Cookie: cookie,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+  return res.data.data;
 };
