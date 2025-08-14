@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.5.0](https://github.com/ylw1997/touchFish/compare/v8.4.0...v8.5.0) (2025-08-14)
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 添加知乎人气问题功能 ([50511a8](https://github.com/50511a8248f2de8afe52f0574b7ec523111c18ef))
+
 ## [8.4.0](https://github.com/ylw1997/touchFish/compare/v8.3.0...v8.4.0) (2025-08-14)
 
 
