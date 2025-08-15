@@ -90,6 +90,8 @@ export type ZhihuCommandList =
   | "ZHIHU_VOTE_ANSWER"
   | "ZHIHU_SEARCH"
   | "ZHIHU_SEND_SEARCH_RESULTS"
+  | "ZHIHU_FOLLOW_QUESTION"
+  | "ZHIHU_UNFOLLOW_QUESTION"
   | "ZHIHU_RESTORE_SCROLL_POSITION";
 
 export type ZhihuCommandsType<T> = {

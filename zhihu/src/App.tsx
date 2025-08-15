@@ -53,6 +53,9 @@ function App() {
     handleVote,
     voteHandler,
     questionDetail,
+    isFollowing,
+    followHandler,
+    unfollowHandler,
   } = useZhihuAction(APPSOURCE, scrollableNodeRef);
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -170,6 +173,9 @@ function App() {
           title={questionTitle}
           voteHandler={voteHandler}
           questionDetail={questionDetail}
+          isFollowing={isFollowing}
+          followHandler={followHandler}
+          unfollowHandler={unfollowHandler}
         />
       </Suspense>
       <SearchDrawer

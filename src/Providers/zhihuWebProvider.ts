@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-12 14:15:51
+ * @LastEditTime: 2025-08-15 14:46:57
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -21,6 +21,8 @@ import {
   voteZhihuAnswer,
   searchZhihu,
   getZhihuQuestionDetailFunc,
+  followQuestion,
+  unfollowQuestion,
 } from "../api/zhihu";
 import * as fs from "fs";
 import { ZhihuCommandsType } from "../../type";
@@ -74,14 +76,14 @@ export class ZhihuWebProvider implements WebviewViewProvider {
           }
           case "getZhihuQuestionDetail": {
             const answers = await getZhihuWebDetail(message.payload);
-            const detail = await getZhihuQuestionDetailFunc(message.payload);
+            const detailObj = await getZhihuQuestionDetailFunc(message.payload);
             webviewView.webview.postMessage({
               command: "sendZhihuQuestionDetail",
               payload: {
                 data: answers,
                 payload: message.payload,
                 source: message.source,
-                detail,
+                ...detailObj,
               },
             });
             break;
@@ -95,7 +97,24 @@ export class ZhihuWebProvider implements WebviewViewProvider {
           }
           case "ZHIHU_VOTE_ANSWER": {
             const { answerId, type } = message.payload;
-            await voteZhihuAnswer(answerId, type);
+            const res = await voteZhihuAnswer(answerId, type);
+            if (res.status != 200) {
+              vscode.window.showErrorMessage("点赞操作失败!");
+            }
+            break;
+          }
+          case "ZHIHU_FOLLOW_QUESTION": {
+            const res = await followQuestion(message.payload);
+            if (res.status != 200) {
+              vscode.window.showErrorMessage("关注失败!");
+            }
+            break;
+          }
+          case "ZHIHU_UNFOLLOW_QUESTION": {
+            const res = await unfollowQuestion(message.payload);
+            if (res.status != 200) {
+              vscode.window.showErrorMessage("取消关注失败!");
+            }
             break;
           }
           case "ZHIHU_SEARCH": {

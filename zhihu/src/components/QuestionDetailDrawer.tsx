@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-08-12 14:18:46
+ * @LastEditTime: 2025-08-15 14:48:53
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, List, Card } from "antd";
+import { Drawer, List, Card, Button } from "antd";
 import React from "react";
 import ZhihuItem from "./ZhihuItem";
 import type { ZhihuItemData } from "../../../type";
@@ -24,6 +24,9 @@ interface QuestionDetailDrawerProps {
     setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>
   ) => void;
   questionDetail: string;
+  isFollowing: boolean | undefined;
+  followHandler: () => void;
+  unfollowHandler: () => void;
 }
 
 const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
@@ -34,6 +37,9 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   title,
   voteHandler,
   questionDetail,
+  isFollowing,
+  followHandler,
+  unfollowHandler,
 }) => {
   return (
     <Drawer
@@ -62,27 +68,40 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
         },
       }}
     >
-      {questionDetail && (
-        <Card
-          style={{
-            background: "rgba(255, 255, 255, 0.1)",
-            border: "none",
+      <Card
+        style={{
+          background: "rgba(255, 255, 255, 0.1)",
+          border: "none",
+        }}
+        actions={[
+          isFollowing === undefined ? null : isFollowing ? (
+            <Button color="red" variant="filled" onClick={unfollowHandler}>
+              取消关注
+            </Button>
+          ) : (
+            <Button variant="filled" color="blue" onClick={followHandler}>
+              关注问题
+            </Button>
+          ),
+        ]}
+      >
+        <div
+          className="question-detail-content"
+          style={{ color: "white" }}
+          dangerouslySetInnerHTML={{
+            __html: questionDetail ? questionDetail : title,
           }}
-        >
-          <div
-            className="question-detail-content"
-            style={{ color: "white" }}
-            dangerouslySetInnerHTML={{ __html: questionDetail }}
-          />
-        </Card>
-      )}
+        />
+      </Card>
       <List
         dataSource={questionData}
         renderItem={(item) => (
           <ZhihuItem
             isDetail
             item={item}
-            handleVote={() => voteHandler(item.id, questionData, setQuestionData)}
+            handleVote={() =>
+              voteHandler(item.id, questionData, setQuestionData)
+            }
           />
         )}
       />
@@ -91,4 +110,3 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
 };
 
 export default QuestionDetailDrawer;
-

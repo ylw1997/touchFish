@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-12 10:51:12
+ * @LastEditTime: 2025-08-15 14:25:15
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\hooks\useZhihuAction.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -24,6 +24,8 @@ const useZhihuAction = (
   const [questionData, setQuestionData] = useState<ZhihuItemData[]>([]);
   const [questionTitle, setQuestionTitle] = useState("");
   const [questionDetail, setQuestionDetail] = useState<string>("");
+  const [isFollowing, setIsFollowing] = useState<boolean>();
+  const [currentQuestionId, setCurrentQuestionId] = useState<string>("");
   const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
 
   const restoreScrollPosition = useCallback(() => {
@@ -44,6 +46,7 @@ const useZhihuAction = (
   const openQuestionDetailDrawer = (questionId: string, title: string) => {
     setQuestionDetailDrawerOpen(true);
     setQuestionTitle(title);
+    setCurrentQuestionId(questionId);
     sendMessage(
       "getZhihuQuestionDetail",
       questionId,
@@ -57,6 +60,7 @@ const useZhihuAction = (
     setQuestionData([]);
     setQuestionTitle("");
     setQuestionDetail("");
+    setCurrentQuestionId("");
   };
 
   const voteHandler = (
@@ -93,6 +97,26 @@ const useZhihuAction = (
     voteHandler(answerId, list, setList);
   };
 
+  const followHandler = () => {
+    if (currentQuestionId) {
+      vscode.postMessage({
+        command: "ZHIHU_FOLLOW_QUESTION",
+        payload: currentQuestionId,
+      })
+      setIsFollowing(true);
+    }
+  };
+
+  const unfollowHandler = () => {
+    if (currentQuestionId) {
+      vscode.postMessage({
+        command: "ZHIHU_UNFOLLOW_QUESTION",
+        payload: currentQuestionId,
+      })
+      setIsFollowing(false);
+    }
+  };
+
   const handleSendData = useCallback(
     (payload: any) => {
       messageApi.destroy("ZHIHU_GETDATA");
@@ -113,6 +137,9 @@ const useZhihuAction = (
       }
       if (payload.data) {
         setQuestionData(payload.data);
+      }
+      if (payload.isFollowing !== undefined) {
+        setIsFollowing(payload.isFollowing);
       }
       messageApi.destroy("getZhihuQuestionDetail");
     },
@@ -150,6 +177,10 @@ const useZhihuAction = (
     handleVote,
     voteHandler,
     questionDetail,
+    isFollowing,
+    setIsFollowing,
+    followHandler,
+    unfollowHandler,
   };
 };
 
