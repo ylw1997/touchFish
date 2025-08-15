@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.6.0](https://github.com/ylw1997/touchFish/compare/v8.5.1...v8.6.0) (2025-08-15)
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 添加关注和取消关注问题功能 ([3784e63](https://github.com/3784e63afa67a664ef652fe95f835fdbf5b53217))
+
 ### [8.5.1](https://github.com/ylw1997/touchFish/compare/v8.5.0...v8.5.1) (2025-08-14)
 
 
