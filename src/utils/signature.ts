@@ -1,29 +1,57 @@
-
-import { execFile } from 'child_process';
+/*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-08-05 08:51:35
+ * @LastEditTime: 2025-08-18 14:14:32
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\src\utils\signature.ts
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
 import * as path from 'path';
+import * as fs from 'fs';
+import * as vm from 'vm';
+import * as crypto from 'crypto-js';
 
-// 定义一个函数，用于通过安全的子进程调用 zhihu.js 加密逻辑
 export function getZhihuSignature(dataToSign: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        // 定义包装器脚本的路径
-        const wrapperPath = path.join(__dirname, 'zhihu-wrapper.js');
+        try {
+            const zhihuScriptPath = path.join(__dirname, 'zhihu.js');
+            const zhihuScriptCode = fs.readFileSync(zhihuScriptPath, 'utf8');
 
-        // 定义要传递给脚本的参数
-        const args = [dataToSign];
+            // 为沙箱环境创建一个'require'函数，只允许加载'crypto-js'
+            const sandboxRequire = (moduleName: string) => {
+                if (moduleName === 'crypto-js') {
+                    return crypto;
+                }
+                throw new Error(`Sandbox does not allow requiring module: ${moduleName}`);
+            };
 
-        // 使用 execFile 安全地执行脚本
-        // execFile 比 exec 更安全，因为它不会启动一个 shell
-        execFile('node', [wrapperPath, ...args], (error, stdout, stderr) => {
-            if (error) {
-                // 如果子进程出错，拒绝 Promise
-                return reject(new Error(`执行签名脚本失败: ${error.message}`));
+            // 创建沙箱，并注入必要的模块和变量
+            const sandbox = {
+                require: sandboxRequire,
+                module: { exports: {} },
+                console: console, // 脚本可能会使用console
+                // zhihu.js 脚本内部会创建一个 window 对象，所以我们不需要在这里预定义
+            };
+
+            const context = vm.createContext(sandbox);
+
+            // 在沙箱中执行 zhihu.js
+            vm.runInContext(zhihuScriptCode, context);
+
+            // 从沙箱的 module.exports 中获取脚本的导出
+            const zhihuModule = context.module.exports as any;
+
+            if (typeof zhihuModule.encrypt !== 'function') {
+                return reject(new Error('zhihu.js did not export an "encrypt" function.'));
             }
-            if (stderr) {
-                // 如果有标准错误输出，也拒绝 Promise
-                return reject(new Error(`签名脚本错误输出: ${stderr}`));
-            }
-            // 成功时，解析标准输出并返回结果
-            resolve(stdout.trim());
-        });
+
+            // 调用加密函数并返回结果
+            const signature = zhihuModule.encrypt(dataToSign);
+            resolve(signature);
+
+        } catch (e: any) {
+            reject(new Error(`Failed to execute zhihu.js in sandbox: ${e.message}`));
+        }
     });
 }

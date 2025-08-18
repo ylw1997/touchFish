@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件,沉浸式主题",
-	"version": "8.7.1",
+	"version": "8.7.2",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.102.0"
@@ -262,7 +262,7 @@
 		"viewsWelcome": [
 			{
 				"view": "view.setting",
-				"contents": "[🛠打开配置页](command:touchfish.openConfigPage) \n 停止内卷,享受摸鱼!欢迎使用摸鱼小工具!😘😘😘😘😘😘😘😘"
+				"contents": "[🛠打开配置页](command:touchfish.openConfigPage)  停止内卷,享受摸鱼!欢迎使用摸鱼小工具!😘😘😘😘😘😘😘😘"
 			}
 		],
 		"commands": [
@@ -390,6 +390,7 @@
 	"devDependencies": {
 		"@eslint/js": "9.30.1",
 		"@types/axios": "^0.14.4",
+		"@types/crypto-js": "^4.2.2",
 		"@types/mocha": "^10.0.9",
 		"@types/node": "24.0.13",
 		"@types/vscode": "1.102.0",

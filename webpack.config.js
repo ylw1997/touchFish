@@ -1,7 +1,17 @@
+/*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-08-04 18:02:41
+ * @LastEditTime: 2025-08-18 14:11:27
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\webpack.config.js
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
 //@ts-check
 
 'use strict';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require('path');
 
 //@ts-check
@@ -14,7 +24,6 @@ const extensionConfig = {
 
   entry: {
     extension: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
-    'zhihu-wrapper': './src/utils/zhihu-wrapper.js',
     'zhihu': './src/utils/zhihu.js'
   },
   output: {
