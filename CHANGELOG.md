@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.7.2](https://github.com/ylw1997/touchFish/compare/v8.7.1...v8.7.2) (2025-08-18)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **utils:** 重构签名工具以提高安全性 ([355b6d4](https://github.com/355b6d45742d3a60cad4c510e38881719b8d9dd7))
+
 ### [8.7.1](https://github.com/ylw1997/touchFish/compare/v8.7.0...v8.7.1) (2025-08-18)
 
 
