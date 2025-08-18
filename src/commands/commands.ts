@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-24 16:18:31
- * @LastEditTime: 2025-08-05 16:23:38
+ * @LastEditTime: 2025-08-18 10:19:42
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\commands.ts
  * @Description: 
@@ -89,4 +89,32 @@ export const changeNgaTab = (ngaProvider:NgaProvider)=>{
       await vscode.window.showInformationMessage(`nga 切换为 ${tab.label}`);
     }
   });
+};
+
+// 设置知乎token
+export const setZhihuTokenCommand = () => {
+    return vscode.commands.registerCommand('touchfish.setZhihuToken', async () => {
+        const zhihuCookie = await vscode.window.showInputBox({
+            prompt: '请输入知乎的Cookie',
+            placeHolder: '请输入知乎的Cookie',
+        });
+        if (zhihuCookie !== undefined) {
+            await setConfigByKey("zhihuCookie",zhihuCookie);
+            await vscode.window.showInformationMessage('知乎Cookie设置成功,点击刷新按钮查看!');
+        }
+    });
+};
+
+// 设置微博token
+export const setWeiboTokenCommand = () => {
+    return vscode.commands.registerCommand('touchfish.setWeiboToken', async () => {
+        const weiboCookie = await vscode.window.showInputBox({
+            prompt: '请输入微博的Cookie',
+            placeHolder: '请输入微博的Cookie',
+        });
+        if (weiboCookie !== undefined) {
+            await setConfigByKey("weiboCookie",weiboCookie);
+            await vscode.window.showInformationMessage('微博Cookie设置成功,点击刷新按钮查看!');
+        }
+    });
 };

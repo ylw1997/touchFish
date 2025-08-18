@@ -28,6 +28,8 @@ import {
   changeNgaTab,
   changeV2exTab,
   openSetting,
+  setZhihuTokenCommand,
+  setWeiboTokenCommand,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
@@ -87,6 +89,8 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(openSetting);
   context.subscriptions.push(openV2exUrl);
   context.subscriptions.push(openNgaUrl);
+  context.subscriptions.push(setZhihuTokenCommand());
+  context.subscriptions.push(setWeiboTokenCommand());
 }
 
 // this method is called when your extension is deactivated
