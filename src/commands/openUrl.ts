@@ -1,31 +1,30 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-08-18 17:12:59
+ * @LastEditTime: 2025-08-18 18:06:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
  */
-import * as vscode from 'vscode';
-import { getChipHellNewsDetail } from '../api/chipHell';
-import { getNewsDetail } from '../api/ithome';
-import { getV2exDetail } from '../api/v2ex';
-import { getHupuDetail } from '../api/hupu';
-import { getNgaNewsDetail } from '../api/nga';
+import * as vscode from "vscode";
+import { getChipHellNewsDetail } from "../api/chipHell";
+import { getNewsDetail } from "../api/ithome";
+import { getV2exDetail } from "../api/v2ex";
+import { getHupuDetail } from "../api/hupu";
+import { getNgaNewsDetail } from "../api/nga";
 
-// 是否已经创建webview
+// 是否已经创建 webview
 let isCreatePanel = false;
 // 新闻详情页面
 let panel: vscode.WebviewPanel | null = null;
 
-// 创建一个webview
+// 创建一个 webview
 const createPanel = (): vscode.WebviewPanel => {
   const panel = vscode.window.createWebviewPanel(
-    'Hello World',
-    "新闻",
+    "Hello World",
+    "\u65B0\u95FB",
     vscode.ViewColumn.One,
-    {     retainContextWhenHidden: true,
-    enableScripts: true, }
+    { retainContextWhenHidden: true, enableScripts: true }
   );
   isCreatePanel = true;
   panel.dispose = () => {
@@ -34,19 +33,22 @@ const createPanel = (): vscode.WebviewPanel => {
   return panel;
 };
 
-/**
- * 打开之家新闻详情
- */
-export const openUrl = vscode.commands.registerCommand('itHome.openUrl', async (title: string, id: number) => {
+const createWebviewHtml = (
+  title: string,
+  content: string,
+  originalUrl?: string,
+  extraCss: string = "",
+  extraHead: string = "",
+  showTitle: boolean = true
+) => {
+  const buttonHtml = originalUrl
+    ? `<a class="open-article-btn" href="${originalUrl}" >打\u5F00\u539F\u6587\u7AE0</a>`
+    : "";
+  const titleHtml = showTitle
+    ? `<h1 style="text-align:center" >${title}</h1>`
+    : "";
 
-  // 如果没有创建过webview,则创建一个
-  if (!isCreatePanel) {
-    panel = createPanel();
-  }
-  panel!.webview.html = "加载中....";
-  // 获取新闻详情
-  await getNewsDetail(id).then(res => {
-    panel!.webview.html = `
+  return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -54,65 +56,19 @@ export const openUrl = vscode.commands.registerCommand('itHome.openUrl', async (
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta http-equiv="X-UA-Compatible" content="ie=edge">
       <title>Document</title>
-      <link rel="stylesheet" href="https://www.ithome.com/css/detail.min.css">
+      ${extraHead}
       <style>
-        p {
-          font-size: 18px;
-          line-height: 2;
-        }
-        img{
-          max-width: 60%;
-        }
-        .news_detail{
+        .news_detail {
           width: 75%;
           margin-left: 12.5%;
         }
-          *{
-        font-family:'Microsoft YaHei';}
-      </style>
-    </head>
-    <body>
-      <h1 style="text-align:center" >${title}</h1>
-      <div class="news_detail">${res.data.detail}</div>
-    </body>
-    </html>
-  `;
-  });
-  panel!.title = title;
-});
-
-// 打开chiphell新闻详情
-export const openCHUrl = vscode.commands.registerCommand('chiphell.openUrl', async (title: string, url: string) => {
-  // 如果没有创建过webview,则创建一个
-  if (!isCreatePanel) {
-    panel = createPanel();
-  }
-  panel!.webview.html = "加载中....";
-  // 获取新闻详情
-  await getChipHellNewsDetail(url).then(res => {
-    panel!.webview.html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta http-equiv="X-UA-Compatible" content="ie=edge">
-      <title>Document</title>
-      <style>
-        img{
-          max-width: 60%;
-        }
-        .news_detail{
-          width: 75%;
-          margin-left: 12.5%;
-        }
+        
         * {
-          color: var(--vscode-editor-foreground) !important;;
-          font-size: 18px;
-          line-height: 2;
+          color: var(--vscode-editor-foreground) !important;
           font-family:'Microsoft YaHei';
+          line-height: 2;
         }
-        .open-article-btn{
+        .open-article-btn {
           position: absolute;
           font-size: 15px;
           right: 20px;
@@ -129,47 +85,100 @@ export const openCHUrl = vscode.commands.registerCommand('chiphell.openUrl', asy
           justify-content: center;
           align-items: center;
           border: 1px solid var(--vscode-button-border,transparent);
-          line-height: 18px;
+          line-height: 16px;
           text-decoration: none;
           color: var(--vscode-button-foreground);
         }
-        .open-article-btn:hover{
+        .open-article-btn:hover {
           background-color: var(--vscode-button-hoverBackground);
         }
+        ${extraCss}
       </style>
     </head>
     <body>
-      <h1 style="text-align:center" >${title}</h1>
-      <a class="open-article-btn" href="${url}" >打开原文章</a>
-      <div class="news_detail">${res}</div>
+      ${titleHtml}
+      ${buttonHtml}
+      <div class="news_detail">${content}</div>
     </body>
     </html>
   `;
-  });
-  panel!.title = title;
-});
+};
 
+/**
+ * 打开之家新闻详情
+ */
+export const openUrl = vscode.commands.registerCommand(
+  "itHome.openUrl",
+  async (title: string, id: number) => {
+    // 如果没有创建过 webview, 则创建一个
+    if (!isCreatePanel) {
+      panel = createPanel();
+    }
+    panel!.webview.html = "\u52A0\u8F7D\u4E2D....";
+    // 获取新闻详情
+    await getNewsDetail(id).then((res) => {
+      const extraCss = `
+        p {
+          font-size: 16px;
+          line-height: 2;
+        }
+    `;
+      const extraHead =
+        '<link rel="stylesheet" href="https://www.ithome.com/css/detail.min.css">';
+      const content = res && res.data && res.data.detail;
+      panel!.webview.html = createWebviewHtml(
+        title,
+        content || "\u5185\u5BB9\u52A0\u8F7D\u5931\u8D25",
+        undefined,
+        extraCss,
+        extraHead
+      );
+    });
+    panel!.title = title;
+  }
+);
+
+// 打开chiphell新闻详情
+export const openCHUrl = vscode.commands.registerCommand(
+  "chiphell.openUrl",
+  async (title: string, url: string) => {
+    // 如果没有创建过 webview, 则创建一个
+    if (!isCreatePanel) {
+      panel = createPanel();
+    }
+    panel!.webview.html = "\u52A0\u8F7D\u4E2D....";
+    // 获取新闻详情
+    await getChipHellNewsDetail(url).then((res) => {
+      panel!.webview.html = createWebviewHtml(
+        title,
+        res || "\u5185\u5BB9\u52A0\u8F7D\u5931\u8D25",
+        url
+      );
+    });
+    panel!.title = title;
+  }
+);
 
 // 打开v2ex新闻详情
-export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async (title: string, url: string) => {
-  // 如果没有创建过webview,则创建一个
-  if (!isCreatePanel) {
-    panel = createPanel();
-  }
-  panel!.webview.html = "加载中....";
-  // 获取新闻详情
-  await getV2exDetail(url).then(res => {
-    panel!.webview.html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        .topic_content {
+export const openV2exUrl = vscode.commands.registerCommand(
+  "v2ex.openUrl",
+  async (title: string, url: string) => {
+    // 如果没有创建过 webview, 则创建一个
+    if (!isCreatePanel) {
+      panel = createPanel();
+    }
+    panel!.webview.html = "\u52A0\u8F7D\u4E2D....";
+    // 获取新闻详情
+    await getV2exDetail(url).then((res) => {
+      const extraCss = `
+        .open-article-btn{
+          top: 90px;
+        }
+        .topic_content,.reply_content {
           font-size: 16px;
         }
         .cell {
-          padding: 10px;
+          padding: 10px 0;
           font-size: 14px;
           line-height: 150%;
           text-align: left;
@@ -178,76 +187,38 @@ export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async
         .tag ,.votes{
           display: none;
         }
-        img{
-          max-width: 60%;
-        }
         .fr {
           float: right;
           text-align: right;
         }
-        .news_detail{
-          width: 75%;
-          margin-left: 12.5%;
-          font-size: 18px;
-          line-height: 2;
-        }
-        .open-article-btn{
-          position: absolute;
-          font-size: 15px;
-          right: 20px;
-          top: 50px;
-          background-color: var(--vscode-button-background);
-          max-width: 300px;
-          box-sizing: border-box;
-          display: flex;
-          width: 300px;
-          padding: 4px;
-          border-radius: 2px;
-          text-align: center;
-          cursor: pointer;
-          justify-content: center;
-          align-items: center;
-          border: 1px solid var(--vscode-button-border,transparent);
-          line-height: 18px;
-          text-decoration: none;
-          color: var(--vscode-button-foreground);
-        }
-        .open-article-btn:hover{
-          background-color: var(--vscode-button-hoverBackground);
-        }
-        * {
-          color: var(--vscode-editor-foreground) !important;
-          font-family:'Microsoft YaHei';
-        }
-      </style>
-    </head>
-    <body>
-      <a class="open-article-btn" href="${"https://www.v2ex.com" + url}" >打开原文章</a>
-      <div class="news_detail">${res}</div>
-    </body>
-    </html>
-  `;
-  });
-  panel!.title = title;
-});
+    `;
+      panel!.webview.html = createWebviewHtml(
+        title,
+        res || "\u5185\u5BB9\u52A0\u8F7D\u5931\u8D25",
+        "https://www.v2ex.com" + url,
+        extraCss,
+        "",
+        false
+      );
+    });
+    panel!.title = title;
+  }
+);
 
 // 打开虎扑新闻详情
-export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async (title: string, url: string) => {
-  // 如果没有创建过webview,则创建一个
-  if (!isCreatePanel) {
-    panel = createPanel();
-  }
-  panel!.webview.html = "加载中....";
-  // 获取新闻详情
-  await getHupuDetail(url).then(res => {
-    panel!.webview.html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <style>
+export const openHupuUrl = vscode.commands.registerCommand(
+  "hupu.openUrl",
+  async (title: string, url: string) => {
+    // 如果没有创建过 webview, 则创建一个
+    if (!isCreatePanel) {
+      panel = createPanel();
+    }
+    panel!.webview.html = "\u52A0\u8F7D\u4E2D....";
+    // 获取新闻详情
+    await getHupuDetail(url).then((res) => {
+      const extraCss = `
       p{
-        font-size: 18px;
+        font-size: 16px;
       }
       .post-user_post-user-comp {
         min-height: 54px;
@@ -291,7 +262,6 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
 
     .post-user_post-user-comp-info-bottom {
       line-height: 1.5;
-      margin-top: 7px
   }
   
   .post-user_post-user-comp-info-bottom-title {
@@ -365,7 +335,7 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
   padding-left: 19px;
   font-family: PingFangSC-Semibold;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
   color: #191c22;
   position: relative;
   letter-spacing: 0;
@@ -390,31 +360,6 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
   margin-left: -10px
 }
 
-.open-article-btn{
-  position: absolute;
-  font-size: 15px;
-  right: 20px;
-  top: 20px;
-  background-color: var(--vscode-button-background);
-  max-width: 300px;
-  box-sizing: border-box;
-  display: flex;
-  width: 300px;
-  padding: 4px;
-  border-radius: 2px;
-  text-align: center;
-  cursor: pointer;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid var(--vscode-button-border,transparent);
-  line-height: 18px;
-  text-decoration: none;
-  color: var(--vscode-button-foreground);
-}
-.open-article-btn:hover{
-  background-color: var(--vscode-button-hoverBackground);
-}
-
 .index_bbs-thread-comp-container {
   position: relative;
   padding: 10px 14px;
@@ -424,45 +369,44 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
 .todo-list{
   margin:0 10px;
 }   
-        .news_detail{
-          width: 75%;
-          margin-left: 12.5%;
-          line-height: 2;
-        }
         div {
           color: var(--vscode-editor-foreground) !important;
         }
         .index_bbs-thread-comp img,.index_bbs-thread-comp video {
           max-width: 50%;
         }
-*{        font-family:'Microsoft YaHei';}
-      </style>
-    </head>
-    <body>
-      <a class="open-article-btn" href="${"https://bbs.hupu.com" + url}" >打开原文章</a>
-      <div class="news_detail">${res}</div>
-    </body>
-    </html>
-  `;
-  });
-  panel!.title = title;
-});
+    `;
+      panel!.webview.html = createWebviewHtml(
+        title,
+        res || "\u5185\u5BB9\u52A0\u8F7D\u5931\u8D25",
+        "https://bbs.hupu.com" + url,
+        extraCss,
+        "",
+        false
+      );
+    });
+    panel!.title = title;
+  }
+);
 
 // 打开nga新闻详情
-export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (title: string, url: string) => {
-  // 如果没有创建过webview,则创建一个
-  if (!isCreatePanel) {
-    panel = createPanel();
-  }
-  panel!.webview.html = "加载中....";
-  // 获取新闻详情
-  await getNgaNewsDetail(url).then(res => {
-    panel!.webview.html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <style>
+export const openNgaUrl = vscode.commands.registerCommand(
+  "nga.openUrl",
+  async (title: string, url: string) => {
+    // 如果没有创建过 webview, 则创建一个
+    if (!isCreatePanel) {
+      panel = createPanel();
+    }
+    panel!.webview.html = "\u52A0\u8F7D\u4E2D....";
+    // 获取新闻详情
+    await getNgaNewsDetail(url).then((res) => {
+      const extraCss = `
+        p,span{
+          font-size: 16px;
+        }
+        .c1{
+          display:none;
+        }
         img{
           max-width: 45%;
           display: block;
@@ -478,16 +422,9 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
           width:100%;
           border-bottom: 1px solid var(--vscode-button-secondaryBackground);
         }
-        .news_detail{
-          width: 75%;
-          margin-left: 12.5%;
-          font-size: 18px;
-          line-height: 3;
-        }
         .postInfo{
-          font-size: 16px;
           margin-right: 20px;
-          width: 130px;
+          width: 180px;
           flex-shrink: 0;
         }
         .c2{
@@ -496,7 +433,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
         .posterinfo,.postrow span br,h3,.postbodysubtitle,.comment_c .postInfo,.small_colored_text_btn{
           display:none
         }
-        #hightlight_for_0{
+        #hightlight_for_0,#comment_for_0{
           display: flex;
           flex-wrap: wrap;
           width: 100%;
@@ -507,43 +444,14 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
           margin-bottom: 5px;
           margin-right: 5px;
         }
-        .open-article-btn{
-          position: absolute;
-          font-size: 15px;
-          right: 20px;
-          top: 20px;
-          background-color: var(--vscode-button-background);
-          max-width: 300px;
-          box-sizing: border-box;
-          display: flex;
-          width: 300px;
-          padding: 4px;
-          border-radius: 2px;
-          text-align: center;
-          cursor: pointer;
-          justify-content: center;
-          align-items: center;
-          border: 1px solid var(--vscode-button-border,transparent);
-          line-height: 18px;
-          text-decoration: none;
-          color: var(--vscode-button-foreground);
-        }
-        .open-article-btn:hover{
-          background-color: var(--vscode-button-hoverBackground);
-        }
-        * {
-          color: var(--vscode-editor-foreground) !important;
-          font-family:'Microsoft YaHei';
-        }
-      </style>
-    </head>
-    <body>
-      <h1 style="text-align:center" >${title}</h1>
-      <a class="open-article-btn" href="${"https://bbs.nga.cn" + url}" >打开原文章</a>
-      <div class="news_detail">${res}</div>
-    </body>
-    </html>
-  `;
-  });
-  panel!.title = title;
-});
+    `;
+      panel!.webview.html = createWebviewHtml(
+        title,
+        res || "\u5185\u5BB9\u52A0\u8F7D\u5931\u8D25",
+        "https://bbs.nga.cn" + url,
+        extraCss
+      );
+    });
+    panel!.title = title;
+  }
+);

@@ -17,7 +17,7 @@ export const getV2exList = async (tab="all")=>{
     const res =  await axios.get("https://www.v2ex.com/?tab="+tab);
     const resArr:NewsItem[] = []; 
     const $ = load(res.data);
-    const newsListli = $('#Main').find('.box').first().find('.cell.item');
+    const newsListli = $("#Main").find(".box").first().find(".cell.item");
     newsListli.map((index)=>{
       const item = newsListli[index];
       resArr.push({
@@ -39,8 +39,8 @@ export const getV2exDetail = async (url:string)=>{
   try {
     const res =  await axios.get("https://www.v2ex.com"+url);
     const $ = load(res.data);
-    const content = $('#Main').html();
-    return content;
+    const content = $("#Main").html();
+    return content ? content.replace(/&nbsp;/g, '') : content;
   } catch (error) {
     console.log(error);
     return "获取V2EX新闻内容失败!";
