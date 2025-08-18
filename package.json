@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "ithome,it之家,chiphell,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件,沉浸式主题",
-	"version": "8.7.2",
+	"version": "8.7.3",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.102.0"
@@ -385,7 +385,7 @@
 		"build": "vsce package",
 		"changelog": "standard-version",
 		"publish": "vsce publish",
-		"build-publish": " npm --prefix ./zhihu run build && npm --prefix ./weibo run build && standard-version && npm run publish "
+		"build-publish": " npm --prefix ./zhihu run build && npm --prefix ./weibo run build && npm run package && standard-version && npm run publish "
 	},
 	"devDependencies": {
 		"@eslint/js": "9.30.1",
