@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.8.1](https://github.com/ylw1997/touchFish/compare/v8.8.0...v8.8.1) (2025-08-18)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **openUrl:** 重构打开详情页功能 ([537ac59](https://github.com/537ac590c15a7ac1dffc1314d582ae6071faa285))
+
+
+### 👷‍ Build System | 构建
+
+* 更新版本号至 8.8.1 ([8c9b72b](https://github.com/8c9b72b2ba7ba107428962ea5c87dfdc430a20df))
+
 ## [8.8.0](https://github.com/ylw1997/touchFish/compare/v8.7.3...v8.8.0) (2025-08-18)
 
 
