@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-04-14 17:59:52
+ * @LastEditTime: 2025-08-18 11:02:33
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\chipHell.ts
  * @Description: 
@@ -21,15 +21,15 @@ export const getChipHellNews = async () => {
   const res = await instance.get(
     "https://www.chiphell.com/forum.php?mod=rss&fid=319&auth=0&orderby=dateline");
   const $ = load(res.data, { xmlMode: true });
-  const newsList: NewsItem[] = [];
+  const titleMap = new Map<string, NewsItem>();
   $("item").each((_, item) => {
     const title = $(item).find('title').text();
     const url = $(item).find('link').text();
-    newsList.push({
-      title,
-      url
-    });
-  })
+    if (!titleMap.has(title)) {
+      titleMap.set(title, { title, url });
+    }
+  });
+  const newsList = Array.from(titleMap.values());
   return newsList;
 };
 
