@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.7.3](https://github.com/ylw1997/touchFish/compare/v8.7.2...v8.7.3) (2025-08-18)
+
+
+### 👷‍ Build System | 构建
+
+* **touchfish:** 优化构建发布流程 ([6ec5671](https://github.com/6ec5671c01ac2ba826e6e1ccb607e4c15e3fc4c4))
+
 ### [8.7.2](https://github.com/ylw1997/touchFish/compare/v8.7.1...v8.7.2) (2025-08-18)
 
 
