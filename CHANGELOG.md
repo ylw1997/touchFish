@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.7.1](https://github.com/ylw1997/touchFish/compare/v8.7.0...v8.7.1) (2025-08-18)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **chipHell:** 优化ChipHell新闻获取功能 ([698f52d](https://github.com/698f52d5e82cd2b1256b2fcb491af93a8dbd0f5e))
+
 ## [8.7.0](https://github.com/ylw1997/touchFish/compare/v8.6.0...v8.7.0) (2025-08-18)
 
 
