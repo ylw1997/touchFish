@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.8.0](https://github.com/ylw1997/touchFish/compare/v8.7.3...v8.8.0) (2025-08-18)
+
+
+### ✨ Features | 新功能
+
+* **commands:** 优化打开网页命令并添加返回原始文章按钮 ([84576df](https://github.com/84576df761966f8725bd327dc4758551d8acb3f9))
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **touchfish:** 重构打开新闻详情页面的代码 ([4e72424](https://github.com/4e724244c364d53a3d065af0eda31666313cad47))
+
 ### [8.7.3](https://github.com/ylw1997/touchFish/compare/v8.7.2...v8.7.3) (2025-08-18)
 
 
