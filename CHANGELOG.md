@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.7.0](https://github.com/ylw1997/touchFish/compare/v8.6.0...v8.7.0) (2025-08-18)
+
+
+### ✨ Features | 新功能
+
+* **zhihu/weibo:** 添加设置知乎和微博 Token 的功能 ([f2b8580](https://github.com/f2b8580191b0d33a4dea2d58ddd3090423fde1f1))
+
 ## [8.6.0](https://github.com/ylw1997/touchFish/compare/v8.5.1...v8.6.0) (2025-08-15)
 
 
