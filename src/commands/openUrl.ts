@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-08-08 11:16:43
+ * @LastEditTime: 2025-08-18 17:12:59
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -112,10 +112,35 @@ export const openCHUrl = vscode.commands.registerCommand('chiphell.openUrl', asy
           line-height: 2;
           font-family:'Microsoft YaHei';
         }
+        .open-article-btn{
+          position: absolute;
+          font-size: 15px;
+          right: 20px;
+          top: 20px;
+          background-color: var(--vscode-button-background);
+          max-width: 300px;
+          box-sizing: border-box;
+          display: flex;
+          width: 300px;
+          padding: 4px;
+          border-radius: 2px;
+          text-align: center;
+          cursor: pointer;
+          justify-content: center;
+          align-items: center;
+          border: 1px solid var(--vscode-button-border,transparent);
+          line-height: 18px;
+          text-decoration: none;
+          color: var(--vscode-button-foreground);
+        }
+        .open-article-btn:hover{
+          background-color: var(--vscode-button-hoverBackground);
+        }
       </style>
     </head>
     <body>
       <h1 style="text-align:center" >${title}</h1>
+      <a class="open-article-btn" href="${url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
     </html>
@@ -166,6 +191,30 @@ export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async
           font-size: 18px;
           line-height: 2;
         }
+        .open-article-btn{
+          position: absolute;
+          font-size: 15px;
+          right: 20px;
+          top: 50px;
+          background-color: var(--vscode-button-background);
+          max-width: 300px;
+          box-sizing: border-box;
+          display: flex;
+          width: 300px;
+          padding: 4px;
+          border-radius: 2px;
+          text-align: center;
+          cursor: pointer;
+          justify-content: center;
+          align-items: center;
+          border: 1px solid var(--vscode-button-border,transparent);
+          line-height: 18px;
+          text-decoration: none;
+          color: var(--vscode-button-foreground);
+        }
+        .open-article-btn:hover{
+          background-color: var(--vscode-button-hoverBackground);
+        }
         * {
           color: var(--vscode-editor-foreground) !important;
           font-family:'Microsoft YaHei';
@@ -173,6 +222,7 @@ export const openV2exUrl = vscode.commands.registerCommand('v2ex.openUrl', async
       </style>
     </head>
     <body>
+      <a class="open-article-btn" href="${"https://www.v2ex.com" + url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
     </html>
@@ -340,7 +390,7 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
   margin-left: -10px
 }
 
-.ngabtn{
+.open-article-btn{
   position: absolute;
   font-size: 15px;
   right: 20px;
@@ -361,7 +411,7 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
   text-decoration: none;
   color: var(--vscode-button-foreground);
 }
-.ngabtn:hover{
+.open-article-btn:hover{
   background-color: var(--vscode-button-hoverBackground);
 }
 
@@ -369,7 +419,8 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
   position: relative;
   padding: 10px 14px;
   background: var(--vscode-button-secondaryBackground)
-}     
+}
+     
 .todo-list{
   margin:0 10px;
 }   
@@ -384,12 +435,11 @@ export const openHupuUrl = vscode.commands.registerCommand('hupu.openUrl', async
         .index_bbs-thread-comp img,.index_bbs-thread-comp video {
           max-width: 50%;
         }
-*{
-        font-family:'Microsoft YaHei';}
+*{        font-family:'Microsoft YaHei';}
       </style>
     </head>
     <body>
-      <a class="ngabtn" href="${"https://bbs.hupu.com" + url}" >打开原文章</a>
+      <a class="open-article-btn" href="${"https://bbs.hupu.com" + url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
     </html>
@@ -457,7 +507,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
           margin-bottom: 5px;
           margin-right: 5px;
         }
-        .ngabtn{
+        .open-article-btn{
           position: absolute;
           font-size: 15px;
           right: 20px;
@@ -478,7 +528,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
           text-decoration: none;
           color: var(--vscode-button-foreground);
         }
-        .ngabtn:hover{
+        .open-article-btn:hover{
           background-color: var(--vscode-button-hoverBackground);
         }
         * {
@@ -489,7 +539,7 @@ export const openNgaUrl = vscode.commands.registerCommand('nga.openUrl', async (
     </head>
     <body>
       <h1 style="text-align:center" >${title}</h1>
-      <a class="ngabtn" href="${"https://bbs.nga.cn" + url}" >打开原文章</a>
+      <a class="open-article-btn" href="${"https://bbs.nga.cn" + url}" >打开原文章</a>
       <div class="news_detail">${res}</div>
     </body>
     </html>
