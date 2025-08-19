@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.9.0](https://github.com/ylw1997/touchFish/compare/v8.8.2...v8.9.0) (2025-08-19)
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 整合 HerouI 组件并优化依赖 ([0d2e5dc](https://github.com/0d2e5dc4f25e4dbd0bf58bb0831273e32d38ade4))
+
 ### [8.8.2](https://github.com/ylw1997/touchFish/compare/v8.8.1...v8.8.2) (2025-08-19)
 
 ### [8.8.1](https://github.com/ylw1997/touchFish/compare/v8.8.0...v8.8.1) (2025-08-18)
