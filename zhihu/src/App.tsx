@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-19 15:27:49
+ * @LastEditTime: 2025-08-19 16:53:30
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -108,7 +108,7 @@ function App() {
       {contextHolder}
       <Tabs
         radius="full"
-        className="fixed z-50 bottom-2.5 w-full justify-center "
+        className="fixed z-50 top-2.5 w-full justify-center "
         onSelectionChange={onChange}
         classNames={{
           tabList: "backdrop-style",
@@ -119,7 +119,7 @@ function App() {
           <Tab key={tab.key} title={tab.label} className="pl-4 pr-4" />
         ))}
       </Tabs>
-      <div ref={scrollableNodeRef} className="list">
+      <div id="scrollableDiv" ref={scrollableNodeRef} className="list">
         <InfiniteScroll
           dataLength={list.length}
           next={fetchData}
@@ -127,6 +127,7 @@ function App() {
           endMessage={<Divider plain>没有了🤐</Divider>}
           hasMore={activeKey != "hot" ? true : false}
           scrollThreshold={0.95}
+          scrollableTarget="scrollableDiv"
         >
           {list.map((item: ZhihuItemData) => (
             <ZhihuItem
