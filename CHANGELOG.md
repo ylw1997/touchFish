@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.9.1](https://github.com/ylw1997/touchFish/compare/v8.9.0...v8.9.1) (2025-08-19)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **zhihu:** 移除回到顶部按钮的 target 属性 ([899ef0d](https://github.com/899ef0d080a89cceb2eae83ad771b3b11bbc9f61))
+
 ## [8.9.0](https://github.com/ylw1997/touchFish/compare/v8.8.2...v8.9.0) (2025-08-19)
 
 
