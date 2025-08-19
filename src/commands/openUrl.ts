@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-08-18 18:19:08
+ * @LastEditTime: 2025-08-19 09:03:43
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -183,6 +183,9 @@ export const openCHUrl = vscode.commands.registerCommand(
         extraCss: `
           img{
             max-width: 60%;
+          }
+          .news_detail {
+            font-size: 16px;  
           }
         `,
       })
@@ -436,7 +439,7 @@ export const openNgaUrl = vscode.commands.registerCommand(
           flex-wrap: wrap;
         }
         .postbox{
-          margin: 15px 0;
+          padding: 12px 0;
           width:100%;
           border-bottom: 1px solid var(--vscode-button-secondaryBackground);
         }
