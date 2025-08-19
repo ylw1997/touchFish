@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.9.2](https://github.com/ylw1997/touchFish/compare/v8.9.1...v8.9.2) (2025-08-19)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **layout:** 调整页面布局和滚动逻辑 ([731ea42](https://github.com/731ea424bfcfd93f3d6bdcd23814ecb2e8f36950))
+
+
+### 👷‍ Build System | 构建
+
+* 更新版本号至 8.9.2 ([4e09ec6](https://github.com/4e09ec6017f0a8c923e2d0639955723cb5efc703))
+
 ### [8.9.1](https://github.com/ylw1997/touchFish/compare/v8.9.0...v8.9.1) (2025-08-19)
 
 
