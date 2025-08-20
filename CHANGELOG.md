@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.10.0](https://github.com/ylw1997/touchFish/compare/v8.9.3...v8.10.0) (2025-08-20)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **zhihu:** 优化界面样式和组件属性 ([4a6a1e3](https://github.com/4a6a1e3056174b6e24b361c4495e06172203acc2))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化微博页面样式和功能 ([4aafd6e](https://github.com/4aafd6ec659baa1c279c4dfb0bade909fd697889)), closes [#3a3a3](https://github.com/ylw1997/touchFish/issues/3a3a3) [#3c3c3](https://github.com/ylw1997/touchFish/issues/3c3c3)
+
 ### [8.9.3](https://github.com/ylw1997/touchFish/compare/v8.9.2...v8.9.3) (2025-08-19)
 
 ### [8.9.2](https://github.com/ylw1997/touchFish/compare/v8.9.1...v8.9.2) (2025-08-19)
