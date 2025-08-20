@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-19 16:53:30
+ * @LastEditTime: 2025-08-20 09:37:31
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -110,6 +110,7 @@ function App() {
         radius="full"
         className="fixed z-50 top-2.5 w-full justify-center "
         onSelectionChange={onChange}
+        selectedKey={activeKey}
         classNames={{
           tabList: "backdrop-style",
           tabContent: "text-gray-300",

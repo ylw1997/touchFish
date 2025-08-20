@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-11 18:00:00
- * @LastEditTime: 2025-08-12 09:36:45
+ * @LastEditTime: 2025-08-20 10:17:49
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -78,7 +78,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   return (
     <>
       {contextHolder}
-      <Drawer
+      <Drawer 
+        getContainer={false}
         title="知乎搜索"
         placement="bottom"
         height={"90vh"}

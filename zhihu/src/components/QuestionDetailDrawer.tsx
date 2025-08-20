@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-08-15 14:48:53
+ * @LastEditTime: 2025-08-20 10:16:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -43,6 +43,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
 }) => {
   return (
     <Drawer
+      getContainer={false}
       title={title}
       onClose={onClose}
       open={open}

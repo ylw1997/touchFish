@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-19 14:49:11
+ * @LastEditTime: 2025-08-20 09:55:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\main.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -18,11 +18,15 @@ createRoot(document.getElementById("root")!).render(
   <ConfigProvider
     theme={{
       algorithm: theme.darkAlgorithm,
+      token: {
+        colorBorderSecondary: "#3a3a3a",
+        borderRadius: 16,
+      },
     }}
     locale={zhCN}
   >
     <HeroUIProvider>
-       <main className="dark">
+      <main className="dark">
         <App />
       </main>
     </HeroUIProvider>

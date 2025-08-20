@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, Flex, List } from "antd";
+import { Button, Card, Flex, List } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
@@ -13,6 +13,7 @@ import { useMessageHandler } from "../hooks/useMessageHandler";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import CommentItem from "./CommentItem";
 import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
+import { Avatar } from "@heroui/react";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
@@ -70,27 +71,24 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   };
 
   const renderTitle = () => (
-    <Flex>
+    <Flex align="center">
       {item.index != undefined ? (
         <Avatar
-          shape="square"
-          size={44}
+          isBordered
+          radius="sm"
+          size="sm"
           style={{
-            border: "none",
             flexShrink: 0,
-            backgroundColor: "#fde3cf",
-            color: "#f56a00",
-            fontWeight: "bold",
             fontSize: "20px",
           }}
+          name={item.index +''}
         >
-          {item.index}
         </Avatar>
       ) : (
         <Avatar
-          shape="square"
-          size={44}
-          style={{ border: "none", flexShrink: 0 }}
+          isBordered 
+          radius="sm"
+          style={{ flexShrink: 0 }}
           src={item.author?.avatar_url}
         >
           {item.author?.name}
