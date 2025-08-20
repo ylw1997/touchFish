@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.10.2](https://github.com/ylw1997/touchFish/compare/v8.10.1...v8.10.2) (2025-08-20)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **zhihu:** 修复回到顶部按钮滚动目标 ([9c9f5d9](https://github.com/9c9f5d958751aba5f3132100e863acc7c970e486))
+
 ### [8.10.1](https://github.com/ylw1997/touchFish/compare/v8.10.0...v8.10.1) (2025-08-20)
 
 
