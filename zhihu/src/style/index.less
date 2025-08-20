@@ -65,8 +65,9 @@ body {
   word-break: break-all;
   margin-bottom: 8px;
   img {
-    object-fit: contain;
+    width: 100%;
     max-height: 500px;
+    object-fit: contain;
   }
 }
 
@@ -208,8 +209,13 @@ body {
 
 .ant-image {
   margin: 0px;
-  &:not(:first-child) {
-    margin: 5px;
+  width: fit-content;
+  margin: 0 auto;
+  img {
+    border-radius: 12px;
+  }
+  .ant-image-mask {
+    border-radius: 12px;
   }
 }
 

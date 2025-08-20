@@ -12,6 +12,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { useMessageHandler } from "../hooks/useMessageHandler";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import CommentItem from "./CommentItem";
+import { parseZhihuItemContent } from "../utils/textParser";
 import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
 import { Avatar } from "@heroui/react";
 
@@ -170,11 +171,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       <Card key={item.id} title={renderTitle()} actions={actions}>
         <div className="content">
           {item.content ? (
-            <div
-              dangerouslySetInnerHTML={{
-                __html: expanded ? item.content : item.excerpt,
-              }}
-            ></div>
+            parseZhihuItemContent(expanded ? item.content : item.excerpt)
           ) : (
             <div
               dangerouslySetInnerHTML={{
