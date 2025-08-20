@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-07-31 11:51:49
+ * @LastEditTime: 2025-08-20 09:30:49
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -61,7 +61,7 @@ export class WeiboProvider implements WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage(
       async (message: commandsType<string | any>) => {
-        console.log("Weibo provider received a message:", message);
+        // console.log("Weibo provider received a message:", message);
         switch (message.command) {
           case "SAVE_SCROLL_POSITION": {
             this.context.workspaceState.update(
