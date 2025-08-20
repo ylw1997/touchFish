@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-20 09:37:31
+ * @LastEditTime: 2025-08-20 13:32:43
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -146,6 +146,7 @@ function App() {
           duration={1000}
           icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
           tooltip={{ title: "回到顶部", placement: "left" }}
+          target={() => scrollableNodeRef.current || window}
         />
         <FloatButton
           icon={<SearchOutlined style={{ color: "#faad14" }} />}
