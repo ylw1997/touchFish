@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.11.0](https://github.com/ylw1997/touchFish/compare/v8.10.3...v8.11.0) (2025-08-21)
+
+
+### ✨ Features | 新功能
+
+* **utils:** 新增数组去重函数并应用于 API 模块 ([130513f](https://github.com/130513fa79067ac77f8df68028830351d9d8e3fb))
+
 ### [8.10.3](https://github.com/ylw1997/touchFish/compare/v8.10.2...v8.10.3) (2025-08-21)
 
 ### [8.10.2](https://github.com/ylw1997/touchFish/compare/v8.10.1...v8.10.2) (2025-08-20)
