@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2025-08-14 18:04:09
+ * @LastEditTime: 2025-08-21 14:21:11
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description:
@@ -163,4 +163,14 @@ export const convertZhihuHotQuestionToZhihuItemData = (
     },
     metrics_area: `${hotQuestion.question.answer_count} 回答 · ${hotQuestion.question.visit_count} 浏览 · ${hotQuestion.question.follower_count} 关注`,
   };
+};
+
+
+// 对NewsItem数组去重
+export const uniqueNews = (newsList: NewsItem[]) => {
+  const uniqueMap = new Map<string, NewsItem>();
+  newsList.forEach((item) => {
+    uniqueMap.set(item.title, item);
+  });
+  return Array.from(uniqueMap.values());
 };

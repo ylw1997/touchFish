@@ -1,14 +1,15 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 11:27:15
- * @LastEditTime: 2024-09-18 13:59:09
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-08-21 14:21:58
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\hupu.ts
  * @Description: 
  */
 import axios from "axios";
 import {load} from 'cheerio';
 import { NewsItem } from '../type/type';
+import { uniqueNews } from "../utils/util";
 
 // 获取新闻列表
 export const getHupuList = async (tab="all-gambia")=>{
@@ -41,7 +42,7 @@ export const getHupuList = async (tab="all-gambia")=>{
     });
   }
   
-  return resArr;
+  return uniqueNews(resArr);
 };
 
 // 获取新闻详情

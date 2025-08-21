@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-20 11:27:15
- * @LastEditTime: 2024-09-18 13:51:05
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-08-21 14:22:34
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\v2ex.ts
  * @Description: 
  */
@@ -10,6 +10,7 @@ import axios from "axios";
 import {load} from 'cheerio';
 import { NewsItem } from "../type/type";
 import * as vscode from 'vscode';
+import { uniqueNews } from "../utils/util";
 
 // 获取新闻列表
 export const getV2exList = async (tab="all")=>{
@@ -25,7 +26,7 @@ export const getV2exList = async (tab="all")=>{
         url: $(item).find(".topic-link").attr('href')?.trim() || '',
       });
     });
-    return resArr;
+    return uniqueNews(resArr);
   } catch (error) {
     console.log(error);
     vscode.window.showErrorMessage("获取V2EX新闻列表失败");

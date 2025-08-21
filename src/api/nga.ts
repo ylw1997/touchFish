@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-06-12 17:05:07
+ * @LastEditTime: 2025-08-21 14:22:17
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\nga.ts
  * @Description: 
@@ -12,6 +12,7 @@ import { load } from 'cheerio';
 import { TextDecoder } from "util";
 import * as vscode from 'vscode';
 import { setConfigByKey } from "../config";
+import { uniqueNews } from "../utils/util";
 
 export const  getOrSetNgaCookie = async () => {
   const config = vscode.workspace.getConfiguration('touchfish');
@@ -58,7 +59,7 @@ export const getNgaList = async (tab?:string) => {
     console.log("nga--->出错",error);
     vscode.window.showInformationMessage("nga加载失败,请刷新列表重试！");
   }
-  return resArr;
+  return uniqueNews(resArr);
 };
 
 
