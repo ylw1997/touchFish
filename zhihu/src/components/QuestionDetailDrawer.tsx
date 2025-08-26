@@ -51,6 +51,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       placement="bottom"
       height="calc(100vh - 200px)"
       loading={questionData.length === 0 && open}
+      zIndex={1001}
       styles={{
         wrapper: {
           background: "none",
