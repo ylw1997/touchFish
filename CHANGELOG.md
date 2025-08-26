@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.11.1](https://github.com/ylw1997/touchFish/compare/v8.11.0...v8.11.1) (2025-08-26)
+
+
+### 👷‍ Build System | 构建
+
+* 升级 vscode API 依赖版本 ([022abad](https://github.com/022abad856f65e8d0f9de22a2877097db0839402))
+
 ## [8.11.0](https://github.com/ylw1997/touchFish/compare/v8.10.3...v8.11.0) (2025-08-21)
 
 
