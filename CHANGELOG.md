@@ -1,6 +1,8 @@
 # 更新历史 
 
 
+### [8.11.2](https://github.com/ylw1997/touchFish/compare/v8.11.1...v8.11.2) (2025-08-26)
+
 ### [8.11.1](https://github.com/ylw1997/touchFish/compare/v8.11.0...v8.11.1) (2025-08-26)
 
 
