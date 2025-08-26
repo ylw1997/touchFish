@@ -6,7 +6,7 @@
 	"version": "8.11.0",
 	"icon": "favicon.ico",
 	"engines": {
-		"vscode": "^1.102.0"
+		"vscode": "^1.80.0"
 	},
 	"activationEvents": [
 		"onView:touchfish"
@@ -393,7 +393,7 @@
 		"@types/crypto-js": "^4.2.2",
 		"@types/mocha": "^10.0.9",
 		"@types/node": "24.0.13",
-		"@types/vscode": "1.102.0",
+		"@types/vscode": "1.80.0",
 		"@typescript-eslint/eslint-plugin": "8.36.0",
 		"@typescript-eslint/parser": "8.36.0",
 		"@vscode/test-electron": "2.5.2",
