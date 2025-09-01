@@ -67,6 +67,6 @@
 - `touchfish.showImg`: 是否显示图片（目前主要支持微博）。
 - `touchfish.weiboCookie`: 你的微博 Cookie，用于获取个人化内容。
 - `touchfish.zhihuCookie`: 你的知乎 Cookie。
-- `touchfish.refreshTime`: 自动刷新的时间间隔（秒）。
+
 - 以及各个新闻源的默认标签页配置。
 

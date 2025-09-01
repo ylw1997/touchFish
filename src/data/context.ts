@@ -7,7 +7,7 @@
  * Copyright (c) 2024 by error: git config user.name & please set dead value or install git, All Rights Reserved. 
  * @Description: 
  */
-export const defaultRefreshTime = 300;
+
 export const defaultHupuTab = "all-gambia";
 export const defaultV2exTab = "all";
 export const defaultNgaTab = "-7";

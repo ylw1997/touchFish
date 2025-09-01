@@ -22,7 +22,6 @@ import {
   refreshNgaNews,
 } from "./commands/refresh";
 import { ItHomeProvider } from "./Providers/itHomeProvider";
-import { refreshTime } from "./config/index";
 import {
   changeHupuTab,
   changeNgaTab,
@@ -34,7 +33,6 @@ import {
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
 import { HupuProvider } from "./Providers/hupuProvider";
-import { defaultRefreshTime } from "./data/context";
 import { NgaProvider } from "./Providers/ngaProvider";
 import { ZhihuWebProvider } from './Providers/zhihuWebProvider';
 import { WeiboProvider } from "./Providers/weiboProvider";
@@ -42,8 +40,6 @@ import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
 
-
-let timer: NodeJS.Timeout | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
   ContextManager.initialize(context);
@@ -80,8 +76,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(changeHupuTab(hupuProvider));
   context.subscriptions.push(refreshNgaNews(ngaProvider));
   context.subscriptions.push(changeNgaTab(ngaProvider));
-  //定时刷新新闻
-  intervalRefrshNews();
 
   //注册打开新闻链接指令
   context.subscriptions.push(openUrl);
@@ -95,38 +89,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-  clearAllTimer();
   const tempDir = Uri.joinPath(ContextManager.context.extensionUri, "temp");
   if (fs.existsSync(tempDir.fsPath)) {
     fs.rmSync(tempDir.fsPath, { recursive: true, force: true });
   }
 }
-
-// 清除所有定时器
-const clearAllTimer = () => {
-  if (timer) {
-    clearInterval(timer);
-  }
-};
-
-const refreshAll = () => {
-  vscode.commands.executeCommand("itHome.refresh");
-  vscode.commands.executeCommand("v2ex.refresh");
-  vscode.commands.executeCommand("hupu.refresh");
-  vscode.commands.executeCommand("chiphell.refresh");
-  vscode.commands.executeCommand("nga.refresh");
-};
-
-// 定时刷新
-const intervalRefrshNews = () => {
-  if (timer) {
-    clearInterval(timer);
-  }
-  refreshAll();
-  const newconfig = vscode.workspace.getConfiguration("touchfish");
-  const autoRefresh = newconfig.get("autoRefresh") as boolean;
-  if (!autoRefresh) {
-    return;
-  }
-  timer = setInterval(refreshAll, 1000 * (refreshTime || defaultRefreshTime));
-};

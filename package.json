@@ -80,11 +80,6 @@
 					"default": null,
 					"description": "每条新闻显示多少字数"
 				},
-				"touchfish.refreshTime": {
-					"type": "number",
-					"default": 300,
-					"description": "多少秒自动刷新,默认300秒"
-				},
 				"touchfish.v2exTab": {
 					"type": "string",
 					"default": "all",
@@ -174,11 +169,7 @@
 						"程序员职业交流"
 					]
 				},
-				"touchfish.autoRefresh": {
-					"type": "boolean",
-					"default": false,
-					"description": "是否自动刷新"
-				},
+				
 				"touchfish.ngaCookie": {
 					"type": "string",
 					"description": "NGA cookie"

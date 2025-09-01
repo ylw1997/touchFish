@@ -17,7 +17,7 @@ export let showNewsNumber: number|undefined = config.get('showNewsNumber');
 export let showNewsWordNumber: number|undefined = config.get('showNewsWordNumber');
 
 //多少秒刷新一次财联社 刷新时间默认为60秒
-export let refreshTime: number|undefined = config.get('refreshTime');
+
 
 export let v2exTab: string|undefined = config.get('v2exTab');
 export let hupuTab: string|undefined = config.get('hupuTab');
@@ -33,7 +33,7 @@ export const refrshConfig = () => {
   const newconfig = vscode.workspace.getConfiguration('touchfish');
   showNewsNumber = newconfig.get('showNewsNumber');
   showNewsWordNumber = newconfig.get('showNewsWordNumber');
-  refreshTime = newconfig.get('refreshTime');
+  
   v2exTab = newconfig.get('v2exTab');
   hupuTab = newconfig.get('hupuTab');
   ngaTab = newconfig.get('ngaTab');
