@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.12.0](https://github.com/ylw1997/touchFish/compare/v8.11.4...v8.12.0) (2025-09-01)
+
+
+### ✨ Features | 新功能
+
+* **activate:** 添加插件启动时会自动加载所有新闻源 ([623a420](https://github.com/623a420976f5f4493cd71cb4ac01d647c3bb602b))
+
 ### [8.11.4](https://github.com/ylw1997/touchFish/compare/v8.11.3...v8.11.4) (2025-09-01)
 
 
