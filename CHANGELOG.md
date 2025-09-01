@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.12.1](https://github.com/ylw1997/touchFish/compare/v8.12.0...v8.12.1) (2025-09-01)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **openUrl:** 为 HTML 内容中的 img 和 video 标签添加 referrerpolicy 属性 ([d365f08](https://github.com/d365f08c4afbc5b9fade7fb67d73d1c9b2d26771))
+
 ## [8.12.0](https://github.com/ylw1997/touchFish/compare/v8.11.4...v8.12.0) (2025-09-01)
 
 
