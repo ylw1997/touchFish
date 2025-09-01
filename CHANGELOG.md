@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.11.3](https://github.com/ylw1997/touchFish/compare/v8.11.2...v8.11.3) (2025-09-01)
+
+
+### 👷‍ Build System | 构建
+
+* **publish:** 更新发布脚本并调整默认配置 ([3e12243](https://github.com/3e1224393555970dfda85f4ac39908a83debb4c3))
+
 ### [8.11.2](https://github.com/ylw1997/touchFish/compare/v8.11.1...v8.11.2) (2025-08-26)
 
 ### [8.11.1](https://github.com/ylw1997/touchFish/compare/v8.11.0...v8.11.1) (2025-08-26)
