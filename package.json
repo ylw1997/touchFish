@@ -176,7 +176,7 @@
 				},
 				"touchfish.autoRefresh": {
 					"type": "boolean",
-					"default": true,
+					"default": false,
 					"description": "是否自动刷新"
 				},
 				"touchfish.ngaCookie": {
@@ -384,7 +384,8 @@
 		"test": "node ./out/test/runTest.js",
 		"build": "vsce package",
 		"changelog": "standard-version",
-		"publish": "vsce publish",
+		"publish": "vsce publish && ovsx publish",
+		"unpublish": "vsce unpublish && ovsx unpublish",
 		"build-publish": " npm --prefix ./zhihu run build && npm --prefix ./weibo run build && npm run package && standard-version && npm run publish "
 	},
 	"devDependencies": {
