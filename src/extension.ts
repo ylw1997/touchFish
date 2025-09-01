@@ -85,6 +85,12 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(openNgaUrl);
   context.subscriptions.push(setZhihuTokenCommand());
   context.subscriptions.push(setWeiboTokenCommand());
+  // 自动刷新
+  vscode.commands.executeCommand("itHome.refresh");
+  vscode.commands.executeCommand("chiphell.refresh");
+  vscode.commands.executeCommand("v2ex.refresh");
+  vscode.commands.executeCommand("hupu.refresh");
+  vscode.commands.executeCommand("nga.refresh");
 }
 
 // this method is called when your extension is deactivated
