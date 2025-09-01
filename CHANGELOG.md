@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.11.4](https://github.com/ylw1997/touchFish/compare/v8.11.3...v8.11.4) (2025-09-01)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **extension:** 移除自动刷新功能 ([792870b](https://github.com/792870b3549381888280263acf4af022dd4d9089))
+
 ### [8.11.3](https://github.com/ylw1997/touchFish/compare/v8.11.2...v8.11.3) (2025-09-01)
 
 
