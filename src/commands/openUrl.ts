@@ -44,7 +44,7 @@ const createWebviewHtml = (
   const titleHtml = showTitle
     ? `<h1 style="text-align:center" >${title}</h1>`
     : "";
-
+  content = content.replace(/<img/g, '<img referrerpolicy="no-referrer"').replace(/<video/g, '<video referrerpolicy="no-referrer"');
   return `
     <!DOCTYPE html>
     <html lang="en">
