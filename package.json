@@ -38,21 +38,6 @@
 				"label": "ylw-dark-theme",
 				"uiTheme": "vs-dark",
 				"path": "./themes/ylw-dark-color-theme.json"
-			},
-			{
-				"label": "ylw-dark-theme-2",
-				"uiTheme": "vs-dark",
-				"path": "./themes/ylw-dark-color-theme-2.json"
-			},
-			{
-				"label": "ylw-light-theme",
-				"uiTheme": "vs",
-				"path": "./themes/ylw-light-color-theme.json"
-			},
-			{
-				"label": "ylw-deep-dark-theme",
-				"uiTheme": "vs-dark",
-				"path": "./themes/ylw-deep-dark-theme.json"
 			}
 		],
 		"configuration": {
@@ -400,6 +385,7 @@
 		"webpack-cli": "6.0.1"
 	},
 	"dependencies": {
+		"antd": "^5.27.2",
 		"axios": "1.10.0",
 		"cheerio": "1.1.0",
 		"crypto-js": "^4.2.0"
