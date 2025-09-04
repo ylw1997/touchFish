@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-08-20 10:16:28
+ * @LastEditTime: 2025-09-04 09:51:17
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -54,7 +54,6 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       zIndex={1001}
       styles={{
         wrapper: {
-          background: "none",
           borderRadius: "10px",
           overflow: "hidden",
         },
@@ -63,33 +62,32 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
           height: "100%",
           minHeight: 0,
           overflow: "auto",
-        },
-        content: {
-          background: "rgba(26, 28, 34, 0.7)",
-          backdropFilter: "saturate(180%) blur(15px)",
-        },
+        }
       }}
     >
       <Card
-        style={{
-          background: "rgba(255, 255, 255, 0.1)",
-          border: "none",
-        }}
-        actions={[
-          isFollowing === undefined ? null : isFollowing ? (
-            <Button color="red" variant="filled" onClick={unfollowHandler}>
-              取消关注
-            </Button>
-          ) : (
-            <Button variant="filled" color="blue" onClick={followHandler}>
-              关注问题
-            </Button>
-          ),
-        ]}
+        actions={
+          isFollowing === undefined
+            ? undefined
+            : [
+                isFollowing ? (
+                  <Button
+                    color="red"
+                    variant="filled"
+                    onClick={unfollowHandler}
+                  >
+                    取消关注
+                  </Button>
+                ) : (
+                  <Button variant="filled" color="blue" onClick={followHandler}>
+                    关注问题
+                  </Button>
+                ),
+              ]
+        }
       >
         <div
           className="question-detail-content"
-          style={{ color: "white" }}
           dangerouslySetInnerHTML={{
             __html: questionDetail ? questionDetail : title,
           }}

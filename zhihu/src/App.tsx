@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-20 13:32:43
+ * @LastEditTime: 2025-09-04 15:29:06
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -113,7 +113,8 @@ function App() {
         selectedKey={activeKey}
         classNames={{
           tabList: "backdrop-style",
-          tabContent: "text-gray-300",
+          cursor: "tab-active-style",
+          tabContent: "vscode-foreground"
         }}
       >
         {tabs.map((tab) => (

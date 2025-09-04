@@ -1,34 +1,14 @@
 /*
- * @Author: yangliwei 1280426581@qq.com
- * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-20 09:55:32
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-09-03 17:06:20
+ * @LastEditTime: 2025-09-04 17:09:01
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\main.tsx
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
- * @Description:
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
  */
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import { ConfigProvider } from "antd";
-import { theme } from "antd";
-import zhCN from "antd/locale/zh_CN";
-import { HeroUIProvider } from "@heroui/react";
+import ThemeWrapper from "./ThemeWrapper";
 import "../styles.css";
-createRoot(document.getElementById("root")!).render(
-  <ConfigProvider
-    theme={{
-      algorithm: theme.darkAlgorithm,
-      token: {
-        colorBorderSecondary: "#3a3a3a",
-        borderRadius: 16,
-      },
-    }}
-    locale={zhCN}
-  >
-    <HeroUIProvider>
-      <main className="dark">
-        <App />
-      </main>
-    </HeroUIProvider>
-  </ConfigProvider>
-);
+
+createRoot(document.getElementById("root")!).render(<ThemeWrapper />);

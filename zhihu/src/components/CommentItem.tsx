@@ -1,21 +1,19 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 14:55:56
- * @LastEditTime: 2025-08-20 10:37:06
+ * @LastEditTime: 2025-09-04 16:19:10
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\CommentItem.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
  * @Description: 
  */
-import { Flex, List, Space, Tag, Typography } from "antd";
+import { Flex, List, Space, Tag } from "antd";
 import React from "react";
 import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../type";
 import { processCommentContent } from "../utils/textParser";
 import { LikeOutlined } from "@ant-design/icons";
 import { Avatar } from "@heroui/react";
-
-const { Text } = Typography;
 
 const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
   return (
@@ -25,7 +23,7 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
       <Flex gap={10} style={{ width: '100%' }}>
         <Avatar src={comment.author.avatar_url} size="sm" isBordered radius="sm" />
         <div style={{ flex: 1 }}>
-          <Text strong>{comment.author.name}</Text>
+          <span style={{fontWeight:'bold'}} >{comment.author.name}</span>
           <div
             dangerouslySetInnerHTML={{ __html: processCommentContent(comment.content) }}
             style={{ marginTop: '4px',lineHeight: '2' }}
@@ -37,16 +35,16 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
                   {tag.text}
                 </Tag>
               ))}
-              <Text type="secondary">
+              <span>
                 {dayjs(comment.created_time * 1000).fromNow()}
-              </Text>
+              </span>
             </Space>
-             <Text type="secondary">
+             <span>
                 <LikeOutlined /> {comment.like_count}
-              </Text>
+              </span>
           </Flex>
           {comment.child_comments && comment.child_comments.length > 0 && (
-            <div style={{ marginTop: '10px',borderTop:'1px solid #fdfdfd1f' }}>
+            <div style={{ marginTop: '10px',borderTop:'1px solid var(--vscode-editorWidget-border)' }}>
               <List
                 dataSource={comment.child_comments}
                 renderItem={(child) => <CommentItem comment={child} />}

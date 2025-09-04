@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-11 18:00:00
- * @LastEditTime: 2025-08-20 10:17:49
+ * @LastEditTime: 2025-09-04 15:30:10
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -88,7 +88,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         destroyOnHidden
         styles={{
           wrapper: {
-            background: "none",
             borderRadius: "10px",
             overflow: "hidden",
           },
@@ -96,17 +95,14 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             padding: "10px",
             paddingTop: "20px",
             overflowY: "auto",
-          },
-          content: {
-            background: "rgba(26, 28, 34, 0.5)",
-            backdropFilter: "saturate(180%) blur(15px)",
-          },
+          }
         }}
       >
         <Form form={form} layout="vertical" onFinish={handleSearch}>
           <Form.Item
             name="keyword"
-            rules={[{ required: true, message: "请输入搜索关键词" }]}
+            rules={[{ required: true, message: "请输入搜索关键词" }]
+            }
           >
             <Input.Search
               placeholder="请输入搜索关键词"
