@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.13.0](https://github.com/ylw1997/touchFish/compare/v8.12.1...v8.13.0) (2025-09-04)
+
+
+### 👷‍ Build System | 构建
+
+* **dependencies:** 添加 antd 依赖并移除部分主题配置 ([3bbf579](https://github.com/3bbf579132b7d9c87453b00551539a0b94e612ab))
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 优化主题和样式以适配 VS Code ([4a3baf2](https://github.com/4a3baf2a6ff5ea0e99e863481b71a572a8720392))
+
 ### [8.12.1](https://github.com/ylw1997/touchFish/compare/v8.12.0...v8.12.1) (2025-09-01)
 
 
