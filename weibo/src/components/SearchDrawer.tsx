@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-08-01 16:38:56
+ * @LastEditTime: 2025-09-05 08:46:41
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -259,22 +259,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         onClose={closeFunc}
         destroyOnHidden
         zIndex={9999}
-        styles={{
-          wrapper: {
-            background: "none",
-            borderRadius: "10px",
-            overflow: "hidden",
-          },
-          body: {
-            padding: "10px",
-            paddingTop: "0",
-            overflowY: "auto",
-          },
-          content: {
-            background: "rgba(26, 28, 34, 0.5)",
-            backdropFilter: "saturate(180%) blur(15px)",
-          },
-        }}
+        
       >
         <Divider>微博热搜</Divider>
         <div className="hot-search-grid">
@@ -303,7 +288,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             <Input.Search
               placeholder="请输入搜索关键词"
               disabled={loading}
-              style={{ background: "#14141482" }}
               onPressEnter={() => handleSearch(searchType)}
               onSearch={() => handleSearch(searchType)}
               enterButton={

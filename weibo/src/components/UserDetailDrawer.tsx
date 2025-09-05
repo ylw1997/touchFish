@@ -100,20 +100,11 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         placement="bottom"
         height="calc(100vh - 200px)"
         styles={{
-          wrapper: {
-            background: "none",
-            borderRadius: "10px",
-            overflow: "hidden",
-          },
           body: {
             padding: 0,
             height: "100%",
             minHeight: 0,
             overflow: "auto",
-          },
-          content: {
-            background: "rgba(26, 28, 34, 0.5)",
-            backdropFilter: "saturate(180%) blur(15px)",
           },
         }}
       >
@@ -124,6 +115,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
             style={{
               height: "100%",
               overflow: "auto",
+              padding: "0 5px",
             }}
           >
             <div

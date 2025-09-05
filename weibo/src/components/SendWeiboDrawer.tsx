@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-07-25 11:09:10
+ * @LastEditTime: 2025-09-05 08:48:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -145,20 +145,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
             发送
           </Button>
         }
-        styles={{
-          wrapper: {
-            background: "none",
-            borderRadius: "10px",
-            overflow: "hidden",
-          },
-          body: {
-            padding: "10px",
-          },
-          content: {
-            background: "rgba(26, 28, 34, 0.5)",
-            backdropFilter: "saturate(180%) blur(15px)",
-          },
-        }}
+        
       >
         <Form form={form} layout="vertical" initialValues={{ visible: 0 }}>
           <Form.Item
@@ -172,7 +159,6 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
               showCount
               placeholder="此刻你想说点什么..."
               disabled={loading}
-              style={{ background: "#14141482" }}
             />
           </Form.Item>
           <Form.Item

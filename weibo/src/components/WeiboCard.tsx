@@ -235,8 +235,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       style={{
         borderTop: "1px solid rgb(255 255 255 / 10%)",
         marginLeft: "-8px",
-        marginRight: "-8px",
-        padding: "8px",
+        marginRight: "-8px"
       }}
     >
       <Flex justify="space-around" align="center">
@@ -294,7 +293,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         )}
         <span className="link">
           <Dropdown
-            trigger={["click", "hover"]}
+            trigger={["hover"]}
             menu={{
               items: [
                 {
@@ -420,7 +419,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
                 rows={3}
                 maxLength={140}
                 placeholder={`请输入${commentTitle}内容`}
-                style={{ background: "#14141482" }}
               />
             </Form.Item>
             <Form.Item>

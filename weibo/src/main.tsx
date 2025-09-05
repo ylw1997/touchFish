@@ -8,22 +8,7 @@
  * @Description:
  */
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import { ConfigProvider } from "antd";
-import { theme } from "antd";
-import zhCN from 'antd/locale/zh_CN';
+import ThemeWrapper from "./ThemeWrapper";
+import "./style/index.less";
 
-createRoot(document.getElementById("root")!).render(
-  <ConfigProvider
-    theme={{
-      algorithm: theme.darkAlgorithm,
-      token: {
-        colorBorderSecondary: "#3a3a3a",
-        borderRadius: 16,
-      },
-    }}
-    locale={zhCN}
-  >
-    <App />
-  </ConfigProvider>
-);
+createRoot(document.getElementById("root")!).render(<ThemeWrapper />);
