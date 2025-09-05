@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.14.0](https://github.com/ylw1997/touchFish/compare/v8.13.0...v8.14.0) (2025-09-05)
+
+
+### ✨ Features | 新功能
+
+* **theme:** 实现主题自动适配功能并优化样式 ([eeb11bb](https://github.com/eeb11bbc97d85e365a2fbbd38b5ad990365046df))
+
 ## [8.13.0](https://github.com/ylw1997/touchFish/compare/v8.12.1...v8.13.0) (2025-09-04)
 
 
