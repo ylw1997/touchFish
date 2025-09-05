@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.14.1](https://github.com/ylw1997/touchFish/compare/v8.14.0...v8.14.1) (2025-09-05)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **components:** 优化评论和微博卡片的样式 ([9162575](https://github.com/916257555483828e8d77ece90b881734069d1867))
+
+
+### 📝 Documentation | 文档
+
+* **README:** 更新功能描述并移除快速启动指南 ([204bb55](https://github.com/204bb55edf06dd542b7a8daf2958e5ad140b50af))
+
 ## [8.14.0](https://github.com/ylw1997/touchFish/compare/v8.13.0...v8.14.0) (2025-09-05)
 
 
