@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-07-31 15:40:43
+ * @LastEditTime: 2025-09-05 15:44:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -18,6 +18,9 @@ import { Uri } from "vscode";
 axios.interceptors.response.use(
   (value) => value,
   (error) => {
+    if (error.response && error.response.status === 432) {
+      return Promise.reject(error);
+    }
     vscode.window.showErrorMessage(
       `请求失败:${error.message} -------> ${error.config.url}`
     );
@@ -395,16 +398,34 @@ export const getHotSearch = async () => {
 //containerid=100103type=3&q=凡人修仙传&t=
 //type: 3 用户 60 热门
 //card_type: 9 微博 11 卡片包裹 10 用户
-export const getWeiboSearch = async (containerid: string) => {
+export const getWeiboSearch = async (
+  containerid: string,
+  retries = 3
+): Promise<any> => {
   const url = `https://m.weibo.cn/api/container/getIndex?containerid=${encodeURIComponent(
     containerid
-  )}&page_type=searchall`;
-  console.log("Fetching Weibo Search Data:", url);
-  return await axios.get(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
-      Referer: "https://m.weibo.cn/",
-    },
-  });
+  )}`;
+  // console.log("Fetching Weibo Search Data:", url);
+  try {
+    return await axios.get(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
+        Referer: "https://m.weibo.cn/",
+      },
+    });
+  } catch (error: any) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return getWeiboSearch(containerid, retries - 1);
+    } else {
+      vscode.window.showErrorMessage(`微博搜索请求失败: ${error.message}`);
+      return Promise.resolve({
+        data: {
+          ok: 0,
+          msg: error.message,
+        },
+      });
+    }
+  }
 };

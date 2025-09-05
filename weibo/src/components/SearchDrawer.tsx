@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-05 08:46:41
+ * @LastEditTime: 2025-09-05 16:00:36
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -176,7 +176,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     setUsers([]);
     setWeibos([]);
     setLoading(false);
-    setSearchType(SearchInfo[0]);
   }, [setWeibos]);
 
   const handleSearch = useCallback(
@@ -208,6 +207,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const closeFunc = useCallback(() => {
     form.resetFields();
     clear();
+    setSearchType(SearchInfo[0]);
     onClose();
   }, [form, clear, onClose]);
 
@@ -258,8 +258,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         open={open}
         onClose={closeFunc}
         destroyOnHidden
-        zIndex={9999}
-        
       >
         <Divider>微博热搜</Divider>
         <div className="hot-search-grid">
