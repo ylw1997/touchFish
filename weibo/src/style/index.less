@@ -67,13 +67,16 @@ body {
   color: var(--vscode-foreground);
   line-height: 2;
   word-break: break-all;
-  margin-bottom: 8px;
+  padding: 8px;
   img {
     width: 18px;
     height: 18px;
     vertical-align: -4px;
     margin: 0 1px;
   }
+}
+.comment-content {
+  padding: 5px 0;
 }
 
 /**
@@ -156,9 +159,13 @@ body {
   backdrop-filter: saturate(180%) blur(15px);
 }
 
+.ant-list .ant-list-item .ant-list-item-meta .ant-list-item-meta-avatar {
+  margin-inline-end: 8px;
+}
+
 .ant-drawer {
   .ant-drawer-body {
-    padding: 10px;
+    padding: 8px;
   }
 }
 
@@ -166,20 +173,20 @@ body {
  * Card: token 未覆盖的特定样式
  */
 .ant-card {
-  margin-top: 10px;
+  margin-top: 8px;
   .ant-card-head-title {
     overflow: visible;
   }
   .ant-card-head {
-    padding: 10px;
+    padding: 8px;
     min-height: 45px;
     font-weight: normal;
   }
   .ant-card-body {
-    padding: 15px 10px;
+    padding: 0px;
   }
   .ant-card-actions li {
-    margin: 10px 0;
+    margin: 8px 0;
   }
 }
 
@@ -201,7 +208,9 @@ body {
 .ant-float-btn-group > .ant-float-btn {
   .backdrop-style();
   &:hover {
-    background: var(--hover-background); /* 注意: --hover-background 不是一个标准的 VS Code token */
+    background: var(
+      --hover-background
+    ); /* 注意: --hover-background 不是一个标准的 VS Code token */
   }
   .ant-float-btn-body {
     background: none;
@@ -223,13 +232,17 @@ body {
    5. 响应式图片列表布局
    ========================================================================== */
 
+.retweeted-status{
+  margin: 0 5px;
+}
+
 // 图片列表通用样式
 .imglist,
 .retweeted-status .imglist {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
   flex-wrap: wrap;
+  padding: 0 8px;
 
   .img-item,
   .img-only-item {
@@ -255,11 +268,11 @@ body {
   .imglist,
   .retweeted-status .imglist {
     .img-item {
-      width: calc(50vw - 28px);
-      height: calc(50vw - 28px);
+      width: calc(50vw - 26px);
+      height: calc(50vw - 26px);
     }
     .img-only-item {
-      width: calc(66.66vw - 28px);
+      width: calc(66.66vw - 26px);
       max-width: 500px;
       max-height: 500px;
     }
@@ -313,8 +326,8 @@ body {
    6. Weibo Specific Styles
    ========================================================================== */
 
-.mt10 {
-  margin-top: 10px;
+.mt8 {
+  margin-top: 8px;
 }
 
 .icon-link {
@@ -344,7 +357,7 @@ body {
 }
 
 .ant-tabs-nav-list {
-  padding: 0 10px;
+  padding: 0 8px;
 }
 
 .ant-tabs .ant-tabs-tab + .ant-tabs-tab {
@@ -352,7 +365,7 @@ body {
 }
 
 .ant-form-item {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .weiboItemUrl {

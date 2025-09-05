@@ -231,10 +231,9 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
   const renderActionBar = () => (
     <div
-      className="info mt10 border-top-divider"
+      className="info mt8 border-top-divider"
       style={{
-        marginLeft: "-8px",
-        marginRight: "-8px",
+        padding: "8px 0px",
       }}
     >
       <Flex justify="space-around" align="center">
@@ -398,8 +397,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         <div
           className="border-top-divider"
           style={{
-            marginLeft: "-8px",
-            marginRight: "-8px",
             padding: "8px 8px 0px",
           }}
         >
@@ -431,7 +428,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </div>
       )}
       {item.comments && (
-        <>{renderComments(item.comments, true, getUserByName, onUserClick,onTopicClick)}</>
+        <>{renderComments(item.comments, false, getUserByName, onUserClick,onTopicClick)}</>
       )}
     </Card>
   );

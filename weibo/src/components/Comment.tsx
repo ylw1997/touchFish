@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-08-01 10:43:47
+ * @LastEditTime: 2025-09-05 10:48:31
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -22,16 +22,8 @@ export const renderComments = (
   onUserClick: (userInfo: weiboUser) => void,
   onTopicClick: (topic: string) => void
 ) => {
-  const defaultAvatarSize = is_child ? 32 : 40;
   return (
-    <div
-      className="border-top-divider"
-      style={{
-        marginLeft: "-8px",
-        marginRight: "-8px",
-        padding: "8px 8px 0px",
-      }}
-    >
+    <div className="border-top-divider">
       <List
         size="small"
         itemLayout="horizontal"
@@ -39,15 +31,13 @@ export const renderComments = (
         renderItem={(item) => (
           <List.Item
             style={{
-              margin: "0px -8px",
-              padding: "8px",
-              paddingBottom: "0px",
+              padding:is_child? "8px 0px 0px" : "8px 8px 0px"
             }}
           >
             <List.Item.Meta
               avatar={
                 <Avatar
-                  size={defaultAvatarSize}
+                  size={32}
                   src={
                     item.user?.avatar_hd && (
                       <YImg useImg src={item.user?.avatar_hd} />
@@ -71,9 +61,11 @@ export const renderComments = (
               }
               description={
                 <>
-                  <div className="content">{parseWeiboText(item,getUserByName,onTopicClick,true)}</div>
+                  <div className="content comment-content">
+                    {parseWeiboText(item, getUserByName, onTopicClick, true)}
+                  </div>
                   {item.url_struct && item.url_struct.length > 0 && (
-                    <div className="imglist" style={{ marginBottom: "10px" }}>
+                    <div className="imglist" style={{ marginBottom: "8px",padding: "0px" }}>
                       <Image.PreviewGroup>
                         {item.url_struct[0]?.pic_ids?.map((pic) => {
                           const picInfo =
@@ -120,7 +112,13 @@ export const renderComments = (
                   >
                     {item.comments &&
                       item.comments.length > 0 &&
-                      renderComments(item.comments, is_child, getUserByName,onUserClick,onTopicClick)}
+                      renderComments(
+                        item.comments,
+                        true,
+                        getUserByName,
+                        onUserClick,
+                        onTopicClick
+                      )}
                   </div>
                 </>
               }

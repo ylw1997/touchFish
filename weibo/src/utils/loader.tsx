@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 14:25:26
- * @LastEditTime: 2025-06-18 14:38:09
+ * @LastEditTime: 2025-09-05 10:45:54
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\utils\loader.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -16,7 +16,7 @@ export const loaderFunc = (number: number = 3) => {
         <Card
           styles={{
             body: {
-              paddingBottom: "10px",
+              paddingBottom: "8px",
             },
           }}
           key={i}

@@ -80,7 +80,7 @@ const SearchList = memo(
         <Skeleton
           active
           style={{
-            marginTop: "10px",
+            marginTop: "8px",
           }}
         />
       );
