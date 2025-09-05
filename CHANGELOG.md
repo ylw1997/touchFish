@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [8.15.0](https://github.com/ylw1997/touchFish/compare/v8.14.2...v8.15.0) (2025-09-05)
+
+
+### ✨ Features | 新功能
+
+* **components:** 在 SearchDrawer 组件中添加话题点击事件处理 ([679760a](https://github.com/679760a90624ed2adc17f4666b2f9263a5b21178))
+* **weibo:** 优化微博搜索功能并添加重试机制 ([5db2e59](https://github.com/5db2e599444ee285ea6eeae30301ff1cb15d1fbe))
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **weibo:** 重构微博卡片和动作处理 ([01dd674](https://github.com/01dd6746d1616c02fd8f0202e1196adc983e3a85))
+
 ### [8.14.2](https://github.com/ylw1997/touchFish/compare/v8.14.1...v8.14.2) (2025-09-05)
 
 ### [8.14.1](https://github.com/ylw1997/touchFish/compare/v8.14.0...v8.14.1) (2025-09-05)
