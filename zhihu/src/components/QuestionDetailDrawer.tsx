@@ -54,7 +54,8 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       zIndex={1001}
       styles={{
         wrapper: {
-          borderRadius: "10px",
+          borderTopLeftRadius: "10px",
+          borderTopRightRadius: "10px",
           overflow: "hidden",
         },
         body: {
@@ -62,7 +63,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
           height: "100%",
           minHeight: 0,
           overflow: "auto",
-        }
+        },
       }}
     >
       <Card

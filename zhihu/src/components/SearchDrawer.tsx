@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-11 18:00:00
- * @LastEditTime: 2025-09-04 15:30:10
+ * @LastEditTime: 2025-09-05 08:58:17
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -29,7 +29,11 @@ interface SearchDrawerProps {
   onClose: () => void;
   source: string;
   openQuestionDetailDrawer: (questionId: string, title: string) => void;
-  voteHandler: (answerId: string, list: ZhihuItemData[], setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>) => void;
+  voteHandler: (
+    answerId: string,
+    list: ZhihuItemData[],
+    setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>
+  ) => void;
 }
 
 const SearchDrawer: React.FC<SearchDrawerProps> = ({
@@ -78,7 +82,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   return (
     <>
       {contextHolder}
-      <Drawer 
+      <Drawer
         getContainer={false}
         title="知乎搜索"
         placement="bottom"
@@ -88,21 +92,21 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         destroyOnHidden
         styles={{
           wrapper: {
-            borderRadius: "10px",
+            borderTopLeftRadius: "10px",
+            borderTopRightRadius: "10px",
             overflow: "hidden",
           },
           body: {
             padding: "10px",
             paddingTop: "20px",
             overflowY: "auto",
-          }
+          },
         }}
       >
         <Form form={form} layout="vertical" onFinish={handleSearch}>
           <Form.Item
             name="keyword"
-            rules={[{ required: true, message: "请输入搜索关键词" }]
-            }
+            rules={[{ required: true, message: "请输入搜索关键词" }]}
           >
             <Input.Search
               placeholder="请输入搜索关键词"
@@ -134,7 +138,10 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             )}
           />
         ) : (
-          <Empty description="暂无搜索结果" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty
+            description="暂无搜索结果"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
         )}
       </Drawer>
     </>
