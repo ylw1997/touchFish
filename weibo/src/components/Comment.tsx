@@ -25,8 +25,8 @@ export const renderComments = (
   const defaultAvatarSize = is_child ? 32 : 40;
   return (
     <div
+      className="border-top-divider"
       style={{
-        borderTop: "1px solid rgb(255 255 255 / 10%)",
         marginLeft: "-8px",
         marginRight: "-8px",
         padding: "8px 8px 0px",

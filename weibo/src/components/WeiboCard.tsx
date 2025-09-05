@@ -231,11 +231,10 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
   const renderActionBar = () => (
     <div
-      className="info mt10"
+      className="info mt10 border-top-divider"
       style={{
-        borderTop: "1px solid rgb(255 255 255 / 10%)",
         marginLeft: "-8px",
-        marginRight: "-8px"
+        marginRight: "-8px",
       }}
     >
       <Flex justify="space-around" align="center">
@@ -397,8 +396,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       {renderActionBar()}
       {commentType && (
         <div
+          className="border-top-divider"
           style={{
-            borderTop: "1px solid rgb(255 255 255 / 10%)",
             marginLeft: "-8px",
             marginRight: "-8px",
             padding: "8px 8px 0px",
