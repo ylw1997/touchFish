@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-08-12 09:40:29
+ * @LastEditTime: 2025-09-05 16:26:16
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -87,6 +87,7 @@ function App() {
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
 
   const handleTopicClick = useCallback((topic: string) => {
+    console.log("topic", topic);
     setSearchDrawerOpen(true);
     setSearchKeyword(topic);
   }, []);
@@ -305,6 +306,7 @@ function App() {
           activeVideoUrl={activeVideoUrl}
           onPlayVideo={handlePlayVideo}
           initialKeyword={searchKeyword}
+          onTopicClick={handleTopicClick}
         />
       </Suspense>
       <Suspense fallback={null}>

@@ -23,7 +23,7 @@ import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
 import React, { CSSProperties, useEffect, useState } from "react";
-import { parseWeiboText } from "../utils/textParser";
+import { parseH5WeiboText, parseWeiboText } from "../utils/textParser";
 import TextArea from "antd/es/input/TextArea";
 
 export interface weiboBaseActions {
@@ -33,7 +33,7 @@ export interface weiboBaseActions {
   onUserClick: (userInfo: weiboUser) => void;
   onFollow?: (userInfo?: weiboUser) => void;
   cancelFollow?: (userInfo?: weiboUser) => void;
-  onExpandLongWeibo?: (id: string) => void;
+  onExpandLongWeibo?: (id: string | number) => void;
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
   showActions?: boolean;
   onCopyLink?: (url: string) => void;
@@ -328,32 +328,22 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       item.page_info.object_type === "live");
 
   return (
-    <Card
-      key={item.id}
-      title={renderTitle()}
-      className={className}
-    >
-      {isH5 ? (
-        <div
-          className="content"
-          dangerouslySetInnerHTML={{ __html: item.text }}
-        ></div>
-      ) : (
-        <div className="content">
-          {parseWeiboText(item, getUserByName,onTopicClick )}
-          {item.isLongText && (
-            <Tag
-              color="blue"
-              style={{ marginLeft: "8px" }}
-              className="link-tag"
-              onClick={() => onExpandLongWeibo?.(item.mblogid)}
-            >
-              展开长微博
-            </Tag>
-          )}
-        </div>
-      )}
-
+    <Card key={item.id} title={renderTitle()} className={className}>
+      <div className="content">
+        {isH5
+          ? parseH5WeiboText(item.text, getUserByName, onTopicClick)
+          : parseWeiboText(item, getUserByName, onTopicClick)}
+        {item.isLongText && !isH5 && (
+          <Tag
+            color="blue"
+            style={{ marginLeft: "8px" }}
+            className="link-tag"
+            onClick={() => onExpandLongWeibo?.(isH5 ? item.id : item.mblogid)}
+          >
+            展开长微博
+          </Tag>
+        )}
+      </div>
       {imgShow && renderImages()}
       {/* 如果showImg为false,出现一个显示图片按钮,点击显示 */}
       {!imgShow && (item.pic_infos || hasVideo) && (
@@ -428,7 +418,15 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </div>
       )}
       {item.comments && (
-        <>{renderComments(item.comments, false, getUserByName, onUserClick,onTopicClick)}</>
+        <>
+          {renderComments(
+            item.comments,
+            false,
+            getUserByName,
+            onUserClick,
+            onTopicClick
+          )}
+        </>
       )}
     </Card>
   );

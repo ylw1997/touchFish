@@ -11,7 +11,10 @@ import { useVscodeMessage } from "./useVscodeMessage";
 import { weiboSendParams } from "../types";
 import { useMessageHandler } from "./useMessageHandler";
 
-const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivElement | null>) => {
+const useWeiboAction = (
+  source: string,
+  scrollableNodeRef?: RefObject<HTMLDivElement | null>
+) => {
   // 微博列表相关状态
   const [list, setList] = useState<weiboItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -139,7 +142,12 @@ const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivEle
         const mblogid = payload.payload;
         updateList(
           (item) => item.mblogid === mblogid,
-          (item) => ({ ...item, text_raw: payload.data.longTextContent, isLongText: false,text: payload.data.longTextContent })
+          (item) => ({
+            ...item,
+            text_raw: payload.data.longTextContent,
+            isLongText: false,
+            text: payload.data.longTextContent,
+          })
         );
       } else if (payload?.source === source) {
         messageApi.error("长文本请求失败!" + payload?.msg);
@@ -294,7 +302,21 @@ const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivEle
       SENDUSERBYNAME: handleSendUserByName,
       RESTORE_SCROLL_POSITION: handleRestoreScrollPosition,
     }),
-    [handleSendUserBlog, handleSendData, handleSendComment, handleSendCreateComments, handleSendCreateRepost, handleSendLongText, handleSendFollow, handleSendNewBlogResult, handleSendCancelFollow, handleSendSetLike, handleSendCancelLike, handleSendUserByName, handleRestoreScrollPosition]
+    [
+      handleSendUserBlog,
+      handleSendData,
+      handleSendComment,
+      handleSendCreateComments,
+      handleSendCreateRepost,
+      handleSendLongText,
+      handleSendFollow,
+      handleSendNewBlogResult,
+      handleSendCancelFollow,
+      handleSendSetLike,
+      handleSendCancelLike,
+      handleSendUserByName,
+      handleRestoreScrollPosition,
+    ]
   );
 
   useMessageHandler(handlers);
@@ -366,7 +388,7 @@ const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivEle
 
   // 合并长微博展开方法，支持主列表和用户微博列表
   const handleExpandLongWeibo = useCallback(
-    (id: string) => {
+    (id: string | number) => {
       sendMessage("GETLONGTEXT", id, "请求长微博中...", source);
     },
     [sendMessage, source]
@@ -404,60 +426,65 @@ const useWeiboAction = (source: string, scrollableNodeRef?: RefObject<HTMLDivEle
     [sendMessage, source]
   );
   // 发送微博功能
-  const handleSendWeibo = useCallback((content: weiboSendParams) => {
-    setSendLoading(true);
-    sendMessage(
-      "GETNEWBLOGRESULT",
-      JSON.stringify(content),
-      "发送中...",
-      source
-    );
-  }, [sendMessage, source]);
+  const handleSendWeibo = useCallback(
+    (content: weiboSendParams) => {
+      setSendLoading(true);
+      sendMessage(
+        "GETNEWBLOGRESULT",
+        JSON.stringify(content),
+        "发送中...",
+        source
+      );
+    },
+    [sendMessage, source]
+  );
 
   // handleCommentOrRepost 评论或转发
-  const handleCommentOrRepost = useCallback((
-    comment: string,
-    item: weiboItem,
-    type: "comment" | "repost"
-  ) => {
-    if (type === "comment") {
-      const obj = {
-        comment,
-        id: item.id,
-        pic_id: "",
-        is_repost: 0,
-        comment_ori: 0,
-        is_comment: 0,
-      } as weiboCommentParams;
-      sendMessage("GETCREATECOMMENTS", obj, "发送评论中...", source);
-      setCurItem(item); //缓存当前微博,当收到回调时刷新
-    }
+  const handleCommentOrRepost = useCallback(
+    (comment: string, item: weiboItem, type: "comment" | "repost") => {
+      if (type === "comment") {
+        const obj = {
+          comment,
+          id: item.id,
+          pic_id: "",
+          is_repost: 0,
+          comment_ori: 0,
+          is_comment: 0,
+        } as weiboCommentParams;
+        sendMessage("GETCREATECOMMENTS", obj, "发送评论中...", source);
+        setCurItem(item); //缓存当前微博,当收到回调时刷新
+      }
 
-    if (type === "repost") {
-      const obj = {
-        comment,
-        id: item.id,
-        pic_id: "",
-        is_repost: 0,
-        comment_ori: 0,
-        is_comment: 0,
-        visible: 0,
-        share_id: "",
-      } as weiboRepostParams;
-      sendMessage("GETCREATEREPOST", obj, "转发微博中...", source);
-    }
-  }, [sendMessage, source]);
+      if (type === "repost") {
+        const obj = {
+          comment,
+          id: item.id,
+          pic_id: "",
+          is_repost: 0,
+          comment_ori: 0,
+          is_comment: 0,
+          visible: 0,
+          share_id: "",
+        } as weiboRepostParams;
+        sendMessage("GETCREATEREPOST", obj, "转发微博中...", source);
+      }
+    },
+    [sendMessage, source]
+  );
 
   // 点赞,取消点赞
-  const handleLike = useCallback((item: weiboItem, type: "like" | "cancel") => {
-    setCurItem(item);
-    if (type == "like") {
-      sendMessage("GETSETLIKE", item.id, "正在点赞...", source);
-    }
-    if (type == "cancel") {
-      sendMessage("GETCANCELLIKE", item.id, "取消点赞中...", source);
-    }
-  }, [sendMessage, source]);
+  const handleLike = useCallback(
+    (item: weiboItem, type: "like" | "cancel") => {
+      setCurItem(item);
+      if (type == "like") {
+        sendMessage("GETSETLIKE", item.id, "正在点赞...", source);
+      }
+      if (type == "cancel") {
+        sendMessage("GETCANCELLIKE", item.id, "取消点赞中...", source);
+      }
+    },
+    [sendMessage, source]
+  );
 
   return {
     getListData,
