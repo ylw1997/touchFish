@@ -11,7 +11,7 @@ const emojiMap = new Map<string, string>(
 
 // 用于查找所有特殊实体（[表情]、#话题#、@用户 或 URL）的正则表达式。
 const regex =
-  /(\[[^\]]+\]|#.*?#|@[\u4e00-\u9fa5a-zA-Z0-9_-]+|https?:\/\/[^\s]+)/g;
+  /([[\]^]]+|#.*?#|@[\u4e00-\u9fa5a-zA-Z0-9_-]+|https?:\/\/[^\s]+)/g;
 
 /**
  * 渲染文本字符串，将换行符转换成 <br> 标签。
@@ -139,4 +139,63 @@ export const parseWeiboText = (
   }
 
   return nodes.filter(Boolean);
+};
+
+export const parseH5WeiboText = (
+  text: string,
+  getUserByName: (username: string) => void,
+  onTopicClick: (topic: string) => void
+): React.ReactNode[] => {
+  if (!text) return [];
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
+  const nodes: React.ReactNode[] = [];
+
+  Array.from(doc.body.childNodes).forEach((node, index) => {
+    const key = `node-${index}`;
+    if (node.nodeType === Node.TEXT_NODE) {
+      nodes.push(<React.Fragment key={key}>{node.textContent}</React.Fragment>);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as HTMLElement;
+      if (element.tagName.toLowerCase() === "a") {
+        const href = element.getAttribute("href");
+        if (href?.startsWith("/n/")) {
+          const username = element.textContent?.trim().substring(1);
+          if (username) {
+            nodes.push(
+              <Tag
+                key={key}
+                color="pink"
+                className="link-tag"
+                onClick={() => getUserByName?.(username)}
+              >
+                {element.textContent}
+              </Tag>
+            );
+          }
+        } else if (element.querySelector(".surl-text")) {
+          const topic = element.textContent;
+          if (topic) {
+            nodes.push(
+              <Tag
+                key={key}
+                color="cyan"
+                className="link-tag"
+                onClick={() => onTopicClick?.(topic)}
+              >
+                {topic}
+              </Tag>
+            );
+          }
+        } else {
+          nodes.push(
+            <React.Fragment key={key}>{element.textContent}</React.Fragment>
+          );
+        }
+      }
+    }
+  });
+
+  return nodes;
 };

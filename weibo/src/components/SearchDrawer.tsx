@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-05 16:00:36
+ * @LastEditTime: 2025-09-05 16:27:15
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -39,6 +39,7 @@ interface SearchDrawerProps {
   onPlayVideo?: (url?: string) => void;
   getUserBlog: (user: weiboUser) => void;
   initialKeyword?: string;
+  onTopicClick: (topic: string) => void;
 }
 
 // Search Type Definition
@@ -124,6 +125,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   onPlayVideo,
   getUserBlog,
   initialKeyword,
+  onTopicClick
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -314,6 +316,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
                 weibos={weibos}
                 loading={loading}
                 getUserBlog={getUserBlog}
+                onTopicClick={onTopicClick}
                 {...weiboCardProps}
               />
             ),
