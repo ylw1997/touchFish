@@ -61,7 +61,7 @@ const createWebviewHtml = (
         }
         
         * {
-          color: var(--vscode-editor-foreground) !important;
+          color: var(--vscode-editor-foreground);
           font-family:'Microsoft YaHei';
           line-height: 2;
         }
