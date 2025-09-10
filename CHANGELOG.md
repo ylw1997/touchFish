@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.16.3](https://github.com/ylw1997/touchFish/compare/v8.16.2...v8.16.3) (2025-09-10)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 修复表情包显示问题 ([4cbd27e](https://github.com/4cbd27e5b47e98dcbfe03451b6e8c35f943014ca))
+
 ### [8.16.2](https://github.com/ylw1997/touchFish/compare/v8.16.1...v8.16.2) (2025-09-10)
 
 
