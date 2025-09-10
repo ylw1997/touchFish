@@ -11,6 +11,8 @@ body {
   background-color: var(--vscode-editor-background);
   height: 100vh;
   overflow: hidden;
+  scrollbar-color: var(--vscode-scrollbarSlider-background) #ffffff00;
+  scrollbar-width: thin;
 }
 
 *:focus {
@@ -165,7 +167,7 @@ body {
 
 .ant-drawer {
   .ant-drawer-body {
-    padding: 8px;
+    padding: 0px 5px;
   }
 }
 
@@ -418,6 +420,7 @@ body {
   text-overflow: ellipsis;
   transition: all 0.2s ease-in-out;
   border: 1px solid transparent;
+  margin-inline-end:0;
 
   &:hover {
     color: var(--vscode-textLink-activeForeground);
