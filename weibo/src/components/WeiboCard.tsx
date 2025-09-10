@@ -347,7 +347,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       </div>
       {imgShow && renderImages()}
       {/* 如果showImg为false,出现一个显示图片按钮,点击显示 */}
-      {!imgShow && (item.pic_infos || hasVideo) && (
+      {!imgShow && (item.pic_infos || (isH5 && item.pics) || hasVideo) && (
         <Button
           color="default"
           variant="filled"
@@ -355,7 +355,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             setImgShow(true);
           }}
           style={{
-            marginTop: "8px",
+            marginLeft: "8px",
+            marginBottom: item.retweeted_status ? "8px" : "0",
           }}
           size="middle"
         >
