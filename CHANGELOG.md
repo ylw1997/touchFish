@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [8.16.0](https://github.com/ylw1997/touchFish/compare/v8.15.0...v8.16.0) (2025-09-10)
+
+
+### ✨ Features | 新功能
+
+* **theme:** 更新主题获取逻辑并优化主题配置 ([f5289eb](https://github.com/f5289eb54e14cdc8fae913054b2b9a076c9ef068))
+* **theme:** 更新主题配置，调整字体大小和边框样式 ([7a59684](https://github.com/7a59684a9627ce517b071fe9d6ccea5b34fa42b2))
+
 ## [8.15.0](https://github.com/ylw1997/touchFish/compare/v8.14.2...v8.15.0) (2025-09-05)
 
 
