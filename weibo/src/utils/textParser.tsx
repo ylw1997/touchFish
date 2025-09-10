@@ -33,16 +33,47 @@ const renderTextWithLineBreaks = (text: string, baseKey: string | number) => {
 };
 
 /**
+ * 渲染链接标签，根据页面信息（如视频、投票）显示不同的文本。
+ */
+const renderLinkTag =
+  (url: string,
+  page_info: baseWeiboField["page_info"],
+  key: string) => {
+  let linkText = "网页链接";
+  let color = "blue";
+
+  const objectType = page_info?.object_type;
+  if (objectType === "video" || objectType === "live") {
+    linkText = "视频链接";
+    color = "green";
+  } else if (objectType === "hudongvote") {
+    linkText = "投票链接";
+    color = "orange";
+  }
+
+  return (
+    <Tag
+      key={key}
+      color={color}
+      className="link-tag"
+      onClick={() => openNewWindow(url)}
+      bordered={false}
+    >
+      {linkText}
+    </Tag>
+  );
+};
+
+/**
  * 解析微博原始文本，并将其转换为 React 节点数组。
  * 它可以处理表情、话题、@用户和链接。
  * 此版本使用 `matchAll` 以获得更好的性能和代码结构。
  */
-export const parseWeiboText = (
-  weiboItem: baseWeiboField,
+export const parseWeiboText =
+  (weiboItem: baseWeiboField,
   getUserByName: (username: string) => void,
   onTopicClick: (topic: string) => void,
-  isComment = false
-): React.ReactNode[] => {
+  isComment = false): React.ReactNode[] => {
   let { text_raw } = weiboItem;
   const { page_info } = weiboItem;
   if (!text_raw) {
@@ -105,32 +136,10 @@ export const parseWeiboText = (
       );
     } else if (part.startsWith("http")) {
       if (isComment) {
-        // 渲染 空
+        // 在评论中，不渲染链接
         nodes.push(null);
       } else {
-        let linkText = "网页链接";
-        let color = "blue";
-        if (
-          page_info?.object_type === "video" ||
-          page_info?.object_type === "live"
-        ) {
-          linkText = "视频链接";
-          color = "green";
-        } else if (page_info?.object_type === "hudongvote") {
-          linkText = "投票链接";
-          color = "orange";
-        }
-        nodes.push(
-          <Tag
-            key={key}
-            color={color}
-            className="link-tag"
-            onClick={() => openNewWindow(part)}
-            bordered={false}
-          >
-            {linkText}
-          </Tag>
-        );
+        nodes.push(renderLinkTag(part, page_info, key));
       }
     }
 
@@ -146,8 +155,9 @@ export const parseWeiboText = (
   return nodes.filter(Boolean);
 };
 
-export const parseH5WeiboText = (
-  text: string,
+
+export const parseH5WeiboText =
+  (text: string,
   getUserByName: (username: string) => void,
   onTopicClick: (topic: string) => void
 ): React.ReactNode[] => {

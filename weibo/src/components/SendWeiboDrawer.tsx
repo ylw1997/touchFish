@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-09-10 10:26:06
+ * @LastEditTime: 2025-09-10 14:52:31
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -160,6 +160,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
               placeholder="此刻你想说点什么..."
               disabled={loading}
               variant="filled"
+              autoSize={{ minRows: 4, maxRows: 4 }}
             />
           </Form.Item>
           <Form.Item

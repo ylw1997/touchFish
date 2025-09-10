@@ -1,127 +1,109 @@
-/*
- * @Author: YangLiwei 1280426581@qq.com
- * @Date: 2025-08-07 10:39:19
- * @LastEditTime: 2025-09-10 09:29:23
- * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\zhihu\src\utils\textParser.tsx
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
- * @Description: 
- */
 import { Image } from "antd";
 import React from "react";
 
+const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
+
+/**
+ * 一个通用的HTML字符串解析器，使用正则表达式查找匹配项，
+ * 并将它们替换为React组件。
+ * @param htmlString 要解析的HTML字符串。
+ * @param regex 用于查找匹配项的正则表达式。
+ * @param processMatch 一个将匹配项转换为React节点的函数。
+ * @returns 包含解析后内容的React片段。
+ */
+const parseHtmlString = (
+  htmlString: string | undefined,
+  regex: RegExp,
+  processMatch: (match: RegExpExecArray) => React.ReactNode
+) => {
+  if (!htmlString) {
+    return null;
+  }
+
+  const elements: React.ReactNode[] = [];
+  let lastIndex = 0;
+
+  // 使用 matchAll 迭代所有匹配项，这比传统的 while 循环更现代、更具可读性。
+  for (const match of htmlString.matchAll(regex)) {
+    const matchIndex = match.index!; // match.index 在 matchAll 的结果中始终存在
+
+    // 1. 添加当前匹配项之前的文本
+    if (matchIndex > lastIndex) {
+      elements.push(
+        <span
+          key={`text-${lastIndex}`}
+          dangerouslySetInnerHTML={{
+            __html: htmlString.substring(lastIndex, matchIndex),
+          }}
+        />
+      );
+    }
+
+    // 2. 处理当前匹配项并添加生成的React节点
+    elements.push(processMatch(match as RegExpExecArray));
+
+    lastIndex = matchIndex + match[0].length;
+  }
+
+  // 3. 添加最后一个匹配项之后的任何剩余文本
+  if (lastIndex < htmlString.length) {
+    elements.push(
+      <span
+        key={`text-${lastIndex}`}
+        dangerouslySetInnerHTML={{ __html: htmlString.substring(lastIndex) }}
+      />
+    );
+  }
+
+  return <>{elements}</>;
+};
+
+/**
+ * 处理知乎评论内容，将链接到图片的 <a> 标签
+ * 转换为 Ant Design 的 <Image> 组件。
+ * @param htmlString 评论的HTML内容。
+ * @returns 包含解析后内容的React片段。
+ */
 export const processCommentContent = (htmlString: string | undefined) => {
-  if (!htmlString) {
-    return null;
-  }
-  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
   const regex = /<a.*?href="(.*?)".*?>(.*?)<\/a>/g;
-  const elements: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
 
-  while ((match = regex.exec(htmlString)) !== null) {
-    // Push the text before the link
-    if (match.index > lastIndex) {
-      elements.push(
-        <span
-          key={`text-${lastIndex}`}
-          dangerouslySetInnerHTML={{
-            __html: htmlString.substring(lastIndex, match.index),
-          }}
-        />
-      );
-    }
-
-    const href = match[1];
-    const text = match[2];
+  return parseHtmlString(htmlString, regex, (match) => {
+    const [fullMatch, href, text] = match;
     const isImage = imageExtensions.some((ext) =>
       href.toLowerCase().endsWith(ext)
     );
 
     if (isImage) {
-      elements.push(<Image key={`image-${match.index}`} src={href} alt={text} />);
+      return <Image key={`image-${match.index}`} src={href} alt={text} />;
     } else {
-      // Not an image link, keep it as a link.
-      elements.push(
+      // 如果链接不是图片，则保留为常规链接。
+      return (
         <span
           key={`link-${match.index}`}
-          dangerouslySetInnerHTML={{ __html: match[0] }}
+          dangerouslySetInnerHTML={{ __html: fullMatch }}
         />
       );
     }
-
-    lastIndex = regex.lastIndex;
-  }
-
-  // Push the remaining text after the last link
-  if (lastIndex < htmlString.length) {
-    elements.push(
-      <span
-        key={`text-${lastIndex}`}
-        dangerouslySetInnerHTML={{ __html: htmlString.substring(lastIndex) }}
-      />
-    );
-  }
-
-  return <>{elements}</>;
+  });
 };
 
+/**
+ * 处理知乎条目内容，将 <img> 标签转换为 Ant Design 的 <Image> 组件，
+ * 以提供更好的查看体验。
+ * @param htmlString 条目的HTML内容。
+ * @returns 包含解析后内容的React片段。
+ */
 export const parseZhihuItemContent = (htmlString: string | undefined) => {
-  if (!htmlString) {
-    return null;
-  }
-  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
-  const regex = /<img.*?src="(.*?)".*?>(.*?)>/g;
-  const elements: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
+  const regex = /<img[^>]*?src="([^"]+)"[^>]*?>/g;
 
-  while ((match = regex.exec(htmlString)) !== null) {
-    // Push the text before the link
-    if (match.index > lastIndex) {
-      elements.push(
-        <span
-          key={`text-${lastIndex}`}
-          dangerouslySetInnerHTML={{
-            __html: htmlString.substring(lastIndex, match.index),
-          }}
-        />
-      );
-    }
+  return parseHtmlString(htmlString, regex, (match) => {
+    const [fullMatch, src] = match;
+    
+    // 为了可访问性，尝试从完整的img标签中提取alt文本
+    const altRegex = /alt="([^"]*)"/;
+    const altMatch = fullMatch.match(altRegex);
+    const alt = altMatch ? altMatch[1] : "";
 
-    const href = match[1];
-    const text = match[2];
-    const isImage = imageExtensions.some((ext) =>
-      href.toLowerCase().endsWith(ext)
-    );
-
-    if (isImage) {
-      elements.push(<Image key={`image-${match.index}`} src={href} alt={text} />);
-    } else {
-      // Not an image link, keep it as a link.
-      elements.push(
-        <span
-          key={`link-${match.index}`}
-          dangerouslySetInnerHTML={{ __html: match[0] }}
-        />
-      );
-    }
-
-    lastIndex = regex.lastIndex;
-  }
-
-  // Push the remaining text after the last link
-  if (lastIndex < htmlString.length) {
-    elements.push(
-      <span
-        key={`text-${lastIndex}`}
-        dangerouslySetInnerHTML={{ __html: htmlString.substring(lastIndex) }}
-      />
-    );
-  }
-
-  return <>{elements}</>;
+    return <Image key={`image-${match.index}`} src={src} alt={alt} />;
+  });
 };
-
-export const a = 1;

@@ -403,10 +403,10 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
               ]}
             >
               <TextArea
-                rows={3}
                 maxLength={140}
                 placeholder={`请输入${commentTitle}内容`}
                 variant="filled"
+                autoSize
               />
             </Form.Item>
             <Form.Item>
