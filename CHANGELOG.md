@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.16.2](https://github.com/ylw1997/touchFish/compare/v8.16.1...v8.16.2) (2025-09-10)
+
+
+### 📦 Chores | 其他更新
+
+* 删除刷新图标 ([517ca91](https://github.com/517ca9139f5237939fd0055c892f58f920ff44bd))
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **textParser:** 重构文本解析器并添加自动调整大小的文本区域 ([7d9aabf](https://github.com/7d9aabf0efc2edf5d4d3aa24433b0b34a34eac1f))
+
 ### [8.16.1](https://github.com/ylw1997/touchFish/compare/v8.16.0...v8.16.1) (2025-09-10)
 
 ## [8.16.0](https://github.com/ylw1997/touchFish/compare/v8.15.0...v8.16.0) (2025-09-10)
