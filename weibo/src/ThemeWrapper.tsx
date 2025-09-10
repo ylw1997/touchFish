@@ -28,17 +28,17 @@ const ThemeWrapper = () => {
     token: {
       fontSize: 15,
       fontSizeSM: 14,
-      colorBorderSecondary: 'var(--vscode-editorWidget-border)',
+      colorBorderSecondary: "var(--vscode-chat-requestBorder)",
       colorText: "var(--vscode-foreground)",
       colorTextDescription: "var(--vscode-descriptionForeground)",
       colorTextSecondary: "var(--vscode-descriptionForeground)",
-      colorBorder: "var(--vscode-editorWidget-border)",
-      colorSplit: "var(--vscode-editorWidget-border)",
+      colorBorder: "var(--vscode-chat-requestBorder)",
+      colorSplit: "var(--vscode-chat-requestBorder)",
       colorLink: "var(--vscode-textLink-foreground)",
       colorLinkHover: "var(--vscode-textLink-activeForeground)",
       colorIcon: "var(--vscode-icon-foreground)",
       colorIconHover: "var(--vscode-foreground)",
-      borderRadius: 16,
+      borderRadius: 10,
     },
     components: {
       Card: {

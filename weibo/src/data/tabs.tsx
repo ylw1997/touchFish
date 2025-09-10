@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-19 09:40:05
- * @LastEditTime: 2025-08-12 09:39:35
+ * @LastEditTime: 2025-09-10 14:20:33
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\data\tabs.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -49,7 +49,7 @@ export const defTab = [
         label: "汽车",
       },
       {
-        labe: "旅游",
+        label: "旅游",
         key: "/hottimeline?group_id=1028032588&containerid=102803_ctg1_2588_-_ctg1_2588&extparam=discover%7Cnew_feed&max_id=0&count=25",
       },
       {

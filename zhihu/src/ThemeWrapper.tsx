@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-04 17:07:50
- * @LastEditTime: 2025-09-10 11:55:17
+ * @LastEditTime: 2025-09-10 14:12:47
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\ThemeWrapper.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -41,12 +41,12 @@ const ThemeWrapper = () => {
       token: {
         fontSize: 15,
         fontSizeSM: 14,
-        colorBorderSecondary: "var(--vscode-editorWidget-border)",
+        colorBorderSecondary: "var(--vscode-chat-requestBorder)",
         colorText: "var(--vscode-foreground)",
         colorTextDescription: "var(--vscode-descriptionForeground)",
         colorTextSecondary: "var(--vscode-descriptionForeground)",
-        colorBorder: "var(--vscode-editorWidget-border)",
-        colorSplit: "var(--vscode-editorWidget-border)",
+        colorBorder: "var(--vscode-chat-requestBorder)",
+        colorSplit: "var(--vscode-chat-requestBorder)",
         colorLink: "var(--vscode-textLink-foreground)",
         colorLinkHover: "var(--vscode-textLink-activeForeground)",
         colorIcon: "var(--vscode-icon-foreground)",
