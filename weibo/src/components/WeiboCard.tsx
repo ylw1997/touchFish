@@ -339,6 +339,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             style={{ marginLeft: "8px" }}
             className="link-tag"
             onClick={() => onExpandLongWeibo?.(isH5 ? item.id : item.mblogid)}
+            bordered={false}
           >
             展开长微博
           </Tag>
@@ -405,6 +406,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
                 rows={3}
                 maxLength={140}
                 placeholder={`请输入${commentTitle}内容`}
+                variant="filled"
               />
             </Form.Item>
             <Form.Item>

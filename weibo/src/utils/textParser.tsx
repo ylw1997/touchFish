@@ -43,10 +43,12 @@ export const parseWeiboText = (
   onTopicClick: (topic: string) => void,
   isComment = false
 ): React.ReactNode[] => {
-  const { text_raw, page_info } = weiboItem;
+  let { text_raw } = weiboItem;
+  const { page_info } = weiboItem;
   if (!text_raw) {
     return [];
   }
+  text_raw = text_raw.replace(/&ZeroWidthSpace;/g, "");
 
   const nodes: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -83,6 +85,7 @@ export const parseWeiboText = (
           color="cyan"
           className="link-tag"
           onClick={() => onTopicClick?.(part)}
+          bordered={false}
         >
           {part}
         </Tag>
@@ -95,6 +98,7 @@ export const parseWeiboText = (
           color="pink"
           className="link-tag"
           onClick={() => getUserByName?.(username)}
+          bordered={false}
         >
           {part}
         </Tag>
@@ -122,6 +126,7 @@ export const parseWeiboText = (
             color={color}
             className="link-tag"
             onClick={() => openNewWindow(part)}
+            bordered={false}
           >
             {linkText}
           </Tag>
@@ -147,6 +152,7 @@ export const parseH5WeiboText = (
   onTopicClick: (topic: string) => void
 ): React.ReactNode[] => {
   if (!text) return [];
+  text = text.replace(/&ZeroWidthSpace;/g, "");
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(text, "text/html");
@@ -169,6 +175,7 @@ export const parseH5WeiboText = (
                 color="pink"
                 className="link-tag"
                 onClick={() => getUserByName?.(username)}
+                bordered={false}
               >
                 {element.textContent}
               </Tag>
@@ -183,6 +190,7 @@ export const parseH5WeiboText = (
                 color="cyan"
                 className="link-tag"
                 onClick={() => onTopicClick?.(topic)}
+                bordered={false}
               >
                 {topic}
               </Tag>

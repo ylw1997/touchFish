@@ -76,7 +76,7 @@ body {
   }
 }
 .comment-content {
-  padding: 5px 0;
+  padding: 0px 0px 5px 0px;
 }
 
 /**
@@ -98,7 +98,7 @@ body {
  * 次要信息文本
  */
 .info {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--vscode-descriptionForeground);
 }
 
@@ -109,7 +109,7 @@ body {
 .expand,
 .link-tag {
   cursor: pointer;
-  font-size: 15px;
+  // font-size: 15px;
   color: var(--vscode-foreground);
   &:hover {
     color: var(--vscode-textLink-activeForeground);
@@ -124,7 +124,7 @@ body {
  * 评论中的图片
  */
 .comment-image {
-  border-radius: 5px;
+  border-radius: 16px;
   max-width: 80%;
 }
 
@@ -198,7 +198,7 @@ body {
   width: fit-content;
   img,
   .ant-image-mask {
-    border-radius: 12px;
+    border-radius: 16px;
   }
 }
 
@@ -208,9 +208,7 @@ body {
 .ant-float-btn-group > .ant-float-btn {
   .backdrop-style();
   &:hover {
-    background: var(
-      --hover-background
-    ); /* 注意: --hover-background 不是一个标准的 VS Code token */
+    background: var(--vscode-button-border);
   }
   .ant-float-btn-body {
     background: none;
@@ -247,7 +245,7 @@ body {
   .img-item,
   .img-only-item {
     object-fit: cover;
-    border-radius: 5px;
+    border-radius: 16px;
   }
 }
 
@@ -417,6 +415,6 @@ body {
   border: 1px solid transparent;
 
   &:hover {
-    border-color: #ffffff6e;
+    color: var(--vscode-textLink-activeForeground);
   }
 }

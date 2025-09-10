@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-05 16:27:15
+ * @LastEditTime: 2025-09-10 10:28:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -266,13 +266,14 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
           {hotSearch.map((item: any, index: number) => (
             <Tag
               key={item.word}
-              className="hot-search-tag"
+              className="hot-search-tag "
               color={index < 3 ? "red" : index < 10 ? "volcano" : "orange"}
               onClick={() => {
                 form.setFieldsValue({ keyword: `#${item.word}#` });
                 handleSearch(searchType);
               }}
               title={item.word}
+              bordered={false}
             >
               {`${index + 1}. ${item.word}`}
             </Tag>
@@ -288,6 +289,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             <Input.Search
               placeholder="请输入搜索关键词"
               disabled={loading}
+              variant="filled"
               onPressEnter={() => handleSearch(searchType)}
               onSearch={() => handleSearch(searchType)}
               enterButton={

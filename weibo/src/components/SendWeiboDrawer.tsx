@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-09-05 08:48:21
+ * @LastEditTime: 2025-09-10 10:26:06
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -159,6 +159,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
               showCount
               placeholder="此刻你想说点什么..."
               disabled={loading}
+              variant="filled"
             />
           </Form.Item>
           <Form.Item
@@ -166,7 +167,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
             name="visible"
             rules={[{ required: true, message: "请选择可见范围" }]}
           >
-            <Select disabled={loading}>
+            <Select disabled={loading} variant="filled">
               {visibleOptions.map((opt) => (
                 <Option value={opt.value} key={opt.value}>
                   {opt.label}

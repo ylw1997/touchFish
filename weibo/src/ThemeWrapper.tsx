@@ -26,6 +26,8 @@ const ThemeWrapper = () => {
   const antdTheme = useMemo(() => ({
     algorithm: isLightTheme ? theme.defaultAlgorithm : theme.darkAlgorithm,
     token: {
+      fontSize: 15,
+      fontSizeSM: 14,
       colorBorderSecondary: 'var(--vscode-editorWidget-border)',
       colorText: "var(--vscode-foreground)",
       colorTextDescription: "var(--vscode-descriptionForeground)",
