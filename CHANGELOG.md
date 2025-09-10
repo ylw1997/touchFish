@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [8.16.4](https://github.com/ylw1997/touchFish/compare/v8.16.3...v8.16.4) (2025-09-10)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **weibo:** 优化图片显示逻辑和按钮布局 ([b9e2b6b](https://github.com/b9e2b6b61894d6c9657a215d0d8c0392530e5754))
+
+
+### 📦 Chores | 其他更新
+
+* **eslint:** 忽略特定文件的 ESLint 检查 ([0a4aab4](https://github.com/0a4aab4ac3e7ce99e6d466814d551c5a2ae56547))
+
 ### [8.16.3](https://github.com/ylw1997/touchFish/compare/v8.16.2...v8.16.3) (2025-09-10)
 
 
