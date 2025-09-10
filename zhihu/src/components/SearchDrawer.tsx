@@ -109,6 +109,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             rules={[{ required: true, message: "请输入搜索关键词" }]}
           >
             <Input.Search
+              variant="filled"
               placeholder="请输入搜索关键词"
               enterButton={
                 <Button icon={<SearchOutlined />} type="primary">

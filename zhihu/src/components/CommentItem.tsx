@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 14:55:56
- * @LastEditTime: 2025-09-04 16:19:10
+ * @LastEditTime: 2025-09-10 10:13:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\CommentItem.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -24,14 +24,13 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
         <Avatar src={comment.author.avatar_url} size="sm" isBordered radius="sm" />
         <div style={{ flex: 1 }}>
           <span style={{fontWeight:'bold'}} >{comment.author.name}</span>
-          <div
-            dangerouslySetInnerHTML={{ __html: processCommentContent(comment.content) }}
-            style={{ marginTop: '4px',lineHeight: '2' }}
-          />
-          <Flex style={{ marginTop: '8px' }} justify="space-between">
+          <div style={{ lineHeight: '2' }} >
+            {processCommentContent(comment.content)}
+          </div>
+          <Flex style={{ marginTop: '4px' }} justify="space-between">
             <Space>
               {comment.comment_tag?.map((tag) => (
-                <Tag color={tag.type === 'hot' ? 'pink' : 'blue'} key={tag.text}>
+                <Tag color={tag.type === 'hot' ? 'pink' : 'blue'} bordered={false} key={tag.text}>
                   {tag.text}
                 </Tag>
               ))}

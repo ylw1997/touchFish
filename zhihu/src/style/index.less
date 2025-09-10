@@ -91,14 +91,6 @@ body {
 }
 
 /**
- * 次要信息文本
- */
-.info {
-  font-size: 12px;
-  color: var(--vscode-descriptionForeground);
-}
-
-/**
  * 通用链接样式文本元素
  */
 .link,
@@ -177,7 +169,7 @@ body {
   width: fit-content;
   img,
   .ant-image-mask {
-    border-radius: 12px;
+    border-radius: 16px;
   }
 }
 
@@ -187,7 +179,7 @@ body {
 .ant-float-btn-group > .ant-float-btn {
   .backdrop-style();
   &:hover {
-    background: var(--hover-background); /* 注意: --hover-background 不是一个标准的 VS Code token */
+    background: var(--vscode-button-border);
   }
   .ant-float-btn-body {
     background: none;
@@ -202,87 +194,5 @@ body {
   &:hover {
     color: inherit;
     text-decoration: underline;
-  }
-}
-
-/* ==========================================================================
-   5. 响应式图片列表布局
-   ========================================================================== */
-
-.imglist,
-.retweeted-status .imglist {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-
-  .img-item,
-  .img-only-item {
-    object-fit: cover;
-    border-radius: 5px;
-  }
-}
-
-@media screen and (max-width: 320px) {
-  .imglist,
-  .retweeted-status .imglist {
-    .img-item,
-    .img-only-item {
-      width: 100vw;
-      height: 100vw;
-    }
-  }
-}
-
-@media screen and (min-width: 341px) and (max-width: 540px) {
-  .imglist,
-  .retweeted-status .imglist {
-    .img-item {
-      width: calc(50vw - 22px);
-      height: calc(50vw - 22px);
-    }
-    .img-only-item {
-      width: calc(66.66vw - 25px);
-      max-width: 500px;
-      max-height: 500px;
-    }
-  }
-  .retweeted-status .imglist .img-item {
-    width: calc(50vw - 31px);
-    height: calc(50vw - 31px);
-  }
-  .h5image-list .img-item {
-    width: calc(50vw - 32px);
-    height: calc(50vw - 32px);
-  }
-}
-
-@media screen and (min-width: 541px) {
-  .imglist,
-  .retweeted-status .imglist {
-    .img-item {
-      width: calc(33.33vw - 17px);
-      height: calc(33.33vw - 17px);
-    }
-    .img-only-item {
-      width: calc(66.66vw - 25px);
-      max-width: 500px;
-      max-height: 500px;
-    }
-  }
-  .retweeted-status .imglist {
-    .img-item,
-    .img-only-item {
-      width: calc(33.33vw - 23px);
-      height: calc(33.33vw - 23px);
-    }
-  }
-
-  .h5image-list {
-    .img-item,
-    .img-only-item {
-      width: calc(33.33vw - 24px);
-      height: calc(33.33vw - 24px);
-    }
   }
 }
