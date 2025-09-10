@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-04 17:07:50
- * @LastEditTime: 2025-09-10 10:06:51
+ * @LastEditTime: 2025-09-10 11:55:17
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\ThemeWrapper.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -51,7 +51,7 @@ const ThemeWrapper = () => {
         colorLinkHover: "var(--vscode-textLink-activeForeground)",
         colorIcon: "var(--vscode-icon-foreground)",
         colorIconHover: "var(--vscode-foreground)",
-        borderRadius: 16,
+        borderRadius: 10,
       },
       components: {
         Card: {

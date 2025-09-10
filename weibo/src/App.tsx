@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-09-05 16:26:16
+ * @LastEditTime: 2025-09-10 13:36:53
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -205,7 +205,7 @@ function App() {
           onChange={onSubChange}
           centered
           style={{
-            top: "46px",
+            top: "47px",
           }}
         />
       )}
@@ -214,7 +214,7 @@ function App() {
         ref={scrollableNodeRef}
         className="list"
         style={{
-          paddingTop: curTab && curTab.childrenList ? "90px" : "44px",
+          paddingTop: curTab && curTab.childrenList ? "95px" : "47px",
           height:
             curTab && curTab.childrenList
               ? "calc(100vh - 90px)"

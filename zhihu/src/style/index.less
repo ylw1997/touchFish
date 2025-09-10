@@ -140,11 +140,20 @@ body {
   backdrop-filter: saturate(180%) blur(15px);
 }
 
+.info {
+  font-size: 14px;
+}
+
 /**
  * Card: token 未覆盖的特定样式
  */
 .ant-card {
   margin-top: 10px;
+  background: color-mix(
+    in srgb,
+    var(--vscode-breadcrumbPicker-background) 60%,
+    transparent
+  );
   .ant-card-head-title {
     overflow: visible;
   }
@@ -169,7 +178,7 @@ body {
   width: fit-content;
   img,
   .ant-image-mask {
-    border-radius: 16px;
+    border-radius: 10px;
   }
 }
 
