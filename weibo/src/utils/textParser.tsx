@@ -11,7 +11,7 @@ const emojiMap = new Map<string, string>(
 
 // 用于查找所有特殊实体（[表情]、#话题#、@用户 或 URL）的正则表达式。
 const regex =
-  /([[\]^]]+|#.*?#|@[\u4e00-\u9fa5a-zA-Z0-9_-]+|https?:\/\/[^\s]+)/g;
+  /(\[[^\]]+\]|#.*?#|@[\u4e00-\u9fa5a-zA-Z0-9_-]+|https?:\/\/[^\s]+)/g;
 
 /**
  * 渲染文本字符串，将换行符转换成 <br> 标签。
@@ -103,7 +103,7 @@ export const parseWeiboText =
       const emojiUrl = emojiMap.get(part);
       if (emojiUrl) {
         nodes.push(
-          <img key={key} src={emojiUrl} alt={part} className="weibo-emoji" />
+          <img key={key} src={emojiUrl} alt={part} className="weibo-emoji" referrerPolicy="no-referrer" />
         );
       } else {
         // 如果表情不在我们的 Map 中，则将其渲染为纯文本。
