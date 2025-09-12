@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-10 10:28:46
+ * @LastEditTime: 2025-09-12 16:40:34
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -17,7 +17,6 @@ import {
   Tag,
   Tabs,
   Empty,
-  Skeleton,
 } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
@@ -27,6 +26,7 @@ import { WeiboUserItem } from "./WeiboUserItem";
 import { parseArray } from "../utils";
 import WeiboCard from "./WeiboCard";
 import useWeiboAction from "../hooks/useWeiboAction";
+import { loaderFunc } from "../utils/loader";
 
 // Component Props
 interface SearchDrawerProps {
@@ -77,14 +77,7 @@ const SearchList = memo(
     ...weiboCardProps
   }: any) => {
     if (loading) {
-      return (
-        <Skeleton
-          active
-          style={{
-            marginTop: "8px",
-          }}
-        />
-      );
+      return loaderFunc();
     }
     if (searchType.type === "3") {
       return (
@@ -125,7 +118,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   onPlayVideo,
   getUserBlog,
   initialKeyword,
-  onTopicClick
+  onTopicClick,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -222,33 +215,36 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     [handleSearch]
   );
 
-  const weiboCardProps = useMemo(() => ({
-    onFollow: (userinfo: weiboUser) => followUser(userinfo, preSource),
-    cancelFollow: (userinfo: weiboUser) => cancelFollow(userinfo, preSource),
-    onExpandLongWeibo: handleExpandLongWeibo,
-    onToggleComments: handleToggleComments,
-    showActions: false,
-    onCopyLink: copyLink,
-    onCommentOrRepost: handleCommentOrRepost,
-    onLikeOrCancelLike: handleLike,
-    showImg,
-    getUserByName,
-    activeVideoUrl,
-    onPlayVideo,
-  }), [
-    followUser,
-    preSource,
-    cancelFollow,
-    handleExpandLongWeibo,
-    handleToggleComments,
-    copyLink,
-    handleCommentOrRepost,
-    handleLike,
-    showImg,
-    getUserByName,
-    activeVideoUrl,
-    onPlayVideo
-  ]);
+  const weiboCardProps = useMemo(
+    () => ({
+      onFollow: (userinfo: weiboUser) => followUser(userinfo, preSource),
+      cancelFollow: (userinfo: weiboUser) => cancelFollow(userinfo, preSource),
+      onExpandLongWeibo: handleExpandLongWeibo,
+      onToggleComments: handleToggleComments,
+      showActions: false,
+      onCopyLink: copyLink,
+      onCommentOrRepost: handleCommentOrRepost,
+      onLikeOrCancelLike: handleLike,
+      showImg,
+      getUserByName,
+      activeVideoUrl,
+      onPlayVideo,
+    }),
+    [
+      followUser,
+      preSource,
+      cancelFollow,
+      handleExpandLongWeibo,
+      handleToggleComments,
+      copyLink,
+      handleCommentOrRepost,
+      handleLike,
+      showImg,
+      getUserByName,
+      activeVideoUrl,
+      onPlayVideo,
+    ]
+  );
 
   return (
     <>
@@ -256,10 +252,15 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       <Drawer
         title="微博搜索"
         placement="bottom"
-        height={"90vh"}
+        height={weibos.length > 0 || users.length > 0 ? "calc(100vh - 150px)" : "850px"}
         open={open}
         onClose={closeFunc}
         destroyOnHidden
+        styles={{
+          body: {
+            padding: '0 5px'
+          },
+        }}
       >
         <Divider>微博热搜</Divider>
         <div className="hot-search-grid">

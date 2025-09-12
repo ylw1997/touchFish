@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-09-10 14:52:31
+ * @LastEditTime: 2025-09-12 16:42:15
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -134,6 +134,11 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
         open={open}
         onClose={closeFunc}
         destroyOnHidden
+        styles={{
+          body: {
+            padding: "16px",
+          },
+        }}
         extra={
           <Button
             icon={<SendOutlined />}

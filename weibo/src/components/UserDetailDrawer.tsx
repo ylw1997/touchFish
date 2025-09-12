@@ -35,7 +35,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   const {
     list: userWeiboList,
     total: userWeiboTotal,
-    sendMessage,
     copyLink,
     contextHolder,
     handleToggleComments,
@@ -55,27 +54,19 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     setUserDetail: setSubUserDetail,
     getUserBlog,
     getUserByName,
+    isFetching,
+    getUserBlogData,
   } = useWeiboAction(source);
 
   useEffect(() => {
     if (visible && userDetail && userWeiboList?.length === 0) {
-      sendMessage(
-        "GETUSERBLOG",
-        JSON.stringify({ uid: userDetail.id, page: 1 }),
-        "请求用户微博中...",
-        source
-      );
+      getUserBlogData(userDetail.id, 1);
     }
-  }, [sendMessage, userDetail, source, visible, userWeiboList?.length]);
+  }, [getUserBlogData, userDetail, visible, userWeiboList?.length]);
 
   const getUserBlogFunc = () => {
-    if (visible && userDetail) {
-      sendMessage(
-        "GETUSERBLOG",
-        JSON.stringify({ uid: userDetail.id, page: userWeiboPage + 1 }),
-        "请求用户微博中...",
-        source
-      );
+    if (visible && userDetail && !isFetching) {
+      getUserBlogData(userDetail.id, userWeiboPage + 1);
       setUserWeiboPage(userWeiboPage + 1);
     }
   };
@@ -98,13 +89,12 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         onClose={closeFunc}
         title={userDetail?.screen_name}
         placement="bottom"
-        height="calc(100vh - 200px)"
+        height={userWeiboList.length === 0 ? "520px" : "calc(100vh - 200px)"}
         styles={{
           body: {
             padding: 0,
             height: "100%",
             minHeight: 0,
-            overflow: "auto",
           },
         }}
       >
@@ -164,9 +154,9 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 scrollableTarget={userBlogRef.current as any}
                 dataLength={userWeiboList.length}
                 next={getUserBlogFunc}
-                loader={loaderFunc(1)}
+                loader={loaderFunc()}
                 endMessage={<Divider plain>没有了🤐</Divider>}
-                hasMore={userWeiboList.length < userWeiboTotal}
+                hasMore={userWeiboList.length < userWeiboTotal || isFetching}
                 style={{ marginTop: 24 }}
               >
                 {userWeiboList.map((item) => (

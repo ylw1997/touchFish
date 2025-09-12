@@ -224,7 +224,7 @@ function App() {
         <InfiniteScroll
           dataLength={list.length}
           next={fetchData}
-          loader={loaderFunc(1)}
+          loader={loaderFunc()}
           endMessage={<Divider plain>没有了🤐</Divider>}
           hasMore={list.length < total}
           scrollableTarget="scrollableDiv"

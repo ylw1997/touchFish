@@ -18,6 +18,7 @@ const useWeiboAction = (
   // 微博列表相关状态
   const [list, setList] = useState<weiboItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
   const [max_id, setMaxId] = useState<number>();
   const [userWeiboPage, setUserWeiboPage] = useState(1); // 用户微博页码
 
@@ -46,6 +47,7 @@ const useWeiboAction = (
   // 处理函数集合
   const handleSendUserBlog = useCallback(
     (payload: payloadType) => {
+      setIsFetching(false);
       messageApi.destroy("GETUSERBLOG");
       if (payload?.ok && payload.source === source) {
         const wlist = [...list, ...payload.data.list];
@@ -61,6 +63,7 @@ const useWeiboAction = (
 
   const handleSendData = useCallback(
     (payload: payloadType) => {
+      setIsFetching(false);
       messageApi.destroy("GETDATA");
       if (payload?.ok && payload.source === source) {
         const wlist = [
@@ -324,7 +327,21 @@ const useWeiboAction = (
   // 请求数据（主列表/用户微博）
   const getListData = useCallback(
     (payload: string) => {
+      setIsFetching(true);
       sendMessage("GETDATA", payload, "请求微博中...", source);
+    },
+    [sendMessage, source]
+  );
+
+  const getUserBlogData = useCallback(
+    (uid: string | number, page: number) => {
+      setIsFetching(true);
+      sendMessage(
+        "GETUSERBLOG",
+        JSON.stringify({ uid, page }),
+        "请求用户微博中...",
+        source
+      );
     },
     [sendMessage, source]
   );
@@ -488,6 +505,8 @@ const useWeiboAction = (
 
   return {
     getListData,
+    getUserBlogData,
+    isFetching,
     list,
     setList,
     total,
