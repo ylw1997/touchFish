@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+### [8.16.6](https://github.com/ylw1997/touchFish/compare/v8.16.5...v8.16.6) (2025-09-12)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **component:** 重构搜索和用户详情组件的加载逻辑 ([99f4d2f](https://github.com/99f4d2fffa5168675f478bada052d99fe5155f23))
+* **zhihu:** 优化加载状态展示效果 ([d662f6e](https://github.com/d662f6e73b00ebf81385fecdd84c103363c3cf69))
+
 ### [8.16.5](https://github.com/ylw1997/touchFish/compare/v8.16.4...v8.16.5) (2025-09-10)
 
 ### [8.16.4](https://github.com/ylw1997/touchFish/compare/v8.16.3...v8.16.4) (2025-09-10)
