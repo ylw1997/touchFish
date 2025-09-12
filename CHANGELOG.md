@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.16.7](https://github.com/ylw1997/touchFish/compare/v8.16.6...v8.16.7) (2025-09-12)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **zhihu:** 优化今日知乎组件的图片显示逻辑 ([5ae3194](https://github.com/5ae3194e0ba2cf34ccc6f726184dc2604e5d3c51))
+
 ### [8.16.6](https://github.com/ylw1997/touchFish/compare/v8.16.5...v8.16.6) (2025-09-12)
 
 
