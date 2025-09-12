@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-09-04 09:51:17
+ * @LastEditTime: 2025-09-12 16:48:48
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -11,6 +11,7 @@ import { Drawer, List, Card, Button } from "antd";
 import React from "react";
 import ZhihuItem from "./ZhihuItem";
 import type { ZhihuItemData } from "../../../type";
+import { loaderFunc } from "../utils/loader";
 
 interface QuestionDetailDrawerProps {
   open: boolean;
@@ -49,8 +50,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       open={open}
       destroyOnHidden
       placement="bottom"
-      height="calc(100vh - 200px)"
-      loading={questionData.length === 0 && open}
+      height={questionData.length === 0 ? "500px" : "calc(100vh - 150px)"}
       zIndex={1001}
       styles={{
         wrapper: {
@@ -94,18 +94,22 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
           }}
         />
       </Card>
-      <List
-        dataSource={questionData}
-        renderItem={(item) => (
-          <ZhihuItem
-            isDetail
-            item={item}
-            handleVote={() =>
-              voteHandler(item.id, questionData, setQuestionData)
-            }
-          />
-        )}
-      />
+      {questionData.length === 0 && open ? (
+        loaderFunc()
+      ) : (
+        <List
+          dataSource={questionData}
+          renderItem={(item) => (
+            <ZhihuItem
+              isDetail
+              item={item}
+              handleVote={() =>
+                voteHandler(item.id, questionData, setQuestionData)
+              }
+            />
+          )}
+        />
+      )}
     </Drawer>
   );
 };

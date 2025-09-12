@@ -1,28 +1,20 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-11 18:00:00
- * @LastEditTime: 2025-09-05 08:58:17
+ * @LastEditTime: 2025-09-12 16:46:19
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import {
-  Drawer,
-  Button,
-  Input,
-  Form,
-  List,
-  Empty,
-  Skeleton,
-  Divider,
-} from "antd";
+import { Drawer, Button, Input, Form, List, Empty, Divider } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useState, useCallback } from "react";
 import { useMessageHandler } from "../hooks/useMessageHandler";
 import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import type { ZhihuItemData } from "../../../type";
 import ZhihuItem from "./ZhihuItem";
+import { loaderFunc } from "../utils/loader";
 
 interface SearchDrawerProps {
   open: boolean;
@@ -86,7 +78,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         getContainer={false}
         title="知乎搜索"
         placement="bottom"
-        height={"90vh"}
+        height={searchResults.length > 0 ? "90vh" : "500px"}
         open={open}
         onClose={closeFunc}
         destroyOnHidden
@@ -123,7 +115,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         </Form>
         <Divider>搜索结果</Divider>
         {loading ? (
-          <Skeleton active />
+          loaderFunc()
         ) : searchResults.length > 0 ? (
           <List
             dataSource={searchResults}
