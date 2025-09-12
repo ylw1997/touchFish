@@ -179,7 +179,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
               }}
             ></div>
           )}
-          {item.image_area ? <img src={item.image_area} /> : <></>}
+          {item.image_area && !isDetail ? <img src={item.image_area} /> : <></>}
         </div>
         {showComments && (
           <List
