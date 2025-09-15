@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.17.0](https://github.com/ylw1997/touchFish/compare/v8.16.8...v8.17.0) (2025-09-15)
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化微博热搜功能 ([d692b42](https://github.com/d692b42f94336ccbad65966cbfc77602157a0ba3))
+
 ### [8.16.8](https://github.com/ylw1997/touchFish/compare/v8.16.7...v8.16.8) (2025-09-15)
 
 
