@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.16.8](https://github.com/ylw1997/touchFish/compare/v8.16.7...v8.16.8) (2025-09-15)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **zhihu:** 过滤 noscript 标签以优化内容解析 ([7cdff28](https://github.com/7cdff284f55bedb60da5d737220de08d367ded44))
+
 ### [8.16.7](https://github.com/ylw1997/touchFish/compare/v8.16.6...v8.16.7) (2025-09-12)
 
 
