@@ -95,10 +95,10 @@ export const processCommentContent = (htmlString: string | undefined) => {
  */
 export const parseZhihuItemContent = (htmlString: string | undefined) => {
   const regex = /<img[^>]*?src="([^"]+)"[^>]*?>/g;
-
-  return parseHtmlString(htmlString, regex, (match) => {
+  const filteredHtml = htmlString?.replace(/<noscript>.*?<\/noscript>/g, "");
+  return parseHtmlString(filteredHtml, regex, (match) => {
     const [fullMatch, src] = match;
-    
+
     // 为了可访问性，尝试从完整的img标签中提取alt文本
     const altRegex = /alt="([^"]*)"/;
     const altMatch = fullMatch.match(altRegex);
