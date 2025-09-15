@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-09-05 15:44:45
+ * @LastEditTime: 2025-09-15 16:05:27
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -402,6 +402,8 @@ export const getWeiboSearch = async (
   containerid: string,
   retries = 3
 ): Promise<any> => {
+  const cookie = (await getOrSetWeiboCookie()) as string;
+  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   const url = `https://m.weibo.cn/api/container/getIndex?containerid=${encodeURIComponent(
     containerid
   )}`;
@@ -409,12 +411,15 @@ export const getWeiboSearch = async (
   try {
     return await axios.get(url, {
       headers: {
+        Cookie: cookie,
         "User-Agent":
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "X-Xsrf-Token": xsrf,
         Referer: "https://m.weibo.cn/",
       },
     });
   } catch (error: any) {
+    console.error("Error fetching Weibo Search Data:", error.data);
     if (retries > 0) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return getWeiboSearch(containerid, retries - 1);

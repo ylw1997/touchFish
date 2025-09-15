@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-12 16:40:34
+ * @LastEditTime: 2025-09-15 16:22:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -18,7 +18,7 @@ import {
   Tabs,
   Empty,
 } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
 import { useMessageHandler } from "../hooks/useMessageHandler";
 import { weiboUser } from "../../../type";
@@ -68,7 +68,7 @@ const SearchInfo: ReadonlyArray<SearchType> = [
 
 // Extracted and Memoized SearchList Component
 const SearchList = memo(
-  ({
+  ({ 
     searchType,
     users,
     weibos,
@@ -141,6 +141,10 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     setList: setWeibos,
     getUserByName,
   } = useWeiboAction(source);
+
+  const handleRefreshHotSearch = useCallback(() => {
+    sendMessage("GETHOTSEARCH", null, "正在刷新热搜...", "weibo");
+  }, [sendMessage]);
 
   const handlers = {
     SENDSEARCH: (payload: any) => {
@@ -262,7 +266,23 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
           },
         }}
       >
-        <Divider>微博热搜</Divider>
+        <Divider>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span>微博热搜</span>
+            <Button
+              type="text"
+              icon={<ReloadOutlined />}
+              onClick={handleRefreshHotSearch}
+              style={{ margin: "0 8px" }}
+            />
+          </div>
+        </Divider>
         <div className="hot-search-grid">
           {hotSearch.map((item: any, index: number) => (
             <Tag
