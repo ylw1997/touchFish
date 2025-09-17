@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.17.2](https://github.com/ylw1997/touchFish/compare/v8.17.1...v8.17.2) (2025-09-17)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **weibo:** 优化搜索功能和微博卡片展示 ([2fdae7a](https://github.com/2fdae7a3f66925bb5d7fe02e6935b6209af49872))
+
 ### [8.17.1](https://github.com/ylw1997/touchFish/compare/v8.17.0...v8.17.1) (2025-09-17)
 
 
