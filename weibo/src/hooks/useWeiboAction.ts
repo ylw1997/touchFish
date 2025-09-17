@@ -144,7 +144,7 @@ const useWeiboAction = (
       if (payload?.ok && payload.source === source) {
         const mblogid = payload.payload;
         updateList(
-          (item) => item.mblogid === mblogid,
+          (item) => (item.mblogid ? item.mblogid : item.bid) === mblogid,
           (item) => ({
             ...item,
             text_raw: payload.data.longTextContent,

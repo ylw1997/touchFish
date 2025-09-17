@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-15 16:22:32
+ * @LastEditTime: 2025-09-17 17:01:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -68,7 +68,7 @@ const SearchInfo: ReadonlyArray<SearchType> = [
 
 // Extracted and Memoized SearchList Component
 const SearchList = memo(
-  ({ 
+  ({
     searchType,
     users,
     weibos,
@@ -167,6 +167,17 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         setHotSearch((payload.data.realtime || []).slice(0, 20));
       }
     },
+    SENDUSERBYNAME: (payload: any) => {
+      messageApi.destroy("GETUSERBYNAME");
+      if (payload.ok === 1) {
+        getUserBlog({
+          ...payload.data,
+          avatar_hd: payload.data.avatar,
+        });
+      } else {
+        messageApi.error(payload.msg || "获取用户信息失败");
+      }
+    },
   };
 
   useMessageHandler(handlers);
@@ -256,13 +267,17 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       <Drawer
         title="微博搜索"
         placement="bottom"
-        height={weibos.length > 0 || users.length > 0 ? "calc(100vh - 150px)" : "850px"}
+        height={
+          weibos.length > 0 || users.length > 0
+            ? "calc(100vh - 150px)"
+            : "850px"
+        }
         open={open}
         onClose={closeFunc}
         destroyOnHidden
         styles={{
           body: {
-            padding: '0 5px'
+            padding: "0 5px",
           },
         }}
       >

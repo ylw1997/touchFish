@@ -331,14 +331,16 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     <Card key={item.id} title={renderTitle()} className={className}>
       <div className="content">
         {isH5
-          ? parseH5WeiboText(item.text, getUserByName, onTopicClick)
+          ? item.text_raw
+            ? parseWeiboText(item, getUserByName, onTopicClick)
+            : parseH5WeiboText(item.text, getUserByName, onTopicClick)
           : parseWeiboText(item, getUserByName, onTopicClick)}
-        {item.isLongText && !isH5 && (
+        {item.isLongText && (
           <Tag
             color="blue"
             style={{ marginLeft: "8px" }}
             className="link-tag"
-            onClick={() => onExpandLongWeibo?.(isH5 ? item.id : item.mblogid)}
+            onClick={() => onExpandLongWeibo?.(isH5 ? item.bid : item.mblogid)}
             bordered={false}
           >
             展开长微博
