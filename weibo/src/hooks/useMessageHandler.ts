@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-25 11:04:43
- * @LastEditTime: 2025-09-18 15:14:19
+ * @LastEditTime: 2025-09-18 16:14:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\hooks\useMessageHandler.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -52,7 +52,7 @@ export function useMessageHandler(handlers: Handlers, options?: Options) {
         return;
       }
 
-      console.log("接收消息", command, options);
+      // console.log("接收消息", command, options);
 
       const fn = handlers[command];
       fn?.(payload);
