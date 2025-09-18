@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.19.1](https://github.com/ylw1997/touchFish/compare/v8.19.0...v8.19.1) (2025-09-18)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **UserDetailDrawer, useVscodeMessage:** 更新字体加粗样式和注释掉日志打印 ([3bdfe1f](https://github.com/3bdfe1f13a099f410bda258d9ed32d58a6e05005))
+
 ## [8.19.0](https://github.com/ylw1997/touchFish/compare/v8.18.0...v8.19.0) (2025-09-18)
 
 
