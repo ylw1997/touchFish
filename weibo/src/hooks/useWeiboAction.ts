@@ -86,37 +86,31 @@ const useWeiboAction = (
     [messageApi, updateList]
   );
 
-  const handleSendCreateComments = useCallback(
-    () => {
-      messageApi.destroy("GETCREATECOMMENTS");
-      messageApi.success("评论成功!");
-      if (curItem) {
-        updateList(
-          (item) => item.id === curItem.id,
-          (item) => ({ ...item, comments_count: item.comments_count + 1 })
-        );
-        sendMessage(
-          "GETCOMMENT",
-          {
-            url: `/statuses/buildComments?flow=1&id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
-            id: curItem.id,
-            uid: curItem.user?.id,
-          },
-          "请求评论中...",
-          source
-        );
-      }
-    },
-    [messageApi, source, curItem, updateList, sendMessage]
-  );
+  const handleSendCreateComments = useCallback(() => {
+    messageApi.destroy("GETCREATECOMMENTS");
+    messageApi.success("评论成功!");
+    if (curItem) {
+      updateList(
+        (item) => item.id === curItem.id,
+        (item) => ({ ...item, comments_count: item.comments_count + 1 })
+      );
+      sendMessage(
+        "GETCOMMENT",
+        {
+          url: `/statuses/buildComments?flow=1&id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
+          id: curItem.id,
+          uid: curItem.user?.id,
+        },
+        "请求评论中...",
+        source
+      );
+    }
+  }, [messageApi, source, curItem, updateList, sendMessage]);
 
-  const handleSendCreateRepost = useCallback(
-    () => {
-      messageApi.destroy("GETCREATEREPOST");
-      messageApi.success("转发成功!");
-    },
-    [messageApi]
-  );
+  const handleSendCreateRepost = useCallback(() => {
+    messageApi.destroy("GETCREATEREPOST");
+    messageApi.success("转发成功!");
+  }, [messageApi]);
 
   const handleSendLongText = useCallback(
     (payload: payloadType) => {
@@ -135,23 +129,20 @@ const useWeiboAction = (
     [messageApi, updateList]
   );
 
-  const handleSendFollow = useCallback(
-    () => {
-      messageApi.destroy("GETFOLLOW");
-      messageApi.success("关注成功!");
-      if (userDetail) {
-        setUserDetail((prev) => (prev ? { ...prev, following: true } : prev));
-        updateList(
-          (item) => item.user?.id === userDetail!.id,
-          (item) => ({
-            ...item,
-            user: { ...item.user, following: true } as weiboUser,
-          })
-        );
-      }
-    },
-    [messageApi, updateList, userDetail]
-  );
+  const handleSendFollow = useCallback(() => {
+    messageApi.destroy("GETFOLLOW");
+    messageApi.success("关注成功!");
+    if (userDetail) {
+      setUserDetail((prev) => (prev ? { ...prev, following: true } : prev));
+      updateList(
+        (item) => item.user?.id === userDetail!.id,
+        (item) => ({
+          ...item,
+          user: { ...item.user, following: true } as weiboUser,
+        })
+      );
+    }
+  }, [messageApi, updateList, userDetail]);
 
   const handleSendNewBlogResult = useCallback(
     (payload: payloadType) => {
@@ -163,59 +154,50 @@ const useWeiboAction = (
     [messageApi, setSendLoading]
   );
 
-  const handleSendCancelFollow = useCallback(
-    () => {
-      messageApi.destroy("GETCANCELFOLLOW");
-      messageApi.success("取消关注成功!");
-      if (userDetail) {
-        setUserDetail((prev) => (prev ? { ...prev, following: false } : prev));
-        updateList(
-          (item) => item.user?.id === userDetail!.id,
-          (item) => ({
-            ...item,
-            user: { ...item.user, following: false } as weiboUser,
-          })
-        );
-      }
-    },
-    [messageApi, updateList, userDetail]
-  );
+  const handleSendCancelFollow = useCallback(() => {
+    messageApi.destroy("GETCANCELFOLLOW");
+    messageApi.success("取消关注成功!");
+    if (userDetail) {
+      setUserDetail((prev) => (prev ? { ...prev, following: false } : prev));
+      updateList(
+        (item) => item.user?.id === userDetail!.id,
+        (item) => ({
+          ...item,
+          user: { ...item.user, following: false } as weiboUser,
+        })
+      );
+    }
+  }, [messageApi, updateList, userDetail]);
 
-  const handleSendSetLike = useCallback(
-    () => {
-      messageApi.destroy("GETSETLIKE");
-      messageApi.success("点赞成功!");
-      if (curItem) {
-        updateList(
-          (item) => item.id === curItem.id,
-          (item) => ({
-            ...item,
-            attitudes_status: 1,
-            attitudes_count: item.attitudes_count + 1,
-          })
-        );
-      }
-    },
-    [messageApi, updateList, curItem]
-  );
+  const handleSendSetLike = useCallback(() => {
+    messageApi.destroy("GETSETLIKE");
+    messageApi.success("点赞成功!");
+    if (curItem) {
+      updateList(
+        (item) => item.id === curItem.id,
+        (item) => ({
+          ...item,
+          attitudes_status: 1,
+          attitudes_count: item.attitudes_count + 1,
+        })
+      );
+    }
+  }, [messageApi, updateList, curItem]);
 
-  const handleSendCancelLike = useCallback(
-    () => {
-      messageApi.destroy("GETCANCELLIKE");
-      messageApi.success("取消点赞成功!");
-      if (curItem) {
-        updateList(
-          (item) => item.id === curItem.id,
-          (item) => ({
-            ...item,
-            attitudes_status: 0,
-            attitudes_count: item.attitudes_count - 1,
-          })
-        );
-      }
-    },
-    [messageApi, updateList, curItem]
-  );
+  const handleSendCancelLike = useCallback(() => {
+    messageApi.destroy("GETCANCELLIKE");
+    messageApi.success("取消点赞成功!");
+    if (curItem) {
+      updateList(
+        (item) => item.id === curItem.id,
+        (item) => ({
+          ...item,
+          attitudes_status: 0,
+          attitudes_count: item.attitudes_count - 1,
+        })
+      );
+    }
+  }, [messageApi, updateList, curItem]);
 
   const handleSendUserByName = useCallback(
     (payload: payloadType) => {
@@ -361,11 +343,15 @@ const useWeiboAction = (
     [sendMessage, source]
   );
 
-  // 查看博主微博
-  const getUserBlog = useCallback((userInfo: weiboUser) => {
-    setUserDetail(userInfo);
-    setUserDetailVisible(true);
-  }, []);
+  // 查看博主微博：只发送请求让消息回调处理用户详情并打开弹窗（避免提前 set 导致重复请求）
+  const getUserBlog = useCallback(
+    (userInfo: weiboUser) => {
+      if (!userInfo) return;
+      // 使用 ",<id>" 格式传参，provider 会解析出 id 并返回用户信息
+      sendMessage("GETUSERBYNAME", "," + String(userInfo.id), "获取用户信息中...", source);
+    },
+    [sendMessage, source]
+  );
 
   const getUserByName = useCallback(
     (username: string) => {

@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-09-17 14:48:35
+ * @LastEditTime: 2025-09-18 16:06:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -365,18 +365,21 @@ export const createRepost = async (params: weiboRepostParams) => {
 export const getUserByName = async (screen_name: string) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
   const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
-  return await axios.get(
-    `https://weibo.com/ajax/user/popcard/get?screen_name=${screen_name}`,
-    {
-      headers: {
-        Cookie: cookie,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        "X-Xsrf-Token": xsrf,
-        Referer: "https://weibo.com/",
-      },
-    }
-  );
+  const arr = screen_name.split(",");
+  const id = arr.length > 1 ? arr[1] : "";
+  let params = `screen_name=${screen_name}`;
+  if (id) {
+    params = `&id=${id}`;
+  }
+  return await axios.get(`https://weibo.com/ajax/user/popcard/get?${params}`, {
+    headers: {
+      Cookie: cookie,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+      "X-Xsrf-Token": xsrf,
+      Referer: "https://weibo.com/",
+    },
+  });
 };
 
 // 获取热搜
