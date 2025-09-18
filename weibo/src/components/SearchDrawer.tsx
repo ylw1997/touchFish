@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-18 15:00:45
+ * @LastEditTime: 2025-09-18 15:27:52
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -143,8 +143,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   } = useWeiboAction(source);
 
   const handleRefreshHotSearch = useCallback(() => {
-    sendMessage("GETHOTSEARCH", null, "正在刷新热搜...", "weibo");
-  }, [sendMessage]);
+    sendMessage("GETHOTSEARCH", null, "正在刷新热搜...", source);
+  }, [sendMessage, source]);
 
   const handlers = {
     SENDSEARCH: (payload: any) => {
@@ -196,13 +196,13 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   useEffect(() => {
     if (open) {
-      sendMessage("GETHOTSEARCH", null, "正在获取热搜...", "weibo");
+      handleRefreshHotSearch();
       if (initialKeyword) {
         form.setFieldsValue({ keyword: initialKeyword });
         handleSearch(SearchInfo[0]);
       }
     }
-  }, [open, initialKeyword, form, handleSearch, sendMessage]);
+  }, [form, handleRefreshHotSearch, handleSearch, initialKeyword, open]);
 
   const closeFunc = useCallback(() => {
     form.resetFields();
