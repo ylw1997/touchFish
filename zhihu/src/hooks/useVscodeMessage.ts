@@ -23,7 +23,7 @@ export function useVscodeMessage() {
       content:string,
       source: string
     ) => {
-      console.log("发送消息", command, payload,source);
+      // console.log("发送消息", command, payload,source);
       messageApi.open({
         key: command,
         type: "loading",

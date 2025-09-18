@@ -132,7 +132,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               >
                 {userDetail.screen_name}
               </Avatar>
-              <div style={{ fontSize: 20, fontWeight: 500 }}>
+              <div style={{ fontSize: 20, fontWeight: "bolder" }}>
                 {userDetail.screen_name}
               </div>
               {userDetail.followers_count_str &&
