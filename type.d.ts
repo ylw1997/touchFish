@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-09-18 16:10:58
+ * @LastEditTime: 2025-09-18 16:33:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -215,6 +215,7 @@ export type weiboUser = {
   verified_reason?: string;
   descText?: string;
   special_follow?: boolean;
+  isOwner?: boolean;
 };
 
 type commentsPicItemImg = {

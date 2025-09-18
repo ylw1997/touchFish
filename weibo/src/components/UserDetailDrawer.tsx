@@ -147,6 +147,11 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                   ) : (
                     <></>
                   )}
+                  {userDetail.isOwner ? (
+                    <Tag color="cyan">本账号</Tag>
+                  ) : (
+                    <></>
+                  )}
                 </div>
               ) : (
                 <></>
@@ -164,8 +169,9 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               ) : (
                 <></>
               )}
-
-              {!userDetail.following ? (
+              {userDetail.isOwner ? (
+                <></>
+              ) : !userDetail.following ? (
                 <Button
                   color="primary"
                   onClick={() => followUser(userDetail, preSource)}
