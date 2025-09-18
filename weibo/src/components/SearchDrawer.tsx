@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-17 17:01:21
+ * @LastEditTime: 2025-09-18 14:52:22
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -169,7 +169,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     },
     SENDUSERBYNAME: (payload: any) => {
       messageApi.destroy("GETUSERBYNAME");
-      if (payload.ok === 1) {
+      if (payload?.ok && payload.source === source) {
         getUserBlog({
           ...payload.data,
           avatar_hd: payload.data.avatar,
