@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 17:38:50
- * @LastEditTime: 2025-07-30 10:07:55
+ * @LastEditTime: 2025-09-18 15:15:02
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -57,6 +57,10 @@ const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
 
     const messageHandler = async (event: MessageEvent<commandsType<any>>) => {
       const msg = event.data;
+      // 如果 command 不包含 SENDIMG 或者 SENDVIDEO 直接返回
+      if (!msg.command.includes("SENDIMG") && !msg.command.includes("SENDVIDEO")) {
+        return;
+      }
       if (msg.command === `SENDIMG:${src}` && msg.payload) {
         setImgSrc(msg.payload);
       }

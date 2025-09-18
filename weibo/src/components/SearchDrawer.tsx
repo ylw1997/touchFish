@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-18 14:52:22
+ * @LastEditTime: 2025-09-18 15:00:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -150,37 +150,27 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     SENDSEARCH: (payload: any) => {
       messageApi.destroy("GETSEARCH");
       setLoading(false);
-      if (payload.ok === 1) {
-        const parsedData = parseArray(payload.data.cards, searchType);
-        if (searchType.type === "3") {
-          setUsers(parsedData);
-        } else if (searchType.type === "60") {
-          setWeibos(parsedData);
-        }
-      } else {
-        messageApi.error(payload.msg || "搜索失败");
+      const parsedData = parseArray(payload.data.cards, searchType);
+      if (searchType.type === "3") {
+        setUsers(parsedData);
+      } else if (searchType.type === "60") {
+        setWeibos(parsedData);
       }
     },
     SENDHOTSEARCH: (payload: any) => {
       messageApi.destroy("GETHOTSEARCH");
-      if (payload.ok === 1) {
-        setHotSearch((payload.data.realtime || []).slice(0, 20));
-      }
+      setHotSearch((payload.data.realtime || []).slice(0, 20));
     },
     SENDUSERBYNAME: (payload: any) => {
       messageApi.destroy("GETUSERBYNAME");
-      if (payload?.ok && payload.source === source) {
-        getUserBlog({
-          ...payload.data,
-          avatar_hd: payload.data.avatar,
-        });
-      } else {
-        messageApi.error(payload.msg || "获取用户信息失败");
-      }
+      getUserBlog({
+        ...payload.data,
+        avatar_hd: payload.data.avatar,
+      });
     },
   };
 
-  useMessageHandler(handlers);
+  useMessageHandler(handlers, { source, messageApi });
 
   const clear = useCallback(() => {
     setUsers([]);
