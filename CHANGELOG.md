@@ -1,6 +1,26 @@
 # 更新历史 
 
 
+## [8.18.0](https://github.com/ylw1997/touchFish/compare/v8.17.2...v8.18.0) (2025-09-18)
+
+
+### ✨ Features | 新功能
+
+* **user:** 在用户详情页面添加用户描述信息 ([9354d6a](https://github.com/9354d6a90a1f37badac227d43b051977a2a1cd11))
+* **weibo:** 用户详情页面增加关注和粉丝数量展示 ([da5eb1a](https://github.com/da5eb1a88e26c966fc90da5bc274d213999fc393))
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **components:** 优化用户详情抽屉中的描述文本渲染逻辑 ([1e00b05](https://github.com/1e00b05dc164721db4c0746b71561d8523fa58d9))
+* **SearchDrawer, SendWeiboDrawer, YImg, useMessageHandler, useWeiboAction:** 优化消息处理逻辑和错误处理 ([34188d0](https://github.com/34188d0ba9a9b15758e9e177daf17d11bd18603f))
+* **SearchDrawer:** 更新最后编辑时间和条件判断逻辑 ([221620e](https://github.com/221620e4276cf719f4885756839a6c826ca8328e))
+* **SearchDrawer:** 更新最后编辑时间和优化消息发送参数 ([44d6212](https://github.com/44d621245e472d30cab8c4bb19fd5c850a405c97))
+* **type.d.ts, UserDetailDrawer:** 更新最后编辑时间和添加特别关注字段 ([385bd05](https://github.com/385bd05aa565f9b28e7e17e1b8d3ad76ef74baed))
+* **UserDetailDrawer:** 优化用户详情抽屉组件的代码结构 ([78c68cd](https://github.com/78c68cd57f7731dc0b0d8dff1abd6db6594feb51))
+* **weibo/src/hooks/useMessageHandler.ts:** 更新最后编辑时间和注释掉日志打印 ([e9fe0e1](https://github.com/e9fe0e110355b93fc2f1126fe7b5ff79e36faced))
+* **weibo:** 优化getUserByName函数并简化useWeiboAction中的回调函数 ([5b480b2](https://github.com/5b480b2f9ea9ed64878e29cdc46bb7b22dc7856b))
+
 ### [8.17.2](https://github.com/ylw1997/touchFish/compare/v8.17.1...v8.17.2) (2025-09-17)
 
 
