@@ -135,10 +135,13 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               <div style={{ fontSize: 20, fontWeight: 500 }}>
                 {userDetail.screen_name}
               </div>
-              {userDetail.followers_count_str && userDetail.friends_count_str ? (
+              {userDetail.followers_count_str &&
+              userDetail.friends_count_str ? (
                 <div>
-                  <Tag color="green" >关注:{userDetail.friends_count_str}</Tag>
-                  <Tag color="orange" >粉丝:{userDetail.followers_count_str}</Tag>
+                  <Tag color="green">关注:{userDetail.friends_count_str}</Tag>
+                  <Tag color="orange">
+                    粉丝:{userDetail.followers_count_str}
+                  </Tag>
                 </div>
               ) : (
                 <></>
@@ -175,14 +178,18 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 </Button>
               )}
             </div>
-            {userBlogRef.current && (
+            {userWeiboList.length === 0 ? (
+              loaderFunc()
+            ) : (
               <InfiniteScroll
-                scrollableTarget={userBlogRef.current as any}
+                scrollableTarget={
+                  userBlogRef.current ? (userBlogRef.current as any) : undefined
+                }
                 dataLength={userWeiboList.length}
                 next={getUserBlogFunc}
-                loader={loaderFunc()}
+                loader={isFetching ? loaderFunc() : null}
                 endMessage={<Divider plain>没有了🤐</Divider>}
-                hasMore={userWeiboList.length < userWeiboTotal || isFetching}
+                hasMore={userWeiboList.length < userWeiboTotal}
                 style={{ marginTop: 24 }}
               >
                 {userWeiboList.map((item) => (
