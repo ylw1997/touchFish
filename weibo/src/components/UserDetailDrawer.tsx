@@ -131,15 +131,18 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               <div style={{ fontSize: 20, fontWeight: 500 }}>
                 {userDetail.screen_name}
               </div>
-              <Card
-                styles={{
-                  body: {
-                    padding: "10px"
-                  },
-                }}
-              >
-                {userDetail.descText}
-              </Card>
+              {userDetail.descText ?? (
+                <Card
+                  styles={{
+                    body: {
+                      padding: "10px",
+                    },
+                  }}
+                >
+                  {userDetail.descText}
+                </Card>
+              )}
+
               {!userDetail.following ? (
                 <Button
                   color="primary"
