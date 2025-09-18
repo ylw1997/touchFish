@@ -211,6 +211,7 @@ export type weiboUser = {
   following?: boolean;
   followers_count?: number;
   verified_reason?: string;
+  descText?: string;
 };
 
 type commentsPicItemImg = {
