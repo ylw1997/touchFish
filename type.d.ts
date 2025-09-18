@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-08-14 18:02:27
+ * @LastEditTime: 2025-09-18 10:06:59
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -210,6 +210,8 @@ export type weiboUser = {
   avatar_large?: string;
   following?: boolean;
   followers_count?: number;
+  followers_count_str?: string;
+  friends_count_str?: string;
   verified_reason?: string;
   descText?: string;
 };

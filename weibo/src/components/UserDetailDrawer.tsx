@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Drawer, Avatar, Button, Divider, Card } from "antd";
+import { Drawer, Avatar, Button, Divider, Card, Tag } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
 import YImg from "./YImg";
 import WeiboCard from "./WeiboCard";
@@ -22,6 +22,7 @@ interface UserDetailDrawerProps {
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   visible,
   userDetail,
+  setUserDetail,
   onClose,
   source,
   preSource,
@@ -77,6 +78,9 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     setTotal(0);
     setUserWeiboPage(1);
     setCurItem(undefined);
+    setSubUserDetail(undefined);
+    setUserDetailVisible(false);
+    setUserDetail(undefined);
   };
 
   return (
@@ -131,7 +135,15 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               <div style={{ fontSize: 20, fontWeight: 500 }}>
                 {userDetail.screen_name}
               </div>
-              {userDetail.descText ?? (
+              {userDetail.followers_count_str && userDetail.friends_count_str ? (
+                <div>
+                  <Tag color="green" >关注:{userDetail.friends_count_str}</Tag>
+                  <Tag color="orange" >粉丝:{userDetail.followers_count_str}</Tag>
+                </div>
+              ) : (
+                <></>
+              )}
+              {userDetail.descText ? (
                 <Card
                   styles={{
                     body: {
@@ -141,6 +153,8 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 >
                   {userDetail.descText}
                 </Card>
+              ) : (
+                <></>
               )}
 
               {!userDetail.following ? (
