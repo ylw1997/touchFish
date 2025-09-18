@@ -142,6 +142,11 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                   <Tag color="orange">
                     粉丝:{userDetail.followers_count_str}
                   </Tag>
+                  {userDetail.special_follow ? (
+                    <Tag color="pink">特别关注</Tag>
+                  ) : (
+                    <></>
+                  )}
                 </div>
               ) : (
                 <></>
