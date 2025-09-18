@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.19.0](https://github.com/ylw1997/touchFish/compare/v8.18.0...v8.19.0) (2025-09-18)
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 添加用户是否为账号所有者的标识 ([5a1fe4f](https://github.com/5a1fe4f237a52eddb785f2bef84239e965a3a341))
+
 ## [8.18.0](https://github.com/ylw1997/touchFish/compare/v8.17.2...v8.18.0) (2025-09-18)
 
 
