@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { ZhihuItemData } from "../../../type";
 import { useRequest } from "./useRequest";
+import { ZhihuApi } from "../api";
 
 const useZhihuAction = () => {
   const [list, setList] = useState<ZhihuItemData[]>([]);
@@ -14,6 +15,8 @@ const useZhihuAction = () => {
   const [currentQuestionId, setCurrentQuestionId] = useState<string>("");
   const { request, contextHolder, messageApi } = useRequest();
 
+  const apiClient = useMemo(() => new ZhihuApi(request), [request]);
+
   const clearList = useCallback(() => {
     setList([]);
   }, []);
@@ -25,11 +28,7 @@ const useZhihuAction = () => {
       }
       setLoading(true);
       try {
-        const result = await request<ZhihuItemData[]>(
-          "ZHIHU_GETDATA",
-          payload,
-          "请求知乎数据中..."
-        );
+        const result = await apiClient.getZhihuList(payload);
         if (result) {
           setList((currentList) =>
             replace ? result : [...currentList, ...result]
@@ -39,7 +38,7 @@ const useZhihuAction = () => {
         setLoading(false);
       }
     },
-    [request, loading]
+    [apiClient, loading]
   );
 
   const openQuestionDetailDrawer = async (
@@ -49,11 +48,7 @@ const useZhihuAction = () => {
     setQuestionDetailDrawerOpen(true);
     setQuestionTitle(title);
     setCurrentQuestionId(questionId);
-    const result = await request<any>(
-      "getZhihuQuestionDetail",
-      questionId,
-      "获取问题详情中..."
-    );
+    const result = await apiClient.getQuestionDetail(questionId);
     if (result.detail) {
       setQuestionDetail(result.detail);
     }
@@ -79,7 +74,7 @@ const useZhihuAction = () => {
     listToUpdate: ZhihuItemData[],
     setListToUpdate: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>
   ) => {
-    await request("ZHIHU_VOTE_ANSWER", { answerId, type }, "操作中...");
+    await apiClient.voteAnswer(answerId, type);
     setListToUpdate(
       listToUpdate.map((item) => {
         if (item.id === answerId) {
@@ -109,7 +104,7 @@ const useZhihuAction = () => {
 
   const followHandler = async () => {
     if (currentQuestionId) {
-      await request("ZHIHU_FOLLOW_QUESTION", currentQuestionId, "关注中...");
+      await apiClient.followQuestion(currentQuestionId);
       setIsFollowing(true);
       messageApi.success("关注成功!");
     }
@@ -117,11 +112,7 @@ const useZhihuAction = () => {
 
   const unfollowHandler = async () => {
     if (currentQuestionId) {
-      await request(
-        "ZHIHU_UNFOLLOW_QUESTION",
-        currentQuestionId,
-        "取消关注中..."
-      );
+      await apiClient.unfollowQuestion(currentQuestionId);
       setIsFollowing(false);
       messageApi.success("取消关注成功!");
     }
@@ -129,26 +120,18 @@ const useZhihuAction = () => {
 
   const searchZhihu = useCallback(
     async (keyword: string) => {
-      const results = await request<ZhihuItemData[]>(
-        "ZHIHU_SEARCH",
-        keyword,
-        "搜索中..."
-      );
+      const results = await apiClient.searchZhihu(keyword);
       return results;
     },
-    [request]
+    [apiClient]
   );
 
   const getZhihuComment = useCallback(
     async (answerId: string) => {
-      const result = await request<any>(
-        "getZhihuComment",
-        answerId,
-        "获取评论中..."
-      );
+      const result = await apiClient.getZhihuComment(answerId);
       return result.data;
     },
-    [request]
+    [apiClient]
   );
 
   return {
