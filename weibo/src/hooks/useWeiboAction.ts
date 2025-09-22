@@ -1,20 +1,20 @@
-import { useCallback, useMemo, useState, RefObject } from "react";
+import { useCallback, useState } from "react";
 import {
   payloadType,
   weiboCommentParams,
   weiboItem,
   weiboRepostParams,
   weiboUser,
+  SearchType,
+  uploadType,
+  UploadImageResponsePayload,
 } from "../../../type";
 import { updateWeiboList } from "../utils/updateWeiboList";
-import { useVscodeMessage } from "./useVscodeMessage";
 import { weiboSendParams } from "../types";
-import { useMessageHandler } from "./useMessageHandler";
+import { parseArray } from "../utils";
+import { useRequest } from "./useRequest";
 
-const useWeiboAction = (
-  source: string,
-  scrollableNodeRef?: RefObject<HTMLDivElement | null>
-) => {
+const useWeiboAction = () => {
   // 微博列表相关状态
   const [list, setList] = useState<weiboItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -31,7 +31,7 @@ const useWeiboAction = (
 
   // 发送状态相关
   const [sendLoading, setSendLoading] = useState(false);
-  const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
+  const { request, contextHolder, messageApi } = useRequest();
 
   // 更新微博列表
   const updateList = useCallback(
@@ -44,238 +44,42 @@ const useWeiboAction = (
     []
   );
 
-  // 处理函数集合
-  const handleSendUserBlog = useCallback(
-    (payload: payloadType) => {
-      setIsFetching(false);
-      messageApi.destroy("GETUSERBLOG");
-      const wlist = [...list, ...payload.data.list];
-      const wtotal = payload.data?.total ?? 999;
-      setList(wlist);
-      setTotal(wtotal);
-    },
-    [list, messageApi]
-  );
-
-  const handleSendData = useCallback(
-    (payload: payloadType) => {
-      setIsFetching(false);
-      messageApi.destroy("GETDATA");
-      const wlist = [
-        ...list,
-        ...payload.statuses.filter((item) => item.mblogtype !== 1),
-      ];
-      const wtotal = payload.total_number ?? 999;
-      setList(wlist);
-      setTotal(wtotal);
-      setMaxId(payload.max_id);
-    },
-    [list, messageApi, setMaxId]
-  );
-
-  const handleSendComment = useCallback(
-    (payload: payloadType) => {
-      messageApi.destroy("GETCOMMENT");
-      const { id } = payload.payload;
-      const data = payload.data;
-      updateList(
-        (item) => item.id === id,
-        (item) => ({ ...item, comments: data })
-      );
-    },
-    [messageApi, updateList]
-  );
-
-  const handleSendCreateComments = useCallback(() => {
-    messageApi.destroy("GETCREATECOMMENTS");
-    messageApi.success("评论成功!");
-    if (curItem) {
-      updateList(
-        (item) => item.id === curItem.id,
-        (item) => ({ ...item, comments_count: item.comments_count + 1 })
-      );
-      sendMessage(
-        "GETCOMMENT",
-        {
-          url: `/statuses/buildComments?flow=1&id=${curItem.id}&is_show_bulletin=2uid=${curItem.user?.id}&locale=zh-CN`,
-          id: curItem.id,
-          uid: curItem.user?.id,
-        },
-        "请求评论中...",
-        source
-      );
-    }
-  }, [messageApi, source, curItem, updateList, sendMessage]);
-
-  const handleSendCreateRepost = useCallback(() => {
-    messageApi.destroy("GETCREATEREPOST");
-    messageApi.success("转发成功!");
-  }, [messageApi]);
-
-  const handleSendLongText = useCallback(
-    (payload: payloadType) => {
-      messageApi.destroy("GETLONGTEXT");
-      const mblogid = payload.payload;
-      updateList(
-        (item) => (item.mblogid ? item.mblogid : item.bid) === mblogid,
-        (item) => ({
-          ...item,
-          text_raw: payload.data.longTextContent,
-          isLongText: false,
-          text: payload.data.longTextContent,
-        })
-      );
-    },
-    [messageApi, updateList]
-  );
-
-  const handleSendFollow = useCallback(() => {
-    messageApi.destroy("GETFOLLOW");
-    messageApi.success("关注成功!");
-    if (userDetail) {
-      setUserDetail((prev) => (prev ? { ...prev, following: true } : prev));
-      updateList(
-        (item) => item.user?.id === userDetail!.id,
-        (item) => ({
-          ...item,
-          user: { ...item.user, following: true } as weiboUser,
-        })
-      );
-    }
-  }, [messageApi, updateList, userDetail]);
-
-  const handleSendNewBlogResult = useCallback(
-    (payload: payloadType) => {
-      messageApi.destroy("GETNEWBLOGRESULT");
-      setSendLoading(false);
-      messageApi.success("微博发送成功!");
-      setList((prev) => [payload.data, ...prev]);
-    },
-    [messageApi, setSendLoading]
-  );
-
-  const handleSendCancelFollow = useCallback(() => {
-    messageApi.destroy("GETCANCELFOLLOW");
-    messageApi.success("取消关注成功!");
-    if (userDetail) {
-      setUserDetail((prev) => (prev ? { ...prev, following: false } : prev));
-      updateList(
-        (item) => item.user?.id === userDetail!.id,
-        (item) => ({
-          ...item,
-          user: { ...item.user, following: false } as weiboUser,
-        })
-      );
-    }
-  }, [messageApi, updateList, userDetail]);
-
-  const handleSendSetLike = useCallback(() => {
-    messageApi.destroy("GETSETLIKE");
-    messageApi.success("点赞成功!");
-    if (curItem) {
-      updateList(
-        (item) => item.id === curItem.id,
-        (item) => ({
-          ...item,
-          attitudes_status: 1,
-          attitudes_count: item.attitudes_count + 1,
-        })
-      );
-    }
-  }, [messageApi, updateList, curItem]);
-
-  const handleSendCancelLike = useCallback(() => {
-    messageApi.destroy("GETCANCELLIKE");
-    messageApi.success("取消点赞成功!");
-    if (curItem) {
-      updateList(
-        (item) => item.id === curItem.id,
-        (item) => ({
-          ...item,
-          attitudes_status: 0,
-          attitudes_count: item.attitudes_count - 1,
-        })
-      );
-    }
-  }, [messageApi, updateList, curItem]);
-
-  const handleSendUserByName = useCallback(
-    (payload: payloadType) => {
-      messageApi.destroy("GETUSERBYNAME");
-      setUserDetail({
-        ...payload.data,
-        avatar_hd: payload.data.avatar,
-      });
-      setUserDetailVisible(true);
-    },
-    [messageApi]
-  );
-
-  const handleRestoreScrollPosition = useCallback(
-    (payload: number) => {
-      if (scrollableNodeRef?.current) {
-        // console.log("恢复滚动位置:", payload);
-        scrollableNodeRef.current.scrollTop = payload;
-      }
-    },
-    [scrollableNodeRef]
-  );
-
-  const handlers = useMemo(
-    () => ({
-      SENDUSERBLOG: handleSendUserBlog,
-      SENDDATA: handleSendData,
-      SENDCOMMENT: handleSendComment,
-      SENDCREATECOMMENTS: handleSendCreateComments,
-      SENDCREATEREPOST: handleSendCreateRepost,
-      SENDLONGTEXT: handleSendLongText,
-      SENDFOLLOW: handleSendFollow,
-      SENDNEWBLOGRESULT: handleSendNewBlogResult,
-      SENDCANCELFOLLOW: handleSendCancelFollow,
-      SENDSETLIKE: handleSendSetLike,
-      SENDCANCELLIKE: handleSendCancelLike,
-      SENDUSERBYNAME: handleSendUserByName,
-      RESTORE_SCROLL_POSITION: handleRestoreScrollPosition,
-    }),
-    [
-      handleSendUserBlog,
-      handleSendData,
-      handleSendComment,
-      handleSendCreateComments,
-      handleSendCreateRepost,
-      handleSendLongText,
-      handleSendFollow,
-      handleSendNewBlogResult,
-      handleSendCancelFollow,
-      handleSendSetLike,
-      handleSendCancelLike,
-      handleSendUserByName,
-      handleRestoreScrollPosition,
-    ]
-  );
-
-  useMessageHandler(handlers, { source, messageApi });
-
   // 请求数据（主列表/用户微博）
   const getListData = useCallback(
-    (payload: string) => {
+    async (payload: string, replace = false) => {
       setIsFetching(true);
-      sendMessage("GETDATA", payload, "请求微博中...", source);
+      try {
+        const result = await request<payloadType>("GETDATA", payload, "请求微博中...");
+        const newList = result.statuses.filter((item) => item.mblogtype !== 1);
+        setList(currentList => replace ? newList : [...currentList, ...newList]);
+        const wtotal = result.total_number ?? 999;
+        setTotal(wtotal);
+        setMaxId(result.max_id);
+      } finally {
+        setIsFetching(false);
+      }
     },
-    [sendMessage, source]
+    [request]
   );
 
   const getUserBlogData = useCallback(
-    (uid: string | number, page: number) => {
+    async (uid: string | number, page: number) => {
       setIsFetching(true);
-      sendMessage(
-        "GETUSERBLOG",
-        JSON.stringify({ uid, page }),
-        "请求用户微博中...",
-        source
-      );
+      try {
+        const result = await request<payloadType>(
+          "GETUSERBLOG",
+          JSON.stringify({ uid, page }),
+          "请求用户微博中..."
+        );
+        const newList = result.data.list;
+        setList(currentList => [...currentList, ...newList]);
+        const wtotal = result.data?.total ?? 999;
+        setTotal(wtotal);
+      } finally {
+        setIsFetching(false);
+      }
     },
-    [sendMessage, source]
+    [request]
   );
 
   // 清空列表
@@ -295,9 +99,9 @@ const useWeiboAction = (
     [messageApi]
   );
 
-  // 合并评论展开/收起方法，支持主列表和用户微博列表
+  // 合并评论展开/收起方法
   const handleToggleComments = useCallback(
-    (id: number, uid: number, is_retweeted: boolean) => {
+    async (id: number, uid: number, is_retweeted: boolean) => {
       const citem = list.find(
         (item) => item.id === id || item.retweeted_status?.id === id
       );
@@ -321,80 +125,147 @@ const useWeiboAction = (
         );
         return;
       }
-      sendMessage(
+      const result = await request<any>(
         "GETCOMMENT",
         {
           url: `/statuses/buildComments?id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`,
           id,
           uid,
         },
-        "请求评论中...",
-        source
+        "请求评论中..."
+      );
+      updateList(
+        (item) => item.id === id,
+        (item) => ({ ...item, comments: result.data })
       );
     },
-    [list, sendMessage, updateList, source]
+    [list, updateList, request]
   );
 
-  // 合并长微博展开方法，支持主列表和用户微博列表
+  // 合并长微博展开方法
   const handleExpandLongWeibo = useCallback(
-    (id: string | number) => {
-      sendMessage("GETLONGTEXT", id, "请求长微博中...", source);
+    async (id: string | number) => {
+      const result = await request<payloadType>("GETLONGTEXT", id, "请求长微博中...");
+      const mblogid = result.payload;
+      updateList(
+        (item) => (item.mblogid ? item.mblogid : item.bid) === mblogid,
+        (item) => ({
+          ...item,
+          text_raw: result.data.longTextContent,
+          isLongText: false,
+          text: result.data.longTextContent,
+        })
+      );
     },
-    [sendMessage, source]
+    [updateList, request]
   );
 
-  // 查看博主微博：只发送请求让消息回调处理用户详情并打开弹窗（避免提前 set 导致重复请求）
+  // 查看博主微博
   const getUserBlog = useCallback(
-    (userInfo: weiboUser) => {
+    async (userInfo: weiboUser) => {
       if (!userInfo) return;
-      // 使用 ",<id>" 格式传参，provider 会解析出 id 并返回用户信息
-      sendMessage("GETUSERBYNAME", "," + String(userInfo.id), "获取用户信息中...", source);
+      const result = await request<payloadType>("GETUSERBYNAME", "," + String(userInfo.id), "获取用户信息中...");
+      setUserDetail({
+        ...result.data,
+        avatar_hd: result.data.avatar,
+      });
+      setUserDetailVisible(true);
     },
-    [sendMessage, source]
+    [request]
   );
 
   const getUserByName = useCallback(
-    (username: string) => {
-      sendMessage("GETUSERBYNAME", username, "获取用户信息中...", source);
+    async (username: string) => {
+      const result = await request<payloadType>("GETUSERBYNAME", username, "获取用户信息中...");
+      setUserDetail({
+        ...result.data,
+        avatar_hd: result.data.avatar,
+      });
+      setUserDetailVisible(true);
     },
-    [sendMessage, source]
+    [request]
   );
 
   // 关注博主
   const followUser = useCallback(
-    (userInfo?: weiboUser, sourceStr = source) => {
+    async (userInfo?: weiboUser) => {
       if (!userInfo) return;
-      setUserDetail(userInfo);
-      sendMessage("GETFOLLOW", userInfo.id, "关注中...", sourceStr);
-    },
-    [sendMessage, source]
-  );
-  // 取关博主
-  const cancelFollow = useCallback(
-    (userInfo?: weiboUser, sourceStr = source) => {
-      if (!userInfo) return;
-      setUserDetail(userInfo);
-      sendMessage("GETCANCELFOLLOW", userInfo.id, "取关中...", sourceStr);
-    },
-    [sendMessage, source]
-  );
-  // 发送微博功能
-  const handleSendWeibo = useCallback(
-    (content: weiboSendParams) => {
-      setSendLoading(true);
-      sendMessage(
-        "GETNEWBLOGRESULT",
-        JSON.stringify(content),
-        "发送中...",
-        source
+      await request("GETFOLLOW", userInfo.id, "关注中...");
+      messageApi.success("关注成功!");
+      setUserDetail((prev) => (prev ? { ...prev, following: true } : prev));
+      updateList(
+        (item) => item.user?.id === userInfo!.id,
+        (item) => ({
+          ...item,
+          user: { ...item.user, following: true } as weiboUser,
+        })
       );
     },
-    [sendMessage, source]
+    [updateList, request, messageApi]
+  );
+
+  // 取关博主
+  const cancelFollow = useCallback(
+    async (userInfo?: weiboUser) => {
+      if (!userInfo) return;
+      await request("GETCANCELFOLLOW", userInfo.id, "取关中...");
+      messageApi.success("取消关注成功!");
+      setUserDetail((prev) => (prev ? { ...prev, following: false } : prev));
+      updateList(
+        (item) => item.user?.id === userInfo!.id,
+        (item) => ({
+          ...item,
+          user: { ...item.user, following: false } as weiboUser,
+        })
+      );
+    },
+    [updateList, request, messageApi]
+  );
+
+  // 搜索
+  const getHotSearch = useCallback(async () => {
+    const result = await request<payloadType>("GETHOTSEARCH", null, "正在刷新热搜...");
+    return (result.data.realtime || []).slice(0, 20);
+  }, [request]);
+
+  const getWeiboSearch = useCallback(async (keyword: string, searchType: SearchType) => {
+      const payload = `100103type=${searchType.type}&q=${keyword}&t=`;
+      const result = await request<payloadType>("GETSEARCH", payload, "正在搜索...");
+      return parseArray(result.data.cards, searchType);
+  }, [request]);
+
+  const uploadImage = useCallback(async (uploadData: uploadType) => {
+    const result = await request<UploadImageResponsePayload>(
+      "GETUPLOADIMGURL",
+      JSON.stringify(uploadData),
+      "上传图片中..."
+    );
+    return result;
+  }, [request]);
+
+
+  // 发送微博功能
+  const handleSendWeibo = useCallback(
+    async (content: weiboSendParams) => {
+      setSendLoading(true);
+      try {
+        const result = await request<payloadType>(
+          "GETNEWBLOGRESULT",
+          JSON.stringify(content),
+          "发送中..."
+        );
+        messageApi.success("微博发送成功!");
+        setList((prev) => [result.data, ...prev]);
+      } finally {
+        setSendLoading(false);
+      }
+    },
+    [request, messageApi]
   );
 
   // handleCommentOrRepost 评论或转发
   const handleCommentOrRepost = useCallback(
-    (comment: string, item: weiboItem, type: "comment" | "repost") => {
+    async (comment: string, item: weiboItem, type: "comment" | "repost") => {
       if (type === "comment") {
         const obj = {
           comment,
@@ -404,8 +275,26 @@ const useWeiboAction = (
           comment_ori: 0,
           is_comment: 0,
         } as weiboCommentParams;
-        sendMessage("GETCREATECOMMENTS", obj, "发送评论中...", source);
-        setCurItem(item); //缓存当前微博,当收到回调时刷新
+        await request("GETCREATECOMMENTS", obj, "发送评论中...");
+        messageApi.success("评论成功!");
+        updateList(
+          (i) => i.id === item.id,
+          (i) => ({ ...i, comments_count: i.comments_count + 1 })
+        );
+        // 刷新评论
+        const result = await request<any>(
+          "GETCOMMENT",
+          {
+            url: `/statuses/buildComments?flow=1&id=${item.id}&is_show_bulletin=2uid=${item.user?.id}&locale=zh-CN`,
+            id: item.id,
+            uid: item.user?.id,
+          },
+          "请求评论中..."
+        );
+        updateList(
+          (i) => i.id === item.id,
+          (i) => ({ ...i, comments: result.data })
+        );
       }
 
       if (type === "repost") {
@@ -419,24 +308,43 @@ const useWeiboAction = (
           visible: 0,
           share_id: "",
         } as weiboRepostParams;
-        sendMessage("GETCREATEREPOST", obj, "转发微博中...", source);
+        await request("GETCREATEREPOST", obj, "转发微博中...");
+        messageApi.success("转发成功!");
       }
     },
-    [sendMessage, source]
+    [updateList, request, messageApi]
   );
 
   // 点赞,取消点赞
   const handleLike = useCallback(
-    (item: weiboItem, type: "like" | "cancel") => {
+    async (item: weiboItem, type: "like" | "cancel") => {
       setCurItem(item);
-      if (type == "like") {
-        sendMessage("GETSETLIKE", item.id, "正在点赞...", source);
+      if (type === "like") {
+        await request("GETSETLIKE", item.id, "正在点赞...");
+        messageApi.success("点赞成功!");
+        updateList(
+          (i) => i.id === item.id,
+          (i) => ({
+            ...i,
+            attitudes_status: 1,
+            attitudes_count: i.attitudes_count + 1,
+          })
+        );
       }
-      if (type == "cancel") {
-        sendMessage("GETCANCELLIKE", item.id, "取消点赞中...", source);
+      if (type === "cancel") {
+        await request("GETCANCELLIKE", item.id, "取消点赞中...");
+        messageApi.success("取消点赞成功!");
+        updateList(
+          (i) => i.id === item.id,
+          (i) => ({
+            ...i,
+            attitudes_status: 0,
+            attitudes_count: i.attitudes_count - 1,
+          })
+        );
       }
     },
-    [sendMessage, source]
+    [updateList, request, messageApi]
   );
 
   return {
@@ -448,10 +356,8 @@ const useWeiboAction = (
     total,
     setTotal,
     updateList,
-    sendMessage,
     copyLink,
     contextHolder,
-    messageApi,
     clearList,
     max_id,
     setMaxId,
@@ -474,6 +380,10 @@ const useWeiboAction = (
     userWeiboPage,
     setUserWeiboPage,
     getUserByName,
+    getHotSearch,
+    getWeiboSearch,
+    uploadImage,
+    messageApi,
   };
 };
 

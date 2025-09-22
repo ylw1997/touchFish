@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-09-18 16:33:28
+ * @LastEditTime: 2025-09-22 09:21:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -104,6 +104,7 @@ export type commandsType<T> = {
   command: CommandList;
   payload: T;
   source?: string;
+  uuid?: string;
 };
 
 export interface payloadType extends weiboAJAX {
@@ -387,4 +388,18 @@ export interface ZhihuHotQuestion {
       avatar_url: string;
     };
   };
+}
+
+// Search Type Definition
+export interface SearchType {
+  type: "3" | "60";
+  card_type: 10 | 9;
+  text: string;
+  field: string;
+}
+
+export interface UploadImageResponsePayload extends weiboAJAX {
+    uid: string;
+    type: string;
+    source: string;
 }

@@ -168,6 +168,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             <YImg
               className="img-only-item video-item"
               src={item.page_info.media_info.stream_url}
+              mediaType="video"
             />
           </div>
         );

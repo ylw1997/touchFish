@@ -8,7 +8,7 @@
  * @Description:
  */
 
-import { SearchType } from "../components/SearchDrawer";
+import { SearchType } from "../../../type";
 
 // file转baase64
 export const fileToBase64 = (file: File): Promise<string> => {

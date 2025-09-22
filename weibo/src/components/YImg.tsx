@@ -1,87 +1,83 @@
-/*
- * @Author: yangliwei 1280426581@qq.com
- * @Date: 2024-11-19 17:38:50
- * @LastEditTime: 2025-09-18 15:15:02
- * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\components\YImg.tsx
- * Copyright (c) 2024 by yangliwei, All Rights Reserved.
- * @Description:
- */
 import { useState, useEffect, useRef } from "react";
-import { vscode } from "../utils/vscode";
-import { commandsType } from "../../../type";
 import { Image } from "antd";
 import { imageFallback } from "../data/imgFallback";
+import { useRequest } from "../hooks/useRequest";
 
 interface YImgProps {
   src: string;
+  mediaType?: 'image' | 'video';
   useImg?: boolean;
   [key: string]: any;
 }
 
-const YImg: React.FC<YImgProps> = ({ src, useImg = false, ...props }) => {
+const YImg: React.FC<YImgProps> = ({ src, mediaType = 'image', useImg = false, ...props }) => {
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
   const elementRef = useRef<HTMLDivElement>(null);
-  const isVideo = src.includes('video');
+  const { request } = useRequest();
+
+  // Use a ref to track loading state inside the effect without adding it as a dependency
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
-    const currentRef = elementRef.current;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && src) {
-            if (isVideo) {
-              vscode.postMessage({
-                command: "GETVIDEO",
-                payload: src,
-              } as commandsType<string>);
-            } else {
-              vscode.postMessage({
-                command: "GETIMG",
-                payload: src,
-              } as commandsType<string>);
+    if (!src) return;
+
+    let isSubscribed = true;
+    let observer: IntersectionObserver | undefined;
+    const currentRef = elementRef.current; // Capture ref.current
+
+    const fetchMedia = () => {
+      // Use the ref to check if already loading
+      if (isLoadingRef.current) return;
+      
+      isLoadingRef.current = true;
+
+      const command = mediaType === "video" ? "GETVIDEO" : "GETIMG";
+      request<string>(command, src, "")
+        .then(url => {
+          if (isSubscribed) {
+            if (mediaType === 'video') {
+              setVideoSrc(url);
             }
-            observer.unobserve(entry.target);
+            else {
+              setImgSrc(url);
+            }
+          }
+        })
+        .catch(console.error)
+        .finally(() => {
+          if (isSubscribed) {
+            isLoadingRef.current = false;
           }
         });
-      },
-      {
-        threshold: 0.1,
-      }
-    );
+    };
 
-    if (currentRef) {
-      observer.observe(currentRef);
+    if (mediaType === 'video') {
+      fetchMedia();
+    } else {
+      observer = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          fetchMedia();
+          if(currentRef) observer?.unobserve(currentRef);
+        }
+      });
+      if (currentRef) {
+        observer.observe(currentRef);
+      }
     }
 
-    const messageHandler = async (event: MessageEvent<commandsType<any>>) => {
-      const msg = event.data;
-      // 如果 command 不包含 SENDIMG 或者 SENDVIDEO 直接返回
-      if (!msg.command.includes("SENDIMG") && !msg.command.includes("SENDVIDEO")) {
-        return;
-      }
-      if (msg.command === `SENDIMG:${src}` && msg.payload) {
-        setImgSrc(msg.payload);
-      }
-      if (msg.command === `SENDVIDEO:${src}` && msg.payload) {
-        setVideoSrc(msg.payload);
-      }
-    };
-
-    window.addEventListener("message", messageHandler);
-
     return () => {
-      if (currentRef) {
+      isSubscribed = false;
+      if (currentRef && observer) {
         observer.unobserve(currentRef);
       }
-      window.removeEventListener("message", messageHandler);
     };
-  }, [src, isVideo]);
+  }, [src, mediaType, request]);
+
 
   return (
     <div style={{ height: "inherit", display: "inline-block" }} ref={elementRef}>
-      {isVideo ? (
+      {mediaType === 'video' ? (
         <video src={videoSrc} controls {...props} autoPlay muted />
       ) : useImg ? (
         <img src={imgSrc} {...props} />

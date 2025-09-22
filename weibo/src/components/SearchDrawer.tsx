@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-18 15:27:52
+ * @LastEditTime: 2025-09-22 09:38:27
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -20,20 +20,17 @@ import {
 } from "antd";
 import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
-import { useMessageHandler } from "../hooks/useMessageHandler";
-import { weiboUser } from "../../../type";
+import { weiboUser, SearchType } from "../../../type";
 import { WeiboUserItem } from "./WeiboUserItem";
-import { parseArray } from "../utils";
 import WeiboCard from "./WeiboCard";
 import useWeiboAction from "../hooks/useWeiboAction";
 import { loaderFunc } from "../utils/loader";
+import { SearchInfo } from "../data/search";
 
 // Component Props
 interface SearchDrawerProps {
   open: boolean;
   onClose: () => void;
-  source: string;
-  preSource: string; // 上一个source
   showImg?: boolean;
   activeVideoUrl?: string | null;
   onPlayVideo?: (url?: string) => void;
@@ -41,30 +38,6 @@ interface SearchDrawerProps {
   initialKeyword?: string;
   onTopicClick: (topic: string) => void;
 }
-
-// Search Type Definition
-export interface SearchType {
-  type: "3" | "60";
-  card_type: 10 | 9;
-  text: string;
-  field: string;
-}
-
-// Search Configuration
-const SearchInfo: ReadonlyArray<SearchType> = [
-  {
-    type: "60",
-    card_type: 9,
-    text: "热门",
-    field: "mblog",
-  },
-  {
-    type: "3",
-    card_type: 10,
-    text: "用户",
-    field: "user",
-  },
-];
 
 // Extracted and Memoized SearchList Component
 const SearchList = memo(
@@ -111,8 +84,6 @@ const SearchList = memo(
 const SearchDrawer: React.FC<SearchDrawerProps> = ({
   open,
   onClose,
-  source,
-  preSource,
   showImg,
   activeVideoUrl,
   onPlayVideo,
@@ -123,12 +94,11 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<weiboUser[]>([]);
-  const [hotSearch, setHotSearch] = useState([]);
+  const [hotSearch, setHotSearch] = useState<any[]>([]);
   const [searchType, setSearchType] = useState<SearchType>(SearchInfo[0]);
 
   const {
     list: weibos,
-    sendMessage,
     copyLink,
     contextHolder,
     handleToggleComments,
@@ -137,40 +107,16 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     handleLike,
     cancelFollow,
     followUser,
-    messageApi,
     setList: setWeibos,
     getUserByName,
-  } = useWeiboAction(source);
+    getHotSearch,
+    getWeiboSearch,
+  } = useWeiboAction();
 
-  const handleRefreshHotSearch = useCallback(() => {
-    sendMessage("GETHOTSEARCH", null, "正在刷新热搜...", source);
-  }, [sendMessage, source]);
-
-  const handlers = {
-    SENDSEARCH: (payload: any) => {
-      messageApi.destroy("GETSEARCH");
-      setLoading(false);
-      const parsedData = parseArray(payload.data.cards, searchType);
-      if (searchType.type === "3") {
-        setUsers(parsedData);
-      } else if (searchType.type === "60") {
-        setWeibos(parsedData);
-      }
-    },
-    SENDHOTSEARCH: (payload: any) => {
-      messageApi.destroy("GETHOTSEARCH");
-      setHotSearch((payload.data.realtime || []).slice(0, 20));
-    },
-    SENDUSERBYNAME: (payload: any) => {
-      messageApi.destroy("GETUSERBYNAME");
-      getUserBlog({
-        ...payload.data,
-        avatar_hd: payload.data.avatar,
-      });
-    },
-  };
-
-  useMessageHandler(handlers, { source, messageApi });
+  const handleRefreshHotSearch = useCallback(async () => {
+    const result = await getHotSearch();
+    setHotSearch(result);
+  }, [getHotSearch]);
 
   const clear = useCallback(() => {
     setUsers([]);
@@ -179,19 +125,25 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   }, [setWeibos]);
 
   const handleSearch = useCallback(
-    (currentSearchType: SearchType) => {
-      form
-        .validateFields()
-        .then((values) => {
-          if (!values.keyword) return;
-          clear();
-          setLoading(true);
-          const payload = `100103type=${currentSearchType.type}&q=${values.keyword}&t=`;
-          sendMessage("GETSEARCH", payload, "正在搜索...", source);
-        })
-        .catch(() => {});
+    async (currentSearchType: SearchType) => {
+      try {
+        const values = await form.validateFields();
+        if (!values.keyword) return;
+        clear();
+        setLoading(true);
+        const result = await getWeiboSearch(values.keyword, currentSearchType);
+        if (currentSearchType.type === "3") {
+          setUsers(result);
+        } else if (currentSearchType.type === "60") {
+          setWeibos(result as any);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     },
-    [form, sendMessage, source, clear]
+    [form, clear, getWeiboSearch, setWeibos]
   );
 
   useEffect(() => {
@@ -222,8 +174,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   const weiboCardProps = useMemo(
     () => ({
-      onFollow: (userinfo: weiboUser) => followUser(userinfo, preSource),
-      cancelFollow: (userinfo: weiboUser) => cancelFollow(userinfo, preSource),
+      onFollow: followUser,
+      cancelFollow: cancelFollow,
       onExpandLongWeibo: handleExpandLongWeibo,
       onToggleComments: handleToggleComments,
       showActions: false,
@@ -234,10 +186,10 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       getUserByName,
       activeVideoUrl,
       onPlayVideo,
+      onTopicClick,
     }),
     [
       followUser,
-      preSource,
       cancelFollow,
       handleExpandLongWeibo,
       handleToggleComments,
@@ -248,6 +200,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       getUserByName,
       activeVideoUrl,
       onPlayVideo,
+      onTopicClick,
     ]
   );
 
@@ -344,7 +297,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
                 weibos={weibos}
                 loading={loading}
                 getUserBlog={getUserBlog}
-                onTopicClick={onTopicClick}
                 {...weiboCardProps}
               />
             ),

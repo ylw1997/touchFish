@@ -43,7 +43,6 @@ dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
 function App() {
-  const APPSOURCE = "WEIBOAPP";
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const {
     list,
@@ -69,7 +68,7 @@ function App() {
     followUser,
     getListData,
     getUserByName,
-  } = useWeiboAction(APPSOURCE, scrollableNodeRef);
+  } = useWeiboAction();
   // 状态管理
   const [tabs] = useState(defTab);
   const [activeKey, setActiveKey] = useState(defTab[1].key);
@@ -104,10 +103,21 @@ function App() {
       });
     }, 500);
 
+    const messageHandler = (ev: MessageEvent<any>) => {
+      if (ev.type !== "message" || !ev.data?.command) return;
+      if (ev.data.command === 'RESTORE_SCROLL_POSITION') {
+          if (scrollableNodeRef.current) {
+            scrollableNodeRef.current.scrollTop = ev.data.payload;
+          }
+      }
+    };
+
     scrollableNode.addEventListener('scroll', handleScroll);
+    window.addEventListener("message", messageHandler);
 
     return () => {
       scrollableNode.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("message", messageHandler);
     };
   }, []);
 
@@ -148,7 +158,7 @@ function App() {
     (key: string) => {
       setSubActiveKey(key);
       clearList();
-      getListData(key);
+      getListData(key, true);
     },
     [clearList, getListData]
   );
@@ -161,10 +171,10 @@ function App() {
       const curTab = tabs.find((item) => item.key === key);
       if (curTab && curTab.childrenList && curTab.childrenList.length > 0) {
         setSubActiveKey(curTab.childrenList?.[0]!.key || "");
-        getListData(curTab.childrenList?.[0]!.key || "");
+        getListData(curTab.childrenList?.[0]!.key || "", true);
       } else {
         setSubActiveKey("");
-        getListData(key);
+        getListData(key, true);
       }
     },
     [clearList, getListData, tabs]
@@ -182,8 +192,6 @@ function App() {
             setUserDetail(undefined);
           }}
           setUserDetail={setUserDetail}
-          source="userDetail"
-          preSource={APPSOURCE}
           showImg={showImg}
           activeVideoUrl={activeVideoUrl}
           onPlayVideo={handlePlayVideo}
@@ -235,8 +243,8 @@ function App() {
               key={item.id}
               item={item}
               onUserClick={getUserBlog}
-              onFollow={(userinfo) => followUser(userinfo, APPSOURCE)}
-              cancelFollow={(userinfo) => cancelFollow(userinfo, APPSOURCE)}
+              onFollow={followUser}
+              cancelFollow={cancelFollow}
               showActions={true}
               onExpandLongWeibo={handleExpandLongWeibo}
               onToggleComments={handleToggleComments}
@@ -273,8 +281,9 @@ function App() {
         />
         <FloatButton
           onClick={() => {
+            const key = subAcitiveKey || activeKey;
             clearList();
-            fetchData();
+            getListData(key, true);
           }}
           icon={<RedoOutlined style={{ color: "#b37feb" }} />}
           tooltip={{ title: "刷新", placement: "left" }}
@@ -300,8 +309,6 @@ function App() {
             setSearchKeyword(undefined);
           }}
           getUserBlog={getUserBlog}
-          source="search"
-          preSource={APPSOURCE}
           showImg={showImg}
           activeVideoUrl={activeVideoUrl}
           onPlayVideo={handlePlayVideo}
@@ -316,7 +323,6 @@ function App() {
           onClose={() => {
             setSendDrawerOpen(false);
             setSendLoading(false);
-            messageApi.destroy("GETNEWBLOGRESULT");
           }}
           onSend={handleSendWeibo}
         />

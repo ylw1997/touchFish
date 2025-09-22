@@ -61,17 +61,18 @@ export class WeiboProvider implements WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage(
       async (message: commandsType<string | any>) => {
+        const { command, payload, uuid } = message;
         // console.log("Weibo provider received a message:", message);
-        switch (message.command) {
+        switch (command) {
           case "SAVE_SCROLL_POSITION": {
             this.context.workspaceState.update(
               "weiboScrollPosition",
-              message.payload
+              payload
             );
             break;
           }
           case "GETDATA": {
-            let res = await getWeiboData(message.payload);
+            let res = await getWeiboData(payload);
             if (res.data.ok !== 1) {
               if (res.data.ok == -100) {
                 const cookie = await window.showInputBox({
@@ -80,7 +81,7 @@ export class WeiboProvider implements WebviewViewProvider {
                 });
                 if (cookie) {
                   await setConfigByKey("weiboCookie", cookie);
-                  res = await getWeiboData(message.payload);
+                  res = await getWeiboData(payload);
                 }
               } else {
                 window.showInformationMessage("获取微博数据失败!");
@@ -90,98 +91,101 @@ export class WeiboProvider implements WebviewViewProvider {
               command: "SENDDATA",
               payload: {
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETIMG": {
-            const res = await getWeiboImg(message.payload);
+            const res = await getWeiboImg(payload);
             webviewView.webview.postMessage({
-              command: `SENDIMG:${message.payload}` as any,
               payload: res,
-              // source:message.source,  特殊情况不能加
-            } as commandsType<string>);
+              uuid,
+            });
             break;
           }
           case "GETVIDEO": {
-            const videoUrl = message.payload;
+            const videoUrl = payload;
             try {
               const videoPath = await downloadVideoAsFile(videoUrl);
               const videoUri = Uri.file(videoPath);
               const webviewUri = webviewView.webview.asWebviewUri(videoUri);
               webviewView.webview.postMessage({
-                command: `SENDVIDEO:${videoUrl}`,
                 payload: webviewUri.toString(),
+                uuid,
               });
             } catch (error) {
               console.error("Failed to fetch video:", error);
-              window.showErrorMessage("获取视频失败!");
+              // Post back an error message
+              webviewView.webview.postMessage({
+                payload: { ok: 0, msg: "获取视频失败!" },
+                uuid,
+              });
             }
             break;
           }
           case "GETCOMMENT": {
-            const res = await getWeiboComment((message.payload as any).url);
+            const res = await getWeiboComment((payload as any).url);
             webviewView.webview.postMessage({
               command: `SENDCOMMENT`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETLONGTEXT": {
-            const res = await getLongText(message.payload);
+            const res = await getLongText(payload);
             webviewView.webview.postMessage({
               command: `SENDLONGTEXT`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETUSERBLOG": {
-            const res = await getUserWeibo(message.payload);
+            const res = await getUserWeibo(payload);
             webviewView.webview.postMessage({
               command: `SENDUSERBLOG`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETFOLLOW": {
-            const res = await followUser(message.payload);
+            const res = await followUser(payload);
             webviewView.webview.postMessage({
               command: `SENDFOLLOW`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETNEWBLOGRESULT": {
-            const res = await sendWeibo(message.payload);
+            const res = await sendWeibo(payload);
             webviewView.webview.postMessage({
               command: "SENDNEWBLOGRESULT",
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETUPLOADIMGURL": {
-            const uploadObj = JSON.parse(message.payload) as uploadType;
+            const uploadObj = JSON.parse(payload) as uploadType;
             const res = await uploadImage(uploadObj.base64);
             webviewView.webview.postMessage({
               command: `SENDUPLOADIMGURL`,
@@ -190,92 +194,92 @@ export class WeiboProvider implements WebviewViewProvider {
                 uid: uploadObj.uid,
                 type: uploadObj.type,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETCANCELFOLLOW": {
-            const res = await cancelfollowUser(message.payload);
+            const res = await cancelfollowUser(payload);
             webviewView.webview.postMessage({
               command: `SENDCANCELFOLLOW`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETCREATECOMMENTS": {
-            const res = await createComments(message.payload);
+            const res = await createComments(payload);
             webviewView.webview.postMessage({
               command: `SENDCREATECOMMENTS`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETCREATEREPOST": {
-            const res = await createRepost(message.payload);
+            const res = await createRepost(payload);
             webviewView.webview.postMessage({
               command: `SENDCREATEREPOST`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETSETLIKE": {
-            const res = await setLike(message.payload);
+            const res = await setLike(payload);
             webviewView.webview.postMessage({
               command: `SENDSETLIKE`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETCANCELLIKE": {
-            const res = await cancelLike(message.payload);
+            const res = await cancelLike(payload);
             webviewView.webview.postMessage({
               command: `SENDCANCELLIKE`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETSEARCH": {
-            const res = await getWeiboSearch(message.payload);
+            const res = await getWeiboSearch(payload);
             webviewView.webview.postMessage({
               command: `SENDSEARCH`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
           case "GETUSERBYNAME": {
-            const res = await getUserByName(message.payload);
+            const res = await getUserByName(payload);
             webviewView.webview.postMessage({
               command: `SENDUSERBYNAME`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }
@@ -284,10 +288,10 @@ export class WeiboProvider implements WebviewViewProvider {
             webviewView.webview.postMessage({
               command: `SENDHOTSEARCH`,
               payload: {
-                payload: message.payload,
+                payload: payload,
                 ...res.data,
-                source: message.source,
               },
+              uuid,
             } as commandsType<weiboAJAX>);
             break;
           }

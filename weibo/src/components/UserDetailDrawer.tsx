@@ -11,8 +11,6 @@ interface UserDetailDrawerProps {
   userDetail?: weiboUser;
   setUserDetail: (userDetail: any) => void;
   onClose: () => void;
-  source: string;
-  preSource: string; // 上一个source
   showImg?: boolean;
   activeVideoUrl?: string | null;
   onPlayVideo?: (url?: string) => void;
@@ -24,8 +22,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   userDetail,
   setUserDetail,
   onClose,
-  source,
-  preSource,
   showImg,
   activeVideoUrl,
   onPlayVideo,
@@ -57,7 +53,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     getUserByName,
     isFetching,
     getUserBlogData,
-  } = useWeiboAction(source);
+  } = useWeiboAction();
 
   useEffect(() => {
     if (visible && userDetail && userWeiboList?.length === 0) {
@@ -174,7 +170,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               ) : !userDetail.following ? (
                 <Button
                   color="primary"
-                  onClick={() => followUser(userDetail, preSource)}
+                  onClick={() => followUser(userDetail)}
                   variant="filled"
                 >
                   关注
@@ -182,7 +178,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               ) : (
                 <Button
                   color="red"
-                  onClick={() => cancelFollow(userDetail, preSource)}
+                  onClick={() => cancelFollow(userDetail)}
                   variant="filled"
                 >
                   取关
@@ -207,11 +203,9 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                   <WeiboCard
                     key={item.id}
                     item={item}
-                    onFollow={(userinfo) => followUser(userinfo, preSource)}
+                    onFollow={followUser}
                     onUserClick={getUserBlog}
-                    cancelFollow={(userinfo) =>
-                      cancelFollow(userinfo, preSource)
-                    }
+                    cancelFollow={cancelFollow}
                     onExpandLongWeibo={handleExpandLongWeibo}
                     onToggleComments={handleToggleComments}
                     showActions={false}
@@ -240,8 +234,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 setSubUserDetail(undefined);
               }}
               setUserDetail={setSubUserDetail}
-              source={`subUser-${subUserDetail?.id}`}
-              preSource={source}
               showImg={showImg}
               activeVideoUrl={activeVideoUrl}
               onPlayVideo={onPlayVideo}

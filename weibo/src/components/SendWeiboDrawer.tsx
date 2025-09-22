@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-18 15:57:18
- * @LastEditTime: 2025-09-12 16:42:15
+ * @LastEditTime: 2025-09-22 13:00:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -10,11 +10,10 @@
 import { useState } from "react";
 import { Drawer, Button, Input, Form, Select, Upload } from "antd";
 import { SendOutlined, PlusOutlined } from "@ant-design/icons";
-import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import { weiboSendParams } from "../types";
 import { fileToBase64 } from "../utils";
-import { useMessageHandler } from "../hooks/useMessageHandler";
 import { uploadType } from "../../../type";
+import useWeiboAction from "../hooks/useWeiboAction";
 
 interface SendWeiboDrawerProps {
   open: boolean;
@@ -40,30 +39,11 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   loading = false,
 }) => {
   const [form] = Form.useForm();
-  const { messageApi, contextHolder, sendMessage } = useVscodeMessage();
   const [fileList, setFileList] = useState<any[]>([]);
-  const [loadingUpload, setLoadingUpload] = useState(false);
   const [pictureList, setPictureList] = useState<
     { type: string; pid: string; uid: string }[]
   >([]);
-  const SENDSOURCE = 'SENDSOURCE'
-
-  const handlers = {
-    SENDUPLOADIMGURL: (payload: any) => {
-      messageApi.destroy("GETUPLOADIMGURL");
-      setLoadingUpload(false);
-      // success path: payload expected to contain uploaded pic info
-      messageApi.success("上传图片成功!");
-      const obj = {
-        type: payload.type,
-        uid: payload.uid,
-        pid: payload.data.pics.pic_1.pid,
-      };
-      setPictureList((list) => [...list, obj]);
-    },
-  };
-
-  useMessageHandler(handlers, { source: SENDSOURCE, messageApi });
+  const { uploadImage, contextHolder, messageApi } = useWeiboAction();
 
   const handleSend = () => {
     form
@@ -81,7 +61,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
                 pid: item.pid,
               };
             })
-          ), // 这里可根据实际需求处理
+          ),
         };
         onSend(obj);
         form.resetFields();
@@ -94,7 +74,8 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   };
 
   // 上传图片
-  const handleUpload = async (file: any) => {
+  const handleUpload = async (options: any) => {
+    const { onSuccess, onError, file } = options;
     const base64 = await fileToBase64(file);
     const obj = {
       base64,
@@ -103,17 +84,26 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
       size: file.size,
       uid: file.uid,
     } as uploadType;
-    setLoadingUpload(true);
-    sendMessage("GETUPLOADIMGURL", JSON.stringify(obj),'上传图片中...',SENDSOURCE);
-    return Promise.reject(obj);
+    try {
+      const result = await uploadImage(obj);
+      messageApi.success("上传图片成功!");
+      const newPic = {
+        type: result.type,
+        uid: result.uid,
+        pid: result.data.pics.pic_1.pid,
+      };
+      setPictureList((list) => [...list, newPic]);
+      onSuccess(result, file);
+    } catch (err) {
+      messageApi.error("上传图片失败");
+      onError(err as Error);
+    }
   };
 
   const closeFunc = () => {
     form.resetFields();
     setFileList([]);
     setPictureList([]);
-    setLoadingUpload(false);
-    messageApi.destroy("GETUPLOADIMGURL");
     onClose();
   };
 
@@ -137,13 +127,10 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
             icon={<SendOutlined />}
             loading={loading}
             onClick={handleSend}
-            variant="filled"
-            color="default"
           >
             发送
           </Button>
         }
-        
       >
         <Form form={form} layout="vertical" initialValues={{ visible: 0 }}>
           <Form.Item
@@ -157,7 +144,6 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
               showCount
               placeholder="此刻你想说点什么..."
               disabled={loading}
-              variant="filled"
               autoSize={{ minRows: 4, maxRows: 4 }}
             />
           </Form.Item>
@@ -166,7 +152,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
             name="visible"
             rules={[{ required: true, message: "请选择可见范围" }]}
           >
-            <Select disabled={loading} variant="filled">
+            <Select disabled={loading}>
               {visibleOptions.map((opt) => (
                 <Option value={opt.value} key={opt.value}>
                   {opt.label}
@@ -178,12 +164,11 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
             <Upload
               listType="picture-card"
               fileList={fileList}
-              beforeUpload={handleUpload}
+              customRequest={handleUpload}
               onChange={({ fileList: newFileList }) => {
                 setFileList(newFileList);
                 // 删除pictureList中已被移除的图片
                 setPictureList((prevList) => {
-                  // 只保留还在fileList中的pid
                   const remainNames = newFileList.map((f) => f.uid);
                   return prevList.filter((item) =>
                     remainNames.includes(item.uid)
@@ -192,7 +177,6 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
               }}
               multiple
               maxCount={9}
-              disabled={loadingUpload}
             >
               {fileList.length >= 9 ? null : (
                 <div>
