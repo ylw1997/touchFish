@@ -51,7 +51,7 @@ class MessageHandler {
     uuid: string,
     resolve: (value: any) => void,
     reject: (reason?: any) => void,
-    timeout: number = 10000
+    timeout: number = 30000
   ) {
     const timeoutId = setTimeout(() => {
       this.pendingRequests.delete(uuid);
