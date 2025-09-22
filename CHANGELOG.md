@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [8.20.0](https://github.com/ylw1997/touchFish/compare/v8.19.1...v8.20.0) (2025-09-22)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **weibo:** 重构消息处理与数据获取逻辑 ([cea7256](https://github.com/cea725641cb912b5e5ff1dd3f6d6463b083b2190))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 引入 WeiboApi 类封装请求逻辑 ([3fa54e5](https://github.com/3fa54e5c3a68eee17f8221d19ba184c447d75797))
+* **zhihu:** 引入 ZhihuApi 类封装请求逻辑 ([1c1c3dc](https://github.com/1c1c3dc1287ef4f980af3896b860b90e8ea8a843))
+* **zhihu:** 重构消息通信机制并优化组件逻辑 ([658410f](https://github.com/658410f16aea457fd108ca5c019917eaf3898ceb))
+
 ### [8.19.1](https://github.com/ylw1997/touchFish/compare/v8.19.0...v8.19.1) (2025-09-18)
 
 
