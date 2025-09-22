@@ -1,4 +1,4 @@
-import { Button, Card, Flex, List } from "antd";
+import { Card, Flex, List } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
@@ -9,18 +9,17 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import React, { useMemo, useRef, useState } from "react";
-import { useMessageHandler } from "../hooks/useMessageHandler";
-import { useVscodeMessage } from "../hooks/useVscodeMessage";
 import CommentItem from "./CommentItem";
 import { parseZhihuItemContent } from "../utils/textParser";
 import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
 import { Avatar } from "@heroui/react";
+import useZhihuAction from "../hooks/useZhihuAction";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
   openQuestionDetailDrawer?: (questionId: string, title: string) => void;
   isDetail?: boolean;
-  handleVote: (answerId: string) => void;
+  handleVote: (answerId: string, type: 'up' | 'neutral') => void;
 }
 const ZhihuItem: React.FC<ZhihuItemProps> = ({
   item,
@@ -31,20 +30,11 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const isLoneContent = useMemo(() => {
     return item.content && item.content.length > 2000;
   }, [item.content]);
-  const [expanded, setExpanded] = useState(!isLoneContent); //默认阅读全文
+  const [expanded, setExpanded] = useState(!isLoneContent);
   const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
   const [showComments, setShowComments] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
-
-  useMessageHandler({
-    zhihuComment: (payload) => {
-      if (payload.answerId === item.id) {
-        messageApi.destroy("getZhihuComment");
-        setComments(payload.data);
-      }
-    },
-  });
+  const { getZhihuComment, contextHolder } = useZhihuAction();
 
   const backToView = () => {
     if (cardRef.current) {
@@ -60,7 +50,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     setExpanded(!expanded);
   };
 
-  const getComments = () => {
+  const getComments = async () => {
     if (showComments) {
       setShowComments(false);
       backToView();
@@ -68,7 +58,10 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     }
     setShowComments(true);
     if (comments.length > 0) return;
-    sendMessage("getZhihuComment", item.id, "获取评论中...", "ZHIHUAPP");
+    const fetchedComments = await getZhihuComment(item.id);
+    if (fetchedComments) {
+      setComments(fetchedComments);
+    }
   };
 
   const renderTitle = () => (
@@ -82,9 +75,8 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             flexShrink: 0,
             fontSize: "20px",
           }}
-          name={item.index +''}
-        >
-        </Avatar>
+          name={item.index + ''}
+        />
       ) : (
         <Avatar
           isBordered 
@@ -117,7 +109,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const actions = [];
   if (item.voteup_count != undefined) {
     actions.push(
-      <span className="link" key="voteup" onClick={() => handleVote(item.id)}>
+      <span className="link" key="voteup" onClick={() => handleVote(item.id, item.vote_next_step === 'unvote' ? 'neutral' : 'up')}>
         {item.vote_next_step === "unvote" ? (
           <LikeFilled style={{ color: "red" }} />
         ) : (
@@ -187,18 +179,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             itemLayout="horizontal"
             dataSource={comments}
             renderItem={(comment) => <CommentItem comment={comment} />}
-            header={
-              <Flex align="center" justify="space-between">
-                <h3>评论</h3>
-                <Button
-                  color="default"
-                  variant="filled"
-                  onClick={() => setShowComments(false)}
-                >
-                  <UpOutlined /> 收起评论
-                </Button>
-              </Flex>
-            }
+            header={<h3>评论</h3>}
           />
         )}
       </Card>

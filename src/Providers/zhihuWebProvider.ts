@@ -50,84 +50,60 @@ export class ZhihuWebProvider implements WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage(
       async (message: ZhihuCommandsType<string | any>) => {
-        switch (message.command) {
-          case "ZHIHU_GETDATA": {
-            const data = await getZhihuWebData(message.payload);
-            webviewView.webview.postMessage({
-              command: "ZHIHU_SENDDATA",
-              payload: {
-                data,
-                source: message.source,
-              },
-            } as ZhihuCommandsType<any>);
-            break;
+        const { command, payload, uuid } = message;
+        try {
+          switch (command) {
+            case "ZHIHU_GETDATA": {
+              const data = await getZhihuWebData(payload);
+              webviewView.webview.postMessage({ payload: data, uuid });
+              break;
+            }
+            case "getZhihuComment": {
+              const comments = await getZhihuComment(payload);
+              webviewView.webview.postMessage({ payload: { data: comments, answerId: payload }, uuid });
+              break;
+            }
+            case "getZhihuQuestionDetail": {
+              const answers = await getZhihuWebDetail(payload);
+              const detailObj = await getZhihuQuestionDetailFunc(payload);
+              webviewView.webview.postMessage({
+                payload: { data: answers, payload: payload, ...detailObj },
+                uuid,
+              });
+              break;
+            }
+            case "ZHIHU_SAVE_SCROLL_POSITION": {
+              this.context.workspaceState.update("zhihuScrollPosition", payload);
+              break;
+            }
+            case "ZHIHU_VOTE_ANSWER": {
+              const { answerId, type } = payload;
+              const res = await voteZhihuAnswer(answerId, type);
+              webviewView.webview.postMessage({ payload: res.data, uuid });
+              break;
+            }
+            case "ZHIHU_FOLLOW_QUESTION": {
+              const res = await followQuestion(payload);
+              webviewView.webview.postMessage({ payload: res.data, uuid });
+              break;
+            }
+            case "ZHIHU_UNFOLLOW_QUESTION": {
+              const res = await unfollowQuestion(payload);
+              webviewView.webview.postMessage({ payload: res.data, uuid });
+              break;
+            }
+            case "ZHIHU_SEARCH": {
+              const results = await searchZhihu(payload);
+              webviewView.webview.postMessage({ payload: results, uuid });
+              break;
+            }
           }
-          case "getZhihuComment": {
-            const comments = await getZhihuComment(message.payload);
+        } catch (error: any) {
+            vscode.window.showErrorMessage(error.message || "知乎请求发生错误");
             webviewView.webview.postMessage({
-              command: "zhihuComment",
-              payload: {
-                data: comments,
-                answerId: message.payload,
-                source: message.source,
-              },
+                payload: { ok: 0, msg: error.message || "请求失败" },
+                uuid,
             });
-            break;
-          }
-          case "getZhihuQuestionDetail": {
-            const answers = await getZhihuWebDetail(message.payload);
-            const detailObj = await getZhihuQuestionDetailFunc(message.payload);
-            webviewView.webview.postMessage({
-              command: "sendZhihuQuestionDetail",
-              payload: {
-                data: answers,
-                payload: message.payload,
-                source: message.source,
-                ...detailObj,
-              },
-            });
-            break;
-          }
-          case "ZHIHU_SAVE_SCROLL_POSITION": {
-            this.context.workspaceState.update(
-              "zhihuScrollPosition",
-              message.payload
-            );
-            break;
-          }
-          case "ZHIHU_VOTE_ANSWER": {
-            const { answerId, type } = message.payload;
-            const res = await voteZhihuAnswer(answerId, type);
-            if (res.status != 200) {
-              vscode.window.showErrorMessage("点赞操作失败!");
-            }
-            break;
-          }
-          case "ZHIHU_FOLLOW_QUESTION": {
-            const res = await followQuestion(message.payload);
-            if (res.status != 200) {
-              vscode.window.showErrorMessage("关注失败!");
-            }
-            break;
-          }
-          case "ZHIHU_UNFOLLOW_QUESTION": {
-            const res = await unfollowQuestion(message.payload);
-            if (res.status != 200) {
-              vscode.window.showErrorMessage("取消关注失败!");
-            }
-            break;
-          }
-          case "ZHIHU_SEARCH": {
-            const results = await searchZhihu(message.payload);
-            webviewView.webview.postMessage({
-              command: "ZHIHU_SEND_SEARCH_RESULTS",
-              payload: {
-                data: results,
-                source: message.source,
-              },
-            } as ZhihuCommandsType<any>);
-            break;
-          }
         }
       }
     );

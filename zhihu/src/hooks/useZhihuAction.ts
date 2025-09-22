@@ -1,24 +1,10 @@
-/*
- * @Author: YangLiwei 1280426581@qq.com
- * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-08-15 14:25:15
- * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\zhihu\src\hooks\useZhihuAction.ts
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
- * @Description:
- */
-
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import type { ZhihuItemData } from "../../../type";
-import { useMessageHandler } from "./useMessageHandler";
-import { useVscodeMessage } from "./useVscodeMessage";
-import { vscode } from "../utils/vscode";
+import { useRequest } from "./useRequest";
 
-const useZhihuAction = (
-  source: string,
-  scrollableNodeRef: React.RefObject<HTMLDivElement | null>
-) => {
+const useZhihuAction = () => {
   const [list, setList] = useState<ZhihuItemData[]>([]);
+  const [loading, setLoading] = useState(false);
   const [questionDetailDrawerOpen, setQuestionDetailDrawerOpen] =
     useState(false);
   const [questionData, setQuestionData] = useState<ZhihuItemData[]>([]);
@@ -26,33 +12,57 @@ const useZhihuAction = (
   const [questionDetail, setQuestionDetail] = useState<string>("");
   const [isFollowing, setIsFollowing] = useState<boolean>();
   const [currentQuestionId, setCurrentQuestionId] = useState<string>("");
-  const { sendMessage, contextHolder, messageApi } = useVscodeMessage();
-
-  const restoreScrollPosition = useCallback(() => {
-    sendMessage("ZHIHU_RESTORE_SCROLL_POSITION", undefined, "", source);
-  }, [sendMessage, source]);
+  const { request, contextHolder, messageApi } = useRequest();
 
   const clearList = useCallback(() => {
     setList([]);
   }, []);
 
   const getListData = useCallback(
-    (payload: any) => {
-      sendMessage("ZHIHU_GETDATA", payload, "请求知乎数据中...", source);
+    async (payload: any, replace = false) => {
+      if (loading) {
+        return;
+      }
+      setLoading(true);
+      try {
+        const result = await request<ZhihuItemData[]>(
+          "ZHIHU_GETDATA",
+          payload,
+          "请求知乎数据中..."
+        );
+        if (result) {
+          setList((currentList) =>
+            replace ? result : [...currentList, ...result]
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
     },
-    [sendMessage, source]
+    [request, loading]
   );
 
-  const openQuestionDetailDrawer = (questionId: string, title: string) => {
+  const openQuestionDetailDrawer = async (
+    questionId: string,
+    title: string
+  ) => {
     setQuestionDetailDrawerOpen(true);
     setQuestionTitle(title);
     setCurrentQuestionId(questionId);
-    sendMessage(
+    const result = await request<any>(
       "getZhihuQuestionDetail",
       questionId,
-      "获取问题详情中...",
-      "ZHIHUAPP"
+      "获取问题详情中..."
     );
+    if (result.detail) {
+      setQuestionDetail(result.detail);
+    }
+    if (result.data) {
+      setQuestionData(result.data);
+    }
+    if (result.isFollowing !== undefined) {
+      setIsFollowing(result.isFollowing);
+    }
   };
 
   const closeQuestionDetailDrawer = () => {
@@ -63,25 +73,20 @@ const useZhihuAction = (
     setCurrentQuestionId("");
   };
 
-  const voteHandler = (
+  const voteHandler = async (
     answerId: string,
-    list: ZhihuItemData[],
-    setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>
+    type: "up" | "neutral",
+    listToUpdate: ZhihuItemData[],
+    setListToUpdate: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>
   ) => {
-    setList(
-      list.map((item) => {
+    await request("ZHIHU_VOTE_ANSWER", { answerId, type }, "操作中...");
+    setListToUpdate(
+      listToUpdate.map((item) => {
         if (item.id === answerId) {
-          const newVoted = item.vote_next_step !== "unvote";
+          const newVoted = type === "up";
           const newVoteCount = newVoted
             ? (item.voteup_count ?? 0) + 1
             : (item.voteup_count ?? 0) - 1;
-          vscode.postMessage({
-            command: "ZHIHU_VOTE_ANSWER",
-            payload: {
-              answerId: item.id,
-              type: newVoted ? "up" : "neutral",
-            },
-          });
           return {
             ...item,
             vote_next_step: newVoted ? "unvote" : "vote",
@@ -91,75 +96,60 @@ const useZhihuAction = (
         return item;
       })
     );
+    messageApi.success("操作成功!");
   };
 
-  const handleVote = (answerId: string) => {
-    voteHandler(answerId, list, setList);
+  const handleVote = (answerId: string, type: "up" | "neutral") => {
+    voteHandler(answerId, type, list, setList);
   };
 
-  const followHandler = () => {
+  const handleQuestionVote = (answerId: string, type: "up" | "neutral") => {
+    voteHandler(answerId, type, questionData, setQuestionData);
+  };
+
+  const followHandler = async () => {
     if (currentQuestionId) {
-      vscode.postMessage({
-        command: "ZHIHU_FOLLOW_QUESTION",
-        payload: currentQuestionId,
-      })
+      await request("ZHIHU_FOLLOW_QUESTION", currentQuestionId, "关注中...");
       setIsFollowing(true);
+      messageApi.success("关注成功!");
     }
   };
 
-  const unfollowHandler = () => {
+  const unfollowHandler = async () => {
     if (currentQuestionId) {
-      vscode.postMessage({
-        command: "ZHIHU_UNFOLLOW_QUESTION",
-        payload: currentQuestionId,
-      })
+      await request(
+        "ZHIHU_UNFOLLOW_QUESTION",
+        currentQuestionId,
+        "取消关注中..."
+      );
       setIsFollowing(false);
+      messageApi.success("取消关注成功!");
     }
   };
 
-  const handleSendData = useCallback(
-    (payload: any) => {
-      messageApi.destroy("ZHIHU_GETDATA");
-      if (payload?.data && payload.source === source) {
-        // console.log(payload.data);
-        setList((prev) => [...prev, ...payload.data]);
-      } else if (payload?.source === source) {
-        messageApi.error("数据请求失败!");
-      }
+  const searchZhihu = useCallback(
+    async (keyword: string) => {
+      const results = await request<ZhihuItemData[]>(
+        "ZHIHU_SEARCH",
+        keyword,
+        "搜索中..."
+      );
+      return results;
     },
-    [messageApi, source]
+    [request]
   );
 
-  const handleSendZhihuQuestionDetail = useCallback(
-    (payload: any) => {
-      if (payload.detail) {
-        setQuestionDetail(payload.detail);
-      }
-      if (payload.data) {
-        setQuestionData(payload.data);
-      }
-      if (payload.isFollowing !== undefined) {
-        setIsFollowing(payload.isFollowing);
-      }
-      messageApi.destroy("getZhihuQuestionDetail");
+  const getZhihuComment = useCallback(
+    async (answerId: string) => {
+      const result = await request<any>(
+        "getZhihuComment",
+        answerId,
+        "获取评论中..."
+      );
+      return result.data;
     },
-    [messageApi]
+    [request]
   );
-
-  const handlers = useMemo(
-    () => ({
-      ZHIHU_SENDDATA: handleSendData,
-      sendZhihuQuestionDetail: handleSendZhihuQuestionDetail,
-      ZHIHU_RESTORE_SCROLL_POSITION: (payload: any) => {
-        if (scrollableNodeRef.current) {
-          scrollableNodeRef.current.scrollTop = payload;
-        }
-      },
-    }),
-    [handleSendData, handleSendZhihuQuestionDetail, scrollableNodeRef]
-  );
-
-  useMessageHandler(handlers);
 
   return {
     list,
@@ -172,15 +162,15 @@ const useZhihuAction = (
     questionTitle,
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
-    restoreScrollPosition,
-    sendMessage,
     handleVote,
-    voteHandler,
+    handleQuestionVote,
     questionDetail,
     isFollowing,
-    setIsFollowing,
     followHandler,
     unfollowHandler,
+    searchZhihu,
+    getZhihuComment,
+    loading,
   };
 };
 

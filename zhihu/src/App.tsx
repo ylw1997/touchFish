@@ -35,10 +35,10 @@ import type { ZhihuItemData } from "../../type";
 import useZhihuAction from "./hooks/useZhihuAction";
 import { debounce } from "./utils";
 import { vscode } from "./utils/vscode";
+import { messageHandler } from "./utils/messageHandler";
 import { Tabs, Tab } from "@heroui/react";
 
 function App() {
-  const APPSOURCE = "ZHIHUAPP";
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const {
     list,
@@ -47,41 +47,45 @@ function App() {
     getListData,
     questionDetailDrawerOpen,
     questionData,
-    setQuestionData,
     questionTitle,
     openQuestionDetailDrawer,
     closeQuestionDetailDrawer,
     handleVote,
-    voteHandler,
+    handleQuestionVote,
     questionDetail,
     isFollowing,
     followHandler,
     unfollowHandler,
-  } = useZhihuAction(APPSOURCE, scrollableNodeRef);
+  } = useZhihuAction();
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
   const [activeKey, setActiveKey] = useState(defTab[0].key);
 
   useEffect(() => {
-    const scrollableDiv = scrollableNodeRef.current;
-    if (!scrollableDiv) return;
+    const scrollableNode = scrollableNodeRef.current;
+    if (!scrollableNode) return;
 
-    const debouncedSave = debounce((scrollTop: number) => {
+    const handleScroll = debounce(() => {
       vscode.postMessage({
-        command: "ZHIHU_SAVE_SCROLL_POSITION",
-        payload: scrollTop,
+        command: 'ZHIHU_SAVE_SCROLL_POSITION',
+        payload: scrollableNode.scrollTop
       });
     }, 500);
+    scrollableNode.addEventListener("scroll", handleScroll);
 
-    const handleScroll = () => {
-      debouncedSave(scrollableDiv.scrollTop);
+    const unsolicitedMessageHandler = (command: string, payload: any) => {
+      if (command === 'ZHIHU_RESTORE_SCROLL_POSITION') {
+        if (scrollableNodeRef.current) {
+          scrollableNodeRef.current.scrollTop = payload;
+        }
+      }
     };
-
-    scrollableDiv.addEventListener("scroll", handleScroll);
+    const removeListener = messageHandler.addUnsolicitedListener(unsolicitedMessageHandler);
 
     return () => {
-      scrollableDiv.removeEventListener("scroll", handleScroll);
+      scrollableNode.removeEventListener("scroll", handleScroll);
+      removeListener();
     };
   }, []);
 
@@ -98,7 +102,7 @@ function App() {
     (key: Key) => {
       clearList();
       setActiveKey(key as "hot" | "follow" | "recommend");
-      getListData(key);
+      getListData(key, true);
     },
     [clearList, getListData]
   );
@@ -157,7 +161,7 @@ function App() {
         <FloatButton
           onClick={() => {
             clearList();
-            fetchData();
+            getListData(activeKey, true);
           }}
           icon={<RedoOutlined style={{ color: "#b37feb" }} />}
           tooltip={{ title: "刷新", placement: "left" }}
@@ -168,9 +172,8 @@ function App() {
           open={questionDetailDrawerOpen}
           onClose={closeQuestionDetailDrawer}
           questionData={questionData}
-          setQuestionData={setQuestionData}
           title={questionTitle}
-          voteHandler={voteHandler}
+          handleVote={handleQuestionVote}
           questionDetail={questionDetail}
           isFollowing={isFollowing}
           followHandler={followHandler}
@@ -180,9 +183,8 @@ function App() {
       <SearchDrawer
         open={searchDrawerOpen}
         onClose={() => setSearchDrawerOpen(false)}
-        source={APPSOURCE}
         openQuestionDetailDrawer={openQuestionDetailDrawer}
-        voteHandler={voteHandler}
+        handleVote={handleQuestionVote}
       />
     </>
   );

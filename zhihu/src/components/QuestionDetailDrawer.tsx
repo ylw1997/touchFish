@@ -17,12 +17,10 @@ interface QuestionDetailDrawerProps {
   open: boolean;
   onClose: () => void;
   questionData: ZhihuItemData[];
-  setQuestionData: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>;
   title: string;
-  voteHandler: (
+  handleVote: (
     answerId: string,
-    list: ZhihuItemData[],
-    setList: React.Dispatch<React.SetStateAction<ZhihuItemData[]>>
+    type: "up" | "neutral",
   ) => void;
   questionDetail: string;
   isFollowing: boolean | undefined;
@@ -34,9 +32,8 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   open,
   onClose,
   questionData,
-  setQuestionData,
   title,
-  voteHandler,
+  handleVote,
   questionDetail,
   isFollowing,
   followHandler,
@@ -103,9 +100,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
             <ZhihuItem
               isDetail
               item={item}
-              handleVote={() =>
-                voteHandler(item.id, questionData, setQuestionData)
-              }
+              handleVote={handleVote}
             />
           )}
         />

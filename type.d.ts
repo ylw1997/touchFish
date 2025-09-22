@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-09-22 09:21:04
+ * @LastEditTime: 2025-09-22 14:28:49
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -98,6 +98,7 @@ export type ZhihuCommandsType<T> = {
   command: ZhihuCommandList;
   payload: T;
   source?: string;
+  uuid?: string;
 };
 
 export type commandsType<T> = {
