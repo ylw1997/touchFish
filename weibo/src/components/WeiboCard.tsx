@@ -232,7 +232,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
   const renderActionBar = () => (
     <div
-      className="info mt8 border-top-divider"
+      className="info border-top-divider action-bar"
       style={{
         padding: "8px 0px",
       }}
@@ -359,34 +359,14 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           }}
           style={{
             marginLeft: "8px",
-            marginBottom: item.retweeted_status ? "8px" : "0",
+            marginBottom: "8px",
           }}
           size="middle"
         >
           显示{hasVideo ? "视频" : "图片"}
         </Button>
       )}
-      {item.retweeted_status && (
-        <WeiboCard
-          className="retweeted-status"
-          item={item.retweeted_status}
-          is_child={true}
-          onUserClick={onUserClick}
-          onFollow={onFollow}
-          cancelFollow={cancelFollow}
-          showActions={showActions}
-          onExpandLongWeibo={onExpandLongWeibo}
-          onToggleComments={onToggleComments}
-          onCopyLink={onCopyLink}
-          onCommentOrRepost={onCommentOrRepost}
-          onLikeOrCancelLike={onLikeOrCancelLike}
-          showImg={showImg}
-          getUserByName={getUserByName}
-          activeVideoUrl={activeVideoUrl}
-          onPlayVideo={onPlayVideo}
-          onTopicClick={onTopicClick}
-        />
-      )}
+      
       {renderActionBar()}
       {commentType && (
         <div
@@ -433,6 +413,27 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             onTopicClick
           )}
         </>
+      )}
+      {item.retweeted_status && (
+        <WeiboCard
+          className="retweeted-status"
+          item={item.retweeted_status}
+          is_child={true}
+          onUserClick={onUserClick}
+          onFollow={onFollow}
+          cancelFollow={cancelFollow}
+          showActions={showActions}
+          onExpandLongWeibo={onExpandLongWeibo}
+          onToggleComments={onToggleComments}
+          onCopyLink={onCopyLink}
+          onCommentOrRepost={onCommentOrRepost}
+          onLikeOrCancelLike={onLikeOrCancelLike}
+          showImg={showImg}
+          getUserByName={getUserByName}
+          activeVideoUrl={activeVideoUrl}
+          onPlayVideo={onPlayVideo}
+          onTopicClick={onTopicClick}
+        />
       )}
     </Card>
   );

@@ -170,6 +170,7 @@ body {
  */
 .ant-card {
   margin-top: 8px;
+  overflow: hidden;
   background: color-mix(
     in srgb,
     var(--vscode-breadcrumbPicker-background) 50%,
@@ -231,17 +232,33 @@ body {
    5. 响应式图片列表布局
    ========================================================================== */
 
-.retweeted-status{
-  margin: 0 5px;
+.retweeted-status {
+  margin: 0px;
+  border-radius: 0;
+  border:none;
+  background: none;
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    background-color: var(--vscode-chat-requestBorder);
+    mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 10'%3e%3cpath d='M 0 5 Q 5 0, 10 5 T 20 5' fill='none' stroke='%23fff' stroke-width='1'/%3e%3c/svg%3e");
+    mask-size: 15px 10px;
+    mask-repeat: repeat-x;
+    z-index: 1;
+  }
 }
 
 // 图片列表通用样式
-.imglist,
-.retweeted-status .imglist {
+.imglist {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 0 8px;
+  padding: 0 8px 8px;
 
   .img-item,
   .img-only-item {
@@ -252,8 +269,7 @@ body {
 
 // 分辨率小于等于320px
 @media screen and (max-width: 320px) {
-  .imglist,
-  .retweeted-status .imglist {
+  .imglist {
     .img-item,
     .img-only-item {
       width: 100vw;
@@ -264,8 +280,7 @@ body {
 
 // 分辨率321-768px
 @media screen and (min-width: 341px) and (max-width: 540px) {
-  .imglist,
-  .retweeted-status .imglist {
+  .imglist{
     .img-item {
       width: calc(50vw - 26px);
       height: calc(50vw - 26px);
@@ -274,12 +289,6 @@ body {
       width: calc(66.66vw - 26px);
       max-width: 500px;
       max-height: 500px;
-    }
-  }
-  .retweeted-status .imglist {
-    .img-item {
-      width: calc(50vw - 31px);
-      height: calc(50vw - 31px);
     }
   }
   .h5image-list {
@@ -292,8 +301,7 @@ body {
 
 // 分辨率大于等于769px
 @media screen and (min-width: 541px) {
-  .imglist,
-  .retweeted-status .imglist {
+  .imglist{
     .img-item {
       width: calc(33.33vw - 21px);
       height: calc(33.33vw - 21px);
@@ -304,14 +312,6 @@ body {
       max-height: 500px;
     }
   }
-  .retweeted-status .imglist {
-    .img-item,
-    .img-only-item {
-      width: calc(33.33vw - 23px);
-      height: calc(33.33vw - 23px);
-    }
-  }
-
   .h5image-list {
     .img-item,
     .img-only-item {
@@ -324,10 +324,6 @@ body {
 /* ==========================================================================
    6. Weibo Specific Styles
    ========================================================================== */
-
-.mt8 {
-  margin-top: 8px;
-}
 
 .icon-link {
   width: 1em;
@@ -414,7 +410,7 @@ body {
   text-overflow: ellipsis;
   transition: all 0.2s ease-in-out;
   border: 1px solid transparent;
-  margin-inline-end:0;
+  margin-inline-end: 0;
 
   &:hover {
     color: var(--vscode-textLink-activeForeground);
