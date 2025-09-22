@@ -1,18 +1,17 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import {
-  payloadType,
   weiboCommentParams,
   weiboItem,
   weiboRepostParams,
   weiboUser,
   SearchType,
   uploadType,
-  UploadImageResponsePayload,
 } from "../../../type";
 import { updateWeiboList } from "../utils/updateWeiboList";
 import { weiboSendParams } from "../types";
 import { parseArray } from "../utils";
 import { useRequest } from "./useRequest";
+import { WeiboApi } from "../api";
 
 const useWeiboAction = () => {
   // 微博列表相关状态
@@ -33,6 +32,8 @@ const useWeiboAction = () => {
   const [sendLoading, setSendLoading] = useState(false);
   const { request, contextHolder, messageApi } = useRequest();
 
+  const apiClient = useMemo(() => new WeiboApi(request), [request]);
+
   // 更新微博列表
   const updateList = useCallback(
     (
@@ -49,7 +50,7 @@ const useWeiboAction = () => {
     async (payload: string, replace = false) => {
       setIsFetching(true);
       try {
-        const result = await request<payloadType>("GETDATA", payload, "请求微博中...");
+        const result = await apiClient.getListData(payload);
         const newList = result.statuses.filter((item) => item.mblogtype !== 1);
         setList(currentList => replace ? newList : [...currentList, ...newList]);
         const wtotal = result.total_number ?? 999;
@@ -59,18 +60,14 @@ const useWeiboAction = () => {
         setIsFetching(false);
       }
     },
-    [request]
+    [apiClient]
   );
 
   const getUserBlogData = useCallback(
     async (uid: string | number, page: number) => {
       setIsFetching(true);
       try {
-        const result = await request<payloadType>(
-          "GETUSERBLOG",
-          JSON.stringify({ uid, page }),
-          "请求用户微博中..."
-        );
+        const result = await apiClient.getUserBlogData(uid, page);
         const newList = result.data.list;
         setList(currentList => [...currentList, ...newList]);
         const wtotal = result.data?.total ?? 999;
@@ -79,7 +76,7 @@ const useWeiboAction = () => {
         setIsFetching(false);
       }
     },
-    [request]
+    [apiClient]
   );
 
   // 清空列表
@@ -125,27 +122,19 @@ const useWeiboAction = () => {
         );
         return;
       }
-      const result = await request<any>(
-        "GETCOMMENT",
-        {
-          url: `/statuses/buildComments?id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`,
-          id,
-          uid,
-        },
-        "请求评论中..."
-      );
+      const result = await apiClient.getComments(id, uid);
       updateList(
         (item) => item.id === id,
         (item) => ({ ...item, comments: result.data })
       );
     },
-    [list, updateList, request]
+    [list, updateList, apiClient]
   );
 
   // 合并长微博展开方法
   const handleExpandLongWeibo = useCallback(
     async (id: string | number) => {
-      const result = await request<payloadType>("GETLONGTEXT", id, "请求长微博中...");
+      const result = await apiClient.getLongText(id);
       const mblogid = result.payload;
       updateList(
         (item) => (item.mblogid ? item.mblogid : item.bid) === mblogid,
@@ -157,40 +146,40 @@ const useWeiboAction = () => {
         })
       );
     },
-    [updateList, request]
+    [updateList, apiClient]
   );
 
   // 查看博主微博
   const getUserBlog = useCallback(
     async (userInfo: weiboUser) => {
       if (!userInfo) return;
-      const result = await request<payloadType>("GETUSERBYNAME", "," + String(userInfo.id), "获取用户信息中...");
+      const result = await apiClient.getUserByName(String(userInfo.id));
       setUserDetail({
         ...result.data,
         avatar_hd: result.data.avatar,
       });
       setUserDetailVisible(true);
     },
-    [request]
+    [apiClient]
   );
 
   const getUserByName = useCallback(
     async (username: string) => {
-      const result = await request<payloadType>("GETUSERBYNAME", username, "获取用户信息中...");
+      const result = await apiClient.getUserByName(username);
       setUserDetail({
         ...result.data,
         avatar_hd: result.data.avatar,
       });
       setUserDetailVisible(true);
     },
-    [request]
+    [apiClient]
   );
 
   // 关注博主
   const followUser = useCallback(
     async (userInfo?: weiboUser) => {
       if (!userInfo) return;
-      await request("GETFOLLOW", userInfo.id, "关注中...");
+      await apiClient.followUser(userInfo.id);
       messageApi.success("关注成功!");
       setUserDetail((prev) => (prev ? { ...prev, following: true } : prev));
       updateList(
@@ -201,14 +190,14 @@ const useWeiboAction = () => {
         })
       );
     },
-    [updateList, request, messageApi]
+    [updateList, apiClient, messageApi]
   );
 
   // 取关博主
   const cancelFollow = useCallback(
     async (userInfo?: weiboUser) => {
       if (!userInfo) return;
-      await request("GETCANCELFOLLOW", userInfo.id, "取关中...");
+      await apiClient.cancelFollow(userInfo.id);
       messageApi.success("取消关注成功!");
       setUserDetail((prev) => (prev ? { ...prev, following: false } : prev));
       updateList(
@@ -219,29 +208,24 @@ const useWeiboAction = () => {
         })
       );
     },
-    [updateList, request, messageApi]
+    [updateList, apiClient, messageApi]
   );
 
   // 搜索
   const getHotSearch = useCallback(async () => {
-    const result = await request<payloadType>("GETHOTSEARCH", null, "正在刷新热搜...");
+    const result = await apiClient.getHotSearch();
     return (result.data.realtime || []).slice(0, 20);
-  }, [request]);
+  }, [apiClient]);
 
   const getWeiboSearch = useCallback(async (keyword: string, searchType: SearchType) => {
-      const payload = `100103type=${searchType.type}&q=${keyword}&t=`;
-      const result = await request<payloadType>("GETSEARCH", payload, "正在搜索...");
+      const result = await apiClient.getWeiboSearch(keyword, searchType);
       return parseArray(result.data.cards, searchType);
-  }, [request]);
+  }, [apiClient]);
 
   const uploadImage = useCallback(async (uploadData: uploadType) => {
-    const result = await request<UploadImageResponsePayload>(
-      "GETUPLOADIMGURL",
-      JSON.stringify(uploadData),
-      "上传图片中..."
-    );
+    const result = await apiClient.uploadImage(uploadData);
     return result;
-  }, [request]);
+  }, [apiClient]);
 
 
   // 发送微博功能
@@ -249,18 +233,14 @@ const useWeiboAction = () => {
     async (content: weiboSendParams) => {
       setSendLoading(true);
       try {
-        const result = await request<payloadType>(
-          "GETNEWBLOGRESULT",
-          JSON.stringify(content),
-          "发送中..."
-        );
+        const result = await apiClient.sendWeibo(content);
         messageApi.success("微博发送成功!");
         setList((prev) => [result.data, ...prev]);
       } finally {
         setSendLoading(false);
       }
     },
-    [request, messageApi]
+    [apiClient, messageApi]
   );
 
   // handleCommentOrRepost 评论或转发
@@ -275,22 +255,14 @@ const useWeiboAction = () => {
           comment_ori: 0,
           is_comment: 0,
         } as weiboCommentParams;
-        await request("GETCREATECOMMENTS", obj, "发送评论中...");
+        await apiClient.createComment(obj);
         messageApi.success("评论成功!");
         updateList(
           (i) => i.id === item.id,
           (i) => ({ ...i, comments_count: i.comments_count + 1 })
         );
         // 刷新评论
-        const result = await request<any>(
-          "GETCOMMENT",
-          {
-            url: `/statuses/buildComments?flow=1&id=${item.id}&is_show_bulletin=2uid=${item.user?.id}&locale=zh-CN`,
-            id: item.id,
-            uid: item.user?.id,
-          },
-          "请求评论中..."
-        );
+        const result = await apiClient.getMoreComments(item.id, item.user?.id);
         updateList(
           (i) => i.id === item.id,
           (i) => ({ ...i, comments: result.data })
@@ -308,11 +280,11 @@ const useWeiboAction = () => {
           visible: 0,
           share_id: "",
         } as weiboRepostParams;
-        await request("GETCREATEREPOST", obj, "转发微博中...");
+        await apiClient.createRepost(obj);
         messageApi.success("转发成功!");
       }
     },
-    [updateList, request, messageApi]
+    [updateList, apiClient, messageApi]
   );
 
   // 点赞,取消点赞
@@ -320,7 +292,7 @@ const useWeiboAction = () => {
     async (item: weiboItem, type: "like" | "cancel") => {
       setCurItem(item);
       if (type === "like") {
-        await request("GETSETLIKE", item.id, "正在点赞...");
+        await apiClient.setLike(item.id);
         messageApi.success("点赞成功!");
         updateList(
           (i) => i.id === item.id,
@@ -332,7 +304,7 @@ const useWeiboAction = () => {
         );
       }
       if (type === "cancel") {
-        await request("GETCANCELLIKE", item.id, "取消点赞中...");
+        await apiClient.cancelLike(item.id);
         messageApi.success("取消点赞成功!");
         updateList(
           (i) => i.id === item.id,
@@ -344,7 +316,7 @@ const useWeiboAction = () => {
         );
       }
     },
-    [updateList, request, messageApi]
+    [updateList, apiClient, messageApi]
   );
 
   return {
