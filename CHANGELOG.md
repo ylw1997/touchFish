@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.22.0](https://github.com/ylw1997/touchFish/compare/v8.21.0...v8.22.0) (2025-09-22)
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化转发微博样式与图片列表布局 ([679e6ca](https://github.com/679e6ca3b18575dc7d2911d283022ecfb98a39fe))
+
 ## [8.21.0](https://github.com/ylw1997/touchFish/compare/v8.20.0...v8.21.0) (2025-09-22)
 
 
