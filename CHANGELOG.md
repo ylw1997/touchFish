@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.21.0](https://github.com/ylw1997/touchFish/compare/v8.20.0...v8.21.0) (2025-09-22)
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 更新用户查询参数支持ID和用户名 ([7b650d6](https://github.com/7b650d67eac5d062d3091e5db69fbbcc4e789d0b))
+
 ## [8.20.0](https://github.com/ylw1997/touchFish/compare/v8.19.1...v8.20.0) (2025-09-22)
 
 
