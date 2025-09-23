@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [8.24.0](https://github.com/ylw1997/touchFish/compare/v8.23.0...v8.24.0) (2025-09-23)
+
+
+### ✨ Features | 新功能
+
+* **UserDetailDrawer:** 实现关注和取关功能的封装与调用 ([c993eaf](https://github.com/c993eaf7623c498b8540cfefa56102e74f630692))
+* **weibo:** 移除全局视频播放控制逻辑，优化媒体展示组件 ([b84583b](https://github.com/b84583b570adc7b8fc516dc1f82eaa7cc7ec3844))
+* **weibo:** 支持混合媒体微博的展示与播放 ([78b74fc](https://github.com/78b74fcceced3a55b8f3b7c2149364f68ccde897))
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **request:** 调整 request 方法参数及逻辑处理 ([6261e51](https://github.com/6261e5159a8d58e533df3bd4511668d5a11ddd84))
+
 ## [8.23.0](https://github.com/ylw1997/touchFish/compare/v8.22.0...v8.23.0) (2025-09-23)
 
 
