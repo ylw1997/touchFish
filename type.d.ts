@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-09-22 14:28:49
+ * @LastEditTime: 2025-09-23 10:06:16
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -152,7 +152,7 @@ export interface weiboItem extends baseWeiboField {
   text: string;
   text_raw: string;
   isLongText: boolean;
-  source?: string;
+  source: string;
   pic_ids: string[];
   mblogid: string;
   mblogtype: number; // 微博类型 0:普通微博 1,热门或者广告 2,置顶

@@ -132,7 +132,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </span>
           <div className="info">
             <span>{dayjs(item.created_at).fromNow()}</span>{" "}
-            <span>{item.region_name?.replace("发布于", "")}</span>
+            <span>{item.region_name?.replace("发布于", "")}</span>{" "}
+            <span dangerouslySetInnerHTML={{__html: item.source}} ></span>
           </div>
         </div>
       </Space>
@@ -232,10 +233,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
   const renderActionBar = () => (
     <div
-      className="info border-top-divider action-bar"
-      style={{
-        padding: "8px 0px",
-      }}
+      className="border-top-divider action-bar"
     >
       <Flex justify="space-around" align="center">
         <span
