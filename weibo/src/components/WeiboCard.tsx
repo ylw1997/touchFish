@@ -10,6 +10,7 @@ import {
   Tag,
 } from "antd";
 import {
+  DeleteOutlined,
   DownCircleOutlined,
   ExportOutlined,
   HeartFilled,
@@ -131,7 +132,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             {item.user?.screen_name}
           </span>
           <div className="info">
-            <span>{dayjs(item.created_at).fromNow()}</span>{" "}
+            <span>{dayjs(item.created_at).fromNow()}</span>
             <span>{item.region_name?.replace("发布于", "")}</span>{" "}
             <span dangerouslySetInnerHTML={{__html: item.source}} ></span>
           </div>
@@ -148,14 +149,35 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             关注
           </Button>
         ) : (
-          <Button
-            color="red"
-            onClick={() => cancelFollow?.(item.user)}
-            variant="filled"
+          <span className="more">
+          <Dropdown
+            trigger={["hover"]}
+            menu={{
+              items: [
+                {
+                  key: "share",
+                  label: "分享",
+                  icon: <ShareAltOutlined />,
+                  onClick: () => {
+                    onCopyLink?.(
+                      `https://weibo.com/${item.user?.id}/${item.mblogid}`
+                    );
+                  },
+                },
+                {
+                  key:'cancelFollow',
+                  label: "取消关注",
+                  icon: <DeleteOutlined /> ,
+                  onClick: () => cancelFollow?.(item.user),
+                }
+              ],
+            }}
           >
-            取关
-          </Button>
+            <DownCircleOutlined />
+          </Dropdown>
+        </span>
         ))}
+      
     </Flex>
   );
 
@@ -288,27 +310,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             <HeartOutlined /> {item.attitudes_count}
           </span>
         )}
-        <span className="link">
-          <Dropdown
-            trigger={["hover"]}
-            menu={{
-              items: [
-                {
-                  key: "share",
-                  label: "分享",
-                  icon: <ShareAltOutlined />,
-                  onClick: () => {
-                    onCopyLink?.(
-                      `https://weibo.com/${item.user?.id}/${item.mblogid}`
-                    );
-                  },
-                },
-              ],
-            }}
-          >
-            <DownCircleOutlined />
-          </Dropdown>
-        </span>
       </Flex>
     </div>
   );
