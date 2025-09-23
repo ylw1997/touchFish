@@ -1,3 +1,12 @@
+/*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-09-23 17:31:31
+ * @LastEditTime: 2025-09-23 17:53:20
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\weibo\src\components\YImg.tsx
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
 import { useState, useEffect, useRef } from "react";
 import { Image } from "antd";
 import { imageFallback } from "../data/imgFallback";
@@ -5,67 +14,59 @@ import { useRequest } from "../hooks/useRequest";
 
 interface YImgProps {
   src: string;
-  previewSrc?: string;
   mediaType?: 'image' | 'video';
   useImg?: boolean;
   [key: string]: any;
 }
 
-const YImg: React.FC<YImgProps> = ({ src, previewSrc, mediaType = 'image', useImg = false, ...props }) => {
+const YImg: React.FC<YImgProps> = ({ src, mediaType = 'image', useImg = false, ...props }) => {
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
-  const [previewImgSrc, setPreviewImgSrc] = useState<string | undefined>(undefined);
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
   const elementRef = useRef<HTMLDivElement>(null);
   const { request } = useRequest();
 
+  // Use a ref to track loading state inside the effect without adding it as a dependency
   const isLoadingRef = useRef(false);
-  const isLoadingPreviewRef = useRef(false);
 
   useEffect(() => {
     if (!src) return;
 
     let isSubscribed = true;
     let observer: IntersectionObserver | undefined;
-    const currentRef = elementRef.current;
+    const currentRef = elementRef.current; // Capture ref.current
 
-    const fetchMedia = (url: string, isPreview: boolean) => {
-      const isLoading = isPreview ? isLoadingPreviewRef : isLoadingRef;
-      if (isLoading.current) return;
+    const fetchMedia = () => {
+      // Use the ref to check if already loading
+      if (isLoadingRef.current) return;
       
-      isLoading.current = true;
+      isLoadingRef.current = true;
 
       const command = mediaType === "video" ? "GETVIDEO" : "GETIMG";
-      request<string>(command, url)
-        .then(fetchedUrl => {
+      request<string>(command, src)
+        .then(url => {
           if (isSubscribed) {
             if (mediaType === 'video') {
-              setVideoSrc(fetchedUrl);
-            } else {
-              if (isPreview) {
-                setPreviewImgSrc(fetchedUrl);
-              } else {
-                setImgSrc(fetchedUrl);
-              }
+              setVideoSrc(url);
+            }
+            else {
+              setImgSrc(url);
             }
           }
         })
         .catch(console.error)
         .finally(() => {
           if (isSubscribed) {
-            isLoading.current = false;
+            isLoadingRef.current = false;
           }
         });
     };
 
     if (mediaType === 'video') {
-      fetchMedia(src, false);
+      fetchMedia();
     } else {
       observer = new IntersectionObserver(entries => {
         if (entries[0].isIntersecting) {
-          fetchMedia(src, false);
-          if (previewSrc) {
-            fetchMedia(previewSrc, true);
-          }
+          fetchMedia();
           if(currentRef) observer?.unobserve(currentRef);
         }
       });
@@ -80,9 +81,8 @@ const YImg: React.FC<YImgProps> = ({ src, previewSrc, mediaType = 'image', useIm
         observer.unobserve(currentRef);
       }
     };
-  }, [src, previewSrc, mediaType, request]);
+  }, [src, mediaType, request]);
 
-  const previewProps = previewImgSrc ? { ...props.preview, src: previewImgSrc } : undefined;
 
   return (
     <div style={{ height: "inherit", display: "inline-block" }} ref={elementRef}>
@@ -91,7 +91,7 @@ const YImg: React.FC<YImgProps> = ({ src, previewSrc, mediaType = 'image', useIm
       ) : useImg ? (
         <img src={imgSrc} {...props} />
       ) : (
-        <Image src={imgSrc} {...props} preview={previewProps} fallback={imageFallback} />
+        <Image src={imgSrc} {...props} fallback={imageFallback} />
       )}
     </div>
   );

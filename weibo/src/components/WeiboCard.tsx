@@ -64,11 +64,9 @@ interface NormalizedMediaItem {
 const MediaItemDisplay: React.FC<{ media: NormalizedMediaItem, count: number }> = ({ media, count }) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const isSingleImage = count === 1 && media.type === 'image';
-
   const imgProps = {
     className: count > 1 ? "img-item" : "img-only-item",
-    src: isSingleImage ? media.fullUrl! : media.thumbnailUrl,
+    src: media.type === 'image' ? media.fullUrl! : media.thumbnailUrl,
   };
 
   if (media.type === 'video') {
@@ -85,7 +83,7 @@ const MediaItemDisplay: React.FC<{ media: NormalizedMediaItem, count: number }> 
 
   // For images
   return (
-    <YImg {...imgProps} previewSrc={media.fullUrl} />
+    <YImg {...imgProps} />
   );
 };
 
