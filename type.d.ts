@@ -156,6 +156,13 @@ export interface weiboItem extends baseWeiboField {
   pic_ids: string[];
   mblogid: string;
   mblogtype: number; // 微博类型 0:普通微博 1,热门或者广告 2,置顶
+  mix_media_info?: {
+    items: {
+      type: 'video' | 'pic';
+      id: string;
+      data: any;
+    }[];
+  };
   pics?: {
     pid: string;
     size: string;

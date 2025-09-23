@@ -163,6 +163,58 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   );
 
   const renderImages = () => {
+    if (item.mix_media_info) {
+      return (
+        <div className="imglist">
+          <Image.PreviewGroup>
+            {item.mix_media_info.items.map((mediaItem) => {
+              if (mediaItem.type === 'video') {
+                const videoInfo = mediaItem.data.media_info;
+                const isPlaying = activeVideoUrl === videoInfo.stream_url;
+                if (isPlaying) {
+                  return (
+                    <div className=" video-cover" key={mediaItem.id}>
+                      <YImg
+                        className="video-item"
+                        src={videoInfo.stream_url}
+                        mediaType="video"
+                      />
+                    </div>
+                  );
+                }
+                return (
+                  <div className=" video-cover" key={mediaItem.id}>
+                    <YImg
+                      className="img-item"
+                      src={mediaItem.data.page_pic}
+                      useImg
+                    />
+                    <PlayCircleFilled
+                      className="video-icon"
+                      onClick={() => onPlayVideo?.(videoInfo.stream_url)}
+                    />
+                  </div>
+                );
+              }
+
+              if (mediaItem.type === 'pic') {
+                const picInfo = mediaItem.data;
+                const imgProps = {
+                  className: item.mix_media_info!.items.length > 1 ? "img-item" : "img-only-item",
+                  src: picInfo.large.url,
+                };
+                return (
+                  <div key={mediaItem.id}>
+                    <YImg {...imgProps} />
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </Image.PreviewGroup>
+        </div>
+      );
+    }
     // 视频封面显示
     if (item.page_info && item.page_info.object_type === "video") {
       const isPlaying = activeVideoUrl === item.page_info.media_info.stream_url;
