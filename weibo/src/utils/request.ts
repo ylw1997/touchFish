@@ -36,17 +36,16 @@ export const request = <T = any>(
 
   return new Promise((resolve, reject) => {
     messageHandler.addRequest(uuid, resolve, reject);
-  }).then(
-    (result) => {
-      if (messageApi) messageApi.destroy(uuid);
-      return result;
-    },
-    (error) => {
-      if (messageApi) {
-        messageApi.destroy(uuid);
-        messageApi.error(error.message || "请求失败");
+  })
+  .catch((error) => {
+      if (messageApi && content) {
+          messageApi.error(error.message || "请求失败");
       }
-      throw error;
-    }
-  ) as Promise<T>;
+      throw error; // Re-throw the error to be caught by the caller
+  })
+  .finally(() => {
+      if (messageApi && content) { // Only destroy if it was created
+          messageApi.destroy(uuid);
+      }
+  }) as Promise<T>;
 };
