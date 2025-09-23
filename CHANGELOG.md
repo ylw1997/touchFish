@@ -1,6 +1,23 @@
 # 更新历史 
 
 
+## [8.23.0](https://github.com/ylw1997/touchFish/compare/v8.22.0...v8.23.0) (2025-09-23)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 更新微博来源字段为必填并优化样式 ([1cf4ad2](https://github.com/1cf4ad2461f5298820da7dc8049b7dc8b11cec4e))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化微博卡片操作按钮样式与功能 ([56e7daa](https://github.com/56e7daa37b23f70a7145af7304602b8a8d276d66))
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **weibo:** 优化 WeiboCard 组件代码结构 ([7944cf5](https://github.com/7944cf54ad1a62fca17bdaddfca5ff964810b55e))
+
 ## [8.22.0](https://github.com/ylw1997/touchFish/compare/v8.21.0...v8.22.0) (2025-09-22)
 
 
