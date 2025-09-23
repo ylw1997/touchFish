@@ -79,6 +79,22 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     setUserDetail(undefined);
   };
 
+  const handleFollow = () => {
+    if (userDetail) {
+      followUser(userDetail).then(() => {
+        setUserDetail({ ...userDetail, following: true });
+      });
+    }
+  };
+
+  const handleCancelFollow = () => {
+    if (userDetail) {
+      cancelFollow(userDetail).then(() => {
+        setUserDetail({ ...userDetail, following: false });
+      });
+    }
+  };
+
   return (
     <>
       {contextHolder}
@@ -170,7 +186,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               ) : !userDetail.following ? (
                 <Button
                   color="primary"
-                  onClick={() => followUser(userDetail)}
+                  onClick={handleFollow}
                   variant="filled"
                 >
                   关注
@@ -178,7 +194,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               ) : (
                 <Button
                   color="red"
-                  onClick={() => cancelFollow(userDetail)}
+                  onClick={handleCancelFollow}
                   variant="filled"
                 >
                   取关
