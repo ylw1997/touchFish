@@ -323,7 +323,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
   // 发布评论和转发
   const handleSubmit = (values: any) => {
-    console.log(values, item);
+    // console.log(values, item);
     onCommentOrRepost?.(values.content, item, commentType!);
     // 清理评论
     form.resetFields();

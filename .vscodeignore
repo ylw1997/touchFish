@@ -26,6 +26,7 @@ weibo/tsconfig.app.json
 weibo/tsconfig.node.json
 weibo/vite.config.ts
 weibo/pnpm-lock.yaml
+weibo/temp/**
 
 zhihu/src/**
 zhihu/node_modules/**
@@ -40,3 +41,4 @@ zhihu/tsconfig.app.json
 zhihu/tsconfig.node.json
 zhihu/vite.config.ts
 zhihu/pnpm-lock.yaml
+temp/**
