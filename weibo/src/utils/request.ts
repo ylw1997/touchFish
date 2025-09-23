@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-22 10:00:00
- * @LastEditTime: 2025-09-22 10:19:29
+ * @LastEditTime: 2025-09-23 17:41:15
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\utils\request.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -23,12 +23,12 @@ const generateUUID = () => {
 export const request = <T = any>(
   command: CommandList,
   payload: any,
-  content: string,
+  content?: string,
   messageApi?: MessageInstance
 ): Promise<T> => {
   const uuid = generateUUID();
-  
-  if (messageApi) {
+
+  if (messageApi && content) {
     messageApi.open({ key: uuid, type: "loading", content, duration: 0 });
   }
 
@@ -37,16 +37,16 @@ export const request = <T = any>(
   return new Promise((resolve, reject) => {
     messageHandler.addRequest(uuid, resolve, reject);
   }).then(
-      (result) => {
-        if (messageApi) messageApi.destroy(uuid);
-        return result;
-      },
-      (error) => {
-        if (messageApi) {
-            messageApi.destroy(uuid);
-            messageApi.error(error.message || "请求失败");
-        }
-        throw error;
+    (result) => {
+      if (messageApi) messageApi.destroy(uuid);
+      return result;
+    },
+    (error) => {
+      if (messageApi) {
+        messageApi.destroy(uuid);
+        messageApi.error(error.message || "请求失败");
       }
+      throw error;
+    }
   ) as Promise<T>;
 };

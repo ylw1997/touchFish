@@ -10,7 +10,7 @@ export const useRequest = () => {
     <T = any>(
       command: CommandList,
       payload: any,
-      content: string
+      content?: string
     ): Promise<T> => {
       return httpRequest<T>(command, payload, content, messageApi);
     },

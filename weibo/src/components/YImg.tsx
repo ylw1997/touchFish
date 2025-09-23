@@ -35,7 +35,7 @@ const YImg: React.FC<YImgProps> = ({ src, previewSrc, mediaType = 'image', useIm
       isLoading.current = true;
 
       const command = mediaType === "video" ? "GETVIDEO" : "GETIMG";
-      request<string>(command, url, "")
+      request<string>(command, url)
         .then(fetchedUrl => {
           if (isSubscribed) {
             if (mediaType === 'video') {
