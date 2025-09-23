@@ -23,7 +23,7 @@ import { weiboItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { parseH5WeiboText, parseWeiboText } from "../utils/textParser";
 import TextArea from "antd/es/input/TextArea";
 
@@ -46,8 +46,6 @@ export interface weiboBaseActions {
   onLikeOrCancelLike?: (item: weiboItem, type: "like" | "cancel") => void;
   showImg?: boolean;
   onDownloadVideo?: (url: string) => void;
-  activeVideoUrl?: string | null;
-  onPlayVideo?: (url?: string) => void;
   onTopicClick: (topic: string) => void;
 }
 
@@ -55,6 +53,41 @@ export interface WeiboCardProps extends weiboBaseActions {
   item: weiboItem;
   isH5?: boolean;
 }
+
+interface NormalizedMediaItem {
+  id: string;
+  type: "image" | "video";
+  thumbnailUrl: string;
+  fullUrl?: string;
+}
+
+const MediaItemDisplay: React.FC<{ media: NormalizedMediaItem, count: number }> = ({ media, count }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const isSingleImage = count === 1 && media.type === 'image';
+
+  const imgProps = {
+    className: count > 1 ? "img-item" : "img-only-item",
+    src: isSingleImage ? media.fullUrl! : media.thumbnailUrl,
+  };
+
+  if (media.type === 'video') {
+    if (isPlaying) {
+      return <YImg src={media.fullUrl!} mediaType="video" className="video-item" />;
+    }
+    return (
+      <div className="video-cover" onClick={() => setIsPlaying(true)} key={media.id}>
+        <YImg className={imgProps.className} src={media.thumbnailUrl} useImg />
+        <PlayCircleFilled className="video-icon" />
+      </div>
+    );
+  }
+
+  // For images
+  return (
+    <YImg {...imgProps} previewSrc={media.fullUrl} />
+  );
+};
 
 const WeiboCard: React.FC<WeiboCardProps> = ({
   item,
@@ -71,8 +104,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   onLikeOrCancelLike,
   showImg,
   getUserByName,
-  activeVideoUrl,
-  onPlayVideo,
   onTopicClick,
   isH5 = false, // 是否是H5端
 }) => {
@@ -88,6 +119,59 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     setImgShow(showImg);
   }, [showImg]);
 
+  const normalizedMedia = useMemo(() => {
+    const media: NormalizedMediaItem[] = [];
+  
+    if (item.mix_media_info) {
+      item.mix_media_info.items.forEach(mediaItem => {
+        if (mediaItem.type === 'video') {
+          media.push({
+            id: mediaItem.id,
+            type: 'video',
+            thumbnailUrl: mediaItem.data.page_pic,
+            fullUrl: mediaItem.data.media_info.stream_url,
+          });
+        } else if (mediaItem.type === 'pic') {
+          media.push({
+            id: mediaItem.id,
+            type: 'image',
+            thumbnailUrl: mediaItem.data.bmiddle.url,
+            fullUrl: mediaItem.data.large.url,
+          });
+        }
+      });
+    } else if (item.page_info && item.page_info.object_type === 'video') {
+      media.push({
+        id: item.id.toString(),
+        type: 'video',
+        thumbnailUrl: item.page_info.page_pic,
+        fullUrl: item.page_info.media_info.stream_url,
+      });
+    } else if (isH5 && item.pics) {
+      item.pics.forEach(pic => {
+        media.push({
+          id: pic.pid,
+          type: 'image',
+          thumbnailUrl: pic.url,
+          fullUrl: pic.url,
+        });
+      });
+    } else if (item.pic_infos && item.pic_ids) {
+      item.pic_ids.forEach(picId => {
+        const picInfo = item.pic_infos[picId];
+        if (picInfo) {
+          media.push({
+            id: picId,
+            type: 'image',
+            thumbnailUrl: picInfo.bmiddle.url,
+            fullUrl: picInfo.large.url,
+          });
+        }
+      });
+    }
+  
+    return media;
+  }, [item, isH5]);
 
   const renderTitle = () => (
     <Flex justify="space-between" align="center">
@@ -163,124 +247,16 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   );
 
   const renderImages = () => {
-    if (item.mix_media_info) {
-      return (
-        <div className="imglist">
-          <Image.PreviewGroup>
-            {item.mix_media_info.items.map((mediaItem) => {
-              if (mediaItem.type === 'video') {
-                const videoInfo = mediaItem.data.media_info;
-                const isPlaying = activeVideoUrl === videoInfo.stream_url;
-                if (isPlaying) {
-                  return (
-                    <div className=" video-cover" key={mediaItem.id}>
-                      <YImg
-                        className="video-item"
-                        src={videoInfo.stream_url}
-                        mediaType="video"
-                      />
-                    </div>
-                  );
-                }
-                return (
-                  <div className=" video-cover" key={mediaItem.id}>
-                    <YImg
-                      className="img-item"
-                      src={mediaItem.data.page_pic}
-                      useImg
-                    />
-                    <PlayCircleFilled
-                      className="video-icon"
-                      onClick={() => onPlayVideo?.(videoInfo.stream_url)}
-                    />
-                  </div>
-                );
-              }
+    if (normalizedMedia.length === 0) {
+      return null;
+    }
 
-              if (mediaItem.type === 'pic') {
-                const picInfo = mediaItem.data;
-                const imgProps = {
-                  className: item.mix_media_info!.items.length > 1 ? "img-item" : "img-only-item",
-                  src: picInfo.large.url,
-                };
-                return (
-                  <div key={mediaItem.id}>
-                    <YImg {...imgProps} />
-                  </div>
-                );
-              }
-              return null;
-            })}
-          </Image.PreviewGroup>
-        </div>
-      );
-    }
-    // 视频封面显示
-    if (item.page_info && item.page_info.object_type === "video") {
-      const isPlaying = activeVideoUrl === item.page_info.media_info.stream_url;
-      if (isPlaying) {
-        return (
-          <div className="imglist video-cover">
-            <YImg
-              className="img-only-item video-item"
-              src={item.page_info.media_info.stream_url}
-              mediaType="video"
-            />
-          </div>
-        );
-      }
-      return (
-        <div className="imglist video-cover">
-          <YImg
-            className="img-only-item"
-            src={item.page_info.page_pic}
-            useImg
-          />
-          <PlayCircleFilled
-            className="video-icon"
-            onClick={() => onPlayVideo?.(item.page_info?.media_info.stream_url)}
-          />
-        </div>
-      );
-    }
-    if (isH5) {
-      if (!item.pics) return null;
-      return (
-        <div className="imglist h5image-list">
-          <Image.PreviewGroup>
-            {item.pics.map((pic: any) => {
-              const imgProps = {
-                className: item.pics!.length > 1 ? "img-item" : "img-only-item",
-                src: pic.url,
-              };
-              return (
-                <div key={pic.url}>
-                  <YImg {...imgProps} />
-                </div>
-              );
-            })}
-          </Image.PreviewGroup>
-        </div>
-      );
-    }
-    if (!item.pic_infos || !item.pic_ids) return null;
     return (
       <div className="imglist">
         <Image.PreviewGroup>
-          {item.pic_ids.map((pic: string) => {
-            const picInfo = item.pic_infos[pic];
-            if (!picInfo) return null;
-
-            const imgProps = {
-              className: item.pic_ids.length > 1 ? "img-item" : "img-only-item",
-              src: picInfo.large ? picInfo.large.url : picInfo.bmiddle.url,
-            };
-            return (
-              <div key={pic}>
-                <YImg {...imgProps} />
-              </div>
-            );
-          })}
+          {normalizedMedia.map(media => (
+            <MediaItemDisplay key={media.id} media={media} count={normalizedMedia.length} />
+          ))}
         </Image.PreviewGroup>
       </div>
     );
@@ -462,8 +438,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           onLikeOrCancelLike={onLikeOrCancelLike}
           showImg={showImg}
           getUserByName={getUserByName}
-          activeVideoUrl={activeVideoUrl}
-          onPlayVideo={onPlayVideo}
           onTopicClick={onTopicClick}
         />
       )}

@@ -83,8 +83,6 @@ function App() {
     window.showImg != undefined ? window.showImg : true
   );
 
-  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
-
   const handleTopicClick = useCallback((topic: string) => {
     console.log("topic", topic);
     setSearchDrawerOpen(true);
@@ -120,18 +118,6 @@ function App() {
       window.removeEventListener("message", messageHandler);
     };
   }, []);
-
-  const handlePlayVideo = (url?: string) => {
-    if (!url) {
-      setActiveVideoUrl(null); // 如果没有视频链接，则暂停
-      return;
-    }
-    if (activeVideoUrl === url) {
-      setActiveVideoUrl(null); // 如果是同一个视频，则暂停
-    } else {
-      setActiveVideoUrl(url); // 否则，播放新视频
-    }
-  };
 
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
@@ -193,8 +179,6 @@ function App() {
           }}
           setUserDetail={setUserDetail}
           showImg={showImg}
-          activeVideoUrl={activeVideoUrl}
-          onPlayVideo={handlePlayVideo}
           onTopicClick={handleTopicClick}
         />
       </Suspense>
@@ -252,8 +236,6 @@ function App() {
               onCommentOrRepost={handleCommentOrRepost}
               onLikeOrCancelLike={handleLike}
               showImg={showImg}
-              activeVideoUrl={activeVideoUrl}
-              onPlayVideo={handlePlayVideo}
               onTopicClick={handleTopicClick}
             />
           ))}
@@ -310,8 +292,6 @@ function App() {
           }}
           getUserBlog={getUserBlog}
           showImg={showImg}
-          activeVideoUrl={activeVideoUrl}
-          onPlayVideo={handlePlayVideo}
           initialKeyword={searchKeyword}
           onTopicClick={handleTopicClick}
         />

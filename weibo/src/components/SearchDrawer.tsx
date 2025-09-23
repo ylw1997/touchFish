@@ -32,8 +32,6 @@ interface SearchDrawerProps {
   open: boolean;
   onClose: () => void;
   showImg?: boolean;
-  activeVideoUrl?: string | null;
-  onPlayVideo?: (url?: string) => void;
   getUserBlog: (user: weiboUser) => void;
   initialKeyword?: string;
   onTopicClick: (topic: string) => void;
@@ -85,8 +83,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   open,
   onClose,
   showImg,
-  activeVideoUrl,
-  onPlayVideo,
   getUserBlog,
   initialKeyword,
   onTopicClick,
@@ -184,8 +180,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       onLikeOrCancelLike: handleLike,
       showImg,
       getUserByName,
-      activeVideoUrl,
-      onPlayVideo,
       onTopicClick,
     }),
     [
@@ -198,8 +192,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       handleLike,
       showImg,
       getUserByName,
-      activeVideoUrl,
-      onPlayVideo,
       onTopicClick,
     ]
   );

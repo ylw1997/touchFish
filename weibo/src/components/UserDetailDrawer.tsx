@@ -12,8 +12,6 @@ interface UserDetailDrawerProps {
   setUserDetail: (userDetail: any) => void;
   onClose: () => void;
   showImg?: boolean;
-  activeVideoUrl?: string | null;
-  onPlayVideo?: (url?: string) => void;
   onTopicClick: (topic: string) => void;
 }
 
@@ -23,8 +21,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   setUserDetail,
   onClose,
   showImg,
-  activeVideoUrl,
-  onPlayVideo,
   onTopicClick,
 }) => {
   const userBlogRef = useRef<HTMLDivElement>(null);
@@ -230,8 +226,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                     onLikeOrCancelLike={handleLike}
                     showImg={showImg}
                     getUserByName={getUserByName}
-                    activeVideoUrl={activeVideoUrl}
-                    onPlayVideo={onPlayVideo}
                     onTopicClick={onTopicClick}
                   />
                 ))}
@@ -251,8 +245,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               }}
               setUserDetail={setSubUserDetail}
               showImg={showImg}
-              activeVideoUrl={activeVideoUrl}
-              onPlayVideo={onPlayVideo}
               onTopicClick={onTopicClick}
             />
           )}
