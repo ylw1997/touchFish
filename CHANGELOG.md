@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.25.0](https://github.com/ylw1997/touchFish/compare/v8.24.0...v8.25.0) (2025-09-23)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **request:** 优化请求处理逻辑中的错误处理和资源清理 ([0ba5c95](https://github.com/0ba5c95d5c0c9ced7055e2412bfa5a2b374e88e3))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化图片加载逻辑并移除预览功能 ([1a59b8a](https://github.com/1a59b8a0b84e0e625bf9f5d6fe378bc83ec4383d))
+
 ## [8.24.0](https://github.com/ylw1997/touchFish/compare/v8.23.0...v8.24.0) (2025-09-23)
 
 
