@@ -23,7 +23,7 @@ import { weiboItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
-import React, { CSSProperties, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { parseH5WeiboText, parseWeiboText } from "../utils/textParser";
 import TextArea from "antd/es/input/TextArea";
 
@@ -56,18 +56,6 @@ export interface WeiboCardProps extends weiboBaseActions {
   isH5?: boolean;
 }
 
-// 提取常量配置
-const CARD_CONFIG = {
-  CHILD: {
-    avatarSize: 32,
-    fontSize: 14,
-  },
-  PARENT: {
-    avatarSize: 40,
-    fontSize: 16,
-  },
-} as const;
-
 const WeiboCard: React.FC<WeiboCardProps> = ({
   item,
   is_child = false,
@@ -88,8 +76,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   onTopicClick,
   isH5 = false, // 是否是H5端
 }) => {
-  const config = is_child ? CARD_CONFIG.CHILD : CARD_CONFIG.PARENT;
-
   const [form] = Form.useForm();
 
   const [commentType, setCommentType] = useState<"comment" | "repost">();
@@ -102,16 +88,12 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     setImgShow(showImg);
   }, [showImg]);
 
-  // 提取样式对象
-  const titleStyles: CSSProperties = {
-    fontSize: config.fontSize,
-  };
 
   const renderTitle = () => (
     <Flex justify="space-between" align="center">
       <Space>
         <Avatar
-          size={config.avatarSize}
+          size={40}
           style={{ border: "none" }}
           src={
             item.user?.avatar_hd && <YImg useImg src={item.user.avatar_hd} />
@@ -122,7 +104,6 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         <div>
           <span
             className={"nick-name"}
-            style={titleStyles}
             onClick={() => {
               if (onUserClick && item.user) {
                 onUserClick(item.user);
