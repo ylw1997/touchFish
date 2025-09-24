@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.29.0](https://github.com/ylw1997/touchFish/compare/v8.28.0...v8.29.0) (2025-09-24)
+
+
+### ✨ Features | 新功能
+
+* **YImg:** 添加加载状态并优化图片和视频渲染逻辑 ([95f8837](https://github.com/95f8837d1c3e1d6d9e42d633256c8258f285a7ca))
+
 ## [8.28.0](https://github.com/ylw1997/touchFish/compare/v8.27.3...v8.28.0) (2025-09-24)
 
 
