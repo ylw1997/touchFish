@@ -1,25 +1,31 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-23 17:31:31
- * @LastEditTime: 2025-09-24 16:22:31
+ * @LastEditTime: 2025-09-24 16:43:05
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
- * @Description: 
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
+ * @Description:
  */
 import { useState, useEffect, useRef } from "react";
-import { Image } from "antd";
-import back from "../../public/back.svg"
+import { Image, Spin } from "antd";
+import back from "../../public/back.svg";
 import { useRequest } from "../hooks/useRequest";
+import { LoadingOutlined } from "@ant-design/icons";
 
 interface YImgProps {
   src: string;
-  mediaType?: 'image' | 'video';
+  mediaType?: "image" | "video";
   useImg?: boolean;
   [key: string]: any;
 }
 
-const YImg: React.FC<YImgProps> = ({ src, mediaType = 'image', useImg = false, ...props }) => {
+const YImg: React.FC<YImgProps> = ({
+  src,
+  mediaType = "image",
+  useImg = false,
+  ...props
+}) => {
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
   const elementRef = useRef<HTMLDivElement>(null);
@@ -38,17 +44,16 @@ const YImg: React.FC<YImgProps> = ({ src, mediaType = 'image', useImg = false, .
     const fetchMedia = () => {
       // Use the ref to check if already loading
       if (isLoadingRef.current) return;
-      
+
       isLoadingRef.current = true;
 
       const command = mediaType === "video" ? "GETVIDEO" : "GETIMG";
       request<string>(command, src)
-        .then(url => {
+        .then((url) => {
           if (isSubscribed) {
-            if (mediaType === 'video') {
+            if (mediaType === "video") {
               setVideoSrc(url);
-            }
-            else {
+            } else {
               setImgSrc(url);
             }
           }
@@ -61,13 +66,13 @@ const YImg: React.FC<YImgProps> = ({ src, mediaType = 'image', useImg = false, .
         });
     };
 
-    if (mediaType === 'video') {
+    if (mediaType === "video") {
       fetchMedia();
     } else {
-      observer = new IntersectionObserver(entries => {
+      observer = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
           fetchMedia();
-          if(currentRef) observer?.unobserve(currentRef);
+          if (currentRef) observer?.unobserve(currentRef);
         }
       });
       if (currentRef) {
@@ -83,15 +88,34 @@ const YImg: React.FC<YImgProps> = ({ src, mediaType = 'image', useImg = false, .
     };
   }, [src, mediaType, request]);
 
+  const placeholder = (
+    <div
+      {...props}
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Spin tip="Loading" indicator={<LoadingOutlined spin />} size="large" />
+    </div>
+  );
 
   return (
-    <div style={{ height: "inherit", display: "inline-block" }} ref={elementRef}>
-      {mediaType === 'video' ? (
+    <div
+      style={{ height: "inherit", display: "inline-block" }}
+      ref={elementRef}
+    >
+      {mediaType === "video" ? (
         <video src={videoSrc} controls {...props} autoPlay muted />
-      ) : useImg ? (
-        <img src={imgSrc} {...props} />
+      ) : imgSrc ? (
+        useImg ? (
+          <img src={imgSrc} {...props} />
+        ) : (
+          <Image src={imgSrc} {...props} fallback={back} />
+        )
       ) : (
-        <Image src={imgSrc} {...props} fallback={back} />
+        placeholder
       )}
     </div>
   );
