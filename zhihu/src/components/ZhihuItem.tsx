@@ -20,7 +20,7 @@ export interface ZhihuItemProps {
   item: ZhihuItemData;
   openQuestionDetailDrawer?: (questionId: string, title: string) => void;
   isDetail?: boolean;
-  handleVote: (answerId: string, type: 'up' | 'neutral') => void;
+  handleVote: (answerId: string, type: "up" | "neutral") => void;
 }
 const ZhihuItem: React.FC<ZhihuItemProps> = ({
   item,
@@ -76,11 +76,11 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             flexShrink: 0,
             fontSize: "20px",
           }}
-          name={item.index + ''}
+          name={item.index + ""}
         />
       ) : (
         <Avatar
-          isBordered 
+          isBordered
           radius="sm"
           style={{ flexShrink: 0 }}
           src={item.author?.avatar_url}
@@ -110,7 +110,16 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const actions = [];
   if (item.voteup_count != undefined) {
     actions.push(
-      <span className="link" key="voteup" onClick={() => handleVote(item.id, item.vote_next_step === 'unvote' ? 'neutral' : 'up')}>
+      <span
+        className="link"
+        key="voteup"
+        onClick={() =>
+          handleVote(
+            item.id,
+            item.vote_next_step === "unvote" ? "neutral" : "up"
+          )
+        }
+      >
         {item.vote_next_step === "unvote" ? (
           <LikeFilled style={{ color: "red" }} />
         ) : (
@@ -186,6 +195,11 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4 }}
+                className="ant-list-item"
+                style={{
+                  display: "block",
+                  padding: '0'
+                }}
               >
                 <CommentItem comment={comment} />
               </motion.div>
