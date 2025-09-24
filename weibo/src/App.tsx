@@ -51,7 +51,6 @@ function App() {
     contextHolder,
     messageApi,
     clearList,
-    max_id,
     handleToggleComments,
     handleExpandLongWeibo,
     userDetailVisible,
@@ -121,16 +120,9 @@ function App() {
 
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
-    let currentKey = subAcitiveKey || activeKey;
-    if (max_id) {
-      if (currentKey.includes('max_id=')) {
-        currentKey = currentKey.replace(/max_id=\d+/, `max_id=${max_id}`);
-      } else {
-        currentKey = `${currentKey}&max_id=${max_id}`;
-      }
-    }
+    const currentKey = subAcitiveKey || activeKey;
     getListData(currentKey);
-  }, [subAcitiveKey, activeKey, max_id, getListData]);
+  }, [subAcitiveKey, activeKey, getListData]);
 
   // 初始化，尝试从缓存恢复
   useEffect(() => {
@@ -222,7 +214,7 @@ function App() {
           next={fetchData}
           loader={loaderFunc()}
           endMessage={<Divider plain>没有了🤐</Divider>}
-          hasMore={(max_id === undefined || max_id > 0) && list.length < total}
+          hasMore={list.length < total}
           scrollableTarget="scrollableDiv"
         >
           {list?.map((item) => (

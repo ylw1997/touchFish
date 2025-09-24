@@ -18,7 +18,6 @@ const useWeiboAction = () => {
   const [list, setList] = useState<weiboItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
-  const [max_id, setMaxId] = useState<number>();
   const [userWeiboPage, setUserWeiboPage] = useState(1); // 用户微博页码
 
   // 当前操作项相关状态
@@ -53,9 +52,9 @@ const useWeiboAction = () => {
         const result = await apiClient.getListData(payload);
         const newList = result.statuses.filter((item) => item.mblogtype !== 1);
         setList(currentList => replace ? newList : [...currentList, ...newList]);
-        const wtotal = result.total_number ?? 999;
+        const wtotal = result.total_number ?? 9999;
         setTotal(wtotal);
-        setMaxId(result.max_id);
+        // console.log("getListData",result,payload);
       } finally {
         setIsFetching(false);
       }
@@ -82,7 +81,6 @@ const useWeiboAction = () => {
   // 清空列表
   const clearList = useCallback(() => {
     setList([]);
-    setMaxId(undefined);
     setTotal(0);
   }, []);
 
@@ -344,8 +342,6 @@ const useWeiboAction = () => {
     copyLink,
     contextHolder,
     clearList,
-    max_id,
-    setMaxId,
     handleToggleComments,
     handleExpandLongWeibo,
     curItem,
