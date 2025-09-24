@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import React, { useEffect, useRef } from "react";
 import { Drawer, Avatar, Button, Divider, Card, Tag } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -212,22 +213,29 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 style={{ marginTop: 24 }}
               >
                 {userWeiboList.map((item) => (
-                  <WeiboCard
+                  <motion.div
                     key={item.id}
-                    item={item}
-                    onFollow={followUser}
-                    onUserClick={getUserBlog}
-                    cancelFollow={cancelFollow}
-                    onExpandLongWeibo={handleExpandLongWeibo}
-                    onToggleComments={handleToggleComments}
-                    showActions={false}
-                    onCopyLink={copyLink}
-                    onCommentOrRepost={handleCommentOrRepost}
-                    onLikeOrCancelLike={handleLike}
-                    showImg={showImg}
-                    getUserByName={getUserByName}
-                    onTopicClick={onTopicClick}
-                  />
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <WeiboCard
+                      item={item}
+                      onFollow={followUser}
+                      onUserClick={getUserBlog}
+                      cancelFollow={cancelFollow}
+                      onExpandLongWeibo={handleExpandLongWeibo}
+                      onToggleComments={handleToggleComments}
+                      showActions={false}
+                      onCopyLink={copyLink}
+                      onCommentOrRepost={handleCommentOrRepost}
+                      onLikeOrCancelLike={handleLike}
+                      showImg={showImg}
+                      getUserByName={getUserByName}
+                      onTopicClick={onTopicClick}
+                    />
+                  </motion.div>
                 ))}
               </InfiniteScroll>
             )}

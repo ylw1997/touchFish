@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-09-24 09:39:18
+ * @LastEditTime: 2025-09-24 11:33:22
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -18,6 +18,7 @@ import {
   useRef,
 } from "react";
 import { Divider, FloatButton, Tabs, TabsProps } from "antd";
+import { motion } from "framer-motion";
 import "./style/index.less";
 import {
   EditOutlined,
@@ -218,22 +219,29 @@ function App() {
           scrollableTarget="scrollableDiv"
         >
           {list?.map((item) => (
-            <WeiboCard
-              getUserByName={getUserByName}
+            <motion.div
               key={item.id}
-              item={item}
-              onUserClick={getUserBlog}
-              onFollow={followUser}
-              cancelFollow={cancelFollow}
-              showActions={true}
-              onExpandLongWeibo={handleExpandLongWeibo}
-              onToggleComments={handleToggleComments}
-              onCopyLink={copyLink}
-              onCommentOrRepost={handleCommentOrRepost}
-              onLikeOrCancelLike={handleLike}
-              showImg={showImg}
-              onTopicClick={handleTopicClick}
-            />
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+            >
+              <WeiboCard
+                getUserByName={getUserByName}
+                item={item}
+                onUserClick={getUserBlog}
+                onFollow={followUser}
+                cancelFollow={cancelFollow}
+                showActions={true}
+                onExpandLongWeibo={handleExpandLongWeibo}
+                onToggleComments={handleToggleComments}
+                onCopyLink={copyLink}
+                onCommentOrRepost={handleCommentOrRepost}
+                onLikeOrCancelLike={handleLike}
+                showImg={showImg}
+                onTopicClick={handleTopicClick}
+              />
+            </motion.div>
           ))}
         </InfiniteScroll>
       </div>

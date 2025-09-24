@@ -19,6 +19,7 @@ import {
   Empty,
 } from "antd";
 import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
+import { motion } from "framer-motion";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
 import { weiboUser, SearchType } from "../../../type";
 import { WeiboUserItem } from "./WeiboUserItem";
@@ -56,7 +57,17 @@ const SearchList = memo(
           itemLayout="horizontal"
           dataSource={users}
           loading={loading}
-          renderItem={(item: weiboUser) => WeiboUserItem(item, getUserBlog)}
+          renderItem={(item: weiboUser) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+            >
+              {WeiboUserItem(item, getUserBlog)}
+            </motion.div>
+          )}
         />
       );
     }
@@ -67,13 +78,20 @@ const SearchList = memo(
 
     // Render Weibo list
     return weibos.map((item: any) => (
-      <WeiboCard
+      <motion.div
         key={item.id}
-        item={item}
-        onUserClick={getUserBlog}
-        {...weiboCardProps}
-        isH5
-      />
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4 }}
+      >
+        <WeiboCard
+          item={item}
+          onUserClick={getUserBlog}
+          {...weiboCardProps}
+          isH5
+        />
+      </motion.div>
     ));
   }
 );

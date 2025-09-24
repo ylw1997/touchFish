@@ -8,6 +8,7 @@
  * @Description:
  */
 import { List, Avatar, Flex, Image } from "antd";
+import { motion } from "framer-motion";
 import { commentsItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
@@ -29,101 +30,111 @@ export const renderComments = (
         itemLayout="horizontal"
         dataSource={comments}
         renderItem={(item) => (
-          <List.Item
-            style={{
-              padding:is_child? "8px 0px 0px" : "8px 8px 0px"
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
           >
-            <List.Item.Meta
-              avatar={
-                <Avatar
-                  size={32}
-                  src={
-                    item.user?.avatar_hd && (
-                      <YImg useImg src={item.user?.avatar_hd} />
-                    )
-                  }
-                >
-                  {item.user?.screen_name}
-                </Avatar>
-              }
-              title={
-                <span
-                  className={"nick-name"}
-                  onClick={() => {
-                    if (onUserClick && item.user) {
-                      onUserClick(item.user);
+            <List.Item
+              style={{
+                padding: is_child ? "8px 0px 0px" : "8px 8px 0px",
+              }}
+            >
+              <List.Item.Meta
+                avatar={
+                  <Avatar
+                    size={32}
+                    src={
+                      item.user?.avatar_hd && (
+                        <YImg useImg src={item.user?.avatar_hd} />
+                      )
                     }
-                  }}
-                >
-                  {item.user?.screen_name}
-                </span>
-              }
-              description={
-                <>
-                  <div className="content comment-content">
-                    {parseWeiboText(item, getUserByName, onTopicClick, true)}
-                  </div>
-                  {item.url_struct && item.url_struct.length > 0 && (
-                    <div className="imglist" style={{ marginBottom: "8px",padding: "0px" }}>
-                      <Image.PreviewGroup>
-                        {item.url_struct[0]?.pic_ids?.map((pic) => {
-                          const picInfo =
-                            item.url_struct?.[0]?.pic_infos?.[pic];
-                          if (!picInfo) return null;
-                          const imgProps = {
-                            className: "img-item",
-                            width: "100px",
-                            height: "100px",
-                            src: picInfo.large
-                              ? picInfo.large.url
-                              : picInfo.bmiddle.url,
-                          };
-                          return (
-                            <div key={pic}>
-                              <YImg {...imgProps} />
-                            </div>
-                          );
-                        })}
-                      </Image.PreviewGroup>
+                  >
+                    {item.user?.screen_name}
+                  </Avatar>
+                }
+                title={
+                  <span
+                    className={"nick-name"}
+                    onClick={() => {
+                      if (onUserClick && item.user) {
+                        onUserClick(item.user);
+                      }
+                    }}
+                  >
+                    {item.user?.screen_name}
+                  </span>
+                }
+                description={
+                  <>
+                    <div className="content comment-content">
+                      {parseWeiboText(item, getUserByName, onTopicClick, true)}
                     </div>
-                  )}
-                  <Flex
-                    justify="space-between"
-                    style={{
-                      color: "#999",
-                      fontSize: "13px",
-                      fontWeight: "normal",
-                    }}
-                    align="center"
-                  >
-                    <span>
-                      {dayjs(item.created_at).format("M-DD HH:mm")}{" "}
-                      {item.source}
-                    </span>
-                    <span>
-                      <HeartOutlined /> {item.like_counts}{" "}
-                    </span>
-                  </Flex>
-                  <div
-                    style={{
-                      marginTop: "5px",
-                    }}
-                  >
-                    {item.comments &&
-                      item.comments.length > 0 &&
-                      renderComments(
-                        item.comments,
-                        true,
-                        getUserByName,
-                        onUserClick,
-                        onTopicClick
-                      )}
-                  </div>
-                </>
-              }
-            />
-          </List.Item>
+                    {item.url_struct && item.url_struct.length > 0 && (
+                      <div
+                        className="imglist"
+                        style={{ marginBottom: "8px", padding: "0px" }}
+                      >
+                        <Image.PreviewGroup>
+                          {item.url_struct[0]?.pic_ids?.map((pic) => {
+                            const picInfo =
+                              item.url_struct?.[0]?.pic_infos?.[pic];
+                            if (!picInfo) return null;
+                            const imgProps = {
+                              className: "img-item",
+                              width: "100px",
+                              height: "100px",
+                              src: picInfo.large
+                                ? picInfo.large.url
+                                : picInfo.bmiddle.url,
+                            };
+                            return (
+                              <div key={pic}>
+                                <YImg {...imgProps} />
+                              </div>
+                            );
+                          })}
+                        </Image.PreviewGroup>
+                      </div>
+                    )}
+                    <Flex
+                      justify="space-between"
+                      style={{
+                        color: "#999",
+                        fontSize: "13px",
+                        fontWeight: "normal",
+                      }}
+                      align="center"
+                    >
+                      <span>
+                        {dayjs(item.created_at).format("M-DD HH:mm")}{" "}
+                        {item.source}
+                      </span>
+                      <span>
+                        <HeartOutlined /> {item.like_counts}{" "}
+                      </span>
+                    </Flex>
+                    <div
+                      style={{
+                        marginTop: "5px",
+                      }}
+                    >
+                      {item.comments &&
+                        item.comments.length > 0 &&
+                        renderComments(
+                          item.comments,
+                          true,
+                          getUserByName,
+                          onUserClick,
+                          onTopicClick
+                        )}
+                    </div>
+                  </>
+                }
+              />
+            </List.Item>
+          </motion.div>
         )}
       />
     </div>
