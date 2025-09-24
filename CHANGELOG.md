@@ -1,6 +1,21 @@
 # 更新历史 
 
 
+## [8.27.0](https://github.com/ylw1997/touchFish/compare/v8.26.0...v8.27.0) (2025-09-24)
+
+
+### ✨ Features | 新功能
+
+* **animations:** 为列表项添加进入动画效果 ([88d012c](https://github.com/88d012c88fe10edbd908268f2af6961e69fde6e1))
+* **weibo:** 实现长微博展开与收起功能 ([4fc87c4](https://github.com/4fc87c4c435e024ce790eef28da0b412cf055f77))
+* **weibo:** 引入 framer-motion 实现动画效果 ([be20553](https://github.com/be20553eca00990011c1e2d754949d37f10cef85))
+* **weibo:** 优化微博卡片图片和视频显示 ([47acfd5](https://github.com/47acfd523dd6517180368668b61510f24b380822))
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **weibo:** 重构 WeiboCard 组件结构 ([aa48d62](https://github.com/aa48d626a9a5946db32a4bb21a366e67fc5f8562))
+
 ## [8.26.0](https://github.com/ylw1997/touchFish/compare/v8.25.1...v8.26.0) (2025-09-24)
 
 
