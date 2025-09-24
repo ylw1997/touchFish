@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-07-23 13:59:10
- * @LastEditTime: 2025-09-22 09:38:27
+ * @LastEditTime: 2025-09-24 15:31:58
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -223,7 +223,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         height={
           weibos.length > 0 || users.length > 0
             ? "calc(100vh - 150px)"
-            : "850px"
+            : "auto"
         }
         open={open}
         onClose={closeFunc}

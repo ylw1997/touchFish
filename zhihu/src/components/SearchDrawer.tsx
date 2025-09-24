@@ -57,7 +57,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         getContainer={false}
         title="知乎搜索"
         placement="bottom"
-        height={searchResults.length > 0 ? "90vh" : "500px"}
+        height={searchResults.length > 0 ? "90vh" : "auto"}
         open={open}
         onClose={closeFunc}
         destroyOnHidden

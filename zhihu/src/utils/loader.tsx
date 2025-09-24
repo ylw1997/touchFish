@@ -17,6 +17,9 @@ export const loaderFunc = () => {
           padding: "8px",
         },
       }}
+      style={{
+        marginBottom: "8px",
+      }}
     >
       <Skeleton avatar paragraph={{ rows: 5 }} active />
     </Card>
