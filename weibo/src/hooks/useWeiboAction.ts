@@ -123,10 +123,23 @@ const useWeiboAction = () => {
         return;
       }
       const result = await apiClient.getComments(id, uid);
-      updateList(
-        (item) => item.id === id,
-        (item) => ({ ...item, comments: result.data })
-      );
+      if (is_retweeted) {
+        updateList(
+          (item) => item.retweeted_status?.id === id,
+          (item) => ({
+            ...item,
+            retweeted_status: {
+              ...item.retweeted_status!,
+              comments: result.data,
+            },
+          })
+        );
+      } else {
+        updateList(
+          (item) => item.id === id,
+          (item) => ({ ...item, comments: result.data })
+        );
+      }
     },
     [list, updateList, apiClient]
   );

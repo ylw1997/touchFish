@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-09-10 13:36:53
+ * @LastEditTime: 2025-09-24 09:39:18
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -121,11 +121,15 @@ function App() {
 
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
-    const key = subAcitiveKey || activeKey;
-
-    const payload =
-      max_id && key !== defTab[0].key ? `${key}&max_id=${max_id}` : key;
-    getListData(payload);
+    let currentKey = subAcitiveKey || activeKey;
+    if (max_id) {
+      if (currentKey.includes('max_id=')) {
+        currentKey = currentKey.replace(/max_id=\d+/, `max_id=${max_id}`);
+      } else {
+        currentKey = `${currentKey}&max_id=${max_id}`;
+      }
+    }
+    getListData(currentKey);
   }, [subAcitiveKey, activeKey, max_id, getListData]);
 
   // 初始化，尝试从缓存恢复
@@ -218,7 +222,7 @@ function App() {
           next={fetchData}
           loader={loaderFunc()}
           endMessage={<Divider plain>没有了🤐</Divider>}
-          hasMore={list.length < total}
+          hasMore={(max_id === undefined || max_id > 0) && list.length < total}
           scrollableTarget="scrollableDiv"
         >
           {list?.map((item) => (
