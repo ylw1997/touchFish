@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.26.0](https://github.com/ylw1997/touchFish/compare/v8.25.1...v8.26.0) (2025-09-24)
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化微博列表数据加载逻辑与评论获取逻辑 ([4d4a9c1](https://github.com/4d4a9c15b112dec1f75c13d496875ba7316168dc))
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 移除 max_id 参数逻辑并优化列表加载机制 ([327dec3](https://github.com/327dec30f27aa43fdb3812141d831e27f56589d9))
+
 ### [8.25.1](https://github.com/ylw1997/touchFish/compare/v8.25.0...v8.25.1) (2025-09-23)
 
 
