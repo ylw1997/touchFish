@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.28.0](https://github.com/ylw1997/touchFish/compare/v8.27.3...v8.28.0) (2025-09-24)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 调整 SearchDrawer 和 UserDetailDrawer 高度逻辑为 auto ([ce56ab5](https://github.com/ce56ab5a1f55d85311b0182e96c3f9d983801a3d))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 添加返回图标并更新图片组件的 fallback 配置 ([e28f33d](https://github.com/e28f33dc06716a83ebb4bfc02a29aec2586df196))
+
 ### [8.27.3](https://github.com/ylw1997/touchFish/compare/v8.27.2...v8.27.3) (2025-09-24)
 
 
