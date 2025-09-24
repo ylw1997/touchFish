@@ -23,6 +23,8 @@ import { weiboItem, weiboUser } from "../../../type";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { renderComments } from "./Comment";
+import { useRequest } from "../hooks/useRequest";
+import { WeiboApi } from "../api";
 import React, { useEffect, useMemo, useState } from "react";
 import { parseH5WeiboText, parseWeiboText } from "../utils/textParser";
 import TextArea from "antd/es/input/TextArea";
@@ -61,20 +63,29 @@ interface NormalizedMediaItem {
   fullUrl?: string;
 }
 
-const MediaItemDisplay: React.FC<{ media: NormalizedMediaItem, count: number }> = ({ media, count }) => {
+const MediaItemDisplay: React.FC<{
+  media: NormalizedMediaItem;
+  count: number;
+}> = ({ media, count }) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const imgProps = {
     className: count > 1 ? "img-item" : "img-only-item",
-    src: media.type === 'image' ? media.fullUrl! : media.thumbnailUrl,
+    src: media.type === "image" ? media.fullUrl! : media.thumbnailUrl,
   };
 
-  if (media.type === 'video') {
+  if (media.type === "video") {
     if (isPlaying) {
-      return <YImg src={media.fullUrl!} mediaType="video" className="video-item" />;
+      return (
+        <YImg src={media.fullUrl!} mediaType="video" className="video-item" />
+      );
     }
     return (
-      <div className="video-cover" onClick={() => setIsPlaying(true)} key={media.id}>
+      <div
+        className="video-cover"
+        onClick={() => setIsPlaying(true)}
+        key={media.id}
+      >
         <YImg className={imgProps.className} src={media.thumbnailUrl} useImg />
         <PlayCircleFilled className="video-icon" />
       </div>
@@ -82,9 +93,7 @@ const MediaItemDisplay: React.FC<{ media: NormalizedMediaItem, count: number }> 
   }
 
   // For images
-  return (
-    <YImg {...imgProps} />
-  );
+  return <YImg {...imgProps} />;
 };
 
 const WeiboCard: React.FC<WeiboCardProps> = ({
@@ -113,61 +122,92 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
 
   const [imgShow, setImgShow] = useState(showImg);
 
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [longText, setLongText] = useState("");
+  const [isLoadingLongText, setIsLoadingLongText] = useState(false);
+  const { request } = useRequest();
+  const apiClient = useMemo(() => new WeiboApi(request), [request]);
+
+  const handleToggleLongText = async () => {
+    if (isExpanded) {
+      setIsExpanded(false);
+      return;
+    }
+
+    if (longText) {
+      setIsExpanded(true);
+      return;
+    }
+
+    setIsLoadingLongText(true);
+    try {
+      const result = await apiClient.getLongText(
+        isH5 ? item.bid : item.mblogid
+      );
+      setLongText(result.data.longTextContent);
+      setIsExpanded(true);
+    } catch (error) {
+      console.error("Failed to fetch long text", error);
+    } finally {
+      setIsLoadingLongText(false);
+    }
+  };
+
   useEffect(() => {
     setImgShow(showImg);
   }, [showImg]);
 
   const normalizedMedia = useMemo(() => {
     const media: NormalizedMediaItem[] = [];
-  
+
     if (item.mix_media_info) {
-      item.mix_media_info.items.forEach(mediaItem => {
-        if (mediaItem.type === 'video') {
+      item.mix_media_info.items.forEach((mediaItem) => {
+        if (mediaItem.type === "video") {
           media.push({
             id: mediaItem.id,
-            type: 'video',
+            type: "video",
             thumbnailUrl: mediaItem.data.page_pic,
             fullUrl: mediaItem.data.media_info.stream_url,
           });
-        } else if (mediaItem.type === 'pic') {
+        } else if (mediaItem.type === "pic") {
           media.push({
             id: mediaItem.id,
-            type: 'image',
+            type: "image",
             thumbnailUrl: mediaItem.data.bmiddle.url,
             fullUrl: mediaItem.data.large.url,
           });
         }
       });
-    } else if (item.page_info && item.page_info.object_type === 'video') {
+    } else if (item.page_info && item.page_info.object_type === "video") {
       media.push({
         id: item.id.toString(),
-        type: 'video',
+        type: "video",
         thumbnailUrl: item.page_info.page_pic,
         fullUrl: item.page_info.media_info.stream_url,
       });
     } else if (isH5 && item.pics) {
-      item.pics.forEach(pic => {
+      item.pics.forEach((pic) => {
         media.push({
           id: pic.pid,
-          type: 'image',
+          type: "image",
           thumbnailUrl: pic.url,
           fullUrl: pic.url,
         });
       });
     } else if (item.pic_infos && item.pic_ids) {
-      item.pic_ids.forEach(picId => {
+      item.pic_ids.forEach((picId) => {
         const picInfo = item.pic_infos[picId];
         if (picInfo) {
           media.push({
             id: picId,
-            type: 'image',
+            type: "image",
             thumbnailUrl: picInfo.bmiddle.url,
             fullUrl: picInfo.large.url,
           });
         }
       });
     }
-  
+
     return media;
   }, [item, isH5]);
 
@@ -197,7 +237,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           <div className="info">
             <span>{dayjs(item.created_at).fromNow()}</span>
             <span>{item.region_name?.replace("发布于", "")}</span>{" "}
-            <span dangerouslySetInnerHTML={{__html: item.source}} ></span>
+            <span dangerouslySetInnerHTML={{ __html: item.source }}></span>
           </div>
         </div>
       </Space>
@@ -213,34 +253,33 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </Button>
         ) : (
           <span className="more">
-          <Dropdown
-            trigger={["hover"]}
-            menu={{
-              items: [
-                {
-                  key: "share",
-                  label: "分享",
-                  icon: <ShareAltOutlined />,
-                  onClick: () => {
-                    onCopyLink?.(
-                      `https://weibo.com/${item.user?.id}/${item.mblogid}`
-                    );
+            <Dropdown
+              trigger={["hover"]}
+              menu={{
+                items: [
+                  {
+                    key: "share",
+                    label: "分享",
+                    icon: <ShareAltOutlined />,
+                    onClick: () => {
+                      onCopyLink?.(
+                        `https://weibo.com/${item.user?.id}/${item.mblogid}`
+                      );
+                    },
                   },
-                },
-                {
-                  key:'cancelFollow',
-                  label: "取消关注",
-                  icon: <DeleteOutlined /> ,
-                  onClick: () => cancelFollow?.(item.user),
-                }
-              ],
-            }}
-          >
-            <DownCircleOutlined />
-          </Dropdown>
-        </span>
+                  {
+                    key: "cancelFollow",
+                    label: "取消关注",
+                    icon: <DeleteOutlined />,
+                    onClick: () => cancelFollow?.(item.user),
+                  },
+                ],
+              }}
+            >
+              <DownCircleOutlined />
+            </Dropdown>
+          </span>
         ))}
-      
     </Flex>
   );
 
@@ -252,8 +291,12 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     return (
       <div className="imglist">
         <Image.PreviewGroup>
-          {normalizedMedia.map(media => (
-            <MediaItemDisplay key={media.id} media={media} count={normalizedMedia.length} />
+          {normalizedMedia.map((media) => (
+            <MediaItemDisplay
+              key={media.id}
+              media={media}
+              count={normalizedMedia.length}
+            />
           ))}
         </Image.PreviewGroup>
       </div>
@@ -261,9 +304,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   };
 
   const renderActionBar = () => (
-    <div
-      className="border-top-divider action-bar"
-    >
+    <div className="border-top-divider action-bar">
       <Flex justify="space-around" align="center">
         <span
           className="link"
@@ -337,7 +378,13 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   return (
     <Card key={item.id} title={renderTitle()} className={className}>
       <div className="content">
-        {isH5
+        {isExpanded
+          ? parseWeiboText(
+              { ...item, text: longText, text_raw: longText },
+              getUserByName,
+              onTopicClick
+            )
+          : isH5
           ? item.text_raw
             ? parseWeiboText(item, getUserByName, onTopicClick)
             : parseH5WeiboText(item.text, getUserByName, onTopicClick)
@@ -345,12 +392,12 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         {item.isLongText && (
           <Tag
             color="blue"
-            style={{ marginLeft: "8px" }}
+            style={{ marginLeft: "8px", cursor: "pointer" }}
             className="link-tag"
-            onClick={() => onExpandLongWeibo?.(isH5 ? item.bid : item.mblogid)}
+            onClick={handleToggleLongText}
             bordered={false}
           >
-            展开长微博
+            {isLoadingLongText ? "加载中..." : isExpanded ? "收起" : "展开全文"}
           </Tag>
         )}
       </div>
@@ -388,7 +435,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             ))}
         </>
       )}
-      
+
       {renderActionBar()}
       {commentType && (
         <div
