@@ -354,23 +354,39 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </Tag>
         )}
       </div>
-      {imgShow && renderImages()}
-      {/* 如果showImg为false,出现一个显示图片按钮,点击显示 */}
-      {!imgShow && (item.pic_infos || (isH5 && item.pics) || hasVideo) && (
-        <Button
-          color="default"
-          variant="filled"
-          onClick={() => {
-            setImgShow(true);
-          }}
-          style={{
-            marginLeft: "8px",
-            marginBottom: "8px",
-          }}
-          size="middle"
-        >
-          显示{hasVideo ? "视频" : "图片"}
-        </Button>
+      {(item.pic_infos || (isH5 && item.pics) || hasVideo) && (
+        <>
+          {showImg && renderImages()}
+          {!showImg &&
+            (imgShow ? (
+              <>
+                {renderImages()}
+                <Button
+                  color="default"
+                  variant="filled"
+                  onClick={() => setImgShow(false)}
+                  style={{
+                    marginLeft: "8px",
+                    marginTop: "8px",
+                    marginBottom: "8px",
+                  }}
+                  size="middle"
+                >
+                  隐藏{hasVideo ? "视频" : "图片"}
+                </Button>
+              </>
+            ) : (
+              <Button
+                color="default"
+                variant="filled"
+                onClick={() => setImgShow(true)}
+                style={{ marginLeft: "8px", marginBottom: "8px" }}
+                size="middle"
+              >
+                显示{hasVideo ? "视频" : "图片"}
+              </Button>
+            ))}
+        </>
       )}
       
       {renderActionBar()}
