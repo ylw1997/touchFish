@@ -8,6 +8,7 @@ import {
   LikeFilled,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { motion } from "framer-motion";
 import React, { useMemo, useRef, useState } from "react";
 import CommentItem from "./CommentItem";
 import { parseZhihuItemContent } from "../utils/textParser";
@@ -178,7 +179,17 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             className="comment-list"
             itemLayout="horizontal"
             dataSource={comments}
-            renderItem={(comment) => <CommentItem comment={comment} />}
+            renderItem={(comment) => (
+              <motion.div
+                key={comment.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4 }}
+              >
+                <CommentItem comment={comment} />
+              </motion.div>
+            )}
             header={<h3>评论</h3>}
           />
         )}

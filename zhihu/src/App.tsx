@@ -10,6 +10,7 @@
 
 import { useEffect, useState, useCallback, useRef, type Key } from "react";
 import { Divider, FloatButton } from "antd";
+import { motion } from "framer-motion";
 import "./style/index.less";
 import {
   RedoOutlined,
@@ -136,12 +137,19 @@ function App() {
           scrollableTarget="scrollableDiv"
         >
           {list.map((item: ZhihuItemData) => (
-            <ZhihuItem
-              item={item}
+            <motion.div
               key={item.id}
-              openQuestionDetailDrawer={openQuestionDetailDrawer}
-              handleVote={handleVote}
-            />
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+            >
+              <ZhihuItem
+                item={item}
+                openQuestionDetailDrawer={openQuestionDetailDrawer}
+                handleVote={handleVote}
+              />
+            </motion.div>
           ))}
         </InfiniteScroll>
       </div>

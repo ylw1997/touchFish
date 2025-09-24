@@ -1,5 +1,6 @@
 import { Drawer, Button, Input, Form, List, Empty, Divider } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
+import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
 import type { ZhihuItemData } from "../../../type";
 import ZhihuItem from "./ZhihuItem";
@@ -97,12 +98,19 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
           <List
             dataSource={searchResults}
             renderItem={(item) => (
-              <ZhihuItem
-                item={item}
+              <motion.div
                 key={item.id}
-                handleVote={handleVote}
-                openQuestionDetailDrawer={openQuestionDetailDrawer}
-              />
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4 }}
+              >
+                <ZhihuItem
+                  item={item}
+                  handleVote={handleVote}
+                  openQuestionDetailDrawer={openQuestionDetailDrawer}
+                />
+              </motion.div>
             )}
           />
         ) : (

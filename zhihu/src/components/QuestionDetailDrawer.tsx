@@ -8,6 +8,7 @@
  * @Description:
  */
 import { Drawer, List, Card, Button } from "antd";
+import { motion } from "framer-motion";
 import React from "react";
 import ZhihuItem from "./ZhihuItem";
 import type { ZhihuItemData } from "../../../type";
@@ -97,11 +98,15 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
         <List
           dataSource={questionData}
           renderItem={(item) => (
-            <ZhihuItem
-              isDetail
-              item={item}
-              handleVote={handleVote}
-            />
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+            >
+              <ZhihuItem isDetail item={item} handleVote={handleVote} />
+            </motion.div>
           )}
         />
       )}
