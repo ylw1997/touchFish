@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-09-05 10:48:31
+ * @LastEditTime: 2025-09-24 12:35:08
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -30,11 +30,16 @@ export const renderComments = (
         itemLayout="horizontal"
         dataSource={comments}
         renderItem={(item) => (
-          <motion.div
+          <motion.li
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
+            className="ant-list-item"
+            style={{
+              display:'block',
+              padding: is_child ? "8px 0px 0px" : "8px 8px 0px",
+            }}
           >
             <List.Item
               style={{
@@ -134,7 +139,7 @@ export const renderComments = (
                 }
               />
             </List.Item>
-          </motion.div>
+          </motion.li>
         )}
       />
     </div>
