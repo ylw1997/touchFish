@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.27.3](https://github.com/ylw1997/touchFish/compare/v8.27.2...v8.27.3) (2025-09-24)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **loader:** 更新文件编辑时间并调整样式 ([e55a579](https://github.com/e55a579644894413fae91821b61b2f9e73cd299d))
+
 ### [8.27.2](https://github.com/ylw1997/touchFish/compare/v8.27.1...v8.27.2) (2025-09-24)
 
 ### [8.27.1](https://github.com/ylw1997/touchFish/compare/v8.27.0...v8.27.1) (2025-09-24)
