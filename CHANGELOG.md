@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.27.1](https://github.com/ylw1997/touchFish/compare/v8.27.0...v8.27.1) (2025-09-24)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 更新评论组件动画标签并优化样式 ([a08f92c](https://github.com/a08f92cace9147725577c3a0e968ebd680a2f98a))
+
 ## [8.27.0](https://github.com/ylw1997/touchFish/compare/v8.26.0...v8.27.0) (2025-09-24)
 
 
