@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.34.1](https://github.com/ylw1997/touchFish/compare/v8.34.0...v8.34.1) (2025-09-25)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **package:** 更新插件描述，移除 ithome 文字 ([11c800c](https://github.com/11c800ca663c25cbf5a8930d91264ccc646fc9ba))
+
 ## [8.34.0](https://github.com/ylw1997/touchFish/compare/v8.33.0...v8.34.0) (2025-09-25)
 
 
