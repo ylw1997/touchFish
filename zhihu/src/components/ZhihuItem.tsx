@@ -176,12 +176,10 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       onClick={() => {
         // 构造知乎内容的链接
         let url = "";
-        if (item.tab === "follow" || item.tab === "recommend") {
-          // 对于回答，使用问题ID和回答ID构建链接
-          url = `https://www.zhihu.com/question/${item.question?.id}/answer/${item.id}`;
-        } else {
-          // 对于问题类型（包括热门、热榜等），直接使用问题ID
+        if (item.tab === "hot" || item.tab === "hot_question") {
           url = `https://www.zhihu.com/question/${item.question?.id}`;
+        } else {
+          url = `https://www.zhihu.com/question/${item.question?.id}/answer/${item.id}`;
         }
         // 使用useZhihuAction中的copyLink函数
         copyLink(url, item.question?.title || item.title);
