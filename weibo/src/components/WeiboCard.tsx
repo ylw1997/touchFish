@@ -1,4 +1,9 @@
 import {
+  DownOutlined,
+  LoadingOutlined,
+  UpOutlined,
+} from "@ant-design/icons";
+import {
   Card,
   Tag,
 } from "antd";
@@ -125,6 +130,15 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             className="link-tag"
             onClick={handleToggleLongText}
             bordered={false}
+            icon={
+              isLoadingLongText ? (
+                <LoadingOutlined />
+              ) : isExpanded ? (
+                <UpOutlined />
+              ) : (
+                <DownOutlined />
+              )
+            }
           >
             {isLoadingLongText
               ? "加载中..."

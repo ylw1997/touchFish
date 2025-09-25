@@ -1,4 +1,11 @@
 import React from "react";
+import {
+  BarChartOutlined,
+  NumberOutlined,
+  PaperClipOutlined,
+  UserOutlined,
+  VideoCameraOutlined,
+} from "@ant-design/icons";
 import { Tag } from "antd";
 import emojiData from "../data/emoji.json";
 import { baseWeiboField } from "../../../type";
@@ -35,20 +42,20 @@ const renderTextWithLineBreaks = (text: string, baseKey: string | number) => {
 /**
  * 渲染链接标签，根据页面信息（如视频、投票）显示不同的文本。
  */
-const renderLinkTag =
-  (url: string,
-  page_info: baseWeiboField["page_info"],
-  key: string) => {
+const renderLinkTag = (url: string, page_info: any, key: string) => {
   let linkText = "网页链接";
-  let color = "blue";
+  let color = "green";
+  let icon = <PaperClipOutlined />;
 
   const objectType = page_info?.object_type;
   if (objectType === "video" || objectType === "live") {
     linkText = "视频链接";
     color = "green";
+    icon = <VideoCameraOutlined />;
   } else if (objectType === "hudongvote") {
     linkText = "投票链接";
     color = "orange";
+    icon = <BarChartOutlined />;
   }
 
   return (
@@ -58,6 +65,7 @@ const renderLinkTag =
       className="link-tag"
       onClick={() => openNewWindow(url)}
       bordered={false}
+      icon={icon}
     >
       {linkText}
     </Tag>
@@ -69,11 +77,12 @@ const renderLinkTag =
  * 它可以处理表情、话题、@用户和链接。
  * 此版本使用 `matchAll` 以获得更好的性能和代码结构。
  */
-export const parseWeiboText =
-  (weiboItem: baseWeiboField,
+export const parseWeiboText = (
+  weiboItem: baseWeiboField,
   getUserByName: (username: string) => void,
   onTopicClick: (topic: string) => void,
-  isComment = false): React.ReactNode[] => {
+  isComment = false
+): React.ReactNode[] => {
   let { text_raw } = weiboItem;
   const { page_info } = weiboItem;
   if (!text_raw) {
@@ -103,7 +112,13 @@ export const parseWeiboText =
       const emojiUrl = emojiMap.get(part);
       if (emojiUrl) {
         nodes.push(
-          <img key={key} src={emojiUrl} alt={part} className="weibo-emoji" referrerPolicy="no-referrer" />
+          <img
+            key={key}
+            src={emojiUrl}
+            alt={part}
+            className="weibo-emoji"
+            referrerPolicy="no-referrer"
+          />
         );
       } else {
         // 如果表情不在我们的 Map 中，则将其渲染为纯文本。
@@ -117,8 +132,9 @@ export const parseWeiboText =
           className="link-tag"
           onClick={() => onTopicClick?.(part)}
           bordered={false}
+          icon={<NumberOutlined />}
         >
-          {part}
+          {part.substring(1, part.length - 1)}
         </Tag>
       );
     } else if (part.startsWith("@")) {
@@ -130,8 +146,9 @@ export const parseWeiboText =
           className="link-tag"
           onClick={() => getUserByName?.(username)}
           bordered={false}
+          icon={<UserOutlined />}
         >
-          {part}
+          {username}
         </Tag>
       );
     } else if (part.startsWith("http")) {
@@ -156,8 +173,8 @@ export const parseWeiboText =
 };
 
 
-export const parseH5WeiboText =
-  (text: string,
+export const parseH5WeiboText = (
+  text: string,
   getUserByName: (username: string) => void,
   onTopicClick: (topic: string) => void
 ): React.ReactNode[] => {
@@ -186,8 +203,9 @@ export const parseH5WeiboText =
                 className="link-tag"
                 onClick={() => getUserByName?.(username)}
                 bordered={false}
+                icon={<UserOutlined />}
               >
-                {element.textContent}
+                {username}
               </Tag>
             );
           }
@@ -201,8 +219,9 @@ export const parseH5WeiboText =
                 className="link-tag"
                 onClick={() => onTopicClick?.(topic)}
                 bordered={false}
+                icon={<NumberOutlined />}
               >
-                {topic}
+                {topic.substring(1, topic.length - 1)}
               </Tag>
             );
           }

@@ -18,7 +18,11 @@ import {
   Tabs,
   Empty,
 } from "antd";
-import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  FireOutlined,
+} from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
 import { weiboUser, SearchType } from "../../../type";
@@ -263,6 +267,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
               }}
               title={item.word}
               bordered={false}
+              icon={<FireOutlined />}
             >
               {`${index + 1}. ${item.word}`}
             </Tag>

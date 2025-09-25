@@ -7,7 +7,7 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Image, Spin } from "antd";
 import back from "../../public/back.svg";
 import { useRequest } from "../hooks/useRequest";
@@ -127,4 +127,4 @@ const YImg: React.FC<YImgProps> = ({
   );
 };
 
-export default YImg;
+export default React.memo(YImg);

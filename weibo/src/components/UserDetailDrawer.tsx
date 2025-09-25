@@ -7,6 +7,13 @@ import WeiboCard from "./WeiboCard";
 import { loaderFunc } from "../utils/loader";
 import { weiboUser } from "../../../type";
 import useWeiboAction from "../hooks/useWeiboAction";
+import {
+  UsergroupAddOutlined,
+  TeamOutlined,
+  StarOutlined,
+  IdcardOutlined,
+} from "@ant-design/icons";
+
 interface UserDetailDrawerProps {
   visible: boolean;
   userDetail?: weiboUser;
@@ -147,17 +154,23 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               {userDetail.followers_count_str &&
               userDetail.friends_count_str ? (
                 <div>
-                  <Tag color="green">关注:{userDetail.friends_count_str}</Tag>
-                  <Tag color="orange">
+                  <Tag icon={<UsergroupAddOutlined />} color="green">
+                    关注:{userDetail.friends_count_str}
+                  </Tag>
+                  <Tag icon={<TeamOutlined />} color="orange">
                     粉丝:{userDetail.followers_count_str}
                   </Tag>
                   {userDetail.special_follow ? (
-                    <Tag color="pink">特别关注</Tag>
+                    <Tag icon={<StarOutlined />} color="pink">
+                      特别关注
+                    </Tag>
                   ) : (
                     <></>
                   )}
                   {userDetail.isOwner ? (
-                    <Tag color="cyan">本账号</Tag>
+                    <Tag icon={<IdcardOutlined />} color="cyan">
+                      本账号
+                    </Tag>
                   ) : (
                     <></>
                   )}
