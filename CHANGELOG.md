@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.34.0](https://github.com/ylw1997/touchFish/compare/v8.33.0...v8.34.0) (2025-09-25)
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 添加分享功能并完善数据结构 ([a27ac68](https://github.com/a27ac68ab630337b2b61892b6b5c23adca54f3f1))
+
 ## [8.33.0](https://github.com/ylw1997/touchFish/compare/v8.32.0...v8.33.0) (2025-09-25)
 
 
