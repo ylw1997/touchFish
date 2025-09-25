@@ -57,6 +57,7 @@ function App() {
     isFollowing,
     followHandler,
     unfollowHandler,
+    loading,
   } = useZhihuAction();
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -127,31 +128,35 @@ function App() {
         ))}
       </Tabs>
       <div id="scrollableDiv" ref={scrollableNodeRef} className="list">
-        <InfiniteScroll
-          dataLength={list.length}
-          next={fetchData}
-          loader={loaderFunc()}
-          endMessage={<Divider plain>没有了🤐</Divider>}
-          hasMore={activeKey != "hot" ? true : false}
-          scrollThreshold={0.95}
-          scrollableTarget="scrollableDiv"
-        >
-          {list.map((item: ZhihuItemData) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
-            >
-              <ZhihuItem
-                item={item}
-                openQuestionDetailDrawer={openQuestionDetailDrawer}
-                handleVote={handleVote}
-              />
-            </motion.div>
-          ))}
-        </InfiniteScroll>
+        {loading && list.length === 0 ? (
+          loaderFunc()
+        ) : (
+          <InfiniteScroll
+            dataLength={list.length}
+            next={fetchData}
+            loader={loaderFunc()}
+            endMessage={<Divider plain>没有了🤐</Divider>}
+            hasMore={activeKey != "hot" ? true : false}
+            scrollThreshold={0.95}
+            scrollableTarget="scrollableDiv"
+          >
+            {list.map((item: ZhihuItemData) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4 }}
+              >
+                <ZhihuItem
+                  item={item}
+                  openQuestionDetailDrawer={openQuestionDetailDrawer}
+                  handleVote={handleVote}
+                />
+              </motion.div>
+            ))}
+          </InfiniteScroll>
+        )}
       </div>
       <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
         <FloatButton.BackTop
