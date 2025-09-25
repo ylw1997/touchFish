@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.35.0](https://github.com/ylw1997/touchFish/compare/v8.34.2...v8.35.0) (2025-09-25)
+
+
+### ✨ Features | 新功能
+
+* **weiboProvider:** 重构消息处理逻辑并增强错误捕获 ([4efa42c](https://github.com/4efa42cc0df50e36bf105de1bc3f4d0bd47009be))
+
 ### [8.34.2](https://github.com/ylw1997/touchFish/compare/v8.34.1...v8.34.2) (2025-09-25)
 
 
