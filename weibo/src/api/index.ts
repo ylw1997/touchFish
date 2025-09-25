@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-22 17:00:00
- * @LastEditTime: 2025-09-22 17:00:00
+ * @LastEditTime: 2025-09-25 12:02:47
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\api\index.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -21,7 +21,7 @@ import type {
 type RequestFunc = <T = any>(
   command: CommandList,
   payload: any,
-  content: string
+  content?: string
 ) => Promise<T>;
 
 export class WeiboApi {
