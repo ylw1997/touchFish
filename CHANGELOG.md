@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.32.0](https://github.com/ylw1997/touchFish/compare/v8.31.0...v8.32.0) (2025-09-25)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **useWeiboAction:** 清空列表时不再重置总数 ([bdb03f1](https://github.com/bdb03f1adc38c45006fbcaf18999c65d54a826d5))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 修改请求方法实现并更新文件注释 ([d65b4a6](https://github.com/d65b4a6ceba41b39b27ad400f67c3d93ee1fc927))
+
 ## [8.31.0](https://github.com/ylw1997/touchFish/compare/v8.30.0...v8.31.0) (2025-09-25)
 
 
