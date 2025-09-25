@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-22 17:02:23
- * @LastEditTime: 2025-09-24 12:39:48
+ * @LastEditTime: 2025-09-25 10:18:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -88,8 +88,6 @@ export const renderComments = (
                             if (!picInfo) return null;
                             const imgProps = {
                               className: "img-item",
-                              width: "100px",
-                              height: "100px",
                               src: picInfo.large
                                 ? picInfo.large.url
                                 : picInfo.bmiddle.url,
