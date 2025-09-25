@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:38:17
- * @LastEditTime: 2025-08-21 14:21:11
+ * @LastEditTime: 2025-09-25 15:06:01
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\util.ts
  * @Description:
@@ -137,6 +137,7 @@ export const convertZhihuHotItemToZhihuItemData = (
     image_area: hotItem.image_area.url,
     index,
     type: "answer",
+    tab: "hot",
   };
 };
 
@@ -161,10 +162,10 @@ export const convertZhihuHotQuestionToZhihuItemData = (
     author: {
       ...hotQuestion.question.author,
     },
-    metrics_area: `${hotQuestion.question.answer_count} 回答 · ${hotQuestion.question.visit_count} 浏览 · ${hotQuestion.question.follower_count} 关注`,
+    metrics_area: `${hotQuestion.question.answer_count} 回答`,
+    tab: "hot_question",
   };
 };
-
 
 // 对NewsItem数组去重
 export const uniqueNews = (newsList: NewsItem[]) => {

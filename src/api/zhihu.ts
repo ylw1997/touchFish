@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-26 15:05:38
- * @LastEditTime: 2025-08-15 14:48:01
+ * @LastEditTime: 2025-09-25 14:58:01
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\zhihu.ts
  * @Description:
@@ -177,6 +177,7 @@ export const getZhihuWebData = async (
       resArr.push({
         ...element.target,
         content: zhihuContentImage(element.target.content),
+        tab: tab,
       });
   });
   return resArr;
@@ -317,13 +318,17 @@ export const getZhihuQuestionDetailFunc = async (
 export const followQuestion = async (questionId: string) => {
   const cookie = (await getOrSetZhihuCookie()) as string;
   const path = `https://www.zhihu.com/api/v4/questions/${questionId}/followers`;
-  return await axios.post(path,{}, {
-    headers: {
-      cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-    },
-  });
+  return await axios.post(
+    path,
+    {},
+    {
+      headers: {
+        cookie: cookie,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+      },
+    }
+  );
 };
 
 // 取关问题 https://www.zhihu.com/api/v4/questions/538449801/followers delete

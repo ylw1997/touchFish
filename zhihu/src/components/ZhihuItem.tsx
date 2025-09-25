@@ -6,6 +6,7 @@ import {
   UpOutlined,
   FireOutlined,
   LikeFilled,
+  ShareAltOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
@@ -35,7 +36,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
   const [showComments, setShowComments] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const { getZhihuComment, contextHolder } = useZhihuAction();
+  const { getZhihuComment, contextHolder, copyLink } = useZhihuAction();
 
   const backToView = () => {
     if (cardRef.current) {
@@ -167,6 +168,29 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     );
   }
 
+  // 添加分享按钮
+  actions.push(
+    <span
+      className="link"
+      key="share"
+      onClick={() => {
+        // 构造知乎内容的链接
+        let url = "";
+        if (item.tab === "follow" || item.tab === "recommend") {
+          // 对于回答，使用问题ID和回答ID构建链接
+          url = `https://www.zhihu.com/question/${item.question?.id}/answer/${item.id}`;
+        } else {
+          // 对于问题类型（包括热门、热榜等），直接使用问题ID
+          url = `https://www.zhihu.com/question/${item.question?.id}`;
+        }
+        // 使用useZhihuAction中的copyLink函数
+        copyLink(url, item.question?.title || item.title);
+      }}
+    >
+      <ShareAltOutlined /> 分享
+    </span>
+  );
+
   return (
     <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
       {contextHolder}
@@ -198,7 +222,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
                 className="ant-list-item"
                 style={{
                   display: "block",
-                  padding: '0'
+                  padding: "0",
                 }}
               >
                 <CommentItem comment={comment} />

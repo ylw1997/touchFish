@@ -17,6 +17,19 @@ const useZhihuAction = () => {
 
   const apiClient = useMemo(() => new ZhihuApi(request), [request]);
 
+  // 复制链接到剪贴板
+  const copyLink = useCallback(
+    (url: string, title?: string) => {
+      const textToCopy = title ? `${title}\n${url}` : url;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        messageApi.success("链接已复制到剪贴板");
+      }).catch(() => {
+        messageApi.error("复制失败，请手动复制链接");
+      });
+    },
+    [messageApi]
+  );
+
   const clearList = useCallback(() => {
     setList([]);
   }, []);
@@ -153,6 +166,7 @@ const useZhihuAction = () => {
     unfollowHandler,
     searchZhihu,
     getZhihuComment,
+    copyLink,
     loading,
   };
 };

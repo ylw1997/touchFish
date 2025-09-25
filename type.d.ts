@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-09-23 10:06:16
+ * @LastEditTime: 2025-09-25 14:55:36
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -327,6 +327,7 @@ export interface ZhihuItemData {
   vote_next_step?: "vote" | "unvote";
   title?: string;
   type: "answer" | "article" | "topic";
+  tab: "hot" | "follow" | "recommend" | "hot_question";
 }
 
 export interface ZhihuCommentItem {
