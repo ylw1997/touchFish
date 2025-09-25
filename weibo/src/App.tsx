@@ -68,6 +68,7 @@ function App() {
     followUser,
     getListData,
     getUserByName,
+    isFetching,
   } = useWeiboAction();
   // 状态管理
   const [tabs] = useState(defTab);
@@ -210,40 +211,44 @@ function App() {
               : "calc(100vh - 44px)",
         }}
       >
-        <InfiniteScroll
-          dataLength={list.length}
-          next={fetchData}
-          loader={loaderFunc()}
-          endMessage={<Divider plain>没有了🤐</Divider>}
-          hasMore={list.length < total}
-          scrollableTarget="scrollableDiv"
-        >
-          {list?.map((item) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
-            >
-              <WeiboCard
-                getUserByName={getUserByName}
-                item={item}
-                onUserClick={getUserBlog}
-                onFollow={followUser}
-                cancelFollow={cancelFollow}
-                showActions={true}
-                onExpandLongWeibo={handleExpandLongWeibo}
-                onToggleComments={handleToggleComments}
-                onCopyLink={copyLink}
-                onCommentOrRepost={handleCommentOrRepost}
-                onLikeOrCancelLike={handleLike}
-                showImg={showImg}
-                onTopicClick={handleTopicClick}
-              />
-            </motion.div>
-          ))}
-        </InfiniteScroll>
+        {isFetching && list.length === 0 ? (
+          loaderFunc()
+        ) : (
+          <InfiniteScroll
+            dataLength={list.length}
+            next={fetchData}
+            loader={loaderFunc()}
+            endMessage={<Divider plain>没有了🤐</Divider>}
+            hasMore={list.length < total}
+            scrollableTarget="scrollableDiv"
+          >
+            {list?.map((item) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4 }}
+              >
+                <WeiboCard
+                  getUserByName={getUserByName}
+                  item={item}
+                  onUserClick={getUserBlog}
+                  onFollow={followUser}
+                  cancelFollow={cancelFollow}
+                  showActions={true}
+                  onExpandLongWeibo={handleExpandLongWeibo}
+                  onToggleComments={handleToggleComments}
+                  onCopyLink={copyLink}
+                  onCommentOrRepost={handleCommentOrRepost}
+                  onLikeOrCancelLike={handleLike}
+                  showImg={showImg}
+                  onTopicClick={handleTopicClick}
+                />
+              </motion.div>
+            ))}
+          </InfiniteScroll>
+        )}
       </div>
       <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
         <FloatButton.BackTop
