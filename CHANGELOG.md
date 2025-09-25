@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.31.0](https://github.com/ylw1997/touchFish/compare/v8.30.0...v8.31.0) (2025-09-25)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 增加 axios 请求超时时间 ([a63281c](https://github.com/a63281ce36458694e9fb1b824e9a4c8a9860c6a3))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化搜索功能与文本解析逻辑 ([8db2412](https://github.com/8db24120daa3f6097039dc347f47576180cd4ce8))
+
 ## [8.30.0](https://github.com/ylw1997/touchFish/compare/v8.28.0...v8.30.0) (2025-09-25)
 
 
