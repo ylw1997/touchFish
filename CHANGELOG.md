@@ -1,6 +1,27 @@
 # 更新历史 
 
 
+## [8.30.0](https://github.com/ylw1997/touchFish/compare/v8.28.0...v8.30.0) (2025-09-25)
+
+
+### 📦 Chores | 其他更新
+
+* **release:** 8.29.0 ([002483a](https://github.com/002483ab01b35b2e1aeaf77585c57c7e17231ec3))
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo/public/back.svg:** 调整 SVG 图标缩放和位置 ([0f0e8bf](https://github.com/0f0e8bffb4ef1f507cf6af5dc08ab1ce39c6d04c))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 添加视频下载请求的超时配置 ([55ca210](https://github.com/55ca2109e5100ce4f6c434bca14f2c14866928f5))
+* **weibo:** 为多个组件添加图标支持并优化文本解析功能 ([25a3c52](https://github.com/25a3c52a7d37f37de6065f4691408713feec0c88))
+* **weibo:** 移除评论图片固定宽高并优化样式 ([65a4907](https://github.com/65a49071d32820d91429408ecee044369144a98d))
+* **weibo:** 优化微博请求头逻辑并统一超时设置 ([204cffb](https://github.com/204cffb4d171c11304489fdd3287c9aedc1cf07f))
+* **YImg:** 添加加载状态并优化图片和视频渲染逻辑 ([95f8837](https://github.com/95f8837d1c3e1d6d9e42d633256c8258f285a7ca))
+
 ## [8.29.0](https://github.com/ylw1997/touchFish/compare/v8.28.0...v8.29.0) (2025-09-24)
 
 
