@@ -98,6 +98,7 @@ export const downloadVideoAsFile = async (url: string): Promise<string> => {
         headers: {
           referer: "https://weibo.com/",
         },
+        timeout: 0,
         onDownloadProgress: (progressEvent) => {
           const total = progressEvent.total;
           if (total) {
