@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.34.2](https://github.com/ylw1997/touchFish/compare/v8.34.1...v8.34.2) (2025-09-25)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **ZhihuItem:** 修正知乎链接构造逻辑 ([6993941](https://github.com/699394187a94c0fcd31aa1f13f8b8c1c54adb37d))
+
 ### [8.34.1](https://github.com/ylw1997/touchFish/compare/v8.34.0...v8.34.1) (2025-09-25)
 
 
