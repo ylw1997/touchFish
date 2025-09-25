@@ -298,6 +298,7 @@ function App() {
           showImg={showImg}
           initialKeyword={searchKeyword}
           onTopicClick={handleTopicClick}
+          getUserByName={getUserByName}
         />
       </Suspense>
       <Suspense fallback={null}>

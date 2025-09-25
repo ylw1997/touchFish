@@ -180,6 +180,7 @@ export const parseH5WeiboText = (
 ): React.ReactNode[] => {
   if (!text) return [];
   text = text.replace(/&ZeroWidthSpace;/g, "");
+  text = text.replace("全文", "");
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(text, "text/html");
@@ -194,8 +195,11 @@ export const parseH5WeiboText = (
       if (element.tagName.toLowerCase() === "a") {
         const href = element.getAttribute("href");
         if (href?.startsWith("/n/")) {
-          const username = element.textContent?.trim().substring(1);
-          if (username) {
+          const usernameText = element.textContent?.trim();
+          if (usernameText) {
+            const username = usernameText.startsWith("@")
+              ? usernameText.substring(1)
+              : usernameText;
             nodes.push(
               <Tag
                 key={key}
@@ -221,7 +225,9 @@ export const parseH5WeiboText = (
                 bordered={false}
                 icon={<NumberOutlined />}
               >
-                {topic.substring(1, topic.length - 1)}
+                {topic.startsWith("#") && topic.endsWith("#")
+                  ? topic.substring(1, topic.length - 1)
+                  : topic}
               </Tag>
             );
           }

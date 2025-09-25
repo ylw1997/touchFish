@@ -40,6 +40,7 @@ interface SearchDrawerProps {
   getUserBlog: (user: weiboUser) => void;
   initialKeyword?: string;
   onTopicClick: (topic: string) => void;
+  getUserByName: (username: string) => void;
 }
 
 // Extracted and Memoized SearchList Component
@@ -108,6 +109,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   getUserBlog,
   initialKeyword,
   onTopicClick,
+  getUserByName,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -126,7 +128,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     cancelFollow,
     followUser,
     setList: setWeibos,
-    getUserByName,
     getHotSearch,
     getWeiboSearch,
   } = useWeiboAction();
