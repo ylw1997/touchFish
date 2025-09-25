@@ -81,7 +81,6 @@ const useWeiboAction = () => {
   // 清空列表
   const clearList = useCallback(() => {
     setList([]);
-    setTotal(0);
   }, []);
 
   // 复制
