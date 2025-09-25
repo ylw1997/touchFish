@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 13:54:53
- * @LastEditTime: 2025-09-18 16:06:50
+ * @LastEditTime: 2025-09-25 10:57:42
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\weibo.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -15,7 +15,7 @@ import ContextManager from "../utils/extensionContext";
 import * as fs from "fs";
 import { Uri } from "vscode";
 
-axios.defaults.timeout = 5000;
+axios.defaults.timeout = 10000;
 
 axios.interceptors.response.use(
   (value) => value,
