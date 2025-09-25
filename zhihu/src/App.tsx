@@ -134,7 +134,7 @@ function App() {
           <InfiniteScroll
             dataLength={list.length}
             next={fetchData}
-            loader={loaderFunc()}
+            loader={loading ? loaderFunc() : null}
             endMessage={<Divider plain>没有了🤐</Divider>}
             hasMore={activeKey != "hot" ? true : false}
             scrollThreshold={0.95}

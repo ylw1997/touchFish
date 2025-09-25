@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-09-24 11:33:22
+ * @LastEditTime: 2025-09-25 17:32:33
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -97,25 +97,25 @@ function App() {
 
     const handleScroll = debounce(() => {
       vscode.postMessage({
-        command: 'SAVE_SCROLL_POSITION',
-        payload: scrollableNode.scrollTop
+        command: "SAVE_SCROLL_POSITION",
+        payload: scrollableNode.scrollTop,
       });
     }, 500);
 
     const messageHandler = (ev: MessageEvent<any>) => {
       if (ev.type !== "message" || !ev.data?.command) return;
-      if (ev.data.command === 'RESTORE_SCROLL_POSITION') {
-          if (scrollableNodeRef.current) {
-            scrollableNodeRef.current.scrollTop = ev.data.payload;
-          }
+      if (ev.data.command === "RESTORE_SCROLL_POSITION") {
+        if (scrollableNodeRef.current) {
+          scrollableNodeRef.current.scrollTop = ev.data.payload;
+        }
       }
     };
 
-    scrollableNode.addEventListener('scroll', handleScroll);
+    scrollableNode.addEventListener("scroll", handleScroll);
     window.addEventListener("message", messageHandler);
 
     return () => {
-      scrollableNode.removeEventListener('scroll', handleScroll);
+      scrollableNode.removeEventListener("scroll", handleScroll);
       window.removeEventListener("message", messageHandler);
     };
   }, []);
@@ -217,7 +217,7 @@ function App() {
           <InfiniteScroll
             dataLength={list.length}
             next={fetchData}
-            loader={loaderFunc()}
+            loader={isFetching ? loaderFunc() : null}
             endMessage={<Divider plain>没有了🤐</Divider>}
             hasMore={list.length < total}
             scrollableTarget="scrollableDiv"

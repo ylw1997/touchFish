@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-23 17:31:31
- * @LastEditTime: 2025-09-25 12:05:05
+ * @LastEditTime: 2025-09-25 16:50:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\hooks\useRequest.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -25,35 +25,19 @@ export const useRequest = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   const request = useCallback(
-    <T = any>(
-      command: CommandList,
-      payload: any,
-      content?: string
-    ): Promise<T> => {
+    <T = any>(command: CommandList, payload: any): Promise<T> => {
       const uuid = generateUUID();
 
-      // if (content) {
-      // messageApi.open({ key: uuid, type: "loading", content, duration: 0 });
-      // }
-
-      vscode.postMessage({ command, payload, uuid });
-
       return new Promise<T>((resolve, reject) => {
+        // Register the pending request before sending the message to avoid
+        // a race where the extension posts a response before the handler is added.
         messageHandler.addRequest(uuid, resolve, reject);
+        vscode.postMessage({ command, payload, uuid });
       }).catch((error) => {
-        if (content) {
-          messageApi.error(error.message || "请求失败");
-        }
         throw error; // Re-throw the error to be caught by the caller
       });
-      // .finally(() => {
-      //   if (content) {
-      //     // Only destroy if it was created
-      //     messageApi.destroy(uuid);
-      //   }
-      // });
     },
-    [messageApi]
+    []
   );
 
   return { request, contextHolder, messageApi };
