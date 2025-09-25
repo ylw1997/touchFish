@@ -154,7 +154,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
           </>
         ) : (
           <>
-            <DownOutlined /> 阅读全文
+            <DownOutlined /> 全文
           </>
         )}
       </span>
