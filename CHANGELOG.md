@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [8.33.0](https://github.com/ylw1997/touchFish/compare/v8.32.0...v8.33.0) (2025-09-25)
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化列表加载状态显示逻辑 ([a82c26e](https://github.com/a82c26ec0686e9e20f16ca0c992f47aedf12af79))
+* **zhihu:** 优化列表加载状态显示逻辑 ([ffbae0a](https://github.com/ffbae0ad6e69b99e22560103915489b417740cce))
+
 ## [8.32.0](https://github.com/ylw1997/touchFish/compare/v8.31.0...v8.32.0) (2025-09-25)
 
 
