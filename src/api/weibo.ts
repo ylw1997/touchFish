@@ -15,6 +15,8 @@ import ContextManager from "../utils/extensionContext";
 import * as fs from "fs";
 import { Uri } from "vscode";
 
+axios.defaults.timeout = 5000;
+
 axios.interceptors.response.use(
   (value) => value,
   (error) => {
@@ -49,17 +51,23 @@ export const getOrSetWeiboCookie = async () => {
   return cookie;
 };
 
-export const getWeiboData = async (url: string) => {
+const getWeiboHeaders = async (extraHeaders = {}) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
   const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
+  return {
+    Cookie: cookie,
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    "X-Xsrf-Token": xsrf,
+    Referer: "https://weibo.com/",
+    Connection: "close",
+    ...extraHeaders,
+  };
+};
+
+export const getWeiboData = async (url: string) => {
   return await axios.get(`https://weibo.com/ajax/feed${url}`, {
-    headers: {
-      Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      "X-Xsrf-Token": xsrf,
-      Referer: "https://weibo.com/",
-    },
+    headers: await getWeiboHeaders(),
   });
 };
 
@@ -141,57 +149,31 @@ export const downloadVideoAsFile = async (url: string): Promise<string> => {
 
 // 获取微博评论
 export const getWeiboComment = async (url: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.get(`https://weibo.com/ajax${url}`, {
-    headers: {
-      Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      "X-Xsrf-Token": xsrf,
-      Referer: "https://weibo.com/",
-    },
+    headers: await getWeiboHeaders(),
   });
 };
 
 // 获取长微博
 export const getLongText = async (id: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.get(`https://weibo.com/ajax/statuses/longtext?id=${id}`, {
-    headers: {
-      Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      "X-Xsrf-Token": xsrf,
-      Referer: "https://weibo.com/",
-    },
+    headers: await getWeiboHeaders(),
   });
 };
 
 // 查看博主 https://weibo.com/ajax/statuses/mymblog?uid=5766179244&page=1&feature=0
 export const getUserWeibo = async (params: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
   const parsedParams = JSON.parse(params);
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.get(
     `https://weibo.com/ajax/statuses/mymblog?uid=${parsedParams.uid}&page=${parsedParams.page}&feature=0`,
     {
-      headers: {
-        Cookie: cookie,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        "X-Xsrf-Token": xsrf,
-        Referer: "https://weibo.com/",
-      },
+      headers: await getWeiboHeaders(),
     }
   );
 };
 
 // 关注博主 https://weibo.com/ajax/friendships/create friend_uid
 export const followUser = async (friend_uid: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(
     `https://weibo.com/ajax/friendships/create`,
     {
@@ -200,13 +182,7 @@ export const followUser = async (friend_uid: string) => {
       page: "profile",
     },
     {
-      headers: {
-        Cookie: cookie,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        "X-Xsrf-Token": xsrf,
-        Referer: "https://weibo.com/",
-      },
+      headers: await getWeiboHeaders(),
     }
   );
 };
@@ -226,28 +202,20 @@ type weiboSendParams = {
 };
 
 export const sendWeibo = async (params: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
   const parsedParams = JSON.parse(params) as weiboSendParams;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(
     `https://weibo.com/ajax/statuses/update`,
     parsedParams,
     {
-      headers: {
-        Cookie: cookie,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        "X-Xsrf-Token": xsrf,
+      headers: await getWeiboHeaders({
         "Content-Type": "application/x-www-form-urlencoded",
-        Referer: "https://weibo.com/",
-      },
+      }),
     }
   );
 };
 
 // 上传图片 https://picupload.weibo.com/interface/pic_upload.php?app=miniblog&s=json&p=1&data=1&url=weibo.com%2Fu%2F7515513422&markpos=1&logo=1&nick=ylwgg&file_source=4&_rid=ZoWn_8FNOXSvGid5
 export const uploadImage = async (file: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
   // 将 base64 转为二进制 Buffer
   const buffer = Buffer.isBuffer(file)
     ? file
@@ -258,113 +226,69 @@ export const uploadImage = async (file: string) => {
   return await axios.request({
     url: `https://picupload.weibo.com/interface/pic_upload.php?app=miniblog&p=1&data=1`,
     method: "POST",
-    headers: {
-      Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    headers: await getWeiboHeaders({
       "Content-Type": "application/octet-stream",
-      Referer: "https://weibo.com/",
-    },
+    }),
     data: buffer,
   });
 };
 
 // 取消关注博主 https://weibo.com/ajax/friendships/destory
 export const cancelfollowUser = async (uid: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(
     `https://weibo.com/ajax/friendships/destory`,
     { uid },
     {
-      headers: {
-        Cookie: cookie,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        "X-Xsrf-Token": xsrf,
-        Referer: "https://weibo.com/",
-      },
+      headers: await getWeiboHeaders(),
     }
   );
 };
 
 // like https://weibo.com/ajax/statuses/setLike {"id":"5181037522454301"}
 export const setLike = async (id: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(
     `https://weibo.com/ajax/statuses/setLike`,
     { id },
     {
-      headers: {
-        Cookie: cookie,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        "X-Xsrf-Token": xsrf,
-        Referer: "https://weibo.com/",
-      },
+      headers: await getWeiboHeaders(),
     }
   );
 };
 // cancelLike https://weibo.com/ajax/statuses/cancelLike {"id":"5181037522454301"}
 export const cancelLike = async (id: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(
     `https://weibo.com/ajax/statuses/cancelLike`,
     { id },
     {
-      headers: {
-        Cookie: cookie,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        "X-Xsrf-Token": xsrf,
-        Referer: "https://weibo.com/",
-      },
+      headers: await getWeiboHeaders(),
     }
   );
 };
 
 // 评论
 export const createComments = async (params: weiboCommentParams) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(`https://weibo.com/ajax/comments/create`, params, {
-    headers: {
-      Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      "X-Xsrf-Token": xsrf,
+    headers: await getWeiboHeaders({
       "Content-Type": "application/x-www-form-urlencoded",
-      Referer: "https://weibo.com/",
-    },
+    }),
   });
 };
 
 // 转发
 export const createRepost = async (params: weiboRepostParams) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.post(
     `https://weibo.com/ajax/statuses/normal_repost`,
     params,
     {
-      headers: {
-        Cookie: cookie,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-        "X-Xsrf-Token": xsrf,
+      headers: await getWeiboHeaders({
         "Content-Type": "application/x-www-form-urlencoded",
-        Referer: "https://weibo.com/",
-      },
+      }),
     }
   );
 };
 
 // 根据用户名查询用户信息
 export const getUserByName = async (screen_name_or_id: string) => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   let params = "";
   if (/^\d+$/.test(screen_name_or_id)) {
     params = `id=${screen_name_or_id}`;
@@ -372,28 +296,14 @@ export const getUserByName = async (screen_name_or_id: string) => {
     params = `screen_name=${screen_name_or_id}`;
   }
   return await axios.get(`https://weibo.com/ajax/user/popcard/get?${params}`, {
-    headers: {
-      Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      "X-Xsrf-Token": xsrf,
-      Referer: "https://weibo.com/",
-    },
+    headers: await getWeiboHeaders(),
   });
 };
 
 // 获取热搜
 export const getHotSearch = async () => {
-  const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
   return await axios.get(`https://weibo.com/ajax/side/hotSearch`, {
-    headers: {
-      Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      "X-Xsrf-Token": xsrf,
-      Referer: "https://weibo.com/",
-    },
+    headers: await getWeiboHeaders(),
   });
 };
 

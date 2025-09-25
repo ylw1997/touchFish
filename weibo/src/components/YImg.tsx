@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-23 17:31:31
- * @LastEditTime: 2025-09-24 16:43:05
+ * @LastEditTime: 2025-09-25 09:31:38
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -58,7 +58,12 @@ const YImg: React.FC<YImgProps> = ({
             }
           }
         })
-        .catch(console.error)
+        .catch((err) => {
+          console.error(err);
+          if (isSubscribed) {
+            setImgSrc(""); // Set to invalid value to trigger fallback
+          }
+        })
         .finally(() => {
           if (isSubscribed) {
             isLoadingRef.current = false;
@@ -97,7 +102,7 @@ const YImg: React.FC<YImgProps> = ({
         alignItems: "center",
       }}
     >
-      <Spin tip="Loading" indicator={<LoadingOutlined spin />} size="large" />
+      <Spin tip="Loading" indicator={<LoadingOutlined spin />} />
     </div>
   );
 
@@ -108,12 +113,13 @@ const YImg: React.FC<YImgProps> = ({
     >
       {mediaType === "video" ? (
         <video src={videoSrc} controls {...props} autoPlay muted />
-      ) : imgSrc ? (
-        useImg ? (
-          <img src={imgSrc} {...props} />
-        ) : (
-          <Image src={imgSrc} {...props} fallback={back} />
-        )
+      ) : imgSrc !== undefined ? (
+        <Image
+          src={imgSrc}
+          {...props}
+          preview={useImg ? false : true}
+          fallback={back}
+        />
       ) : (
         placeholder
       )}
