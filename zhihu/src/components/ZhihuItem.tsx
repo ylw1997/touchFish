@@ -23,12 +23,14 @@ export interface ZhihuItemProps {
   openQuestionDetailDrawer?: (questionId: string, title: string) => void;
   isDetail?: boolean;
   handleVote: (answerId: string, type: "up" | "neutral") => void;
+  showImg?: boolean;
 }
 const ZhihuItem: React.FC<ZhihuItemProps> = ({
   item,
   openQuestionDetailDrawer,
   isDetail,
   handleVote,
+  showImg = true,
 }) => {
   const isLoneContent = useMemo(() => {
     return item.content && item.content.length > 2000;
@@ -197,7 +199,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
       {contextHolder}
       <Card key={item.id} title={renderTitle()} actions={actions}>
-        <div className="content">
+        <div className={`content ${!showImg ? "hide-images" : ""}`.trim()}>
           {item.content ? (
             parseZhihuItemContent(expanded ? item.content : item.excerpt)
           ) : (

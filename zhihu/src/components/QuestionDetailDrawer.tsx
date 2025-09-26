@@ -27,6 +27,7 @@ interface QuestionDetailDrawerProps {
   isFollowing: boolean | undefined;
   followHandler: () => void;
   unfollowHandler: () => void;
+  showImg?: boolean;
 }
 
 const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
@@ -39,6 +40,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   isFollowing,
   followHandler,
   unfollowHandler,
+  showImg = true,
 }) => {
   return (
     <Drawer
@@ -105,7 +107,12 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
               viewport={{ once: true }}
               transition={{ duration: 0.4 }}
             >
-              <ZhihuItem isDetail item={item} handleVote={handleVote} />
+              <ZhihuItem
+                isDetail
+                item={item}
+                handleVote={handleVote}
+                showImg={showImg}
+              />
             </motion.div>
           )}
         />

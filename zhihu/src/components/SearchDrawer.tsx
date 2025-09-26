@@ -15,6 +15,7 @@ interface SearchDrawerProps {
     answerId: string,
     type: "up" | "neutral",
   ) => void;
+  showImg?: boolean;
 }
 
 const SearchDrawer: React.FC<SearchDrawerProps> = ({
@@ -22,6 +23,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   onClose,
   openQuestionDetailDrawer,
   handleVote,
+  showImg = true,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -109,6 +111,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
                   item={item}
                   handleVote={handleVote}
                   openQuestionDetailDrawer={openQuestionDetailDrawer}
+                  showImg={showImg}
                 />
               </motion.div>
             )}

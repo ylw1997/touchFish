@@ -168,6 +168,7 @@ const useZhihuAction = () => {
     getZhihuComment,
     copyLink,
     loading,
+    messageApi,
   };
 };
 
