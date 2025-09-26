@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.37.0](https://github.com/ylw1997/touchFish/compare/v8.36.0...v8.37.0) (2025-09-26)
+
+
+### ✨ Features | 新功能
+
+* **nga:** 添加 NGA 论坛支持与 Token 设置功能 ([964f809](https://github.com/964f80972afc571c6f15dfe378756cc926f37365))
+
 ## [8.36.0](https://github.com/ylw1997/touchFish/compare/v8.35.0...v8.36.0) (2025-09-26)
 
 
