@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.38.0](https://github.com/ylw1997/touchFish/compare/v8.37.0...v8.38.0) (2025-09-26)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 调整加载状态间距以优化视觉效果 ([98f69eb](https://github.com/98f69eb0e4aeeb2a5fac710ae991adeab97b8519))
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 添加评论加载状态并优化加载动画显示逻辑 ([1ea7bb0](https://github.com/1ea7bb024f3a7da47371cd932706f73c2e3a23ab))
+
 ## [8.37.0](https://github.com/ylw1997/touchFish/compare/v8.36.0...v8.37.0) (2025-09-26)
 
 
