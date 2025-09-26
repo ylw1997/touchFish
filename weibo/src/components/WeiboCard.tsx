@@ -117,7 +117,9 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
             ? parseWeiboText(item, getUserByName, onTopicClick)
             : parseH5WeiboText(item.text, getUserByName, onTopicClick)
           : parseWeiboText(item, getUserByName, onTopicClick)}
-        {item.isLongText && (
+        {item.isLongText &&
+          ((item.text_raw && item.text_raw.length > 140) ||
+            (isH5 && !item.text_raw && item.text && item.text.length > 140)) && (
           <Tag
             color="blue"
             style={{ marginLeft: "8px", cursor: "pointer" }}
