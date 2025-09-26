@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-06-17 17:57:55
- * @LastEditTime: 2025-09-25 17:32:33
+ * @LastEditTime: 2025-09-26 18:05:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -22,7 +22,8 @@ import { motion } from "framer-motion";
 import "./style/index.less";
 import {
   EditOutlined,
-  PictureOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   RedoOutlined,
   SearchOutlined,
   VerticalAlignTopOutlined,
@@ -50,7 +51,6 @@ function App() {
     total,
     copyLink,
     contextHolder,
-    messageApi,
     clearList,
     handleToggleComments,
     handleExpandLongWeibo,
@@ -282,10 +282,20 @@ function App() {
         {/* 显示图片 */}
         <FloatButton
           onClick={() => {
-            messageApi.success(`图片已${showImg ? "隐藏" : "显示"}!`);
-            setShowImg((showImg) => !showImg);
+            const newState = !showImg;
+            setShowImg(newState);
+            vscode.postMessage({
+              command: "TOGGLE_SHOW_IMG",
+              payload: newState,
+            });
           }}
-          icon={<PictureOutlined style={{ color: "#13c2c2" }} />}
+          icon={
+            showImg ? (
+              <EyeOutlined style={{ color: "#13c2c2" }} />
+            ) : (
+              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+            )
+          }
           tooltip={{
             title: `${showImg ? "隐藏" : "显示"}图片`,
             placement: "left",

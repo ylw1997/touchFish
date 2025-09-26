@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-09-26 17:38:39
+ * @LastEditTime: 2025-09-26 18:02:57
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -60,11 +60,9 @@ function App() {
     followHandler,
     unfollowHandler,
     loading,
-    messageApi,
   } = useZhihuAction();
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
-  console.log("render 知乎",window.showImg);
   const [showImg, setShowImg] = useState(
     window.showImg != undefined ? window.showImg : true
   );
@@ -189,8 +187,12 @@ function App() {
         />
         <FloatButton
           onClick={() => {
-            messageApi.success(`图片已${showImg ? "隐藏" : "显示"}!`);
-            setShowImg((showImg) => !showImg);
+            const newState = !showImg;
+            setShowImg(newState);
+            vscode.postMessage({
+              command: "TOGGLE_SHOW_IMG",
+              payload: newState,
+            });
           }}
           icon={
             showImg ? (

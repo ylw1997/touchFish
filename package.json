@@ -46,7 +46,7 @@
 				"touchfish.showImg": {
 					"type": "boolean",
 					"default": true,
-					"description": "是否显示图片(此选项暂时只支持微博)"
+					"description": "是否显示图片"
 				},
 				"touchfish.weiboCookie": {
 					"type": "string",

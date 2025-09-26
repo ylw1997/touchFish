@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-20 09:30:49
+ * @LastEditTime: 2025-09-26 17:49:49
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\weiboProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -65,6 +65,15 @@ export class WeiboProvider implements WebviewViewProvider {
         // console.log("Weibo provider received a message:", message);
         try {
           switch (command) {
+            case "TOGGLE_SHOW_IMG": {
+              const newState = payload as boolean;
+              const config = vscode.workspace.getConfiguration("touchfish");
+              config.update("showImg", newState, true);
+              vscode.window.showInformationMessage(
+                `图片已设置为${newState ? "显示" : "隐藏"}`
+              );
+              break;
+            }
             case "SAVE_SCROLL_POSITION": {
               this.context.workspaceState.update(
                 "weiboScrollPosition",
@@ -354,7 +363,11 @@ export class WeiboProvider implements WebviewViewProvider {
         </html>
       `;
     } else {
-      const distPath = Uri.joinPath(this.context.extensionUri, "weibo", "dist");
+      const distPath = Uri.joinPath(
+        this.context.extensionUri,
+        "weibo",
+        "dist"
+      );
       const indexPath = Uri.joinPath(distPath, "index.html");
       let html = fs.readFileSync(indexPath.fsPath, "utf-8");
       html = html.replace(

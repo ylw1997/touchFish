@@ -53,6 +53,15 @@ export class ZhihuWebProvider implements WebviewViewProvider {
         const { command, payload, uuid } = message;
         try {
           switch (command) {
+            case "TOGGLE_SHOW_IMG": {
+              const newState = payload as boolean;
+              const config = vscode.workspace.getConfiguration("touchfish");
+              config.update("showImg", newState, true);
+              vscode.window.showInformationMessage(
+                `图片已设置为${newState ? "显示" : "隐藏"}`
+              );
+              break;
+            }
             case "ZHIHU_GETDATA": {
               const data = await getZhihuWebData(payload);
               webviewView.webview.postMessage({ payload: data, uuid });

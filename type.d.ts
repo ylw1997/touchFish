@@ -78,7 +78,8 @@ export type CommandList =
   | "GETVIDEO"
   | "SENDVIDEO"
   | "SAVE_SCROLL_POSITION"
-  | "RESTORE_SCROLL_POSITION";
+  | "RESTORE_SCROLL_POSITION"
+  | "TOGGLE_SHOW_IMG";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"
@@ -92,7 +93,8 @@ export type ZhihuCommandList =
   | "ZHIHU_SEND_SEARCH_RESULTS"
   | "ZHIHU_FOLLOW_QUESTION"
   | "ZHIHU_UNFOLLOW_QUESTION"
-  | "ZHIHU_RESTORE_SCROLL_POSITION";
+  | "ZHIHU_RESTORE_SCROLL_POSITION"
+  | "TOGGLE_SHOW_IMG";
 
 export type ZhihuCommandsType<T> = {
   command: ZhihuCommandList;
