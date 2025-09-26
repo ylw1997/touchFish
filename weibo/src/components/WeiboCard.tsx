@@ -158,7 +158,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       {item.comments && (
         <>
           {item.comments === "loading" ? (
-            <div style={{ margin: "8px" }}>{loaderFunc(2)}</div>
+            <div style={{ margin: "5px" }}>{loaderFunc(2)}</div>
           ) : (
             renderComments(
               item.comments,
