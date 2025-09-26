@@ -19,6 +19,7 @@ const useWeiboAction = () => {
   const [total, setTotal] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
   const [userWeiboPage, setUserWeiboPage] = useState(1); // 用户微博页码
+  const [maxId, setMaxId] = useState(0);
 
   // 当前操作项相关状态
   const [curItem, setCurItem] = useState<weiboItem>();
@@ -48,18 +49,41 @@ const useWeiboAction = () => {
   const getListData = useCallback(
     async (payload: string, replace = false) => {
       setIsFetching(true);
+      let newPayload = payload;
+      const currentMaxId = replace ? 0 : maxId;
+
+      if (replace) {
+        setMaxId(0);
+      }
+
+      if (currentMaxId > 0) {
+        // If we have a max_id, use it.
+        // Remove since_id if it exists.
+        newPayload = newPayload.replace(/&?since_id=\d+/, "");
+        // Add or replace max_id.
+        if (newPayload.includes("max_id=")) {
+          newPayload = newPayload.replace(/max_id=\d+/, `max_id=${currentMaxId}`);
+        } else {
+          newPayload = `${newPayload}&max_id=${currentMaxId}`;
+        }
+      }
       try {
-        const result = await apiClient.getListData(payload);
+        const result = await apiClient.getListData(newPayload);
+        if (result.max_id) {
+          setMaxId(result.max_id);
+        }
         const newList = result.statuses.filter((item) => item.mblogtype !== 1);
-        setList(currentList => replace ? newList : [...currentList, ...newList]);
+        setList((currentList) =>
+          replace ? newList : [...currentList, ...newList]
+        );
         const wtotal = result.total_number ?? 9999;
         setTotal(wtotal);
-        // console.log("getListData",result,payload);
+        console.log("getListData", result, newPayload);
       } finally {
         setIsFetching(false);
       }
     },
-    [apiClient]
+    [apiClient, maxId]
   );
 
   const getUserBlogData = useCallback(
