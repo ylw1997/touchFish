@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [8.36.0](https://github.com/ylw1997/touchFish/compare/v8.35.0...v8.36.0) (2025-09-26)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 更新微博列表请求参数以支持分页加载 ([10f4b8f](https://github.com/10f4b8fefae6ef20e8ac4992c555d05798008c8c))
+
+
+### ✨ Features | 新功能
+
+* **weibo:** 优化评论加载状态显示与类型定义 ([3557939](https://github.com/35579397e0a4e798ca9cc315d5d5aaf80e4a56d2))
+* **YImg:** 优化图片懒加载观察器配置 ([8091770](https://github.com/809177082138ef7e83aff6e6e7af5be099ccdc5e))
+
 ## [8.35.0](https://github.com/ylw1997/touchFish/compare/v8.34.2...v8.35.0) (2025-09-25)
 
 
