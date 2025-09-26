@@ -1,6 +1,27 @@
 # 更新历史 
 
 
+## [8.39.0](https://github.com/ylw1997/touchFish/compare/v8.38.0...v8.39.0) (2025-09-26)
+
+
+### 📝 Documentation | 文档
+
+* **readme:** 更新 README 文档内容与功能说明 ([1705f92](https://github.com/1705f92932c3e8fb8e9cda4287b86d885eb75961))
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **weibo:** 修复长文本判断逻辑不准确的问题 ([99591c5](https://github.com/99591c50474a24e99388776b9d4d0e117211b2cc))
+
+
+### ✨ Features | 新功能
+
+* **provider:** 实现图片显示切换功能并更新相关配置描述 ([000f04a](https://github.com/000f04a148bc9ac817b45a6092cd1654962ee26c))
+* **style:** 优化隐藏图片功能的样式处理 ([9396d5d](https://github.com/9396d5d806389cd2642fdda2f3fe36e5f6bb715d))
+* **zhihu:** 添加图片显示/隐藏功能 ([3a88079](https://github.com/3a88079f9b8165fb031995e311b76eeda320f4d2))
+* **zhihu:** 优化图片显示控制逻辑并支持手动切换 ([9525620](https://github.com/952562074e3bc9d97cf747233d21ddc543b05230))
+* **zhihuWebProvider:** 添加图片显示配置项支持 ([92f7cee](https://github.com/92f7cee0f9d409d3ca88dd9800f9b163fb880330))
+
 ## [8.38.0](https://github.com/ylw1997/touchFish/compare/v8.37.0...v8.38.0) (2025-09-26)
 
 
