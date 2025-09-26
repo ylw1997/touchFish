@@ -1,4 +1,4 @@
-import { Card, Flex, List } from "antd";
+import { Card, Flex, List, Button } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
@@ -30,7 +30,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   openQuestionDetailDrawer,
   isDetail,
   handleVote,
-  showImg = true,
+  showImg: globalShowImg = true,
 }) => {
   const isLoneContent = useMemo(() => {
     return item.content && item.content.length > 2000;
@@ -41,6 +41,12 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const [commentsLoading, setCommentsLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const { getZhihuComment, contextHolder, copyLink } = useZhihuAction();
+  const [overrideShow, setOverrideShow] = useState(false);
+  const imagesVisible = globalShowImg || overrideShow;
+  const hasImages = useMemo(
+    () => (item.content && item.content.includes("<img")) || item.image_area,
+    [item.content, item.image_area]
+  );
 
   const backToView = () => {
     if (cardRef.current) {
@@ -199,7 +205,9 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
       {contextHolder}
       <Card key={item.id} title={renderTitle()} actions={actions}>
-        <div className={`content ${!showImg ? "hide-images" : ""}`.trim()}>
+        <div
+          className={`content ${!imagesVisible ? "hide-images" : ""}`.trim()}
+        >
           {item.content ? (
             parseZhihuItemContent(expanded ? item.content : item.excerpt)
           ) : (
@@ -210,6 +218,18 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             ></div>
           )}
           {item.image_area && !isDetail ? <img src={item.image_area} /> : <></>}
+          {!globalShowImg &&
+            hasImages &&
+            (expanded || (item.excerpt && item.excerpt.includes("<img"))) && (
+              <Button
+                color="default"
+                variant="filled"
+                onClick={() => setOverrideShow(!overrideShow)}
+                size="middle"
+              >
+                {overrideShow ? "隐藏图片" : "显示图片"}
+              </Button>
+            )}
         </div>
         {showComments &&
           (commentsLoading ? (
