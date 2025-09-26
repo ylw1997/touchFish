@@ -29,6 +29,7 @@ import {
   openSetting,
   setZhihuTokenCommand,
   setWeiboTokenCommand,
+  setNgaTokenCommand,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
@@ -85,6 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(openNgaUrl);
   context.subscriptions.push(setZhihuTokenCommand());
   context.subscriptions.push(setWeiboTokenCommand());
+  context.subscriptions.push(setNgaTokenCommand());
   // 自动刷新
   vscode.commands.executeCommand("itHome.refresh");
   vscode.commands.executeCommand("chiphell.refresh");

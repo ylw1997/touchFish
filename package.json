@@ -290,6 +290,11 @@
 				"command": "touchfish.setWeiboToken",
 				"title": "设置微博Token",
 				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "touchfish.setNgaToken",
+				"title": "设置NGA-Token",
+				"icon": "$(settings-gear)"
 			}
 		],
 		"menus": {
@@ -342,6 +347,11 @@
 				{
 					"command": "touchfish.setWeiboToken",
 					"when": "view == weibo",
+					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setNgaToken",
+					"when": "view == view.ngaList",
 					"group": "navigation"
 				}
 			]

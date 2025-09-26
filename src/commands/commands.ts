@@ -118,3 +118,17 @@ export const setWeiboTokenCommand = () => {
         }
     });
 };
+
+// 设置NGA-token
+export const setNgaTokenCommand = () => {
+    return vscode.commands.registerCommand('touchfish.setNgaToken', async () => {
+        const ngaCookie = await vscode.window.showInputBox({
+            prompt: '请输入NGA的Cookie',
+            placeHolder: '请输入NGA的Cookie',
+        });
+        if (ngaCookie !== undefined) {
+            await setConfigByKey("ngaCookie",ngaCookie);
+            await vscode.window.showInformationMessage('NGA-Cookie设置成功,点击刷新按钮查看!');
+        }
+    });
+};
