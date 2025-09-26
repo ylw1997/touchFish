@@ -9,7 +9,7 @@
  */
 import { Card, Skeleton } from "antd";
 
-export const loaderFunc = () => {
+export const loaderFunc = (rows = 5) => {
   return (
     <Card
       styles={{
@@ -21,7 +21,7 @@ export const loaderFunc = () => {
         marginBottom: "8px",
       }}
     >
-      <Skeleton avatar paragraph={{ rows: 5 }} active />
+      <Skeleton avatar paragraph={{ rows }} active />
     </Card>
   );
 };

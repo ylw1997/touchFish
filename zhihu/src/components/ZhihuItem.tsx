@@ -16,6 +16,7 @@ import { parseZhihuItemContent } from "../utils/textParser";
 import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
 import { Avatar } from "@heroui/react";
 import useZhihuAction from "../hooks/useZhihuAction";
+import { loaderFunc } from "../utils/loader";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
@@ -35,6 +36,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const [expanded, setExpanded] = useState(!isLoneContent);
   const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
   const [showComments, setShowComments] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const { getZhihuComment, contextHolder, copyLink } = useZhihuAction();
 
@@ -60,10 +62,12 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     }
     setShowComments(true);
     if (comments.length > 0) return;
+    setCommentsLoading(true);
     const fetchedComments = await getZhihuComment(item.id);
     if (fetchedComments) {
       setComments(fetchedComments);
     }
+    setCommentsLoading(false);
   };
 
   const renderTitle = () => (
@@ -135,7 +139,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       <span className="link" key="comment" onClick={getComments}>
         {showComments ? (
           <span>
-            <UpOutlined /> 收起评论
+            <UpOutlined /> 收起
           </span>
         ) : (
           <span>
@@ -205,30 +209,33 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
           )}
           {item.image_area && !isDetail ? <img src={item.image_area} /> : <></>}
         </div>
-        {showComments && (
-          <List
-            className="comment-list"
-            itemLayout="horizontal"
-            dataSource={comments}
-            renderItem={(comment) => (
-              <motion.div
-                key={comment.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4 }}
-                className="ant-list-item"
-                style={{
-                  display: "block",
-                  padding: "0",
-                }}
-              >
-                <CommentItem comment={comment} />
-              </motion.div>
-            )}
-            header={<h3>评论</h3>}
-          />
-        )}
+        {showComments &&
+          (commentsLoading ? (
+            loaderFunc(2)
+          ) : (
+            <List
+              className="comment-list"
+              itemLayout="horizontal"
+              dataSource={comments}
+              renderItem={(comment) => (
+                <motion.div
+                  key={comment.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4 }}
+                  className="ant-list-item"
+                  style={{
+                    display: "block",
+                    padding: "0",
+                  }}
+                >
+                  <CommentItem comment={comment} />
+                </motion.div>
+              )}
+              header={<h3>评论</h3>}
+            />
+          ))}
       </Card>
     </div>
   );
