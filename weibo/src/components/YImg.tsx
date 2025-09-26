@@ -74,12 +74,15 @@ const YImg: React.FC<YImgProps> = ({
     if (mediaType === "video") {
       fetchMedia();
     } else {
-      observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          fetchMedia();
-          if (currentRef) observer?.unobserve(currentRef);
-        }
-      });
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            fetchMedia();
+            if (currentRef) observer?.unobserve(currentRef);
+          }
+        },
+        { threshold: 0.01, rootMargin: "200px" }
+      );
       if (currentRef) {
         observer.observe(currentRef);
       }
