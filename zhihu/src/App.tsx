@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-09-26 17:03:21
+ * @LastEditTime: 2025-09-26 17:38:39
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -64,7 +64,10 @@ function App() {
   } = useZhihuAction();
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
-  const [showImg, setShowImg] = useState(true);
+  console.log("render 知乎",window.showImg);
+  const [showImg, setShowImg] = useState(
+    window.showImg != undefined ? window.showImg : true
+  );
 
   const [activeKey, setActiveKey] = useState(defTab[0].key);
 

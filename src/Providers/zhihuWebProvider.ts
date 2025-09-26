@@ -108,6 +108,12 @@ export class ZhihuWebProvider implements WebviewViewProvider {
       }
     );
 
+    const config = vscode.workspace.getConfiguration("touchfish");
+    let showImg = config.get("showImg") as boolean | undefined;
+    if (showImg === undefined) {
+      showImg = true;
+    }
+
     // 判断是否为开发环境
     const isDev =
       process.env.NODE_ENV === "development" ||
@@ -120,6 +126,9 @@ export class ZhihuWebProvider implements WebviewViewProvider {
       <!doctype html>
                 <html lang="en">
           <head>
+          <script>
+          window.showImg = ${showImg}
+          </script>
             <script type="module">
         import RefreshRuntime from "http://localhost:5174/@react-refresh"
         RefreshRuntime.injectIntoGlobalHook(window)
@@ -150,6 +159,10 @@ export class ZhihuWebProvider implements WebviewViewProvider {
           `${attr}="${webviewView.webview.asWebviewUri(
             vscode.Uri.joinPath(distPath, path)
           )}"`
+      );
+      html = html.replace(
+        "</head>",
+        `<script>window.showImg = ${showImg}</script></head>`
       );
       htmlContent = html;
     }
