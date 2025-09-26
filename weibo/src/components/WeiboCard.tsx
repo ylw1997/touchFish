@@ -1,14 +1,8 @@
-import {
-  DownOutlined,
-  LoadingOutlined,
-  UpOutlined,
-} from "@ant-design/icons";
-import {
-  Card,
-  Tag,
-} from "antd";
+import { DownOutlined, LoadingOutlined, UpOutlined } from "@ant-design/icons";
+import { Card, Tag } from "antd";
 import { weiboItem, weiboUser } from "../../../type";
 import { renderComments } from "./Comment";
+import { loaderFunc } from "../utils/loader";
 import WeiboCardActions from "./WeiboCardActions";
 import WeiboCardHeader from "./WeiboCardHeader";
 import CommentForm from "./CommentForm";
@@ -140,11 +134,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
               )
             }
           >
-            {isLoadingLongText
-              ? "加载中..."
-              : isExpanded
-              ? "收起"
-              : "展开全文"}
+            {isLoadingLongText ? "加载中..." : isExpanded ? "收起" : "展开全文"}
           </Tag>
         )}
       </div>
@@ -167,12 +157,16 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
       )}
       {item.comments && (
         <>
-          {renderComments(
-            item.comments,
-            false,
-            getUserByName,
-            onUserClick,
-            onTopicClick
+          {item.comments === "loading" ? (
+            <div style={{ margin: "5px" }}>{loaderFunc(2)}</div>
+          ) : (
+            renderComments(
+              item.comments,
+              false,
+              getUserByName,
+              onUserClick,
+              onTopicClick
+            )
           )}
         </>
       )}

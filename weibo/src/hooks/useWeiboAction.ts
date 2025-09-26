@@ -78,7 +78,7 @@ const useWeiboAction = () => {
         );
         const wtotal = result.total_number ?? 9999;
         setTotal(wtotal);
-        console.log("getListData", result, newPayload);
+        // console.log("getListData", result, newPayload);
       } finally {
         setIsFetching(false);
       }
@@ -142,6 +142,24 @@ const useWeiboAction = () => {
           })
         );
         return;
+      }
+      // Set loading state
+      if (is_retweeted) {
+        updateList(
+          (item) => item.retweeted_status?.id === id,
+          (item) => ({
+            ...item,
+            retweeted_status: {
+              ...item.retweeted_status!,
+              comments: "loading", // Special value for loading
+            },
+          })
+        );
+      } else {
+        updateList(
+          (item) => item.id === id,
+          (item) => ({ ...item, comments: "loading" }) // Special value for loading
+        );
       }
       const result = await apiClient.getComments(id, uid);
       if (is_retweeted) {

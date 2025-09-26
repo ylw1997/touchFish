@@ -203,7 +203,7 @@ export interface weiboItem extends baseWeiboField {
   attitudes_count: number; // 赞
   attitudes_status: number;
   pic_num: number;
-  comments?: commentsItem[]; // 评论
+  comments?: commentsItem[] | 'loading'; // 评论
   followBtnCode?: {
     //  关注按钮
     followcardid: string;
