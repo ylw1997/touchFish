@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [8.41.0](https://github.com/ylw1997/touchFish/compare/v8.40.0...v8.41.0) (2025-09-29)
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 优化评论组件代码结构与样式细节 ([ec43082](https://github.com/ec43082ae056a2653288e561b54d636bc537a39d))
+* **zhihu:** 支持加载知乎子评论并分页展示 ([4905c25](https://github.com/4905c2510f2f7f4dc17e43e0c6be9e2079c8ab8d))
+* **zhihu:** 支持显示评论回复对象名称 ([74cdfe2](https://github.com/74cdfe299bbdab9e99d6b896129716b420de9750))
+
 ## [8.40.0](https://github.com/ylw1997/touchFish/compare/v8.39.0...v8.40.0) (2025-09-29)
 
 
