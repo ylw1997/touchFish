@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-22 15:00:00
- * @LastEditTime: 2025-09-22 16:00:00
+ * @LastEditTime: 2025-09-29 15:53:54
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\api\index.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -24,7 +24,7 @@ export class ZhihuApi {
   }
 
   getZhihuList(payload: any) {
-    return this.request<ZhihuItemData[]>(
+    return this.request<{ data: ZhihuItemData[]; paging?: any }>(
       "ZHIHU_GETDATA",
       payload,
       "请求知乎数据中..."

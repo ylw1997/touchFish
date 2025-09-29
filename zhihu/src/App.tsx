@@ -48,6 +48,8 @@ function App() {
     contextHolder,
     clearList,
     getListData,
+    fetchNext,
+    hasMore,
     questionDetailDrawerOpen,
     questionData,
     questionTitle,
@@ -97,11 +99,12 @@ function App() {
   }, []);
 
   const fetchData = useCallback(() => {
-    getListData(activeKey);
-  }, [activeKey, getListData]);
+    // load next page (initial load will call getListData via fetchNext)
+    fetchNext(activeKey);
+  }, [activeKey, fetchNext]);
 
   useEffect(() => {
-    if (list.length === 0) fetchData();
+    if (list.length === 0) getListData({ tab: activeKey }, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -109,7 +112,7 @@ function App() {
     (key: Key) => {
       clearList();
       setActiveKey(key as "hot" | "follow" | "recommend");
-      getListData(key, true);
+      getListData({ tab: key }, true);
     },
     [clearList, getListData]
   );
@@ -136,15 +139,15 @@ function App() {
         {loading && list.length === 0 ? (
           loaderFunc()
         ) : (
-          <InfiniteScroll
-            dataLength={list.length}
-            next={fetchData}
-            loader={loading ? loaderFunc() : null}
-            endMessage={<Divider plain>没有了🤐</Divider>}
-            hasMore={activeKey != "hot" ? true : false}
-            scrollThreshold={0.95}
-            scrollableTarget="scrollableDiv"
-          >
+            <InfiniteScroll
+              dataLength={list.length}
+              next={fetchData}
+              loader={loading ? loaderFunc() : null}
+              endMessage={<Divider plain>没有了🤐</Divider>}
+              hasMore={hasMore(activeKey as string)}
+              scrollThreshold={0.95}
+              scrollableTarget="scrollableDiv"
+            >
             {list.map((item: ZhihuItemData) => (
               <motion.div
                 key={item.id}

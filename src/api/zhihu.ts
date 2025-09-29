@@ -64,40 +64,41 @@ export const getZhihu96 = async (url: string) => {
   return signatureResult;
 };
 
-const getZhihuData = async () => {
+const getZhihuData = async (nextUrl?: string) => {
   const cookie = (await getOrSetZhihuCookie()) as string;
-  const xzse96 = await getZhihu96(
-    "/api/v3/feed/topstory/recommend?limit=10&desktop=true"
-  );
-  return await axios.get(
-    "https://www.zhihu.com/api/v3/feed/topstory/recommend?limit=10&desktop=true",
-    {
-      headers: {
-        Cookie: cookie,
-        "x-zse-96": xzse96,
-        "x-zse-93": xzse93,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      },
-    }
-  );
+  const defaultPath = "/api/v3/feed/topstory/recommend?limit=10&desktop=true";
+  const requestUrl = nextUrl || `https://www.zhihu.com${defaultPath}`;
+  // 签名需要 path + cookie d_c0
+  const signPath = nextUrl ? new URL(nextUrl).pathname + new URL(nextUrl).search : defaultPath;
+  const xzse96 = await getZhihu96(signPath);
+  const res = await axios.get(requestUrl, {
+    headers: {
+      Cookie: cookie,
+      "x-zse-96": xzse96,
+      "x-zse-93": xzse93,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+  return { data: res.data.data, paging: res.data.paging };
 };
 
-const getZhihuFollowData = async () => {
+const getZhihuFollowData = async (nextUrl?: string) => {
   const cookie = (await getOrSetZhihuCookie()) as string;
-  const xzse96 = await getZhihu96("/api/v3/moments?limit=10&desktop=true");
-  return await axios.get(
-    "https://www.zhihu.com/api/v3/moments?limit=10&desktop=true",
-    {
-      headers: {
-        Cookie: cookie,
-        "x-zse-96": xzse96,
-        "x-zse-93": xzse93,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      },
-    }
-  );
+  const defaultPath = "/api/v3/moments?limit=10&desktop=true";
+  const requestUrl = nextUrl || `https://www.zhihu.com${defaultPath}`;
+  const signPath = nextUrl ? new URL(nextUrl).pathname + new URL(nextUrl).search : defaultPath;
+  const xzse96 = await getZhihu96(signPath);
+  const res = await axios.get(requestUrl, {
+    headers: {
+      Cookie: cookie,
+      "x-zse-96": xzse96,
+      "x-zse-93": xzse93,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+  return { data: res.data.data, paging: res.data.paging };
 };
 
 // 获取评论 https://www.zhihu.com/api/v4/comment_v5/answers/96218155860/root_comment?order_by=score&limit=20&offset=
@@ -124,55 +125,56 @@ export const getZhihuComment = async (
 
 // 知乎热榜  https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true
 
-export const getZhihuHot = async () => {
+export const getZhihuHot = async (nextUrl?: string) => {
   const cookie = (await getOrSetZhihuCookie()) as string;
-  const res = await axios.get(
-    "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true",
-    {
-      headers: {
-        Cookie: cookie,
-        "x-api-version": xapi,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-      },
-    }
-  );
-  return res.data.data;
+  const defaultPath = "/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true";
+  const requestUrl = nextUrl || `https://www.zhihu.com${defaultPath}`;
+  const res = await axios.get(requestUrl, {
+    headers: {
+      Cookie: cookie,
+      "x-api-version": xapi,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+  // 热榜接口返回结构可能和 feed 不完全相同，保持向后兼容：
+  return { data: res.data.data, paging: res.data.paging };
 };
 
 // web知乎处理数据
 export const getZhihuWebData = async (
-  tab: "follow" | "recommend" | "hot" | "hot_question"
+  tab: "follow" | "recommend" | "hot" | "hot_question",
+  nextUrl?: string
 ) => {
   const resArr: ZhihuItemData[] = [];
-  let res = { data: { data: [] } };
+  // apiRes: { data: any[], paging?: any }
+  let apiRes: { data: any[]; paging?: any } = { data: [] };
+
   switch (tab) {
     case "follow":
-      res = await getZhihuFollowData();
+      apiRes = await getZhihuFollowData(nextUrl);
       break;
     case "recommend":
-      res = await getZhihuData();
+      apiRes = await getZhihuData(nextUrl);
       break;
     case "hot": {
-      const hotres = await getZhihuHot();
-      // console.log(hotres);
-      hotres.forEach((item: { target: ZhihuHotItem }, index: number) => {
+      const hotres = await getZhihuHot(nextUrl);
+      // hotres is { data, paging }
+      (hotres.data || []).forEach((item: { target: ZhihuHotItem }, index: number) => {
         resArr.push(convertZhihuHotItemToZhihuItemData(item.target, index + 1));
       });
-      break;
+      return { data: resArr, paging: hotres.paging };
     }
     case "hot_question": {
-      const hotQuestions = await getZhihuHotQuestions();
-      hotQuestions.forEach((item: ZhihuHotQuestion) => {
+      const hotQuestions = await getZhihuHotQuestions(nextUrl);
+      (hotQuestions.data || []).forEach((item: ZhihuHotQuestion) => {
         resArr.push(convertZhihuHotQuestionToZhihuItemData(item));
       });
-      break;
+      return { data: resArr, paging: hotQuestions.paging };
     }
   }
-  if (tab === "hot" || tab === "hot_question") {
-    return resArr;
-  }
-  res.data.data.forEach((element: { target?: ZhihuItemData }) => {
+
+  (apiRes.data || []).forEach((element: { target?: ZhihuItemData }) => {
     if (element.target && element.target.question && element.target.content)
       resArr.push({
         ...element.target,
@@ -180,7 +182,7 @@ export const getZhihuWebData = async (
         tab: tab,
       });
   });
-  return resArr;
+  return { data: resArr, paging: apiRes.paging };
 };
 
 // web查看问题详情
@@ -346,12 +348,13 @@ export const unfollowQuestion = async (questionId: string) => {
 };
 
 // 人气问题 https://www.zhihu.com/api/v4/creators/question_route/pc_member_related/hot?page_source=pc_panel&limit=20&offset=0&recom_domain_score_ab=1
-export const getZhihuHotQuestions = async () => {
-  const url = "/api/v4/creators/question_route/pc_member_related/hot";
-  const xzse96 = await getZhihu96(url);
+export const getZhihuHotQuestions = async (nextUrl?: string) => {
+  const defaultPath = "/api/v4/creators/question_route/pc_member_related/hot?page_source=pc_panel&limit=20&offset=0&recom_domain_score_ab=1";
+  const requestUrl = nextUrl || `https://www.zhihu.com${defaultPath}`;
+  const signPath = nextUrl ? new URL(nextUrl).pathname + new URL(nextUrl).search : defaultPath;
+  const xzse96 = await getZhihu96(signPath);
   const cookie = (await getOrSetZhihuCookie()) as string;
-  const searchUrl = `https://www.zhihu.com${url}`;
-  const res = await axios.get(searchUrl, {
+  const res = await axios.get(requestUrl, {
     headers: {
       "x-zse-96": xzse96,
       "x-zse-93": xzse93,
@@ -360,5 +363,5 @@ export const getZhihuHotQuestions = async () => {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
     },
   });
-  return res.data.data;
+  return { data: res.data.data, paging: res.data.paging };
 };

@@ -6,6 +6,7 @@ import { ZhihuApi } from "../api";
 const useZhihuAction = () => {
   const [list, setList] = useState<ZhihuItemData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pagingMap, setPagingMap] = useState<Record<string, any>>({});
   const [questionDetailDrawerOpen, setQuestionDetailDrawerOpen] =
     useState(false);
   const [questionData, setQuestionData] = useState<ZhihuItemData[]>([]);
@@ -41,11 +42,15 @@ const useZhihuAction = () => {
       }
       setLoading(true);
       try {
-        const result = await apiClient.getZhihuList(payload);
-        if (result) {
-          setList((currentList) =>
-            replace ? result : [...currentList, ...result]
-          );
+        // payload can be tab string or { tab, nextUrl }
+        const tab = typeof payload === "string" ? payload : payload.tab;
+        const nextUrl = typeof payload === "string" ? undefined : payload.nextUrl;
+        const result = await apiClient.getZhihuList({ tab, nextUrl });
+        console.log("getListData result", result);
+        // result expected to be { data: ZhihuItemData[], paging?: { next?: string, is_end?: boolean } }
+        if (result && result.data) {
+          setList((currentList) => (replace ? result.data : [...currentList, ...result.data]));
+          setPagingMap((m) => ({ ...m, [tab]: result.paging }));
         }
       } finally {
         setLoading(false);
@@ -53,6 +58,24 @@ const useZhihuAction = () => {
     },
     [apiClient, loading]
   );
+
+  const fetchNext = useCallback(
+    async (tab: string) => {
+      const paging = pagingMap[tab];
+      if (paging && paging.is_end) return;
+      const nextUrl = paging?.next;
+      await getListData({ tab, nextUrl }, false);
+    },
+    [getListData, pagingMap]
+  );
+
+  const hasMore = useCallback((tab: string) => {
+    if (tab === "hot") return false;
+    const paging = pagingMap[tab];
+    // If paging is undefined, assume has more (initial load)
+    if (!paging) return true;
+    return paging.is_end !== true;
+  }, [pagingMap]);
 
   const openQuestionDetailDrawer = async (
     questionId: string,
@@ -152,6 +175,8 @@ const useZhihuAction = () => {
     contextHolder,
     clearList,
     getListData,
+    fetchNext,
+    hasMore,
     questionDetailDrawerOpen,
     questionData,
     setQuestionData,

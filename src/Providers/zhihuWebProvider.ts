@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-08-15 14:46:57
+ * @LastEditTime: 2025-09-29 15:41:57
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -63,7 +63,12 @@ export class ZhihuWebProvider implements WebviewViewProvider {
               break;
             }
             case "ZHIHU_GETDATA": {
-              const data = await getZhihuWebData(payload);
+              const { tab, nextUrl } = payload as { tab: string; nextUrl?: string };
+              if (!tab) {
+                webviewView.webview.postMessage({ payload: { ok: 0, msg: "ZHIHU_GETDATA payload.tab is required" }, uuid });
+                break;
+              }
+              const data = await getZhihuWebData(tab as any, nextUrl);
               webviewView.webview.postMessage({ payload: data, uuid });
               break;
             }
