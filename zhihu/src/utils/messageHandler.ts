@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-25 10:58:35
- * @LastEditTime: 2025-09-29 16:24:38
+ * @LastEditTime: 2025-09-29 16:35:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\utils\messageHandler.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -37,7 +37,6 @@ class MessageHandler {
 
     // Case 1: It's a response to a pending request
     if (response.uuid && this.pendingRequests.has(response.uuid)) {
-      // console.log("handleMessage", response);
       const pendingRequest = this.pendingRequests.get(response.uuid)!;
       clearTimeout(pendingRequest.timeoutId);
 

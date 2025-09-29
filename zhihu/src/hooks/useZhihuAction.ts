@@ -47,8 +47,6 @@ const useZhihuAction = () => {
         const tab = typeof payload === "string" ? payload : payload.tab;
         const nextUrl = typeof payload === "string" ? undefined : payload.nextUrl;
         const result = await apiClient.getZhihuList({ tab, nextUrl });
-        console.log("getListData result", result);
-        // result expected to be { data: ZhihuItemData[], paging?: { next?: string, is_end?: boolean } }
         if (result && result.data) {
           setList((currentList) => (replace ? result.data : [...currentList, ...result.data]));
           setPagingMap((m) => ({ ...m, [tab]: result.paging }));
@@ -109,7 +107,6 @@ const useZhihuAction = () => {
 
   const fetchQuestionNext = useCallback(
     async (questionId: string) => {
-      console.log("fetchQuestionNext", questionId,pagingMap);
       const paging = questionPagingMap[questionId];
       if (paging && paging.is_end) return;
       const nextUrl = paging?.next;
@@ -122,7 +119,7 @@ const useZhihuAction = () => {
         }
       }
     },
-    [apiClient, pagingMap, questionPagingMap]
+    [apiClient, questionPagingMap]
   );
 
   const closeQuestionDetailDrawer = () => {
