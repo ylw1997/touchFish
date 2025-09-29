@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 14:55:56
- * @LastEditTime: 2025-09-10 10:13:21
+ * @LastEditTime: 2025-09-29 17:49:33
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\CommentItem.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../type";
 import { useRequest } from "../hooks/useRequest";
 import { processCommentContent } from "../utils/textParser";
-import { LikeOutlined } from "@ant-design/icons";
+import { CaretRightOutlined, LikeOutlined } from "@ant-design/icons";
 import { Avatar } from "@heroui/react";
 
 const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
@@ -59,7 +59,14 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
       <Flex gap={10} style={{ width: '100%' }}>
         <Avatar src={comment.author.avatar_url} size="sm" isBordered radius="sm" />
         <div style={{ flex: 1 }}>
-          <span style={{fontWeight:'bold'}} >{comment.author.name}</span>
+          <span style={{fontWeight:'bold'}}>
+            {comment.author.name}
+            {comment.reply_to_author ? (
+              <span style={{ marginLeft: 6 }}>
+                <CaretRightOutlined /> {comment.reply_to_author.name}
+              </span>
+            ) : null}
+          </span>
           <div style={{ lineHeight: '2' }} >
             {processCommentContent(comment.content)}
           </div>

@@ -347,6 +347,10 @@ export interface ZhihuCommentItem {
     name: string;
     url_token: string;
   };
+  // 当该评论是对另一位作者的回复时，reply_to_author 会包含对方信息
+  reply_to_author?: {
+    name?: string;
+  };
   comment_tag: {
     type: "ip_info" | "hot";
     text: string;
