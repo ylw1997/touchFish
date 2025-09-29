@@ -50,6 +50,9 @@ function App() {
     getListData,
     fetchNext,
     hasMore,
+    hasMoreQuestion,
+    fetchQuestionNext,
+    currentQuestionId,
     questionDetailDrawerOpen,
     questionData,
     questionTitle,
@@ -221,6 +224,9 @@ function App() {
           isFollowing={isFollowing}
           followHandler={followHandler}
           unfollowHandler={unfollowHandler}
+          fetchNext={fetchQuestionNext}
+          questionId={currentQuestionId}
+          hasMore={hasMoreQuestion(currentQuestionId as string)}
           showImg={showImg}
         />
       </Suspense>

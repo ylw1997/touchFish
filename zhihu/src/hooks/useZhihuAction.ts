@@ -7,6 +7,7 @@ const useZhihuAction = () => {
   const [list, setList] = useState<ZhihuItemData[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagingMap, setPagingMap] = useState<Record<string, any>>({});
+  const [questionPagingMap, setQuestionPagingMap] = useState<Record<string, any>>({});
   const [questionDetailDrawerOpen, setQuestionDetailDrawerOpen] =
     useState(false);
   const [questionData, setQuestionData] = useState<ZhihuItemData[]>([]);
@@ -70,12 +71,17 @@ const useZhihuAction = () => {
   );
 
   const hasMore = useCallback((tab: string) => {
-    if (tab === "hot") return false;
     const paging = pagingMap[tab];
-    // If paging is undefined, assume has more (initial load)
-    if (!paging) return true;
+    // Only consider hasMore true when paging exists and is_end is false
+    if (!paging) return false;
     return paging.is_end !== true;
   }, [pagingMap]);
+
+  const hasMoreQuestion = useCallback((questionId: string) => {
+    const paging = questionPagingMap[questionId];
+    if (!paging) return false;
+    return paging.is_end !== true;
+  }, [questionPagingMap]);
 
   const openQuestionDetailDrawer = async (
     questionId: string,
@@ -84,17 +90,40 @@ const useZhihuAction = () => {
     setQuestionDetailDrawerOpen(true);
     setQuestionTitle(title);
     setCurrentQuestionId(questionId);
-    const result = await apiClient.getQuestionDetail(questionId);
+    // initialize temporary paging so UI treats as having more until real paging arrives
+    setQuestionPagingMap((m) => ({ ...m, [questionId]: { is_end: false } }));
+    const result = await apiClient.getQuestionDetail({ questionId });
     if (result.detail) {
       setQuestionDetail(result.detail);
     }
     if (result.data) {
       setQuestionData(result.data);
     }
+    if (result.paging) {
+      setQuestionPagingMap((m) => ({ ...m, [questionId]: result.paging }));
+    }
     if (result.isFollowing !== undefined) {
       setIsFollowing(result.isFollowing);
     }
   };
+
+  const fetchQuestionNext = useCallback(
+    async (questionId: string) => {
+      console.log("fetchQuestionNext", questionId,pagingMap);
+      const paging = questionPagingMap[questionId];
+      if (paging && paging.is_end) return;
+      const nextUrl = paging?.next;
+      if (!nextUrl) return;
+      const res = await apiClient.getQuestionDetail({ questionId, nextUrl });
+      if (res && res.data) {
+        setQuestionData((cur) => [...cur, ...res.data]);
+        if (res.paging) {
+          setQuestionPagingMap((m) => ({ ...m, [questionId]: res.paging }));
+        }
+      }
+    },
+    [apiClient, pagingMap, questionPagingMap]
+  );
 
   const closeQuestionDetailDrawer = () => {
     setQuestionDetailDrawerOpen(false);
@@ -177,6 +206,9 @@ const useZhihuAction = () => {
     getListData,
     fetchNext,
     hasMore,
+    fetchQuestionNext,
+  currentQuestionId,
+  hasMoreQuestion,
     questionDetailDrawerOpen,
     questionData,
     setQuestionData,

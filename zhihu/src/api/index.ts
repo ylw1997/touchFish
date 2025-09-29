@@ -31,10 +31,11 @@ export class ZhihuApi {
     );
   }
 
-  getQuestionDetail(questionId: string) {
+  getQuestionDetail(payload: any) {
+    // payload: questionId string or { questionId, nextUrl? }
     return this.request<any>(
       "getZhihuQuestionDetail",
-      questionId,
+      payload,
       "获取问题详情中..."
     );
   }

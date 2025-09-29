@@ -1,13 +1,14 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-09-24 15:41:43
+ * @LastEditTime: 2025-09-29 16:23:37
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, List, Card, Button } from "antd";
+import { Drawer, List, Card, Button, Divider } from "antd";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { motion } from "framer-motion";
 import React from "react";
 import ZhihuItem from "./ZhihuItem";
@@ -18,11 +19,11 @@ interface QuestionDetailDrawerProps {
   open: boolean;
   onClose: () => void;
   questionData: ZhihuItemData[];
+  fetchNext?: (questionId: string) => Promise<void>;
+  questionId?: string;
+  hasMore?: boolean;
   title: string;
-  handleVote: (
-    answerId: string,
-    type: "up" | "neutral",
-  ) => void;
+  handleVote: (answerId: string, type: "up" | "neutral") => void;
   questionDetail: string;
   isFollowing: boolean | undefined;
   followHandler: () => void;
@@ -40,6 +41,9 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   isFollowing,
   followHandler,
   unfollowHandler,
+  fetchNext,
+  questionId,
+  hasMore,
   showImg = true,
 }) => {
   return (
@@ -59,63 +63,86 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
           overflow: "hidden",
         },
         body: {
-          padding: 5,
+          padding: 0,
           height: "100%",
           minHeight: 0,
           overflow: "auto",
         },
       }}
     >
-      <Card
-        actions={
-          isFollowing === undefined
-            ? undefined
-            : [
-                isFollowing ? (
-                  <Button
-                    color="red"
-                    variant="filled"
-                    onClick={unfollowHandler}
-                  >
-                    取消关注
-                  </Button>
-                ) : (
-                  <Button variant="filled" color="blue" onClick={followHandler}>
-                    关注问题
-                  </Button>
-                ),
-              ]
-        }
-      >
-        <div
-          className="question-detail-content"
-          dangerouslySetInnerHTML={{
-            __html: questionDetail ? questionDetail : title,
-          }}
-        />
-      </Card>
       {questionData.length === 0 && open ? (
         loaderFunc()
       ) : (
-        <List
-          dataSource={questionData}
-          renderItem={(item) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
-            >
-              <ZhihuItem
-                isDetail
-                item={item}
-                handleVote={handleVote}
-                showImg={showImg}
-              />
-            </motion.div>
-          )}
-        />
+        // make the drawer body the scrollable target so InfiniteScroll can detect
+        // reaching bottom inside the drawer
+        <div
+          id="questionDetailScroll"
+          style={{ height: "100%", overflow: "auto", padding: "5px" }}
+        >
+          <Card
+            actions={
+              isFollowing === undefined
+                ? undefined
+                : [
+                    isFollowing ? (
+                      <Button
+                        color="red"
+                        variant="filled"
+                        onClick={unfollowHandler}
+                      >
+                        取消关注
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="filled"
+                        color="blue"
+                        onClick={followHandler}
+                      >
+                        关注问题
+                      </Button>
+                    ),
+                  ]
+            }
+          >
+            <div
+              className="question-detail-content"
+              dangerouslySetInnerHTML={{
+                __html: questionDetail ? questionDetail : title,
+              }}
+            />
+          </Card>
+          <InfiniteScroll
+            dataLength={questionData.length}
+            next={() => {
+              if (fetchNext && questionId) fetchNext(questionId);
+            }}
+            endMessage={<Divider plain>没有了🤐</Divider>}
+            hasMore={hasMore ?? false}
+            loader={loaderFunc()}
+            scrollThreshold={0.95}
+            scrollableTarget="questionDetailScroll"
+          >
+            <List
+              dataSource={questionData}
+              renderItem={(item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <ZhihuItem
+                    isDetail
+                    item={item}
+                    handleVote={handleVote}
+                    showImg={showImg}
+                  />
+                </motion.div>
+              )}
+            />
+          </InfiniteScroll>
+        </div>
       )}
     </Drawer>
   );

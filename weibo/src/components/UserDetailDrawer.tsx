@@ -218,6 +218,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 scrollableTarget={
                   userBlogRef.current ? (userBlogRef.current as any) : undefined
                 }
+                scrollThreshold={0.95}
                 dataLength={userWeiboList.length}
                 next={getUserBlogFunc}
                 loader={isFetching ? loaderFunc() : null}

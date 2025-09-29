@@ -220,6 +220,7 @@ function App() {
             loader={isFetching ? loaderFunc() : null}
             endMessage={<Divider plain>没有了🤐</Divider>}
             hasMore={list.length < total}
+            scrollThreshold={0.95}
             scrollableTarget="scrollableDiv"
           >
             {list?.map((item) => (

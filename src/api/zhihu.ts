@@ -187,14 +187,24 @@ export const getZhihuWebData = async (
 
 // web查看问题详情
 export const getZhihuWebDetail = async (
-  id: string
-): Promise<ZhihuItemData[]> => {
-  const xzse96 = await getZhihu96(
-    `/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`
-  );
+  idOrNextUrl: string
+): Promise<{ data: ZhihuItemData[]; paging?: any }> => {
+  // If idOrNextUrl is a full URL (starts with http), treat as nextUrl; otherwise treat as question id
+  let requestUrl: string;
+  let signPath: string;
+  if (idOrNextUrl.startsWith("http")) {
+    requestUrl = idOrNextUrl;
+    const u = new URL(idOrNextUrl);
+    signPath = u.pathname + u.search;
+  } else {
+    const id = idOrNextUrl;
+    signPath = `/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`;
+    requestUrl = `https://www.zhihu.com${signPath}`;
+  }
+
+  const xzse96 = await getZhihu96(signPath);
   const cookie = (await getOrSetZhihuCookie()) as string;
-  const answerUrl = `https://www.zhihu.com/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`;
-  const res = await axios.get(answerUrl, {
+  const res = await axios.get(requestUrl, {
     headers: {
       Cookie: cookie,
       "x-zse-96": xzse96,
@@ -203,16 +213,18 @@ export const getZhihuWebDetail = async (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
     },
   });
+
   const resArr: ZhihuItemData[] = [];
   // 解决图片懒加载问题
-  res.data.data.forEach((element: { target?: ZhihuItemData }) => {
+  (res.data.data || []).forEach((element: { target?: ZhihuItemData }) => {
     if (element.target && element.target.question && element.target.content)
       resArr.push({
         ...element.target,
         content: zhihuContentImage(element.target.content),
       });
   });
-  return resArr;
+
+  return { data: resArr, paging: res.data.paging };
 };
 
 // 点赞 /api/v4/answers/1918268396996363949/voters

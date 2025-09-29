@@ -1,3 +1,12 @@
+/*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-09-25 10:58:35
+ * @LastEditTime: 2025-09-29 16:24:38
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\zhihu\src\utils\messageHandler.ts
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
 type PendingRequest = {
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
