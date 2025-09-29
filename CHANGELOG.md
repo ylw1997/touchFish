@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [8.40.0](https://github.com/ylw1997/touchFish/compare/v8.39.0...v8.40.0) (2025-09-29)
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 实现分页加载与无限滚动功能 ([1736c2c](https://github.com/1736c2c6dd49638336c84863aa1a669c8f1c5eca))
+* **zhihu:** 实现问题详情分页加载与滚动优化 ([dc842ec](https://github.com/dc842ec74c598cdffd82cb3e8dd612faa64d8197))
+
+
+### ♻ Code Refactoring | 代码重构
+
+* **useZhihuAction:** 移除调试日志和未使用的依赖 ([d5fb427](https://github.com/d5fb427529763e9c0bcbbbe48e108175abfed383))
+* **zhihuWebProvider:** 优化知乎数据获取逻辑并移除冗余参数校验 ([50a55d7](https://github.com/50a55d705f5d235faae54275c8b59c4848351c2f))
+
 ## [8.39.0](https://github.com/ylw1997/touchFish/compare/v8.38.0...v8.39.0) (2025-09-26)
 
 
