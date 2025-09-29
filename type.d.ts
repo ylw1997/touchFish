@@ -86,6 +86,7 @@ export type ZhihuCommandList =
   | "ZHIHU_SENDDATA"
   | "getZhihuComment"
   | "getZhihuQuestionDetail"
+  | "getZhihuChildComment"
   | "sendZhihuQuestionDetail"
   | "ZHIHU_SAVE_SCROLL_POSITION"
   | "ZHIHU_VOTE_ANSWER"
@@ -351,6 +352,15 @@ export interface ZhihuCommentItem {
     text: string;
   }[];
   child_comments: ZhihuCommentItem[];
+  // 当有更多子评论可加载时为 true
+  can_more?: boolean;
+  // 可加载的子评论总数（用于按钮文案）
+  child_comment_count?: number;
+  // 分页信息（来自知乎 API 的 paging）
+  paging?: {
+    is_end: boolean;
+    next?: string;
+  };
 }
 
 export interface ZhihuHotItem {

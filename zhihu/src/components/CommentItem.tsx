@@ -7,15 +7,51 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
  * @Description: 
  */
-import { Flex, List, Space, Tag } from "antd";
-import React from "react";
+import { Flex, List, Space, Tag, Button } from "antd";
+import React, { useState } from "react";
 import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../type";
+import { useRequest } from "../hooks/useRequest";
 import { processCommentContent } from "../utils/textParser";
 import { LikeOutlined } from "@ant-design/icons";
 import { Avatar } from "@heroui/react";
 
 const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
+  const [childComments, setChildComments] = useState<ZhihuCommentItem[]>(comment.child_comments || []);
+  const [paging, setPaging] = useState<{ is_end: boolean; next?: string } | undefined>(comment.paging);
+  const [loading, setLoading] = useState(false);
+  const { request } = useRequest();
+  const [childrenLoaded, setChildrenLoaded] = useState<boolean>(false);
+
+  const loadChildComments = async (replace = true) => {
+    if (!comment.id) return;
+    setLoading(true);
+    try {
+      // 使用 extension-host 提供的后端接口请求子评论；payload 可以为 commentId 或 paging.next（nextUrl）
+      const payload = !replace && paging?.next ? paging.next : comment.id;
+      const res = await request<{ data: ZhihuCommentItem[]; paging?: any }>(
+        "getZhihuChildComment",
+        payload
+      );
+
+      const newChildren: ZhihuCommentItem[] = res?.data || [];
+      const newPaging = res?.paging;
+
+      if (replace) {
+        setChildComments(newChildren);
+        // 标记已替换加载子评论
+        setChildrenLoaded(true);
+      } else {
+        setChildComments((prev) => [...prev, ...newChildren]);
+      }
+      if (newPaging) setPaging({ is_end: !!newPaging.is_end, next: newPaging.next });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <List.Item style={{
       padding: '8px 0'
@@ -42,14 +78,34 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
                 <LikeOutlined /> {comment.like_count}
               </span>
           </Flex>
-          {comment.child_comments && comment.child_comments.length > 0 && (
-            <div style={{ marginTop: '10px',borderTop:'1px solid var(--vscode-editorWidget-border)' }}>
+
+          {(childComments && childComments.length > 0) && (
+            <div style={{ marginTop: '10px',borderTop:'1px solid var(--vscode-editorWidget-border)', paddingTop:8 }}>
               <List
-                dataSource={comment.child_comments}
+                dataSource={childComments}
                 renderItem={(child) => <CommentItem comment={child} />}
               />
             </div>
           )}
+
+          {/* 如果服务端声明 can_more 且还未替换加载子评论，显示“查看其他”按钮（替换当前 child_comments） */}
+          {comment.can_more && comment.child_comment_count && !childrenLoaded ? (
+            <div style={{ marginTop: 8 }}>
+              <Button size="small" onClick={() => loadChildComments(true)} loading={loading}>
+                查看其他 {comment.child_comment_count} 条回复
+              </Button>
+            </div>
+          ) : null}
+
+          {/* 如果有分页且未结束，显示加载更多按钮，用于追加 */}
+          {paging && !paging.is_end ? (
+            <div style={{ marginTop: 8 }}>
+              <Button size="small" onClick={() => loadChildComments(false)} loading={loading}>
+                加载更多
+              </Button>
+            </div>
+          ) : null}
+
         </div>
       </Flex>
     </List.Item>

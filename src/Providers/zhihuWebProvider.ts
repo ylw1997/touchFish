@@ -16,6 +16,7 @@ import {
 import * as vscode from "vscode";
 import {
   getZhihuComment,
+  getZhihuChildComment,
   getZhihuWebData,
   getZhihuWebDetail,
   voteZhihuAnswer,
@@ -71,6 +72,12 @@ export class ZhihuWebProvider implements WebviewViewProvider {
             case "getZhihuComment": {
               const comments = await getZhihuComment(payload);
               webviewView.webview.postMessage({ payload: { data: comments, answerId: payload }, uuid });
+              break;
+            }
+            case "getZhihuChildComment": {
+              // payload may be commentId or nextUrl
+              const res = await getZhihuChildComment(payload);
+              webviewView.webview.postMessage({ payload: { data: res.data, paging: res.paging, commentIdOrNextUrl: payload }, uuid });
               break;
             }
             case "getZhihuQuestionDetail": {

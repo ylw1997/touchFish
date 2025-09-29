@@ -123,6 +123,38 @@ export const getZhihuComment = async (
   return res.data.data;
 };
 
+// 获取子评论：https://www.zhihu.com/api/v4/comment_v5/comment/{commentId}/child_comment?order_by=ts&limit=20&offset=
+export const getZhihuChildComment = async (
+  commentIdOrNextUrl: string
+): Promise<{ data: ZhihuCommentItem[]; paging?: any }> => {
+  // 如果传入的值是完整的 nextUrl（以 http 开头），则直接使用；否则构造 child_comment 路径
+  let requestUrl: string;
+  let signPath: string;
+  if (commentIdOrNextUrl.startsWith("http")) {
+    requestUrl = commentIdOrNextUrl;
+    const u = new URL(commentIdOrNextUrl);
+    signPath = u.pathname + u.search;
+  } else {
+    const commentId = commentIdOrNextUrl;
+    signPath = `/api/v4/comment_v5/comment/${commentId}/child_comment?order_by=ts&limit=20&offset=`;
+    requestUrl = `https://www.zhihu.com${signPath}`;
+  }
+
+  const xzse96 = await getZhihu96(signPath);
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const res = await axios.get(requestUrl, {
+    headers: {
+      Cookie: cookie,
+      "x-zse-96": xzse96,
+      "x-zse-93": xzse93,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+  });
+
+  return { data: res.data.data, paging: res.data.paging };
+};
+
 // 知乎热榜  https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true
 
 export const getZhihuHot = async (nextUrl?: string) => {

@@ -72,6 +72,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     if (comments.length > 0) return;
     setCommentsLoading(true);
     const fetchedComments = await getZhihuComment(item.id);
+    console.log("getComments",fetchedComments);
     if (fetchedComments) {
       setComments(fetchedComments);
     }
