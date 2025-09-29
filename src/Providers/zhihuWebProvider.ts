@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-12 15:14:35
- * @LastEditTime: 2025-09-29 15:41:57
+ * @LastEditTime: 2025-09-29 16:31:02
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\zhihuWebProvider.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -64,10 +64,6 @@ export class ZhihuWebProvider implements WebviewViewProvider {
             }
             case "ZHIHU_GETDATA": {
               const { tab, nextUrl } = payload as { tab: string; nextUrl?: string };
-              if (!tab) {
-                webviewView.webview.postMessage({ payload: { ok: 0, msg: "ZHIHU_GETDATA payload.tab is required" }, uuid });
-                break;
-              }
               const data = await getZhihuWebData(tab as any, nextUrl);
               webviewView.webview.postMessage({ payload: data, uuid });
               break;
@@ -78,17 +74,7 @@ export class ZhihuWebProvider implements WebviewViewProvider {
               break;
             }
             case "getZhihuQuestionDetail": {
-              // payload expected to be { questionId, nextUrl? } or a questionId string
-              let questionId: string;
-              let nextUrl: string | undefined;
-              if (payload && typeof payload === "object") {
-                questionId = payload.questionId;
-                nextUrl = payload.nextUrl;
-              } else {
-                questionId = payload;
-              }
-
-              // If nextUrl provided, call getZhihuWebDetail with nextUrl, otherwise use questionId
+              const { questionId, nextUrl } = payload as { questionId: string; nextUrl?: string };
               const detailRes = await getZhihuWebDetail(nextUrl ? nextUrl : questionId);
               const detailObj = await getZhihuQuestionDetailFunc(questionId);
               webviewView.webview.postMessage({

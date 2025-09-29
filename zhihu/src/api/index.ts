@@ -10,9 +10,9 @@
 
 import type { ZhihuCommandList, ZhihuItemData } from "../../../type";
 
-type RequestFunc = <T = any>(
+type RequestFunc = <T = any, P = any>(
   command: ZhihuCommandList,
-  payload: any,
+  payload: P,
   content: string
 ) => Promise<T>;
 
@@ -31,9 +31,8 @@ export class ZhihuApi {
     );
   }
 
-  getQuestionDetail(payload: any) {
-    // payload: questionId string or { questionId, nextUrl? }
-    return this.request<any>(
+  getQuestionDetail(payload: { questionId: string; nextUrl?: string }) {
+    return this.request<any, { questionId: string; nextUrl?: string }>(
       "getZhihuQuestionDetail",
       payload,
       "获取问题详情中..."
