@@ -15,7 +15,7 @@ export async function fetchNewsList(sourceKey: string, params?: any): Promise<Ne
   const source = getNewsSource(sourceKey);
   if (!source) throw new Error(`Unknown news source: ${sourceKey}`);
   const data = await source.fetchList(params);
-  console.log('Fetching news from source:', sourceKey, 'with params:', params, 'Result count:', data);
+  // console.log('Fetching news from source:', sourceKey, 'with params:', params, 'Result count:', data);
   return data;
 }
 
