@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.42.0](https://github.com/ylw1997/touchFish/compare/v8.41.0...v8.42.0) (2025-09-30)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **zhihu:** 修改收起按钮文本及图片最大高度样式 ([281caaa](https://github.com/281caaab7d5f59cc071359115fcd120df99cdfb3))
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 添加收起评论功能并优化评论区域标题栏 ([a41c03a](https://github.com/a41c03a134fe97dafc4d7466a25a08b78b7daf9c))
+
 ## [8.41.0](https://github.com/ylw1997/touchFish/compare/v8.40.0...v8.41.0) (2025-09-29)
 
 
