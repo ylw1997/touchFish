@@ -1,17 +1,17 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-23 17:31:31
- * @LastEditTime: 2025-09-25 10:12:46
+ * @LastEditTime: 2025-09-30 17:59:18
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\weibo\src\components\YImg.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 import React, { useState, useEffect, useRef } from "react";
-import { Image, Spin } from "antd";
+import { Image } from "antd";
 import back from "../../public/back.svg";
 import { useRequest } from "../hooks/useRequest";
-import { LoadingOutlined } from "@ant-design/icons";
+// import { LoadingOutlined } from "@ant-design/icons";
 
 interface YImgProps {
   src: string;
@@ -96,19 +96,6 @@ const YImg: React.FC<YImgProps> = ({
     };
   }, [src, mediaType, request]);
 
-  const placeholder = (
-    <div
-      {...props}
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Spin tip="Loading" indicator={<LoadingOutlined spin />} />
-    </div>
-  );
-
   return (
     <div
       style={{ height: "inherit", display: "inline-block" }}
@@ -116,15 +103,13 @@ const YImg: React.FC<YImgProps> = ({
     >
       {mediaType === "video" ? (
         <video src={videoSrc} controls {...props} autoPlay muted />
-      ) : imgSrc !== undefined ? (
+      ) : (
         <Image
           src={imgSrc}
           {...props}
           preview={useImg ? false : true}
           fallback={back}
         />
-      ) : (
-        placeholder
       )}
     </div>
   );
