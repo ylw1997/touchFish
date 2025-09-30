@@ -148,7 +148,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       <span className="link" key="comment" onClick={getComments}>
         {showComments ? (
           <span>
-            <UpOutlined /> 收起
+            <UpOutlined /> 评论
           </span>
         ) : (
           <span>
@@ -163,7 +163,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       <span className="link" key="expand" onClick={handleToggle}>
         {expanded ? (
           <>
-            <UpOutlined /> 收起
+            <UpOutlined /> 精简
           </>
         ) : (
           <>
