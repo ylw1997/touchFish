@@ -13,8 +13,6 @@ const config = vscode.workspace.getConfiguration('touchfish');
 // 显示新闻数量 默认为10
 export let showNewsNumber: number|undefined = config.get('showNewsNumber');
 
-// 显示新闻字数 默认为25
-export let showNewsWordNumber: number|undefined = config.get('showNewsWordNumber');
 
 //多少秒刷新一次财联社 刷新时间默认为60秒
 
@@ -32,7 +30,6 @@ export const setConfigByKey = async (key:string,value:string)=>{
 export const refrshConfig = () => {
   const newconfig = vscode.workspace.getConfiguration('touchfish');
   showNewsNumber = newconfig.get('showNewsNumber');
-  showNewsWordNumber = newconfig.get('showNewsWordNumber');
   
   v2exTab = newconfig.get('v2exTab');
   hupuTab = newconfig.get('hupuTab');

@@ -8,7 +8,7 @@
  */
 import { NewsCommandType, NewsItem } from "../type/type";
 import { ThemeIcon, TreeItem } from "vscode";
-import { showNewsWordNumber } from "../config/index";
+// Removed showNewsWordNumber truncation feature
 import { ZhihuHotItem, ZhihuHotQuestion, ZhihuItemData } from "../../type";
 
 /**
@@ -24,9 +24,7 @@ export const formatData = (
   const treeList: TreeItem[] = [];
   for (const i in dataList) {
     const item = dataList[i];
-    const treeItem = new TreeItem(
-      subStringBySize(item.title, showNewsWordNumber)
-    );
+    const treeItem = new TreeItem(item.title);
     treeItem.id = item.title;
     treeItem.command = {
       title: item.title,
@@ -41,24 +39,7 @@ export const formatData = (
   return treeList;
 };
 
-/**
- *  截取字符串
- * @param str 字符串
- * @param size  截取长度
- * @returns  截取后的字符串
- */
-export const subStringBySize = (
-  str: string,
-  size: number | undefined
-): string => {
-  if (!size) {
-    return str;
-  } else if (str.length > size) {
-    return str.substring(0, size) + "...";
-  } else {
-    return str;
-  }
-};
+// subStringBySize removed: titles now display full length
 
 /**
  * 睡眠

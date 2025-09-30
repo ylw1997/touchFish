@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-08-19 09:03:43
+ * @LastEditTime: 2025-09-30 15:05:52
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -429,7 +429,7 @@ export const openNgaUrl = vscode.commands.registerCommand(
           display:none;
         }
         img{
-          max-width: 45%;
+          max-height: 600px;
           display: block;
         }
         #postcontent0 br {
