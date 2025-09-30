@@ -9,8 +9,8 @@
 import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
 import { compareNews, formatData } from '../utils/util';
 import { hupuTab, showNewsNumber } from '../config/index';
-import { getHupuList } from '../api/hupu';
 import { defaultHupuTab } from '../data/context';
+import { fetchNewsList } from '../news/fetch';
 
 export class HupuProvider implements TreeDataProvider<TreeItem>{
 
@@ -24,11 +24,11 @@ export class HupuProvider implements TreeDataProvider<TreeItem>{
 
   async getData(tab?:string){
     this.newsList = [];
-    const v2exTab = tab || hupuTab || defaultHupuTab;
-    await getHupuList(v2exTab).then(res=>{
-      const news = formatData(res,"hupu.openUrl").slice(0,showNewsNumber);
-      this.newsList = compareNews(this.newsList,news,"bell-dot","notebook-render-output");
-    });
+    const currentTab = tab || hupuTab || defaultHupuTab;
+    const list = await fetchNewsList('hupu', { tab: currentTab });
+    const plain = list.slice(0, showNewsNumber).map(i => ({ title: i.title, url: i.url || '' }));
+    const news = formatData(plain, 'hupu.openUrl');
+    this.newsList = compareNews(this.newsList, news, 'bell-dot', 'notebook-render-output');
     this.update.fire();
   }
   

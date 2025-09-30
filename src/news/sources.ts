@@ -4,6 +4,7 @@ import { getV2exList, getV2exDetail } from '../api/v2ex';
 import { getChipHellNews, getChipHellNewsDetail } from '../api/chipHell';
 import { getNgaList, getNgaNewsDetail } from '../api/nga';
 import { getNewsList as getIthomeList, getNewsDetail as getIthomeDetail } from '../api/ithome';
+import { getHupuList, getHupuDetail } from '../api/hupu';
 // Zhihu / Weibo can be integrated later (they have more complex flows)
 
 function normalizeList(items: { title: string; url: string }[], source: NewsSource['key']): NewsListItem[] {
@@ -54,6 +55,15 @@ export const newsSources: NewsSource[] = [
       const res = await getIthomeDetail(Number(id));
       return JSON.stringify(res.data);
     },
+  },
+  {
+    key: 'hupu',
+    supportsDetail: true,
+    fetchList: async (params?: { tab?: string }) => normalizeList(await getHupuList(params?.tab || 'all-gambia'), 'hupu'),
+    fetchDetail: async (url) => {
+      const html = await getHupuDetail(url);
+      return html || undefined;
+    }
   },
 ];
 

@@ -2,7 +2,7 @@
  * Unified News Model & Source Interfaces
  */
 
-export type NewsSourceKey = 'v2ex' | 'nga' | 'chiphell' | 'ithome' | 'zhihu' | 'weibo';
+export type NewsSourceKey = 'v2ex' | 'nga' | 'chiphell' | 'ithome' | 'hupu' | 'zhihu' | 'weibo';
 
 export interface NewsListItem {
   id: string;              // unique id (hash/url/id)
