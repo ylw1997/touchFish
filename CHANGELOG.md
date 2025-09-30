@@ -1,6 +1,17 @@
 # 更新历史 
 
 
+## [8.43.0](https://github.com/ylw1997/touchFish/compare/v8.42.0...v8.43.0) (2025-09-30)
+
+
+### ✨ Features | 新功能
+
+* 更新样式，限制图片最大高度以优化显示效果 ([dd5db46](https://github.com/dd5db46a2440e7137fcbadaed2f979bbbc79eefc))
+* 修改数据获取逻辑，保留旧列表以优化新闻比较功能 ([9e309af](https://github.com/9e309afeae11232de7275b62a7e55db6bca49265))
+* 重构新闻源管理与缓存机制，新增内存缓存功能，优化数据获取逻辑 ([34146d9](https://github.com/34146d9e4c929899ef3c462136343875efe04368))
+* 重构openUrl命令，抽取重复逻辑并优化HTML清洗，增强可读性和安全性 ([b3f3ff8](https://github.com/b3f3ff892197e16259ca6fa539086694895a76dd))
+* **hupu:** 更新Hupu数据获取逻辑，新增fetchNewsList函数，优化新闻源支持 ([e5278af](https://github.com/e5278afe8f43dcf3e4b5aec307772852eeec6606))
+
 ## [8.42.0](https://github.com/ylw1997/touchFish/compare/v8.41.0...v8.42.0) (2025-09-30)
 
 
