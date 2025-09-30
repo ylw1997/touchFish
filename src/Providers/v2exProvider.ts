@@ -27,7 +27,8 @@ export class V2exProvider implements TreeDataProvider<TreeItem> {
   constructor() {}
 
   async getData(tab?: string) {
-    this.newsList = [];
+    // 保留旧列表用于 diff，不能提前清空，否则 compareNews 无法标记新旧
+    const oldList = this.newsList;
     const currentTab = tab || v2exTab || defaultV2exTab;
     // 新的统一注册表 + 缓存
     try {
@@ -39,7 +40,7 @@ export class V2exProvider implements TreeDataProvider<TreeItem> {
       }));
       const news = formatData(limited, "v2ex.openUrl");
       this.newsList = compareNews(
-        this.newsList,
+        oldList,
         news,
         "bell-dot",
         "notebook-render-output"

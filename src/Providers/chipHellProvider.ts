@@ -25,14 +25,14 @@ export class ChipHellProvider implements TreeDataProvider<TreeItem> {
   constructor() {}
 
   async getData() {
-    this.newsList = [];
+    const oldList = this.newsList;
     const list = await fetchNewsList("chiphell");
     const plain = list
       .slice(0, showNewsNumber)
       .map((i) => ({ title: i.title, url: i.url || "" }));
     const news = formatData(plain, "chiphell.openUrl");
     this.newsList = compareNews(
-      this.newsList,
+      oldList,
       news,
       "bell-dot",
       "notebook-render-output"

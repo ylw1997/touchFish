@@ -23,12 +23,12 @@ export class HupuProvider implements TreeDataProvider<TreeItem>{
 	}
 
   async getData(tab?:string){
-    this.newsList = [];
+    const oldList = this.newsList;
     const currentTab = tab || hupuTab || defaultHupuTab;
     const list = await fetchNewsList('hupu', { tab: currentTab });
     const plain = list.slice(0, showNewsNumber).map(i => ({ title: i.title, url: i.url || '' }));
     const news = formatData(plain, 'hupu.openUrl');
-    this.newsList = compareNews(this.newsList, news, 'bell-dot', 'notebook-render-output');
+    this.newsList = compareNews(oldList, news, 'bell-dot', 'notebook-render-output');
     this.update.fire();
   }
   

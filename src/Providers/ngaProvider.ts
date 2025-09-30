@@ -26,7 +26,7 @@ export class NgaProvider implements TreeDataProvider<TreeItem> {
   constructor() {}
 
   async getData(tab?: string) {
-    this.newsList = [];
+    const oldList = this.newsList;
     const currentTab = tab || ngaTab || defaultNgaTab;
     const list = await fetchNewsList("nga", { tab: currentTab });
     const plain = list
@@ -34,7 +34,7 @@ export class NgaProvider implements TreeDataProvider<TreeItem> {
       .map((i) => ({ title: i.title, url: i.url || "" }));
     const news = formatData(plain, "nga.openUrl");
     this.newsList = compareNews(
-      this.newsList,
+      oldList,
       news,
       "bell-dot",
       "notebook-render-output"
