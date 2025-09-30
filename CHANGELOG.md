@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [8.44.0](https://github.com/ylw1997/touchFish/compare/v8.43.0...v8.44.0) (2025-09-30)
+
+
+### 📦 Chores | 其他更新
+
+* 注释掉fetchNewsList中的调试日志 ([0ecce19](https://github.com/0ecce19d4d66bc24d26b79793572cf66eeea1373))
+
+
+### ✨ Features | 新功能
+
+* 调整YImg组件，更新SVG背景位置，优化加载占位符逻辑 ([b434096](https://github.com/b434096fa7a7aeacb4ad3985fccf2cdea54c1d2e))
+
 ## [8.43.0](https://github.com/ylw1997/touchFish/compare/v8.42.0...v8.43.0) (2025-09-30)
 
 
