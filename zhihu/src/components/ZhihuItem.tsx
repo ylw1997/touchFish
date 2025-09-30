@@ -72,11 +72,16 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     if (comments.length > 0) return;
     setCommentsLoading(true);
     const fetchedComments = await getZhihuComment(item.id);
-    console.log("getComments",fetchedComments);
     if (fetchedComments) {
       setComments(fetchedComments);
     }
     setCommentsLoading(false);
+  };
+
+  const closeComments = () => {
+    // 隐藏评论并把卡片滚回视图
+    setShowComments(false);
+    backToView();
   };
 
   const renderTitle = () => (
@@ -256,7 +261,24 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
                   <CommentItem comment={comment} />
                 </motion.div>
               )}
-              header={<h3>评论</h3>}
+              header={
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <h3 style={{ margin: 0 }}>评论</h3>
+                  <Button
+                    color="default"
+                    variant="filled"
+                    onClick={closeComments}
+                  >
+                    <UpOutlined /> 收起评论
+                  </Button>
+                </div>
+              }
             />
           ))}
       </Card>
