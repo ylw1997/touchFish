@@ -75,7 +75,10 @@ export const compareNews = (
     const isRead = iconId === 'eye';
     if (isRead) return; // 已读优先
     if (!oldIds.includes(item.id)) {
-      item.iconPath = new ThemeIcon(newIcon);
+      // 新出现的新闻：如果不是已读，再标记为新图标；若已读则保持 eye
+      if (iconId !== 'eye') {
+        item.iconPath = new ThemeIcon(newIcon);
+      }
       return;
     }
     const topItem = new ThemeIcon('arrow-up');
