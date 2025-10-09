@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.45.1](https://github.com/ylw1997/touchFish/compare/v8.45.0...v8.45.1) (2025-10-09)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 修正 build-publish 脚本中的命令，确保正确执行发布流程 ([0a76b1f](https://github.com/0a76b1ffc1b41662e27ae81cd93d61db9787497a))
+
 ## [8.45.0](https://github.com/ylw1997/touchFish/compare/v8.44.1...v8.45.0) (2025-10-09)
 
 
