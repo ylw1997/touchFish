@@ -6,45 +6,13 @@
  * @FilePath: \touchfish\src\Providers\chipHellProvider.ts
  * @Description:
  */
-import {
-  EventEmitter,
-  ProviderResult,
-  TreeDataProvider,
-  TreeItem,
-} from "vscode";
-// import { getChipHellNews } from '../api/chipHell';
-import { fetchNewsList } from "../news/fetch";
-import { showNewsNumber } from "../config";
-import { compareNews, formatData } from "../utils/util";
+import { BaseNewsProvider } from '../core/baseNewsProvider';
 
-export class ChipHellProvider implements TreeDataProvider<TreeItem> {
-  private newsList: TreeItem[] = [];
-  private update = new EventEmitter<TreeItem | void>();
-  readonly onDidChangeTreeData = this.update.event;
-
-  constructor() {}
-
-  async getData() {
-    const oldList = this.newsList;
-    const list = await fetchNewsList("chiphell");
-    const plain = list
-      .slice(0, showNewsNumber)
-      .map((i) => ({ title: i.title, url: i.url || "" }));
-    const news = formatData(plain, "chiphell.openUrl");
-    this.newsList = compareNews(
-      oldList,
-      news,
-      "bell-dot",
-      "notebook-render-output"
-    );
-    this.update.fire();
-  }
-
-  getTreeItem(element: TreeItem): TreeItem | Thenable<TreeItem> {
-    return element;
-  }
-
-  getChildren(): ProviderResult<TreeItem[]> {
-    return this.newsList;
+export class ChipHellProvider extends BaseNewsProvider {
+  constructor() {
+    super({
+      sourceKey: 'chiphell',
+      commandName: 'chiphell.openUrl',
+    });
   }
 }

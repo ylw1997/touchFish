@@ -358,20 +358,22 @@
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "yarn run package",
+		"vscode:prepublish": "pnpm package",
 		"compile": "webpack",
 		"watch": "webpack --watch",
 		"package": "webpack --mode production --devtool hidden-source-map",
 		"compile-tests": "tsc -p . --outDir out",
 		"watch-tests": "tsc -p . -w --outDir out",
-		"pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+		"pretest": "pnpm compile-tests && pnpm compile && pnpm lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js",
 		"build": "vsce package",
 		"changelog": "standard-version",
 		"publish": "vsce publish && ovsx publish",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-publish": " npm --prefix ./zhihu run build && npm --prefix ./weibo run build && npm run package && standard-version && npm run publish "
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build",
+		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm publish",
+		"dev": "concurrently -n ZHIHU,WEIBO -c magenta,cyan \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\""
 	},
 	"devDependencies": {
 		"@eslint/js": "9.30.1",
@@ -392,7 +394,8 @@
 		"typescript": "5.8.3",
 		"typescript-eslint": "^8.15.0",
 		"webpack": "5.100.0",
-		"webpack-cli": "6.0.1"
+		"webpack-cli": "6.0.1",
+		"concurrently": "^9.0.1"
 	},
 	"dependencies": {
 		"antd": "^5.27.2",

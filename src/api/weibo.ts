@@ -9,7 +9,7 @@
  */
 import axios from "axios";
 import * as vscode from "vscode";
-import { setConfigByKey } from "../config";
+import { setConfigByKey } from "../core/config";
 import { weiboCommentParams, weiboRepostParams } from "../../type";
 import ContextManager from "../utils/extensionContext";
 import * as fs from "fs";

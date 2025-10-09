@@ -7,6 +7,8 @@
  * @Description: +
  */
 import * as vscode from "vscode";
+import { ReadState } from '../core/readState';
+import ContextManager from '../utils/extensionContext';
 import { getChipHellNewsDetail } from "../api/chipHell";
 import { getNewsDetail } from "../api/ithome";
 import { getV2exDetail } from "../api/v2ex";
@@ -115,16 +117,32 @@ const openDetailView = async (
 // 通用注册器（未来新增来源时更容易）
 const registerArticleCommand = (
   commandId: string,
-  handler: (title: string, idOrUrl: any) => Promise<ProcessResult>
+  handler: (title: string, idOrUrl: any, uniqueId?: string) => Promise<ProcessResult>
 ): vscode.Disposable => {
   return vscode.commands.registerCommand(
     commandId,
-    async (title: string, idOrUrl: any) => {
+    async (title: string, idOrUrl: any, uniqueId?: string) => {
       await openDetailView(
         title,
-        () => handler(title, idOrUrl),
+        () => handler(title, idOrUrl, uniqueId),
         (r) => r
       );
+      // 标记已读并刷新对应 provider 列表
+      if (uniqueId) {
+        ReadState.markRead(ContextManager.context, uniqueId);
+        // 触发一次刷新对应来源 (根据命令名简单匹配)
+        const mapping: Record<string, string> = {
+          'itHome.openUrl': 'itHome.refresh',
+          'chiphell.openUrl': 'chiphell.refresh',
+          'v2ex.openUrl': 'v2ex.refresh',
+          'hupu.openUrl': 'hupu.refresh',
+          'nga.openUrl': 'nga.refresh'
+        };
+        const refreshCmd = mapping[commandId];
+        if (refreshCmd) {
+          vscode.commands.executeCommand(refreshCmd);
+        }
+      }
     }
   );
 };

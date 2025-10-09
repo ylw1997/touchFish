@@ -35,7 +35,7 @@ import {
 } from "../api/weibo";
 import * as vscode from "vscode";
 import { commandsType, uploadType, weiboAJAX } from "../../type";
-import { setConfigByKey } from "../config";
+import { setConfigByKey } from "../core/config";
 import * as fs from "fs";
 export class WeiboProvider implements WebviewViewProvider {
   constructor(protected context: ExtensionContext) {}
@@ -326,10 +326,8 @@ export class WeiboProvider implements WebviewViewProvider {
       showImg = true;
     }
 
-    // 判断是否为开发环境
-    const isDev =
-      process.env.NODE_ENV === "development" ||
-      process.env.VSCODE_DEBUG_MODE === "true";
+    // 判断是否为开发环境: 使用 VSCode API 提供的 extensionMode 更可靠
+    const isDev = this.context.extensionMode === vscode.ExtensionMode.Development;
     let htmlContent = "";
     console.log("isDev判断是否为开发环境", isDev);
     if (isDev) {

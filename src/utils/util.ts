@@ -16,24 +16,32 @@ import { ZhihuHotItem, ZhihuHotQuestion, ZhihuItemData } from "../../type";
  * @param dataList  数据列表
  * @returns  转换后的数据列表
  */
+export interface FormatNewsInput extends NewsItem {
+  id?: string;            // 唯一ID（新）
+  tooltip?: string;       // 提示文本
+  read?: boolean;         // 已读状态
+}
+
 export const formatData = (
-  dataList: NewsItem[],
+  dataList: FormatNewsInput[],
   command: NewsCommandType,
   iconPath = "notebook-render-output"
 ): TreeItem[] => {
   const treeList: TreeItem[] = [];
-  for (const i in dataList) {
-    const item = dataList[i];
-    const treeItem = new TreeItem(item.title);
-    treeItem.id = item.title;
+  for (const i of dataList) {
+    const treeItem = new TreeItem(i.title);
+    treeItem.id = i.id || i.url || i.title; // 兜底
+    treeItem.tooltip = i.tooltip || i.url || i.title;
     treeItem.command = {
-      title: item.title,
+      title: i.title,
       command,
-      arguments: [item.title, item.url],
+      arguments: [i.title, i.url, treeItem.id], // 追加 id 供命令侧写已读
     };
-    treeItem.iconPath = item.isTop
-      ? new ThemeIcon("arrow-up")
-      : new ThemeIcon(iconPath);
+    if (i.read) {
+      treeItem.iconPath = new ThemeIcon('eye');
+    } else {
+      treeItem.iconPath = i.isTop ? new ThemeIcon('arrow-up') : new ThemeIcon(iconPath);
+    }
     treeList.push(treeItem);
   }
   return treeList;
@@ -62,15 +70,19 @@ export const compareNews = (
   }
   const oldIds = oldList.map((item) => item.id);
   newList.map((item) => {
+    // 已读 (eye) 保持不变
+    const iconId = (item.iconPath as ThemeIcon).id;
+    const isRead = iconId === 'eye';
+    if (isRead) return; // 已读优先
     if (!oldIds.includes(item.id)) {
       item.iconPath = new ThemeIcon(newIcon);
+      return;
+    }
+    const topItem = new ThemeIcon('arrow-up');
+    if (iconId === topItem.id) {
+      item.iconPath = topItem; // 置顶保持
     } else {
-      const topItem = new ThemeIcon("arrow-up");
-      if ((item.iconPath as ThemeIcon).id !== topItem.id) {
-        item.iconPath = new ThemeIcon(oldIcon);
-      } else {
-        item.iconPath = topItem;
-      }
+      item.iconPath = new ThemeIcon(oldIcon);
     }
   });
   return newList;

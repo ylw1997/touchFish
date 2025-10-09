@@ -9,7 +9,7 @@
 // 注册命令
 import { commands } from 'vscode';
 import { NgaProvider } from '../Providers/ngaProvider';
-import { setConfigByKey } from '../config';
+import { setConfigByKey } from '../core/config';
 import * as vscode from 'vscode';
 import { V2exProvider } from '../Providers/v2exProvider';
 import { HupuProvider } from '../Providers/hupuProvider';

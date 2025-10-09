@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-04 18:02:41
- * @LastEditTime: 2025-08-18 14:11:27
+ * @LastEditTime: 2025-10-09 12:21:23
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\webpack.config.js
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -19,9 +19,7 @@ const path = require('path');
 
 /** @type WebpackConfig */
 const extensionConfig = {
-  target: 'node', // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
-	mode: 'none', // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
-
+  target: "node",
   entry: {
     extension: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
     'zhihu': './src/utils/zhihu.js'

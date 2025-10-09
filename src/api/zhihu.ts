@@ -8,7 +8,7 @@
  */
 import axios from "axios";
 import * as vscode from "vscode";
-import { setConfigByKey } from "../config";
+import { setConfigByKey } from "../core/config";
 import { getZhihuSignature } from "../utils/signature";
 import {
   ZhihuCommentItem,

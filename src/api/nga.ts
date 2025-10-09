@@ -11,7 +11,7 @@ import { NewsItem } from "../type/type";
 import { load } from "cheerio";
 import { TextDecoder } from "util";
 import * as vscode from "vscode";
-import { setConfigByKey } from "../config";
+import { setConfigByKey } from "../core/config";
 import { uniqueNews } from "../utils/util";
 
 export const getOrSetNgaCookie = async () => {

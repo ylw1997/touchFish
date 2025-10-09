@@ -132,10 +132,8 @@ export class ZhihuWebProvider implements WebviewViewProvider {
       showImg = true;
     }
 
-    // 判断是否为开发环境
-    const isDev =
-      process.env.NODE_ENV === "development" ||
-      process.env.VSCODE_DEBUG_MODE === "true";
+    // 判断是否为开发环境: 使用 VSCode API 的 extensionMode
+    const isDev = this.context.extensionMode === vscode.ExtensionMode.Development;
     let htmlContent = "";
     console.log("isDev判断是否为开发环境", isDev);
     if (isDev) {
