@@ -372,7 +372,7 @@
 		"publish": "vsce publish && ovsx publish",
 		"unpublish": "vsce unpublish && ovsx unpublish",
 		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build",
-		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm publish",
+		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
 		"dev": "concurrently -n ZHIHU,WEIBO -c magenta,cyan \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\""
 	},
 	"devDependencies": {
