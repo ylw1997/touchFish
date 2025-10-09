@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.45.0](https://github.com/ylw1997/touchFish/compare/v8.44.1...v8.45.0) (2025-10-09)
+
+
+### ✨ Features | 新功能
+
+* 优化已读标记逻辑，支持局部更新，减少不必要的全量刷新 ([380c899](https://github.com/380c899d2e0d4046a31bf2a9a293c8c5fe3339ae))
+
 ### [8.44.1](https://github.com/ylw1997/touchFish/compare/v8.44.0...v8.44.1) (2025-10-09)
 
 ## [8.44.0](https://github.com/ylw1997/touchFish/compare/v8.43.0...v8.44.0) (2025-09-30)
