@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-08-12 09:09:29
+ * @LastEditTime: 2025-10-09 13:57:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description:
@@ -96,18 +96,6 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.executeCommand("v2ex.refresh");
   vscode.commands.executeCommand("hupu.refresh");
   vscode.commands.executeCommand("nga.refresh");
-
-  // 监听配置变化并自动刷新受影响的 provider
-  context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
-    if (e.affectsConfiguration('touchfish')) {
-      // 动态刷新所有 provider
-      vscode.commands.executeCommand('itHome.refresh');
-      vscode.commands.executeCommand('chiphell.refresh');
-      vscode.commands.executeCommand('v2ex.refresh');
-      vscode.commands.executeCommand('hupu.refresh');
-      vscode.commands.executeCommand('nga.refresh');
-    }
-  }));
 }
 
 // this method is called when your extension is deactivated

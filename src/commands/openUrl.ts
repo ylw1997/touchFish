@@ -8,6 +8,7 @@
  */
 import * as vscode from "vscode";
 import { ReadState } from '../core/readState';
+import { BaseNewsProvider } from '../core/baseNewsProvider';
 import ContextManager from '../utils/extensionContext';
 import { getChipHellNewsDetail } from "../api/chipHell";
 import { getNewsDetail } from "../api/ithome";
@@ -127,21 +128,10 @@ const registerArticleCommand = (
         () => handler(title, idOrUrl, uniqueId),
         (r) => r
       );
-      // 标记已读并刷新对应 provider 列表
+      // 标记已读并局部更新（不再全量刷新）
       if (uniqueId) {
         ReadState.markRead(ContextManager.context, uniqueId);
-        // 触发一次刷新对应来源 (根据命令名简单匹配)
-        const mapping: Record<string, string> = {
-          'itHome.openUrl': 'itHome.refresh',
-          'chiphell.openUrl': 'chiphell.refresh',
-          'v2ex.openUrl': 'v2ex.refresh',
-          'hupu.openUrl': 'hupu.refresh',
-          'nga.openUrl': 'nga.refresh'
-        };
-        const refreshCmd = mapping[commandId];
-        if (refreshCmd) {
-          vscode.commands.executeCommand(refreshCmd);
-        }
+        BaseNewsProvider.markReadGlobally(uniqueId);
       }
     }
   );

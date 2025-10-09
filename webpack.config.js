@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-04 18:02:41
- * @LastEditTime: 2025-10-09 12:21:23
+ * @LastEditTime: 2025-10-09 14:06:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\webpack.config.js
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -16,10 +16,12 @@ const path = require('path');
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
+const isDev = process.env.NODE_ENV === 'development';
 
 /** @type WebpackConfig */
 const extensionConfig = {
   target: "node",
+  mode: isDev ? 'development' : 'production',
   entry: {
     extension: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
     'zhihu': './src/utils/zhihu.js'
