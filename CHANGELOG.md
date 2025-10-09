@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [8.45.2](https://github.com/ylw1997/touchFish/compare/v8.45.1...v8.45.2) (2025-10-09)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 更新 compareNews 函数逻辑，确保新出现的新闻在未读状态下标记为新图标 ([49863b2](https://github.com/49863b27ae239835c8f84b01dd9768eb246094dd))
+
 ### [8.45.1](https://github.com/ylw1997/touchFish/compare/v8.45.0...v8.45.1) (2025-10-09)
 
 
