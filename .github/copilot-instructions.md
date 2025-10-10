@@ -1,0 +1,25 @@
+## TouchFish 协作速记
+- **扩展入口**：`src/extension.ts` 负责注册所有新闻树视图与微博/知乎 Webview，新增 Provider 后要同步更新 `package.json` 的 `views`/`commands` 声明。
+- **新闻管线**：树数据显示由 `src/core/baseNewsProvider.ts` 调度，统一调用 `fetchNewsList`、生成 md5 唯一 ID，并通过 `ReadState` 保持已读状态。
+- **详情命令**：`src/commands/openUrl.ts` 使用 `registerArticleCommand` 创建 Webview；调用方必须把第三个参数(id)传回，以便 `BaseNewsProvider.markReadGlobally` 局部刷新图标。
+- **数据源注册**：所有新闻源在 `src/news/sources.ts` 汇总，并下沉到 `src/api/**/*.ts` 的抓取函数；新增来源流程是：实现 API → 注册 source → 新建 Provider 子类 → 在 `extension.ts` 激活。
+- **图标语义**：`src/utils/util.ts` 管理树节点图标：`bell-dot` 新消息、`server-environment` 已看但未读、`eye` 已读、`arrow-up` 置顶；保持一致以免误导用户。
+- **Tab 配置**：默认 tab 常量在 `src/data/context.ts`，实际值来自 `touchfish.*Tab` 设置；`src/commands/commands.ts` 的切换命令会更新配置并立即刷新 Provider。
+- **配置写入**：涉及 Cookie/Token 要通过 `setConfigByKey`（`src/core/config.ts`）写入用户级设置，避免污染工作区。
+- **HTTP 约定**：统一使用 `src/core/http.ts` 的 axios 实例，继承默认 UA/timeout；网络错误抛出的消息会直达 UI，注意保持中文友好提示。
+- **Webview 通信**：微博与知乎 Provider 约定消息格式 `{ command, payload, uuid }`；前端 Promise 通过 uuid 匹配，任何新消息都要原样回传 uuid。
+- **状态恢复**：`workspaceState` 中的 `weiboScrollPosition`、`zhihuScrollPosition` 保存滚动位置；扩展新状态时可复用同样模式。
+- **开发模式**：判断 `extensionMode === Development` 时，Webview 直接加载 Vite dev server（微博 5173、知乎 5174）；确保端口占用检查优先进行。
+- **静态资源替换**：生产模式下 Provider 会 rewrite `/asset.js` 类路径到 `webview.asWebviewUri`，保持打包输出的相对路径即可。
+- **构建流程**：发布前先执行 `pnpm build-webviews`（或各自 `--filter` build）产出 `weibo/dist`、`zhihu/dist`，再跑 `pnpm compile` 或 `pnpm package`。
+- **快速调试**：本地联调推荐 `pnpm dev` 同时跑两个 Vite 服务，再在主项目 F5；改动前端会通过 React Fast Refresh 即时生效。
+- **测试&Lint**：`pnpm test` 会串行执行 `compile-tests`、`compile` 与 `pnpm lint`，Mocha 测试位于 `src/test/suite`，新增用例记得输出到 `out/test/suite`。
+- **缓存策略**：`src/news/cache.ts` 提供 TTL 缓存，但当前 `fetchNewsList` 直接绕过；若恢复缓存要注意已读状态刷新是否同步。
+- **命令暴露**：Cookie 设定命令在 `package.json` 的 `view/title` 菜单中出现，逻辑实现在 `src/commands/commands.ts`，复用该模式扩展其它凭证入口。
+- **主题与图标**：`assets/` 与 `themes/` 存放活动栏图标及内置主题；新增视图时准备对应 SVG，保持 Marketplace 品牌一致。
+- **发布脚本**：`pnpm build-publish` 顺序执行 Webview build → webpack 打包 → `standard-version` 生成 changelog → `vsce/ovsx publish`，执行前确保令牌有效。
+- **Token 处理**：微博/知乎/NGA API 依赖 `touchfish.*Cookie`，后端捕获 `ok == -100` 会提示用户输入；请把后端错误信息透出到 webview。
+- **签名工具**：平台签名逻辑散落在 `src/utils/signature.ts`、`src/utils/zhihu.js` 等文件，改动前先确认不会破坏现有请求。
+- **激活节奏**：扩展激活事件是 `onView:touchfish`，因此新命令应确保在视图加载后即可使用，不依赖额外触发。
+- **读状态迁移**：若需要重置历史已读，可调用 `ReadState.clear`（`src/core/readState.ts`）；使用前告知用户会清空本地记录。
+- **异常提示**：所有 API 失败默认走 `vscode.window.showErrorMessage`；请返回具体验证步骤或重试提示，而不是直接抛栈信息。
