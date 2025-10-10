@@ -30,20 +30,25 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const [searchResults, setSearchResults] = useState<ZhihuItemData[]>([]);
   const { searchZhihu, contextHolder } = useZhihuAction();
 
-  const handleSearch = useCallback(async () => {
-    try {
-      const values = await form.validateFields();
-      if (!values.keyword) return;
+  const handleSearch = useCallback(
+    async ({ keyword }: { keyword: string }) => {
+      const trimmed = keyword?.trim();
+      if (!trimmed) {
+        return;
+      }
       setSearchResults([]);
       setLoading(true);
-      const results = await searchZhihu(values.keyword);
-      setSearchResults(results || []);
-    } catch (error) {
-      console.error("Search failed:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [form, searchZhihu]);
+      try {
+        const results = await searchZhihu(trimmed);
+        setSearchResults(results || []);
+      } catch (error) {
+        console.error("Search failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [searchZhihu]
+  );
 
   const closeFunc = useCallback(() => {
     onClose();
@@ -89,6 +94,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
                   搜索
                 </Button>
               }
+              onSearch={() => form.submit()}
               loading={loading}
             />
           </Form.Item>
