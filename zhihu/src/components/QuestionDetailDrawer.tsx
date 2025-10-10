@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-09-29 16:23:37
+ * @LastEditTime: 2025-10-10 13:41:30
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -63,7 +63,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
           overflow: "hidden",
         },
         body: {
-          padding: 0,
+          padding: "5px",
           height: "100%",
           minHeight: 0,
           overflow: "auto",
@@ -73,11 +73,9 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       {questionData.length === 0 && open ? (
         loaderFunc()
       ) : (
-        // make the drawer body the scrollable target so InfiniteScroll can detect
-        // reaching bottom inside the drawer
         <div
           id="questionDetailScroll"
-          style={{ height: "100%", overflow: "auto", padding: "5px" }}
+          style={{ height: "100%", overflow: "auto" }}
         >
           <Card
             actions={

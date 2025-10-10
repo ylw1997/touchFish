@@ -70,7 +70,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             overflow: "hidden",
           },
           body: {
-            padding: "10px",
+            padding: "5px",
             paddingTop: "20px",
             overflowY: "auto",
           },
