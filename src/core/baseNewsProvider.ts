@@ -124,7 +124,7 @@ export abstract class BaseNewsProvider implements TreeDataProvider<TreeItem> {
     const plain = list.map(i => {
       const rawId = i.id || i.url || i.title;
       const id = this.generateItemId(rawId);
-      return { title: i.title, url: i.url || '', id, read: ReadState.isRead(id), tooltip: i.url };
+      return { title: i.title, url: i.url || '', id, read: ReadState.isRead(id), tooltip: i.title };
     });
     return formatData(plain as any, this.opts.commandName as NewsCommandType, 'notebook-render-output');
   }
