@@ -30,12 +30,12 @@ export const formatData = (
   const treeList: TreeItem[] = [];
   for (const i of dataList) {
     const treeItem = new TreeItem(i.title);
-    treeItem.id = i.id || i.url || i.title; // 兜底
-    treeItem.tooltip = i.tooltip || i.url || i.title;
+    treeItem.id = i.id; // 使用传入的准确 id，不再兜底
+    treeItem.tooltip = i.tooltip || i.title;
     treeItem.command = {
       title: i.title,
       command,
-      arguments: [i.title, i.url, treeItem.id], // 追加 id 供命令侧写已读
+      arguments: [i.title, i.url, i.id], // 使用原始传入的 id 保证一致性
     };
     if (i.read) {
       treeItem.iconPath = new ThemeIcon('eye');
