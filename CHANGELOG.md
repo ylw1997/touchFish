@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [8.46.0](https://github.com/ylw1997/touchFish/compare/v8.45.2...v8.46.0) (2025-10-10)
+
+
+### ✨ Features | 新功能
+
+* 添加 TouchFish 协作速记文档，详细说明扩展功能与使用流程 ([6bc2b49](https://github.com/6bc2b49fd28a218f9e07f2be705363b97d1c69c3))
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 更新 buildTreeItems 方法，修正 tooltip 显示为标题而非 URL ([1466d24](https://github.com/1466d24cd44ac8d8a2c8f8364dd3b326bff7f160))
+* 更新 formatData 函数，确保使用传入的准确 id，提升一致性 ([63e8764](https://github.com/63e8764887982b165fee6c81b48c3f00905d0873))
+
 ### [8.45.2](https://github.com/ylw1997/touchFish/compare/v8.45.1...v8.45.2) (2025-10-09)
 
 
