@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+### [8.46.1](https://github.com/ylw1997/touchFish/compare/v8.46.0...v8.46.1) (2025-10-10)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 调整 QuestionDetailDrawer 和 SearchDrawer 组件的内边距，优化布局 ([e4ecd2b](https://github.com/e4ecd2b980687afd1ac471cd2d72c582989e84b3))
+* 优化搜索功能，确保处理搜索关键词的空格并添加 onSearch 事件 ([93e7300](https://github.com/93e7300aaab5c621bf65a7fc388d006cb7428c6d))
+
 ## [8.46.0](https://github.com/ylw1997/touchFish/compare/v8.45.2...v8.46.0) (2025-10-10)
 
 
