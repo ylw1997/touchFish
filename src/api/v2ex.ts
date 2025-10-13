@@ -21,9 +21,13 @@ export const getV2exList = async (tab="all")=>{
     const newsListli = $("#Main").find(".box").first().find(".cell.item");
     newsListli.map((index)=>{
       const item = newsListli[index];
+      const linkEl = $(item).find('.topic-link');
+      const rawHref = linkEl.attr('href')?.trim() || '';
+      const hrefWithoutHash = rawHref.split('#')[0];
+      const cleanHref = hrefWithoutHash.split('?')[0];
       resArr.push({
-        title:$(item).find(".topic-link").text(),
-        url: $(item).find(".topic-link").attr('href')?.trim() || '',
+        title: linkEl.text(),
+        url: cleanHref,
       });
     });
     return uniqueNews(resArr);
