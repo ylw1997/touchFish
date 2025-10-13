@@ -226,3 +226,34 @@ a {
     display: none !important;
   }
 }
+
+/* 排名徽章: 替代 Avatar 显示多位数字 */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 0 6px;
+  height: 40px;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 600;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 10px;
+  box-sizing: border-box;
+  user-select: none;
+}
+.rank-badge.top-1 {
+  background: linear-gradient(135deg,#ffb347,#ffcc33);
+  color: #3a2500;
+}
+.rank-badge.top-2 {
+  background: linear-gradient(135deg,#d9d9d9,#ffffff);
+  color: #2a2a2a;
+}
+.rank-badge.top-3 {
+  background: linear-gradient(135deg,#f2c199,#e08a3a);
+  color: #3a2500;
+}

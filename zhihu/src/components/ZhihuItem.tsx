@@ -87,16 +87,13 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const renderTitle = () => (
     <Flex align="center">
       {item.index != undefined ? (
-        <Avatar
-          isBordered
-          radius="sm"
-          size="sm"
-          style={{
-            flexShrink: 0,
-            fontSize: "20px",
-          }}
-          name={item.index + ""}
-        />
+        // 自定义排名徽章（不用 Avatar，避免多位数字被截断）
+        <span
+          className={`rank-badge ${item.index <= 3 ? `top-${item.index}` : ""}`.trim()}
+          aria-label={`排名 ${item.index}`}
+        >
+          {item.index}
+        </span>
       ) : (
         <Avatar
           isBordered
