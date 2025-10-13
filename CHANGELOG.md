@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+### [8.46.2](https://github.com/ylw1997/touchFish/compare/v8.46.1...v8.46.2) (2025-10-13)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 替换 Avatar 为自定义排名徽章，优化多位数字显示 ([5ba0e43](https://github.com/5ba0e4366cd137bc37f105f811c802e8a5e5bed0))
+* 优化 V2EX 新闻列表获取，清理链接地址，去除哈希和查询参数 ([adea5fa](https://github.com/adea5fa10676fe0bf8d410ff5cd4343606614913))
+
 ### [8.46.1](https://github.com/ylw1997/touchFish/compare/v8.46.0...v8.46.1) (2025-10-10)
 
 
