@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [8.47.0](https://github.com/ylw1997/touchFish/compare/v8.46.2...v8.47.0) (2025-10-14)
+
+
+### ✨ Features | 新功能
+
+* 添加问题详情排序功能，支持按时间和默认排序 ([bc9be8d](https://github.com/bc9be8d68f195dbc2aca09407867133313908b39))
+
 ### [8.46.2](https://github.com/ylw1997/touchFish/compare/v8.46.1...v8.46.2) (2025-10-13)
 
 
