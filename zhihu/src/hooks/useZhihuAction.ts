@@ -15,6 +15,8 @@ const useZhihuAction = () => {
   const [questionDetail, setQuestionDetail] = useState<string>("");
   const [isFollowing, setIsFollowing] = useState<boolean>();
   const [currentQuestionId, setCurrentQuestionId] = useState<string>("");
+  // 排序: default | updated
+  const [questionOrder, setQuestionOrder] = useState<"default" | "updated">("default");
   const { request, contextHolder, messageApi } = useRequest();
 
   const apiClient = useMemo(() => new ZhihuApi(request), [request]);
@@ -88,9 +90,11 @@ const useZhihuAction = () => {
     setQuestionDetailDrawerOpen(true);
     setQuestionTitle(title);
     setCurrentQuestionId(questionId);
+    // 重置排序为 default
+    setQuestionOrder("default");
     // initialize temporary paging so UI treats as having more until real paging arrives
     setQuestionPagingMap((m) => ({ ...m, [questionId]: { is_end: false } }));
-    const result = await apiClient.getQuestionDetail({ questionId });
+    const result = await apiClient.getQuestionDetail({ questionId, order: "default" });
     if (result.detail) {
       setQuestionDetail(result.detail);
     }
@@ -121,6 +125,26 @@ const useZhihuAction = () => {
     },
     [apiClient, questionPagingMap]
   );
+
+  // 切换排序（重新拉取第一页数据）
+  const changeQuestionOrder = useCallback(async (order: "default" | "updated") => {
+    if (!currentQuestionId) return;
+    if (order === questionOrder) return; // 相同无需刷新
+    console.log('[Zhihu] changeQuestionOrder ->', order, 'currentQuestionId=', currentQuestionId);
+    setQuestionOrder(order);
+    setQuestionData([]);
+    setQuestionPagingMap((m) => ({ ...m, [currentQuestionId]: { is_end: false } }));
+    const res = await apiClient.getQuestionDetail({ questionId: currentQuestionId, order });
+    console.log('[Zhihu] changeQuestionOrder fetched', res?.data?.length, 'items');
+    if (res.data) {
+      let newData = res.data;
+      if (order === 'updated') {
+        newData = [...newData].sort((a: any, b: any) => (b.updated_time || 0) - (a.updated_time || 0));
+      }
+      setQuestionData(newData);
+    }
+    if (res.paging) setQuestionPagingMap((m) => ({ ...m, [currentQuestionId]: res.paging }));
+  }, [apiClient, currentQuestionId, questionOrder]);
 
   const closeQuestionDetailDrawer = () => {
     setQuestionDetailDrawerOpen(false);
@@ -204,8 +228,8 @@ const useZhihuAction = () => {
     fetchNext,
     hasMore,
     fetchQuestionNext,
-  currentQuestionId,
-  hasMoreQuestion,
+    currentQuestionId,
+    hasMoreQuestion,
     questionDetailDrawerOpen,
     questionData,
     setQuestionData,
@@ -223,6 +247,8 @@ const useZhihuAction = () => {
     copyLink,
     loading,
     messageApi,
+    questionOrder,
+    changeQuestionOrder,
   };
 };
 

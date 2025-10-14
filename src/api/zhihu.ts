@@ -219,7 +219,8 @@ export const getZhihuWebData = async (
 
 // web查看问题详情
 export const getZhihuWebDetail = async (
-  idOrNextUrl: string
+  idOrNextUrl: string,
+  order: "default" | "updated" = "default"
 ): Promise<{ data: ZhihuItemData[]; paging?: any }> => {
   // If idOrNextUrl is a full URL (starts with http), treat as nextUrl; otherwise treat as question id
   let requestUrl: string;
@@ -230,12 +231,13 @@ export const getZhihuWebDetail = async (
     signPath = u.pathname + u.search;
   } else {
     const id = idOrNextUrl;
-    signPath = `/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=default&platform=desktop`;
+    signPath = `/api/v4/questions/${id}/feeds?include=data[*].content&limit=30&offset=0&order=${order}&platform=desktop&ws_qiangzhisafe=0`;
     requestUrl = `https://www.zhihu.com${signPath}`;
   }
 
   const xzse96 = await getZhihu96(signPath);
   const cookie = (await getOrSetZhihuCookie()) as string;
+  console.log("[ZhihuFeeds] order=", order, " signPath=", signPath);
   const res = await axios.get(requestUrl, {
     headers: {
       Cookie: cookie,

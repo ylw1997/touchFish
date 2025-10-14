@@ -65,6 +65,8 @@ function App() {
     followHandler,
     unfollowHandler,
     loading,
+    questionOrder,
+    changeQuestionOrder,
   } = useZhihuAction();
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -228,6 +230,8 @@ function App() {
           questionId={currentQuestionId}
           hasMore={hasMoreQuestion(currentQuestionId as string)}
           showImg={showImg}
+          questionOrder={questionOrder}
+          changeQuestionOrder={changeQuestionOrder}
         />
       </Suspense>
       <SearchDrawer

@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-10-10 13:41:30
+ * @LastEditTime: 2025-10-14 17:13:37
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, List, Card, Button, Divider } from "antd";
+import { Drawer, List, Card, Button, Divider, Segmented } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { motion } from "framer-motion";
 import React from "react";
@@ -29,6 +29,8 @@ interface QuestionDetailDrawerProps {
   followHandler: () => void;
   unfollowHandler: () => void;
   showImg?: boolean;
+  questionOrder?: "default" | "updated";
+  changeQuestionOrder?: (order: "default" | "updated") => void;
 }
 
 const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
@@ -45,6 +47,8 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   questionId,
   hasMore,
   showImg = true,
+  questionOrder = "default",
+  changeQuestionOrder,
 }) => {
   return (
     <Drawer
@@ -78,6 +82,8 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
           style={{ height: "100%", overflow: "auto" }}
         >
           <Card
+            title="问题详情"
+            size="small"
             actions={
               isFollowing === undefined
                 ? undefined
@@ -108,6 +114,21 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
                 __html: questionDetail ? questionDetail : title,
               }}
             />
+          </Card>
+          <Card
+            style={{ marginTop: 10 }}
+            size="small"
+            title="回答排序"
+          >
+            <Segmented
+                style={{ fontSize: 14 }}
+                options={[
+                  { label: <span style={{ padding: '4px 10px' }}>默认排序</span>, value: 'default' },
+                  { label: <span style={{ padding: '4px 10px' }}>按时间(最新)</span>, value: 'updated' },
+                ]}
+                value={questionOrder}
+                onChange={(val) => changeQuestionOrder && changeQuestionOrder(val as any)}
+              />
           </Card>
           <InfiniteScroll
             dataLength={questionData.length}

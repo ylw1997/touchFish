@@ -81,8 +81,8 @@ export class ZhihuWebProvider implements WebviewViewProvider {
               break;
             }
             case "getZhihuQuestionDetail": {
-              const { questionId, nextUrl } = payload as { questionId: string; nextUrl?: string };
-              const detailRes = await getZhihuWebDetail(nextUrl ? nextUrl : questionId);
+              const { questionId, nextUrl, order } = payload as { questionId: string; nextUrl?: string; order?: "default" | "updated" };
+              const detailRes = await getZhihuWebDetail(nextUrl ? nextUrl : questionId, order || "default");
               const detailObj = await getZhihuQuestionDetailFunc(questionId);
               webviewView.webview.postMessage({
                 payload: { data: detailRes.data, paging: detailRes.paging, payload: questionId, ...detailObj },

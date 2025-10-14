@@ -31,8 +31,8 @@ export class ZhihuApi {
     );
   }
 
-  getQuestionDetail(payload: { questionId: string; nextUrl?: string }) {
-    return this.request<any, { questionId: string; nextUrl?: string }>(
+  getQuestionDetail(payload: { questionId: string; nextUrl?: string; order?: "default" | "updated" }) {
+    return this.request<any, { questionId: string; nextUrl?: string; order?: "default" | "updated" }>(
       "getZhihuQuestionDetail",
       payload,
       "获取问题详情中..."
