@@ -132,3 +132,17 @@ export const setNgaTokenCommand = () => {
         }
     });
 };
+
+// 设置小红书 cookie
+export const setXhsTokenCommand = () => {
+  return vscode.commands.registerCommand('touchfish.setXhsToken', async () => {
+    const xhsCookie = await vscode.window.showInputBox({
+      prompt: '请输入小红书的Cookie',
+      placeHolder: '请输入小红书的Cookie',
+    });
+    if (xhsCookie !== undefined) {
+      await setConfigByKey("xhsCookie", xhsCookie);
+      await vscode.window.showInformationMessage('小红书Cookie设置成功,切换到小红书视图查看!');
+    }
+  });
+};
