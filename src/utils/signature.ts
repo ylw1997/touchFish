@@ -61,11 +61,17 @@ export function getZhihuSignature(dataToSign: string): Promise<string> {
 
 // 小红书签名生成：调用 xhs/xhs.js 中导出的 mainSafe/main
 // 返回 { 'X-s': string; 'X-t': string }
+export interface XhsSignature {
+  xs: string;
+  xt: string;
+  xs_common?: string;
+}
+
 export function getXhsSignature(
   apiPath: string,
   payload: any,
   cookie?: string
-): Promise<{ "xs": string; "xt": string; "xs_common"?: string }> {
+): Promise<XhsSignature> {
   return new Promise((resolve, reject) => {
     try {
       const xhsScriptPath = path.join(__dirname, "xhs.js");
@@ -107,7 +113,13 @@ export function getXhsSignature(
         console.warn("[xhs] 未在 Cookie 中解析到 a1，使用脚本内默认 a1 可能导致签名失效");
       }
       const result = signer(apiPath, payload, a1);
-      resolve(result);
+      const xs: string | undefined = result.xs;
+      const xt: string | undefined = result.xt;
+      const xs_common: string | undefined = result.xs_common;
+      if (!xs || !xt) {
+        return reject(new Error('签名结果缺少 xs/xt'));
+      }
+      resolve(xs_common ? { xs, xt, xs_common } : { xs, xt });
     } catch (e: any) {
       reject(new Error(`执行本地 xhs.js 失败: ${e.message}`));
     }
