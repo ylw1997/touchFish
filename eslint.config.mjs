@@ -13,7 +13,7 @@ import tseslint from "typescript-eslint";
 
 
 export default [
-  {ignores: ["src/utils/zhihu.js"]},
+  {ignores: ["src/utils/zhihu.js", "src/utils/xhs.js"]},
   {files: ["**/*.{js,mjs,cjs,ts}"]},
   {files: ["**/*.js"], languageOptions: {sourceType: "script"}},
   {languageOptions: { globals: {...globals.browser, ...globals.node} }},

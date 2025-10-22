@@ -79,10 +79,26 @@
 - `touchfish.weiboCookie`: 你的微博 Cookie。
 - `touchfish.zhihuCookie`: 你的知乎 Cookie。
 - `touchfish.ngaCookie`: 你的 NGA Cookie。
+- `touchfish.xhsCookie`: 你的小红书 Cookie (用于首页推荐加密接口)。
 - `touchfish.showImg`: 是否显示图片（目前主要支持微博）。
 - 以及各个新闻源的默认标签页配置。
 
 ## ⚠️ 注意事项
+
+### 小红书使用说明
+
+当前内置了首页推荐加密签名逻辑，视图在侧边活动栏 `TouchFish-Xhs` 中。首次打开会提示设置 `小红书 Cookie`：
+
+1. 浏览器登录 https://www.xiaohongshu.com
+2. 打开开发者工具 Network 任意请求复制完整 `Cookie`
+3. 在 XHS 视图标题的齿轮菜单里执行 “设置小红书Cookie” 命令并粘贴
+
+功能：
+- 支持首页瀑布流推荐无限下拉
+- 支持图片显示/隐藏切换（复用全局 `touchfish.showImg`）
+- 自动记忆滚动位置
+
+后续计划：搜索、笔记详情、点赞/收藏 等交互能力。
 
 - **网络环境**: 浏览 **V2EX** 节点需要科学上网。
 - **Cookie 配置**: **微博、知乎、NGA** 的大部分高级功能（如个人主页、发布、评论等）需要登录凭证 (Cookie)。你可以在浏览器中登录相应网站，然后按 `F12` 打开开发者工具，在“网络”(Network) 面板中找到请求的 `Cookie` 值并配置到插件中。

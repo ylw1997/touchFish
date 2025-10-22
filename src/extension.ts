@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-10-09 13:57:29
+ * @LastEditTime: 2025-10-22 08:57:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description:
@@ -30,12 +30,14 @@ import {
   setZhihuTokenCommand,
   setWeiboTokenCommand,
   setNgaTokenCommand,
+  setXhsTokenCommand,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
 import { HupuProvider } from "./Providers/hupuProvider";
 import { NgaProvider } from "./Providers/ngaProvider";
 import { ZhihuWebProvider } from './Providers/zhihuWebProvider';
+import { XhsWebProvider } from './Providers/xhsWebProvider';
 import { WeiboProvider } from "./Providers/weiboProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
@@ -55,6 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
   const ngaProvider = new NgaProvider();
   const weiboProvider = new WeiboProvider(context);
   const zhihuWebProvider = new ZhihuWebProvider(context);
+  const xhsWebProvider = new XhsWebProvider(context);
   vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
   vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
   vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
@@ -66,6 +69,11 @@ export function activate(context: vscode.ExtensionContext) {
     },
   });
   vscode.window.registerWebviewViewProvider("zhihu", zhihuWebProvider, {
+    webviewOptions: {
+      retainContextWhenHidden: true,
+    },
+  });
+  vscode.window.registerWebviewViewProvider("xhs", xhsWebProvider, {
     webviewOptions: {
       retainContextWhenHidden: true,
     },
@@ -90,6 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(setZhihuTokenCommand());
   context.subscriptions.push(setWeiboTokenCommand());
   context.subscriptions.push(setNgaTokenCommand());
+  context.subscriptions.push(setXhsTokenCommand());
   // 自动刷新
   vscode.commands.executeCommand("itHome.refresh");
   vscode.commands.executeCommand("chiphell.refresh");
