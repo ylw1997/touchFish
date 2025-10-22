@@ -428,3 +428,81 @@ export interface UploadImageResponsePayload extends weiboAJAX {
     type: string;
     source: string;
 }
+
+// ================== 小红书 (XHS) 原始 Feed 类型定义 ==================
+// 说明：这些类型用于描述从 /api/sns/web/v1/homefeed 接口直接返回的原始数据结构。
+// arg1 示例：{ cursor_score: string; items: XhsFeedRawItem[] }
+
+export interface XhsCoverInfo {
+  image_scene?: 'WB_PRV' | 'WB_DFT' | string;
+  url?: string;
+  [key: string]: any;
+}
+
+export interface XhsCover {
+  url_default?: string;
+  file_id?: string;
+  height?: number;
+  width?: number;
+  url?: string;
+  info_list?: XhsCoverInfo[];
+  url_pre?: string;
+  [key: string]: any;
+}
+
+export interface XhsInteractInfo {
+  liked?: boolean;
+  liked_count?: string | number;
+  [key: string]: any;
+}
+
+export interface XhsUser {
+  nick_name?: string;
+  nickname?: string;
+  avatar?: string;
+  user_id?: string;
+  xsec_token?: string;
+  [key: string]: any;
+}
+
+export interface XhsNoteVideoCapa {
+  duration?: string | number;
+  [key: string]: any;
+}
+
+export interface XhsNoteVideo {
+  capa?: XhsNoteVideoCapa;
+  [key: string]: any;
+}
+
+export interface XhsNoteCard {
+  display_title?: string;
+  user?: XhsUser;
+  interact_info?: XhsInteractInfo;
+  cover?: XhsCover;
+  type?: 'normal' | 'video' | string;
+  desc?: string;
+  title?: string;
+  video?: XhsNoteVideo;
+  [key: string]: any;
+}
+
+export interface XhsFeedRawItem {
+  ignore: boolean;
+  xsec_token?: string;
+  id: string;
+  model_type: 'note' | string;
+  note_card?: XhsNoteCard;
+  track_id?: string;
+  [key: string]: any;
+}
+
+export interface XhsFeedRawResponse {
+  cursor_score: string; // 例如 '1.7611199689800014E9'
+  items: XhsFeedRawItem[];
+  // 其它潜在字段（按需补充）
+  // is_end?: boolean;
+  // has_more?: boolean;
+  [key: string]: any;
+}
+

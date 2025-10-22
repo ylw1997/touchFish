@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-22 15:58:11
+ * @LastEditTime: 2025-10-22 16:08:56
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -67,7 +67,7 @@ function buildXhsHeaders(params: {
     origin: "https://www.xiaohongshu.com",
   };
 }
-
+// 推荐
 export const getXhsFeed = async (cursor: string = "") => {
   const cookie = await getOrSetXhsCookie();
   if (!cookie) throw new Error("请先设置小红书 Cookie");
