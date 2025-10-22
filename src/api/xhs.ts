@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-22 15:11:55
+ * @LastEditTime: 2025-10-22 15:33:25
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -79,19 +79,13 @@ export const getXhsFeed = async (
     "Cookie": cookie,
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Content-Type": "application/json;charset=UTF-8",
-  "x-s": (signObj as any)["X-s"] || (signObj as any).xs, // 兼容返回结构字段名
-  "x-t": ((signObj as any)["X-t"] || (signObj as any).xt || '').toString(),
+    "x-s": signObj.xs,
+    "x-t": signObj.xt,
     authority: "edith.xiaohongshu.com",
     referer: "https://www.xiaohongshu.com/",
     accept: "application/json, text/plain, */*",
     origin: "https://www.xiaohongshu.com",
-    "Accept-Language": "zh-CN,zh;q=0.9",
-    "Sec-Fetch-Site": "same-site",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Dest": "empty"
   };
-  // 暂时移除 X-s-common，若仍失败可再启用
-  console.log("XHS API 请求 URL:", url, bodyString, headers);
   let json: any;
   try {
     const resp = await fetch(url, {

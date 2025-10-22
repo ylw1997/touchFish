@@ -2,7 +2,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-05 08:51:35
- * @LastEditTime: 2025-10-22 15:11:32
+ * @LastEditTime: 2025-10-22 15:34:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\signature.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -107,7 +107,6 @@ export function getXhsSignature(
         console.warn("[xhs] 未在 Cookie 中解析到 a1，使用脚本内默认 a1 可能导致签名失效");
       }
       const result = signer(apiPath, payload, a1);
-      console.log("[xhs] signature result:", result,apiPath, payload, a1);
       resolve(result);
     } catch (e: any) {
       reject(new Error(`执行本地 xhs.js 失败: ${e.message}`));
