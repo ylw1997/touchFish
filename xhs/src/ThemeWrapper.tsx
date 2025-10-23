@@ -1,12 +1,64 @@
-import { useEffect, useState } from 'react';
-import Feed from './components/Feed';
+import { ConfigProvider, theme } from "antd";
+import zhCN from "antd/locale/zh_CN";
+import { useState, useEffect, useMemo } from "react";
+import Feed from "./components/Feed";
 
-declare global { interface Window { showImg?: boolean; } }
+const getTheme = () => {
+  return document.body.getAttribute('data-vscode-theme-kind') === 'vscode-light';
+};
 
-export default function ThemeWrapper() {
-  const [showImg, setShowImg] = useState<boolean>(true);
+const ThemeWrapper = () => {
+  const [isLightTheme, setIsLightTheme] = useState(getTheme());
+
   useEffect(() => {
-    if (typeof window.showImg === 'boolean') setShowImg(window.showImg);
+    const observer = new MutationObserver(() => {
+      setIsLightTheme(getTheme());
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-vscode-theme-kind'],
+    });
+
+    return () => observer.disconnect();
   }, []);
-  return <Feed showImg={showImg} />;
-}
+
+  const antdTheme = useMemo(() => ({
+    algorithm: isLightTheme ? theme.defaultAlgorithm : theme.darkAlgorithm,
+    token: {
+      fontSize: 14,
+      fontSizeSM: 13,
+      colorBorderSecondary: "var(--vscode-chat-requestBorder)",
+      colorText: "var(--vscode-foreground)",
+      colorTextDescription: "var(--vscode-descriptionForeground)",
+      colorTextSecondary: "var(--vscode-descriptionForeground)",
+      colorBorder: "var(--vscode-chat-requestBorder)",
+      colorSplit: "var(--vscode-chat-requestBorder)",
+      colorLink: "var(--vscode-textLink-foreground)",
+      colorLinkHover: "var(--vscode-textLink-activeForeground)",
+      colorIcon: "var(--vscode-icon-foreground)",
+      colorIconHover: "var(--vscode-foreground)",
+      borderRadius: 10,
+    },
+    components: {
+      Card: {
+        colorBgContainer: "transparent",
+        padding: 10,
+        paddingLG: 10,
+      },
+      Drawer: {
+        colorBgElevated: "transparent",
+      },
+    },
+  }), [isLightTheme]);
+
+  return (
+    <ConfigProvider theme={antdTheme} locale={zhCN}>
+        <main className={isLightTheme ? "" : "dark"}>
+          <Feed />
+        </main>
+    </ConfigProvider>
+  );
+};
+
+export default ThemeWrapper;

@@ -16,7 +16,8 @@
     "antd": "^5.26.6",
     "dayjs": "^1.11.13",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-infinite-scroll-component": "^6.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

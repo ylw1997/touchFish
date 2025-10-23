@@ -1,2 +1,52 @@
-html,body,#root{height:100%;margin:0;padding:0;}
-body{font-family: 'Microsoft YaHei', system-ui, Arial, sans-serif; font-size:12px;}
+/* ==========================================================================
+   1. 全局样式与重置
+   ========================================================================== */
+* {
+  font-family: "Microsoft YaHei", var(--vscode-font-family);
+}
+
+html,
+body {
+  padding: 0;
+  background-color: var(--vscode-editor-background);
+  height: 100vh;
+  overflow: hidden;
+  scrollbar-color: var(--vscode-scrollbarSlider-background) #ffffff00;
+  scrollbar-width: thin;
+}
+
+*:focus {
+  outline: none;
+}
+
+a {
+  color: var(--vscode-textLink-foreground);
+  &:hover {
+    color: var(--vscode-textLink-activeForeground);
+  }
+}
+
+/* ==========================================================================
+   2. 共享/可复用样式
+   ========================================================================== */
+
+/**
+ * 通用毛玻璃背景效果
+ */
+.backdrop-style {
+  background-color: color-mix(
+    in srgb,
+    var(--vscode-editor-background) 50%,
+    transparent
+  );
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
+.ant-card {
+  overflow: hidden;
+  .ant-card-meta-title {
+    word-break: break-all;
+    overflow: auto;
+    white-space: wrap;
+  }
+}

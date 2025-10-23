@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-09-25 14:55:36
+ * @LastEditTime: 2025-10-23 10:26:45
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -79,7 +79,13 @@ export type CommandList =
   | "SENDVIDEO"
   | "SAVE_SCROLL_POSITION"
   | "RESTORE_SCROLL_POSITION"
-  | "TOGGLE_SHOW_IMG";
+  | "TOGGLE_SHOW_IMG"
+  // XHS commands
+  | "XHS_GETDATA"
+  | "XHS_SENDDATA"
+  | "XHS_GET_HOME_FEED"
+  | "XHS_SEARCH"
+  | "XHS_NOTE_DETAIL";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"
@@ -440,12 +446,12 @@ export interface XhsCoverInfo {
 }
 
 export interface XhsCover {
-  url_default?: string;
-  file_id?: string;
-  height?: number;
-  width?: number;
-  url?: string;
-  info_list?: XhsCoverInfo[];
+  url_default: string;
+  file_id: string;
+  height: number;
+  width: number;
+  url: string;
+  info_list: XhsCoverInfo[];
   url_pre?: string;
   [key: string]: any;
 }
@@ -457,11 +463,11 @@ export interface XhsInteractInfo {
 }
 
 export interface XhsUser {
-  nick_name?: string;
-  nickname?: string;
-  avatar?: string;
-  user_id?: string;
-  xsec_token?: string;
+  nick_name: string;
+  nickname: string;
+  avatar: string;
+  user_id: string;
+  xsec_token: string;
   [key: string]: any;
 }
 
@@ -476,13 +482,13 @@ export interface XhsNoteVideo {
 }
 
 export interface XhsNoteCard {
-  display_title?: string;
-  user?: XhsUser;
-  interact_info?: XhsInteractInfo;
-  cover?: XhsCover;
-  type?: 'normal' | 'video' | string;
-  desc?: string;
-  title?: string;
+  display_title: string;
+  user: XhsUser;
+  interact_info: XhsInteractInfo;
+  cover: XhsCover;
+  type: 'normal' | 'video' | string;
+  desc: string;
+  title: string;
   video?: XhsNoteVideo;
   [key: string]: any;
 }
@@ -492,7 +498,7 @@ export interface XhsFeedRawItem {
   xsec_token?: string;
   id: string;
   model_type: 'note' | string;
-  note_card?: XhsNoteCard;
+  note_card: XhsNoteCard;
   track_id?: string;
   [key: string]: any;
 }
@@ -500,9 +506,5 @@ export interface XhsFeedRawItem {
 export interface XhsFeedRawResponse {
   cursor_score: string; // 例如 '1.7611199689800014E9'
   items: XhsFeedRawItem[];
-  // 其它潜在字段（按需补充）
-  // is_end?: boolean;
-  // has_more?: boolean;
-  [key: string]: any;
 }
 

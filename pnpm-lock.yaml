@@ -178,6 +178,9 @@ importers:
       react-dom:
         specifier: ^19.1.0
         version: 19.1.1(react@19.1.1)
+      react-infinite-scroll-component:
+        specifier: ^6.1.0
+        version: 6.1.0(react@19.1.1)
     devDependencies:
       '@eslint/js':
         specifier: ^9.30.1
