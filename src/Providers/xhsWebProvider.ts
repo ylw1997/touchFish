@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:49:53
- * @LastEditTime: 2025-10-23 14:15:53
+ * @LastEditTime: 2025-10-23 14:52:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\xhsWebProvider.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -55,13 +55,11 @@ export class XhsWebProvider implements WebviewViewProvider {
             break;
           }
           case 'XHS_SAVE_SCROLL_POSITION': {
-            console.log("Saving scroll position:", payload);
             this.context.workspaceState.update('xhsScrollPosition', payload || 0);
             break;
           }
           case 'XHS_REQUEST_RESTORE_SCROLL': {
             const pos = this.context.workspaceState.get('xhsScrollPosition', 0);
-            console.log("Restoring scroll position to:", pos);
             webviewView.webview.postMessage({ command: 'XHS_RESTORE_SCROLL_POSITION', payload: pos });
             break;
           }

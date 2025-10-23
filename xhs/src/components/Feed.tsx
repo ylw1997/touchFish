@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:35
- * @LastEditTime: 2025-10-23 14:41:20
+ * @LastEditTime: 2025-10-23 14:52:16
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\Feed.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -38,7 +38,6 @@ export default function Feed() {
     if (!scrollableNode) return;
 
     const handleScroll = debounce(() => {
-      console.log("[xhs] sending SAVE", scrollableNode.scrollTop);
       vscode.postMessage({
         command: "XHS_SAVE_SCROLL_POSITION",
         payload: scrollableNode.scrollTop,
@@ -48,7 +47,6 @@ export default function Feed() {
     const messageHandler = (ev: MessageEvent<any>) => {
       if (ev.type !== "message" || !ev.data?.command) return;
       if (ev.data.command === "XHS_RESTORE_SCROLL_POSITION") {
-        console.log("Restoring scroll position to:", ev.data.payload);
         if (scrollRef.current) {
           scrollRef.current.scrollTop = ev.data.payload;
         }
