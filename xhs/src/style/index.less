@@ -50,3 +50,49 @@ a {
     white-space: wrap;
   }
 }
+/* ========================================================================
+   3. 小红书瀑布流布局 (Masonry via CSS Columns)
+   使用 columns 实现不规则高度瀑布流；卡片需要 display:inline-block 以避免跨列。
+   响应式断点：>=1600px 5列, >=1200px 4列, >=900px 3列, >=600px 2列, <600px 1列。
+   ======================================================================== */
+
+.xhs-waterfall {
+  column-gap: 12px;
+  /* 初始列数在较宽屏 */
+  column-count: 2;
+  /* 让滚动容器内的列高度自适应 */
+  width: 100%;
+  padding: 8px 12px 24px;
+  box-sizing: border-box;
+}
+
+/* 断点调整列数 */
+@media (min-width: 1600px) {
+  .xhs-waterfall {
+    column-count: 5;
+  }
+}
+@media (max-width: 1199px) and (min-width: 900px) {
+  .xhs-waterfall {
+    column-count: 3;
+  }
+}
+@media (max-width: 899px) and (min-width: 300px) {
+  .xhs-waterfall {
+    column-count: 2;
+  }
+}
+@media (max-width: 299px) {
+  .xhs-waterfall {
+    column-count: 1;
+  }
+}
+
+/* 瀑布流条目：让卡片在列中独立且撑满列宽 */
+.xhs-waterfall-item {
+  break-inside: avoid; /* 防止被列拆分 */
+  margin-bottom: 12px;
+  display: inline-block; /* columns 模式需要 inline-block 才能正确换列 */
+  width: 100%;
+  box-sizing: border-box;
+}

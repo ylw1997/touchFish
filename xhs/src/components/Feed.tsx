@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:35
- * @LastEditTime: 2025-10-23 10:47:03
+ * @LastEditTime: 2025-10-23 11:17:08
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\Feed.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -37,19 +37,13 @@ export default function Feed() {
           </div>
         }
         scrollableTarget="xhsScrollableDiv"
-        scrollThreshold={0.95}
+        scrollThreshold={0.9}
       >
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignContent: "flex-start",
-            gap: 8,
-            justifyContent: "center",
-          }}
-        >
+        <div className="xhs-waterfall">
           {items.map((raw: any) => (
-            <XhsFeedCard key={raw.id} data={raw} />
+            <div key={raw.id} className="xhs-waterfall-item">
+              <XhsFeedCard data={raw} />
+            </div>
           ))}
         </div>
       </InfiniteScroll>

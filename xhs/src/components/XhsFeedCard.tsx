@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 10:20:51
- * @LastEditTime: 2025-10-23 11:04:08
+ * @LastEditTime: 2025-10-23 11:10:31
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\XhsFeedCard.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -27,7 +27,6 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data }) => {
   const cover: string = card.cover.url_default;
   return (
     <Card
-      style={{ width: "calc(50% - 8px)" }}
       styles={{
         body: {
           padding: 8,
