@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-22 16:08:56
+ * @LastEditTime: 2025-10-23 11:24:05
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -101,7 +101,7 @@ export const getXhsFeed = async (cursor: string = "") => {
 
   try {
     const resp = await axios.post(url, bodyString, { headers, timeout: 10000 });
-    console.log("[xhs response]", resp.data.data);
+    console.log(url, bodyObj, resp.data);
     return resp.data.data;
   } catch (err: any) {
     console.error("[xhs request error]", err);

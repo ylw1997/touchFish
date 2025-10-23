@@ -1,22 +1,35 @@
 /*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-10-23 10:05:42
+ * @LastEditTime: 2025-10-23 11:22:55
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\xhs\src\hooks\useXhsFeed.ts
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
+/*
  * 小红书 feed 数据加载 Hook
  * 模仿 weibo 下的 useWeiboAction：负责滚动加载、并发控制、刷新、错误处理占位。
  */
-import { useCallback, useRef, useState } from 'react';
-import { fetchFeed } from '../api';
+import { useCallback, useRef, useState } from "react";
+import { fetchFeed } from "../api";
 
-export interface XhsFeedRawItem { id?: string; [k: string]: any }
-export interface XhsFeedRawResponse { items?: XhsFeedRawItem[]; cursor_score?: string; has_more?: boolean }
+export interface XhsFeedRawItem {
+  id?: string;
+  [k: string]: any;
+}
+export interface XhsFeedRawResponse {
+  items?: XhsFeedRawItem[];
+  cursor_score?: string;
+}
 
 interface UseXhsFeedOptions {
   /** 初始光标 */
   initialCursor?: string;
-  /** 是否自动去重（根据 id） */
-  dedupe?: boolean;
 }
 
 export function useXhsFeed(options: UseXhsFeedOptions = {}) {
-  const { initialCursor = '', dedupe = true } = options;
+  const { initialCursor = "" } = options;
   const [items, setItems] = useState<XhsFeedRawItem[]>([]);
   const [cursor, setCursor] = useState<string>(initialCursor);
   const [loading, setLoading] = useState<boolean>(false);
@@ -24,55 +37,39 @@ export function useXhsFeed(options: UseXhsFeedOptions = {}) {
   const [error, setError] = useState<string | null>(null);
 
   const loadingRef = useRef(false);
-  const idSetRef = useRef<Set<string>>(new Set());
-
-  const mapIncoming = useCallback((arr: XhsFeedRawItem[] | undefined) => {
-    if (!arr || arr.length === 0) return [];
-    if (!dedupe) return arr.map(it => ({ ...it, id: it.id || Math.random().toString(36).slice(2) }));
-    return arr.map(raw => {
-      const id = raw.id || Math.random().toString(36).slice(2);
-      raw.id = id; // 直接附加 id 以便后续组件使用
-      return raw;
-    }).filter(it => {
-      if (!it.id) return true; // 理论不发生
-      if (idSetRef.current.has(it.id)) return false;
-      idSetRef.current.add(it.id);
-      return true;
-    });
-  }, [dedupe]);
-
-  const load = useCallback(async (reset = false) => {
-    if (loadingRef.current) return;
-    loadingRef.current = true;
-    setLoading(true);
-    setError(null);
-    try {
-      const nextCursor = reset ? '' : cursor;
-      const res: XhsFeedRawResponse = await fetchFeed(nextCursor);
-      const mapped = mapIncoming(res.items);
-      setItems(prev => reset ? mapped : [...prev, ...mapped]);
-      setCursor(res.cursor_score || '');
-      setHasMore(res.has_more !== false && (res.items?.length || 0) > 0);
-    } catch (e: any) {
-      console.error('[useXhsFeed] load error', e);
-      setError(e?.message || '加载失败');
-    } finally {
-      loadingRef.current = false;
-      setLoading(false);
-    }
-  }, [cursor, mapIncoming]);
+  const load = useCallback(
+    async (reset = false) => {
+      if (loadingRef.current) return;
+      loadingRef.current = true;
+      setLoading(true);
+      setError(null);
+      try {
+        const nextCursor = reset ? "" : cursor;
+        const res: XhsFeedRawResponse = await fetchFeed(nextCursor);
+        const incoming = res.items || [];
+        setItems((prev) => (reset ? incoming : [...prev, ...incoming]));
+        setCursor(res.cursor_score || "");
+        // 没有 has_more 字段时：当返回空数组则认为结束
+        setHasMore(incoming.length > 0);
+      } catch (e: any) {
+        console.error("[useXhsFeed] load error", e);
+        setError(e?.message || "加载失败");
+      } finally {
+        loadingRef.current = false;
+        setLoading(false);
+      }
+    },
+    [cursor]
+  );
 
   const refresh = useCallback(async () => {
-    // 清理去重集合
-    idSetRef.current.clear();
-    setCursor('');
+    setCursor("");
     await load(true);
   }, [load]);
 
   const clear = useCallback(() => {
-    idSetRef.current.clear();
     setItems([]);
-    setCursor('');
+    setCursor("");
     setHasMore(true);
   }, []);
 
