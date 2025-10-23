@@ -2,7 +2,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-05 08:51:35
- * @LastEditTime: 2025-10-23 09:27:13
+ * @LastEditTime: 2025-10-23 14:27:25
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\signature.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -74,7 +74,7 @@ export function getXhsSignature(
   opts?: { timeoutMs?: number; forceReload?: boolean }
 ): Promise<XhsSignature> {
   // 缓存 signer，避免每次都重新创建 VM 导致性能抖动 / 超时
-  const timeoutMs = opts?.timeoutMs ?? 5000; // 默认提高到 5s，可通过 opts 调整
+  const timeoutMs = 10000; // 默认提高到 10s，可通过 opts 调整
   // 使用闭包级别静态变量缓存
   const cached: { signer?: any; loadedAt?: number } = (getXhsSignature as any)._cache || {};
   // 如果需要强制刷新或未缓存，或者超过 30 分钟自动失效重新加载

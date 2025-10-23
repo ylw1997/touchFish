@@ -83,7 +83,10 @@ export type CommandList =
   // XHS commands
   | "XHS_GET_HOME_FEED"
   | "XHS_SEARCH"
-  | "XHS_FEED_DETAIL";
+  | "XHS_FEED_DETAIL"
+  | "XHS_SAVE_SCROLL_POSITION"
+  | "XHS_RESTORE_SCROLL_POSITION"
+  | "XHS_REQUEST_RESTORE_SCROLL";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"

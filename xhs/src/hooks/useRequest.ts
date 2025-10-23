@@ -1,21 +1,44 @@
 /*
- * @Author: Auto-generated
- * @Description: XHS useRequest Hook 与 Weibo 版本对齐，提供统一请求入口
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-09-23 17:31:31
+ * @LastEditTime: 2025-10-23 14:43:48
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\xhs\src\hooks\useRequest.ts
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
+ * @Description:
  */
-import { useCallback } from 'react';
-import { message } from 'antd';
-import { messageHandler } from '../utils/messageHandler';
-import type { CommandList } from '../../../type';
+import { message } from "antd";
+import { useCallback } from "react";
+import { CommandList } from "../../../type";
+import { vscode } from "../utils/vscode";
+import { messageHandler } from "../utils/messageHandler";
 
-// 旧的 uuid 生成与手动注册逻辑移除，统一走 messageHandler.send
+const generateUUID = () => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0,
+      v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
 
 export const useRequest = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
-  const request = useCallback(<T = any>(command: CommandList, payload: any): Promise<T> => {
-    // 直接委托给 messageHandler.send (内部管理 uuid & timeout)，避免重复 acquireVsCodeApi
-    return messageHandler.send<T>(command, payload);
-  }, []);
+  const request = useCallback(
+    <T = any>(command: CommandList, payload: any): Promise<T> => {
+      const uuid = generateUUID();
+
+      return new Promise<T>((resolve, reject) => {
+        // Register the pending request before sending the message to avoid
+        // a race where the extension posts a response before the handler is added.
+        messageHandler.addRequest(uuid, resolve, reject);
+        vscode.postMessage({ command, payload, uuid });
+      }).catch((error) => {
+        throw error; // Re-throw the error to be caught by the caller
+      });
+    },
+    []
+  );
 
   return { request, contextHolder, messageApi };
 };

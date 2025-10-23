@@ -1,22 +1,24 @@
 /*
- * 增强版 messageHandler：支持超时、错误码检查与显式 reject
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-09-22 11:50:57
+ * @LastEditTime: 2025-10-23 14:45:11
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\xhs\src\utils\messageHandler.ts
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
  */
-declare function acquireVsCodeApi(): { postMessage: (msg: any) => void } | undefined;
-
-interface PendingRequest {
+type PendingRequest = {
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
-  timeoutId: number;
-}
+  timeoutId: NodeJS.Timeout;
+};
 
 class MessageHandler {
   private pendingRequests = new Map<string, PendingRequest>();
-  private vscode: { postMessage: (msg: any) => void } | undefined;
   private static instance: MessageHandler;
 
   private constructor() {
-    this.vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
-    window.addEventListener('message', this.handleMessage.bind(this));
+    window.addEventListener("message", this.handleMessage.bind(this));
   }
 
   public static getInstance(): MessageHandler {
@@ -26,19 +28,23 @@ class MessageHandler {
     return MessageHandler.instance;
   }
 
-  private handleMessage(ev: MessageEvent) {
-    const { uuid, payload } = (ev.data || {}) as { uuid?: string; payload?: any };
-    if (!uuid) return;
-    const pending = this.pendingRequests.get(uuid);
-    if (!pending) return;
-    clearTimeout(pending.timeoutId);
+  private handleMessage(event: MessageEvent) {
+    const response = event.data;
+    if (response.uuid && this.pendingRequests.has(response.uuid)) {
+      const pendingRequest = this.pendingRequests.get(response.uuid)!;
+      clearTimeout(pendingRequest.timeoutId);
 
-    if (payload && typeof payload.ok !== 'undefined' && payload.ok !== 1) {
-      pending.reject(new Error(payload.msg || '请求失败'));
-    } else {
-      pending.resolve(payload);
+      if (
+        response.payload &&
+        typeof response.payload.ok !== "undefined" &&
+        response.payload.ok !== 1
+      ) {
+        pendingRequest.reject(new Error(response.payload.msg || "请求失败"));
+      } else {
+        pendingRequest.resolve(response.payload);
+      }
+      this.pendingRequests.delete(response.uuid);
     }
-    this.pendingRequests.delete(uuid);
   }
 
   public addRequest(
@@ -47,19 +53,13 @@ class MessageHandler {
     reject: (reason?: any) => void,
     timeout: number = 30000
   ) {
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       this.pendingRequests.delete(uuid);
-      reject(new Error('Request timed out'));
+      reject(new Error("Request timed out"));
     }, timeout);
-    this.pendingRequests.set(uuid, { resolve, reject, timeoutId });
-  }
 
-  public send<T = any>(command: string, payload?: any, timeout?: number): Promise<T> {
-    const uuid = Math.random().toString(36).slice(2);
-    return new Promise<T>((resolve, reject) => {
-      this.addRequest(uuid, resolve, reject, timeout);
-      this.vscode?.postMessage({ command, payload, uuid });
-    });
+    this.pendingRequests.set(uuid, { resolve, reject, timeoutId });
+    // console.log("addRequest", uuid, this.pendingRequests);
   }
 }
 
