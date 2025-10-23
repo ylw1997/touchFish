@@ -398,9 +398,10 @@
 		"changelog": "standard-version",
 		"publish": "vsce publish && ovsx publish",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build",
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
-		"dev": "concurrently -n ZHIHU,WEIBO -c magenta,cyan \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\""
+		"dev": "concurrently -n ZHIHU,WEIBO,XHS -c magenta,cyan,yellow \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\"",
+		"build-xhs": "pnpm --filter xhs build"
 	},
 	"devDependencies": {
 		"@eslint/js": "9.30.1",

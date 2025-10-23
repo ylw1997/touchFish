@@ -10,9 +10,10 @@
 /*
  * XhsWebProvider: 小红书 Webview 列表展示 (仿知乎实现, 精简版)
  */
-import { WebviewViewProvider, WebviewView, ExtensionContext } from 'vscode';
+import { WebviewViewProvider, WebviewView, ExtensionContext, Uri } from 'vscode';
 import * as vscode from 'vscode';
 import { getXhsFeed } from '../api/xhs';
+import * as fs from 'fs';
 
 interface XhsMessage<T=any> { command: string; payload?: T; uuid?: string; }
 
@@ -63,37 +64,37 @@ export class XhsWebProvider implements WebviewViewProvider {
     let showImg = config.get('showImg') as boolean | undefined;
     if (showImg === undefined) showImg = true;
 
-    // 简化: 生产 & 开发均使用内联 HTML (后续可接入 Vite)
-  webviewView.webview.html = this.getInlineHtml();
+    const isDev = this.context.extensionMode === vscode.ExtensionMode.Development;
+    let htmlContent = '';
+    if (isDev) {
+      // 开发模式：加载 Vite Dev Server 5175，复用 weibo/zhihu 逻辑
+      htmlContent = `<!doctype html><html lang="zh"><head><meta charset="UTF-8" />
+        <script>window.showImg = ${showImg}</script>
+        <script type="module">\n        import RefreshRuntime from "http://localhost:5175/@react-refresh";\n        RefreshRuntime.injectIntoGlobalHook(window);\n        window.$RefreshReg$ = () => {};\n        window.$RefreshSig$ = () => (type) => type;\n        window.__vite_plugin_react_preamble_installed__ = true;\n        </script>
+        <script type="module" src="http://localhost:5175/@vite/client"></script>
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>小红书</title></head><body>
+        <div id="root"></div>
+        <script type="module" src="http://localhost:5175/src/main.tsx"></script>
+        </body></html>`;
+    } else {
+      // 生产模式：读取 dist/index.html 并重写静态资源路径
+      const distPath = Uri.joinPath(this.context.extensionUri, 'xhs', 'dist');
+      const indexPath = Uri.joinPath(distPath, 'index.html');
+      let html = '';
+      try {
+        html = fs.readFileSync(indexPath.fsPath, 'utf-8');
+      } catch (e: any) {
+        html = `<html><body><h3>未找到 xhs 构建资源，请先执行 pnpm --filter xhs build</h3><pre>${e?.message}</pre></body></html>`;
+      }
+      html = html.replace(/(href|src)="\/([^"/]*)"/g, (_m, attr, path) => {
+        return `${attr}="${webviewView.webview.asWebviewUri(vscode.Uri.joinPath(distPath, path))}"`;
+      });
+      html = html.replace('</head>', `<script>window.showImg = ${showImg}</script></head>`);
+      htmlContent = html;
+    }
+    webviewView.webview.html = htmlContent;
   }
 
-  private getInlineHtml(): string {
-    return `<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>小红书数据</title>
-    <style>
-      body { font-family: 'Microsoft YaHei'; padding:8px; }
-      .note { border:1px solid var(--vscode-textBlockQuote-border); padding:10px; margin:8px 0; border-radius:6px; }
-      pre { white-space:pre-wrap; word-break:break-word; font-size:12px; line-height:1.5; }
-      .loading { text-align:center; padding:14px; }
-    </style>
-    </head><body>
-      <div id="list"></div>
-      <div id="loading" class="loading">加载中...</div>
-    <script>
-      const vscode = acquireVsCodeApi();
-      const pending = new Map();
-      let cursor=''; let ended=false; let loading=false;
-      function send(command,payload){ const uuid=Math.random().toString(36).slice(2); vscode.postMessage({command,payload,uuid}); return new Promise(r=>pending.set(uuid,r)); }
-      function esc(str){return (str||'').replace(/[&<>]/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]));}
-      window.addEventListener('message',ev=>{ const { payload, uuid } = ev.data; if(uuid && pending.has(uuid)){ pending.get(uuid)(payload); pending.delete(uuid); }
-        if(payload && payload.items){ render(payload.items); cursor = payload.cursor||''; ended = !payload.has_more; document.getElementById('loading').textContent = ended? '已结束':'加载完毕'; loading=false; }
-        if(payload && payload.ok===0){ document.getElementById('loading').textContent = '错误: '+payload.msg; }
-      });
-      async function load(){ if(loading||ended) return; loading=true; document.getElementById('loading').textContent='加载中...'; await send('XHS_GETDATA',{cursor}); }
-      function render(items){ const list=document.getElementById('list'); if(!Array.isArray(items)) return; if(!cursor) list.innerHTML=''; items.forEach(it=>{ const div=document.createElement('div'); div.className='note'; const raw = esc(JSON.stringify(it.raw||it,null,2)); div.innerHTML = '<pre>'+ raw +'</pre>'; list.appendChild(div); }); }
-      load();
-    </script>
-    </body></html>`;
-  }
+  // 旧的内联实现保留以便回退（暂不删除，可根据需要恢复）
 }
