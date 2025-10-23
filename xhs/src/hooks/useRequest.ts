@@ -7,27 +7,14 @@ import { message } from 'antd';
 import { messageHandler } from '../utils/messageHandler';
 import type { CommandList } from '../../../type';
 
-// UUID 生成保持一致性
-const generateUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0,
-      v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
+// 旧的 uuid 生成与手动注册逻辑移除，统一走 messageHandler.send
 
 export const useRequest = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   const request = useCallback(<T = any>(command: CommandList, payload: any): Promise<T> => {
-    const uuid = generateUUID();
-    return new Promise<T>((resolve, reject) => {
-      messageHandler.addRequest(uuid, resolve, reject);
-      // 直接使用内部 messageHandler 的 send 逻辑，这里只负责注册然后发消息
-      (window as any).acquireVsCodeApi?.().postMessage({ command, payload, uuid });
-    }).catch((error) => {
-      throw error;
-    });
+    // 直接委托给 messageHandler.send (内部管理 uuid & timeout)，避免重复 acquireVsCodeApi
+    return messageHandler.send<T>(command, payload);
   }, []);
 
   return { request, contextHolder, messageApi };

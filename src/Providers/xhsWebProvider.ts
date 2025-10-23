@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:49:53
- * @LastEditTime: 2025-10-22 10:24:21
+ * @LastEditTime: 2025-10-23 13:45:11
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\xhsWebProvider.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -12,7 +12,7 @@
  */
 import { WebviewViewProvider, WebviewView, ExtensionContext, Uri } from 'vscode';
 import * as vscode from 'vscode';
-import { getXhsFeed } from '../api/xhs';
+import { getXhsFeed, getXhsFeedDetail } from '../api/xhs';
 import * as fs from 'fs';
 
 interface XhsMessage<T=any> { command: string; payload?: T; uuid?: string; }
@@ -43,9 +43,15 @@ export class XhsWebProvider implements WebviewViewProvider {
             webviewView.webview.postMessage({ command: 'XHS_IMG_TOGGLED', payload: newState });
             break;
           }
-          case 'XHS_GETDATA': {
+          case 'XHS_GET_HOME_FEED': {
             const cursor = (payload && (payload as any).cursor) || '';
             const data = await getXhsFeed(cursor);
+            webviewView.webview.postMessage({ payload: data, uuid });
+            break;
+          }
+          case 'XHS_FEED_DETAIL': {
+            const detailPayload = payload as any;
+            const data = await getXhsFeedDetail(detailPayload);
             webviewView.webview.postMessage({ payload: data, uuid });
             break;
           }

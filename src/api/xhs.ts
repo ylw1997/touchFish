@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-23 11:24:05
+ * @LastEditTime: 2025-10-23 11:36:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -101,7 +101,42 @@ export const getXhsFeed = async (cursor: string = "") => {
 
   try {
     const resp = await axios.post(url, bodyString, { headers, timeout: 10000 });
-    console.log(url, bodyObj, resp.data);
+    return resp.data.data;
+  } catch (err: any) {
+    console.error("[xhs request error]", err);
+    throw new Error("小红书请求异常，请检查网络或稍后再试");
+  }
+};
+
+// 获取笔记详情（feed detail）
+export const getXhsFeedDetail = async (payload: {
+  source_note_id: string;
+  image_formats?: string[];
+  extra?: { need_body_topic?: string };
+  xsec_source?: string;
+  xsec_token?: string;
+}) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v1/feed";
+  const body = {
+    image_formats: ["jpg", "webp", "avif"],
+    extra: { need_body_topic: "1" },
+    xsec_source: "pc_feed",
+    ...payload,
+  };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error]", e?.message || e);
+    throw new Error("小红书签名生成失败，请检查 Cookie 或稍后再试");
+  }
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  try {
+    const resp = await axios.post(url, bodyString, { headers, timeout: 10000 });
     return resp.data.data;
   } catch (err: any) {
     console.error("[xhs request error]", err);
