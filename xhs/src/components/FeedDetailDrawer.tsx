@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-10-24 14:03:52
+ * @LastEditTime: 2025-10-24 14:36:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
@@ -9,7 +9,7 @@
 import React from "react";
 import { Drawer, Avatar, Image, Flex, Typography, Card, Carousel } from "antd";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
 interface FeedDetailDrawerProps {
   open: boolean;
@@ -78,7 +78,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
       onClose={onClose}
       placement="bottom"
       destroyOnHidden
-      height="80vh"
+      height="90vh"
       title={title || "笔记详情"}
       styles={{
         body: {
@@ -95,14 +95,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             <Avatar src={avatar} size={40}>
               {userName?.[0]}
             </Avatar>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <Text style={{ fontWeight: 600 }}>{userName}</Text>
-              {user?.desc && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {user.desc}
-                </Text>
-              )}
-            </div>
+            <span style={{ fontWeight: 600, fontSize: 18 }}>{userName}</span>
           </Flex>
         </Card>
 
@@ -152,7 +145,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
 
             {images.length > 1 && (
               <Image.PreviewGroup>
-                <Carousel dots={{ className: "xhs-carousel-dots" }} arrows>
+                <Carousel adaptiveHeight draggable dots={{ className: "xhs-carousel-dots" }} arrows>
                   {images.map((url: string, idx: number) => (
                     <Image src={url} alt={title} key={idx} />
                   ))}

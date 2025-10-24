@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 10:20:51
- * @LastEditTime: 2025-10-23 11:10:31
+ * @LastEditTime: 2025-10-24 14:14:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\XhsFeedCard.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Avatar, Card, Flex, Image } from "antd";
+import { Avatar, Card, Flex } from "antd";
 import React from "react";
 import { XhsFeedRawItem } from "../hooks/useXhsFeed";
 import Meta from "antd/es/card/Meta";
@@ -35,7 +35,7 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick }) => {
         },
       }}
       cover={
-        <Image
+        <img
           alt={title}
           src={cover}
           style={{

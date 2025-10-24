@@ -42,8 +42,22 @@ a {
   backdrop-filter: saturate(180%) blur(15px);
 }
 
+.ant-drawer .ant-drawer-content-wrapper {
+  background-color: color-mix(
+    in srgb,
+    var(--vscode-editor-background) 80%,
+    transparent
+  );
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
 .ant-card {
   overflow: hidden;
+  background: color-mix(
+    in srgb,
+    var(--vscode-breadcrumbPicker-background) 60%,
+    transparent
+  );
   .ant-card-meta-title {
     word-break: break-all;
     overflow: auto;
@@ -52,11 +66,7 @@ a {
 }
 .ant-image {
   display: block;
-  max-height: 600px;
-  .ant-image-img {
-    object-fit: cover;
-    max-height: 600px;
-  }
+  max-height: 60vh;
 }
 /* ========================================================================
    3. 小红书瀑布流布局 (Masonry via CSS Columns)

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:27
- * @LastEditTime: 2025-10-24 10:59:58
+ * @LastEditTime: 2025-10-24 14:29:34
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\ThemeWrapper.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -49,10 +49,25 @@ const ThemeWrapper = () => {
       colorIconHover: "var(--vscode-foreground)",
       borderRadius: 10,
     },
+    components: {
+      Card: {
+        colorBgContainer: "transparent",
+        padding: 10,
+        paddingLG: 10,
+      },
+      Drawer: {
+        colorBgElevated: "transparent",
+      },
+      Carousel: {
+        arrowSize: 26,
+      },
+    },
   }), [isLightTheme]);
 
   return (
-    <ConfigProvider theme={antdTheme} locale={zhCN}>
+    <ConfigProvider theme={antdTheme} locale={zhCN}
+    
+    >
         <main className={isLightTheme ? "" : "dark"}>
           <Feed />
         </main>
