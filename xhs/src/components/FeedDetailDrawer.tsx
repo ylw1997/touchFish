@@ -1,13 +1,14 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-10-24 14:36:28
+ * @LastEditTime: 2025-10-24 15:11:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
  */
 import React from "react";
 import { Drawer, Avatar, Image, Flex, Typography, Card, Carousel } from "antd";
+import { loaderFunc } from "../utils/loader";
 
 const { Title, Paragraph } = Typography;
 
@@ -100,11 +101,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
         </Card>
 
         {/* 2) 图片 / 视频 Carousel Card */}
-        {loading && (
-          <div style={{ textAlign: "center", padding: 12, color: "#999" }}>
-            加载中...
-          </div>
-        )}
+        {loading && loaderFunc(3)}
 
         {/* 视频单独放在外层包裹 div 中 */}
         {videoUrl && (

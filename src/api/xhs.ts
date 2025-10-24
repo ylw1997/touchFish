@@ -1,14 +1,14 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-24 11:09:50
+ * @LastEditTime: 2025-10-24 15:36:20
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 /* XHS API 封装（优化：回退使用 axios，并拆分请求头生成函数） */
-import axios from "axios";
+import xhsHttp from "../core/xhsHttp";
 import * as vscode from "vscode";
 import { setConfigByKey } from "../core/config";
 import { getXhsSignature, XhsSignature } from "../utils/signature";
@@ -99,13 +99,9 @@ export const getXhsFeed = async (cursor: string = "") => {
 
   const url = "https://edith.xiaohongshu.com" + apiPath;
   const headers = buildXhsHeaders({ cookie, signObj });
-  try {
-    const resp = await axios.post(url, bodyString, { headers, timeout: 10000 });
-    return resp.data.data;
-  } catch (err: any) {
-    console.error("[xhs request error]", err);
-    throw new Error("小红书请求异常，请检查网络或稍后再试");
-  }
+  const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+  // xhsHttp 拦截器会处理 success=false / code === -100 的提示与 Cookie 引导
+  return resp.data?.data;
 };
 
 // 获取笔记详情（feed detail）
@@ -136,14 +132,7 @@ export const getXhsFeedDetail = async (payload: {
   }
   const url = "https://edith.xiaohongshu.com" + apiPath;
   const headers = buildXhsHeaders({ cookie, signObj });
-  try {
-    const resp = await axios.post(url, bodyString, { headers, timeout: 10000 });
-    console.log("XHS Feed Detail Response:", resp.data);
-    // 直接返回原始 items[0] 给前端，由前端弹窗负责渲染（不在后端转换）
-    return resp.data?.data?.items?.[0];
-  } catch (err: any) {
-    console.error("[xhs request error]", err);
-    throw new Error("小红书请求异常，请检查网络或稍后再试");
-  }
+  const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+  // 直接返回原始 items[0] 给前端，由前端弹窗负责渲染（不在后端转换）
+  return resp.data?.data?.items?.[0];
 };
-

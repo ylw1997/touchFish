@@ -68,6 +68,14 @@ a {
   display: block;
   max-height: 60vh;
 }
+
+.ant-card-hoverable {
+  &:hover {
+    border: 1px solid
+      color-mix(in srgb, var(--vscode-breadcrumb-foreground) 50%, transparent);
+    box-shadow: none;
+  }
+}
 /* ========================================================================
    3. 小红书瀑布流布局 (Masonry via CSS Columns)
    使用 columns 实现不规则高度瀑布流；卡片需要 display:inline-block 以避免跨列。
