@@ -479,7 +479,116 @@ export interface XhsNoteVideoCapa {
 
 export interface XhsNoteVideo {
   capa?: XhsNoteVideoCapa;
+  // 原始接口里 video 包含 media/image/capa/consumer 等字段，补全主要字段以便类型推导
+  media?: {
+    video_id?: number | string;
+    video?: {
+      hdr_type?: number;
+      drm_type?: number;
+      stream_types?: number[];
+      biz_name?: number;
+      biz_id?: string;
+      duration?: number;
+      md5?: string;
+      [key: string]: any;
+    };
+    stream?: {
+      // 各种编码或封装下的视频流数组
+      h265?: XhsVideoStreamItem[];
+      h264?: XhsVideoStreamItem[];
+      h266?: XhsVideoStreamItem[];
+      av1?: XhsVideoStreamItem[];
+      [key: string]: any;
+    };
+    [key: string]: any;
+  };
+  image?: {
+    first_frame_fileid?: string;
+    thumbnail_fileid?: string;
+    [key: string]: any;
+  };
+  consumer?: {
+    origin_video_key?: string;
+    [key: string]: any;
+  };
   [key: string]: any;
+}
+
+export interface XhsVideoStreamItem {
+  vmaf?: number;
+  psnr?: number;
+  quality_type?: string;
+  stream_type?: number;
+  volume?: number;
+  fps?: number;
+  rotate?: number;
+  master_url?: string;
+  hdr_type?: number;
+  duration?: number;
+  audio_channels?: number;
+  format?: string;
+  width?: number;
+  height?: number;
+  video_bitrate?: number;
+  audio_bitrate?: number;
+  backup_urls?: string[];
+  stream_desc?: string;
+  size?: number;
+  video_codec?: string;
+  audio_codec?: string;
+  default_stream?: number;
+  [key: string]: any;
+}
+
+// image_list 中的项：与 XhsCover 相近但更泛化
+export interface XhsImageListItem {
+  live_photo?: boolean;
+  file_id?: string;
+  url?: string;
+  trace_id?: string;
+  info_list?: XhsCoverInfo[];
+  url_pre?: string;
+  url_default?: string;
+  stream?: any;
+  height?: number;
+  width?: number;
+  [key: string]: any;
+}
+
+// 更完整的 note_card 类型（在示例中包含 tag_list/video/image_list等）
+export interface XhsNoteCardFull extends XhsNoteCard {
+  user: XhsUser;
+  interact_info?: XhsInteractInfo;
+  at_user_list?: any[];
+  last_update_time?: number;
+  ip_location?: string;
+  title?: string;
+  time?: number;
+  share_info?: any;
+  desc?: string;
+  image_list?: XhsImageListItem[];
+  video?: XhsNoteVideo;
+  tag_list?: Array<{ id?: string; name: string; type?: string }>;
+  note_id?: string;
+  type?: string; // 'video'|'normal'...
+}
+
+// 顶层返回结构（data 包含 cursor_score/items）
+export interface XhsFeedResponse {
+  data: {
+    cursor_score: string;
+    items: Array<{
+      id: string;
+      model_type: string;
+      note_card: XhsNoteCardFull;
+      [key: string]: any;
+    }>;
+    current_time?: number;
+    [key: string]: any;
+  };
+  code?: number;
+  success?: boolean;
+  msg?: string;
 }
 
 export interface XhsNoteCard {
