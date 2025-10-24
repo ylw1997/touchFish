@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-23 11:36:00
+ * @LastEditTime: 2025-10-24 11:09:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -61,6 +61,7 @@ function buildXhsHeaders(params: {
     "Content-Type": "application/json;charset=UTF-8",
     "x-s": signObj.xs,
     "x-t": signObj.xt.toString(),
+    "x-s-common": signObj.xs_common,
     authority: host,
     referer: "https://www.xiaohongshu.com/",
     accept: "application/json, text/plain, */*",
@@ -98,7 +99,6 @@ export const getXhsFeed = async (cursor: string = "") => {
 
   const url = "https://edith.xiaohongshu.com" + apiPath;
   const headers = buildXhsHeaders({ cookie, signObj });
-
   try {
     const resp = await axios.post(url, bodyString, { headers, timeout: 10000 });
     return resp.data.data;
@@ -114,16 +114,17 @@ export const getXhsFeedDetail = async (payload: {
   image_formats?: string[];
   extra?: { need_body_topic?: string };
   xsec_source?: string;
-  xsec_token?: string;
+  xsec_token: string;
 }) => {
   const cookie = await getOrSetXhsCookie();
   if (!cookie) throw new Error("请先设置小红书 Cookie");
   const apiPath = "/api/sns/web/v1/feed";
   const body = {
-    image_formats: ["jpg", "webp", "avif"],
     extra: { need_body_topic: "1" },
+    image_formats: ["jpg", "webp", "avif"],
+    source_note_id: payload.source_note_id,
     xsec_source: "pc_feed",
-    ...payload,
+    xsec_token: payload.xsec_token,
   };
   const { bodyString, bodyObj } = buildRequestBody(body);
   let signObj: XhsSignature;
@@ -137,9 +138,12 @@ export const getXhsFeedDetail = async (payload: {
   const headers = buildXhsHeaders({ cookie, signObj });
   try {
     const resp = await axios.post(url, bodyString, { headers, timeout: 10000 });
-    return resp.data.data;
+    console.log("XHS Feed Detail Response:", resp.data);
+    // 直接返回原始 items[0] 给前端，由前端弹窗负责渲染（不在后端转换）
+    return resp.data?.data?.items?.[0];
   } catch (err: any) {
     console.error("[xhs request error]", err);
     throw new Error("小红书请求异常，请检查网络或稍后再试");
   }
 };
+

@@ -2,7 +2,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-05 08:51:35
- * @LastEditTime: 2025-10-23 14:27:25
+ * @LastEditTime: 2025-10-24 10:49:20
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\signature.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -64,7 +64,7 @@ export function getZhihuSignature(dataToSign: string): Promise<string> {
 export interface XhsSignature {
   xs: string;
   xt: string;
-  xs_common?: string;
+  xs_common: string;
 }
 
 export function getXhsSignature(
@@ -150,10 +150,10 @@ export function getXhsSignature(
       const xs: string | undefined = result?.xs;
       const xt: string | undefined = result?.xt;
       const xs_common: string | undefined = result?.xs_common;
-      if (!xs || !xt) {
-        return reject(new Error("签名结果缺少 xs/xt"));
+      if (!xs || !xt || !xs_common) {
+        return reject(new Error("签名结果缺少 xs/xt/xs_common"));
       }
-      resolve(xs_common ? { xs, xt, xs_common } : { xs, xt });
+      resolve({ xs, xt, xs_common });
     } catch (e: any) {
       // 如果首次失败且不是强制 reload，尝试一次强制重载
       if (!needReload) {
@@ -164,10 +164,10 @@ export function getXhsSignature(
           const xs: string | undefined = result?.xs;
           const xt: string | undefined = result?.xt;
           const xs_common: string | undefined = result?.xs_common;
-          if (!xs || !xt) {
-            return reject(new Error("签名结果缺少 xs/xt (重试后)"));
+          if (!xs || !xt || !xs_common) {
+            return reject(new Error("签名结果缺少 xs/xt/xs_common (重试后)"));
           }
-          return resolve(xs_common ? { xs, xt, xs_common } : { xs, xt });
+          return resolve({ xs, xt, xs_common });
         } catch (e2: any) {
           return reject(new Error(`执行本地 xhs.js 失败(重试后): ${e2.message}`));
         }

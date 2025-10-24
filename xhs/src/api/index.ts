@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:41
- * @LastEditTime: 2025-10-23 13:38:38
+ * @LastEditTime: 2025-10-24 11:10:28
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\api\index.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -30,7 +30,7 @@ export class XhsApi {
     image_formats?: string[];
     extra?: { need_body_topic?: string };
     xsec_source?: string;
-    xsec_token?: string;
+    xsec_token: string;
   }) {
     return this.request<any>('XHS_FEED_DETAIL' as CommandList, payload, '加载笔记内容中...');
   }

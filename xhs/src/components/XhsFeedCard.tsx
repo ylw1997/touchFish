@@ -17,7 +17,7 @@ interface XhsFeedCardProps {
   onClick?: (data: XhsFeedRawItem) => void;
 }
 
-export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data }) => {
+export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick }) => {
   const card = data.note_card;
   const user = card.user;
   const title: string = card.display_title;
@@ -27,6 +27,8 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data }) => {
   const cover: string = card.cover.url_default;
   return (
     <Card
+      hoverable
+      onClick={() => onClick?.(data)}
       styles={{
         body: {
           padding: 8,
