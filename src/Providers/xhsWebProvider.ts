@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:49:53
- * @LastEditTime: 2025-10-24 15:05:45
+ * @LastEditTime: 2025-10-31 17:41:21
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\xhsWebProvider.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -43,7 +43,6 @@ export class XhsWebProvider implements WebviewViewProvider {
             break;
           }
           case 'XHS_GET_HOME_FEED': {
-            console.log("[xhs] requesting home feed");
             const cursor = (payload && (payload as any).cursor) || '';
             const data = await getXhsFeed(cursor);
             webviewView.webview.postMessage({ payload: data, uuid });

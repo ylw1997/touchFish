@@ -51,6 +51,17 @@ a {
   backdrop-filter: saturate(180%) blur(15px);
 }
 
+.ant-float-btn-group > .ant-float-btn {
+  .backdrop-style();
+  &:hover {
+    background: var(--vscode-button-border);
+  }
+  .ant-float-btn-body {
+    background: none;
+  }
+}
+
+
 .ant-card {
   overflow: hidden;
   background: color-mix(
@@ -77,48 +88,45 @@ a {
   }
 }
 /* ========================================================================
-   3. 小红书瀑布流布局 (Masonry via CSS Columns)
-   使用 columns 实现不规则高度瀑布流；卡片需要 display:inline-block 以避免跨列。
-   响应式断点：>=1600px 5列, >=1200px 4列, >=900px 3列, >=600px 2列, <600px 1列。
+   3. 小红书瀑布流布局 (React Masonry CSS)
+   使用 react-masonry-css 实现稳定的瀑布流，新数据添加到底部不会重排现有内容。
    ======================================================================== */
 
-.xhs-waterfall {
-  column-gap: 12px;
-  /* 初始列数在较宽屏 */
-  column-count: 2;
-  /* 让滚动容器内的列高度自适应 */
-  width: 100%;
+/* Masonry 容器 */
+.xhs-masonry {
+  display: flex;
+  margin-left: -12px; /* 抵消左边距 */
+  width: auto;
   padding: 8px 12px 24px;
   box-sizing: border-box;
 }
 
-/* 断点调整列数 */
-@media (min-width: 1600px) {
-  .xhs-waterfall {
-    column-count: 5;
-  }
-}
-@media (max-width: 1199px) and (min-width: 900px) {
-  .xhs-waterfall {
-    column-count: 3;
-  }
-}
-@media (max-width: 899px) and (min-width: 300px) {
-  .xhs-waterfall {
-    column-count: 2;
-  }
-}
-@media (max-width: 299px) {
-  .xhs-waterfall {
-    column-count: 1;
-  }
+/* Masonry 列 */
+.xhs-masonry-column {
+  padding-left: 12px; /* 列间距 */
+  background-clip: padding-box;
 }
 
-/* 瀑布流条目：让卡片在列中独立且撑满列宽 */
+/* 瀑布流条目：每个卡片项目 */
 .xhs-waterfall-item {
-  break-inside: avoid; /* 防止被列拆分 */
   margin-bottom: 12px;
-  display: inline-block; /* columns 模式需要 inline-block 才能正确换列 */
   width: 100%;
   box-sizing: border-box;
+  /* 启用硬件加速，减少重排 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* 淡入动画 */
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+/* 淡入动画关键帧 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+  }
 }

@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:35
- * @LastEditTime: 2025-10-31 15:40:59
+ * @LastEditTime: 2025-10-31 17:57:35
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\Feed.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -9,6 +9,7 @@
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
+import Masonry from "react-masonry-css";
 import { FloatButton } from "antd";
 import { RedoOutlined, VerticalAlignTopOutlined, SearchOutlined } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
@@ -131,13 +132,28 @@ export default function Feed() {
           scrollableTarget="xhsScrollableDiv"
           scrollThreshold={0.9}
         >
-          <div className="xhs-waterfall">
-            {items.map((raw: any) => (
-              <div key={raw.id} className="xhs-waterfall-item">
+          <Masonry
+            breakpointCols={{
+              default: 2,
+              1500: 5,
+              1200: 4,
+              9000: 3,
+              600: 2,
+              300: 1
+            }}
+            className="xhs-masonry"
+            columnClassName="xhs-masonry-column"
+          >
+            {items.map((raw: any, index: number) => (
+              <div 
+                key={raw.id} 
+                className="xhs-waterfall-item"
+                style={{ animationDelay: `${(index % 10) * 50}ms` }}
+              >
                 <XhsFeedCard data={raw} onClick={handleOpenDetail} />
               </div>
             ))}
-          </div>
+          </Masonry>
         </InfiniteScroll>
       )}
     </div>

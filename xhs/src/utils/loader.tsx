@@ -14,7 +14,7 @@ export const loaderFunc = (rows = 5) => {
         },
       }}
       style={{
-        marginBottom: "5px",
+        margin: '5px'
       }}
     >
       <Skeleton avatar paragraph={{ rows }} active />
