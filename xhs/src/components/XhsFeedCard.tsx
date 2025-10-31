@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 10:20:51
- * @LastEditTime: 2025-10-31 16:38:04
+ * @LastEditTime: 2025-10-31 16:41:42
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\XhsFeedCard.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -37,7 +37,7 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick }) => {
 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[xhs user]', user);
+    // console.log('[xhs user]', user);
     onClick?.(data);
   };
 
