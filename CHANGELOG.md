@@ -1,6 +1,45 @@
 # 更新历史 
 
 
+## [9.1.0](https://github.com/ylw1997/touchFish/compare/v8.47.0...v9.1.0) (2025-10-31)
+
+
+### 📦 Chores | 其他更新
+
+* 删除 xhsSignature 测试文件，清理不再使用的代码 ([30e7ba3](https://github.com/30e7ba3369d91c378cd939a2bcd1a5113c5c8152))
+
+
+### ✨ Features | 新功能
+
+* 更新 package.json 版本和描述，新增 xhsFeedCard 组件样式，优化 XhsFeedCard 组件结构和功能 ([3dba981](https://github.com/3dba981294b91342cbb9bacc3dc09e0f0173c830))
+* 更新 XhsFeedCard 组件，使用 HeartOutlined 图标替代点赞文本，优化用户体验；调整 ant-card-hoverable 样式，增强视觉效果 ([fa5338f](https://github.com/fa5338f92d704928854e9f1b76c891adf7803c93))
+* 更新主题包装器和小红书笔记详情组件，增强样式和功能，优化布局 ([d251bd7](https://github.com/d251bd730b59db18a28d5bdd8c2924fb50625e13))
+* 添加获取小红书评论功能，更新相关接口和组件，优化评论展示 ([c20f46b](https://github.com/c20f46b3a7708ac214bf1b0c86d95e367a65e7c5))
+* 添加搜索功能，整合搜索笔记接口，优化搜索结果展示；新增搜索抽屉组件，增强用户体验 ([f052a30](https://github.com/f052a30179e2175be316e17a87d57c1940484a99))
+* 添加小红书 API 支持，重构数据请求和组件，优化主题和样式 ([c64c1f7](https://github.com/c64c1f79a50f8dd50506e8d98188af8a69d236a0))
+* 添加小红书笔记详情抽屉组件，优化 Feed 组件以支持详情展示 ([0802581](https://github.com/08025813a24b032044e7fcfef678e5201258e914))
+* 添加小红书笔记详情支持，重构 API 调用，优化数据加载逻辑 ([85ad3d1](https://github.com/85ad3d1e55a43d4977c5f0c8c7d9435b02308b48))
+* 添加小红书原始 Feed 类型定义以支持数据结构描述 ([0f64a0e](https://github.com/0f64a0ea20d3b0c3521d092c22aa739e667e47ca))
+* 添加小红书支持，包含 API、组件和构建配置 ([696b90e](https://github.com/696b90ea46e938d85a4002f275bb45d1fa6dd8db))
+* 完善小红书笔记详情类型定义，增强视频和图片支持，优化样式 ([d666fba](https://github.com/d666fba5a4ab4f9c5410b9fe3c3ec4e180e03cbd))
+* 移除 XhsSearchDrawer 组件中的 getContainer 属性，优化组件渲染 ([b686069](https://github.com/b686069a2f899375bffa579bb266369628a90dd2))
+* 移除 XhsSearchDrawer 组件中的调试日志，优化代码整洁性；更新 useXhsFeed Hook，增强清空和刷新功能 ([4fc7f9a](https://github.com/4fc7f9ab0388a40854598d024c18a44ed8de7816))
+* 移除滚动位置保存与恢复中的调试日志，优化代码整洁性 ([c95da0b](https://github.com/c95da0bb575c60007f59d70e03215cac29284b15))
+* 优化 Feed 组件和样式，调整瀑布流布局，增强响应式设计 ([84bfc4f](https://github.com/84bfc4ff436713352e7e25a709c4e5ccd5f75894))
+* 优化 useXhsFeed Hook，简化数据加载逻辑，移除去重功能 ([a5385a6](https://github.com/a5385a628e328b24647facbd260d24bfea9ff985))
+* 优化 XhsFeedCard 组件，增强用户交互体验；更新样式以改善悬停效果 ([2b24868](https://github.com/2b2486883f72d8fd73937bb34c5393807b7bed70))
+* 增强小红书支持，添加滚动位置保存与恢复功能，优化请求处理逻辑 ([7ecb286](https://github.com/7ecb2867a7b1769038e34824182cbfd809630394))
+* 重构小红书 API 请求，使用 xhsHttp 封装，优化错误处理与加载组件 ([30814a6](https://github.com/30814a6dd0e0120ed01506d1afcf2ffc7e632dc3))
+* add XhsWebProvider and API integration for 小红书 ([415c9d1](https://github.com/415c9d19c0a6c442da04f90eaa7826fb96f295be))
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 更新 XHS API 请求头以简化签名字段处理 ([8dca990](https://github.com/8dca99026e105978bba6e3e5219b492a2ed5cf1e))
+* 更新 xhs.svg 文件以修复图标显示问题 ([b11dc03](https://github.com/b11dc030d30ae99969a7e6b9ed0b6316c1f40ff0))
+* 更新 XhsFeedCard 组件的最后编辑时间；注释掉用户点击日志输出 ([4d2d06c](https://github.com/4d2d06c94e3857519341efea14d40116044d5258))
+* 回退使用 axios 并优化请求头生成函数，确保签名生成稳定性 ([e98db3b](https://github.com/e98db3b2ed0f6c67fd01d74478602b89468d8d89))
+
 ## [8.47.0](https://github.com/ylw1997/touchFish/compare/v8.46.2...v8.47.0) (2025-10-14)
 
 
