@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 10:05:42
- * @LastEditTime: 2025-10-24 15:36:06
+ * @LastEditTime: 2025-10-31 15:52:52
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\hooks\useXhsFeed.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -14,15 +14,9 @@
 import { useCallback, useRef, useState } from "react";
 import { createXhsApi } from "../api";
 import { useRequest } from "./useRequest";
+import { XhsFeedRawItem, XhsFeedRawResponse } from "../../../type";
 
-export interface XhsFeedRawItem {
-  id?: string;
-  [k: string]: any;
-}
-export interface XhsFeedRawResponse {
-  items?: XhsFeedRawItem[];
-  cursor_score?: string;
-}
+
 
 interface UseXhsFeedOptions {
   /** 初始光标 */
