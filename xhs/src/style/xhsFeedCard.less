@@ -43,6 +43,10 @@
   margin-bottom: 8px;
   color: var(--vscode-foreground);
   word-break: break-word;
+  cursor: pointer;
+  &:hover {
+    color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);
+  }
 }
 
 .xhs-feed-card-meta {
@@ -61,7 +65,7 @@
     color: var(--vscode-foreground);
     cursor: pointer;
     &:hover {
-      color: var(--vscode-textLink-activeForeground);
+      color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);
     }
   }
 }

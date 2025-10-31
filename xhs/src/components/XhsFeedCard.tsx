@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 10:20:51
- * @LastEditTime: 2025-10-31 16:06:35
+ * @LastEditTime: 2025-10-31 16:38:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\XhsFeedCard.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -35,19 +35,16 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick }) => {
   const cover: string | undefined = card.cover?.url_default || card.cover?.url_pre;
   const isVideo = card.type === 'video' || card.media_type === 'video' || card.video_info;
 
-  const handleImageClick = () => {
-    onClick?.(data);
-  };
-
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     console.log('[xhs user]', user);
+    onClick?.(data);
   };
 
   return (
     <div className="xhs-feed-card">
       {cover && (
-        <div className="xhs-feed-card-cover" onClick={handleImageClick}>
+        <div className="xhs-feed-card-cover" onClick={() => onClick?.(data)}>
           <img src={cover} alt={title} />
           {isVideo && (
             <PlayCircleFilled className="xhs-feed-card-play" />
@@ -55,7 +52,7 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick }) => {
         </div>
       )}
       <div className="xhs-feed-card-info">
-        <div className="xhs-feed-card-desc">
+        <div className="xhs-feed-card-desc" onClick={() => onClick?.(data)}>
           {title}
         </div>
         <div className="xhs-feed-card-meta">
