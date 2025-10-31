@@ -57,17 +57,18 @@ export function useXhsFeed(options: UseXhsFeedOptions = {}) {
     },
     [cursor]
   );
-
-  const refresh = useCallback(async () => {
-    setCursor("");
-    await load(true);
-  }, [load]);
-
+  // 先定义 clear，供 refresh 使用
   const clear = useCallback(() => {
-    setItems([]);
+    setItems([]); // 立即清空，Feed 中会显示加载占位
     setCursor("");
     setHasMore(true);
   }, []);
+
+  const refresh = useCallback(async () => {
+    // 刷新时先清空旧数据，提升“正在加载”反馈
+    clear();
+    await load(true);
+  }, [clear, load]);
 
   return {
     items,

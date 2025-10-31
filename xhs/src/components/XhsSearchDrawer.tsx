@@ -43,7 +43,6 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
         page: 1,
         search_id: newSearchId,
       });
-      console.log("[xhs search] res", res);
       const incoming = res?.items || [];
       setResults(incoming);
       setHasMore(res.has_more);
