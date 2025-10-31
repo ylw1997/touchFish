@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [9.2.0](https://github.com/ylw1997/touchFish/compare/v9.1.0...v9.2.0) (2025-10-31)
+
+
+### ✨ Features | 新功能
+
+* 更新 .vscodeignore 文件，添加 xhs webview 相关路径以排除源代码和依赖项 ([e2955f5](https://github.com/e2955f5f39dc5f1aa0186e36b1adc2623ce7c23e))
+
 ## [9.1.0](https://github.com/ylw1997/touchFish/compare/v8.47.0...v9.1.0) (2025-10-31)
 
 
