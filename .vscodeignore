@@ -42,3 +42,19 @@ zhihu/tsconfig.node.json
 zhihu/vite.config.ts
 zhihu/pnpm-lock.yaml
 temp/**
+
+# xhs webview (exclude source & deps; only dist assets should be packed if needed)
+xhs/src/**
+xhs/node_modules/**
+xhs/public/**
+xhs/.gitignore
+xhs/eslint.config.js
+xhs/index.html
+xhs/package.json
+xhs/README.md
+xhs/tsconfig.json
+xhs/tsconfig.app.json
+xhs/tsconfig.node.json
+xhs/vite.config.ts
+xhs/pnpm-lock.yaml
+xhs/temp/**
