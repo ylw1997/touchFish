@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 10:20:51
- * @LastEditTime: 2025-10-24 14:14:21
+ * @LastEditTime: 2025-10-31 14:20:02
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\XhsFeedCard.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -11,6 +11,7 @@ import { Avatar, Card, Flex } from "antd";
 import React from "react";
 import { XhsFeedRawItem } from "../hooks/useXhsFeed";
 import Meta from "antd/es/card/Meta";
+import { HeartOutlined } from "@ant-design/icons";
 
 interface XhsFeedCardProps {
   data: XhsFeedRawItem;
@@ -59,7 +60,7 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick }) => {
               <Avatar src={avatar} size={26} style={{ marginRight: 6 }} />
               <span>{userName}</span>
             </Flex>
-            <span>{`👍 ${likedCount}`}</span>
+            <span><HeartOutlined/> {likedCount}</span>
           </Flex>
         }
       />
