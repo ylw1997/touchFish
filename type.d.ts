@@ -86,7 +86,8 @@ export type CommandList =
   | "XHS_FEED_DETAIL"
   | "XHS_SAVE_SCROLL_POSITION"
   | "XHS_RESTORE_SCROLL_POSITION"
-  | "XHS_REQUEST_RESTORE_SCROLL";
+  | "XHS_REQUEST_RESTORE_SCROLL"
+  | "XHS_GET_COMMENTS";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"
@@ -616,5 +617,45 @@ export interface XhsFeedRawItem {
 export interface XhsFeedRawResponse {
   cursor_score: string; // 例如 '1.7611199689800014E9'
   items: XhsFeedRawItem[];
+}
+
+// ================== 小红书 (XHS) 评论类型定义 ==================
+export interface XhsSubCommentItem {
+  id: string;
+  content: string;
+  like_count?: string | number;
+  liked?: boolean;
+  create_time?: number;
+  ip_location?: string;
+  user_info?: {
+    user_id: string;
+    nickname: string;
+    image: string;
+    xsec_token?: string;
+  };
+  target_comment?: {
+    id: string;
+    user_info?: { nickname?: string; user_id?: string; image?: string };
+  };
+  show_tags?: string[]; // e.g. ['is_author']
+  at_users?: any[];
+  [k: string]: any;
+}
+
+export interface XhsCommentItem extends XhsSubCommentItem {
+  sub_comments?: XhsSubCommentItem[];
+  sub_comment_count?: string | number;
+  sub_comment_cursor?: string;
+  sub_comment_has_more?: boolean;
+  status?: number;
+}
+
+export interface XhsCommentsResponseData {
+  comments: XhsCommentItem[];
+  cursor: string;
+  has_more: boolean;
+  user_id?: string;
+  time?: number;
+  xsec_token?: string;
 }
 

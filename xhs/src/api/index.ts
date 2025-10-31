@@ -34,7 +34,20 @@ export class XhsApi {
   }) {
     return this.request<any>('XHS_FEED_DETAIL' as CommandList, payload, '加载笔记内容中...');
   }
+
+  getComments(payload: {
+    note_id: string;
+    cursor?: string;
+    top_comment_id?: string;
+    image_formats?: string; // "jpg,webp,avif"
+    xsec_token: string;
+  }) {
+    return this.request<any>('XHS_GET_COMMENTS' as CommandList, payload, cursorLabel(payload.cursor));
+  }
 }
 
+function cursorLabel(cursor?: string) {
+  return cursor ? '加载更多评论...' : '加载评论中...';
+}
 
 export const createXhsApi = (request: RequestFunc) => new XhsApi(request);

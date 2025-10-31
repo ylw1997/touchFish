@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-31 09:31:53
+ * @LastEditTime: 2025-10-31 13:45:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -135,4 +135,39 @@ export const getXhsFeedDetail = async (payload: {
   const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
   // 直接返回原始 items[0] 给前端，由前端弹窗负责渲染（不在后端转换）
   return resp.data?.data?.items?.[0];
+};
+
+// 获取评论列表
+// 接口：/api/sns/web/v2/comment/page?note_id=xxx&cursor=&top_comment_id=&image_formats=jpg,webp,avif&xsec_token=XXX
+// 说明：原始请求为 GET，但为保持与其他签名请求一致并避免前端直连，这里改造成签名 POST：后端仍然接受 body 中的参数。
+// 若后端以后严格限制必须 GET，可回退为 axios.get 并构造 headers。
+export const getXhsComments = async (payload: {
+  note_id: string;
+  cursor?: string;
+  xsec_token: string;
+}) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v2/comment/page";
+  const queryObj = {
+    note_id: payload.note_id,
+    cursor: payload.cursor || "",
+    top_comment_id: "",
+    image_formats: "jpg,webp,avif",
+    xsec_token: payload.xsec_token,
+  };
+  // GET 签名：仍然对 query 进行稳定排序后签名
+  const { bodyObj } = buildRequestBody(queryObj);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error]", e?.message || e);
+    throw new Error("小红书签名生成失败，请检查 Cookie 或稍后再试");
+  }
+  const url = `https://edith.xiaohongshu.com${apiPath}?note_id=${payload.note_id}&cursor=${payload.cursor}&top_comment_id=&image_formats=jpg,webp,avif&xsec_token=${payload.xsec_token}`;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  console.log("XHS GET COMMENTS URL28:", url, headers);
+  const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
+  return resp.data?.data; // { comments, cursor, has_more, ... }
 };

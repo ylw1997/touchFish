@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:35
- * @LastEditTime: 2025-10-24 15:29:08
+ * @LastEditTime: 2025-10-31 13:44:40
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\Feed.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -13,8 +13,6 @@ import { FloatButton } from "antd";
 import { RedoOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
-import { createXhsApi } from "../api";
-import { useRequest } from "../hooks/useRequest";
 import XhsFeedCard from "./XhsFeedCard";
 import { vscode } from "../utils/vscode";
 import FeedDetailDrawer from "./FeedDetailDrawer";
@@ -34,10 +32,9 @@ export default function Feed() {
   const { items, loadMore, hasMore, refresh } = useXhsFeed();
   // 详情状态
   const [detailOpen, setDetailOpen] = useState(false);
-  const [detailData, setDetailData] = useState<any>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const { request } = useRequest();
-  const apiRef = useRef(createXhsApi(request));
+  const [activeNoteId, setActiveNoteId] = useState<string >("");
+  const [activeXsecToken, setActiveXsecToken] = useState<string>("");
+  // 目前 Drawer 内部自行通过 useRequest 获取接口，此处仅维持滚动保存逻辑
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -71,23 +68,11 @@ export default function Feed() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 
-  const handleOpenDetail = useCallback(async (raw: any) => {
-    // raw.id 为 source_note_id, raw.xsec_token
+  const handleOpenDetail = useCallback((raw: any) => {
     if (!raw?.id) return;
     setDetailOpen(true);
-    setDetailLoading(true);
-    setDetailData(null);
-    try {
-      const data = await apiRef.current.getFeedDetail({
-        source_note_id: raw.id,
-        xsec_token: raw.xsec_token || raw.note_card?.user?.xsec_token || "",
-      });
-      setDetailData(data);
-    } catch (e: any) {
-      console.error("[xhs] get detail error", e);
-    } finally {
-      setDetailLoading(false);
-    }
+    setActiveNoteId(raw.id);
+    setActiveXsecToken(raw.xsec_token);
   }, []);
 
   return (
@@ -98,12 +83,13 @@ export default function Feed() {
     >
       <FeedDetailDrawer
         open={detailOpen}
-        loading={detailLoading}
-        detail={detailData}
         onClose={() => {
           setDetailOpen(false);
-          setDetailData(null);
+          setActiveNoteId("");
+          setActiveXsecToken("");
         }}
+        // 仅传递基础标识，Drawer 内部自行请求
+        detail={{ note_id: activeNoteId, xsec_token: activeXsecToken }}
       />
       {/* 使用 Antd 浮动按钮组（参考 weibo） */}
       <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>

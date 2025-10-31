@@ -1,22 +1,35 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-10-24 15:11:21
+ * @LastEditTime: 2025-10-31 14:15:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
  */
-import React from "react";
-import { Drawer, Avatar, Image, Flex, Typography, Card, Carousel } from "antd";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Drawer,
+  Avatar,
+  Image,
+  Flex,
+  Typography,
+  Card,
+  Carousel,
+  List,
+  Button,
+} from "antd";
 import { loaderFunc } from "../utils/loader";
+import { createXhsApi } from "../api";
+import { useRequest } from "../hooks/useRequest";
+import CommonItem from "./CommonItem";
 
 const { Title, Paragraph } = Typography;
 
 interface FeedDetailDrawerProps {
   open: boolean;
-  loading?: boolean;
   onClose: () => void;
-  detail?: any; // 后端返回的笔记详情结构（暂未完整类型）
+  // 由父组件传入的必要标识（feed 列表项）
+  detail: { note_id: string; xsec_token: string };
 }
 
 // 约定 detail.note 对象结构含有以下字段：title, desc, user, image_list
@@ -25,10 +38,97 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
   open,
   onClose,
   detail,
-  loading,
 }) => {
+  // ====== 基础标识 ======
+  const sourceNoteId: string = detail.note_id;
+  const initXsecToken: string = detail.xsec_token;
+
+  // ====== 状态管理 ======
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [noteDetail, setNoteDetail] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentCursor, setCommentCursor] = useState<string>("");
+  const [commentHasMore, setCommentHasMore] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+
+  const { request } = useRequest();
+  const apiRef = useRef(createXhsApi(request));
+
+  // ====== 加载详情 ======
+  const fetchDetail = useCallback(async () => {
+    setLoadingDetail(true);
+    setNoteDetail(null);
+    try {
+      const data = await apiRef.current.getFeedDetail({
+        source_note_id: sourceNoteId,
+        xsec_token: initXsecToken,
+      });
+      setNoteDetail(data);
+    } catch (e: any) {
+      console.error("[xhs] feed detail error", e);
+    } finally {
+      setLoadingDetail(false);
+    }
+  }, [sourceNoteId, initXsecToken]);
+
+  // ====== 加载评论 ======
+  const fetchComments = useCallback(
+    async (cursor: string = "") => {
+      setCommentLoading(true);
+      if (!cursor) {
+        setComments([]);
+        setCommentCursor("");
+        setCommentHasMore(false);
+        setCommentError(null);
+      }
+      try {
+        const data: any = await apiRef.current.getComments({
+          note_id: sourceNoteId,
+          cursor,
+          xsec_token: initXsecToken,
+        });
+        setComments((prev) =>
+          cursor ? [...prev, ...data.comments] : data.comments
+        );
+        setCommentCursor(data.cursor);
+        setCommentHasMore(!!data.has_more);
+      } catch (e: any) {
+        setCommentError(e?.message || "评论加载失败");
+      } finally {
+        setCommentLoading(false);
+      }
+    },
+    [sourceNoteId, initXsecToken]
+  );
+
+  const handleLoadMoreComments = useCallback(() => {
+    fetchComments(commentCursor);
+  }, [fetchComments, commentCursor]);
+
+  // ====== 生命周期：打开抽屉时加载详情与评论 ======
+  useEffect(() => {
+    if (open && sourceNoteId && initXsecToken) {
+      fetchDetail();
+    }
+    if (!open) {
+      // 重置状态
+      setNoteDetail(null);
+      setComments([]);
+      setCommentCursor("");
+      setCommentHasMore(false);
+      setCommentError(null);
+    }
+  }, [open, sourceNoteId, initXsecToken, fetchDetail]);
+
+  // 当详情返回后，再加载首批评论
+  useEffect(() => {
+    if (noteDetail && open) {
+      fetchComments("");
+    }
+  }, [noteDetail, open, fetchComments]);
   // 后端直接返回 items[0]，其中真实笔记在 note_card 字段；兼容老格式 detail.note 或直接的 note 对象
-  const note = detail?.note || detail?.note_card || detail; // 容错
+  const note = noteDetail?.note || noteDetail?.note_card || noteDetail; // 容错：使用加载后的详情
   // image 对象可能包含 info_list/url_default/url_pre/url，优先使用 info_list 中的 WB_DFT/WB_PRV
   const images: string[] = (note?.image_list || [])
     .map((i: any) => {
@@ -48,7 +148,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     })
     .filter(Boolean);
   const title: string = note?.title || note?.display_title || "";
-  const user = note?.user || detail?.user || {};
+  const user = note?.user || {};
   const userName: string = user?.nickname || user?.nick_name || "";
   const avatar: string = user?.avatar || "";
   const desc: string = note?.desc || "";
@@ -101,7 +201,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
         </Card>
 
         {/* 2) 图片 / 视频 Carousel Card */}
-        {loading && loaderFunc(3)}
+        {loadingDetail && loaderFunc(3)}
 
         {/* 视频单独放在外层包裹 div 中 */}
         {videoUrl && (
@@ -124,7 +224,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
         )}
 
         {/* 图片区域：单张直接展示，多张使用 Carousel + PreviewGroup */}
-        {!loading && !videoUrl && images.length > 0 && (
+        {!loadingDetail && !videoUrl && images.length > 0 && (
           <div
             style={{
               borderRadius: "12px",
@@ -142,7 +242,12 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
 
             {images.length > 1 && (
               <Image.PreviewGroup>
-                <Carousel adaptiveHeight draggable dots={{ className: "xhs-carousel-dots" }} arrows>
+                <Carousel
+                  adaptiveHeight
+                  draggable
+                  dots={{ className: "xhs-carousel-dots" }}
+                  arrows
+                >
                   {images.map((url: string, idx: number) => (
                     <Image src={url} alt={title} key={idx} />
                   ))}
@@ -164,9 +269,50 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
               {desc}
             </Paragraph>
           )}
-          {!loading && !images.length && !desc && !videoUrl && (
+          {!loadingDetail && !images.length && !desc && !videoUrl && (
             <div style={{ padding: 20, textAlign: "center", color: "#999" }}>
               暂无更多内容
+            </div>
+          )}
+        </Card>
+
+        {/* 4) 评论展示 */}
+        <Card
+          size="small"
+          title="评论"
+          style={{ marginTop: 12 }}
+          styles={{
+            body: {
+              padding: "0",
+            },
+          }}
+        >
+          {commentLoading && !comments.length && loaderFunc(2)}
+          {commentError && (
+            <div style={{ color: "#ff4d4f", padding: "8px 0" }}>
+              {commentError}
+            </div>
+          )}
+          {!commentLoading && !comments.length && !commentError && (
+            <div style={{ color: "#999" }}>暂无评论</div>
+          )}
+          {!!comments.length && (
+            <List
+              size="small"
+              dataSource={comments}
+              renderItem={(comment) => <CommonItem c={comment} />}
+            />
+          )}
+          {commentHasMore && (
+            <div style={{ textAlign: "center", margin: 8 }}>
+              <Button
+                variant="filled"
+                color="default"
+                loading={commentLoading}
+                onClick={handleLoadMoreComments}
+              >
+                {commentLoading ? "加载中..." : "加载更多"}
+              </Button>
             </div>
           )}
         </Card>

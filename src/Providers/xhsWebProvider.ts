@@ -12,7 +12,7 @@
  */
 import { WebviewViewProvider, WebviewView, ExtensionContext, Uri } from 'vscode';
 import * as vscode from 'vscode';
-import { getXhsFeed, getXhsFeedDetail } from '../api/xhs';
+import { getXhsFeed, getXhsFeedDetail, getXhsComments } from '../api/xhs';
 import * as fs from 'fs';
 
 interface XhsMessage<T=any> { command: string; payload?: T; uuid?: string; }
@@ -52,6 +52,12 @@ export class XhsWebProvider implements WebviewViewProvider {
           case 'XHS_FEED_DETAIL': {
             const detailPayload = payload as any;
             const data = await getXhsFeedDetail(detailPayload);
+            webviewView.webview.postMessage({ payload: data, uuid });
+            break;
+          }
+          case 'XHS_GET_COMMENTS': {
+            const commentPayload = payload as any; // { note_id, cursor, xsec_token }
+            const data = await getXhsComments(commentPayload);
             webviewView.webview.postMessage({ payload: data, uuid });
             break;
           }
