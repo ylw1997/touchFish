@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-10-14 17:13:37
+ * @LastEditTime: 2025-10-31 15:40:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -59,7 +59,6 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       destroyOnHidden
       placement="bottom"
       height={questionData.length === 0 ? "auto" : "calc(100vh - 150px)"}
-      zIndex={1001}
       styles={{
         wrapper: {
           borderTopLeftRadius: "10px",

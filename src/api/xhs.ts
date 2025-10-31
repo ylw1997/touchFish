@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-31 13:45:46
+ * @LastEditTime: 2025-10-31 15:41:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -45,6 +45,16 @@ export const getOrSetXhsCookie = async (): Promise<string | undefined> => {
 function buildRequestBody(body: any) {
   const bodyString = stableStringify(body);
   return { rawBody: body, bodyString, bodyObj: JSON.parse(bodyString) };
+}
+
+
+export function generateXB3TraceId(len = 16) {
+  const chars = "abcdef0123456789";
+  let x_b3_traceid = "";
+  for (let i = 0; i < len; i++) {
+    x_b3_traceid += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return x_b3_traceid;
 }
 
 // 生成请求头（与签名解耦，方便复用 / 单测）
@@ -167,7 +177,40 @@ export const getXhsComments = async (payload: {
   }
   const url = `https://edith.xiaohongshu.com${apiPath}?note_id=${payload.note_id}&cursor=${payload.cursor}&top_comment_id=&image_formats=jpg,webp,avif&xsec_token=${payload.xsec_token}`;
   const headers = buildXhsHeaders({ cookie, signObj });
-  console.log("XHS GET COMMENTS URL28:", url, headers);
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
   return resp.data?.data; // { comments, cursor, has_more, ... }
+};
+
+// 搜索笔记
+// POST: /api/sns/web/v1/search/notes
+// body: {
+//   keyword, page, page_size, search_id, sort, note_type, ext_flags, geo, image_formats
+// }
+export const searchXhsNotes = async (params: { keyword: string; page?: number; search_id?: string }) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v1/search/notes";
+    const body = {
+      keyword: params.keyword,
+      page: params.page ?? 3,
+      page_size: 20,
+      search_id: params.search_id || generateXB3TraceId(),
+      sort: "general",
+      note_type: 0,
+      ext_flags: [] as any[],
+      geo: "",
+      image_formats: ["jpg", "webp", "avif"],
+  };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error]", e?.message || e);
+    throw new Error("小红书签名生成失败，请检查 Cookie 或稍后再试");
+  }
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+  return resp.data?.data; // { items, has_more, ... }
 };

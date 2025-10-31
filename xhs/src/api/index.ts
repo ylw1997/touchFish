@@ -21,7 +21,7 @@ export class XhsApi {
     return this.request<XhsFeedRawResponse>('XHS_GET_HOME_FEED' as CommandList, params, '加载首页推荐中...');
   }
 
-  searchNotes(params: { keyword: string; page?: number }) {
+  searchNotes(params: { keyword: string; page?: number; search_id?: string }) {
     return this.request<any>('XHS_SEARCH' as CommandList, params, '搜索中...');
   }
 

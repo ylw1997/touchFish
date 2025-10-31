@@ -272,16 +272,44 @@ function get_request_headers_params(api, data, a1) {
   };
 }
 
+function generateXB3TraceId(len = 16) {
+  const chars = "abcdef0123456789";
+  let x_b3_traceid = "";
+  for (let i = 0; i < len; i++) {
+    x_b3_traceid += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return x_b3_traceid;
+}
+
 console.log("XHS Node.js signature module loaded.");
+// console.log(
+//   "get_request_headers_params(api, data, a1)",
+//   get_request_headers_params("/api/sns/web/v2/comment/page", {
+//     note_id: "690298180000000003018708",
+//     cursor: "",
+//     top_comment_id: "",
+//     image_formats: "jpg,webp,avif",
+//     xsec_token: "ABzFqovWKh-cIFqbCTIw75Ae_FV_TX9lfM2Gdxcl2HwxY=",
+//   },"19a244b47d3icm32hzeksg6oujiejluy67u23wlco10000262523")
+// );
+
 console.log(
-  "get_request_headers_params(api, data, a1)",
-  get_request_headers_params("/api/sns/web/v2/comment/page", {
-    note_id: "690298180000000003018708",
-    cursor: "",
-    top_comment_id: "",
-    image_formats: "jpg,webp,avif",
-    xsec_token: "ABzFqovWKh-cIFqbCTIw75Ae_FV_TX9lfM2Gdxcl2HwxY=",
-  },"19a244b47d3icm32hzeksg6oujiejluy67u23wlco10000262523")
+  "search 11",
+  get_request_headers_params(
+    "/api/sns/web/v1/search/notes",
+    {
+      keyword: "科技",
+      page: 3,
+      page_size: 20,
+      search_id: generateXB3TraceId(),
+      sort: "general",
+      note_type: 0,
+      ext_flags: [],
+      geo: "",
+      image_formats: ["jpg", "webp", "avif"],
+    },
+    "19a244b47d3icm32hzeksg6oujiejluy67u23wlco10000262523"
+  )
 );
 
 if (typeof module !== "undefined") {

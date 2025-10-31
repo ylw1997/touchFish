@@ -12,7 +12,7 @@
  */
 import { WebviewViewProvider, WebviewView, ExtensionContext, Uri } from 'vscode';
 import * as vscode from 'vscode';
-import { getXhsFeed, getXhsFeedDetail, getXhsComments } from '../api/xhs';
+import { getXhsFeed, getXhsFeedDetail, getXhsComments, searchXhsNotes } from '../api/xhs';
 import * as fs from 'fs';
 
 interface XhsMessage<T=any> { command: string; payload?: T; uuid?: string; }
@@ -46,6 +46,13 @@ export class XhsWebProvider implements WebviewViewProvider {
             console.log("[xhs] requesting home feed");
             const cursor = (payload && (payload as any).cursor) || '';
             const data = await getXhsFeed(cursor);
+            webviewView.webview.postMessage({ payload: data, uuid });
+            break;
+          }
+          case 'XHS_SEARCH': {
+            const { keyword, page, search_id } = (payload || {}) as any;
+            if (!keyword) throw new Error('缺少搜索关键词');
+            const data = await searchXhsNotes({ keyword, page, search_id });
             webviewView.webview.postMessage({ payload: data, uuid });
             break;
           }

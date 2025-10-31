@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:35
- * @LastEditTime: 2025-10-31 13:44:40
+ * @LastEditTime: 2025-10-31 15:40:59
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\Feed.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -10,12 +10,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { FloatButton } from "antd";
-import { RedoOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
+import { RedoOutlined, VerticalAlignTopOutlined, SearchOutlined } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
 import XhsFeedCard from "./XhsFeedCard";
 import { vscode } from "../utils/vscode";
 import FeedDetailDrawer from "./FeedDetailDrawer";
+import XhsSearchDrawer from "./XhsSearchDrawer";
 
 // 统一使用封装的 vscode.postMessage，浏览器环境自动降级为 console.log
 
@@ -34,6 +35,8 @@ export default function Feed() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState<string >("");
   const [activeXsecToken, setActiveXsecToken] = useState<string>("");
+  // 搜索弹窗状态
+  const [searchOpen, setSearchOpen] = useState(false);
   // 目前 Drawer 内部自行通过 useRequest 获取接口，此处仅维持滚动保存逻辑
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -91,6 +94,7 @@ export default function Feed() {
         // 仅传递基础标识，Drawer 内部自行请求
         detail={{ note_id: activeNoteId, xsec_token: activeXsecToken }}
       />
+      <XhsSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
       {/* 使用 Antd 浮动按钮组（参考 weibo） */}
       <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
         <FloatButton.BackTop
@@ -104,6 +108,11 @@ export default function Feed() {
           onClick={refresh}
           icon={<RedoOutlined style={{ color: "#b37feb" }} />}
           tooltip={{ title: "刷新", placement: "left" }}
+        />
+        <FloatButton
+          onClick={() => setSearchOpen(true)}
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
         />
       </FloatButton.Group>
       {items.length === 0 ? (
