@@ -97,7 +97,6 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
 
   return (
     <Drawer
-      getContainer={false}
       title="小红书搜索"
       placement="bottom"
       height={results.length > 0 ? "90vh" : "auto"}
