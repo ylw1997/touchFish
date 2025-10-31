@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:27
- * @LastEditTime: 2025-10-24 14:29:34
+ * @LastEditTime: 2025-10-31 18:00:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\ThemeWrapper.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -59,7 +59,7 @@ const ThemeWrapper = () => {
         colorBgElevated: "transparent",
       },
       Carousel: {
-        arrowSize: 26,
+        arrowSize: 30,
       },
     },
   }), [isLightTheme]);
