@@ -12,7 +12,7 @@
  */
 import { WebviewViewProvider, WebviewView, ExtensionContext, Uri } from 'vscode';
 import * as vscode from 'vscode';
-import { getXhsFeed, getXhsFeedDetail, getXhsComments, searchXhsNotes, getXhsUserPosted } from '../api/xhs';
+import { getXhsFeed, getXhsFeedDetail, getXhsComments, searchXhsNotes, getXhsUserPosted, getXhsUserHoverCard } from '../api/xhs';
 import * as fs from 'fs';
 
 interface XhsMessage<T=any> { command: string; payload?: T; uuid?: string; }
@@ -71,6 +71,12 @@ export class XhsWebProvider implements WebviewViewProvider {
             // payload: { user_id, cursor, xsec_token }
             const userPayload = payload as any;
             const data = await getXhsUserPosted(userPayload);
+            webviewView.webview.postMessage({ payload: data, uuid });
+            break;
+          }
+          case 'XHS_USER_HOVER_CARD': {
+            const hoverPayload = payload as any; // { target_user_id, xsec_token, xsec_source }
+            const data = await getXhsUserHoverCard(hoverPayload);
             webviewView.webview.postMessage({ payload: data, uuid });
             break;
           }

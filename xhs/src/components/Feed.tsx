@@ -105,10 +105,6 @@ export default function Feed() {
         }}
         // 仅传递基础标识，Drawer 内部自行请求
         detail={{ note_id: activeNoteId, xsec_token: activeXsecToken }}
-        onUserClick={(p) => {
-          setUserParams(p);
-          setUserOpen(true);
-        }}
       />
       <XhsSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
       {/* 使用 Antd 浮动按钮组（参考 weibo） */}

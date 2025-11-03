@@ -50,6 +50,11 @@ export class XhsApi {
     const label = payload.cursor ? '加载更多用户笔记...' : '加载用户笔记中...';
     return this.request<any>('XHS_GET_USER_POSTED' as CommandList, payload, label);
   }
+
+  // 获取用户 hover card 详情（头像/昵称/关注粉丝/简介/获赞收藏）
+  getUserHoverCard(payload: { target_user_id: string; image_formats?: string; xsec_source?: string; xsec_token: string }) {
+    return this.request<any>('XHS_USER_HOVER_CARD' as CommandList, payload, '加载用户信息中...');
+  }
 }
 
 function cursorLabel(cursor?: string) {

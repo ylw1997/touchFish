@@ -285,3 +285,37 @@ export const getXhsUserPosted = async (params: {
     _raw: raw,
   };
 };
+
+// 获取用户 hover card 信息
+// 接口：GET /api/sns/web/v1/user/hover_card?target_user_id=xxx&image_formats=jpg,webp,avif&xsec_source=pc_comment&xsec_token=XXX
+// 使用与评论/用户主页一致的 GET + 签名策略
+export const getXhsUserHoverCard = async (params: {
+  target_user_id: string;
+  xsec_token: string;
+  xsec_source?: string;
+  image_formats?: string; // 'jpg,webp,avif'
+}) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error('请先设置小红书 Cookie');
+  const apiPath = '/api/sns/web/v1/user/hover_card';
+  const queryObj = {
+    target_user_id: params.target_user_id,
+    image_formats: params.image_formats || 'jpg,webp,avif',
+    xsec_source: params.xsec_source || 'pc_feed',
+    xsec_token: params.xsec_token,
+  };
+  let signObj: XhsSignature;
+  try {
+    // GET 签名模式
+    signObj = await getXhsSignature(apiPath, queryObj, cookie, 'GET');
+  } catch (e: any) {
+    console.error('[xhs signature error hover_card]', e?.message || e);
+    throw new Error('小红书签名生成失败，请稍后再试');
+  }
+  const safeToken = queryObj.xsec_token.replace(/=/g, '%3D');
+  const url = `https://edith.xiaohongshu.com${apiPath}?target_user_id=${queryObj.target_user_id}&image_formats=${queryObj.image_formats}&xsec_source=${queryObj.xsec_source}&xsec_token=${safeToken}`;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
+  const data = resp.data?.data;
+  return data; // { basic_info, interact_info, extraInfo_info, verify_info, ... }
+};

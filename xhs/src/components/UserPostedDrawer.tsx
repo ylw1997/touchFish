@@ -4,7 +4,8 @@
  * @Description: 小红书用户主页 Drawer：展示用户头像/昵称及其已发布笔记瀑布流，可翻页加载。
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Drawer, Avatar, Card, Button, Empty, message } from "antd";
+import { Drawer, Avatar, Card, Button, Empty, Tag } from "antd";
+import { UsergroupAddOutlined, TeamOutlined, LikeOutlined } from '@ant-design/icons';
 import Masonry from "react-masonry-css";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
@@ -42,10 +43,39 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   // 使用 ref 保存最新 cursor，避免将 cursor 纳入 useCallback 依赖导致函数重建和二次请求
   const cursorRef = useRef(cursor);
 
-  // 用户信息基础展示
+  // 用户信息基础展示（初始）
   const user = initParams.user || {}; // 兼容从 note_card.user 传入
   const nickname: string = user.nick_name || user.nickname || "未知用户";
   const avatar: string | undefined = user.avatar;
+
+  // Hover Card 详细数据
+  const [hoverLoading, setHoverLoading] = useState(false);
+  const [hoverError, setHoverError] = useState<string | null>(null);
+  const [hoverData, setHoverData] = useState<any>(null);
+
+  const fetchHover = useCallback(async () => {
+    if (!initParams.user_id || !initParams.xsec_token) return;
+    setHoverLoading(true);
+    setHoverError(null);
+    setHoverData(null);
+    try {
+      const res: any = await apiRef.current.getUserHoverCard({
+        target_user_id: initParams.user_id,
+        image_formats: 'jpg,webp,avif',
+        xsec_source:'pc_comment',
+        xsec_token: initParams.xsec_token,
+      });
+      // 兼容后端直接返回 data 或完整响应
+      const dataLayer = res?.basic_info ? res : res?.data;
+      setHoverData(dataLayer || null);
+      console.log('[xhs user hover card raw] ', res);
+      console.log('[xhs user hover card parsed] ', dataLayer);
+    } catch (e: any) {
+      setHoverError(e?.message || '用户信息加载失败');
+    } finally {
+      setHoverLoading(false);
+    }
+  }, [initParams.user_id, initParams.xsec_token]);
 
   const fetchPosted = useCallback(
     async (reset: boolean = false, nextCursor?: string) => {
@@ -89,18 +119,30 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
       cursorRef.current = firstCursor;
       setHasMore(true);
       fetchPosted(true, firstCursor);
+      fetchHover();
     } else {
       setItems([]);
       setCursor("");
       cursorRef.current = "";
       setHasMore(true);
+      setHoverData(null);
+      setHoverError(null);
     }
     // 仅在 open 或 initParams 关键字段变化时触发，不添加 fetchPosted 以避免重复请求
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initParams.cursor, initParams.user_id, initParams.xsec_token]);
 
-  const handleUserClick = () => {
-    messageApi.info("已经是本用户主页了");
+  const isFollowed = hoverData?.extraInfo_info?.fstatus && hoverData.extraInfo_info.fstatus !== 'none';
+  const follows = hoverData?.interact_info?.follows || '0';
+  const fans = hoverData?.interact_info?.fans || '0';
+  const interaction = hoverData?.interact_info?.interaction || '0';
+  const desc = hoverData?.basic_info?.desc || '';
+  const handleFollowClick = () => {
+    if (!isFollowed) {
+      messageApi.info('暂未实现关注接口');
+    } else {
+      messageApi.info('暂未实现取消关注接口');
+    }
   };
 
   return (
@@ -117,19 +159,32 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
     >
       {contextHolder}
       <div style={{ padding: 16 }}>
-        <Card size="small" style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Avatar src={avatar} size={48} onClick={handleUserClick}>
-              {nickname[0]}
-            </Avatar>
-            <div
-              style={{ fontWeight: 600, fontSize: 20, cursor: "pointer" }}
-              onClick={handleUserClick}
-            >
-              {nickname}
-            </div>
+        {/* 用户详情区（微博风格） */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+          <Avatar src={avatar} size={80}>{nickname[0]}</Avatar>
+          <div style={{ fontSize: 20, fontWeight: 'bolder' }}>{nickname}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {hoverLoading && <Tag color="default">加载用户信息...</Tag>}
+            {hoverError && <Tag color="red">{hoverError}</Tag>}
+            {!hoverLoading && !hoverError && hoverData && (
+              <>
+                <Tag icon={<UsergroupAddOutlined />} color="green">关注: {follows}</Tag>
+                <Tag icon={<TeamOutlined />} color="orange">粉丝: {fans}</Tag>
+                <Tag icon={<LikeOutlined />} color="magenta">获赞收藏: {interaction}</Tag>
+              </>
+            )}
           </div>
-        </Card>
+          {!hoverLoading && !hoverError && desc && (
+            <Card size="small" styles={{ body: { padding: '10px', textAlign: 'center' } }}>{desc}</Card>
+          )}
+          {!hoverLoading && !hoverError && initParams.user_id && (
+            isFollowed ? (
+              <Button color="red" variant="filled" onClick={handleFollowClick}>取关</Button>
+            ) : (
+              <Button color="primary" variant="filled" onClick={handleFollowClick}>关注</Button>
+            )
+          )}
+        </div>
         {/* 瀑布流 */}
         {loading && items.length === 0 ? (
           loaderFunc()
@@ -157,7 +212,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
                   onClick={() => onOpenDetail?.(raw)}
                   onUserClick={() => {
                     // 已在当前用户主页
-                    message.info("已经是本用户主页了");
+                    messageApi.info("已经是本用户主页了");
                   }}
                 />
               </div>
