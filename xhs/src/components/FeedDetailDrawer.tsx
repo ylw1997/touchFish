@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-11-03 15:03:18
+ * @LastEditTime: 2025-11-03 17:53:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
@@ -209,7 +209,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
         },
       }}
     >
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: 8 }}>
         {/* 1) 用户信息 Card（头像小一些） */}
         <Card size="small" style={{ marginBottom: 12 }}>
           <Flex align="center" gap={12} style={{ marginBottom: 0 }}>

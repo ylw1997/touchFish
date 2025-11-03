@@ -119,7 +119,7 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
           borderTopRightRadius: 10,
           overflow: "hidden",
         },
-        body: { padding: 12, paddingTop: 20, overflowY: "auto" },
+        body: { padding: 8, paddingTop: 20, overflowY: "auto" },
       }}
     >
       <FeedDetailDrawer
@@ -177,6 +177,9 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
           }}
           className="xhs-masonry"
           columnClassName="xhs-masonry-column"
+          style={{
+            padding:'0'
+          }}
         >
           {results.map((raw: any, index: number) => (
             <div
