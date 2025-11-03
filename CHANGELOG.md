@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [9.4.2](https://github.com/ylw1997/touchFish/compare/v9.4.1...v9.4.2) (2025-11-03)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 调整 FeedDetailDrawer 和 XhsSearchDrawer 组件的内边距，优化布局 ([307d6cb](https://github.com/307d6cb605074407b998d85efcfbb2160bf60967))
+
 ### [9.4.1](https://github.com/ylw1997/touchFish/compare/v9.4.0...v9.4.1) (2025-11-03)
 
 
