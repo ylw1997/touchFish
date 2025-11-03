@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-05 08:51:35
- * @LastEditTime: 2025-10-31 09:38:03
+ * @LastEditTime: 2025-11-03 11:18:38
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\signature.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -69,7 +69,8 @@ export interface XhsSignature {
 export function getXhsSignature(
   apiPath: string,
   payload: any,
-  cookie?: string
+  cookie: string,
+  method: "GET" | "POST" = "POST"
 ): Promise<XhsSignature> {
   return new Promise((resolve, reject) => {
     try {
@@ -101,7 +102,7 @@ export function getXhsSignature(
         const m = cookie.match(/(?:^|;\s*)a1=([^;]+)/);
         if (m) a1 = m[1];
       }
-      const result = signer(apiPath, payload, a1);
+      const result = signer(apiPath, payload, a1, method);
       // console.log('XHS signature result:', result);
       const xs: string | undefined = result?.xs;
       const xt: string | undefined = result?.xt;

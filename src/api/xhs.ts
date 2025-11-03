@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-10-31 15:41:50
+ * @LastEditTime: 2025-11-03 11:30:24
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -213,4 +213,44 @@ export const searchXhsNotes = async (params: { keyword: string; page?: number; s
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
   return resp.data?.data; // { items, has_more, ... }
+};
+
+// 获取用户已发布笔记列表
+// 原始接口：GET /api/sns/web/v1/user_posted
+// 示例参数：{
+//   num: "30",
+//   cursor: "68b69471000000001b01d7c9",
+//   user_id: "5c4569a4000000000701a8de",
+//   image_formats: "jpg,webp,avif",
+//   xsec_token: "...",
+//   xsec_source: "pc_feed"
+// }
+// 说明：与 getXhsComments 一致，依旧对 query 参数做稳定排序后参与签名，然后以 axios.get 方式请求。
+export const getXhsUserPosted = async (params: {
+  user_id: string;
+  xsec_token: string;
+  cursor?: string;
+}) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v1/user_posted";
+  const queryObj = {
+    num: "30",
+    cursor: params.cursor || "",
+    user_id: params.user_id,
+    image_formats: "jpg,webp,avif",
+    xsec_token: params.xsec_token,
+    xsec_source: "pc_feed",
+  };
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
+  } catch (e: any) {
+    console.error("[xhs signature error]", e?.message || e);
+    throw new Error("小红书签名生成失败，请检查 Cookie 或稍后再试");
+  }
+  const url = `https://edith.xiaohongshu.com${apiPath}?num=30&cursor=${queryObj.cursor}&user_id=${queryObj.user_id}&image_formats=${queryObj.image_formats}&xsec_token=${queryObj.xsec_token}&xsec_source=${queryObj.xsec_source}`;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
+  return resp.data?.data; // { items, cursor, has_more, ... }
 };

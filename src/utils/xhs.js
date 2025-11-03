@@ -153,21 +153,33 @@ function base64Fallback(bin) {
   return out;
 }
 function buildContentString(method, uri, payload) {
+  // Mirrors Python implementation in client._build_content_string:
+  // POST: uri + compact JSON (no spaces, unicode preserved)
+  // GET: uri + key=value pairs joined by &; only '=' inside values replaced with '%3D'; commas kept.
   payload = payload || {};
-  if (method === "POST") return uri + JSON.stringify(payload);
-  const keys = Object.keys(payload);
-  if (!keys.length) return uri;
-  return (
-    uri +
-    "?" +
-    keys
-      .map((k) =>
-        Array.isArray(payload[k])
-          ? `${k}=${payload[k].join(",")}`
-          : `${k}=${payload[k] ?? ""}`
-      )
-      .join("&")
-  );
+  if (method === "POST") {
+    // JSON.stringify already produces compact form without spaces; unicode stays unescaped (similar to ensure_ascii=False)
+    return uri + JSON.stringify(payload);
+  }
+  const entries = Object.entries(payload);
+  if (!entries.length) return uri;
+  const parts = entries.map(([key, value]) => {
+    let valStr;
+    if (Array.isArray(value)) {
+      // Join array elements by comma (Python uses ','.join(str(v) for v in value))
+      valStr = value
+        .map((v) => (v !== undefined && v !== null ? String(v) : ""))
+        .join(",");
+    } else if (value === null || value === undefined) {
+      valStr = "";
+    } else {
+      valStr = String(value);
+    }
+    // Replace only '=' characters inside the value string
+    valStr = valStr.replace(/=/g, "%3D");
+    return `${key}=${valStr}`;
+  });
+  return uri + "?" + parts.join("&");
 }
 function md5Hex(s) {
   if (cryptoJs && cryptoJs.MD5) return cryptoJs.MD5(s).toString();
@@ -319,9 +331,17 @@ function XsCommon(a1, xs, xt) {
   let dataStr = JSON.stringify(d);
   return b64Encode(encodeUtf8(dataStr));
 }
+function generateXB3TraceId(len = 16) {
+  const chars = "abcdef0123456789";
+  let x_b3_traceid = "";
+  for (let i = 0; i < len; i++) {
+    x_b3_traceid += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return x_b3_traceid;
+}
 
-function get_request_headers_params(api, data, a1) {
-  let xs_xt = signXs("POST", api, a1, "xhs-pc-web", data);
+function get_request_headers_params(api, data, a1, method = "POST") {
+  let xs_xt = signXs(method, api, a1, "xhs-pc-web", data);
   let xs = xs_xt;
   let xt = new Date().getTime();
   let xs_common = XsCommon(a1, xs, xt);
@@ -329,6 +349,7 @@ function get_request_headers_params(api, data, a1) {
     xs: xs,
     xt: xt,
     xs_common: xs_common,
+    x_b3_traceid: generateXB3TraceId(),
   };
 }
 
