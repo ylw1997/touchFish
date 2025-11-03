@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件,沉浸式主题",
-	"version": "9.3.0",
+	"version": "9.4.0",
 	"icon": "favicon.ico",
 	"engines": {
 		"vscode": "^1.80.0"

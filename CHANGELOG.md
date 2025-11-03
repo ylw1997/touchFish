@@ -1,6 +1,25 @@
 # 更新历史 
 
 
+## [9.4.0](https://github.com/ylw1997/touchFish/compare/v9.3.0...v9.4.0) (2025-11-03)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 强制要求 getXhsUserPosted 接口的 cursor 参数为必填项 ([acda9cb](https://github.com/acda9cb9105062c6c570d2a512f1df62ccfd25cf))
+
+
+### ✨ Features | 新功能
+
+* 更新用户相关接口，支持可选 xsec_source 参数；优化用户主页和笔记详情组件的用户点击处理 ([d88a940](https://github.com/d88a940c244f8a3f6fe1a104d691f8dd05e1240d))
+* 使用 react-masonry-css 组件替换 List 组件以优化瀑布流布局 ([3f9fbf6](https://github.com/3f9fbf6354fac3874e575910b1e4bfa8c7ad3a27))
+* 添加关注和取消关注用户功能；更新用户主页组件以支持关注状态的显示和处理 ([ce6d0c1](https://github.com/ce6d0c1958c7b9fdbf996ac498440b2c42248a8f))
+* 添加获取用户 hover card 信息接口；更新用户主页组件以展示用户详细信息 ([bc11478](https://github.com/bc1147800324a33bf39b4604808149a175293c6d))
+* 添加获取用户已发布笔记功能；更新相关组件以支持用户主页展示 ([ba094a7](https://github.com/ba094a7d56c39a131c7a554ac2d415e63418687e))
+* 添加获取用户已发布笔记列表接口；更新签名生成逻辑以支持 GET 方法；调整 XhsFeedCard 组件的用户点击处理 ([a0fd730](https://github.com/a0fd7304643d5295e1cb76b6da7e4726b0dbc9be))
+* 添加内置用户主页 Drawer 功能；支持在父组件未传递 onUserClick 时展示用户信息 ([0e4c668](https://github.com/0e4c668251a850c83c47854836044d9b99c819e3))
+* 添加生成 x_b3_traceid 函数并更新请求头参数；调整 CommonItem 组件昵称样式 ([54c4fda](https://github.com/54c4fda7a1022e5d4a7f0ca5898df5563b08ef63))
+
 ## [9.3.0](https://github.com/ylw1997/touchFish/compare/v9.2.0...v9.3.0) (2025-10-31)
 
 
