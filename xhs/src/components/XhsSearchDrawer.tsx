@@ -171,7 +171,7 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
             default: 2,
             1500: 5,
             1200: 4,
-            9000: 3,
+            900: 3,
             600: 2,
             300: 1,
           }}
