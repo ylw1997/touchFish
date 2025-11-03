@@ -22,6 +22,7 @@ import { loaderFunc } from "../utils/loader";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
 import CommonItem from "./CommonItem";
+import UserPostedDrawer from './UserPostedDrawer';
 
 const { Title, Paragraph } = Typography;
 
@@ -176,6 +177,22 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
   // 计算视频封面：优先使用后端 video.image 提供的缩略图字段，否则当存在视频且只有一张图片时使用该图片
   const videoPoster = videoUrl && images.length === 1 ? images[0] : undefined;
 
+  // ====== 内置用户主页 Drawer（当父组件未传 onUserClick 时启用） ======
+  const [userDrawerOpen, setUserDrawerOpen] = useState(false);
+  const [userDrawerParams, setUserDrawerParams] = useState<{ cursor: string; user_id: string; xsec_token: string; user?: any; xsec_source?: string }>({ cursor: '', user_id: '', xsec_token: '' });
+
+  const openUserDrawer = (payload: { cursor: string; user_id: string; xsec_token: string; user?: any; xsec_source?: string }) => {
+    if (onUserClick) {
+      // 交给父组件处理
+      onUserClick(payload);
+    } else {
+      setUserDrawerParams(payload);
+      setUserDrawerOpen(true);
+    }
+  };
+
+  const closeUserDrawer = () => setUserDrawerOpen(false);
+
   return (
     <Drawer
       open={open}
@@ -202,7 +219,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
               style={{ cursor: user?.user_id ? 'pointer' : 'default' }}
               onClick={() => {
                 if (!user?.user_id) return;
-                onUserClick?.({
+                openUserDrawer({
                   cursor: sourceNoteId,
                   user_id: user.user_id,
                   xsec_token: initXsecToken,
@@ -216,7 +233,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
               style={{ fontWeight: 600, fontSize: 18, cursor: user?.user_id ? 'pointer' : 'default' }}
               onClick={() => {
                 if (!user?.user_id) return;
-                onUserClick?.({
+                openUserDrawer({
                   cursor: sourceNoteId,
                   user_id: user.user_id,
                   xsec_token: initXsecToken,
@@ -334,14 +351,14 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
                     const u = comment?.user_info;
                     if (!u?.user_id) return;
                     const rawUser = comment.user_info || {};
-                    onUserClick?.({
-                      cursor: "", // 带上评论 id，如果不存在则回退笔记 id
+                    openUserDrawer({
+                      cursor: "", // 评论上下文不需要初始 cursor
                       user_id: rawUser.user_id,
                       xsec_token: rawUser.xsec_token,
                       xsec_source: "pc_comment",
                       user: {
                         ...rawUser,
-                        avatar: rawUser.avatar || rawUser.image, // 评论返回多为 image 字段
+                        avatar: rawUser.avatar || rawUser.image,
                         nickname: rawUser.nickname || rawUser.nick_name,
                       },
                     });
@@ -364,6 +381,20 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
           )}
         </Card>
       </div>
+      {/* 内置用户主页 Drawer（父组件未提供 onUserClick 时使用） */}
+      {!onUserClick && (
+        <UserPostedDrawer
+          open={userDrawerOpen}
+          onClose={closeUserDrawer}
+          initParams={{
+            cursor: userDrawerParams.cursor,
+            user_id: userDrawerParams.user_id,
+            xsec_token: userDrawerParams.xsec_token,
+            user: userDrawerParams.user,
+            xsec_source: userDrawerParams.xsec_source,
+          }}
+        />
+      )}
     </Drawer>
   );
 };
