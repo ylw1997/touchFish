@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+### [9.4.1](https://github.com/ylw1997/touchFish/compare/v9.4.0...v9.4.1) (2025-11-03)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 调整 UserPostedDrawer 组件的样式，修改 body 内边距并添加 Card 组件的外边距 ([fb3590d](https://github.com/fb3590d26b3fd660f195b97e1f2d20a94ff71dc2))
+* 修正 Feed 和 XhsSearchDrawer 组件中的响应式列数配置，将 9000 修改为 900 ([82b8d05](https://github.com/82b8d0598db12b4d01a534d4a1d44ad4cf53d80c))
+
 ## [9.4.0](https://github.com/ylw1997/touchFish/compare/v9.3.0...v9.4.0) (2025-11-03)
 
 
