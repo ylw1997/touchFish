@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:35
- * @LastEditTime: 2025-11-03 14:03:50
+ * @LastEditTime: 2025-11-03 14:54:56
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\Feed.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -41,7 +41,7 @@ export default function Feed() {
   const [searchOpen, setSearchOpen] = useState(false);
   // 用户主页弹窗状态
   const [userOpen, setUserOpen] = useState(false);
-  const [userParams, setUserParams] = useState<{ cursor: string; user_id: string; xsec_token: string; user?: any }>({ cursor: '', user_id: '', xsec_token: '' });
+  const [userParams, setUserParams] = useState<{ cursor: string; user_id: string; xsec_token: string; user?: any;xsec_source?:any }>({ cursor: '', user_id: '', xsec_token: '' });
   // 目前 Drawer 内部自行通过 useRequest 获取接口，此处仅维持滚动保存逻辑
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -105,6 +105,10 @@ export default function Feed() {
         }}
         // 仅传递基础标识，Drawer 内部自行请求
         detail={{ note_id: activeNoteId, xsec_token: activeXsecToken }}
+        onUserClick={(p) => {
+          setUserParams(p);
+          setUserOpen(true);
+        }}
       />
       <XhsSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
       {/* 使用 Antd 浮动按钮组（参考 weibo） */}
@@ -167,7 +171,14 @@ export default function Feed() {
           </Masonry>
         </InfiniteScroll>
       )}
-      <UserPostedDrawer open={userOpen} onClose={() => setUserOpen(false)} initParams={userParams} />
+        <UserPostedDrawer
+          open={userOpen}
+          onClose={() => setUserOpen(false)}
+          initParams={userParams}
+          onOpenDetail={(raw) => {
+            handleOpenDetail(raw);
+          }}
+        />
     </div>
   );
 }

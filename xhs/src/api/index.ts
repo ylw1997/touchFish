@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:41
- * @LastEditTime: 2025-10-24 11:10:28
+ * @LastEditTime: 2025-11-03 14:50:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\api\index.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -46,7 +46,7 @@ export class XhsApi {
   }
 
   // 获取用户已发布笔记列表
-  getUserPosted(payload: { user_id: string; cursor: string; xsec_token: string }) {
+  getUserPosted(payload: { user_id: string; cursor: string; xsec_token: string,xsec_source?:string }) {
     const label = payload.cursor ? '加载更多用户笔记...' : '加载用户笔记中...';
     return this.request<any>('XHS_GET_USER_POSTED' as CommandList, payload, label);
   }

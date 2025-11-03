@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-10-31 14:15:04
+ * @LastEditTime: 2025-11-03 15:03:18
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
@@ -30,6 +30,7 @@ interface FeedDetailDrawerProps {
   onClose: () => void;
   // 由父组件传入的必要标识（feed 列表项）
   detail: { note_id: string; xsec_token: string };
+  onUserClick?: (payload: { cursor: string; user_id: string; xsec_token: string; user?: any; pc_comment?: any; xsec_source?: string }) => void;
 }
 
 // 约定 detail.note 对象结构含有以下字段：title, desc, user, image_list
@@ -38,6 +39,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
   open,
   onClose,
   detail,
+  onUserClick,
 }) => {
   // ====== 基础标识 ======
   const sourceNoteId: string = detail.note_id;
@@ -88,6 +90,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
           cursor,
           xsec_token: initXsecToken,
         });
+        // console.log("[xhs feed detail] comments data:", data);
         setComments((prev) =>
           cursor ? [...prev, ...data.comments] : data.comments
         );
@@ -193,10 +196,34 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
         {/* 1) 用户信息 Card（头像小一些） */}
         <Card size="small" style={{ marginBottom: 12 }}>
           <Flex align="center" gap={12} style={{ marginBottom: 0 }}>
-            <Avatar src={avatar} size={40}>
+            <Avatar
+              src={avatar}
+              size={40}
+              style={{ cursor: user?.user_id ? 'pointer' : 'default' }}
+              onClick={() => {
+                if (!user?.user_id) return;
+                onUserClick?.({
+                  cursor: sourceNoteId,
+                  user_id: user.user_id,
+                  xsec_token: initXsecToken,
+                  user,
+                });
+              }}
+            >
               {userName?.[0]}
             </Avatar>
-            <span style={{ fontWeight: 600, fontSize: 18 }}>{userName}</span>
+            <span
+              style={{ fontWeight: 600, fontSize: 18, cursor: user?.user_id ? 'pointer' : 'default' }}
+              onClick={() => {
+                if (!user?.user_id) return;
+                onUserClick?.({
+                  cursor: sourceNoteId,
+                  user_id: user.user_id,
+                  xsec_token: initXsecToken,
+                  user,
+                });
+              }}
+            >{userName}</span>
           </Flex>
         </Card>
 
@@ -294,13 +321,33 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             </div>
           )}
           {!commentLoading && !comments.length && !commentError && (
-            <div style={{ color: "#999" }}>暂无评论</div>
+            <div style={{ color: "#999", padding: "8px" }}>暂无评论</div>
           )}
           {!!comments.length && (
             <List
               size="small"
               dataSource={comments}
-              renderItem={(comment) => <CommonItem c={comment} />}
+              renderItem={(comment) => (
+                <CommonItem
+                  c={comment}
+                  onUserClick={() => {
+                    const u = comment?.user_info;
+                    if (!u?.user_id) return;
+                    const rawUser = comment.user_info || {};
+                    onUserClick?.({
+                      cursor: "", // 带上评论 id，如果不存在则回退笔记 id
+                      user_id: rawUser.user_id,
+                      xsec_token: rawUser.xsec_token,
+                      xsec_source: "pc_comment",
+                      user: {
+                        ...rawUser,
+                        avatar: rawUser.avatar || rawUser.image, // 评论返回多为 image 字段
+                        nickname: rawUser.nickname || rawUser.nick_name,
+                      },
+                    });
+                  }}
+                />
+              )}
             />
           )}
           {commentHasMore && (

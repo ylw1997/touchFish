@@ -4,7 +4,7 @@
  * @Description: 小红书用户主页 Drawer：展示用户头像/昵称及其已发布笔记瀑布流，可翻页加载。
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Drawer, Avatar, Card, Button, Empty } from "antd";
+import { Drawer, Avatar, Card, Button, Empty, message } from "antd";
 import Masonry from "react-masonry-css";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
@@ -17,19 +17,22 @@ interface UserPostedDrawerProps {
   onClose: () => void;
   // 初始参数：从点击的笔记中获取 note id 作为 cursor（或空字符串），以及 user 对象里的 user_id 与 xsec_token
   initParams: {
+    xsec_source?: any;
     cursor: string;
     user_id: string;
     xsec_token: string;
     user?: any;
   };
+  onOpenDetail?: (raw: any) => void; // 点击用户主页里的笔记打开详情
 }
 
 const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   open,
   onClose,
   initParams,
+  onOpenDetail,
 }) => {
-  const { request } = useRequest();
+  const { request, messageApi, contextHolder } = useRequest();
   const apiRef = useRef(createXhsApi(request));
 
   const [loading, setLoading] = useState(false);
@@ -47,13 +50,16 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   const fetchPosted = useCallback(
     async (reset: boolean = false, nextCursor?: string) => {
       if (!initParams.user_id || !initParams.xsec_token) return;
-      const useCursor = reset ? (nextCursor ?? "") : (nextCursor ?? cursorRef.current);
+      const useCursor = reset
+        ? nextCursor ?? ""
+        : nextCursor ?? cursorRef.current;
       setLoading(true);
       try {
         const res: any = await apiRef.current.getUserPosted({
           user_id: initParams.user_id,
           cursor: useCursor,
           xsec_token: initParams.xsec_token,
+          xsec_source: initParams.xsec_source,
         });
         const incoming: XhsFeedRawItem[] = res?.items || [];
         setItems((prev) => (reset ? incoming : [...prev, ...incoming]));
@@ -67,7 +73,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
         setLoading(false);
       }
     },
-    [apiRef, initParams.user_id, initParams.xsec_token]
+    [initParams.user_id, initParams.xsec_source, initParams.xsec_token]
   );
 
   const loadMore = useCallback(() => {
@@ -93,10 +99,9 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initParams.cursor, initParams.user_id, initParams.xsec_token]);
 
-  const handleUserClick = useCallback(() => {
-    // 点击头像刷新用户主页
-    fetchPosted(true, "");
-  }, [fetchPosted]);
+  const handleUserClick = () => {
+    messageApi.info("已经是本用户主页了");
+  };
 
   return (
     <Drawer
@@ -110,13 +115,19 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
         body: { padding: 0, height: "100%", overflow: "auto" },
       }}
     >
+      {contextHolder}
       <div style={{ padding: 16 }}>
         <Card size="small" style={{ marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Avatar src={avatar} size={48} onClick={handleUserClick}>
               {nickname[0]}
             </Avatar>
-            <div style={{ fontWeight: 600, fontSize: 20 }}>{nickname}</div>
+            <div
+              style={{ fontWeight: 600, fontSize: 20, cursor: "pointer" }}
+              onClick={handleUserClick}
+            >
+              {nickname}
+            </div>
           </div>
         </Card>
         {/* 瀑布流 */}
@@ -143,8 +154,10 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
               >
                 <XhsFeedCard
                   data={raw}
-                  onClick={() => {
-                    /* 复用外部 FeedDetailDrawer 由父层处理 */
+                  onClick={() => onOpenDetail?.(raw)}
+                  onUserClick={() => {
+                    // 已在当前用户主页
+                    message.info("已经是本用户主页了");
                   }}
                 />
               </div>

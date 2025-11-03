@@ -99,7 +99,7 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
     setActiveXsecToken(raw.xsec_token);
   }, []);
 
-  const handleOpenUser = useCallback((raw: any, user: any) => {
+  const handleOpenUser = useCallback((raw: {id: string, xsec_token: string}, user: any) => {
     if (!user?.user_id) return;
     setUserParams({ cursor: raw.id || '', user_id: user.user_id, xsec_token: raw.xsec_token, user });
     setUserOpen(true);
@@ -131,8 +131,19 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
         }}
         // 仅传递基础标识，Drawer 内部自行请求
         detail={{ note_id: activeNoteId, xsec_token: activeXsecToken }}
+        onUserClick={(p) => {
+          setUserParams(p);
+          setUserOpen(true);
+        }}
       />
-      <UserPostedDrawer open={userOpen} onClose={() => setUserOpen(false)} initParams={userParams} />
+      <UserPostedDrawer
+        open={userOpen}
+        onClose={() => setUserOpen(false)}
+        initParams={userParams}
+        onOpenDetail={(raw) => {
+          handleOpenDetail(raw);
+        }}
+      />
       <Form form={form} layout="vertical" onFinish={handleSearch}>
         <Form.Item
           name="keyword"

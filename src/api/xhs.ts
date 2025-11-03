@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-11-03 14:06:46
+ * @LastEditTime: 2025-11-03 14:49:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -230,6 +230,7 @@ export const getXhsUserPosted = async (params: {
   user_id: string;
   xsec_token: string;
   cursor: string;
+  xsec_source?: string;
 }) => {
   const cookie = await getOrSetXhsCookie();
   if (!cookie) throw new Error("请先设置小红书 Cookie");
@@ -240,7 +241,7 @@ export const getXhsUserPosted = async (params: {
     user_id: params.user_id,
     image_formats: "jpg,webp,avif",
     xsec_token: params.xsec_token,
-    xsec_source: "pc_feed",
+    xsec_source: params.xsec_source || "pc_feed",
   };
   let signObj: XhsSignature;
   try {
@@ -252,6 +253,7 @@ export const getXhsUserPosted = async (params: {
   const xsecToken = queryObj.xsec_token.replace(/=/g, "%3D");
   const url = `https://edith.xiaohongshu.com${apiPath}?num=30&cursor=${queryObj.cursor}&user_id=${queryObj.user_id}&image_formats=jpg,webp,avif&xsec_token=${xsecToken}&xsec_source=${queryObj.xsec_source}`;
   const headers = buildXhsHeaders({ cookie, signObj });
+  console.log("xhs user posted url:", url);
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
   const raw = resp.data?.data; // 可能包含 notes 或 items
   const notes: any[] = raw?.notes || raw?.items || [];
