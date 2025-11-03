@@ -91,7 +91,10 @@ export type CommandList =
   // 用户主页：获取用户已发布笔记
   | "XHS_GET_USER_POSTED"
   // 用户 hover card 信息
-  | "XHS_USER_HOVER_CARD";
+  | "XHS_USER_HOVER_CARD"
+  // 关注 / 取关
+  | "XHS_USER_FOLLOW"
+  | "XHS_USER_UNFOLLOW";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"

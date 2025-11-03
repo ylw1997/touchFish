@@ -319,3 +319,49 @@ export const getXhsUserHoverCard = async (params: {
   const data = resp.data?.data;
   return data; // { basic_info, interact_info, extraInfo_info, verify_info, ... }
 };
+
+// 关注用户
+// POST https://edith.xiaohongshu.com/api/sns/web/v1/user/follow { target_user_id }
+export const followXhsUser = async (params: { target_user_id: string }) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error('请先设置小红书 Cookie');
+  const apiPath = '/api/sns/web/v1/user/follow';
+  const body = { target_user_id: params.target_user_id };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error('[xhs signature error follow]', e?.message || e);
+    throw new Error('关注签名失败，请稍后重试');
+  }
+  const url = 'https://edith.xiaohongshu.com' + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+  const data = resp.data?.data;
+  if (!data) throw new Error('关注失败，返回数据为空');
+  return data; // { fstatus: 'follows' }
+};
+
+// 取消关注用户
+// POST https://edith.xiaohongshu.com/api/sns/web/v1/user/unfollow { target_user_id }
+export const unfollowXhsUser = async (params: { target_user_id: string }) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error('请先设置小红书 Cookie');
+  const apiPath = '/api/sns/web/v1/user/unfollow';
+  const body = { target_user_id: params.target_user_id };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error('[xhs signature error unfollow]', e?.message || e);
+    throw new Error('取消关注签名失败，请稍后重试');
+  }
+  const url = 'https://edith.xiaohongshu.com' + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+  const data = resp.data?.data;
+  if (!data) throw new Error('取消关注失败，返回数据为空');
+  return data; // { fstatus: 'none' }
+};

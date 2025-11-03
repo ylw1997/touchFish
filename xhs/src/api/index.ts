@@ -55,6 +55,14 @@ export class XhsApi {
   getUserHoverCard(payload: { target_user_id: string; image_formats?: string; xsec_source?: string; xsec_token: string }) {
     return this.request<any>('XHS_USER_HOVER_CARD' as CommandList, payload, '加载用户信息中...');
   }
+
+  followUser(payload: { target_user_id: string }) {
+    return this.request<any>('XHS_USER_FOLLOW' as CommandList, payload, '关注中...');
+  }
+
+  unfollowUser(payload: { target_user_id: string }) {
+    return this.request<any>('XHS_USER_UNFOLLOW' as CommandList, payload, '取消关注中...');
+  }
 }
 
 function cursorLabel(cursor?: string) {

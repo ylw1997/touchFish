@@ -137,11 +137,31 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   const fans = hoverData?.interact_info?.fans || '0';
   const interaction = hoverData?.interact_info?.interaction || '0';
   const desc = hoverData?.basic_info?.desc || '';
-  const handleFollowClick = () => {
-    if (!isFollowed) {
-      messageApi.info('暂未实现关注接口');
-    } else {
-      messageApi.info('暂未实现取消关注接口');
+  const [followLoading, setFollowLoading] = useState(false);
+  const handleFollowClick = async () => {
+    if (!initParams.user_id) return;
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+      if (!isFollowed) {
+        // 乐观更新：先设置状态，再回滚可能的失败
+        setHoverData((prev: any) => ({ ...prev, extraInfo_info: { ...(prev?.extraInfo_info || {}), fstatus: 'follows' } }));
+        const res = await apiRef.current.followUser({ target_user_id: initParams.user_id });
+        // 以返回值为准
+        setHoverData((prev: any) => ({ ...prev, extraInfo_info: { ...(prev?.extraInfo_info || {}), fstatus: res?.fstatus || 'follows' } }));
+        messageApi.success('关注成功');
+      } else {
+        setHoverData((prev: any) => ({ ...prev, extraInfo_info: { ...(prev?.extraInfo_info || {}), fstatus: 'none' } }));
+        const res = await apiRef.current.unfollowUser({ target_user_id: initParams.user_id });
+        setHoverData((prev: any) => ({ ...prev, extraInfo_info: { ...(prev?.extraInfo_info || {}), fstatus: res?.fstatus || 'none' } }));
+        messageApi.success('已取消关注');
+      }
+    } catch (e: any) {
+      // 回滚：重新拉取 hover card 以恢复真实状态
+      messageApi.error(e?.message || (isFollowed ? '取消关注失败' : '关注失败'));
+      fetchHover();
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -179,9 +199,13 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
           )}
           {!hoverLoading && !hoverError && initParams.user_id && (
             isFollowed ? (
-              <Button color="red" variant="filled" onClick={handleFollowClick}>取关</Button>
+              <Button color="red" variant="filled" loading={followLoading} onClick={handleFollowClick}>
+                {followLoading ? '处理中...' : '取关'}
+              </Button>
             ) : (
-              <Button color="primary" variant="filled" onClick={handleFollowClick}>关注</Button>
+              <Button color="primary" variant="filled" loading={followLoading} onClick={handleFollowClick}>
+                {followLoading ? '处理中...' : '关注'}
+              </Button>
             )
           )}
         </div>

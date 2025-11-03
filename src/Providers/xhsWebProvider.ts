@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:49:53
- * @LastEditTime: 2025-10-31 17:41:21
+ * @LastEditTime: 2025-11-03 16:07:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\xhsWebProvider.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -12,7 +12,7 @@
  */
 import { WebviewViewProvider, WebviewView, ExtensionContext, Uri } from 'vscode';
 import * as vscode from 'vscode';
-import { getXhsFeed, getXhsFeedDetail, getXhsComments, searchXhsNotes, getXhsUserPosted, getXhsUserHoverCard } from '../api/xhs';
+import { getXhsFeed, getXhsFeedDetail, getXhsComments, searchXhsNotes, getXhsUserPosted, getXhsUserHoverCard, followXhsUser, unfollowXhsUser } from '../api/xhs';
 import * as fs from 'fs';
 
 interface XhsMessage<T=any> { command: string; payload?: T; uuid?: string; }
@@ -78,6 +78,20 @@ export class XhsWebProvider implements WebviewViewProvider {
             const hoverPayload = payload as any; // { target_user_id, xsec_token, xsec_source }
             const data = await getXhsUserHoverCard(hoverPayload);
             webviewView.webview.postMessage({ payload: data, uuid });
+            break;
+          }
+          case 'XHS_USER_FOLLOW': {
+            const followPayload = payload as any; // { target_user_id }
+            const data = await followXhsUser(followPayload);
+            webviewView.webview.postMessage({ payload: data, uuid });
+            // vscode.window.showInformationMessage('关注成功');
+            break;
+          }
+          case 'XHS_USER_UNFOLLOW': {
+            const unfollowPayload = payload as any; // { target_user_id }
+            const data = await unfollowXhsUser(unfollowPayload);
+            webviewView.webview.postMessage({ payload: data, uuid });
+            // vscode.window.showInformationMessage('已取消关注');
             break;
           }
           case 'XHS_SAVE_SCROLL_POSITION': {
