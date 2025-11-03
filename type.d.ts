@@ -87,7 +87,9 @@ export type CommandList =
   | "XHS_SAVE_SCROLL_POSITION"
   | "XHS_RESTORE_SCROLL_POSITION"
   | "XHS_REQUEST_RESTORE_SCROLL"
-  | "XHS_GET_COMMENTS";
+  | "XHS_GET_COMMENTS"
+  // 用户主页：获取用户已发布笔记
+  | "XHS_GET_USER_POSTED";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"

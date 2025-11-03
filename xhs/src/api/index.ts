@@ -44,6 +44,12 @@ export class XhsApi {
   }) {
     return this.request<any>('XHS_GET_COMMENTS' as CommandList, payload, cursorLabel(payload.cursor));
   }
+
+  // 获取用户已发布笔记列表
+  getUserPosted(payload: { user_id: string; cursor: string; xsec_token: string }) {
+    const label = payload.cursor ? '加载更多用户笔记...' : '加载用户笔记中...';
+    return this.request<any>('XHS_GET_USER_POSTED' as CommandList, payload, label);
+  }
 }
 
 function cursorLabel(cursor?: string) {

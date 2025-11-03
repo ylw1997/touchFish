@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-11-03 11:30:24
+ * @LastEditTime: 2025-11-03 14:06:46
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -246,11 +246,40 @@ export const getXhsUserPosted = async (params: {
   try {
     signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
   } catch (e: any) {
-    console.error("[xhs signature error]", e?.message || e);
+    console.log("[xhs signature error]", e?.message || e);
     throw new Error("小红书签名生成失败，请检查 Cookie 或稍后再试");
   }
-  const url = `https://edith.xiaohongshu.com${apiPath}?num=30&cursor=${queryObj.cursor}&user_id=${queryObj.user_id}&image_formats=${queryObj.image_formats}&xsec_token=${queryObj.xsec_token}&xsec_source=${queryObj.xsec_source}`;
+  const xsecToken = queryObj.xsec_token.replace(/=/g, "%3D");
+  const url = `https://edith.xiaohongshu.com${apiPath}?num=30&cursor=${queryObj.cursor}&user_id=${queryObj.user_id}&image_formats=jpg,webp,avif&xsec_token=${xsecToken}&xsec_source=${queryObj.xsec_source}`;
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
-  return resp.data?.data; // { items, cursor, has_more, ... }
+  const raw = resp.data?.data; // 可能包含 notes 或 items
+  const notes: any[] = raw?.notes || raw?.items || [];
+  // 转换为与首页 feed 相同的结构，复用 XhsFeedCard 组件
+  const items = notes.map((note: any) => {
+    return {
+      ignore: false,
+      xsec_token: note.xsec_token,
+      id: note.note_id || note.id,
+      model_type: 'note',
+      track_id: '',
+      note_card: {
+        user: note.user,
+        interact_info: note.interact_info,
+        cover: note.cover,
+        display_title: note.display_title || note.title,
+        title: note.display_title || note.title,
+        type: note.type,
+        note_id: note.note_id || note.id,
+        xsec_token: note.xsec_token,
+      },
+    };
+  });
+  return {
+    items,
+    cursor: raw?.cursor || '',
+    has_more: raw?.has_more,
+    // 保留原始结构供必要时调试
+    _raw: raw,
+  };
 };

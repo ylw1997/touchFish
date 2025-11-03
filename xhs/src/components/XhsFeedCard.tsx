@@ -15,10 +15,11 @@ import { XhsFeedRawItem } from '../../../type';
 
 interface XhsFeedCardProps {
   data: XhsFeedRawItem;
-  onClick?: (data: XhsFeedRawItem) => void;
+  onClick?: (data: XhsFeedRawItem) => void; // 打开笔记详情
+  onUserClick?: (data: XhsFeedRawItem, user: any) => void; // 打开用户主页
 }
 
-export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick }) => {
+export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick, onUserClick }) => {
   // 过滤非 note
   if ((data as any).model_type && (data as any).model_type !== 'note') {
     return null;
@@ -37,8 +38,7 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick }) => {
 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[xhs user]', user);
-    // onClick?.(data);
+    onUserClick?.(data, user);
   };
 
   return (

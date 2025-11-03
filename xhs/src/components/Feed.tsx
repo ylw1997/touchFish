@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 08:49:35
- * @LastEditTime: 2025-10-31 17:57:35
+ * @LastEditTime: 2025-11-03 14:03:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\Feed.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -18,6 +18,7 @@ import XhsFeedCard from "./XhsFeedCard";
 import { vscode } from "../utils/vscode";
 import FeedDetailDrawer from "./FeedDetailDrawer";
 import XhsSearchDrawer from "./XhsSearchDrawer";
+import UserPostedDrawer from "./UserPostedDrawer";
 
 // 统一使用封装的 vscode.postMessage，浏览器环境自动降级为 console.log
 
@@ -38,6 +39,9 @@ export default function Feed() {
   const [activeXsecToken, setActiveXsecToken] = useState<string>("");
   // 搜索弹窗状态
   const [searchOpen, setSearchOpen] = useState(false);
+  // 用户主页弹窗状态
+  const [userOpen, setUserOpen] = useState(false);
+  const [userParams, setUserParams] = useState<{ cursor: string; user_id: string; xsec_token: string; user?: any }>({ cursor: '', user_id: '', xsec_token: '' });
   // 目前 Drawer 内部自行通过 useRequest 获取接口，此处仅维持滚动保存逻辑
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -77,6 +81,13 @@ export default function Feed() {
     setDetailOpen(true);
     setActiveNoteId(raw.id);
     setActiveXsecToken(raw.xsec_token);
+  }, []);
+
+  const handleOpenUser = useCallback((raw: any, user: any) => {
+    if (!user?.user_id) return;
+    // 以当前笔记 id 作为初始 cursor，有些接口可能不认可；如果需要可置空 ''
+    setUserParams({ cursor: raw.id, user_id: user.user_id, xsec_token: raw.xsec_token, user });
+    setUserOpen(true);
   }, []);
 
   return (
@@ -150,12 +161,13 @@ export default function Feed() {
                 className="xhs-waterfall-item"
                 style={{ animationDelay: `${(index % 10) * 50}ms` }}
               >
-                <XhsFeedCard data={raw} onClick={handleOpenDetail} />
+                <XhsFeedCard data={raw} onClick={handleOpenDetail} onUserClick={handleOpenUser} />
               </div>
             ))}
           </Masonry>
         </InfiniteScroll>
       )}
+      <UserPostedDrawer open={userOpen} onClose={() => setUserOpen(false)} initParams={userParams} />
     </div>
   );
 }

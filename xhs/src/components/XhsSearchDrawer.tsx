@@ -6,6 +6,7 @@ import { useRequest } from "../hooks/useRequest";
 import { loaderFunc } from "../utils/loader";
 import { generateXB3TraceId } from "../utils/utils";
 import XhsFeedCard from "./XhsFeedCard";
+import UserPostedDrawer from "./UserPostedDrawer";
 import FeedDetailDrawer from "./FeedDetailDrawer";
 import Masonry from "react-masonry-css";
 
@@ -28,6 +29,9 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState<string>("");
   const [activeXsecToken, setActiveXsecToken] = useState<string>("");
+  // 用户主页
+  const [userOpen, setUserOpen] = useState(false);
+  const [userParams, setUserParams] = useState<{ cursor: string; user_id: string; xsec_token: string; user?: any }>({ cursor: '', user_id: '', xsec_token: '' });
 
   const handleSearch = useCallback(async ({ keyword }: { keyword: string }) => {
     const trimmed = keyword?.trim();
@@ -95,6 +99,12 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
     setActiveXsecToken(raw.xsec_token);
   }, []);
 
+  const handleOpenUser = useCallback((raw: any, user: any) => {
+    if (!user?.user_id) return;
+    setUserParams({ cursor: raw.id || '', user_id: user.user_id, xsec_token: raw.xsec_token, user });
+    setUserOpen(true);
+  }, []);
+
   return (
     <Drawer
       title="小红书搜索"
@@ -122,6 +132,7 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
         // 仅传递基础标识，Drawer 内部自行请求
         detail={{ note_id: activeNoteId, xsec_token: activeXsecToken }}
       />
+      <UserPostedDrawer open={userOpen} onClose={() => setUserOpen(false)} initParams={userParams} />
       <Form form={form} layout="vertical" onFinish={handleSearch}>
         <Form.Item
           name="keyword"
@@ -162,7 +173,7 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
               className="xhs-waterfall-item"
               style={{ animationDelay: `${(index % 10) * 50}ms` }}
             >
-              <XhsFeedCard data={raw} onClick={handleOpenDetail} />
+              <XhsFeedCard data={raw} onClick={handleOpenDetail} onUserClick={handleOpenUser} />
             </div>
           ))}
         </Masonry>
