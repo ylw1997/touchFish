@@ -229,14 +229,14 @@ export const searchXhsNotes = async (params: { keyword: string; page?: number; s
 export const getXhsUserPosted = async (params: {
   user_id: string;
   xsec_token: string;
-  cursor?: string;
+  cursor: string;
 }) => {
   const cookie = await getOrSetXhsCookie();
   if (!cookie) throw new Error("请先设置小红书 Cookie");
   const apiPath = "/api/sns/web/v1/user_posted";
   const queryObj = {
     num: "30",
-    cursor: params.cursor || "",
+    cursor: params.cursor,
     user_id: params.user_id,
     image_formats: "jpg,webp,avif",
     xsec_token: params.xsec_token,
