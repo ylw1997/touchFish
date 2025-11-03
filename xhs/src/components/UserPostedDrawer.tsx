@@ -207,7 +207,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
       height="90vh"
       title={`用户主页 - ${nickname}`}
       styles={{
-        body: { padding: 0, height: "100%", overflow: "auto" },
+        body: { padding: '10px 0', height: "100%", overflow: "auto" },
       }}
     >
       {contextHolder}
@@ -252,6 +252,9 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
           <Card
             size="small"
             styles={{ body: { padding: "10px", textAlign: "center" } }}
+            style={{
+              margin:"0 8px"
+            }}
           >
             {desc}
           </Card>
