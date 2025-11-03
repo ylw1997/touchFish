@@ -1,4 +1,4 @@
-import { Drawer, Button, Input, Form, List, Empty, Divider } from "antd";
+import { Drawer, Button, Input, Form, Empty, Divider } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useState, useCallback, useRef } from "react";
 import { createXhsApi } from "../api";
@@ -7,6 +7,7 @@ import { loaderFunc } from "../utils/loader";
 import { generateXB3TraceId } from "../utils/utils";
 import XhsFeedCard from "./XhsFeedCard";
 import FeedDetailDrawer from "./FeedDetailDrawer";
+import Masonry from "react-masonry-css";
 
 interface XhsSearchDrawerProps {
   open: boolean;
@@ -143,15 +144,28 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
       {loading && results.length === 0 ? (
         loaderFunc()
       ) : results.length > 0 ? (
-        <List
-          dataSource={results}
-          className="xhs-waterfall"
-          renderItem={(item: any) => (
-            <div key={item.id} className="xhs-waterfall-item">
-              <XhsFeedCard data={item} onClick={handleOpenDetail} />
+        <Masonry
+          breakpointCols={{
+            default: 2,
+            1500: 5,
+            1200: 4,
+            9000: 3,
+            600: 2,
+            300: 1,
+          }}
+          className="xhs-masonry"
+          columnClassName="xhs-masonry-column"
+        >
+          {results.map((raw: any, index: number) => (
+            <div
+              key={index}
+              className="xhs-waterfall-item"
+              style={{ animationDelay: `${(index % 10) * 50}ms` }}
+            >
+              <XhsFeedCard data={raw} onClick={handleOpenDetail} />
             </div>
-          )}
-        />
+          ))}
+        </Masonry>
       ) : (
         <Empty
           description="暂无搜索结果"
