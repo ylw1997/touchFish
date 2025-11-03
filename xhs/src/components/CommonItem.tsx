@@ -1,3 +1,12 @@
+/*
+ * @Author: YangLiwei 1280426581@qq.com
+ * @Date: 2025-10-31 14:01:36
+ * @LastEditTime: 2025-11-03 09:08:15
+ * @LastEditors: YangLiwei 1280426581@qq.com
+ * @FilePath: \touchfish\xhs\src\components\CommonItem.tsx
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * @Description: 
+ */
 import { HeartOutlined, MessageOutlined } from "@ant-design/icons";
 import { List, Avatar, Space, Tag } from "antd";
 
@@ -25,7 +34,7 @@ const CommonItem: React.FC<{ c: any, [key: string]: any }> = ({ c,...arg }) => {
               flexWrap: "wrap",
             }}
           >
-            <span style={{ fontWeight: 500 }}>{c.user_info?.nickname}</span>
+            <span style={{ fontWeight: "bolder" }}>{c.user_info?.nickname}</span>
             <span style={{ color: "#999", fontSize: 12 }}>
               {formatTime(c.create_time)}
             </span>

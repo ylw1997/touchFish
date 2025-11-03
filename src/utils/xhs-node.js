@@ -259,6 +259,14 @@ function XsCommon(a1, xs, xt) {
   let dataStr = JSON.stringify(d);
   return b64Encode(encodeUtf8(dataStr));
 }
+function generateXB3TraceId(len = 16) {
+  const chars = "abcdef0123456789";
+  let x_b3_traceid = "";
+  for (let i = 0; i < len; i++) {
+    x_b3_traceid += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return x_b3_traceid;
+}
 
 function get_request_headers_params(api, data, a1) {
   let xs_xt = signXs("POST", api, a1, "xhs-pc-web", data);
@@ -269,16 +277,8 @@ function get_request_headers_params(api, data, a1) {
     xs: xs,
     xt: xt,
     xs_common: xs_common,
+    x_b3_traceid: generateXB3TraceId(),
   };
-}
-
-function generateXB3TraceId(len = 16) {
-  const chars = "abcdef0123456789";
-  let x_b3_traceid = "";
-  for (let i = 0; i < len; i++) {
-    x_b3_traceid += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return x_b3_traceid;
 }
 
 console.log("XHS Node.js signature module loaded.");
@@ -293,20 +293,36 @@ console.log("XHS Node.js signature module loaded.");
 //   },"19a244b47d3icm32hzeksg6oujiejluy67u23wlco10000262523")
 // );
 
+// console.log(
+//   "search 11",
+//   get_request_headers_params(
+//     "/api/sns/web/v1/search/notes",
+//     {
+//       keyword: "科技",
+//       page: 3,
+//       page_size: 20,
+//       search_id: generateXB3TraceId(),
+//       sort: "general",
+//       note_type: 0,
+//       ext_flags: [],
+//       geo: "",
+//       image_formats: ["jpg", "webp", "avif"],
+//     },
+//     "19a244b47d3icm32hzeksg6oujiejluy67u23wlco10000262523"
+//   )
+// );
+
 console.log(
-  "search 11",
+  "user 12",
   get_request_headers_params(
-    "/api/sns/web/v1/search/notes",
+    "/api/sns/web/v1/user_posted",
     {
-      keyword: "科技",
-      page: 3,
-      page_size: 20,
-      search_id: generateXB3TraceId(),
-      sort: "general",
-      note_type: 0,
-      ext_flags: [],
-      geo: "",
+      num: 30,
+      cursor: "68b69471000000001b01d7c9",
+      user_id: "5c4569a4000000000701a8de",
       image_formats: ["jpg", "webp", "avif"],
+      xsec_token: "ABQz2wzKZnJsqSByeH1nPjuNMs_kwAujD6OAB5kIRViVc=",
+      xsec_source: "pc_feed",
     },
     "19a244b47d3icm32hzeksg6oujiejluy67u23wlco10000262523"
   )
