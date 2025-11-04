@@ -61,7 +61,6 @@ a {
   }
 }
 
-
 .ant-card {
   overflow: hidden;
   background: color-mix(
@@ -129,4 +128,24 @@ a {
     opacity: 1;
     transform: translateY(0) translateZ(0);
   }
+}
+
+.ant-carousel .slick-prev::after {
+  display: none;
+}
+
+.ant-carousel .slick-next::after {
+  display: none;
+}
+.ant-carousel .slick-prev,
+.ant-carousel .slick-next {
+  width: auto;
+  height: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.xhs-carousel-arrow {
+  font-size: 32px;
 }

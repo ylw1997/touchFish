@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-11-03 17:53:32
+ * @LastEditTime: 2025-11-04 10:02:19
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
@@ -23,6 +23,7 @@ import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
 import CommonItem from "./CommonItem";
 import UserPostedDrawer from './UserPostedDrawer';
+import { LeftCircleOutlined, RightCircleOutlined } from "@ant-design/icons";
 
 const { Title, Paragraph } = Typography;
 
@@ -291,6 +292,16 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
                   draggable
                   dots={{ className: "xhs-carousel-dots" }}
                   arrows
+                  prevArrow={
+                    <div>
+                      <LeftCircleOutlined className="xhs-carousel-arrow" />
+                    </div>
+                  }
+                  nextArrow={
+                    <div >
+                      <RightCircleOutlined  className="xhs-carousel-arrow" />
+                    </div>
+                  }
                 >
                   {images.map((url: string, idx: number) => (
                     <Image src={url} alt={title} key={idx} />
