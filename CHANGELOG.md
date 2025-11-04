@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+### [9.4.3](https://github.com/ylw1997/touchFish/compare/v9.4.2...v9.4.3) (2025-11-04)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 添加自定义箭头图标到 FeedDetailDrawer 组件的轮播图，并调整样式以隐藏默认箭头 ([8c9807a](https://github.com/8c9807ad284b7b9158bc4634cb2cd7eadee2b9ab))
+* 注释掉获取用户已发布笔记的调试日志 ([39109d0](https://github.com/39109d0d69c39797a34e37d568f1a9beecee1a08))
+
 ### [9.4.2](https://github.com/ylw1997/touchFish/compare/v9.4.1...v9.4.2) (2025-11-03)
 
 
