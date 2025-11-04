@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [9.5.0](https://github.com/ylw1997/touchFish/compare/v9.4.3...v9.5.0) (2025-11-04)
+
+
+### ✨ Features | 新功能
+
+* 添加小红书浏览功能，优化交互体验并更新 README 文档 ([b06f70c](https://github.com/b06f70c2f9a95a70a415ef0abf0235cd823587ba))
+
 ### [9.4.3](https://github.com/ylw1997/touchFish/compare/v9.4.2...v9.4.3) (2025-11-04)
 
 
