@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-11-05 10:00:08
+ * @LastEditTime: 2025-11-05 10:15:47
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -468,6 +468,9 @@ export interface XhsCover {
 export interface XhsInteractInfo {
   liked: boolean;
   liked_count: string | number;
+  comment_count: string | number;
+  followed: boolean;
+  collected_count: string | number;
   [key: string]: any;
 }
 
@@ -566,7 +569,7 @@ export interface XhsImageListItem {
 // 更完整的 note_card 类型（在示例中包含 tag_list/video/image_list等）
 export interface XhsNoteCardFull extends XhsNoteCard {
   user: XhsUser;
-  interact_info?: XhsInteractInfo;
+  interact_info: XhsInteractInfo;
   at_user_list: any[];
   last_update_time: number;
   ip_location: string;

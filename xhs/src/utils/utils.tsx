@@ -81,8 +81,80 @@ export function extractXhsImageUrl(imageItem: any): string {
 export function formatTimestamp(timestamp?: number): string {
   if (!timestamp) return "";
   try {
-    return new Date(timestamp).toLocaleString();
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    // 相对时间显示
+    if (seconds < 60) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    if (hours < 24) return `${hours}小时前`;
+    if (days < 7) return `${days}天前`;
+    
+    // 超过7天显示具体日期
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    
+    // 如果是今年,不显示年份
+    if (year === now.getFullYear()) {
+      return `${month}-${day} ${hour}:${minute}`;
+    }
+    return `${year}-${month}-${day} ${hour}:${minute}`;
   } catch {
     return "";
   }
+}
+
+/**
+ * 格式化数字为易读形式
+ * @param num 数字
+ * @returns 格式化后的字符串 (如 1000 -> 1k, 1000000 -> 1m)
+ */
+export function formatCount(num: number | string): string {
+  const n = typeof num === 'string' ? parseInt(num, 10) : num;
+  if (isNaN(n)) return '0';
+  if (n < 1000) return n.toString();
+  if (n < 10000) return (n / 1000).toFixed(1) + 'k';
+  if (n < 1000000) return (n / 10000).toFixed(1) + 'w';
+  return (n / 1000000).toFixed(1) + 'm';
+}
+
+/**
+ * 解析文本中的话题标签 #XXX#
+ * @param text 原始文本
+ * @returns 包含文本片段和话题标签的数组
+ */
+export function parseTopicTags(text: string): Array<{ type: 'text' | 'tag'; content: string }> {
+  if (!text) return [];
+  const result: Array<{ type: 'text' | 'tag'; content: string }> = [];
+  const regex = /#([^#]+)#/g;
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    // 添加标签前的文本
+    if (match.index > lastIndex) {
+      result.push({ type: 'text', content: text.substring(lastIndex, match.index) });
+    }
+    // 添加标签,去除内容中的 [] 及其中的内容
+    const tagContent = match[1].replace(/\[[^\]]*\]/g, '');
+    if (tagContent.trim()) { // 只添加非空标签
+      result.push({ type: 'tag', content: tagContent });
+    }
+    lastIndex = regex.lastIndex;
+  }
+  
+  // 添加剩余文本
+  if (lastIndex < text.length) {
+    result.push({ type: 'text', content: text.substring(lastIndex) });
+  }
+  
+  return result.length > 0 ? result : [{ type: 'text', content: text }];
 }

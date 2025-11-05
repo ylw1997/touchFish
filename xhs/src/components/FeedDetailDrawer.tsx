@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-11-05 10:00:00
+ * @LastEditTime: 2025-11-05 10:47:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
@@ -18,12 +18,28 @@ import {
   Carousel,
   List,
   Button,
+  Space,
+  Tag,
 } from "antd";
 import type { CarouselRef } from "antd/es/carousel";
-import { LeftCircleOutlined, RightCircleOutlined } from "@ant-design/icons";
+import { 
+  LeftCircleOutlined, 
+  RightCircleOutlined,
+  HeartOutlined,
+  HeartFilled,
+  StarOutlined,
+  StarFilled,
+  CommentOutlined,
+  ShareAltOutlined,
+  EnvironmentOutlined,
+  ClockCircleOutlined,
+  UserAddOutlined,
+  UserDeleteOutlined,
+} from "@ant-design/icons";
 import { loaderFunc } from "../utils/loader";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
+import { formatTimestamp, formatCount, parseTopicTags } from "../utils/utils";
 import CommonItem from "./CommonItem";
 import UserPostedDrawer from "./UserPostedDrawer";
 
@@ -104,8 +120,10 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
   const [commentCursor, setCommentCursor] = useState<string>("");
   const [commentHasMore, setCommentHasMore] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
-  const { request } = useRequest();
+  const { request, messageApi, contextHolder } = useRequest();
   const apiRef = useRef(createXhsApi(request));
   const carouselRef = useRef<CarouselRef>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -202,10 +220,69 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
   const userName: string = user?.nickname || user?.nick_name || "";
   const avatar: string = user?.avatar || "";
   const desc: string = note?.desc || "";
+  
+  // 提取互动信息
+  const interactInfo = useMemo(() => note?.interact_info || {}, [note?.interact_info]);
+  const likedCount = interactInfo?.liked_count || 0;
+  const collectedCount = interactInfo?.collected_count || 0;
+  const commentCount = interactInfo?.comment_count || 0;
+  const shareCount = interactInfo?.share_count || 0;
+  const liked = !!interactInfo?.liked;
+  const collected = !!interactInfo?.collected;
+  
+  // 提取发布时间和地点
+  const publishTime = note?.time || note?.last_update_time || 0;
+  const ipLocation = note?.ip_location || "";
 
   // 使用辅助函数提取视频URL
   const videoUrl = useMemo(() => extractVideoUrl(note), [note]);
   const videoPoster = videoUrl && images.length === 1 ? images[0] : undefined;
+  
+  // 同步关注状态（从 interact_info 或 extraInfo_info 获取）
+  useEffect(() => {
+    if (note) {
+      const followed = interactInfo?.followed || note?.extraInfo_info?.fstatus === 'follows' || note?.extraInfo_info?.fstatus === 'each_other';
+      setIsFollowing(!!followed);
+    }
+  }, [note, interactInfo]);
+  
+  // 关注/取消关注功能
+  const handleFollowToggle = useCallback(async () => {
+    if (!user?.user_id) return;
+    
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await apiRef.current.unfollowUser({ target_user_id: user.user_id });
+        messageApi.success('已取消关注');
+        setIsFollowing(false);
+      } else {
+        await apiRef.current.followUser({ target_user_id: user.user_id });
+        messageApi.success('关注成功');
+        setIsFollowing(true);
+      }
+    } catch (e: any) {
+      messageApi.error(e?.message || '操作失败');
+    } finally {
+      setFollowLoading(false);
+    }
+  }, [user?.user_id, isFollowing, messageApi]);
+  
+  // 分享功能
+  const handleShare = useCallback(() => {
+    if (note?.note_id) {
+      const params = new URLSearchParams({
+        xsec_token: initXsecToken || '',
+        xsec_source: 'pc_feed'
+      });
+      const url = `https://www.xiaohongshu.com/explore/${note.note_id}?${params.toString()}`;
+      navigator.clipboard.writeText(url).then(() => {
+        messageApi.success('链接已复制到剪贴板');
+      }).catch(() => {
+        messageApi.error('复制失败');
+      });
+    }
+  }, [note?.note_id, initXsecToken, messageApi]);
 
   // ====== 内置用户主页 Drawer（当父组件未传 onUserClick 时启用） ======
   const [userDrawerOpen, setUserDrawerOpen] = useState(false);
@@ -287,43 +364,58 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
   }, [open, images.length]);
 
   return (
-    <Drawer
-      open={open}
-      onClose={onClose}
-      placement="bottom"
-      destroyOnHidden
-      height="90vh"
-      title={title || "笔记详情"}
-      styles={{
-        body: {
-          padding: 0,
-          height: "100%",
-          overflow: "auto",
-        },
-      }}
-    >
-      <div style={{ padding: 8 }}>
+    <>
+      {contextHolder}
+      <Drawer
+        open={open}
+        onClose={onClose}
+        placement="bottom"
+        destroyOnHidden
+        height="90vh"
+        title={title || "笔记详情"}
+        styles={{
+          body: {
+            padding: 0,
+            height: "100%",
+            overflow: "auto",
+          },
+        }}
+      >
+        <div style={{ padding: 8 }}>
         {/* 1) 用户信息 Card（头像小一些） */}
         <Card size="small" style={{ marginBottom: 12 }}>
-          <Flex align="center" gap={12} style={{ marginBottom: 0 }}>
-            <Avatar
-              src={avatar}
-              size={40}
-              style={{ cursor: user?.user_id ? "pointer" : "default" }}
-              onClick={handleUserClick}
-            >
-              {userName?.[0]}
-            </Avatar>
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: 18,
-                cursor: user?.user_id ? "pointer" : "default",
-              }}
-              onClick={handleUserClick}
-            >
-              {userName}
-            </span>
+          <Flex align="center" justify="space-between">
+            <Flex align="center" gap={12}>
+              <Avatar
+                src={avatar}
+                size={40}
+                style={{ cursor: user?.user_id ? "pointer" : "default" }}
+                onClick={handleUserClick}
+              >
+                {userName?.[0]}
+              </Avatar>
+              <span
+                style={{
+                  fontWeight: 600,
+                  fontSize: 18,
+                  cursor: user?.user_id ? "pointer" : "default",
+                }}
+                onClick={handleUserClick}
+              >
+                {userName}
+              </span>
+            </Flex>
+            {user?.user_id && (
+              <Button
+                color={isFollowing ? "default" : "primary"}
+                variant="filled"
+                icon={isFollowing ? <UserDeleteOutlined /> : <UserAddOutlined />}
+                loading={followLoading}
+                onClick={handleFollowToggle}
+              >
+                {isFollowing ? "取消关注" : "关注"}
+              </Button>
+            )}
           </Flex>
         </Card>
 
@@ -395,20 +487,73 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
         )}
 
         {/* 3) 正文 & Tag Card */}
-        <Card size="small">
+        <Card 
+          actions={[
+            <Space key="like" style={{ fontSize:'16px'}} >
+              {liked ? <HeartFilled style={{ color: '#ff4d4f'}} /> : <HeartOutlined />}
+              <span>{formatCount(likedCount)}</span>
+            </Space>,
+            <Space key="collect" style={{ fontSize:'16px'}} >
+              {collected ? <StarFilled style={{ color: '#faad14'}} /> : <StarOutlined />}
+              <span>{formatCount(collectedCount)}</span>
+            </Space>,
+            <Space key="comment" style={{ fontSize:'16px'}} >
+              <CommentOutlined />
+              <span>{formatCount(commentCount)}</span>
+            </Space>,
+            <Space key="share" style={{ fontSize:'16px'}} onClick={handleShare}>
+              <ShareAltOutlined />
+              <span>{shareCount > 0 ? formatCount(shareCount) : '分享'}</span>
+            </Space>,
+          ]}
+        >
           <Title level={4} style={{ marginTop: 0 }}>
             {title}
           </Title>
           {desc && (
-            <Paragraph
-              style={{ 
-                whiteSpace: "pre-wrap", 
-                marginTop: 8, 
-                fontSize: "16px" 
-              }}
-            >
-              {desc}
-            </Paragraph>
+            <>
+              <Paragraph
+                style={{ 
+                  whiteSpace: "pre-wrap", 
+                  marginTop: 8, 
+                  fontSize: "16px",
+                  marginBottom: 8,
+                }}
+              >
+                {parseTopicTags(desc).map((item, idx) => {
+                  if (item.type === 'tag') {
+                    return (
+                      <Tag key={idx} color="blue" style={{ marginLeft: 4 }}>
+                        {item.content}
+                      </Tag>
+                    );
+                  }
+                  return <span key={idx}>{item.content}</span>;
+                })}
+              </Paragraph>
+              
+              {/* 时间和地点信息 */}
+              {(publishTime > 0 || ipLocation) && (
+                <Space>
+                  <span className="descriptionForeground">
+                    {publishTime > 0 && (
+                      <>
+                        <ClockCircleOutlined style={{ marginRight: 4 }} />
+                        {formatTimestamp(publishTime * 1000)}
+                      </>
+                    )}
+                  </span>
+                  <span className="descriptionForeground">
+                    {ipLocation && (
+                      <>
+                        <EnvironmentOutlined style={{ marginRight: 4 }} />
+                        {ipLocation}
+                      </>
+                    )}
+                  </span>
+                </Space>
+              )}
+            </>
           )}
           {!loadingDetail && !images.length && !desc && !videoUrl && (
             <div style={{ padding: 20, textAlign: "center", color: "#999" }}>
@@ -478,6 +623,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
         />
       )}
     </Drawer>
+    </>
   );
 };
 

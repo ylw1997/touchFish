@@ -1,14 +1,14 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-31 14:01:36
- * @LastEditTime: 2025-11-05 10:35:00
+ * @LastEditTime: 2025-11-05 10:52:35
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\CommonItem.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
  * @Description: 评论项组件
  */
 import React from "react";
-import { HeartOutlined, MessageOutlined } from "@ant-design/icons";
+import { HeartOutlined, MessageOutlined, EnvironmentOutlined, UserOutlined } from "@ant-design/icons";
 import { List, Avatar, Space, Tag, Image } from "antd";
 import { extractXhsImageUrl, formatTimestamp } from "../utils/utils";
 
@@ -99,7 +99,7 @@ const CommonItem: React.FC<CommonItemProps> = ({ c, onUserClick, ...arg }) => {
                       key={idx}
                       src={url}
                       alt={`${c.id}_${idx}`}
-                      style={{ maxWidth: 120, borderRadius: 6, objectFit: 'cover' }}
+                      style={{ maxHeight: 240, maxWidth: 240, borderRadius: 6, objectFit: 'cover' }}
                     />
                   );
                 })}
@@ -109,7 +109,9 @@ const CommonItem: React.FC<CommonItemProps> = ({ c, onUserClick, ...arg }) => {
           
           <Space size={4} style={{ marginTop: 4 }} wrap>
             {c.show_tags?.includes("is_author") && (
-              <Tag color="green">作者</Tag>
+              <Tag color="green">
+                <UserOutlined /> 作者
+              </Tag>
             )}
             {c.like_count && (
               <Tag color="pink">
@@ -123,9 +125,9 @@ const CommonItem: React.FC<CommonItemProps> = ({ c, onUserClick, ...arg }) => {
             )}
             {c.ip_location && (
               <Tag color="purple">
-              {c.ip_location}
-            </Tag>
-          )}
+                <EnvironmentOutlined /> {c.ip_location}
+              </Tag>
+            )}
           </Space>
           {c.sub_comments && c.sub_comments.length > 0 && (
             <List
