@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [9.6.0](https://github.com/ylw1997/touchFish/compare/v9.5.0...v9.6.0) (2025-11-05)
+
+
+### ✨ Features | 新功能
+
+* 更新小红书组件，添加互动信息和关注功能，优化时间格式化及标签解析 ([cb3dbe0](https://github.com/cb3dbe08c0f121a01fc35ce3926e95aa843f10ef))
+* 完善小红书 API 封装，添加搜索、笔记详情及用户信息功能，优化组件和常量配置 ([351b6bb](https://github.com/351b6bbe151f247050d041906ac2e7451fb1cb2e))
+* 优化 FeedDetailDrawer 组件，重构用户点击处理逻辑，添加辅助函数提取图片和视频URL ([8309aac](https://github.com/8309aac37fdeaad3d6c838bfe490e201e315f378))
+
 ## [9.5.0](https://github.com/ylw1997/touchFish/compare/v9.4.3...v9.5.0) (2025-11-04)
 
 
