@@ -1,22 +1,22 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 10:20:51
- * @LastEditTime: 2025-11-03 11:17:59
+ * @LastEditTime: 2025-11-05 11:05:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\XhsFeedCard.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
- * @Description:
+ * @Description: 小红书笔记卡片组件
  */
 import React from 'react';
 import { Avatar } from 'antd';
 import { HeartOutlined, PlayCircleFilled } from '@ant-design/icons';
 import '../style/xhsFeedCard.less';
-import { XhsFeedRawItem } from '../../../type';
+import type { XhsFeedRawItem, XhsUser } from '../../../type';
 
 interface XhsFeedCardProps {
   data: XhsFeedRawItem;
-  onClick?: (data: XhsFeedRawItem) => void; // 打开笔记详情
-  onUserClick?: (data: XhsFeedRawItem, user: any) => void; // 打开用户主页
+  onClick?: (data: XhsFeedRawItem) => void;
+  onUserClick?: (data: XhsFeedRawItem, user: XhsUser) => void;
 }
 
 export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick, onUserClick }) => {

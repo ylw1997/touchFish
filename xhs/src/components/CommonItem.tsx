@@ -1,26 +1,54 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-31 14:01:36
- * @LastEditTime: 2025-11-03 09:08:15
+ * @LastEditTime: 2025-11-05 10:35:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\CommonItem.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
- * @Description: 
+ * @Description: 评论项组件
  */
+import React from "react";
 import { HeartOutlined, MessageOutlined } from "@ant-design/icons";
 import { List, Avatar, Space, Tag, Image } from "antd";
+import { extractXhsImageUrl, formatTimestamp } from "../utils/utils";
 
-interface CommonItemProps { c: any; onUserClick?: (userInfo: any) => void; [key: string]: any }
+interface CommentUser {
+  user_id?: string;
+  nickname?: string;
+  image?: string;
+  avatar?: string;
+}
+
+interface CommentPicture {
+  info_list?: Array<{
+    image_scene?: string;
+    url?: string;
+  }>;
+  url_default?: string;
+  url_pre?: string;
+  url?: string;
+}
+
+interface Comment {
+  id: string;
+  user_info?: CommentUser;
+  content?: string;
+  create_time?: number;
+  pictures?: CommentPicture[];
+  show_tags?: string[];
+  like_count?: string | number;
+  sub_comment_count?: string | number;
+  ip_location?: string;
+  sub_comments?: Comment[]; // 子评论
+}
+
+interface CommonItemProps {
+  c: Comment;
+  onUserClick?: (userInfo: CommentUser) => void;
+  [key: string]: any;
+}
+
 const CommonItem: React.FC<CommonItemProps> = ({ c, onUserClick, ...arg }) => {
-  const formatTime = (ts?: number) => {
-    if (!ts) return "";
-    try {
-      const d = new Date(ts);
-      return d.toLocaleString();
-    } catch {
-      return "";
-    }
-  };
   return (
     <List.Item key={c.id} {...arg}>
       <div style={{ display: "flex", width: "100%", gap: 8 }}>
@@ -53,7 +81,7 @@ const CommonItem: React.FC<CommonItemProps> = ({ c, onUserClick, ...arg }) => {
               {c.user_info?.nickname}
             </span>
             <span style={{ color: "#999", fontSize: 12 }}>
-              {formatTime(c.create_time)}
+              {formatTimestamp(c.create_time)}
             </span>
           </div>
           
@@ -63,17 +91,14 @@ const CommonItem: React.FC<CommonItemProps> = ({ c, onUserClick, ...arg }) => {
           {Array.isArray(c.pictures) && c.pictures.length > 0 && (
             <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Image.PreviewGroup>
-                {c.pictures.map((pic: any, idx: number) => {
-                  const list = Array.isArray(pic.info_list) ? pic.info_list : [];
-                  const preferred = list.find((it: any) => /ND_PRV|WB_PRV/.test(it.image_scene))
-                    || list.find((it: any) => /ND_DFT|WB_DFT/.test(it.image_scene));
-                  const url = preferred?.url || pic.url_default || pic.url_pre || '';
+                {c.pictures.map((pic, idx) => {
+                  const url = extractXhsImageUrl(pic);
                   if (!url) return null;
                   return (
                     <Image
                       key={idx}
                       src={url}
-                      alt={c.id + '_' + idx}
+                      alt={`${c.id}_${idx}`}
                       style={{ maxWidth: 120, borderRadius: 6, objectFit: 'cover' }}
                     />
                   );

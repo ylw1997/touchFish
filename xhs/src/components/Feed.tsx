@@ -16,20 +16,11 @@ import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
 import XhsFeedCard from "./XhsFeedCard";
 import { vscode } from "../utils/vscode";
+import { debounce } from "../utils/utils";
+import { MASONRY_BREAKPOINTS, INFINITE_SCROLL_CONFIG, DEBOUNCE_DELAY } from "../constants";
 import FeedDetailDrawer from "./FeedDetailDrawer";
 import XhsSearchDrawer from "./XhsSearchDrawer";
 import UserPostedDrawer from "./UserPostedDrawer";
-
-// 统一使用封装的 vscode.postMessage，浏览器环境自动降级为 console.log
-
-// 简单防抖
-function debounce<T extends (...args: any[]) => void>(fn: T, wait = 300) {
-  let timer: any;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), wait);
-  };
-}
 
 export default function Feed() {
   const { items, loadMore, hasMore, refresh } = useXhsFeed();
@@ -55,7 +46,7 @@ export default function Feed() {
         command: "XHS_SAVE_SCROLL_POSITION",
         payload: scrollableNode.scrollTop,
       });
-    }, 500);
+    }, DEBOUNCE_DELAY.SCROLL);
 
     const messageHandler = (ev: MessageEvent<any>) => {
       if (ev.type !== "message" || !ev.data?.command) return;
@@ -110,8 +101,8 @@ export default function Feed() {
       {/* 使用 Antd 浮动按钮组（参考 weibo） */}
       <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
         <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
+          visibilityHeight={INFINITE_SCROLL_CONFIG.BACK_TOP_VISIBILITY_HEIGHT}
+          duration={INFINITE_SCROLL_CONFIG.BACK_TOP_DURATION}
           icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
           tooltip={{ title: "回到顶部", placement: "left" }}
           target={() => scrollRef.current || window}
@@ -141,17 +132,10 @@ export default function Feed() {
             </div>
           }
           scrollableTarget="xhsScrollableDiv"
-          scrollThreshold={0.9}
+          scrollThreshold={INFINITE_SCROLL_CONFIG.THRESHOLD}
         >
           <Masonry
-            breakpointCols={{
-              default: 2,
-              1500: 5,
-              1200: 4,
-              900: 3,
-              600: 2,
-              300: 1
-            }}
+            breakpointCols={MASONRY_BREAKPOINTS}
             className="xhs-masonry"
             columnClassName="xhs-masonry-column"
           >

@@ -264,13 +264,14 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
   // ====== 监听图片区域滚轮事件,使用原生事件阻止页面滚动 ======
   useEffect(() => {
     const container = imageContainerRef.current;
-    if (!container || !open) return;
+    // 只有多图时才需要阻止滚动和切换图片
+    if (!container || !open || images.length <= 1) return;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      // 多图时切换图片
-      if (images.length > 1 && carouselRef.current) {
+      // 切换图片
+      if (carouselRef.current) {
         if (e.deltaY > 0) {
           carouselRef.current.next();
         } else if (e.deltaY < 0) {

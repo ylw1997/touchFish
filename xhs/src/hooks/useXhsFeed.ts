@@ -9,12 +9,12 @@
  */
 /*
  * 小红书 feed 数据加载 Hook
- * 模仿 weibo 下的 useWeiboAction：负责滚动加载、并发控制、刷新、错误处理占位。
+ * 负责滚动加载、并发控制、刷新、错误处理
  */
 import { useCallback, useRef, useState } from "react";
 import { createXhsApi } from "../api";
 import { useRequest } from "./useRequest";
-import { XhsFeedRawItem, XhsFeedRawResponse } from "../../../type";
+import type { XhsFeedRawItem, XhsFeedRawResponse } from "../../../type";
 
 
 

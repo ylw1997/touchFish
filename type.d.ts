@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-10-23 13:49:59
+ * @LastEditTime: 2025-11-05 10:00:08
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -486,80 +486,80 @@ export interface XhsNoteVideoCapa {
 }
 
 export interface XhsNoteVideo {
-  capa?: XhsNoteVideoCapa;
+  capa: XhsNoteVideoCapa;
   // 原始接口里 video 包含 media/image/capa/consumer 等字段，补全主要字段以便类型推导
-  media?: {
-    video_id?: number | string;
-    video?: {
-      hdr_type?: number;
-      drm_type?: number;
-      stream_types?: number[];
-      biz_name?: number;
-      biz_id?: string;
-      duration?: number;
-      md5?: string;
+  media: {
+    video_id: number | string;
+    video: {
+      hdr_type: number;
+      drm_type: number;
+      stream_types: number[];
+      biz_name: number;
+      biz_id: string;
+      duration: number;
+      md5: string;
       [key: string]: any;
     };
-    stream?: {
+    stream: {
       // 各种编码或封装下的视频流数组
-      h265?: XhsVideoStreamItem[];
-      h264?: XhsVideoStreamItem[];
-      h266?: XhsVideoStreamItem[];
-      av1?: XhsVideoStreamItem[];
+      h265: XhsVideoStreamItem[];
+      h264: XhsVideoStreamItem[];
+      h266: XhsVideoStreamItem[];
+      av1: XhsVideoStreamItem[];
       [key: string]: any;
     };
     [key: string]: any;
   };
-  image?: {
-    first_frame_fileid?: string;
-    thumbnail_fileid?: string;
+  image: {
+    first_frame_fileid: string;
+    thumbnail_fileid: string;
     [key: string]: any;
   };
-  consumer?: {
-    origin_video_key?: string;
+  consumer: {
+    origin_video_key: string;
     [key: string]: any;
   };
   [key: string]: any;
 }
 
 export interface XhsVideoStreamItem {
-  vmaf?: number;
-  psnr?: number;
-  quality_type?: string;
-  stream_type?: number;
-  volume?: number;
-  fps?: number;
-  rotate?: number;
-  master_url?: string;
-  hdr_type?: number;
-  duration?: number;
-  audio_channels?: number;
-  format?: string;
-  width?: number;
-  height?: number;
-  video_bitrate?: number;
-  audio_bitrate?: number;
-  backup_urls?: string[];
-  stream_desc?: string;
-  size?: number;
-  video_codec?: string;
-  audio_codec?: string;
-  default_stream?: number;
+  vmaf: number;
+  psnr: number;
+  quality_type: string;
+  stream_type: number;
+  volume: number;
+  fps: number;
+  rotate: number;
+  master_url: string;
+  hdr_type: number;
+  duration: number;
+  audio_channels: number;
+  format: string;
+  width: number;
+  height: number;
+  video_bitrate: number;
+  audio_bitrate: number;
+  backup_urls: string[];
+  stream_desc: string;
+  size: number;
+  video_codec: string;
+  audio_codec: string;
+  default_stream: number;
   [key: string]: any;
 }
 
 // image_list 中的项：与 XhsCover 相近但更泛化
 export interface XhsImageListItem {
-  live_photo?: boolean;
-  file_id?: string;
-  url?: string;
-  trace_id?: string;
-  info_list?: XhsCoverInfo[];
-  url_pre?: string;
-  url_default?: string;
-  stream?: any;
-  height?: number;
-  width?: number;
+  live_photo: boolean;
+  file_id: string;
+  url: string;
+  trace_id: string;
+  info_list: XhsCoverInfo[];
+  url_pre: string;
+  url_default: string;
+  stream: any;
+  height: number;
+  width: number;
   [key: string]: any;
 }
 
@@ -567,18 +567,18 @@ export interface XhsImageListItem {
 export interface XhsNoteCardFull extends XhsNoteCard {
   user: XhsUser;
   interact_info?: XhsInteractInfo;
-  at_user_list?: any[];
-  last_update_time?: number;
-  ip_location?: string;
-  title?: string;
-  time?: number;
-  share_info?: any;
-  desc?: string;
-  image_list?: XhsImageListItem[];
-  video?: XhsNoteVideo;
-  tag_list?: Array<{ id?: string; name: string; type?: string }>;
-  note_id?: string;
-  type?: string; // 'video'|'normal'...
+  at_user_list: any[];
+  last_update_time: number;
+  ip_location: string;
+  title: string;
+  time: number;
+  share_info: any;
+  desc: string;
+  image_list: XhsImageListItem[];
+  video: XhsNoteVideo;
+  tag_list: Array<{ id?: string; name: string; type?: string }>;
+  note_id: string;
+  type: string; // 'video'|'normal'...
 }
 
 // 顶层返回结构（data 包含 cursor_score/items）
@@ -591,12 +591,12 @@ export interface XhsFeedResponse {
       note_card: XhsNoteCardFull;
       [key: string]: any;
     }>;
-    current_time?: number;
+    current_time: number;
     [key: string]: any;
   };
-  code?: number;
-  success?: boolean;
-  msg?: string;
+  code: number;
+  success: boolean;
+  msg: string;
 }
 
 export interface XhsNoteCard {
@@ -630,39 +630,209 @@ export interface XhsFeedRawResponse {
 export interface XhsSubCommentItem {
   id: string;
   content: string;
-  like_count?: string | number;
-  liked?: boolean;
-  create_time?: number;
-  ip_location?: string;
-  user_info?: {
+  like_count: string | number;
+  liked: boolean;
+  create_time: number;
+  ip_location: string;
+  user_info: {
     user_id: string;
     nickname: string;
     image: string;
-    xsec_token?: string;
+    xsec_token: string;
   };
-  target_comment?: {
+  target_comment: {
     id: string;
-    user_info?: { nickname?: string; user_id?: string; image?: string };
+    user_info: { nickname: string; user_id: string; image: string };
   };
-  show_tags?: string[]; // e.g. ['is_author']
-  at_users?: any[];
+  show_tags: string[]; // e.g. ['is_author']
+  at_users: any[];
   [k: string]: any;
 }
 
 export interface XhsCommentItem extends XhsSubCommentItem {
-  sub_comments?: XhsSubCommentItem[];
-  sub_comment_count?: string | number;
-  sub_comment_cursor?: string;
-  sub_comment_has_more?: boolean;
-  status?: number;
+  sub_comments: XhsSubCommentItem[];
+  sub_comment_count: string | number;
+  sub_comment_cursor: string;
+  sub_comment_has_more: boolean;
+  status: number;
 }
 
 export interface XhsCommentsResponseData {
   comments: XhsCommentItem[];
   cursor: string;
   has_more: boolean;
-  user_id?: string;
-  time?: number;
-  xsec_token?: string;
+  user_id: string;
+  time: number;
+  xsec_token: string;
+}
+
+// ================== 小红书 (XHS) 搜索类型定义 ==================
+export interface XhsSearchParams {
+  keyword: string;
+  page?: number;
+  search_id?: string;
+  image_formats?: string[];
+  note_type?: number;
+  search_scene?: string;
+}
+
+export interface XhsSearchNoteCard extends XhsNoteCard {
+  // 搜索结果中的 note_card 可能包含额外字段
+  liked_count?: string | number;
+  collected_count?: string | number;
+  comment_count?: string | number;
+  share_count?: string | number;
+}
+
+export interface XhsSearchItem {
+  id: string;
+  model_type: 'note' | 'user' | string;
+  note_card?: XhsSearchNoteCard;
+  user?: XhsUser;
+  xsec_token: string;
+  [key: string]: any;
+}
+
+export interface XhsSearchResponse {
+  items: XhsSearchItem[];
+  has_more: boolean;
+  search_id: string;
+  total: number;
+  cursor?: string;
+  [key: string]: any;
+}
+
+// ================== 小红书 (XHS) 笔记详情类型定义 ==================
+export interface XhsFeedDetailParams {
+  source_note_id: string;
+  image_formats?: string[];
+  extra?: { need_body_topic?: string };
+  xsec_source?: string;
+  xsec_token: string;
+}
+
+export interface XhsTagInfo {
+  id: string;
+  name: string;
+  type?: string;
+  [key: string]: any;
+}
+
+export interface XhsNoteDetail {
+  note_id: string;
+  type: 'normal' | 'video' | string;
+  title: string;
+  desc: string;
+  time: number;
+  last_update_time: number;
+  user: XhsUser;
+  image_list: XhsImageListItem[];
+  video?: XhsNoteVideo;
+  tag_list: XhsTagInfo[];
+  at_user_list: any[];
+  interact_info: XhsInteractInfo;
+  ip_location: string;
+  share_info?: any;
+  [key: string]: any;
+}
+
+export interface XhsFeedDetailResponse {
+  note?: XhsNoteDetail;
+  note_card?: XhsNoteCardFull;
+  [key: string]: any;
+}
+
+// ================== 小红书 (XHS) 用户主页类型定义 ==================
+export interface XhsUserPostedParams {
+  user_id: string;
+  cursor: string;
+  xsec_token: string;
+  xsec_source?: string;
+  num?: number;
+  image_formats?: string[];
+}
+
+export interface XhsUserPostedResponse {
+  items: XhsFeedRawItem[];
+  cursor: string;
+  has_more: boolean;
+  [key: string]: any;
+}
+
+// ================== 小红书 (XHS) 用户信息类型定义 ==================
+export interface XhsUserHoverCardParams {
+  target_user_id: string;
+  image_formats?: string;
+  xsec_source?: string;
+  xsec_token: string;
+}
+
+export interface XhsUserBasicInfo {
+  red_id: string;
+  nickname: string;
+  avatar: string;
+  desc: string;
+  gender?: number;
+  ip_location?: string;
+  imageb?: string;
+  [key: string]: any;
+}
+
+export interface XhsUserInteractInfo {
+  follows: string | number; // 关注数
+  fans: string | number; // 粉丝数
+  interaction: string | number; // 获赞与收藏数
+  [key: string]: any;
+}
+
+export interface XhsUserExtraInfo {
+  fstatus: 'none' | 'follows' | 'each_other' | string; // 关注状态
+  [key: string]: any;
+}
+
+export interface XhsUserHoverCardResponse {
+  basic_info: XhsUserBasicInfo;
+  interact_info: XhsUserInteractInfo;
+  extraInfo_info: XhsUserExtraInfo;
+  [key: string]: any;
+}
+
+// ================== 小红书 (XHS) 关注操作类型定义 ==================
+export interface XhsFollowParams {
+  target_user_id: string;
+}
+
+export interface XhsFollowResponse {
+  success: boolean;
+  msg?: string;
+  [key: string]: any;
+}
+
+export interface XhsUnfollowParams {
+  target_user_id: string;
+}
+
+export interface XhsUnfollowResponse {
+  success: boolean;
+  msg?: string;
+  [key: string]: any;
+}
+
+// ================== 小红书 (XHS) 通用API响应包装 ==================
+export interface XhsApiResponse<T = any> {
+  code: number;
+  success: boolean;
+  msg: string;
+  data: T;
+  [key: string]: any;
+}
+
+// ================== 小红书 (XHS) 错误响应类型 ==================
+export interface XhsErrorResponse {
+  code: number;
+  success: false;
+  msg: string;
+  error_msg?: string;
+  [key: string]: any;
 }
 
