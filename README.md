@@ -25,23 +25,31 @@
 - **丰富交互体验**: 支持 **图片懒加载、视频播放、长文展开、加载动画、列表无限滚动、瀑布流布局** 等特性，提供流畅、现代的浏览体验。
 - **高度可配置**: 从新闻源到栏目分类，再到内容展示方式，多种参数均可自定义，打造最适合你的摸鱼环境。
 
-## 🚀 功能展示
 
-#### 💬 刷小红书
+## 🚀 功能展示（视频）
 
-![小红书](https://oss.qmsznj.com/prod/2025/11/04/c66f5614-c657-49fb-9e95-7443f25c473d_20251104170409A304.jpg)
+https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
+
+
+## 🚀 功能展示（截图）
+
+#### 📰 新闻阅读
+![ScreenShot_2025-11-05_150613_386](https://github.com/user-attachments/assets/533fbebe-2f5c-468c-a3d1-c588c86664ec)
+
 
 #### 💬 刷知乎
 
-![知乎](https://oss.qmsznj.com/prod/2025/08/13/b77683ce-b998-4a5e-85c9-561e99b37aa9_20250813172625A272.png)
+![ScreenShot_2025-11-05_150650_643](https://github.com/user-attachments/assets/6d34e1ab-b11e-4560-8d29-c95734e7080f)
+
 
 #### 💬 刷微博
 
-![刷微博](https://oss.qmsznj.com/prod/2025/08/13/14786899-ee21-46d9-925f-5395a009a505_20250813172610A271.png)
+![ScreenShot_2025-11-05_150629_155](https://github.com/user-attachments/assets/1df12cd7-013f-4782-8265-de0c25d21c1b)
 
-#### 📰 新闻阅读
 
-![新闻](https://oss.qmsznj.com/prod/2025/08/13/382058b5-0aca-49ec-ad1c-72bf77a7c190_20250813172501A270.png)
+#### 💬 刷小红书
+![ScreenShot_2025-11-05_150705_107](https://github.com/user-attachments/assets/afef14cf-e641-482a-87be-baf61ff33b2f)
+
 
 ### 🎮 VSCODE暗色主题
 
