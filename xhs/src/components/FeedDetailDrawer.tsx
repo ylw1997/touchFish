@@ -1,12 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-11-04 10:02:19
+ * @LastEditTime: 2025-11-05 10:00:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
+ * 
  */
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Drawer,
   Avatar,
@@ -18,22 +19,70 @@ import {
   List,
   Button,
 } from "antd";
+import type { CarouselRef } from "antd/es/carousel";
+import { LeftCircleOutlined, RightCircleOutlined } from "@ant-design/icons";
 import { loaderFunc } from "../utils/loader";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
 import CommonItem from "./CommonItem";
-import UserPostedDrawer from './UserPostedDrawer';
-import { LeftCircleOutlined, RightCircleOutlined } from "@ant-design/icons";
+import UserPostedDrawer from "./UserPostedDrawer";
 
 const { Title, Paragraph } = Typography;
+
+// ====== 类型定义 ======
+interface UserDrawerPayload {
+  cursor: string;
+  user_id: string;
+  xsec_token: string;
+  user?: any;
+  pc_comment?: any;
+  xsec_source?: string;
+}
 
 interface FeedDetailDrawerProps {
   open: boolean;
   onClose: () => void;
-  // 由父组件传入的必要标识（feed 列表项）
   detail: { note_id: string; xsec_token: string };
-  onUserClick?: (payload: { cursor: string; user_id: string; xsec_token: string; user?: any; pc_comment?: any; xsec_source?: string }) => void;
+  onUserClick?: (payload: UserDrawerPayload) => void;
 }
+
+// ====== 辅助函数 ======
+/**
+ * 从图片对象中提取最佳质量的图片URL
+ */
+const extractImageUrl = (imageItem: any): string => {
+  if (Array.isArray(imageItem.info_list)) {
+    const dft = imageItem.info_list.find(
+      (it: any) => it.image_scene === "WB_DFT" || it.image_scene === "ND_DFT"
+    );
+    const prv = imageItem.info_list.find(
+      (it: any) => it.image_scene === "WB_PRV" || it.image_scene === "ND_PRV"
+    );
+    if (dft?.url) return dft.url;
+    if (prv?.url) return prv.url;
+  }
+  return imageItem.url_default || imageItem.url_pre || imageItem.url || "";
+};
+
+/**
+ * 提取视频播放URL
+ */
+const extractVideoUrl = (note: any): string | null => {
+  const streams = note?.video?.media?.stream;
+  if (!streams) return null;
+
+  const candidates: any[] = [
+    ...(Array.isArray(streams.h265) ? streams.h265 : []),
+    ...(Array.isArray(streams.h264) ? streams.h264 : []),
+    ...(Array.isArray(streams.h266) ? streams.h266 : []),
+    ...(Array.isArray(streams.av1) ? streams.av1 : []),
+  ];
+
+  const first = candidates[0];
+  if (!first) return null;
+
+  return first.master_url || first.backup_urls?.[0] || null;
+};
 
 // 约定 detail.note 对象结构含有以下字段：title, desc, user, image_list
 // 如果后端返回结构差异，可根据实际字段调整。
@@ -58,6 +107,8 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
 
   const { request } = useRequest();
   const apiRef = useRef(createXhsApi(request));
+  const carouselRef = useRef<CarouselRef>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // ====== 加载详情 ======
   const fetchDetail = useCallback(async () => {
@@ -111,88 +162,128 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     fetchComments(commentCursor);
   }, [fetchComments, commentCursor]);
 
+  // 重置状态
+  const resetState = useCallback(() => {
+    setNoteDetail(null);
+    setComments([]);
+    setCommentCursor("");
+    setCommentHasMore(false);
+    setCommentError(null);
+  }, []);
+
   // ====== 生命周期：打开抽屉时加载详情与评论 ======
   useEffect(() => {
     if (open && sourceNoteId && initXsecToken) {
       fetchDetail();
+    } else if (!open) {
+      resetState();
     }
-    if (!open) {
-      // 重置状态
-      setNoteDetail(null);
-      setComments([]);
-      setCommentCursor("");
-      setCommentHasMore(false);
-      setCommentError(null);
-    }
-  }, [open, sourceNoteId, initXsecToken, fetchDetail]);
+  }, [open, sourceNoteId, initXsecToken, fetchDetail, resetState]);
 
-  // 当详情返回后，再加载首批评论
+  // 当详情返回后,再加载首批评论
   useEffect(() => {
     if (noteDetail && open) {
       fetchComments("");
     }
   }, [noteDetail, open, fetchComments]);
+
   // 后端直接返回 items[0]，其中真实笔记在 note_card 字段；兼容老格式 detail.note 或直接的 note 对象
-  const note = noteDetail?.note || noteDetail?.note_card || noteDetail; // 容错：使用加载后的详情
-  // image 对象可能包含 info_list/url_default/url_pre/url，优先使用 info_list 中的 WB_DFT/WB_PRV
-  const images: string[] = (note?.image_list || [])
-    .map((i: any) => {
-      if (Array.isArray(i.info_list)) {
-        const dft = i.info_list.find(
-          (it: any) =>
-            it.image_scene === "WB_DFT" || it.image_scene === "ND_DFT"
-        );
-        const prv = i.info_list.find(
-          (it: any) =>
-            it.image_scene === "WB_PRV" || it.image_scene === "ND_PRV"
-        );
-        if (dft?.url) return dft.url;
-        if (prv?.url) return prv.url;
-      }
-      return i.url_default || i.url_pre || i.url || "";
-    })
-    .filter(Boolean);
+  const note = noteDetail?.note || noteDetail?.note_card || noteDetail;
+  
+  // 使用辅助函数提取图片URLs
+  const images: string[] = useMemo(
+    () =>
+      (note?.image_list || []).map(extractImageUrl).filter(Boolean),
+    [note?.image_list]
+  );
+
   const title: string = note?.title || note?.display_title || "";
-  const user = note?.user || {};
+  const user = useMemo(() => note?.user || {}, [note?.user]);
   const userName: string = user?.nickname || user?.nick_name || "";
   const avatar: string = user?.avatar || "";
   const desc: string = note?.desc || "";
 
-  // try extract a playable video url from note.video
-  const getFirstVideoUrl = (n: any): string | null => {
-    const streams = n?.video?.media?.stream;
-    if (!streams) return null;
-    const candidates: any[] = [];
-    if (Array.isArray(streams.h265)) candidates.push(...streams.h265);
-    if (Array.isArray(streams.h264)) candidates.push(...streams.h264);
-    if (Array.isArray(streams.h266)) candidates.push(...streams.h266);
-    if (Array.isArray(streams.av1)) candidates.push(...streams.av1);
-    const first = candidates[0] || null;
-    if (!first) return null;
-    return (
-      first.master_url || (first.backup_urls && first.backup_urls[0]) || null
-    );
-  };
-
-  const videoUrl = getFirstVideoUrl(note);
-  // 计算视频封面：优先使用后端 video.image 提供的缩略图字段，否则当存在视频且只有一张图片时使用该图片
+  // 使用辅助函数提取视频URL
+  const videoUrl = useMemo(() => extractVideoUrl(note), [note]);
   const videoPoster = videoUrl && images.length === 1 ? images[0] : undefined;
 
   // ====== 内置用户主页 Drawer（当父组件未传 onUserClick 时启用） ======
   const [userDrawerOpen, setUserDrawerOpen] = useState(false);
-  const [userDrawerParams, setUserDrawerParams] = useState<{ cursor: string; user_id: string; xsec_token: string; user?: any; xsec_source?: string }>({ cursor: '', user_id: '', xsec_token: '' });
+  const [userDrawerParams, setUserDrawerParams] = useState<UserDrawerPayload>({
+    cursor: "",
+    user_id: "",
+    xsec_token: "",
+  });
 
-  const openUserDrawer = (payload: { cursor: string; user_id: string; xsec_token: string; user?: any; xsec_source?: string }) => {
-    if (onUserClick) {
-      // 交给父组件处理
-      onUserClick(payload);
-    } else {
-      setUserDrawerParams(payload);
-      setUserDrawerOpen(true);
-    }
-  };
+  const openUserDrawer = useCallback(
+    (payload: UserDrawerPayload) => {
+      if (onUserClick) {
+        onUserClick(payload);
+      } else {
+        setUserDrawerParams(payload);
+        setUserDrawerOpen(true);
+      }
+    },
+    [onUserClick]
+  );
 
-  const closeUserDrawer = () => setUserDrawerOpen(false);
+  const closeUserDrawer = useCallback(() => setUserDrawerOpen(false), []);
+
+  // 统一的用户点击处理
+  const handleUserClick = useCallback(() => {
+    if (!user?.user_id) return;
+    openUserDrawer({
+      cursor: sourceNoteId,
+      user_id: user.user_id,
+      xsec_token: initXsecToken,
+      user,
+    });
+  }, [user, sourceNoteId, initXsecToken, openUserDrawer]);
+
+  // 评论用户点击处理
+  const handleCommentUserClick = useCallback(
+    (comment: any) => {
+      const rawUser = comment?.user_info;
+      if (!rawUser?.user_id) return;
+      
+      openUserDrawer({
+        cursor: "",
+        user_id: rawUser.user_id,
+        xsec_token: rawUser.xsec_token,
+        xsec_source: "pc_comment",
+        user: {
+          ...rawUser,
+          avatar: rawUser.avatar || rawUser.image,
+          nickname: rawUser.nickname || rawUser.nick_name,
+        },
+      });
+    },
+    [openUserDrawer]
+  );
+
+  // ====== 监听图片区域滚轮事件,使用原生事件阻止页面滚动 ======
+  useEffect(() => {
+    const container = imageContainerRef.current;
+    if (!container || !open) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // 多图时切换图片
+      if (images.length > 1 && carouselRef.current) {
+        if (e.deltaY > 0) {
+          carouselRef.current.next();
+        } else if (e.deltaY < 0) {
+          carouselRef.current.prev();
+        }
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, [open, images.length]);
 
   return (
     <Drawer
@@ -217,31 +308,21 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             <Avatar
               src={avatar}
               size={40}
-              style={{ cursor: user?.user_id ? 'pointer' : 'default' }}
-              onClick={() => {
-                if (!user?.user_id) return;
-                openUserDrawer({
-                  cursor: sourceNoteId,
-                  user_id: user.user_id,
-                  xsec_token: initXsecToken,
-                  user,
-                });
-              }}
+              style={{ cursor: user?.user_id ? "pointer" : "default" }}
+              onClick={handleUserClick}
             >
               {userName?.[0]}
             </Avatar>
             <span
-              style={{ fontWeight: 600, fontSize: 18, cursor: user?.user_id ? 'pointer' : 'default' }}
-              onClick={() => {
-                if (!user?.user_id) return;
-                openUserDrawer({
-                  cursor: sourceNoteId,
-                  user_id: user.user_id,
-                  xsec_token: initXsecToken,
-                  user,
-                });
+              style={{
+                fontWeight: 600,
+                fontSize: 18,
+                cursor: user?.user_id ? "pointer" : "default",
               }}
-            >{userName}</span>
+              onClick={handleUserClick}
+            >
+              {userName}
+            </span>
           </Flex>
         </Card>
 
@@ -260,17 +341,16 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             <video
               controls
               src={videoUrl}
-              style={{
-                display: "block",
-              }}
+              style={{ display: "block" }}
               poster={videoPoster || undefined}
             />
           </div>
         )}
 
-        {/* 图片区域：单张直接展示，多张使用 Carousel + PreviewGroup */}
+        {/* 图片区域:单张直接展示,多张使用 Carousel + PreviewGroup */}
         {!loadingDetail && !videoUrl && images.length > 0 && (
           <div
+            ref={imageContainerRef}
             style={{
               borderRadius: "12px",
               overflow: "hidden",
@@ -288,6 +368,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             {images.length > 1 && (
               <Image.PreviewGroup>
                 <Carousel
+                  ref={carouselRef}
                   adaptiveHeight
                   draggable
                   dots={{ className: "xhs-carousel-dots" }}
@@ -298,8 +379,8 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
                     </div>
                   }
                   nextArrow={
-                    <div >
-                      <RightCircleOutlined  className="xhs-carousel-arrow" />
+                    <div>
+                      <RightCircleOutlined className="xhs-carousel-arrow" />
                     </div>
                   }
                 >
@@ -319,7 +400,11 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
           </Title>
           {desc && (
             <Paragraph
-              style={{ whiteSpace: "pre-wrap", marginTop: 8, fontSize: "16px" }}
+              style={{ 
+                whiteSpace: "pre-wrap", 
+                marginTop: 8, 
+                fontSize: "16px" 
+              }}
             >
               {desc}
             </Paragraph>
@@ -358,22 +443,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
               renderItem={(comment) => (
                 <CommonItem
                   c={comment}
-                  onUserClick={() => {
-                    const u = comment?.user_info;
-                    if (!u?.user_id) return;
-                    const rawUser = comment.user_info || {};
-                    openUserDrawer({
-                      cursor: "", // 评论上下文不需要初始 cursor
-                      user_id: rawUser.user_id,
-                      xsec_token: rawUser.xsec_token,
-                      xsec_source: "pc_comment",
-                      user: {
-                        ...rawUser,
-                        avatar: rawUser.avatar || rawUser.image,
-                        nickname: rawUser.nickname || rawUser.nick_name,
-                      },
-                    });
-                  }}
+                  onUserClick={() => handleCommentUserClick(comment)}
                 />
               )}
             />
