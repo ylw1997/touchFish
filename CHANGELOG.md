@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [9.7.0](https://github.com/ylw1997/touchFish/compare/v9.6.0...v9.7.0) (2025-11-05)
+
+
+### ✨ Features | 新功能
+
+* 更新功能展示部分，添加视频和截图，优化小红书展示 ([5c39655](https://github.com/5c39655008e7e2457e13a51328df46e13341bc91))
+
 ## [9.6.0](https://github.com/ylw1997/touchFish/compare/v9.5.0...v9.6.0) (2025-11-05)
 
 
