@@ -155,9 +155,6 @@ export default function Feed() {
           open={userOpen}
           onClose={() => setUserOpen(false)}
           initParams={userParams}
-          onOpenDetail={(raw) => {
-            handleOpenDetail(raw);
-          }}
         />
     </div>
   );

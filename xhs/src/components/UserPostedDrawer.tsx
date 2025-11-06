@@ -4,18 +4,17 @@
  * @Description: 小红书用户主页 Drawer：展示用户头像/昵称及其已发布笔记瀑布流，可翻页加载。
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Drawer, Avatar, Card, Button, Empty, Tag } from "antd";
-import {
-  UsergroupAddOutlined,
-  TeamOutlined,
-  LikeOutlined,
-} from "@ant-design/icons";
+import { Empty } from "antd";
 import Masonry from "react-masonry-css";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
+import { useFollowUser } from "../hooks/useFollowUser";
 import XhsFeedCard from "./XhsFeedCard";
 import { loaderFunc } from "../utils/loader";
+import BaseDrawer from "./BaseDrawer";
+import UserInfoCard from "./UserInfoCard";
+import FeedDetailDrawer from "./FeedDetailDrawer";
 import { XhsFeedRawItem } from "../../../type";
 import { INFINITE_SCROLL_CONFIG } from "../constants";
 
@@ -30,14 +29,12 @@ interface UserPostedDrawerProps {
     xsec_token: string;
     user?: any;
   };
-  onOpenDetail?: (raw: any) => void; // 点击用户主页里的笔记打开详情
 }
 
 const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   open,
   onClose,
   initParams,
-  onOpenDetail,
 }) => {
   const { request, messageApi, contextHolder } = useRequest();
   const apiRef = useRef(createXhsApi(request));
@@ -49,10 +46,18 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   // 使用 ref 保存最新 cursor，避免将 cursor 纳入 useCallback 依赖导致函数重建和二次请求
   const cursorRef = useRef(cursor);
 
+  // 内部 FeedDetailDrawer 状态
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<any>(null);
+
+  const handleOpenDetail = (raw: any) => {
+    setSelectedNote(raw);
+    setDetailOpen(true);
+  };
+
   // 用户信息基础展示（初始）
   const user = initParams.user || {}; // 兼容从 note_card.user 传入
   const nickname: string = user.nick_name || user.nickname || "未知用户";
-  const avatar: string | undefined = user.avatar;
 
   // Hover Card 详细数据
   const [hoverLoading, setHoverLoading] = useState(false);
@@ -139,214 +144,120 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   const isFollowed =
     hoverData?.extraInfo_info?.fstatus &&
     hoverData.extraInfo_info.fstatus !== "none";
-  const follows = hoverData?.interact_info?.follows || "0";
-  const fans = hoverData?.interact_info?.fans || "0";
-  const interaction = hoverData?.interact_info?.interaction || "0";
-  const desc = hoverData?.basic_info?.desc || "";
-  const [followLoading, setFollowLoading] = useState(false);
+
+  // 使用统一的关注 Hook
+  const { toggleFollow, loading: followLoading } = useFollowUser({
+    initialFollowing: isFollowed,
+    onSuccess: (newFollowingState) => {
+      // 成功后更新 hover data 中的关注状态
+      setHoverData((prev: any) => ({
+        ...prev,
+        extraInfo_info: {
+          ...(prev?.extraInfo_info || {}),
+          fstatus: newFollowingState ? "follows" : "none",
+        },
+      }));
+    },
+    onError: () => {
+      // 失败后重新拉取 hover card 以恢复真实状态
+      fetchHover();
+    },
+  });
+
   const handleFollowClick = async () => {
     if (!initParams.user_id) return;
-    if (followLoading) return;
-    setFollowLoading(true);
-    try {
-      if (!isFollowed) {
-        // 乐观更新：先设置状态，再回滚可能的失败
-        setHoverData((prev: any) => ({
-          ...prev,
-          extraInfo_info: {
-            ...(prev?.extraInfo_info || {}),
-            fstatus: "follows",
-          },
-        }));
-        const res = await apiRef.current.followUser({
-          target_user_id: initParams.user_id,
-        });
-        // 以返回值为准
-        setHoverData((prev: any) => ({
-          ...prev,
-          extraInfo_info: {
-            ...(prev?.extraInfo_info || {}),
-            fstatus: res?.fstatus || "follows",
-          },
-        }));
-        messageApi.success("关注成功");
-      } else {
-        setHoverData((prev: any) => ({
-          ...prev,
-          extraInfo_info: { ...(prev?.extraInfo_info || {}), fstatus: "none" },
-        }));
-        const res = await apiRef.current.unfollowUser({
-          target_user_id: initParams.user_id,
-        });
-        setHoverData((prev: any) => ({
-          ...prev,
-          extraInfo_info: {
-            ...(prev?.extraInfo_info || {}),
-            fstatus: res?.fstatus || "none",
-          },
-        }));
-        messageApi.success("已取消关注");
-      }
-    } catch (e: any) {
-      // 回滚：重新拉取 hover card 以恢复真实状态
-      messageApi.error(
-        e?.message || (isFollowed ? "取消关注失败" : "关注失败")
-      );
-      fetchHover();
-    } finally {
-      setFollowLoading(false);
-    }
+    await toggleFollow(initParams.user_id);
   };
 
   return (
-    <Drawer
-      open={open}
-      onClose={onClose}
-      placement="bottom"
-      destroyOnHidden
-      height="90vh"
-      title={`用户主页 - ${nickname}`}
-      styles={{
-        body: { padding: 0, height: "100%", minHeight: 0,overflow:"hidden" },
-      }}
-    >
+    <>
       {contextHolder}
-      <div
-        id="xhsUserScrollableDiv"
-        style={{
-          height: "100%",
-          overflow: "auto",
-          padding: "10px 0",
-        }}
+      <BaseDrawer
+        open={open}
+        onClose={onClose}
+        title={`用户主页 - ${nickname}`}
+        scrollableId="xhsUserScrollableDiv"
       >
-        {/* 用户详情区（微博风格） */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 16,
-            marginBottom: 12,
-          }}
-        >
-        <Avatar src={avatar} size={80}>
-          {nickname[0]}
-        </Avatar>
-        <div style={{ fontSize: 20, fontWeight: "bolder" }}>{nickname}</div>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-          }}
-        >
-          {hoverLoading && <Tag color="default">加载用户信息...</Tag>}
-          {hoverError && <Tag color="red">{hoverError}</Tag>}
-          {!hoverLoading && !hoverError && hoverData && (
-            <>
-              <Tag icon={<UsergroupAddOutlined />} color="green">
-                关注: {follows}
-              </Tag>
-              <Tag icon={<TeamOutlined />} color="orange">
-                粉丝: {fans}
-              </Tag>
-              <Tag icon={<LikeOutlined />} color="magenta">
-                获赞收藏: {interaction}
-              </Tag>
-            </>
-          )}
-        </div>
-        {!hoverLoading && !hoverError && desc && (
-          <Card
-            size="small"
-            styles={{ body: { padding: "10px", textAlign: "center" } }}
-            style={{
-              margin:"0 8px"
-            }}
-          >
-            {desc}
-          </Card>
-        )}
-        {!hoverLoading &&
-          !hoverError &&
-          initParams.user_id &&
-          (isFollowed ? (
-            <Button
-              color="red"
-              variant="filled"
-              loading={followLoading}
-              onClick={handleFollowClick}
-            >
-              {followLoading ? "处理中..." : "取关"}
-            </Button>
-          ) : (
-            <Button
-              color="primary"
-              variant="filled"
-              loading={followLoading}
-              onClick={handleFollowClick}
-            >
-              {followLoading ? "处理中..." : "关注"}
-            </Button>
-          ))}
-      </div>
-      {/* 瀑布流 */}
-      {loading && items.length === 0 ? (
-        <div style={{ padding: "20px 0" }}>
-          {loaderFunc()}
-        </div>
-      ) : items.length > 0 ? (
-        <InfiniteScroll
-          dataLength={items.length}
-          next={loadMore}
-          hasMore={hasMore && !loading}
-          loader={loaderFunc()}
-          endMessage={
-            <div style={{ padding: 8, textAlign: "center", color: "#999" }}>
-              没有更多了
-            </div>
-          }
-          scrollableTarget="xhsUserScrollableDiv"
-          scrollThreshold={INFINITE_SCROLL_CONFIG.THRESHOLD}
-        >
-          <Masonry
-            breakpointCols={{
-              default: 2,
-              1500: 5,
-              1200: 4,
-              900: 3,
-              600: 2,
-              300: 1,
-            }}
-            className="xhs-masonry"
-            columnClassName="xhs-masonry-column"
-          >
-            {items.map((raw: any, index: number) => (
-              <div
-                key={raw.id + index}
-                className="xhs-waterfall-item"
-                style={{ animationDelay: `${(index % 10) * 50}ms` }}
-              >
-                <XhsFeedCard
-                  data={raw}
-                  onClick={() => onOpenDetail?.(raw)}
-                  onUserClick={() => {
-                    // 已在当前用户主页
-                    messageApi.info("已经是本用户主页了");
-                  }}
-                />
-              </div>
-            ))}
-          </Masonry>
-        </InfiniteScroll>
-      ) : (
-        <Empty
-          description="暂无用户笔记"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        {contextHolder}
+        {/* 用户详情区（统一组件） */}
+        <UserInfoCard
+          user={user}
+          hoverData={hoverData}
+          loading={hoverLoading}
+          error={hoverError}
+          mode="detailed"
+          showFollowButton={!!initParams.user_id}
+          isFollowing={isFollowed}
+          followLoading={followLoading}
+          onFollowToggle={handleFollowClick}
         />
-      )}
-    </div>
-    </Drawer>
+
+        {/* 瀑布流 */}
+        {loading && items.length === 0 ? (
+          <div style={{ padding: "20px 0" }}>{loaderFunc()}</div>
+        ) : items.length > 0 ? (
+          <InfiniteScroll
+            dataLength={items.length}
+            next={loadMore}
+            hasMore={hasMore && !loading}
+            loader={loaderFunc()}
+            endMessage={
+              <div style={{ padding: 8, textAlign: "center", color: "#999" }}>
+                没有更多了
+              </div>
+            }
+            scrollableTarget="xhsUserScrollableDiv"
+            scrollThreshold={INFINITE_SCROLL_CONFIG.THRESHOLD}
+          >
+            <Masonry
+              breakpointCols={{
+                default: 2,
+                1500: 5,
+                1200: 4,
+                900: 3,
+                600: 2,
+                300: 1,
+              }}
+              className="xhs-masonry"
+              columnClassName="xhs-masonry-column"
+            >
+              {items.map((raw: any, index: number) => (
+                <div
+                  key={raw.id + index}
+                  className="xhs-waterfall-item"
+                  style={{ animationDelay: `${(index % 10) * 50}ms` }}
+                >
+                  <XhsFeedCard
+                    data={raw}
+                    onClick={() => handleOpenDetail(raw)}
+                    onUserClick={() => {
+                      // 已在当前用户主页
+                      messageApi.info("已经是本用户主页了");
+                    }}
+                  />
+                </div>
+              ))}
+            </Masonry>
+          </InfiniteScroll>
+        ) : (
+          <Empty
+            description="暂无用户笔记"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        )}
+        {/* 在 UserPostedDrawer 内部嵌套打开 FeedDetailDrawer */}
+        {selectedNote && (
+          <FeedDetailDrawer
+            open={detailOpen}
+            onClose={() => setDetailOpen(false)}
+            detail={{
+              note_id: selectedNote.id || selectedNote.note_id,
+              xsec_token: selectedNote.xsec_token,
+            }}
+          />
+        )}
+      </BaseDrawer>
+    </>
   );
 };
 

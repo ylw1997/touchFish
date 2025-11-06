@@ -1,15 +1,15 @@
-import { Drawer, Button, Input, Form, Empty, Divider } from "antd";
+import { Button, Input, Form, Empty, Divider } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { createXhsApi } from "../api";
+import Masonry from "react-masonry-css";
 import { useRequest } from "../hooks/useRequest";
+import { useXhsSearch } from "../hooks/useXhsSearch";
 import { loaderFunc } from "../utils/loader";
-import { generateXB3TraceId } from "../utils/utils";
 import XhsFeedCard from "./XhsFeedCard";
 import UserPostedDrawer from "./UserPostedDrawer";
 import FeedDetailDrawer from "./FeedDetailDrawer";
-import Masonry from "react-masonry-css";
+import BaseDrawer from "./BaseDrawer";
 import { INFINITE_SCROLL_CONFIG } from "../constants";
 
 interface XhsSearchDrawerProps {
@@ -20,79 +20,47 @@ interface XhsSearchDrawerProps {
 
 const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
   const [form] = Form.useForm();
-  const { request } = useRequest();
-  const apiRef = useRef(createXhsApi(request));
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
-  const [searchId, setSearchId] = useState("");
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const { request, messageApi, contextHolder } = useRequest();
+
+  // 使用搜索 Hook
+  const { loading, results, hasMore, search, loadMore, reset } = useXhsSearch({
+    request,
+  });
+
   // 详情状态
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState<string>("");
   const [activeXsecToken, setActiveXsecToken] = useState<string>("");
+
   // 用户主页
   const [userOpen, setUserOpen] = useState(false);
-  const [userParams, setUserParams] = useState<{ cursor: string; user_id: string; xsec_token: string; user?: any }>({ cursor: '', user_id: '', xsec_token: '' });
+  const [userParams, setUserParams] = useState<{
+    cursor: string;
+    user_id: string;
+    xsec_token: string;
+    user?: any;
+  }>({
+    cursor: "",
+    user_id: "",
+    xsec_token: "",
+  });
 
-  const handleSearch = useCallback(async ({ keyword }: { keyword: string }) => {
-    const trimmed = keyword?.trim();
-    if (!trimmed) return;
-    setLoading(true);
-    setPage(1);
-    setResults([]);
-    setHasMore(true);
-    const newSearchId = generateXB3TraceId();
-    setSearchId(newSearchId);
-    try {
-      const res: any = await apiRef.current.searchNotes({
-        keyword: trimmed,
-        page: 1,
-        search_id: newSearchId,
-      });
-      const incoming = res?.items || [];
-      setResults(incoming);
-      setHasMore(res.has_more);
-      setPage(2);
-    } catch (e) {
-      console.error("[xhs search] error", e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadMore = useCallback(async () => {
-    if (!hasMore || loading) return;
-    const keyword = form.getFieldValue("keyword") || "";
-    const trimmed = keyword.trim();
-    if (!trimmed) return;
-    setLoading(true);
-    try {
-      const res: any = await apiRef.current.searchNotes({
-        keyword: trimmed,
-        page,
-        search_id: searchId,
-      });
-      const incoming = res?.items || [];
-      setResults((prev) => [...prev, ...incoming]);
-      setHasMore(res.has_more);
-      setPage(page + 1);
-    } catch (e) {
-      console.error("[xhs search more] error", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [hasMore, loading, page, searchId, form]);
+  const handleSearch = useCallback(
+    async ({ keyword }: { keyword: string }) => {
+      try {
+        await search(keyword);
+      } catch (e: any) {
+        messageApi.error(e?.message || "搜索失败");
+      }
+    },
+    [search, messageApi]
+  );
 
   const closeFunc = useCallback(() => {
     onClose();
     form.resetFields();
-    setResults([]);
-    setPage(1);
-    setSearchId("");
-    setHasMore(true);
-    setLoading(false);
-  }, [onClose, form]);
+    reset();
+  }, [onClose, form, reset]);
 
   const handleOpenDetail = useCallback((raw: any) => {
     if (!raw?.id) return;
@@ -101,63 +69,39 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
     setActiveXsecToken(raw.xsec_token);
   }, []);
 
-  const handleOpenUser = useCallback((raw: {id: string, xsec_token: string}, user: any) => {
-    if (!user?.user_id) return;
-    setUserParams({ cursor: raw.id || '', user_id: user.user_id, xsec_token: raw.xsec_token, user });
-    setUserOpen(true);
-  }, []);
+  const handleOpenUser = useCallback(
+    (raw: { id: string; xsec_token: string }, user: any) => {
+      if (!user?.user_id) return;
+      setUserParams({
+        cursor: raw.id || "",
+        user_id: user.user_id,
+        xsec_token: raw.xsec_token,
+        user,
+      });
+      setUserOpen(true);
+    },
+    []
+  );
 
   return (
-    <Drawer
-      title="小红书搜索"
-      placement="bottom"
-      height="90vh"
-      open={open}
-      onClose={closeFunc}
-      destroyOnHidden
-      styles={{
-        wrapper: {
-          borderTopLeftRadius: 10,
-          borderTopRightRadius: 10,
-          overflow: "hidden",
-        },
-        body: { padding: 0, height: "100%", minHeight: 0, overflow: "hidden" },
-      }}
-    >
-      <FeedDetailDrawer
-        open={detailOpen}
-        onClose={() => {
-          setDetailOpen(false);
-          setActiveNoteId("");
-          setActiveXsecToken("");
-        }}
-        // 仅传递基础标识，Drawer 内部自行请求
-        detail={{ note_id: activeNoteId, xsec_token: activeXsecToken }}
-        onUserClick={(p) => {
-          setUserParams(p);
-          setUserOpen(true);
-        }}
-      />
-      <UserPostedDrawer
-        open={userOpen}
-        onClose={() => setUserOpen(false)}
-        initParams={userParams}
-        onOpenDetail={(raw) => {
-          handleOpenDetail(raw);
-        }}
-      />
-      <div 
-        id="xhsSearchScrollableDiv"
-        style={{ 
-          padding: 8, 
-          height: "100%", 
-          overflow: "auto" 
-        }}
+    <>
+      {contextHolder}
+      <BaseDrawer
+        open={open}
+        onClose={closeFunc}
+        title="小红书搜索"
+        scrollableId="xhsSearchScrollableDiv"
       >
-        <Form form={form} layout="vertical" onFinish={handleSearch}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSearch}
+          style={{ marginBottom: 12 }}
+        >
           <Form.Item
             name="keyword"
             rules={[{ required: true, message: "请输入搜索关键词" }]}
+            style={{ marginBottom: 0 }}
           >
             <Input.Search
               placeholder="请输入搜索关键词"
@@ -172,7 +116,9 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
             />
           </Form.Item>
         </Form>
+
         <Divider style={{ margin: "12px 0" }}>搜索结果</Divider>
+
         {loading && results.length === 0 ? (
           loaderFunc()
         ) : results.length > 0 ? (
@@ -200,9 +146,6 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
               }}
               className="xhs-masonry"
               columnClassName="xhs-masonry-column"
-              style={{
-                padding:'0'
-              }}
             >
               {results.map((raw: any, index: number) => (
                 <div
@@ -210,7 +153,11 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
                   className="xhs-waterfall-item"
                   style={{ animationDelay: `${(index % 10) * 50}ms` }}
                 >
-                  <XhsFeedCard data={raw} onClick={handleOpenDetail} onUserClick={handleOpenUser} />
+                  <XhsFeedCard
+                    data={raw}
+                    onClick={handleOpenDetail}
+                    onUserClick={handleOpenUser}
+                  />
                 </div>
               ))}
             </Masonry>
@@ -221,8 +168,29 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         )}
-      </div>
-    </Drawer>
+        {/* 笔记详情弹窗 */}
+        <FeedDetailDrawer
+          open={detailOpen}
+          onClose={() => {
+            setDetailOpen(false);
+            setActiveNoteId("");
+            setActiveXsecToken("");
+          }}
+          detail={{ note_id: activeNoteId, xsec_token: activeXsecToken }}
+          onUserClick={(p) => {
+            setUserParams(p);
+            setUserOpen(true);
+          }}
+        />
+
+        {/* 用户主页弹窗 */}
+        <UserPostedDrawer
+          open={userOpen}
+          onClose={() => setUserOpen(false)}
+          initParams={userParams}
+        />
+      </BaseDrawer>
+    </>
   );
 };
 

@@ -158,3 +158,25 @@ export function parseTopicTags(text: string): Array<{ type: 'text' | 'tag'; cont
   
   return result.length > 0 ? result : [{ type: 'text', content: text }];
 }
+
+/**
+ * 从视频对象中提取播放URL
+ * @param note 笔记对象
+ * @returns 视频播放URL或null
+ */
+export function extractVideoUrl(note: any): string | null {
+  const streams = note?.video?.media?.stream;
+  if (!streams) return null;
+
+  const candidates: any[] = [
+    ...(Array.isArray(streams.h265) ? streams.h265 : []),
+    ...(Array.isArray(streams.h264) ? streams.h264 : []),
+    ...(Array.isArray(streams.h266) ? streams.h266 : []),
+    ...(Array.isArray(streams.av1) ? streams.av1 : []),
+  ];
+
+  const first = candidates[0];
+  if (!first) return null;
+
+  return first.master_url || first.backup_urls?.[0] || null;
+}
