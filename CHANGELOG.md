@@ -1,6 +1,22 @@
 # 更新历史 
 
 
+## [9.8.0](https://github.com/ylw1997/touchFish/compare/v9.7.0...v9.8.0) (2025-11-06)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 更新描述前景色，调整标签样式以继承字体大小 ([9a96de1](https://github.com/9a96de1b2365755520b2b18c2753de987e121aef))
+
+
+### ✨ Features | 新功能
+
+* 添加统一图片预览工具栏组件，优化图片预览功能 ([b76500c](https://github.com/b76500c155664217adbc6f45e0ec98525d3e170e))
+* 添加图片下载功能到 FeedDetailDrawer 组件，并优化 XhsSearchDrawer 样式 ([e2f89ae](https://github.com/e2f89ae5c3ae97e28c16d2d33838946377aaac07))
+* 添加图片预览功能，优化图片展示体验 ([0f3e1ef](https://github.com/0f3e1ef903408abd2ec474903541ac0f74af1d66))
+* 添加无限滚动功能到多个组件，优化用户体验 ([d5c3906](https://github.com/d5c3906f4162be8632d95fb0ff29c101f1c5b659))
+* 优化搜索抽屉组件，添加滚动容器并调整加载状态显示 ([62f04e4](https://github.com/62f04e48cdefb6aad57cd85b23f640a08c96a22f))
+
 ## [9.7.0](https://github.com/ylw1997/touchFish/compare/v9.6.0...v9.7.0) (2025-11-05)
 
 
