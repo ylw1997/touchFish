@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-11-06 10:19:26
+ * @LastEditTime: 2025-11-06 10:49:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
@@ -35,6 +35,11 @@ import {
   ClockCircleOutlined,
   UserAddOutlined,
   UserDeleteOutlined,
+  DownloadOutlined,
+  RotateLeftOutlined,
+  RotateRightOutlined,
+  ZoomInOutlined,
+  ZoomOutOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { loaderFunc } from "../utils/loader";
@@ -44,6 +49,7 @@ import { formatTimestamp, formatCount, parseTopicTags } from "../utils/utils";
 import CommonItem from "./CommonItem";
 import UserPostedDrawer from "./UserPostedDrawer";
 import { INFINITE_SCROLL_CONFIG } from "../constants";
+import { vscode } from "../utils/vscode";
 
 const { Title, Paragraph } = Typography;
 
@@ -286,6 +292,27 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     }
   }, [note?.note_id, initXsecToken, messageApi]);
 
+  // 下载图片功能
+  const handleDownloadImage = useCallback(async (url: string, index: number) => {
+    try {
+      const fileName = `${title || 'xhs_image'}_${index + 1}.jpg`;
+      
+      // 通过 VSCode API 发送下载请求
+      vscode.postMessage({
+        command: 'XHS_DOWNLOAD_IMAGE',
+        payload: {
+          url,
+          fileName,
+        }
+      });
+      
+      messageApi.success('已发起下载请求');
+    } catch (error) {
+      console.error('下载失败:', error);
+      messageApi.error('下载失败');
+    }
+  }, [title, messageApi]);
+
   // ====== 内置用户主页 Drawer（当父组件未传 onUserClick 时启用） ======
   const [userDrawerOpen, setUserDrawerOpen] = useState(false);
   const [userDrawerParams, setUserDrawerParams] = useState<UserDrawerPayload>({
@@ -380,6 +407,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             padding: 0,
             height: "100%",
             minHeight: 0,
+            overflow: "hidden"
           },
         }}
       >
@@ -464,11 +492,34 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
                 src={images[0]}
                 alt={title}
                 style={{ objectFit: "contain", width: "100%" }}
+                preview={{
+                  toolbarRender: (_, { transform: { scale }, actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight } }) => (
+                    <Space size={12} className="toolbar-wrapper">
+                      <DownloadOutlined onClick={() => handleDownloadImage(images[0], 0)} />
+                      <RotateLeftOutlined onClick={onRotateLeft} />
+                      <RotateRightOutlined onClick={onRotateRight} />
+                      <ZoomOutOutlined disabled={scale === 1} onClick={onZoomOut} />
+                      <ZoomInOutlined disabled={scale === 50} onClick={onZoomIn} />
+                    </Space>
+                  ),
+                }}
               />
             )}
 
             {images.length > 1 && (
-              <Image.PreviewGroup>
+              <Image.PreviewGroup
+                preview={{
+                  toolbarRender: (_, { transform: { scale }, actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight }, current }) => (
+                    <Space size={12} className="toolbar-wrapper">
+                      <DownloadOutlined onClick={() => handleDownloadImage(images[current], current)} />
+                      <RotateLeftOutlined onClick={onRotateLeft} />
+                      <RotateRightOutlined onClick={onRotateRight} />
+                      <ZoomOutOutlined disabled={scale === 1} onClick={onZoomOut} />
+                      <ZoomInOutlined disabled={scale === 50} onClick={onZoomIn} />
+                    </Space>
+                  ),
+                }}
+              >
                 <Carousel
                   ref={carouselRef}
                   adaptiveHeight

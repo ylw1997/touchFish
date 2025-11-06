@@ -121,7 +121,7 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
           borderTopRightRadius: 10,
           overflow: "hidden",
         },
-        body: { padding: 0, height: "100%", minHeight: 0 },
+        body: { padding: 0, height: "100%", minHeight: 0, overflow: "hidden" },
       }}
     >
       <FeedDetailDrawer

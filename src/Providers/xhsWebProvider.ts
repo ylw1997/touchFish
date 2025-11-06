@@ -103,6 +103,39 @@ export class XhsWebProvider implements WebviewViewProvider {
             webviewView.webview.postMessage({ command: 'XHS_RESTORE_SCROLL_POSITION', payload: pos });
             break;
           }
+          case 'XHS_DOWNLOAD_IMAGE': {
+            const { url, fileName } = (payload || {}) as { url: string; fileName: string };
+            if (!url) throw new Error('缺少图片URL');
+            
+            // 使用 VSCode API 下载图片
+            try {
+              const axios = (await import('axios')).default;
+              const response = await axios.get(url, {
+                responseType: 'arraybuffer',
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                  'Referer': 'https://www.xiaohongshu.com/',
+                }
+              });
+              
+              // 让用户选择保存位置
+              const defaultUri = vscode.Uri.file(fileName || 'image.jpg');
+              const uri = await vscode.window.showSaveDialog({
+                defaultUri,
+                filters: {
+                  'Images': ['jpg', 'jpeg', 'png', 'webp']
+                }
+              });
+              
+              if (uri) {
+                await vscode.workspace.fs.writeFile(uri, new Uint8Array(response.data));
+                vscode.window.showInformationMessage(`图片已保存到: ${uri.fsPath}`);
+              }
+            } catch (downloadErr: any) {
+              vscode.window.showErrorMessage(`下载失败: ${downloadErr.message}`);
+            }
+            break;
+          }
         }
       } catch (err: any) {
         vscode.window.showErrorMessage(err?.message || '小红书请求发生错误');
