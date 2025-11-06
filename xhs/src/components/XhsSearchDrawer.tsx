@@ -1,6 +1,7 @@
 import { Drawer, Button, Input, Form, Empty, Divider } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useState, useCallback, useRef } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
 import { loaderFunc } from "../utils/loader";
@@ -9,6 +10,7 @@ import XhsFeedCard from "./XhsFeedCard";
 import UserPostedDrawer from "./UserPostedDrawer";
 import FeedDetailDrawer from "./FeedDetailDrawer";
 import Masonry from "react-masonry-css";
+import { INFINITE_SCROLL_CONFIG } from "../constants";
 
 interface XhsSearchDrawerProps {
   open: boolean;
@@ -109,7 +111,7 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
     <Drawer
       title="小红书搜索"
       placement="bottom"
-      height={results.length > 0 ? "90vh" : "auto"}
+      height="90vh"
       open={open}
       onClose={closeFunc}
       destroyOnHidden
@@ -119,7 +121,7 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
           borderTopRightRadius: 10,
           overflow: "hidden",
         },
-        body: { padding: 8, paddingTop: 20, overflowY: "auto" },
+        body: { padding: 0, height: "100%", minHeight: 0 },
       }}
     >
       <FeedDetailDrawer
@@ -144,71 +146,84 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
           handleOpenDetail(raw);
         }}
       />
-      <Form form={form} layout="vertical" onFinish={handleSearch}>
-        <Form.Item
-          name="keyword"
-          rules={[{ required: true, message: "请输入搜索关键词" }]}
-        >
-          <Input.Search
-            placeholder="请输入搜索关键词"
-            enterButton={
-              <Button icon={<SearchOutlined />} type="primary">
-                搜索
-              </Button>
-            }
-            onSearch={() => form.submit()}
-            loading={loading}
-            allowClear
-          />
-        </Form.Item>
-      </Form>
-      <Divider>搜索结果</Divider>
-      {loading && results.length === 0 ? (
-        loaderFunc()
-      ) : results.length > 0 ? (
-        <Masonry
-          breakpointCols={{
-            default: 2,
-            1500: 5,
-            1200: 4,
-            900: 3,
-            600: 2,
-            300: 1,
-          }}
-          className="xhs-masonry"
-          columnClassName="xhs-masonry-column"
-          style={{
-            padding:'0'
-          }}
-        >
-          {results.map((raw: any, index: number) => (
-            <div
-              key={index}
-              className="xhs-waterfall-item"
-              style={{ animationDelay: `${(index % 10) * 50}ms` }}
-            >
-              <XhsFeedCard data={raw} onClick={handleOpenDetail} onUserClick={handleOpenUser} />
-            </div>
-          ))}
-        </Masonry>
-      ) : (
-        <Empty
-          description="暂无搜索结果"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
-      )}
-      {hasMore && !loading && results.length > 0 && (
-        <div style={{ textAlign: "center", padding: 12 }}>
-          <Button
-            variant="filled"
-            color="default"
-            loading={loading}
-            onClick={loadMore}
+      <div style={{ padding: "8px 8px 0" }}>
+        <Form form={form} layout="vertical" onFinish={handleSearch}>
+          <Form.Item
+            name="keyword"
+            rules={[{ required: true, message: "请输入搜索关键词" }]}
           >
-            {loading ? "加载中..." : "加载更多"}
-          </Button>
-        </div>
-      )}
+            <Input.Search
+              placeholder="请输入搜索关键词"
+              enterButton={
+                <Button icon={<SearchOutlined />} type="primary">
+                  搜索
+                </Button>
+              }
+              onSearch={() => form.submit()}
+              loading={loading}
+              allowClear
+            />
+          </Form.Item>
+        </Form>
+        <Divider style={{ margin: "12px 0" }}>搜索结果</Divider>
+      </div>
+      <div
+        id="xhsSearchScrollableDiv"
+        style={{
+          height: "calc(100% - 120px)",
+          overflow: "auto",
+          padding: "0 8px",
+        }}
+      >
+        {loading && results.length === 0 ? (
+          loaderFunc()
+        ) : results.length > 0 ? (
+          <InfiniteScroll
+            dataLength={results.length}
+            next={loadMore}
+            hasMore={hasMore && !loading}
+            loader={loaderFunc()}
+            endMessage={
+              <div style={{ padding: 8, textAlign: "center", color: "#999" }}>
+                没有更多了
+              </div>
+            }
+            scrollableTarget="xhsSearchScrollableDiv"
+            scrollThreshold={INFINITE_SCROLL_CONFIG.THRESHOLD}
+          >
+            <Masonry
+              breakpointCols={{
+                default: 2,
+                1500: 5,
+                1200: 4,
+                900: 3,
+                600: 2,
+                300: 1,
+              }}
+              className="xhs-masonry"
+              columnClassName="xhs-masonry-column"
+              style={{
+                padding:'0'
+              }}
+            >
+              {results.map((raw: any, index: number) => (
+                <div
+                  key={index}
+                  className="xhs-waterfall-item"
+                  style={{ animationDelay: `${(index % 10) * 50}ms` }}
+                >
+                  <XhsFeedCard data={raw} onClick={handleOpenDetail} onUserClick={handleOpenUser} />
+                </div>
+              ))}
+            </Masonry>
+          </InfiniteScroll>
+        ) : (
+          <Empty
+            description="暂无搜索结果"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        )}
+      </div>
     </Drawer>
   );
 };

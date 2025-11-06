@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-23 15:10:00
- * @LastEditTime: 2025-11-05 10:47:00
+ * @LastEditTime: 2025-11-06 10:19:26
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\components\FeedDetailDrawer.tsx
  * @Description: 小红书笔记详情 Drawer，展示标题/作者/正文/图片（简单版）
@@ -36,12 +36,14 @@ import {
   UserAddOutlined,
   UserDeleteOutlined,
 } from "@ant-design/icons";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { loaderFunc } from "../utils/loader";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
 import { formatTimestamp, formatCount, parseTopicTags } from "../utils/utils";
 import CommonItem from "./CommonItem";
 import UserPostedDrawer from "./UserPostedDrawer";
+import { INFINITE_SCROLL_CONFIG } from "../constants";
 
 const { Title, Paragraph } = Typography;
 
@@ -377,11 +379,18 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
           body: {
             padding: 0,
             height: "100%",
-            overflow: "auto",
+            minHeight: 0,
           },
         }}
       >
-        <div style={{ padding: 8 }}>
+        <div 
+          id="xhsFeedDetailScrollableDiv"
+          style={{ 
+            padding: 8, 
+            height: "100%", 
+            overflow: "auto" 
+          }}
+        >
         {/* 1) 用户信息 Card（头像小一些） */}
         <Card size="small" style={{ marginBottom: 12 }}>
           <Flex align="center" justify="space-between">
@@ -523,7 +532,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
                 {parseTopicTags(desc).map((item, idx) => {
                   if (item.type === 'tag') {
                     return (
-                      <Tag key={idx} color="blue" style={{ marginLeft: 4 }}>
+                      <Tag key={idx} color="blue" style={{ margin: 0 }}>
                         {item.content}
                       </Tag>
                     );
@@ -566,7 +575,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
         <Card
           size="small"
           title="评论"
-          style={{ marginTop: 12 }}
+          style={{ marginTop: 12,marginBottom: 16 }}
           styles={{
             body: {
               padding: "0",
@@ -583,28 +592,30 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             <div style={{ color: "#999", padding: "8px" }}>暂无评论</div>
           )}
           {!!comments.length && (
-            <List
-              size="small"
-              dataSource={comments}
-              renderItem={(comment) => (
-                <CommonItem
-                  c={comment}
-                  onUserClick={() => handleCommentUserClick(comment)}
-                />
-              )}
-            />
-          )}
-          {commentHasMore && (
-            <div style={{ textAlign: "center", margin: 8 }}>
-              <Button
-                variant="filled"
-                color="default"
-                loading={commentLoading}
-                onClick={handleLoadMoreComments}
-              >
-                {commentLoading ? "加载中..." : "加载更多"}
-              </Button>
-            </div>
+            <InfiniteScroll
+              dataLength={comments.length}
+              next={handleLoadMoreComments}
+              hasMore={commentHasMore}
+              loader={commentLoading ? loaderFunc() : null}
+              endMessage={
+                <div style={{ padding: 8, textAlign: "center", color: "#999" }}>
+                  没有更多评论了
+                </div>
+              }
+              scrollableTarget="xhsFeedDetailScrollableDiv"
+              scrollThreshold={INFINITE_SCROLL_CONFIG.THRESHOLD}
+            >
+              <List
+                size="small"
+                dataSource={comments}
+                renderItem={(comment) => (
+                  <CommonItem
+                    c={comment}
+                    onUserClick={() => handleCommentUserClick(comment)}
+                  />
+                )}
+              />
+            </InfiniteScroll>
           )}
         </Card>
       </div>

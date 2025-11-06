@@ -11,11 +11,13 @@ import {
   LikeOutlined,
 } from "@ant-design/icons";
 import Masonry from "react-masonry-css";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { createXhsApi } from "../api";
 import { useRequest } from "../hooks/useRequest";
 import XhsFeedCard from "./XhsFeedCard";
 import { loaderFunc } from "../utils/loader";
 import { XhsFeedRawItem } from "../../../type";
+import { INFINITE_SCROLL_CONFIG } from "../constants";
 
 interface UserPostedDrawerProps {
   open: boolean;
@@ -72,8 +74,6 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
       // 兼容后端直接返回 data 或完整响应
       const dataLayer = res?.basic_info ? res : res?.data;
       setHoverData(dataLayer || null);
-      console.log("[xhs user hover card raw] ", res);
-      console.log("[xhs user hover card parsed] ", dataLayer);
     } catch (e: any) {
       setHoverError(e?.message || "用户信息加载失败");
     } finally {
@@ -207,20 +207,28 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
       height="90vh"
       title={`用户主页 - ${nickname}`}
       styles={{
-        body: { padding: '10px 0', height: "100%", overflow: "auto" },
+        body: { padding: 0, height: "100%", minHeight: 0,overflow:"hidden" },
       }}
     >
       {contextHolder}
-      {/* 用户详情区（微博风格） */}
       <div
+        id="xhsUserScrollableDiv"
         style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 16,
-          marginBottom: 12,
+          height: "100%",
+          overflow: "auto",
+          padding: "10px 0",
         }}
       >
+        {/* 用户详情区（微博风格） */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 16,
+            marginBottom: 12,
+          }}
+        >
         <Avatar src={avatar} size={80}>
           {nickname[0]}
         </Avatar>
@@ -284,55 +292,60 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
       </div>
       {/* 瀑布流 */}
       {loading && items.length === 0 ? (
-        loaderFunc()
+        <div style={{ padding: "20px 0" }}>
+          {loaderFunc()}
+        </div>
       ) : items.length > 0 ? (
-        <Masonry
-          breakpointCols={{
-            default: 2,
-            1500: 5,
-            1200: 4,
-            900: 3,
-            600: 2,
-            300: 1,
-          }}
-          className="xhs-masonry"
-          columnClassName="xhs-masonry-column"
-        >
-          {items.map((raw: any, index: number) => (
-            <div
-              key={raw.id + index}
-              className="xhs-waterfall-item"
-              style={{ animationDelay: `${(index % 10) * 50}ms` }}
-            >
-              <XhsFeedCard
-                data={raw}
-                onClick={() => onOpenDetail?.(raw)}
-                onUserClick={() => {
-                  // 已在当前用户主页
-                  messageApi.info("已经是本用户主页了");
-                }}
-              />
+        <InfiniteScroll
+          dataLength={items.length}
+          next={loadMore}
+          hasMore={hasMore && !loading}
+          loader={loaderFunc()}
+          endMessage={
+            <div style={{ padding: 8, textAlign: "center", color: "#999" }}>
+              没有更多了
             </div>
-          ))}
-        </Masonry>
+          }
+          scrollableTarget="xhsUserScrollableDiv"
+          scrollThreshold={INFINITE_SCROLL_CONFIG.THRESHOLD}
+        >
+          <Masonry
+            breakpointCols={{
+              default: 2,
+              1500: 5,
+              1200: 4,
+              900: 3,
+              600: 2,
+              300: 1,
+            }}
+            className="xhs-masonry"
+            columnClassName="xhs-masonry-column"
+          >
+            {items.map((raw: any, index: number) => (
+              <div
+                key={raw.id + index}
+                className="xhs-waterfall-item"
+                style={{ animationDelay: `${(index % 10) * 50}ms` }}
+              >
+                <XhsFeedCard
+                  data={raw}
+                  onClick={() => onOpenDetail?.(raw)}
+                  onUserClick={() => {
+                    // 已在当前用户主页
+                    messageApi.info("已经是本用户主页了");
+                  }}
+                />
+              </div>
+            ))}
+          </Masonry>
+        </InfiniteScroll>
       ) : (
         <Empty
           description="暂无用户笔记"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       )}
-      {hasMore && !loading && items.length > 0 && (
-        <div style={{ textAlign: "center", padding: 12 }}>
-          <Button
-            variant="filled"
-            color="default"
-            loading={loading}
-            onClick={loadMore}
-          >
-            {loading ? "加载中..." : "加载更多"}
-          </Button>
-        </div>
-      )}
+    </div>
     </Drawer>
   );
 };
