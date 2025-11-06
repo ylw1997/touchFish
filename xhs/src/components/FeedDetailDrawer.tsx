@@ -130,6 +130,10 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
   const apiRef = useRef(createXhsApi(request));
   const carouselRef = useRef<CarouselRef>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  
+  // 追踪图片预览状态
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewCurrent, setPreviewCurrent] = useState(0);
 
   // ====== 加载详情 ======
   const fetchDetail = useCallback(async () => {
@@ -484,22 +488,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             )}
 
             {images.length > 1 && (
-              <Image.PreviewGroup
-                preview={{
-                  toolbarRender: (_, { transform: { scale }, actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight }, current }) => (
-                    <ImagePreviewToolbar
-                      imageUrl={images[current]}
-                      imageIndex={current}
-                      fileNamePrefix={title || "note"}
-                      scale={scale}
-                      onRotateLeft={onRotateLeft}
-                      onRotateRight={onRotateRight}
-                      onZoomIn={onZoomIn}
-                      onZoomOut={onZoomOut}
-                    />
-                  ),
-                }}
-              >
+              <>
                 <Carousel
                   ref={carouselRef}
                   adaptiveHeight
@@ -518,10 +507,47 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
                   }
                 >
                   {images.map((url: string, idx: number) => (
-                    <Image src={url} alt={title} key={idx} />
+                    <div 
+                      key={idx} 
+                      style={{ position: 'relative' }}
+                      onClick={() => {
+                        setPreviewCurrent(idx);
+                        setPreviewVisible(true);
+                      }}
+                    >
+                      <img 
+                        src={url} 
+                        alt={title} 
+                        style={{ display: 'block', width: '100%', cursor: 'zoom-in' }}
+                      />
+                    </div>
                   ))}
                 </Carousel>
-              </Image.PreviewGroup>
+                <div style={{ display: 'none' }}>
+                  <Image.PreviewGroup
+                    preview={{
+                      visible: previewVisible,
+                      current: previewCurrent,
+                      onVisibleChange: (visible) => setPreviewVisible(visible),
+                      onChange: (current) => setPreviewCurrent(current),
+                      toolbarRender: (_, { transform: { scale }, actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight }, current }) => (
+                        <ImagePreviewToolbar
+                          imageUrl={images[current]}
+                          imageIndex={current}
+                          fileNamePrefix={title || "note"}
+                          scale={scale}
+                          onRotateLeft={onRotateLeft}
+                          onRotateRight={onRotateRight}
+                          onZoomIn={onZoomIn}
+                          onZoomOut={onZoomOut}
+                        />
+                      ),
+                    }}
+                    items={images.map((url) => ({ src: url }))}
+                  >
+                  </Image.PreviewGroup>
+                </div>
+              </>
             )}
           </div>
         )}
