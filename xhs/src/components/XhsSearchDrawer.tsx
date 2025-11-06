@@ -146,7 +146,14 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
           handleOpenDetail(raw);
         }}
       />
-      <div style={{ padding: "8px 8px 0" }}>
+      <div 
+        id="xhsSearchScrollableDiv"
+        style={{ 
+          padding: 8, 
+          height: "100%", 
+          overflow: "auto" 
+        }}
+      >
         <Form form={form} layout="vertical" onFinish={handleSearch}>
           <Form.Item
             name="keyword"
@@ -166,23 +173,14 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
           </Form.Item>
         </Form>
         <Divider style={{ margin: "12px 0" }}>搜索结果</Divider>
-      </div>
-      <div
-        id="xhsSearchScrollableDiv"
-        style={{
-          height: "calc(100% - 120px)",
-          overflow: "auto",
-          padding: "0 8px",
-        }}
-      >
         {loading && results.length === 0 ? (
           loaderFunc()
         ) : results.length > 0 ? (
           <InfiniteScroll
             dataLength={results.length}
             next={loadMore}
-            hasMore={hasMore && !loading}
-            loader={loaderFunc()}
+            hasMore={hasMore}
+            loader={loading ? loaderFunc() : null}
             endMessage={
               <div style={{ padding: 8, textAlign: "center", color: "#999" }}>
                 没有更多了
