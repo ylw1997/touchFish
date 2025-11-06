@@ -146,8 +146,7 @@ a {
   justify-content: center;
 }
 
-
-.descriptionForeground{
+.descriptionForeground {
   color: var(--vscode-tab-inactiveForeground);
 }
 
@@ -170,5 +169,47 @@ a {
   .ant-image-img {
     min-height: 300px;
     cursor: zoom-in;
+  }
+}
+
+/* ==========================================================================
+   4. 图片预览工具栏样式
+   ========================================================================== */
+
+/**
+ * 自定义图片预览工具栏样式，保持与 antd 原生工具栏一致
+ */
+.xhs-image-preview-toolbar {
+  .backdrop-style();
+  padding: 8px 12px;
+  border-radius: 100px;
+
+  /* 图标按钮样式 */
+  .anticon {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 8px;
+    border-radius: 50px;
+
+    &:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    /* 禁用状态 */
+    &[disabled] {
+      color: rgba(255, 255, 255, 0.25);
+      cursor: not-allowed;
+
+      &:hover {
+        background: transparent;
+      }
+    }
   }
 }

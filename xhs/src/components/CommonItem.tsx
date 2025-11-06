@@ -11,6 +11,7 @@ import React from "react";
 import { HeartOutlined, MessageOutlined, EnvironmentOutlined, UserOutlined } from "@ant-design/icons";
 import { List, Avatar, Space, Tag, Image } from "antd";
 import { extractXhsImageUrl, formatTimestamp } from "../utils/utils";
+import ImagePreviewToolbar from "./ImagePreviewToolbar";
 
 interface CommentUser {
   user_id?: string;
@@ -90,7 +91,22 @@ const CommonItem: React.FC<CommonItemProps> = ({ c, onUserClick, ...arg }) => {
           </div>
           {Array.isArray(c.pictures) && c.pictures.length > 0 && (
             <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Image.PreviewGroup>
+              <Image.PreviewGroup
+                preview={{
+                  toolbarRender: (_, { transform: { scale }, actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight }, current }) => (
+                    <ImagePreviewToolbar
+                      imageUrl={extractXhsImageUrl(c.pictures![current])}
+                      imageIndex={current}
+                      fileNamePrefix={`comment_${c.id}`}
+                      scale={scale}
+                      onRotateLeft={onRotateLeft}
+                      onRotateRight={onRotateRight}
+                      onZoomIn={onZoomIn}
+                      onZoomOut={onZoomOut}
+                    />
+                  ),
+                }}
+              >
                 {c.pictures.map((pic, idx) => {
                   const url = extractXhsImageUrl(pic);
                   if (!url) return null;

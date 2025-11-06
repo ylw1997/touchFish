@@ -35,11 +35,6 @@ import {
   ClockCircleOutlined,
   UserAddOutlined,
   UserDeleteOutlined,
-  DownloadOutlined,
-  RotateLeftOutlined,
-  RotateRightOutlined,
-  ZoomInOutlined,
-  ZoomOutOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { loaderFunc } from "../utils/loader";
@@ -48,8 +43,8 @@ import { useRequest } from "../hooks/useRequest";
 import { formatTimestamp, formatCount, parseTopicTags } from "../utils/utils";
 import CommonItem from "./CommonItem";
 import UserPostedDrawer from "./UserPostedDrawer";
+import ImagePreviewToolbar from "./ImagePreviewToolbar";
 import { INFINITE_SCROLL_CONFIG } from "../constants";
-import { vscode } from "../utils/vscode";
 
 const { Title, Paragraph } = Typography;
 
@@ -292,27 +287,6 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     }
   }, [note?.note_id, initXsecToken, messageApi]);
 
-  // 下载图片功能
-  const handleDownloadImage = useCallback(async (url: string, index: number) => {
-    try {
-      const fileName = `${title || 'xhs_image'}_${index + 1}.jpg`;
-      
-      // 通过 VSCode API 发送下载请求
-      vscode.postMessage({
-        command: 'XHS_DOWNLOAD_IMAGE',
-        payload: {
-          url,
-          fileName,
-        }
-      });
-      
-      messageApi.success('已发起下载请求');
-    } catch (error) {
-      console.error('下载失败:', error);
-      messageApi.error('下载失败');
-    }
-  }, [title, messageApi]);
-
   // ====== 内置用户主页 Drawer（当父组件未传 onUserClick 时启用） ======
   const [userDrawerOpen, setUserDrawerOpen] = useState(false);
   const [userDrawerParams, setUserDrawerParams] = useState<UserDrawerPayload>({
@@ -494,13 +468,16 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
                 style={{ objectFit: "contain", width: "100%" }}
                 preview={{
                   toolbarRender: (_, { transform: { scale }, actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight } }) => (
-                    <Space size={12} className="toolbar-wrapper">
-                      <DownloadOutlined onClick={() => handleDownloadImage(images[0], 0)} />
-                      <RotateLeftOutlined onClick={onRotateLeft} />
-                      <RotateRightOutlined onClick={onRotateRight} />
-                      <ZoomOutOutlined disabled={scale === 1} onClick={onZoomOut} />
-                      <ZoomInOutlined disabled={scale === 50} onClick={onZoomIn} />
-                    </Space>
+                    <ImagePreviewToolbar
+                      imageUrl={images[0]}
+                      imageIndex={0}
+                      fileNamePrefix={title || "note"}
+                      scale={scale}
+                      onRotateLeft={onRotateLeft}
+                      onRotateRight={onRotateRight}
+                      onZoomIn={onZoomIn}
+                      onZoomOut={onZoomOut}
+                    />
                   ),
                 }}
               />
@@ -510,13 +487,16 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
               <Image.PreviewGroup
                 preview={{
                   toolbarRender: (_, { transform: { scale }, actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight }, current }) => (
-                    <Space size={12} className="toolbar-wrapper">
-                      <DownloadOutlined onClick={() => handleDownloadImage(images[current], current)} />
-                      <RotateLeftOutlined onClick={onRotateLeft} />
-                      <RotateRightOutlined onClick={onRotateRight} />
-                      <ZoomOutOutlined disabled={scale === 1} onClick={onZoomOut} />
-                      <ZoomInOutlined disabled={scale === 50} onClick={onZoomIn} />
-                    </Space>
+                    <ImagePreviewToolbar
+                      imageUrl={images[current]}
+                      imageIndex={current}
+                      fileNamePrefix={title || "note"}
+                      scale={scale}
+                      onRotateLeft={onRotateLeft}
+                      onRotateRight={onRotateRight}
+                      onZoomIn={onZoomIn}
+                      onZoomOut={onZoomOut}
+                    />
                   ),
                 }}
               >
