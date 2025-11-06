@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [9.9.0](https://github.com/ylw1997/touchFish/compare/v9.8.0...v9.9.0) (2025-11-06)
+
+
+### ✨ Features | 新功能
+
+* add UserInfoCard component for displaying user information with follow functionality ([4d7ede6](https://github.com/4d7ede60311a57111e8b7feee39ce0d0994aaefd))
+
 ## [9.8.0](https://github.com/ylw1997/touchFish/compare/v9.7.0...v9.8.0) (2025-11-06)
 
 
