@@ -5,7 +5,7 @@
  * 提供下载、旋转、缩放等功能，保持与 antd 原生工具栏一致的样式
  */
 import React from "react";
-import { Space, message } from "antd";
+import { Space } from "antd";
 import {
   DownloadOutlined,
   RotateLeftOutlined,
@@ -71,11 +71,14 @@ const ImagePreviewToolbar: React.FC<ImagePreviewToolbarProps> = ({
 }) => {
   const handleDownload = () => {
     const fileName = `${fileNamePrefix}_${imageIndex + 1}.jpg`;
-    
+
     // 尝试获取原图
     const originalResult = getNoteOriginalImage(imageUrl);
-    const downloadUrl = originalResult.success && originalResult.newUrl ? originalResult.newUrl : imageUrl;
-    
+    const downloadUrl =
+      originalResult.success && originalResult.newUrl
+        ? originalResult.newUrl
+        : imageUrl;
+
     if (onDownload) {
       onDownload(downloadUrl, fileName);
     } else {
@@ -84,13 +87,6 @@ const ImagePreviewToolbar: React.FC<ImagePreviewToolbarProps> = ({
         command: "XHS_DOWNLOAD_IMAGE",
         payload: { url: downloadUrl, fileName },
       });
-      
-      // 提示用户是否为原图
-      if (originalResult.isOriginal) {
-        message.success("已发起下载请求（原图）");
-      } else {
-        message.info("已发起下载请求");
-      }
     }
   };
 
