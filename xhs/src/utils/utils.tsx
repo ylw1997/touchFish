@@ -60,11 +60,12 @@ export function extractXhsImageUrl(imageItem: any): string {
   if (!imageItem) return "";
   
   // 优先使用 info_list 中的高质量图片
+  // 注意：WB_DFT/ND_DFT 比 WB_PRV/ND_PRV 更清晰
   if (Array.isArray(imageItem.info_list)) {
     const preferred = imageItem.info_list.find(
-      (it: any) => /ND_PRV|WB_PRV/.test(it.image_scene)
-    ) || imageItem.info_list.find(
       (it: any) => /ND_DFT|WB_DFT/.test(it.image_scene)
+    ) || imageItem.info_list.find(
+      (it: any) => /ND_PRV|WB_PRV/.test(it.image_scene)
     );
     if (preferred?.url) return preferred.url;
   }
