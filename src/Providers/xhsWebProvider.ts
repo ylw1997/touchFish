@@ -107,6 +107,9 @@ export class XhsWebProvider implements WebviewViewProvider {
             const { url, fileName } = (payload || {}) as { url: string; fileName: string };
             if (!url) throw new Error('缺少图片URL');
             
+            // 判断是否为原图URL（不包含感叹号参数）
+            const isOriginal = !url.includes('!nd_dft');
+            
             // 使用 VSCode API 下载图片
             try {
               const axios = (await import('axios')).default;
@@ -129,7 +132,8 @@ export class XhsWebProvider implements WebviewViewProvider {
               
               if (uri) {
                 await vscode.workspace.fs.writeFile(uri, new Uint8Array(response.data));
-                vscode.window.showInformationMessage(`图片已保存到: ${uri.fsPath}`);
+                const imageType = isOriginal ? '原图' : '普通图片';
+                vscode.window.showInformationMessage(`${imageType}已保存到: ${uri.fsPath}`);
               }
             } catch (downloadErr: any) {
               vscode.window.showErrorMessage(`下载失败: ${downloadErr.message}`);

@@ -178,7 +178,6 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
         title={`用户主页 - ${nickname}`}
         scrollableId="xhsUserScrollableDiv"
       >
-        {contextHolder}
         {/* 用户详情区（统一组件） */}
         <UserInfoCard
           user={user}
