@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-09-30 15:59:42
+ * @LastEditTime: 2025-11-10 16:50:47
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -261,83 +261,111 @@ export const openLinuxDoUrl = registerArticleCommand(
     const html = await getNewsDetail(url);
     
     const extraCss = `
+      .news_detail {
+        font-size: 16px;
+      }
+      /* 主标题区域 */
       .topic-header { 
-        margin-bottom: 30px; 
+        margin-bottom: 32px; 
         padding-bottom: 20px; 
-        border-bottom: 2px solid var(--vscode-panel-border); 
+        border-bottom: 1px solid var(--vscode-textBlockQuote-border);
       }
       .topic-header h1 { 
-        margin: 0 0 15px 0; 
-        font-size: 28px; 
-        font-weight: bold; 
+        margin: 0 0 12px 0; 
+        font-size: 32px; 
+        font-weight: 600; 
+        line-height: 1.3;
+        color: var(--vscode-editor-foreground);
       }
       .topic-meta { 
         display: flex; 
-        gap: 15px; 
-        margin-bottom: 15px; 
-        font-size: 14px; 
+        gap: 16px; 
         color: var(--vscode-descriptionForeground); 
       }
       .category { 
-        background: var(--vscode-badge-background); 
-        color: var(--vscode-badge-foreground); 
-        padding: 3px 10px; 
-        border-radius: 3px; 
+        color: var(--vscode-textLink-foreground);
+        font-weight: 500;
       }
-      .topic-description { 
-        font-size: 16px; 
-        line-height: 1.8; 
-        color: var(--vscode-editor-foreground); 
+      .reply-count {
+        color: var(--vscode-descriptionForeground);
       }
-      .topic-posts { 
-        margin-top: 20px; 
+      
+      /* 主楼内容 */
+      .main-post {
+        padding: 24px;
+        background: var(--vscode-editor-inactiveSelectionBackground);
+        border-left: 3px solid var(--vscode-textLink-foreground);
       }
-      .post-item { 
-        margin-bottom: 25px; 
-        padding: 15px; 
-        background: var(--vscode-editor-background); 
-        border: 1px solid var(--vscode-panel-border); 
-        border-radius: 6px; 
+      .main-post-header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        color: var(--vscode-descriptionForeground);
       }
-      .post-header { 
+      .main-post-content {
+        line-height: 1.8;
+        color: var(--vscode-editor-foreground);
+      }
+      
+      /* 回复区域 */
+      .replies-section {
+        margin-top: 12px;
+      }
+      .replies-header {
+        font-weight: 600;
+        color: var(--vscode-editor-foreground);
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--vscode-textBlockQuote-border);
+      }
+      .reply-item { 
+        padding: 10px 0;
+        border-bottom: 1px solid var(--vscode-textBlockQuote-border);
+      }
+      .reply-item:last-child {
+        border-bottom: none;
+      }
+      .reply-header { 
         display: flex; 
-        gap: 15px; 
-        margin-bottom: 12px; 
-        font-size: 13px; 
+        gap: 12px;
+        align-items: center;
         color: var(--vscode-descriptionForeground); 
-        padding-bottom: 10px; 
-        border-bottom: 1px solid var(--vscode-widget-border); 
       }
       .post-author { 
-        font-weight: bold; 
+        font-weight: 600; 
         color: var(--vscode-textLink-foreground); 
       }
+      .post-time {
+        opacity: 0.7;
+      }
       .post-floor { 
-        margin-left: auto; 
+        margin-left: auto;
+        opacity: 0.6;
+        font-size: 12px;
       }
-      .post-content { 
-        font-size: 15px; 
-        line-height: 1.8; 
+      .reply-content { 
+        line-height: 1.8;
+        color: var(--vscode-editor-foreground);
       }
-      .post-content p { 
-        margin: 8px 0; 
-      }
-      .post-content img { 
-        max-width: 100%; 
-        border-radius: 4px; 
+      
+      /* 通用内容样式 */
+      .main-post-content p,
+      .reply-content p { 
         margin: 10px 0; 
       }
-      .post-content code { 
+      .main-post-content code,
+      .reply-content code { 
         background: var(--vscode-textCodeBlock-background); 
-        padding: 2px 6px; 
-        border-radius: 3px; 
+        padding: 2px 5px; 
+        border-radius: 2px; 
         font-family: var(--vscode-editor-font-family); 
       }
-      .post-content a { 
+      .main-post-content a,
+      .reply-content a { 
         color: var(--vscode-textLink-foreground); 
         text-decoration: none; 
       }
-      .post-content a:hover { 
+      .main-post-content a:hover,
+      .reply-content a:hover { 
         text-decoration: underline; 
       }
     `;

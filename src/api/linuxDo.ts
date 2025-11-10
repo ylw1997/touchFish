@@ -5,6 +5,50 @@ import axios from "axios";
 import * as vscode from "vscode";
 
 /**
+ * 格式化时间
+ */
+function formatTime(timeStr: string): string {
+  try {
+    const date = new Date(timeStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    // 1分钟内
+    if (diff < 60000) {
+      return '刚刚';
+    }
+    // 1小时内
+    if (diff < 3600000) {
+      return `${Math.floor(diff / 60000)} 分钟前`;
+    }
+    // 24小时内
+    if (diff < 86400000) {
+      return `${Math.floor(diff / 3600000)} 小时前`;
+    }
+    // 7天内
+    if (diff < 604800000) {
+      return `${Math.floor(diff / 86400000)} 天前`;
+    }
+    
+    // 超过7天，显示具体日期
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    
+    // 今年的日期不显示年份
+    if (year === now.getFullYear()) {
+      return `${month}-${day} ${hour}:${minute}`;
+    }
+    
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+  } catch {
+    return timeStr;
+  }
+}
+
+/**
  * 生成通用请求头
  */
 function getCommonHeaders(cookie: string, referer: string = "https://linux.do/latest") {
@@ -159,17 +203,15 @@ export const getNewsDetail = async (url: string) => {
     
     // 提取 channel 信息
     const titleMatch = xmlString.match(/<title>([^<]+)<\/title>/);
-    const descMatch = xmlString.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/);
     const categoryMatch = xmlString.match(/<category>([^<]+)<\/category>/);
     
     const title = titleMatch ? titleMatch[1] : "";
-    const description = descMatch ? descMatch[1] : "";
     const category = categoryMatch ? categoryMatch[1] : "";
     
     // 解析所有回复
     const items = parseRSS(xmlString);
     
-    // 构建 HTML
+    // 构建 HTML - 主题内容
     let html = `
       <div class="topic-header">
         <h1>${title}</h1>
@@ -177,25 +219,56 @@ export const getNewsDetail = async (url: string) => {
           <span class="category">${category}</span>
           <span class="reply-count">${items.length} 条回复</span>
         </div>
-        <div class="topic-description">${description}</div>
       </div>
-      <div class="topic-posts">
     `;
     
-    items.forEach((item, index) => {
+    // 第一项是主题内容
+    if (items.length > 0) {
+      const mainPost = items[items.length - 1]; // RSS 是倒序，最后一个是主楼
+      const cleanDescription = mainPost.description
+        .replace(/<p><a[^>]*>阅读完整话题<\/a><\/p>/gi, '')
+        .replace(/<a[^>]*>阅读完整话题<\/a>/gi, '')
+        .trim();
+      
       html += `
-        <div class="post-item">
-          <div class="post-header">
-            <span class="post-author">${item.author}</span>
-            <span class="post-time">${item.time}</span>
-            <span class="post-floor">#${items.length - index}</span>
+        <div class="main-post">
+          <div class="main-post-header">
+            <span class="post-author">${mainPost.author}</span>
+            <span class="post-time">${formatTime(mainPost.time)}</span>
           </div>
-          <div class="post-content">${item.description}</div>
+          <div class="main-post-content">${cleanDescription}</div>
         </div>
       `;
-    });
+    }
     
-    html += `</div>`;
+    // 回复列表
+    if (items.length > 1) {
+      html += `<div class="replies-section">
+        <div class="replies-header">${items.length - 1} 条回复</div>
+      `;
+      
+      // 倒序遍历，跳过最后一个（主楼）
+      for (let i = items.length - 2; i >= 0; i--) {
+        const item = items[i];
+        const cleanDescription = item.description
+          .replace(/<p><a[^>]*>阅读完整话题<\/a><\/p>/gi, '')
+          .replace(/<a[^>]*>阅读完整话题<\/a>/gi, '')
+          .trim();
+        
+        html += `
+          <div class="reply-item">
+            <div class="reply-header">
+              <span class="post-author">${item.author}</span>
+              <span class="post-time">${formatTime(item.time)}</span>
+              <span class="post-floor">#${i + 1}</span>
+            </div>
+            <div class="reply-content">${cleanDescription}</div>
+          </div>
+        `;
+      }
+      
+      html += `</div>`;
+    }
     
     return html;
   } catch (error: any) {
