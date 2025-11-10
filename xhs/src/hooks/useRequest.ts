@@ -1,13 +1,13 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-23 17:31:31
- * @LastEditTime: 2025-10-23 14:43:48
+ * @LastEditTime: 2025-11-10 14:27:35
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\hooks\useRequest.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { message } from "antd";
+import { App } from "antd";
 import { useCallback } from "react";
 import { CommandList } from "../../../type";
 import { vscode } from "../utils/vscode";
@@ -22,7 +22,7 @@ const generateUUID = () => {
 };
 
 export const useRequest = () => {
-  const [messageApi, contextHolder] = message.useMessage();
+  const { message: messageApi } = App.useApp();
 
   const request = useCallback(
     <T = any>(command: CommandList, payload: any): Promise<T> => {
@@ -40,5 +40,5 @@ export const useRequest = () => {
     []
   );
 
-  return { request, contextHolder, messageApi };
+  return { request, messageApi };
 };

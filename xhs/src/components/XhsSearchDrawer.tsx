@@ -20,7 +20,7 @@ interface XhsSearchDrawerProps {
 
 const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
   const [form] = Form.useForm();
-  const { request, messageApi, contextHolder } = useRequest();
+  const { request, messageApi } = useRequest();
 
   // 使用搜索 Hook
   const { loading, results, hasMore, search, loadMore, reset } = useXhsSearch({
@@ -85,7 +85,6 @@ const XhsSearchDrawer: React.FC<XhsSearchDrawerProps> = ({ open, onClose }) => {
 
   return (
     <>
-      {contextHolder}
       <BaseDrawer
         open={open}
         onClose={closeFunc}

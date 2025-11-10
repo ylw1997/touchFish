@@ -36,7 +36,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   onClose,
   initParams,
 }) => {
-  const { request, messageApi, contextHolder } = useRequest();
+  const { request, messageApi } = useRequest();
   const apiRef = useRef(createXhsApi(request));
 
   const [loading, setLoading] = useState(false);
@@ -171,7 +171,6 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
 
   return (
     <>
-      {contextHolder}
       <BaseDrawer
         open={open}
         onClose={onClose}

@@ -7,7 +7,7 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
  * @Description: 
  */
-import { ConfigProvider, theme } from "antd";
+import { ConfigProvider, theme, App } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { useState, useEffect, useMemo } from "react";
 import Feed from "./components/Feed";
@@ -65,12 +65,12 @@ const ThemeWrapper = () => {
   }), [isLightTheme]);
 
   return (
-    <ConfigProvider theme={antdTheme} locale={zhCN}
-    
-    >
+    <ConfigProvider theme={antdTheme} locale={zhCN}>
+      <App>
         <main className={isLightTheme ? "" : "dark"}>
           <Feed />
         </main>
+      </App>
     </ConfigProvider>
   );
 };
