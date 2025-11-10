@@ -120,7 +120,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const {
     list: weibos,
     copyLink,
-    contextHolder,
     handleToggleComments,
     handleExpandLongWeibo,
     handleCommentOrRepost,
@@ -221,7 +220,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   return (
     <>
-      {contextHolder}
       <Drawer
         title="微博搜索"
         placement="bottom"

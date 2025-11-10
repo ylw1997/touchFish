@@ -30,7 +30,7 @@ const useWeiboAction = () => {
 
   // 发送状态相关
   const [sendLoading, setSendLoading] = useState(false);
-  const { request, contextHolder, messageApi } = useRequest();
+  const { request, messageApi } = useRequest();
 
   const apiClient = useMemo(() => new WeiboApi(request), [request]);
 
@@ -381,7 +381,6 @@ const useWeiboAction = () => {
     setTotal,
     updateList,
     copyLink,
-    contextHolder,
     clearList,
     handleToggleComments,
     handleExpandLongWeibo,

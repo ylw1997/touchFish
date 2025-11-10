@@ -7,7 +7,7 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { message } from "antd";
+import { App } from "antd";
 import { useCallback } from "react";
 import { vscode } from "../utils/vscode";
 import { messageHandler } from "../utils/messageHandler";
@@ -22,7 +22,7 @@ const generateUUID = () => {
 };
 
 export const useRequest = () => {
-  const [messageApi, contextHolder] = message.useMessage();
+  const { message: messageApi } = App.useApp();
 
   const request = useCallback(
     <T = any>(command: ZhihuCommandList, payload: any): Promise<T> => {
@@ -40,5 +40,5 @@ export const useRequest = () => {
     []
   );
 
-  return { request, contextHolder, messageApi };
+  return { request, messageApi };
 };

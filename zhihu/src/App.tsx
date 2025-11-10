@@ -45,7 +45,6 @@ function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const {
     list,
-    contextHolder,
     clearList,
     getListData,
     fetchNext,
@@ -124,7 +123,6 @@ function App() {
 
   return (
     <>
-      {contextHolder}
       <Tabs
         radius="full"
         className="fixed z-50 top-2.5 w-full justify-center "

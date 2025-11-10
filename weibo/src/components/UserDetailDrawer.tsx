@@ -37,7 +37,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     list: userWeiboList,
     total: userWeiboTotal,
     copyLink,
-    contextHolder,
     handleToggleComments,
     handleExpandLongWeibo,
     handleCommentOrRepost,
@@ -101,7 +100,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
 
   return (
     <>
-      {contextHolder}
       <Drawer
         destroyOnHidden
         closable

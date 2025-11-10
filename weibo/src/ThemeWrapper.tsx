@@ -1,4 +1,4 @@
-import { ConfigProvider, theme } from "antd";
+import { ConfigProvider, theme, App as AntdApp } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { useState, useEffect, useMemo } from "react";
 import App from "./App";
@@ -54,9 +54,11 @@ const ThemeWrapper = () => {
 
   return (
     <ConfigProvider theme={antdTheme} locale={zhCN}>
+      <AntdApp>
         <main className={isLightTheme ? "" : "dark"}>
           <App />
         </main>
+      </AntdApp>
     </ConfigProvider>
   );
 };

@@ -40,7 +40,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const [showComments, setShowComments] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const { getZhihuComment, contextHolder, copyLink } = useZhihuAction();
+  const { getZhihuComment, copyLink } = useZhihuAction();
   const [overrideShow, setOverrideShow] = useState(false);
   const imagesVisible = globalShowImg || overrideShow;
   const hasImages = useMemo(
@@ -206,7 +206,6 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
 
   return (
     <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
-      {contextHolder}
       <Card key={item.id} title={renderTitle()} actions={actions}>
         <div
           className={`content ${!imagesVisible ? "hide-images" : ""}`.trim()}

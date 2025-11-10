@@ -7,7 +7,7 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { ConfigProvider, theme } from "antd";
+import { ConfigProvider, theme, App as AntdApp } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { HeroUIProvider } from "@heroui/react";
 import { useState, useEffect, useMemo } from "react";
@@ -69,11 +69,13 @@ const ThemeWrapper = () => {
 
   return (
     <ConfigProvider theme={antdTheme} locale={zhCN}>
-      <HeroUIProvider>
-        <main className={isLightTheme ? "" : "dark"}>
-          <App />
-        </main>
-      </HeroUIProvider>
+      <AntdApp>
+        <HeroUIProvider>
+          <main className={isLightTheme ? "" : "dark"}>
+            <App />
+          </main>
+        </HeroUIProvider>
+      </AntdApp>
     </ConfigProvider>
   );
 };

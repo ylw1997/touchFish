@@ -17,7 +17,7 @@ const useZhihuAction = () => {
   const [currentQuestionId, setCurrentQuestionId] = useState<string>("");
   // 排序: default | updated
   const [questionOrder, setQuestionOrder] = useState<"default" | "updated">("default");
-  const { request, contextHolder, messageApi } = useRequest();
+  const { request, messageApi } = useRequest();
 
   const apiClient = useMemo(() => new ZhihuApi(request), [request]);
 
@@ -222,7 +222,6 @@ const useZhihuAction = () => {
 
   return {
     list,
-    contextHolder,
     clearList,
     getListData,
     fetchNext,

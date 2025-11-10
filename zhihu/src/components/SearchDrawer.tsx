@@ -28,7 +28,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<ZhihuItemData[]>([]);
-  const { searchZhihu, contextHolder } = useZhihuAction();
+  const { searchZhihu } = useZhihuAction();
 
   const handleSearch = useCallback(
     async ({ keyword }: { keyword: string }) => {
@@ -59,7 +59,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   return (
     <>
-      {contextHolder}
       <Drawer
         getContainer={false}
         title="知乎搜索"

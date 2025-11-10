@@ -50,7 +50,6 @@ function App() {
     list,
     total,
     copyLink,
-    contextHolder,
     clearList,
     handleToggleComments,
     handleExpandLongWeibo,
@@ -166,7 +165,6 @@ function App() {
 
   return (
     <>
-      {contextHolder}
       <Suspense fallback={null}>
         <UserDetailDrawer
           visible={userDetailVisible}
