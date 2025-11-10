@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [9.11.0](https://github.com/ylw1997/touchFish/compare/v9.10.2...v9.11.0) (2025-11-10)
+
+
+### ✨ Features | 新功能
+
+* 更新命令注册，添加自定义输入功能和优化代码格式 ([7dec359](https://github.com/7dec35947075eece2ba38e5a4ee6f41bc10beb92))
+* 添加专有软件许可协议文件 ([4312f8d](https://github.com/4312f8da4f818514044b254d918d0c906228c47e))
+
 ### [9.10.2](https://github.com/ylw1997/touchFish/compare/v9.10.1...v9.10.2) (2025-11-10)
 
 ### [9.10.1](https://github.com/ylw1997/touchFish/compare/v9.10.0...v9.10.1) (2025-11-10)
