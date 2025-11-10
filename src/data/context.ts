@@ -11,3 +11,4 @@
 export const defaultHupuTab = "all-gambia";
 export const defaultV2exTab = "all";
 export const defaultNgaTab = "-7";
+export const defaultLinuxDoTab = "latest";

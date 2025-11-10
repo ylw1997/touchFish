@@ -112,8 +112,9 @@ function parseRSS(xmlString: string): any[] {
 
 /**
  * 获取 Linux.do RSS 新闻列表
+ * @param tab - 'latest' | 'hot' | 'top'
  */
-export const getNewsList = async () => {
+export const getNewsList = async (tab: string = 'latest') => {
   const config = vscode.workspace.getConfiguration("touchfish");
   const cookie = config.get<string>("linuxDoCookie") || "";
 
@@ -123,9 +124,18 @@ export const getNewsList = async () => {
     );
   }
 
+  // 根据 tab 确定 URL
+  const urlMap: Record<string, string> = {
+    latest: "https://linux.do/latest.rss",
+    hot: "https://linux.do/hot.rss",
+    top: "https://linux.do/top.rss",
+  };
+  
+  const url = urlMap[tab] || urlMap.latest;
+
   try {
-    const response = await axios.get("https://linux.do/latest.rss", {
-      headers: getCommonHeaders(cookie),
+    const response = await axios.get(url, {
+      headers: getCommonHeaders(cookie, url.replace('.rss', '')),
       timeout: 15000,
       decompress: true,
       validateStatus: (status) => status < 500,

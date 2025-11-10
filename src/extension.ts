@@ -34,6 +34,7 @@ import {
   setNgaTokenCommand,
   setXhsTokenCommand,
   setLinuxDoTokenCommand,
+  switchLinuxDoTab,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
@@ -108,6 +109,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(setNgaTokenCommand());
   context.subscriptions.push(setXhsTokenCommand());
   context.subscriptions.push(setLinuxDoTokenCommand());
+  context.subscriptions.push(switchLinuxDoTab());
   // 自动刷新
   vscode.commands.executeCommand("itHome.refresh");
   vscode.commands.executeCommand("chiphell.refresh");

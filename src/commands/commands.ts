@@ -371,6 +371,22 @@ export const setXhsTokenCommand = () => {
   });
 };
 
+// 切换 Linux.do tab
+export const switchLinuxDoTab = () => {
+  return vscode.commands.registerCommand("touchfish.switchLinuxDoTab", async () => {
+    const tab = await vscode.window.showQuickPick([
+      { label: "最新", description: "latest" },
+      { label: "热门", description: "hot" },
+      { label: "排行榜", description: "top" },
+    ]);
+    if (tab) {
+      await setConfigByKey("linuxDoTab", tab.description);
+      await vscode.commands.executeCommand("linuxdo.refresh");
+      await vscode.window.showInformationMessage(`Linux.do 切换为 ${tab.label}`);
+    }
+  });
+};
+
 // 设置 Linux.do cookie
 export const setLinuxDoTokenCommand = () => {
   return vscode.commands.registerCommand("touchfish.setLinuxDoToken", async () => {

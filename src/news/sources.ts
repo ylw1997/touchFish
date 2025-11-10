@@ -69,8 +69,9 @@ export const newsSources: NewsSource[] = [
   {
     key: 'linuxdo',
     supportsDetail: true,
-    fetchList: async () => {
-      const res = await getLinuxDoList();
+    fetchList: async (params?: any) => {
+      const tab = params?.tab || 'latest';
+      const res = await getLinuxDoList(tab);
       const list = res.data || [];
       return list.map((item: any) => ({
         id: `linuxdo:${item.guid || item.url}`,
