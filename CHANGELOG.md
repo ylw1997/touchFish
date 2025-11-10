@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [9.10.0](https://github.com/ylw1997/touchFish/compare/v9.9.0...v9.10.0) (2025-11-10)
+
+
+### ♻ Code Refactoring | 代码重构
+
+* 移除多余的消息提示，优化下载处理逻辑 ([59a7c3a](https://github.com/59a7c3a7244e5530572b2401a6ca4d4b374264d7))
+
+
+### ✨ Features | 新功能
+
+* 添加获取原图功能，优化图片下载体验 ([a0cbdf6](https://github.com/a0cbdf6bec5249e92eabccd6df79023b9ad60ad7))
+* 添加获取原图结果的日志输出，优化调试体验；调整提取图片URL的优先级逻辑 ([09077e5](https://github.com/09077e5824f2ac2fc4f1da14c94ee2084cb40b49))
+* 优化图片下载逻辑，直接使用展示图URL，简化原图获取流程 ([f377730](https://github.com/f3777305218de4a615052cc76699702c30f8622e))
+
 ## [9.9.0](https://github.com/ylw1997/touchFish/compare/v9.8.0...v9.9.0) (2025-11-06)
 
 
