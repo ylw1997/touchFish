@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [9.12.0](https://github.com/ylw1997/touchFish/compare/v9.11.0...v9.12.0) (2025-11-10)
+
+
+### ✨ Features | 新功能
+
+* 移除不必要的 contextHolder，优化 useRequest 钩子和相关组件 ([4340596](https://github.com/4340596ec9ccab2d8cbadb95045e18f3d23a7cdc))
+* 移除不必要的 contextHolder，优化 useRequest 钩子和相关组件 ([1db2593](https://github.com/1db259396ceff73353fcfa5e092029d8069ab022))
+
 ## [9.11.0](https://github.com/ylw1997/touchFish/compare/v9.10.2...v9.11.0) (2025-11-10)
 
 
