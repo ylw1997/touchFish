@@ -370,3 +370,20 @@ export const setXhsTokenCommand = () => {
     }
   });
 };
+
+// 设置 Linux.do cookie
+export const setLinuxDoTokenCommand = () => {
+  return vscode.commands.registerCommand("touchfish.setLinuxDoToken", async () => {
+    const linuxDoCookie = await vscode.window.showInputBox({
+      prompt: "请输入 Linux.do 的 Cookie",
+      placeHolder: "请输入 Linux.do 的 Cookie",
+    });
+    if (linuxDoCookie !== undefined) {
+      await setConfigByKey("linuxDoCookie", linuxDoCookie);
+      await vscode.window.showInformationMessage(
+        "Linux.do Cookie 设置成功！"
+      );
+      await vscode.commands.executeCommand("linuxdo.refresh");
+    }
+  });
+};

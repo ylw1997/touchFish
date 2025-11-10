@@ -2,7 +2,7 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博摸鱼聚合插件,沉浸式主题",
+	"description": "it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do摸鱼聚合插件,沉浸式主题",
 	"version": "9.12.0",
 	"icon": "logo.png",
 	"engines": {
@@ -22,6 +22,8 @@
 		"zhihu",
 		"虎扑步行街",
 		"nga",
+		"linux.do",
+		"linuxdo",
 		"沉浸式主题",
 		"纯色主题",
 		"摸鱼",
@@ -168,6 +170,10 @@
 				"touchfish.xhsCookie": {
 					"type": "string",
 					"description": "小红书 cookie"
+				},
+				"touchfish.linuxDoCookie": {
+					"type": "string",
+					"description": "Linux.do cookie，访问 RSS 源需要"
 				}
 			}
 		},
@@ -247,6 +253,11 @@
 					"icon": "assets/training.svg"
 				},
 				{
+					"id": "view.linuxdoList",
+					"name": "Linux.do",
+					"icon": "assets/training.svg"
+				},
+				{
 					"id": "view.setting",
 					"name": "设置",
 					"visibility": "hidden",
@@ -300,6 +311,16 @@
 				"command": "nga.changeTab",
 				"title": "切换tab",
 				"icon": "$(pencil)"
+			},
+			{
+				"command": "linuxdo.refresh",
+				"title": "刷新",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "touchfish.setLinuxDoToken",
+				"title": "设置 Linux.do Cookie",
+				"icon": "$(settings-gear)"
 			},
 			{
 				"command": "touchfish.setZhihuToken",
@@ -377,6 +398,16 @@
 				{
 					"command": "touchfish.setNgaToken",
 					"when": "view == view.ngaList",
+					"group": "navigation"
+				},
+				{
+					"command": "linuxdo.refresh",
+					"when": "view == view.linuxdoList",
+					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setLinuxDoToken",
+					"when": "view == view.linuxdoList",
 					"group": "navigation"
 				},
 				{

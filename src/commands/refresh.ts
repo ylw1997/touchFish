@@ -12,6 +12,7 @@ import { ChipHellProvider } from "../Providers/chipHellProvider";
 import { V2exProvider } from "../Providers/v2exProvider";
 import { HupuProvider } from "../Providers/hupuProvider";
 import { NgaProvider } from "../Providers/ngaProvider";
+import { LinuxDoProvider } from "../Providers/linuxDoProvider";
 
 /**
  * 刷新之家树列表
@@ -57,5 +58,12 @@ export const refreshNgaNews = (ngaProvider: NgaProvider) => {
     await ngaProvider.getData(
       vscode.workspace.getConfiguration("touchfish").get("ngaTab")
     );
+  });
+};
+
+// 刷新 Linux.do 文章列表
+export const refreshLinuxDoNews = (linuxDoProvider: LinuxDoProvider) => {
+  return vscode.commands.registerCommand("linuxdo.refresh", async () => {
+    await linuxDoProvider.getData();
   });
 };

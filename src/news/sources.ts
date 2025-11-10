@@ -5,6 +5,7 @@ import { getChipHellNews, getChipHellNewsDetail } from '../api/chipHell';
 import { getNgaList, getNgaNewsDetail } from '../api/nga';
 import { getNewsList as getIthomeList, getNewsDetail as getIthomeDetail } from '../api/ithome';
 import { getHupuList, getHupuDetail } from '../api/hupu';
+import { getNewsList as getLinuxDoList, getNewsDetail as getLinuxDoDetail } from '../api/linuxDo';
 // Zhihu / Weibo can be integrated later (they have more complex flows)
 
 function normalizeList(items: { title: string; url: string }[], source: NewsSource['key']): NewsListItem[] {
@@ -62,6 +63,28 @@ export const newsSources: NewsSource[] = [
     fetchList: async (params?: { tab?: string }) => normalizeList(await getHupuList(params?.tab || 'all-gambia'), 'hupu'),
     fetchDetail: async (url) => {
       const html = await getHupuDetail(url);
+      return html || undefined;
+    }
+  },
+  {
+    key: 'linuxdo',
+    supportsDetail: true,
+    fetchList: async () => {
+      const res = await getLinuxDoList();
+      const list = res.data || [];
+      return list.map((item: any) => ({
+        id: `linuxdo:${item.guid || item.url}`,
+        title: item.title.trim(),
+        url: item.url,
+        source: 'linuxdo' as const,
+        supportsDetail: true,
+        time: item.time,
+        author: item.author,
+        category: item.category,
+      }));
+    },
+    fetchDetail: async (url) => {
+      const html = await getLinuxDoDetail(url);
       return html || undefined;
     }
   },

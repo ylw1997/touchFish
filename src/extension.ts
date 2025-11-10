@@ -12,7 +12,8 @@ import {
   openUrl,
   openCHUrl,
   openV2exUrl,
-  openNgaUrl
+  openNgaUrl,
+  openLinuxDoUrl
 } from "./commands/openUrl";
 import {
   refresh,
@@ -20,6 +21,7 @@ import {
   refreshV2exNews,
   refreshHupuNews,
   refreshNgaNews,
+  refreshLinuxDoNews,
 } from "./commands/refresh";
 import { ItHomeProvider } from "./Providers/itHomeProvider";
 import {
@@ -31,11 +33,13 @@ import {
   setWeiboTokenCommand,
   setNgaTokenCommand,
   setXhsTokenCommand,
+  setLinuxDoTokenCommand,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
 import { HupuProvider } from "./Providers/hupuProvider";
 import { NgaProvider } from "./Providers/ngaProvider";
+import { LinuxDoProvider } from "./Providers/linuxDoProvider";
 import { ZhihuWebProvider } from './Providers/zhihuWebProvider';
 import { XhsWebProvider } from './Providers/xhsWebProvider';
 import { WeiboProvider } from "./Providers/weiboProvider";
@@ -55,6 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
   const v2exProvicer = new V2exProvider();
   const hupuProvider = new HupuProvider();
   const ngaProvider = new NgaProvider();
+  const linuxDoProvider = new LinuxDoProvider();
   const weiboProvider = new WeiboProvider(context);
   const zhihuWebProvider = new ZhihuWebProvider(context);
   const xhsWebProvider = new XhsWebProvider(context);
@@ -63,6 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
   vscode.window.registerTreeDataProvider("view.hupuList", hupuProvider);
   vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
+  vscode.window.registerTreeDataProvider("view.linuxdoList", linuxDoProvider);
   vscode.window.registerWebviewViewProvider("weibo", weiboProvider, {
     webviewOptions: {
       retainContextWhenHidden: true,
@@ -88,6 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(changeHupuTab(hupuProvider));
   context.subscriptions.push(refreshNgaNews(ngaProvider));
   context.subscriptions.push(changeNgaTab(ngaProvider));
+  context.subscriptions.push(refreshLinuxDoNews(linuxDoProvider));
 
   //注册打开新闻链接指令
   context.subscriptions.push(openUrl);
@@ -95,16 +102,19 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(openSetting);
   context.subscriptions.push(openV2exUrl);
   context.subscriptions.push(openNgaUrl);
+  context.subscriptions.push(openLinuxDoUrl);
   context.subscriptions.push(setZhihuTokenCommand());
   context.subscriptions.push(setWeiboTokenCommand());
   context.subscriptions.push(setNgaTokenCommand());
   context.subscriptions.push(setXhsTokenCommand());
+  context.subscriptions.push(setLinuxDoTokenCommand());
   // 自动刷新
   vscode.commands.executeCommand("itHome.refresh");
   vscode.commands.executeCommand("chiphell.refresh");
   vscode.commands.executeCommand("v2ex.refresh");
   vscode.commands.executeCommand("hupu.refresh");
   vscode.commands.executeCommand("nga.refresh");
+  vscode.commands.executeCommand("linuxdo.refresh");
 }
 
 // this method is called when your extension is deactivated

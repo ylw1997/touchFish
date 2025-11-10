@@ -252,3 +252,101 @@ export const openNgaUrl = registerArticleCommand(
     };
   }
 );
+
+// 打开 Linux.do 话题详情
+export const openLinuxDoUrl = registerArticleCommand(
+  "linuxdo.openUrl",
+  async (_title, url: string) => {
+    const { getNewsDetail } = await import("../api/linuxDo");
+    const html = await getNewsDetail(url);
+    
+    const extraCss = `
+      .topic-header { 
+        margin-bottom: 30px; 
+        padding-bottom: 20px; 
+        border-bottom: 2px solid var(--vscode-panel-border); 
+      }
+      .topic-header h1 { 
+        margin: 0 0 15px 0; 
+        font-size: 28px; 
+        font-weight: bold; 
+      }
+      .topic-meta { 
+        display: flex; 
+        gap: 15px; 
+        margin-bottom: 15px; 
+        font-size: 14px; 
+        color: var(--vscode-descriptionForeground); 
+      }
+      .category { 
+        background: var(--vscode-badge-background); 
+        color: var(--vscode-badge-foreground); 
+        padding: 3px 10px; 
+        border-radius: 3px; 
+      }
+      .topic-description { 
+        font-size: 16px; 
+        line-height: 1.8; 
+        color: var(--vscode-editor-foreground); 
+      }
+      .topic-posts { 
+        margin-top: 20px; 
+      }
+      .post-item { 
+        margin-bottom: 25px; 
+        padding: 15px; 
+        background: var(--vscode-editor-background); 
+        border: 1px solid var(--vscode-panel-border); 
+        border-radius: 6px; 
+      }
+      .post-header { 
+        display: flex; 
+        gap: 15px; 
+        margin-bottom: 12px; 
+        font-size: 13px; 
+        color: var(--vscode-descriptionForeground); 
+        padding-bottom: 10px; 
+        border-bottom: 1px solid var(--vscode-widget-border); 
+      }
+      .post-author { 
+        font-weight: bold; 
+        color: var(--vscode-textLink-foreground); 
+      }
+      .post-floor { 
+        margin-left: auto; 
+      }
+      .post-content { 
+        font-size: 15px; 
+        line-height: 1.8; 
+      }
+      .post-content p { 
+        margin: 8px 0; 
+      }
+      .post-content img { 
+        max-width: 100%; 
+        border-radius: 4px; 
+        margin: 10px 0; 
+      }
+      .post-content code { 
+        background: var(--vscode-textCodeBlock-background); 
+        padding: 2px 6px; 
+        border-radius: 3px; 
+        font-family: var(--vscode-editor-font-family); 
+      }
+      .post-content a { 
+        color: var(--vscode-textLink-foreground); 
+        text-decoration: none; 
+      }
+      .post-content a:hover { 
+        text-decoration: underline; 
+      }
+    `;
+    
+    return {
+      content: html || "内容加载失败",
+      originalUrl: url,
+      extraCss,
+      showTitle: false,
+    };
+  }
+);
