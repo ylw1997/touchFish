@@ -1,6 +1,22 @@
 # 更新历史 
 
 
+## [10.1.0](https://github.com/ylw1997/touchFish/compare/v9.12.0...v10.1.0) (2025-11-10)
+
+
+### 📦 Chores | 其他更新
+
+* 更新版本号至 10.0.0,增加linux.do支持 ([d49018c](https://github.com/d49018c39da431a368ae56dfe3a1f8f10e9d5b9c))
+
+
+### ✨ Features | 新功能
+
+* 添加对 Linux.do 标签切换功能的支持，优化新闻列表获取逻辑 ([77eedaa](https://github.com/77eedaa74413991f41645a38444e2cbb225b6957))
+* 添加对 Linux.do 的支持，包括文章列表和详情获取功能 ([4e946ee](https://github.com/4e946eeaca086913f962096eec8e757a38fee5f6))
+* 添加对 Linux.do 的支持，更新 README.md 中的功能描述和 Cookie 配置说明 ([ffec326](https://github.com/ffec326d1580037f23a87f388952c82e2cb59c3d))
+* 优化 Linux.do 新闻详情页面样式，增加时间格式化功能 ([db1989e](https://github.com/db1989e6286f3316ea26c0eeff09564ad6ee98c9))
+* 优化帖子详情页面回复部分，增加无回复时的提示样式 ([9b4a7da](https://github.com/9b4a7daab51e7ddac2191461179e565b1ffcdf09))
+
 ## [9.12.0](https://github.com/ylw1997/touchFish/compare/v9.11.0...v9.12.0) (2025-11-10)
 
 
