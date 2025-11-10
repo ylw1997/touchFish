@@ -317,6 +317,13 @@ export const openLinuxDoUrl = registerArticleCommand(
         padding-bottom: 12px;
         border-bottom: 1px solid var(--vscode-textBlockQuote-border);
       }
+      .no-replies {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--vscode-descriptionForeground);
+        font-size: 14px;
+        opacity: 0.7;
+      }
       .reply-item { 
         padding: 10px 0;
         border-bottom: 1px solid var(--vscode-textBlockQuote-border);

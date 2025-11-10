@@ -242,11 +242,11 @@ export const getNewsDetail = async (url: string) => {
     }
     
     // 回复列表
+    html += `<div class="replies-section">
+      <div class="replies-header">${items.length > 1 ? `${items.length - 1} 条回复` : '暂无回复'}</div>
+    `;
+    
     if (items.length > 1) {
-      html += `<div class="replies-section">
-        <div class="replies-header">${items.length - 1} 条回复</div>
-      `;
-      
       // 倒序遍历，跳过最后一个（主楼）
       for (let i = items.length - 2; i >= 0; i--) {
         const item = items[i];
@@ -266,9 +266,11 @@ export const getNewsDetail = async (url: string) => {
           </div>
         `;
       }
-      
-      html += `</div>`;
+    } else {
+      html += `<div class="no-replies">还没有人回复，快来抢沙发吧！</div>`;
     }
+    
+    html += `</div>`;
     
     return html;
   } catch (error: any) {
