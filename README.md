@@ -17,7 +17,7 @@
 
 ## ✨ 核心功能
 
-- **多平台聚合**: 无需离开 VS Code，即可沉浸式浏览来自 **IT之家、Chiphell、V2EX、虎扑、NGA** 等多个热门社区的资讯。
+- **多平台聚合**: 无需离开 VS Code，即可沉浸式浏览来自 **IT之家、Chiphell、V2EX、虎扑、NGA、Linux.do** 等多个热门社区的资讯。
 - **全功能微博**: 不仅仅是看！你可以 **刷微博、看评论、点赞、转发、发微博、关注/取关用户**，享受近乎完整的桌面端微博体验。
 - **深度集成知乎**: 在代码的海洋里，随时潜入知乎探索答案。支持 **查看热榜、浏览推荐、查看问题和回答详情、展开/折叠评论、点赞/反对、关注问题** 等深度互动。
 - **小红书浏览**: 完整的小红书体验，支持 **首页推荐流、搜索笔记、查看详情、浏览评论、用户主页、关注/取关用户**，在 VS Code 内完成完整的小红书浏览闭环。
@@ -28,10 +28,7 @@
 
 ## 🚀 功能展示（视频）
 
-
-
 https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
-
 
 
 ## 🚀 功能展示（截图）
@@ -107,10 +104,14 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 - `touchfish.zhihuCookie`: 你的知乎 Cookie。
 - `touchfish.ngaCookie`: 你的 NGA Cookie。
 - `touchfish.xhsCookie`: 你的小红书 Cookie (用于首页推荐加密接口)。
+- `touchfish.linuxDoCookie`: 你的 Linux.do Cookie (访问 RSS 源需要)。
 - `touchfish.showImg`: 是否显示图片（目前主要支持微博）。
-- 以及各个新闻源的默认标签页配置。
+- 以及各个新闻源的默认标签页配置（支持 V2EX、虎扑、NGA、Linux.do 等）。
 
 ## ⚠️ 注意事项
 - **网络环境**: 浏览 **V2EX** 节点需要科学上网。
-- **Cookie 配置**: **小红书、微博、知乎、NGA** 的大部分高级功能（如个人主页、发布、评论等）需要登录凭证 (Cookie)。你可以在浏览器中登录相应网站，然后按 `F12` 打开开发者工具，在“网络”(Network) 面板中找到请求的 `Cookie` 值并配置到插件中。
+- **Cookie 配置**: 
+  - **小红书、微博、知乎、NGA、Linux.do** 的大部分高级功能（如个人主页、发布、评论等）需要登录凭证 (Cookie)。
+  - 你可以在浏览器中登录相应网站，然后按 `F12` 打开开发者工具，在"网络"(Network) 面板中找到请求的 `Cookie` 值并配置到插件中。
+- **标签页切换**: 支持 **Linux.do**（最新/热门/排行榜）、**V2EX**（全部/技术/创意等）、**虎扑**（步行街热帖/主干道等）、**NGA**（网事杂谈/晴风村等）多个平台的栏目切换。
 - **问题反馈**: 如果遇到任何 Bug 或有功能建议，欢迎在 [GitHub Issues](https://github.com/ylw1997/touchFish/issues) 中提出。
