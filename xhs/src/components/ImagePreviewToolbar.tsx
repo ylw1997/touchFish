@@ -14,7 +14,6 @@ import {
   ZoomOutOutlined,
 } from "@ant-design/icons";
 import { vscode } from "../utils/vscode";
-import { getNoteOriginalImage } from "../utils/imageUtils";
 
 interface ImagePreviewToolbarProps {
   /** 当前图片URL */
@@ -72,20 +71,13 @@ const ImagePreviewToolbar: React.FC<ImagePreviewToolbarProps> = ({
   const handleDownload = () => {
     const fileName = `${fileNamePrefix}_${imageIndex + 1}.jpg`;
 
-    // 尝试获取原图
-    const originalResult = getNoteOriginalImage(imageUrl);
-    const downloadUrl =
-      originalResult.success && originalResult.newUrl
-        ? originalResult.newUrl
-        : imageUrl;
-
     if (onDownload) {
-      onDownload(downloadUrl, fileName);
+      onDownload(imageUrl, fileName);
     } else {
-      // 默认使用 VSCode 扩展下载
+      // 直接传展示图URL给后端，后端会自动解析原图并降级
       vscode.postMessage({
         command: "XHS_DOWNLOAD_IMAGE",
-        payload: { url: downloadUrl, fileName },
+        payload: { url: imageUrl, fileName },
       });
     }
   };
