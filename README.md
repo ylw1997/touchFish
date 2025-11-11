@@ -114,4 +114,16 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
   - **小红书、微博、知乎、NGA、Linux.do** 的大部分高级功能（如个人主页、发布、评论等）需要登录凭证 (Cookie)。
   - 你可以在浏览器中登录相应网站，然后按 `F12` 打开开发者工具，在"网络"(Network) 面板中找到请求的 `Cookie` 值并配置到插件中。
 - **标签页切换**: 支持 **Linux.do**（最新/热门/排行榜）、**V2EX**（全部/技术/创意等）、**虎扑**（步行街热帖/主干道等）、**NGA**（网事杂谈/晴风村等）多个平台的栏目切换。
+- **无声音**:需要替换ffmpeg动态链接库,一键脚本如下:
+ - **视频播放无声音（常见于 AAC 音轨的 MP4）**：VS Code 内置的 Electron/Chromium 精简版不含部分专利音频解码器，出现“有画面没声音”。
+   **一键脚本（替换 ffmpeg.dll）—使用前请确认 Electron 版本并自担风险**：
+   > Windows PowerShell
+   ```powershell
+   Invoke-RestMethod https://gist.githubusercontent.com/nondanee/f157bbbccecfe29e48d87273cd02e213/raw | python
+   ```
+   > Linux / macOS
+   ```bash
+   curl https://gist.githubusercontent.com/nondanee/f157bbbccecfe29e48d87273cd02e213/raw | python
+   ```
+
 - **问题反馈**: 如果遇到任何 Bug 或有功能建议，欢迎在 [GitHub Issues](https://github.com/ylw1997/touchFish/issues) 中提出。
