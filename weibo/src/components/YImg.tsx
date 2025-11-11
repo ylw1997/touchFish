@@ -102,7 +102,7 @@ const YImg: React.FC<YImgProps> = ({
       ref={elementRef}
     >
       {mediaType === "video" ? (
-        <video src={videoSrc} controls {...props} autoPlay muted />
+        <video src={videoSrc} controls {...props} />
       ) : (
         <Image
           src={imgSrc}
