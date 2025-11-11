@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [10.2.0](https://github.com/ylw1997/touchFish/compare/v10.1.0...v10.2.0) (2025-11-11)
+
+
+### ✨ Features | 新功能
+
+* 添加视频播放无声音问题的解决方案及一键脚本说明 ([2256862](https://github.com/2256862350febb0742c2d9b8bd49b0efc8b841b5))
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 修正 README.md 中的格式和内容错误 ([e7ceb4e](https://github.com/e7ceb4e116a6d2007123fb1177f070ccade2fbd0))
+* 移除视频播放组件中的自动播放和静音属性 ([6743d6d](https://github.com/6743d6d6ec48a0803bbc529c6bc1c53b76208fe2))
+
 ## [10.1.0](https://github.com/ylw1997/touchFish/compare/v9.12.0...v10.1.0) (2025-11-10)
 
 
