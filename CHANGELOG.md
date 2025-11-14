@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [10.3.1](https://github.com/ylw1997/touchFish/compare/v10.3.0...v10.3.1) (2025-11-14)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 更新 processCommentContent 函数以支持检查 comment_img 类和图片链接 ([986ece0](https://github.com/986ece0bf3b29fbf8450e2c5ce98001700c52ac1))
+
 ## [10.3.0](https://github.com/ylw1997/touchFish/compare/v10.2.0...v10.3.0) (2025-11-14)
 
 
