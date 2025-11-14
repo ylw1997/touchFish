@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-09-26 18:02:57
+ * @LastEditTime: 2025-11-14 10:23:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -18,6 +18,7 @@ import {
   SearchOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  CompressOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -40,6 +41,8 @@ import { debounce } from "./utils";
 import { vscode } from "./utils/vscode";
 import { messageHandler } from "./utils/messageHandler";
 import { Tabs, Tab } from "@heroui/react";
+import { useHasExpanded, useExpandedStore } from "./store/expanded";
+import type { ExpandedState } from "./store/expanded";
 
 function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
@@ -74,6 +77,8 @@ function App() {
   );
 
   const [activeKey, setActiveKey] = useState(defTab[0].key);
+  const hasExpanded = useHasExpanded();
+  const collapseAll = useExpandedStore((state: ExpandedState) => state.collapseAll);
 
   useEffect(() => {
     const scrollableNode = scrollableNodeRef.current;
@@ -191,6 +196,13 @@ function App() {
           icon={<RedoOutlined style={{ color: "#b37feb" }} />}
           tooltip={{ title: "刷新", placement: "left" }}
         />
+        {hasExpanded && (
+          <FloatButton
+            onClick={() => collapseAll()}
+            icon={<CompressOutlined style={{ color: "#a0d911" }} />}
+            tooltip={{ title: "折叠已展开", placement: "left" }}
+          />
+        )}
         <FloatButton
           onClick={() => {
             const newState = !showImg;

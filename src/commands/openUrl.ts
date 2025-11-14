@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-11-10 16:50:47
+ * @LastEditTime: 2025-11-14 10:05:43
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -160,7 +160,7 @@ export const openCHUrl = registerArticleCommand(
     return {
       content: res || "内容加载失败",
       originalUrl: url,
-      extraCss: `img{ max-width:60%; } .news_detail { font-size: 16px; }`,
+      extraCss: `.news_detail { font-size: 16px; }`,
     };
   }
 );

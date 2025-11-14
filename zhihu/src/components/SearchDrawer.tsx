@@ -1,10 +1,11 @@
-import { Drawer, Button, Input, Form, List, Empty, Divider } from "antd";
+import { Drawer, Button, Input, Form, List, Empty, Divider, Space } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
 import type { ZhihuItemData } from "../../../type";
 import ZhihuItem from "./ZhihuItem";
 import { loaderFunc } from "../utils/loader";
+import { useHasExpanded, useExpandedStore } from "../store/expanded";
 import useZhihuAction from "../hooks/useZhihuAction";
 
 interface SearchDrawerProps {
@@ -29,6 +30,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<ZhihuItemData[]>([]);
   const { searchZhihu } = useZhihuAction();
+  const hasExpanded = useHasExpanded();
+  const collapseAll = useExpandedStore(state => state.collapseAll);
 
   const handleSearch = useCallback(
     async ({ keyword }: { keyword: string }) => {
@@ -97,6 +100,17 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
               loading={loading}
             />
           </Form.Item>
+          {hasExpanded && (
+            <Space style={{ marginBottom: 8 }}>
+              <Button
+                onClick={() => collapseAll()}
+                variant="filled"
+                color="default"
+              >
+                折叠全部
+              </Button>
+            </Space>
+          )}
         </Form>
         <Divider>搜索结果</Divider>
         {loading ? (

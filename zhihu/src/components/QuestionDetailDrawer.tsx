@@ -11,6 +11,7 @@ import { Drawer, List, Card, Button, Divider, Segmented } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { motion } from "framer-motion";
 import React from "react";
+import { useHasExpanded, useExpandedStore } from "../store/expanded";
 import ZhihuItem from "./ZhihuItem";
 import type { ZhihuItemData } from "../../../type";
 import { loaderFunc } from "../utils/loader";
@@ -50,6 +51,8 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   questionOrder = "default",
   changeQuestionOrder,
 }) => {
+  const hasExpanded = useHasExpanded();
+  const collapseAll = useExpandedStore(state => state.collapseAll);
   return (
     <Drawer
       getContainer={false}
@@ -104,6 +107,15 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
                         关注问题
                       </Button>
                     ),
+                    hasExpanded ? (
+                      <Button
+                        variant="filled"
+                        color="default"
+                        onClick={() => collapseAll()}
+                      >
+                        折叠全部
+                      </Button>
+                    ) : null,
                   ]
             }
           >
