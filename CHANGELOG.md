@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [10.3.0](https://github.com/ylw1997/touchFish/compare/v10.2.0...v10.3.0) (2025-11-14)
+
+
+### ✨ Features | 新功能
+
+* 添加 zustand 状态管理以支持折叠功能，更新相关组件以使用新状态 ([bd55b5a](https://github.com/bd55b5ac765f61dc42848207b2833b2dc2f3a68f))
+
 ## [10.2.0](https://github.com/ylw1997/touchFish/compare/v10.1.0...v10.2.0) (2025-11-11)
 
 
