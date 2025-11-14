@@ -65,15 +65,19 @@ const parseHtmlString = (
  * @returns 包含解析后内容的React片段。
  */
 export const processCommentContent = (htmlString: string | undefined) => {
-  const regex = /<a.*?href="(.*?)".*?>(.*?)<\/a>/g;
+  const regex = /<a\s+([^>]*?)href="([^"]+)"([^>]*?)>(.*?)<\/a>/g;
 
   return parseHtmlString(htmlString, regex, (match) => {
-    const [fullMatch, href, text] = match;
-    const isImage = imageExtensions.some((ext) =>
+    const [fullMatch, attrsBefore, href, attrsAfter, text] = match;
+    const allAttrs = attrsBefore + ' ' + attrsAfter;
+    
+    // 检查是否有 comment_img class 或链接指向图片
+    const hasCommentImgClass = /class=["']?[^"']*comment_img[^"']*["']?/.test(allAttrs);
+    const isImageUrl = imageExtensions.some((ext) =>
       href.toLowerCase().endsWith(ext)
     );
 
-    if (isImage) {
+    if (hasCommentImgClass || isImageUrl) {
       return <Image key={`image-${match.index}`} src={href} alt={text} />;
     } else {
       // 如果链接不是图片，则保留为常规链接。
