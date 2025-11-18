@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [10.3.2](https://github.com/ylw1997/touchFish/compare/v10.3.1...v10.3.2) (2025-11-18)
+
+
+### 📝 Documentation | 文档
+
+* 添加 open-vsx 地址以提供第三方市场链接 ([e14dbcb](https://github.com/e14dbcb0081f8364cd002b2ab2f00f8f68cf6c2e))
+
 ### [10.3.1](https://github.com/ylw1997/touchFish/compare/v10.3.0...v10.3.1) (2025-11-14)
 
 
