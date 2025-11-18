@@ -15,6 +15,11 @@
 > [!Important]
 > 记住这个插件：`TouchFish` - 让工作时间不再枯燥，摸鱼摸得理直气壮！
 
+## 🔥open-vsx 地址
+**第三方市场可用**
+
+https://open-vsx.org/extension/ylw/touchfish
+
 ## ✨ 核心功能
 
 - **多平台聚合**: 无需离开 VS Code，即可沉浸式浏览来自 **IT 之家、Chiphell、V2EX、虎扑、NGA、Linux.do** 等多个热门社区的资讯。
@@ -25,7 +30,7 @@
 - **丰富交互体验**: 支持 **图片懒加载、视频播放、长文展开、加载动画、列表无限滚动、瀑布流布局** 等特性，提供流畅、现代的浏览体验。
 - **高度可配置**: 从新闻源到栏目分类，再到内容展示方式，多种参数均可自定义，打造最适合你的摸鱼环境。
 
-## 🚀 功能展示（视频）
+## 💡 功能展示（视频）
 
 https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 
