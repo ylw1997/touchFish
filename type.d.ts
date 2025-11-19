@@ -1,7 +1,7 @@
 /*
  * @Author: yangliwei 1280426581@qq.com
  * @Date: 2024-11-19 14:17:37
- * @LastEditTime: 2025-11-05 10:15:47
+ * @LastEditTime: 2025-11-19 17:09:22
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\type.d.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
@@ -86,7 +86,6 @@ export type CommandList =
   | "XHS_FEED_DETAIL"
   | "XHS_SAVE_SCROLL_POSITION"
   | "XHS_RESTORE_SCROLL_POSITION"
-  | "XHS_REQUEST_RESTORE_SCROLL"
   | "XHS_GET_COMMENTS"
   // 用户主页：获取用户已发布笔记
   | "XHS_GET_USER_POSTED"
