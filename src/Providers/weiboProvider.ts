@@ -36,7 +36,7 @@ import {
 import * as vscode from "vscode";
 import { commandsType, uploadType, weiboAJAX } from "../../type";
 import { setConfigByKey } from "../core/config";
-import * as fs from "fs";
+import { getWebviewHtml } from "../utils/webviewUtils";
 export class WeiboProvider implements WebviewViewProvider {
   constructor(protected context: ExtensionContext) {}
 
@@ -326,61 +326,13 @@ export class WeiboProvider implements WebviewViewProvider {
       showImg = true;
     }
 
-    // 判断是否为开发环境: 使用 VSCode API 提供的 extensionMode 更可靠
-    const isDev = this.context.extensionMode === vscode.ExtensionMode.Development;
-    let htmlContent = "";
-    console.log("isDev判断是否为开发环境", isDev);
-    if (isDev) {
-      // 开发环境，直接加载本地Vite dev server
-      htmlContent = `
-        <!doctype html>
-                <html lang="en">
-          <head>
-          <script>
-          window.showImg = ${showImg}
-          </script>
-            <script type="module">
-        import RefreshRuntime from "http://localhost:5173/@react-refresh"
-        RefreshRuntime.injectIntoGlobalHook(window)
-        window.$RefreshReg$ = () => {}
-        window.$RefreshSig$ = () => (type) => type
-        window.__vite_plugin_react_preamble_installed__ = true
-        </script>
-
-            <script type="module" src="http://localhost:5173/@vite/client"></script>
-
-            <meta charset="UTF-8" />
-            <link rel="icon" type="image/svg+xml" href="http://localhost:5173/vite.svg" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Vite + React + TS</title>
-          </head>
-          <body>
-            <div id="root"></div>
-            <script type="module" src="http://localhost:5173/src/main.tsx"></script>
-          </body>
-        </html>
-      `;
-    } else {
-      const distPath = Uri.joinPath(
-        this.context.extensionUri,
-        "weibo",
-        "dist"
-      );
-      const indexPath = Uri.joinPath(distPath, "index.html");
-      let html = fs.readFileSync(indexPath.fsPath, "utf-8");
-      html = html.replace(
-        /(href|src)="\/([^"]*)"/g,
-        (_, attr, path) =>
-          `${attr}="${webviewView.webview.asWebviewUri(
-            vscode.Uri.joinPath(distPath, path)
-          )}"`
-      );
-      html = html.replace(
-        "</head>",
-        `<script>window.showImg = ${showImg}</script></head>`
-      );
-      htmlContent = html;
-    }
-    webviewView.webview.html = htmlContent;
+    webviewView.webview.html = getWebviewHtml({
+      webviewView,
+      context: this.context,
+      distPath: "weibo/dist",
+      devPort: 5173,
+      title: "Vite + React + TS",
+      windowConfig: { showImg },
+    });
   }
 }

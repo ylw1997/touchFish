@@ -12,12 +12,30 @@ import * as fs from "fs";
 import * as vm from "vm";
 import * as crypto from "crypto-js";
 
+let zhihuScript: vm.Script | null = null;
+let xhsScript: vm.Script | null = null;
+
+function getZhihuScript(): vm.Script {
+  if (!zhihuScript) {
+    const zhihuScriptPath = path.join(__dirname, "zhihu.js");
+    const zhihuScriptCode = fs.readFileSync(zhihuScriptPath, "utf8");
+    zhihuScript = new vm.Script(zhihuScriptCode);
+  }
+  return zhihuScript;
+}
+
+function getXhsScript(): vm.Script {
+  if (!xhsScript) {
+    const xhsScriptPath = path.join(__dirname, "xhs.js");
+    const xhsScriptCode = fs.readFileSync(xhsScriptPath, "utf8");
+    xhsScript = new vm.Script(xhsScriptCode);
+  }
+  return xhsScript;
+}
+
 export function getZhihuSignature(dataToSign: string): Promise<string> {
   return new Promise((resolve, reject) => {
     try {
-      const zhihuScriptPath = path.join(__dirname, "zhihu.js");
-      const zhihuScriptCode = fs.readFileSync(zhihuScriptPath, "utf8");
-
       // 为沙箱环境创建一个'require'函数，只允许加载'crypto-js'
       const sandboxRequire = (moduleName: string) => {
         if (moduleName === "crypto-js") {
@@ -38,7 +56,7 @@ export function getZhihuSignature(dataToSign: string): Promise<string> {
       const context = vm.createContext(sandbox);
 
       // 在沙箱中执行 zhihu.js
-      vm.runInContext(zhihuScriptCode, context);
+      getZhihuScript().runInContext(context);
 
       // 从沙箱的 module.exports 中获取脚本的导出
       const zhihuModule = context.module.exports as any;
@@ -74,27 +92,29 @@ export function getXhsSignature(
 ): Promise<XhsSignature> {
   return new Promise((resolve, reject) => {
     try {
-      const xhsScriptPath = path.join(__dirname, "xhs.js");
-      const xhsScriptCode = fs.readFileSync(xhsScriptPath, "utf8");
       // 限制 require 只允许 crypto-js
       const sandboxRequire = (moduleName: string) => {
         if (moduleName === "crypto-js") return crypto;
-        throw new Error(`Sandbox does not allow requiring module: ${moduleName}`);
+        throw new Error(
+          `Sandbox does not allow requiring module: ${moduleName}`
+        );
       };
       const sandbox = {
         require: sandboxRequire,
         module: { exports: {} },
         console: console,
         // 兼容脚本可能访问的全局函数
-        btoa: (str: string) => Buffer.from(str, 'binary').toString('base64'),
-        atob: (b64: string) => Buffer.from(b64, 'base64').toString('binary'),
+        btoa: (str: string) => Buffer.from(str, "binary").toString("base64"),
+        atob: (b64: string) => Buffer.from(b64, "base64").toString("binary"),
       } as any;
       const context = vm.createContext(sandbox);
-      vm.runInContext(xhsScriptCode, context);
+      getXhsScript().runInContext(context);
       const exported: any = context.module.exports || {};
       const signer = exported.get_request_headers_params;
-      if (typeof signer !== 'function') {
-        return reject(new Error('xhs.js did not export get_request_headers_params'));
+      if (typeof signer !== "function") {
+        return reject(
+          new Error("xhs.js did not export get_request_headers_params")
+        );
       }
       // 解析 cookie 中的 a1 值
       let a1: string | undefined;
@@ -108,7 +128,7 @@ export function getXhsSignature(
       const xt: string | undefined = result?.xt;
       const xs_common: string | undefined = result?.xs_common;
       if (!xs || !xt || !xs_common) {
-        return reject(new Error('签名结果缺少 xs/xt/xs_common'));
+        return reject(new Error("签名结果缺少 xs/xt/xs_common"));
       }
       resolve({ xs, xt, xs_common });
     } catch (e: any) {

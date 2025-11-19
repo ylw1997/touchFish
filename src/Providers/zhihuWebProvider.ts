@@ -7,12 +7,7 @@
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import {
-  WebviewView,
-  WebviewViewProvider,
-  ExtensionContext,
-  Uri,
-} from "vscode";
+import { WebviewView, WebviewViewProvider, ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import {
   getZhihuComment,
@@ -25,7 +20,7 @@ import {
   followQuestion,
   unfollowQuestion,
 } from "../api/zhihu";
-import * as fs from "fs";
+import { getWebviewHtml } from "../utils/webviewUtils";
 import { ZhihuCommandsType } from "../../type";
 export class ZhihuWebProvider implements WebviewViewProvider {
   constructor(protected context: ExtensionContext) {}
@@ -64,34 +59,62 @@ export class ZhihuWebProvider implements WebviewViewProvider {
               break;
             }
             case "ZHIHU_GETDATA": {
-              const { tab, nextUrl } = payload as { tab: string; nextUrl?: string };
+              const { tab, nextUrl } = payload as {
+                tab: string;
+                nextUrl?: string;
+              };
               const data = await getZhihuWebData(tab as any, nextUrl);
               webviewView.webview.postMessage({ payload: data, uuid });
               break;
             }
             case "getZhihuComment": {
               const comments = await getZhihuComment(payload);
-              webviewView.webview.postMessage({ payload: { data: comments, answerId: payload }, uuid });
+              webviewView.webview.postMessage({
+                payload: { data: comments, answerId: payload },
+                uuid,
+              });
               break;
             }
             case "getZhihuChildComment": {
               // payload may be commentId or nextUrl
               const res = await getZhihuChildComment(payload);
-              webviewView.webview.postMessage({ payload: { data: res.data, paging: res.paging, commentIdOrNextUrl: payload }, uuid });
+              webviewView.webview.postMessage({
+                payload: {
+                  data: res.data,
+                  paging: res.paging,
+                  commentIdOrNextUrl: payload,
+                },
+                uuid,
+              });
               break;
             }
             case "getZhihuQuestionDetail": {
-              const { questionId, nextUrl, order } = payload as { questionId: string; nextUrl?: string; order?: "default" | "updated" };
-              const detailRes = await getZhihuWebDetail(nextUrl ? nextUrl : questionId, order || "default");
+              const { questionId, nextUrl, order } = payload as {
+                questionId: string;
+                nextUrl?: string;
+                order?: "default" | "updated";
+              };
+              const detailRes = await getZhihuWebDetail(
+                nextUrl ? nextUrl : questionId,
+                order || "default"
+              );
               const detailObj = await getZhihuQuestionDetailFunc(questionId);
               webviewView.webview.postMessage({
-                payload: { data: detailRes.data, paging: detailRes.paging, payload: questionId, ...detailObj },
+                payload: {
+                  data: detailRes.data,
+                  paging: detailRes.paging,
+                  payload: questionId,
+                  ...detailObj,
+                },
                 uuid,
               });
               break;
             }
             case "ZHIHU_SAVE_SCROLL_POSITION": {
-              this.context.workspaceState.update("zhihuScrollPosition", payload);
+              this.context.workspaceState.update(
+                "zhihuScrollPosition",
+                payload
+              );
               break;
             }
             case "ZHIHU_VOTE_ANSWER": {
@@ -117,11 +140,11 @@ export class ZhihuWebProvider implements WebviewViewProvider {
             }
           }
         } catch (error: any) {
-            vscode.window.showErrorMessage(error.message || "知乎请求发生错误");
-            webviewView.webview.postMessage({
-                payload: { ok: 0, msg: error.message || "请求失败" },
-                uuid,
-            });
+          vscode.window.showErrorMessage(error.message || "知乎请求发生错误");
+          webviewView.webview.postMessage({
+            payload: { ok: 0, msg: error.message || "请求失败" },
+            uuid,
+          });
         }
       }
     );
@@ -132,56 +155,13 @@ export class ZhihuWebProvider implements WebviewViewProvider {
       showImg = true;
     }
 
-    // 判断是否为开发环境: 使用 VSCode API 的 extensionMode
-    const isDev = this.context.extensionMode === vscode.ExtensionMode.Development;
-    let htmlContent = "";
-    console.log("isDev判断是否为开发环境", isDev);
-    if (isDev) {
-      // 开发环境，直接加载本地Vite dev server
-      htmlContent = `
-      <!doctype html>
-                <html lang="en">
-          <head>
-          <script>
-          window.showImg = ${showImg}
-          </script>
-            <script type="module">
-        import RefreshRuntime from "http://localhost:5174/@react-refresh"
-        RefreshRuntime.injectIntoGlobalHook(window)
-        window.$RefreshReg$ = () => {}
-        window.$RefreshSig$ = () => (type) => type
-        window.__vite_plugin_react_preamble_installed__ = true
-        </script>
-            <script type="module" src="http://localhost:5174/@vite/client"></script>
-
-            <meta charset="UTF-8" />
-            <link rel="icon" type="image/svg+xml" href="http://localhost:5174/vite.svg" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Vite + React + TS</title>
-          </head>
-          <body>
-            <div id="root"></div>
-            <script type="module" src="http://localhost:5174/src/main.tsx"></script>
-          </body>
-        </html>
-      `;
-    } else {
-      const distPath = Uri.joinPath(this.context.extensionUri, "zhihu", "dist");
-      const indexPath = Uri.joinPath(distPath, "index.html");
-      let html = fs.readFileSync(indexPath.fsPath, "utf-8");
-      html = html.replace(
-        /(href|src)="\/([^"]*)"/g,
-        (_, attr, path) =>
-          `${attr}="${webviewView.webview.asWebviewUri(
-            vscode.Uri.joinPath(distPath, path)
-          )}"`
-      );
-      html = html.replace(
-        "</head>",
-        `<script>window.showImg = ${showImg}</script></head>`
-      );
-      htmlContent = html;
-    }
-    webviewView.webview.html = htmlContent;
+    webviewView.webview.html = getWebviewHtml({
+      webviewView,
+      context: this.context,
+      distPath: "zhihu/dist",
+      devPort: 5174,
+      title: "Vite + React + TS",
+      windowConfig: { showImg },
+    });
   }
 }
