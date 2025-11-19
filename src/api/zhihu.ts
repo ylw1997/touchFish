@@ -7,8 +7,7 @@
  * @Description:
  */
 import axios from "axios";
-import * as vscode from "vscode";
-import { setConfigByKey } from "../core/config";
+import { getOrSetCookie, getCookieField } from "../utils/apiUtils";
 import { getZhihuSignature } from "../utils/signature";
 import {
   ZhihuCommentItem,
@@ -25,34 +24,15 @@ import {
 
 const xzse93 = "101_3_3.0";
 const xapi = "3.0.91";
+
 export const getOrSetZhihuCookie = async () => {
-  const config = vscode.workspace.getConfiguration("touchfish");
-  let cookie = config.get("zhihuCookie") as string | undefined;
-  // 如果没有就请输入cookie
-  if (!cookie) {
-    cookie = await vscode.window.showInputBox({
-      placeHolder: "请输入知乎的cookie",
-      prompt: "请输入知乎的cookie",
-    });
-    if (cookie) {
-      await setConfigByKey("zhihuCookie", cookie);
-    }
-  }
-  return cookie;
+  return await getOrSetCookie("zhihuCookie", "请输入知乎的cookie");
 };
 
 // 获取cookie中的d_c0
 export const getZhihuCookieByField = async (field: string) => {
   const cookie = (await getOrSetZhihuCookie()) as string;
-  if (cookie) {
-    const cookieParts = cookie.split(";");
-    for (const part of cookieParts) {
-      const [key, ...value] = part.split("=");
-      if (key.trim() === field) {
-        return value.join("=");
-      }
-    }
-  }
+  return cookie ? getCookieField(cookie, field) : undefined;
 };
 
 export const getZhihu96 = async (url: string) => {
@@ -69,7 +49,9 @@ const getZhihuData = async (nextUrl?: string) => {
   const defaultPath = "/api/v3/feed/topstory/recommend?limit=10&desktop=true";
   const requestUrl = nextUrl || `https://www.zhihu.com${defaultPath}`;
   // 签名需要 path + cookie d_c0
-  const signPath = nextUrl ? new URL(nextUrl).pathname + new URL(nextUrl).search : defaultPath;
+  const signPath = nextUrl
+    ? new URL(nextUrl).pathname + new URL(nextUrl).search
+    : defaultPath;
   const xzse96 = await getZhihu96(signPath);
   const res = await axios.get(requestUrl, {
     headers: {
@@ -87,7 +69,9 @@ const getZhihuFollowData = async (nextUrl?: string) => {
   const cookie = (await getOrSetZhihuCookie()) as string;
   const defaultPath = "/api/v3/moments?limit=10&desktop=true";
   const requestUrl = nextUrl || `https://www.zhihu.com${defaultPath}`;
-  const signPath = nextUrl ? new URL(nextUrl).pathname + new URL(nextUrl).search : defaultPath;
+  const signPath = nextUrl
+    ? new URL(nextUrl).pathname + new URL(nextUrl).search
+    : defaultPath;
   const xzse96 = await getZhihu96(signPath);
   const res = await axios.get(requestUrl, {
     headers: {
@@ -159,7 +143,8 @@ export const getZhihuChildComment = async (
 
 export const getZhihuHot = async (nextUrl?: string) => {
   const cookie = (await getOrSetZhihuCookie()) as string;
-  const defaultPath = "/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true";
+  const defaultPath =
+    "/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true";
   const requestUrl = nextUrl || `https://www.zhihu.com${defaultPath}`;
   const res = await axios.get(requestUrl, {
     headers: {
@@ -192,9 +177,13 @@ export const getZhihuWebData = async (
     case "hot": {
       const hotres = await getZhihuHot(nextUrl);
       // hotres is { data, paging }
-      (hotres.data || []).forEach((item: { target: ZhihuHotItem }, index: number) => {
-        resArr.push(convertZhihuHotItemToZhihuItemData(item.target, index + 1));
-      });
+      (hotres.data || []).forEach(
+        (item: { target: ZhihuHotItem }, index: number) => {
+          resArr.push(
+            convertZhihuHotItemToZhihuItemData(item.target, index + 1)
+          );
+        }
+      );
       return { data: resArr, paging: hotres.paging };
     }
     case "hot_question": {
@@ -395,9 +384,12 @@ export const unfollowQuestion = async (questionId: string) => {
 
 // 人气问题 https://www.zhihu.com/api/v4/creators/question_route/pc_member_related/hot?page_source=pc_panel&limit=20&offset=0&recom_domain_score_ab=1
 export const getZhihuHotQuestions = async (nextUrl?: string) => {
-  const defaultPath = "/api/v4/creators/question_route/pc_member_related/hot?page_source=pc_panel&limit=20&offset=0&recom_domain_score_ab=1";
+  const defaultPath =
+    "/api/v4/creators/question_route/pc_member_related/hot?page_source=pc_panel&limit=20&offset=0&recom_domain_score_ab=1";
   const requestUrl = nextUrl || `https://www.zhihu.com${defaultPath}`;
-  const signPath = nextUrl ? new URL(nextUrl).pathname + new URL(nextUrl).search : defaultPath;
+  const signPath = nextUrl
+    ? new URL(nextUrl).pathname + new URL(nextUrl).search
+    : defaultPath;
   const xzse96 = await getZhihu96(signPath);
   const cookie = (await getOrSetZhihuCookie()) as string;
   const res = await axios.get(requestUrl, {

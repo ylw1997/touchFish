@@ -9,8 +9,7 @@
  */
 /* XHS API 封装（优化：回退使用 axios，并拆分请求头生成函数） */
 import xhsHttp from "../core/xhsHttp";
-import * as vscode from "vscode";
-import { setConfigByKey } from "../core/config";
+import { getOrSetCookie } from "../utils/apiUtils";
 import { getXhsSignature, XhsSignature } from "../utils/signature";
 
 // 稳定序列化，确保签名与发送体 key 顺序一致（避免后端校验差异）
@@ -29,16 +28,7 @@ function stableStringify(value: any): string {
 }
 
 export const getOrSetXhsCookie = async (): Promise<string | undefined> => {
-  const config = vscode.workspace.getConfiguration("touchfish");
-  let cookie = config.get("xhsCookie") as string | undefined;
-  if (!cookie) {
-    cookie = await vscode.window.showInputBox({
-      prompt: "请输入小红书 Cookie",
-      placeHolder: "请输入小红书 Cookie",
-    });
-    if (cookie) await setConfigByKey("xhsCookie", cookie);
-  }
-  return cookie;
+  return await getOrSetCookie("xhsCookie", "请输入小红书 Cookie");
 };
 
 // 构造请求体（稳定排序）
@@ -46,7 +36,6 @@ function buildRequestBody(body: any) {
   const bodyString = stableStringify(body);
   return { rawBody: body, bodyString, bodyObj: JSON.parse(bodyString) };
 }
-
 
 export function generateXB3TraceId(len = 16) {
   const chars = "abcdef0123456789";
@@ -186,20 +175,24 @@ export const getXhsComments = async (payload: {
 // body: {
 //   keyword, page, page_size, search_id, sort, note_type, ext_flags, geo, image_formats
 // }
-export const searchXhsNotes = async (params: { keyword: string; page?: number; search_id?: string }) => {
+export const searchXhsNotes = async (params: {
+  keyword: string;
+  page?: number;
+  search_id?: string;
+}) => {
   const cookie = await getOrSetXhsCookie();
   if (!cookie) throw new Error("请先设置小红书 Cookie");
   const apiPath = "/api/sns/web/v1/search/notes";
-    const body = {
-      keyword: params.keyword,
-      page: params.page ?? 3,
-      page_size: 20,
-      search_id: params.search_id || generateXB3TraceId(),
-      sort: "general",
-      note_type: 0,
-      ext_flags: [] as any[],
-      geo: "",
-      image_formats: ["jpg", "webp", "avif"],
+  const body = {
+    keyword: params.keyword,
+    page: params.page ?? 3,
+    page_size: 20,
+    search_id: params.search_id || generateXB3TraceId(),
+    sort: "general",
+    note_type: 0,
+    ext_flags: [] as any[],
+    geo: "",
+    image_formats: ["jpg", "webp", "avif"],
   };
   const { bodyString, bodyObj } = buildRequestBody(body);
   let signObj: XhsSignature;
@@ -263,8 +256,8 @@ export const getXhsUserPosted = async (params: {
       ignore: false,
       xsec_token: note.xsec_token,
       id: note.note_id || note.id,
-      model_type: 'note',
-      track_id: '',
+      model_type: "note",
+      track_id: "",
       note_card: {
         user: note.user,
         interact_info: note.interact_info,
@@ -279,7 +272,7 @@ export const getXhsUserPosted = async (params: {
   });
   return {
     items,
-    cursor: raw?.cursor || '',
+    cursor: raw?.cursor || "",
     has_more: raw?.has_more,
     // 保留原始结构供必要时调试
     _raw: raw,
@@ -296,23 +289,23 @@ export const getXhsUserHoverCard = async (params: {
   image_formats?: string; // 'jpg,webp,avif'
 }) => {
   const cookie = await getOrSetXhsCookie();
-  if (!cookie) throw new Error('请先设置小红书 Cookie');
-  const apiPath = '/api/sns/web/v1/user/hover_card';
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v1/user/hover_card";
   const queryObj = {
     target_user_id: params.target_user_id,
-    image_formats: params.image_formats || 'jpg,webp,avif',
-    xsec_source: params.xsec_source || 'pc_feed',
+    image_formats: params.image_formats || "jpg,webp,avif",
+    xsec_source: params.xsec_source || "pc_feed",
     xsec_token: params.xsec_token,
   };
   let signObj: XhsSignature;
   try {
     // GET 签名模式
-    signObj = await getXhsSignature(apiPath, queryObj, cookie, 'GET');
+    signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
   } catch (e: any) {
-    console.error('[xhs signature error hover_card]', e?.message || e);
-    throw new Error('小红书签名生成失败，请稍后再试');
+    console.error("[xhs signature error hover_card]", e?.message || e);
+    throw new Error("小红书签名生成失败，请稍后再试");
   }
-  const safeToken = queryObj.xsec_token.replace(/=/g, '%3D');
+  const safeToken = queryObj.xsec_token.replace(/=/g, "%3D");
   const url = `https://edith.xiaohongshu.com${apiPath}?target_user_id=${queryObj.target_user_id}&image_formats=${queryObj.image_formats}&xsec_source=${queryObj.xsec_source}&xsec_token=${safeToken}`;
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
@@ -324,22 +317,22 @@ export const getXhsUserHoverCard = async (params: {
 // POST https://edith.xiaohongshu.com/api/sns/web/v1/user/follow { target_user_id }
 export const followXhsUser = async (params: { target_user_id: string }) => {
   const cookie = await getOrSetXhsCookie();
-  if (!cookie) throw new Error('请先设置小红书 Cookie');
-  const apiPath = '/api/sns/web/v1/user/follow';
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v1/user/follow";
   const body = { target_user_id: params.target_user_id };
   const { bodyString, bodyObj } = buildRequestBody(body);
   let signObj: XhsSignature;
   try {
     signObj = await getXhsSignature(apiPath, bodyObj, cookie);
   } catch (e: any) {
-    console.error('[xhs signature error follow]', e?.message || e);
-    throw new Error('关注签名失败，请稍后重试');
+    console.error("[xhs signature error follow]", e?.message || e);
+    throw new Error("关注签名失败，请稍后重试");
   }
-  const url = 'https://edith.xiaohongshu.com' + apiPath;
+  const url = "https://edith.xiaohongshu.com" + apiPath;
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
   const data = resp.data?.data;
-  if (!data) throw new Error('关注失败，返回数据为空');
+  if (!data) throw new Error("关注失败，返回数据为空");
   return data; // { fstatus: 'follows' }
 };
 
@@ -347,21 +340,21 @@ export const followXhsUser = async (params: { target_user_id: string }) => {
 // POST https://edith.xiaohongshu.com/api/sns/web/v1/user/unfollow { target_user_id }
 export const unfollowXhsUser = async (params: { target_user_id: string }) => {
   const cookie = await getOrSetXhsCookie();
-  if (!cookie) throw new Error('请先设置小红书 Cookie');
-  const apiPath = '/api/sns/web/v1/user/unfollow';
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v1/user/unfollow";
   const body = { target_user_id: params.target_user_id };
   const { bodyString, bodyObj } = buildRequestBody(body);
   let signObj: XhsSignature;
   try {
     signObj = await getXhsSignature(apiPath, bodyObj, cookie);
   } catch (e: any) {
-    console.error('[xhs signature error unfollow]', e?.message || e);
-    throw new Error('取消关注签名失败，请稍后重试');
+    console.error("[xhs signature error unfollow]", e?.message || e);
+    throw new Error("取消关注签名失败，请稍后重试");
   }
-  const url = 'https://edith.xiaohongshu.com' + apiPath;
+  const url = "https://edith.xiaohongshu.com" + apiPath;
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
   const data = resp.data?.data;
-  if (!data) throw new Error('取消关注失败，返回数据为空');
+  if (!data) throw new Error("取消关注失败，返回数据为空");
   return data; // { fstatus: 'none' }
 };

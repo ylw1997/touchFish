@@ -9,7 +9,7 @@
  */
 import axios from "axios";
 import * as vscode from "vscode";
-import { setConfigByKey } from "../core/config";
+import { getOrSetCookie, buildCommonHeaders } from "../utils/apiUtils";
 import { weiboCommentParams, weiboRepostParams } from "../../type";
 import ContextManager from "../utils/extensionContext";
 import * as fs from "fs";
@@ -24,7 +24,7 @@ axios.interceptors.response.use(
       return Promise.reject(error);
     }
     vscode.window.showErrorMessage(
-      `请求失败:${error.message} -------> ${error.config.url}`
+      `请求失败:${error.message} -------&gt; ${error.config.url}`
     );
     return Promise.resolve({
       data: {
@@ -36,33 +36,18 @@ axios.interceptors.response.use(
 );
 
 export const getOrSetWeiboCookie = async () => {
-  const config = vscode.workspace.getConfiguration("touchfish");
-  let cookie = config.get("weiboCookie") as string | undefined;
-  // 如果没有就请输入cookie
-  if (!cookie) {
-    cookie = await vscode.window.showInputBox({
-      placeHolder: "请输入微博的cookie",
-      prompt: "请输入微博的cookie",
-    });
-    if (cookie) {
-      await setConfigByKey("weiboCookie", cookie);
-    }
-  }
-  return cookie;
+  return await getOrSetCookie("weiboCookie", "请输入微博的cookie");
 };
 
 const getWeiboHeaders = async (extraHeaders = {}) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
   const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
-  return {
-    Cookie: cookie,
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+  return buildCommonHeaders(cookie, {
     "X-Xsrf-Token": xsrf,
     Referer: "https://weibo.com/",
     Connection: "close",
     ...extraHeaders,
-  };
+  });
 };
 
 export const getWeiboData = async (url: string) => {
