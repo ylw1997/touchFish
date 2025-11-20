@@ -15,7 +15,7 @@ import { loaderFunc } from "../utils/loader";
 import BaseDrawer from "./BaseDrawer";
 import UserInfoCard from "./UserInfoCard";
 import FeedDetailDrawer from "./FeedDetailDrawer";
-import { XhsFeedRawItem } from "../../../type";
+import { XhsFeedRawItem } from "../../../types/xhs";
 import { INFINITE_SCROLL_CONFIG } from "../constants";
 
 interface UserPostedDrawerProps {

@@ -9,7 +9,7 @@
  */
 import { App } from "antd";
 import { useCallback } from "react";
-import { CommandList } from "../../../type";
+import { CommandList } from "../../../types/commands";
 import { vscode } from "../utils/vscode";
 import { messageHandler } from "../utils/messageHandler";
 

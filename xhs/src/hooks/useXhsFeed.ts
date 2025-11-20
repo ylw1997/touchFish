@@ -14,7 +14,7 @@
 import { useCallback, useRef, useState } from "react";
 import { createXhsApi } from "../api";
 import { useRequest } from "./useRequest";
-import type { XhsFeedRawItem, XhsFeedRawResponse } from "../../../type";
+import type { XhsFeedRawItem, XhsFeedRawResponse } from "../../../types/xhs";
 
 
 

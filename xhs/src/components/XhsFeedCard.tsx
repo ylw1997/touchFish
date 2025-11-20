@@ -11,7 +11,7 @@ import React from 'react';
 import { Avatar } from 'antd';
 import { HeartOutlined, PlayCircleFilled } from '@ant-design/icons';
 import '../style/xhsFeedCard.less';
-import type { XhsFeedRawItem, XhsUser } from '../../../type';
+import type { XhsFeedRawItem, XhsUser } from '../../../types/xhs';
 
 interface XhsFeedCardProps {
   data: XhsFeedRawItem;

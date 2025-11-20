@@ -7,8 +7,8 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
  * @Description: 小红书 API 封装，提供完整的类型定义
  */
+import type { CommandList } from '../../../types/commands';
 import type {
-  CommandList,
   XhsFeedRawResponse,
   XhsSearchParams,
   XhsSearchResponse,
@@ -23,7 +23,7 @@ import type {
   XhsFollowResponse,
   XhsUnfollowParams,
   XhsUnfollowResponse,
-} from '../../../type';
+} from '../../../types/xhs';
 
 type RequestFunc = <T = any>(command: CommandList, payload: any, content?: string) => Promise<T>;
 
