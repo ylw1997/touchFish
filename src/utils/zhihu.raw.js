@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+/* eslint-disable */
 const crypto = require("crypto-js");
 window = (function () {
   var v_saf;
@@ -63,7 +63,7 @@ window = (function () {
       v_console_logger.apply(this, arguments);
     }
   }, "info");
-  var v_console_log = function () {};;
+  var v_console_log = function () {};
   var v_random = (function () {
     var seed = 276951438;
     return function random() {
@@ -10734,10 +10734,10 @@ window = (function () {
 // );
 
 const encrypt = (str) => {
-  return '2.0_'+ window.yang(1514).ZP(crypto.MD5(str).toString());
+  return "2.0_" + window.yang(1514).ZP(crypto.MD5(str).toString());
 };
 
-if (typeof module !== "undefined") {
+if (typeof module !== "undefined" || typeof encrypt !== "undefined") {
   module.exports = {
     encrypt,
   };

@@ -1,8 +1,5 @@
+import * as cryptoJs from "crypto-js";
 // Removed Node crypto dependency; introduce crypto-js & pure JS helpers
-let cryptoJs = null;
-try {
-  if (typeof require === "function") cryptoJs = require("crypto-js");
-} catch (_) {}
 const webCrypto =
   typeof globalThis !== "undefined" &&
   globalThis.crypto &&
@@ -353,10 +350,4 @@ function get_request_headers_params(api, data, a1, method = "POST") {
   };
 }
 
-if (typeof module !== "undefined") {
-  module.exports = {
-    signXs,
-    get_request_headers_params,
-    setSeed,
-  };
-}
+export { signXs, get_request_headers_params, setSeed };
