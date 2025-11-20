@@ -264,6 +264,7 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     setCommentCursor("");
     setCommentHasMore(false);
     setCommentError(null);
+    setCommentsInitialized(false);
   }, []);
 
   // 自动加载详情
