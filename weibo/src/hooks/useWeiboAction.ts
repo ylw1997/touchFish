@@ -6,7 +6,7 @@ import {
   weiboUser,
   SearchType,
   uploadType,
-} from "../../../type";
+} from "../../../types/weibo";
 import { updateWeiboList } from "../utils/updateWeiboList";
 import { weiboSendParams } from "../types";
 import { parseArray } from "../utils";

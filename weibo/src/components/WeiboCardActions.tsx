@@ -6,7 +6,7 @@ import {
   HeartOutlined,
   MessageOutlined,
 } from "@ant-design/icons";
-import { weiboItem } from "../../../type";
+import { weiboItem } from "../../../types/weibo";
 import React from "react";
 
 interface WeiboCardActionsProps {

@@ -12,7 +12,7 @@ import { Drawer, Button, Input, Form, Select, Upload } from "antd";
 import { SendOutlined, PlusOutlined } from "@ant-design/icons";
 import { weiboSendParams } from "../types";
 import { fileToBase64 } from "../utils";
-import { uploadType } from "../../../type";
+import { uploadType } from "../../../types/weibo";
 import useWeiboAction from "../hooks/useWeiboAction";
 
 interface SendWeiboDrawerProps {

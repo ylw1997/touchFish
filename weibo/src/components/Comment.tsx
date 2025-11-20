@@ -9,7 +9,7 @@
  */
 import { List, Avatar, Flex, Image } from "antd";
 import { motion } from "framer-motion";
-import { commentsItem, weiboUser } from "../../../type";
+import { commentsItem, weiboUser } from "../../../types/weibo";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import { parseWeiboText } from "../utils/textParser";

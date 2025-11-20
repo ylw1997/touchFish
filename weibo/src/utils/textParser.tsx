@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { Tag } from "antd";
 import emojiData from "../data/emoji.json";
-import { baseWeiboField } from "../../../type";
+import { baseWeiboField } from "../../../types/weibo";
 import { openNewWindow } from ".";
 
 // 使用 Map 进行高效的表情查找。它仅在模块加载时创建一次。

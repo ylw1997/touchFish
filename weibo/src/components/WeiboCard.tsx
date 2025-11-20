@@ -1,6 +1,6 @@
 import { DownOutlined, LoadingOutlined, UpOutlined } from "@ant-design/icons";
 import { Card, Tag } from "antd";
-import { weiboItem, weiboUser } from "../../../type";
+import { weiboItem, weiboUser } from "../../../types/weibo";
 import { renderComments } from "./Comment";
 import { loaderFunc } from "../utils/loader";
 import WeiboCardActions from "./WeiboCardActions";

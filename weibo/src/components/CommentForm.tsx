@@ -1,6 +1,6 @@
 
 import { Button, Flex, Form, Input } from "antd";
-import { weiboItem } from "../../../type";
+import { weiboItem } from "../../../types/weibo";
 import React from "react";
 
 const { TextArea } = Input;

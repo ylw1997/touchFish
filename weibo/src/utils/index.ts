@@ -8,7 +8,7 @@
  * @Description:
  */
 
-import { SearchType } from "../../../type";
+import { SearchType } from "../../../types/weibo";
 
 // file转baase64
 export const fileToBase64 = (file: File): Promise<string> => {

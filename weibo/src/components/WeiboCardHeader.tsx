@@ -1,6 +1,6 @@
 
 import { Avatar, Button, Dropdown, Flex, Space } from "antd";
-import { weiboItem, weiboUser } from "../../../type";
+import { weiboItem, weiboUser } from "../../../types/weibo";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import {

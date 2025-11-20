@@ -8,15 +8,15 @@
  * @Description: Weibo API requests
  */
 
+import type { CommandList } from "../../../types/commands";
 import type {
-  CommandList,
   payloadType,
   weiboCommentParams,
   weiboRepostParams,
   SearchType,
   uploadType,
   UploadImageResponsePayload,
-} from "../../../type";
+} from "../../../types/weibo";
 
 type RequestFunc = <T = any>(
   command: CommandList,
