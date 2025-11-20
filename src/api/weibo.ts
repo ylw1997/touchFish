@@ -10,7 +10,7 @@
 import axios from "axios";
 import * as vscode from "vscode";
 import { getOrSetCookie, buildCommonHeaders } from "../utils/apiUtils";
-import { weiboCommentParams, weiboRepostParams } from "../../type";
+import { weiboCommentParams, weiboRepostParams } from "../../types/weibo";
 import ContextManager from "../utils/extensionContext";
 import * as fs from "fs";
 import { Uri } from "vscode";

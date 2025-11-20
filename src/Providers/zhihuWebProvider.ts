@@ -20,7 +20,7 @@ import {
   unfollowQuestion,
 } from "../api/zhihu";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
-import { ZhihuCommandsType } from "../../type";
+import { ZhihuCommandsType } from "../../types/commands";
 export class ZhihuWebProvider extends BaseWebviewProvider {
   constructor(context: ExtensionContext) {
     super(context, {

@@ -27,7 +27,8 @@ import {
   getUserByName,
   getHotSearch,
 } from "../api/weibo";
-import { commandsType, uploadType, weiboAJAX } from "../../type";
+import { CommandsType } from "../../types/commands";
+import { uploadType, weiboAJAX } from "../../types/weibo";
 import { setConfigByKey } from "../core/config";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
@@ -48,7 +49,7 @@ export class WeiboProvider extends BaseWebviewProvider {
   }
 
   protected async handleCustomMessage(message: IncomingMessage, webviewView: WebviewView) {
-    const { command, payload, uuid } = message as commandsType<string | any>;
+    const { command, payload, uuid } = message as CommandsType<string | any>;
     switch (command) {
       case "GETDATA": {
         let res = await getWeiboData(payload);
@@ -70,7 +71,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: "SENDDATA",
           payload: { ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETIMG": {
@@ -97,7 +98,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDCOMMENT`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETLONGTEXT": {
@@ -106,7 +107,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDLONGTEXT`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETUSERBLOG": {
@@ -115,7 +116,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDUSERBLOG`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETFOLLOW": {
@@ -124,7 +125,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDFOLLOW`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETNEWBLOGRESULT": {
@@ -133,7 +134,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: "SENDNEWBLOGRESULT",
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETUPLOADIMGURL": {
@@ -143,7 +144,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDUPLOADIMGURL`,
           payload: { payload: uploadObj.uid, uid: uploadObj.uid, type: uploadObj.type, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETCANCELFOLLOW": {
@@ -152,7 +153,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDCANCELFOLLOW`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETCREATECOMMENTS": {
@@ -161,7 +162,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDCREATECOMMENTS`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETCREATEREPOST": {
@@ -170,7 +171,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDCREATEREPOST`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETSETLIKE": {
@@ -179,7 +180,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDSETLIKE`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETCANCELLIKE": {
@@ -188,7 +189,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDCANCELLIKE`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETSEARCH": {
@@ -197,7 +198,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDSEARCH`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETUSERBYNAME": {
@@ -206,7 +207,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDUSERBYNAME`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
       case "GETHOTSEARCH": {
@@ -215,9 +216,10 @@ export class WeiboProvider extends BaseWebviewProvider {
           command: `SENDHOTSEARCH`,
           payload: { payload: payload, ...res.data },
           uuid,
-        } as commandsType<weiboAJAX>);
+        } as CommandsType<weiboAJAX>);
         break;
       }
     }
   }
 }
+

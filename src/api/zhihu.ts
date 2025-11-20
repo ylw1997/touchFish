@@ -15,7 +15,7 @@ import {
   ZhihuHotQuestion,
   ZhihuItemData,
   ZhihuSearchItem,
-} from "../../type";
+} from "../../types/zhihu";
 import {
   convertZhihuHotItemToZhihuItemData,
   convertZhihuHotQuestionToZhihuItemData,

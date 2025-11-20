@@ -9,7 +9,7 @@
 import { NewsCommandType, NewsItem } from "../type/type";
 import { ThemeIcon, TreeItem } from "vscode";
 // Removed showNewsWordNumber truncation feature
-import { ZhihuHotItem, ZhihuHotQuestion, ZhihuItemData } from "../../type";
+import { ZhihuHotItem, ZhihuHotQuestion, ZhihuItemData } from "../../types/zhihu";
 
 /**
  * 转换之家数据
