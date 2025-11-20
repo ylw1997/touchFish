@@ -46,6 +46,10 @@ interface NoteContentCardProps {
   onShare?: () => void;
   /** 是否正在加载 */
   loading?: boolean;
+  /** 点赞/取消点赞操作 */
+  onToggleLike?: () => void;
+  /** 点赞加载状态 */
+  likeLoading?: boolean;
 }
 
 /**
@@ -56,6 +60,8 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
   noteData,
   onShare,
   loading = false,
+  onToggleLike,
+  likeLoading = false,
 }) => {
   const {
     title,
@@ -232,7 +238,14 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
       {/* 正文内容 */}
       <Card
         actions={[
-          <Space key="like" style={{ fontSize: "16px" }}>
+          <Space
+            key="like"
+            style={{ fontSize: "16px", cursor: likeLoading ? 'not-allowed' : 'pointer', opacity: likeLoading ? 0.6 : 1 }}
+            onClick={() => {
+              if (likeLoading) return;
+              onToggleLike?.();
+            }}
+          >
             {liked ? (
               <HeartFilled style={{ color: "#ff4d4f" }} />
             ) : (

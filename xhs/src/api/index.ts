@@ -24,6 +24,10 @@ import type {
   XhsUnfollowParams,
   XhsUnfollowResponse,
   XhsSubCommentsResponseData,
+  XhsLikeNoteParams,
+  XhsLikeNoteResponse,
+  XhsDislikeNoteParams,
+  XhsDislikeNoteResponse,
 } from '../../../types/xhs';
 
 type RequestFunc = <T = any>(command: CommandList, payload: any, content?: string) => Promise<T>;
@@ -142,6 +146,24 @@ export class XhsApi {
       'XHS_USER_UNFOLLOW' as CommandList,
       payload,
       '取消关注中...'
+    );
+  }
+
+  /** 点赞笔记 */
+  likeNote(payload: XhsLikeNoteParams) {
+    return this.request<XhsLikeNoteResponse>(
+      'XHS_NOTE_LIKE' as CommandList,
+      payload,
+      '点赞中...'
+    );
+  }
+
+  /** 取消点赞 */
+  dislikeNote(payload: XhsDislikeNoteParams) {
+    return this.request<XhsDislikeNoteResponse>(
+      'XHS_NOTE_DISLIKE' as CommandList,
+      payload,
+      '取消点赞中...'
     );
   }
 }

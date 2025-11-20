@@ -48,6 +48,8 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     commentError,
     loadMoreComments,
     fetchSubComments,
+    likeLoading,
+    toggleLike,
     shareNote,
   } = useNoteDetail({
     noteId: detail.note_id,
@@ -152,7 +154,12 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
 
         {/* 笔记内容 */}
         {!loadingDetail && (
-          <NoteContentCard noteData={noteData} onShare={shareNote} />
+          <NoteContentCard
+            noteData={noteData}
+            onShare={shareNote}
+            onToggleLike={toggleLike}
+            likeLoading={likeLoading}
+          />
         )}
 
         {/* 评论区 */}

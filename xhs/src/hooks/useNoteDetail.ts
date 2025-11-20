@@ -36,6 +36,8 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
   const [commentCursor, setCommentCursor] = useState<string>("");
   const [commentHasMore, setCommentHasMore] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  // 首次评论初始化标记，避免点赞修改 noteDetail 触发重复刷新
+  const [commentsInitialized, setCommentsInitialized] = useState(false);
 
   // 提取笔记信息
   const note = useMemo(
@@ -51,6 +53,10 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
   );
 
   const videoUrl = useMemo(() => extractVideoUrl(note), [note]);
+  const [likeLoading, setLikeLoading] = useState(false);
+  // 独立的点赞本地状态，避免依赖深层对象引用导致不刷新
+  const [likedState, setLikedState] = useState<boolean>(false);
+  const [likedCountState, setLikedCountState] = useState<number>(0);
 
   const noteData = useMemo(() => {
     const interactInfo = note?.interact_info || {};
@@ -61,19 +67,19 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
       images,
       videoUrl,
       videoPoster: videoUrl && images.length === 1 ? images[0] : undefined,
-      liked: !!interactInfo?.liked,
-      likedCount: interactInfo?.liked_count || 0,
+      liked: likedState,
+      likedCount: likedCountState,
       collected: !!interactInfo?.collected,
       collectedCount: interactInfo?.collected_count || 0,
       commentCount: interactInfo?.comment_count || 0,
       shareCount: interactInfo?.share_count || 0,
       publishTime: note?.time || note?.last_update_time || 0,
       ipLocation: note?.ip_location || "",
-      followed: !!interactInfo?.followed || 
-                note?.extraInfo_info?.fstatus === 'follows' || 
+      followed: !!interactInfo?.followed ||
+                note?.extraInfo_info?.fstatus === 'follows' ||
                 note?.extraInfo_info?.fstatus === 'each_other',
     };
-  }, [note, user, images, videoUrl]);
+  }, [note, user, images, videoUrl, likedState, likedCountState]);
 
   // 加载笔记详情
   const fetchDetail = useCallback(async () => {
@@ -87,6 +93,11 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
         xsec_token: xsecToken,
       });
       setNoteDetail(data);
+      // 根据返回的 interact_info 初始化本地点赞状态
+      const base = (data?.note || data?.note_card || data) as any;
+      const info = base?.interact_info || {};
+      setLikedState(!!info.liked);
+      setLikedCountState(Number(info.liked_count || 0));
     } catch (e: any) {
       console.error("[xhs] feed detail error", e);
     } finally {
@@ -165,6 +176,37 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     }
   }, [noteId, xsecToken, comments]);
 
+  // 点赞/取消点赞（乐观更新 + 成功/失败提示 + 回滚）
+  const toggleLike = useCallback(async () => {
+    const noteIdLocal = note?.note_id;
+    if (!noteIdLocal || likeLoading) return;
+    const currentlyLiked = likedState;
+    const prevCount = likedCountState;
+    setLikeLoading(true);
+    try {
+      if (!currentlyLiked) {
+        await apiRef.current.likeNote({ note_oid: noteIdLocal });
+        // 成功后更新
+        setLikedState(true);
+        setLikedCountState(prevCount + 1);
+        messageApi.success('已点赞');
+      } else {
+        const data = await apiRef.current.dislikeNote({ note_oid: noteIdLocal });
+        setLikedState(false);
+        if (typeof data?.like_count === 'number') {
+          setLikedCountState(Number(data.like_count));
+        } else {
+          setLikedCountState(Math.max(0, prevCount - 1));
+        }
+        messageApi.success('已取消点赞');
+      }
+    } catch (e: any) {
+      messageApi.error(e?.message || (currentlyLiked ? '取消点赞失败' : '点赞失败'));
+    } finally {
+      setLikeLoading(false);
+    }
+  }, [note?.note_id, likeLoading, likedState, likedCountState, messageApi]);
+
   // 分享功能
   const shareNote = useCallback(() => {
     if (!note?.note_id) return;
@@ -199,12 +241,13 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     }
   }, [open, noteId, xsecToken, fetchDetail, reset]);
 
-  // 详情加载完成后加载评论
+  // 详情首次加载后初始化评论，后续点赞等修改 noteDetail 不再触发刷新
   useEffect(() => {
-    if (noteDetail && open) {
+    if (noteDetail && open && !commentsInitialized) {
       fetchComments("");
+      setCommentsInitialized(true);
     }
-  }, [noteDetail, open, fetchComments]);
+  }, [noteDetail, open, fetchComments, commentsInitialized]);
 
   return {
     // 笔记数据
@@ -218,6 +261,8 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     commentError,
     loadMoreComments,
     fetchSubComments,
+    likeLoading,
+    toggleLike,
     
     // 方法
     shareNote,
