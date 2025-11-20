@@ -273,6 +273,35 @@ export interface XhsCollectNoteParams { note_id: string }
 export interface XhsCollectNoteResponse { code: number; success: boolean; msg: string; [k: string]: any }
 export interface XhsUncollectNoteParams { note_ids: string }
 export interface XhsUncollectNoteResponse { code: number; success: boolean; msg: string; [k: string]: any }
+export interface XhsPostCommentParams { note_id: string; content: string; at_users?: any[] }
+export interface XhsPostCommentResponse {
+  code: number;
+  success: boolean;
+  msg: string;
+  data: {
+    comment: {
+      note_id: string;
+      at_users: any[];
+      liked: boolean;
+      user_info: {
+        nickname: string;
+        image: string;
+        user_id: string;
+      };
+      create_time: number;
+      ip_location: string;
+      id: string;
+      status: number;
+      content: string;
+      like_count: string;
+      show_tags: any[];
+      [k: string]: any;
+    };
+    time: number;
+    toast: string;
+  };
+  [k: string]: any;
+}
 export interface XhsApiResponse<T = any> {
   code: number;
   success: boolean;

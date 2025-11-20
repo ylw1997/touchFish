@@ -32,6 +32,8 @@ import type {
   XhsCollectNoteResponse,
   XhsUncollectNoteParams,
   XhsUncollectNoteResponse,
+  XhsPostCommentParams,
+  XhsPostCommentResponse,
 } from '../../../types/xhs';
 
 type RequestFunc = <T = any>(command: CommandList, payload: any, content?: string) => Promise<T>;
@@ -186,6 +188,15 @@ export class XhsApi {
       'XHS_NOTE_UNCOLLECT' as CommandList,
       payload,
       '取消收藏中...'
+    );
+  }
+
+  /** 发布评论 */
+  postComment(payload: XhsPostCommentParams) {
+    return this.request<XhsPostCommentResponse>(
+      'XHS_POST_COMMENT' as CommandList,
+      payload,
+      '发送中...'
     );
   }
 }

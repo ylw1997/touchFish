@@ -15,6 +15,7 @@ import BaseDrawer from "./BaseDrawer";
 import UserInfoCard from "./UserInfoCard";
 import NoteContentCard from "./NoteContentCard";
 import CommentSection from "./CommentSection";
+import CommentInput from "./CommentInput";
 
 // ====== 类型定义 ======
 interface UserDrawerPayload {
@@ -52,6 +53,8 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     toggleLike,
     collectLoading,
     toggleCollect,
+    postingComment,
+    postComment,
     shareNote,
   } = useNoteDetail({
     noteId: detail.note_id,
@@ -163,6 +166,15 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             likeLoading={likeLoading}
             onToggleCollect={toggleCollect}
             collectLoading={collectLoading}
+          />
+        )}
+
+        {/* 评论输入 */}
+        {!loadingDetail && (
+          <CommentInput
+            onSubmit={postComment}
+            loading={postingComment}
+            placeholder="写下你的评论..."
           />
         )}
 

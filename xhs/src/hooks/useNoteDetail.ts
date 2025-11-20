@@ -36,6 +36,7 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
   const [commentCursor, setCommentCursor] = useState<string>("");
   const [commentHasMore, setCommentHasMore] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [postingComment, setPostingComment] = useState(false);
   // 首次评论初始化标记，避免点赞修改 noteDetail 触发重复刷新
   const [commentsInitialized, setCommentsInitialized] = useState(false);
 
@@ -241,6 +242,37 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     }
   }, [note?.note_id, collectLoading, collectedState, collectedCountState, messageApi]);
 
+  // 发布评论
+  const postComment = useCallback(async (content: string) => {
+    const noteIdLocal = note?.note_id;
+    if (!noteIdLocal || postingComment) return;
+    if (!content || !content.trim()) {
+      messageApi.error('评论内容不能为空');
+      return;
+    }
+    setPostingComment(true);
+    try {
+      const data = await apiRef.current.postComment({
+        note_id: noteIdLocal,
+        content: content.trim(),
+        at_users: [],
+      });
+      // 将新评论添加到评论列表最前面
+      if (data?.data?.comment) {
+        setComments(prev => [data.data.comment, ...prev]);
+        messageApi.success(data.data.toast || '评论已发布');
+        return true;
+      }
+      messageApi.success('评论已发布');
+      return true;
+    } catch (e: any) {
+      messageApi.error(e?.message || '发布评论失败');
+      return false;
+    } finally {
+      setPostingComment(false);
+    }
+  }, [note?.note_id, postingComment, messageApi]);
+
   // 分享功能
   const shareNote = useCallback(() => {
     if (!note?.note_id) return;
@@ -302,6 +334,8 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     toggleLike,
     collectLoading,
     toggleCollect,
+    postingComment,
+    postComment,
     
     // 方法
     shareNote,

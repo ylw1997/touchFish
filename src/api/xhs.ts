@@ -517,3 +517,45 @@ export const uncollectXhsNote = async (params: { note_ids: string }) => {
     throw new Error(error.message || "取消收藏请求失败");
   }
 };
+
+// 发布评论
+// POST https://edith.xiaohongshu.com/api/sns/web/v1/comment/post
+// body: { note_id, content, at_users }
+export const postXhsComment = async (params: {
+  note_id: string;
+  content: string;
+  at_users?: any[];
+}) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  if (!params.note_id) throw new Error("缺少 note_id 参数");
+  if (!params.content || !params.content.trim()) throw new Error("评论内容不能为空");
+  const apiPath = "/api/sns/web/v1/comment/post";
+  const body = {
+    note_id: params.note_id,
+    content: params.content.trim(),
+    at_users: params.at_users || [],
+  };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error post comment]", e?.message || e);
+    throw new Error("评论签名失败，请稍后重试");
+  }
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  try {
+    const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+    const data = resp.data;
+    if (!data || !data.success) throw new Error(data?.msg || "发布评论失败");
+    return data; // { code: 0, success: true, msg: "成功", data: { comment, time, toast } }
+  } catch (error: any) {
+    const responseData = error.response?.data;
+    if (responseData?.msg) {
+      throw new Error(responseData.msg);
+    }
+    throw new Error(error.message || "发布评论请求失败");
+  }
+};
