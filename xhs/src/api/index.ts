@@ -28,6 +28,10 @@ import type {
   XhsLikeNoteResponse,
   XhsDislikeNoteParams,
   XhsDislikeNoteResponse,
+  XhsCollectNoteParams,
+  XhsCollectNoteResponse,
+  XhsUncollectNoteParams,
+  XhsUncollectNoteResponse,
 } from '../../../types/xhs';
 
 type RequestFunc = <T = any>(command: CommandList, payload: any, content?: string) => Promise<T>;
@@ -164,6 +168,24 @@ export class XhsApi {
       'XHS_NOTE_DISLIKE' as CommandList,
       payload,
       '取消点赞中...'
+    );
+  }
+
+  /** 收藏笔记 */
+  collectNote(payload: XhsCollectNoteParams) {
+    return this.request<XhsCollectNoteResponse>(
+      'XHS_NOTE_COLLECT' as CommandList,
+      payload,
+      '收藏中...'
+    );
+  }
+
+  /** 取消收藏 */
+  uncollectNote(payload: XhsUncollectNoteParams) {
+    return this.request<XhsUncollectNoteResponse>(
+      'XHS_NOTE_UNCOLLECT' as CommandList,
+      payload,
+      '取消收藏中...'
     );
   }
 }

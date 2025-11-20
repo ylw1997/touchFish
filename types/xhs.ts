@@ -269,6 +269,10 @@ export interface XhsLikeNoteParams { note_oid: string }
 export interface XhsLikeNoteResponse { new_like: boolean; [k: string]: any }
 export interface XhsDislikeNoteParams { note_oid: string }
 export interface XhsDislikeNoteResponse { like_count: number; [k: string]: any }
+export interface XhsCollectNoteParams { note_id: string }
+export interface XhsCollectNoteResponse { code: number; success: boolean; msg: string; [k: string]: any }
+export interface XhsUncollectNoteParams { note_ids: string }
+export interface XhsUncollectNoteResponse { code: number; success: boolean; msg: string; [k: string]: any }
 export interface XhsApiResponse<T = any> {
   code: number;
   success: boolean;

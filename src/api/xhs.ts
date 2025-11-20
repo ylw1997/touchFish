@@ -451,3 +451,69 @@ export const dislikeXhsNote = async (params: { note_oid: string }) => {
   if (!data) throw new Error("取消点赞失败，返回数据为空");
   return data; // { like_count: number }
 };
+
+// 收藏笔记
+// POST https://edith.xiaohongshu.com/api/sns/web/v1/note/collect { note_id }
+export const collectXhsNote = async (params: { note_id: string }) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  if (!params.note_id) throw new Error("缺少 note_id 参数");
+  const apiPath = "/api/sns/web/v1/note/collect";
+  const body = { note_id: params.note_id };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error collect]", e?.message || e);
+    throw new Error("收藏签名失败，请稍后重试");
+  }
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  try {
+    const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+    const data = resp.data;
+    if (!data || !data.success) throw new Error(data?.msg || "收藏失败");
+    return data; // { code: 0, success: true, msg: "成功" }
+  } catch (error: any) {
+    const responseData = error.response?.data;
+    // 检查后端返回的错误信息
+    if (responseData?.msg) {
+      throw new Error(responseData.msg);
+    }
+    throw new Error(error.message || "收藏请求失败");
+  }
+};
+
+// 取消收藏笔记
+// POST https://edith.xiaohongshu.com/api/sns/web/v1/note/uncollect { note_ids }
+export const uncollectXhsNote = async (params: { note_ids: string }) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  if (!params.note_ids) throw new Error("缺少 note_ids 参数");
+  const apiPath = "/api/sns/web/v1/note/uncollect";
+  const body = { note_ids: params.note_ids };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error uncollect]", e?.message || e);
+    throw new Error("取消收藏签名失败，请稍后重试");
+  }
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  try {
+    const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+    const data = resp.data;
+    if (!data || !data.success) throw new Error(data?.msg || "取消收藏失败");
+    return data; // { code: 0, success: true, msg: "成功" }
+  } catch (error: any) {
+    const responseData = error.response?.data;
+    // 检查后端返回的错误信息
+    if (responseData?.msg) {
+      throw new Error(responseData.msg);
+    }
+    throw new Error(error.message || "取消收藏请求失败");
+  }
+};

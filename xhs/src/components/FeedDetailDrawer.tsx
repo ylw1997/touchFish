@@ -50,6 +50,8 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     fetchSubComments,
     likeLoading,
     toggleLike,
+    collectLoading,
+    toggleCollect,
     shareNote,
   } = useNoteDetail({
     noteId: detail.note_id,
@@ -159,6 +161,8 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
             onShare={shareNote}
             onToggleLike={toggleLike}
             likeLoading={likeLoading}
+            onToggleCollect={toggleCollect}
+            collectLoading={collectLoading}
           />
         )}
 

@@ -41,7 +41,12 @@ xhsHttp.interceptors.response.use(
   },
   (error: AxiosError) => {
     if (error.code === 'ECONNABORTED') return Promise.reject(new Error('请求超时'));
-    if (error.response) return Promise.reject(new Error(`请求失败: ${error.response.status}`));
+    if (error.response) {
+      // 保留原始响应数据，方便上层调试
+      const err = new Error(`请求失败: ${error.response.status}`) as any;
+      err.response = error.response;
+      return Promise.reject(err);
+    }
     return Promise.reject(error);
   }
 );

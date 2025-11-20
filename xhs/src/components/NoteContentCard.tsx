@@ -50,6 +50,10 @@ interface NoteContentCardProps {
   onToggleLike?: () => void;
   /** 点赞加载状态 */
   likeLoading?: boolean;
+  /** 收藏/取消收藏操作 */
+  onToggleCollect?: () => void;
+  /** 收藏加载状态 */
+  collectLoading?: boolean;
 }
 
 /**
@@ -62,6 +66,8 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
   loading = false,
   onToggleLike,
   likeLoading = false,
+  onToggleCollect,
+  collectLoading = false,
 }) => {
   const {
     title,
@@ -253,7 +259,14 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
             )}
             <span>{formatCount(likedCount)}</span>
           </Space>,
-          <Space key="collect" style={{ fontSize: "16px" }}>
+          <Space
+            key="collect"
+            style={{ fontSize: "16px", cursor: collectLoading ? 'not-allowed' : 'pointer', opacity: collectLoading ? 0.6 : 1 }}
+            onClick={() => {
+              if (collectLoading) return;
+              onToggleCollect?.();
+            }}
+          >
             {collected ? (
               <StarFilled style={{ color: "#faad14" }} />
             ) : (

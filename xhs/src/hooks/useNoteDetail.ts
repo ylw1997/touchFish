@@ -57,6 +57,11 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
   // 独立的点赞本地状态，避免依赖深层对象引用导致不刷新
   const [likedState, setLikedState] = useState<boolean>(false);
   const [likedCountState, setLikedCountState] = useState<number>(0);
+  
+  const [collectLoading, setCollectLoading] = useState(false);
+  // 独立的收藏本地状态
+  const [collectedState, setCollectedState] = useState<boolean>(false);
+  const [collectedCountState, setCollectedCountState] = useState<number>(0);
 
   const noteData = useMemo(() => {
     const interactInfo = note?.interact_info || {};
@@ -69,8 +74,8 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
       videoPoster: videoUrl && images.length === 1 ? images[0] : undefined,
       liked: likedState,
       likedCount: likedCountState,
-      collected: !!interactInfo?.collected,
-      collectedCount: interactInfo?.collected_count || 0,
+      collected: collectedState,
+      collectedCount: collectedCountState,
       commentCount: interactInfo?.comment_count || 0,
       shareCount: interactInfo?.share_count || 0,
       publishTime: note?.time || note?.last_update_time || 0,
@@ -79,7 +84,7 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
                 note?.extraInfo_info?.fstatus === 'follows' ||
                 note?.extraInfo_info?.fstatus === 'each_other',
     };
-  }, [note, user, images, videoUrl, likedState, likedCountState]);
+  }, [note, user, images, videoUrl, likedState, likedCountState, collectedState, collectedCountState]);
 
   // 加载笔记详情
   const fetchDetail = useCallback(async () => {
@@ -93,11 +98,13 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
         xsec_token: xsecToken,
       });
       setNoteDetail(data);
-      // 根据返回的 interact_info 初始化本地点赞状态
+      // 根据返回的 interact_info 初始化本地点赞与收藏状态
       const base = (data?.note || data?.note_card || data) as any;
       const info = base?.interact_info || {};
       setLikedState(!!info.liked);
       setLikedCountState(Number(info.liked_count || 0));
+      setCollectedState(!!info.collected);
+      setCollectedCountState(Number(info.collected_count || 0));
     } catch (e: any) {
       console.error("[xhs] feed detail error", e);
     } finally {
@@ -176,7 +183,7 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     }
   }, [noteId, xsecToken, comments]);
 
-  // 点赞/取消点赞（乐观更新 + 成功/失败提示 + 回滚）
+  // 点赞/取消点赞（成功后更新）
   const toggleLike = useCallback(async () => {
     const noteIdLocal = note?.note_id;
     if (!noteIdLocal || likeLoading) return;
@@ -206,6 +213,33 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
       setLikeLoading(false);
     }
   }, [note?.note_id, likeLoading, likedState, likedCountState, messageApi]);
+
+  // 收藏/取消收藏（成功后更新）
+  const toggleCollect = useCallback(async () => {
+    const noteIdLocal = note?.note_id;
+    if (!noteIdLocal || collectLoading) return;
+    const currentlyCollected = collectedState;
+    const prevCount = collectedCountState;
+    setCollectLoading(true);
+    try {
+      if (!currentlyCollected) {
+        await apiRef.current.collectNote({ note_id: noteIdLocal });
+        // 成功后更新
+        setCollectedState(true);
+        setCollectedCountState(prevCount + 1);
+        messageApi.success('已收藏');
+      } else {
+        await apiRef.current.uncollectNote({ note_ids: noteIdLocal });
+        setCollectedState(false);
+        setCollectedCountState(Math.max(0, prevCount - 1));
+        messageApi.success('已取消收藏');
+      }
+    } catch (e: any) {
+      messageApi.error(e?.message || (currentlyCollected ? '取消收藏失败' : '收藏失败'));
+    } finally {
+      setCollectLoading(false);
+    }
+  }, [note?.note_id, collectLoading, collectedState, collectedCountState, messageApi]);
 
   // 分享功能
   const shareNote = useCallback(() => {
@@ -261,8 +295,12 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     commentError,
     loadMoreComments,
     fetchSubComments,
+    
+    // 互动状态
     likeLoading,
     toggleLike,
+    collectLoading,
+    toggleCollect,
     
     // 方法
     shareNote,

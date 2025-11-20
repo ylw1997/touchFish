@@ -25,6 +25,8 @@ import {
   getXhsSubComments,
   likeXhsNote,
   dislikeXhsNote,
+  collectXhsNote,
+  uncollectXhsNote,
 } from "../api/xhs";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
@@ -154,6 +156,18 @@ export class XhsWebProvider extends BaseWebviewProvider {
       case "XHS_NOTE_DISLIKE": {
         const dislikePayload = payload as any;
         const data = await dislikeXhsNote(dislikePayload);
+        webviewView.webview.postMessage({ payload: data, uuid });
+        break;
+      }
+      case "XHS_NOTE_COLLECT": {
+        const collectPayload = payload as any;
+        const data = await collectXhsNote(collectPayload);
+        webviewView.webview.postMessage({ payload: data, uuid });
+        break;
+      }
+      case "XHS_NOTE_UNCOLLECT": {
+        const uncollectPayload = payload as any;
+        const data = await uncollectXhsNote(uncollectPayload);
         webviewView.webview.postMessage({ payload: data, uuid });
         break;
       }
