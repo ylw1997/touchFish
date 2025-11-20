@@ -1,6 +1,35 @@
 # 更新历史 
 
 
+## [10.4.0](https://github.com/ylw1997/touchFish/compare/v10.3.2...v10.4.0) (2025-11-20)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 将超时错误消息翻译为中文，提升用户友好性 ([a0462af](https://github.com/a0462afc09c3baa3a8264f70e17108cdd9bba0cf))
+* 移除不必要的类型断言，简化 handleCustomMessage 方法中的消息解构 ([51eff11](https://github.com/51eff116799e3b1b84b4683f6f5c718caadececf))
+
+
+### ✨ Features | 新功能
+
+* 更新错误处理方式，统一使用 showInfo、showError 和 showWarn 方法，清理不必要的日志输出 ([75a5f14](https://github.com/75a5f1461fce644560e9c34d71c772010df5512e))
+* 删除 type.d.ts 文件，清理不再使用的类型定义 ([8f1b945](https://github.com/8f1b945c186ba0f41c35e5a96a79460e5082aada))
+* 添加 BaseWebviewProvider 类及相关接口，实现统一的 Webview 逻辑 ([9d1e503](https://github.com/9d1e503d2a90778ddc9fef9fba50a6d0ec7f4282))
+* 添加点赞和取消点赞功能，更新相关组件和接口，优化用户体验 ([e60ae07](https://github.com/e60ae0734346a120906297c20eb2e7cf19e52fcc))
+* 添加点赞和取消点赞功能，更新相关API接口 ([2077bed](https://github.com/2077bed88019e95b03c679b34ed18c03addab213))
+* 添加获取子评论功能，更新相关组件和接口，优化评论加载体验 ([e2f3dba](https://github.com/e2f3dba4b2b177677382f2dac691dec96d13640c))
+* 添加命令相关类型定义，支持微博和小红书的API交互 ([4ca4fff](https://github.com/4ca4fffd9a9ce6bb96e06c106165e6722f2d2141))
+* 添加收藏和取消收藏功能，更新相关组件和接口，优化用户体验 ([2da68b0](https://github.com/2da68b027fdcbc5c28ba77bc7fe936473a776535))
+* 添加微博、小红书和知乎的API集成及相关工具函数 ([3ec8482](https://github.com/3ec8482b199e9e9ea405f176cff1212ab7df17a5))
+* 添加小红书和知乎签名工具及相关类型声明，并更新 Webpack 配置。 ([791c665](https://github.com/791c66500f22cf8234e1e817e2e667179c34c485))
+* 统一类型导入路径，优化 Weibo 和 Zhihu 提供者及相关 API ([ad8fcf0](https://github.com/ad8fcf0863b7af20930d7b0ffc3f2650cc7d8b80))
+* 统一类型导入路径，优化 Weibo 相关组件和工具 ([12ad41d](https://github.com/12ad41d2d88aae32abd828e81313d26c43f2fba9))
+* 统一类型导入路径，优化 Xhs 相关组件和工具 ([21fa7c6](https://github.com/21fa7c6fb06ebcc4da582df14bca8a512253282f))
+* 统一类型导入路径，优化 Zhihu 相关组件和工具 ([d569169](https://github.com/d569169fe0e6b01f8330ef52e94c06d0e6ac8ca9))
+* 新增知乎、微博、小红书网页内容提供器及相关签名和webview工具函数 ([adcafb4](https://github.com/adcafb4437e66c68d6a351b8574ef49fbe13924c))
+* 移除 XHS_REQUEST_RESTORE_SCROLL 命令，优化命令列表 ([fff6535](https://github.com/fff65355c4ba04362dc9aa5f98e065976d58fd40))
+* 重构 WeiboProvider、XhsWebProvider 和 ZhihuWebProvider，统一消息处理逻辑，优化代码结构 ([7f70951](https://github.com/7f70951d36f5073ac2e3de56ad5806952bff67c6))
+
 ### [10.3.2](https://github.com/ylw1997/touchFish/compare/v10.3.1...v10.3.2) (2025-11-18)
 
 
