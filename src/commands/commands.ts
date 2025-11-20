@@ -11,6 +11,7 @@ import { commands } from "vscode";
 import { NgaProvider } from "../Providers/ngaProvider";
 import { setConfigByKey } from "../core/config";
 import * as vscode from "vscode";
+import { showInfo } from '../utils/errorMessage';
 import { V2exProvider } from "../Providers/v2exProvider";
 import { HupuProvider } from "../Providers/hupuProvider";
 
@@ -45,7 +46,7 @@ export const changeV2exTab = (provider: V2exProvider) => {
       await provider.getData(tab.description);
       await setConfigByKey("v2exTab", tab.description);
       // await vscode.commands.executeCommand('v2ex.refresh');
-      await vscode.window.showInformationMessage(`v2ex 切换为 ${tab.label}`);
+      await showInfo(`v2ex 切换为 ${tab.label}`);
     }
   });
 };
@@ -67,7 +68,7 @@ export const changeHupuTab = (provider: HupuProvider) => {
       await provider.getData(tab.description);
       await setConfigByKey("hupuTab", tab.description);
       // await vscode.commands.executeCommand('hupu.refresh');
-      await vscode.window.showInformationMessage(`Hupu 切换为 ${tab.label}`);
+      await showInfo(`Hupu 切换为 ${tab.label}`);
     }
   });
 };
@@ -296,7 +297,7 @@ export const changeNgaTab = (ngaProvider: NgaProvider) => {
 
       await ngaProvider.getData(tabValue);
       await setConfigByKey("ngaTab", tabValue);
-      await vscode.window.showInformationMessage(`nga 切换为 ${tabLabel}`);
+      await showInfo(`nga 切换为 ${tabLabel}`);
     }
   });
 };
@@ -312,9 +313,7 @@ export const setZhihuTokenCommand = () => {
       });
       if (zhihuCookie !== undefined) {
         await setConfigByKey("zhihuCookie", zhihuCookie);
-        await vscode.window.showInformationMessage(
-          "知乎Cookie设置成功,点击刷新按钮查看!"
-        );
+        await showInfo("知乎Cookie设置成功,点击刷新按钮查看!");
       }
     }
   );
@@ -331,9 +330,7 @@ export const setWeiboTokenCommand = () => {
       });
       if (weiboCookie !== undefined) {
         await setConfigByKey("weiboCookie", weiboCookie);
-        await vscode.window.showInformationMessage(
-          "微博Cookie设置成功,点击刷新按钮查看!"
-        );
+        await showInfo("微博Cookie设置成功,点击刷新按钮查看!");
       }
     }
   );
@@ -348,9 +345,7 @@ export const setNgaTokenCommand = () => {
     });
     if (ngaCookie !== undefined) {
       await setConfigByKey("ngaCookie", ngaCookie);
-      await vscode.window.showInformationMessage(
-        "NGA-Cookie设置成功,点击刷新按钮查看!"
-      );
+      await showInfo("NGA-Cookie设置成功,点击刷新按钮查看!");
     }
   });
 };
@@ -364,9 +359,7 @@ export const setXhsTokenCommand = () => {
     });
     if (xhsCookie !== undefined) {
       await setConfigByKey("xhsCookie", xhsCookie);
-      await vscode.window.showInformationMessage(
-        "小红书Cookie设置成功,切换到小红书视图查看!"
-      );
+      await showInfo("小红书Cookie设置成功,切换到小红书视图查看!");
     }
   });
 };
@@ -382,7 +375,7 @@ export const switchLinuxDoTab = () => {
     if (tab) {
       await setConfigByKey("linuxDoTab", tab.description);
       await vscode.commands.executeCommand("linuxdo.refresh");
-      await vscode.window.showInformationMessage(`Linux.do 切换为 ${tab.label}`);
+      await showInfo(`Linux.do 切换为 ${tab.label}`);
     }
   });
 };
@@ -396,9 +389,7 @@ export const setLinuxDoTokenCommand = () => {
     });
     if (linuxDoCookie !== undefined) {
       await setConfigByKey("linuxDoCookie", linuxDoCookie);
-      await vscode.window.showInformationMessage(
-        "Linux.do Cookie 设置成功！"
-      );
+      await showInfo("Linux.do Cookie 设置成功！");
       await vscode.commands.executeCommand("linuxdo.refresh");
     }
   });

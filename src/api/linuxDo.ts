@@ -140,7 +140,6 @@ export const getNewsList = async (tab: string = 'latest') => {
       decompress: true,
       validateStatus: (status) => status < 500,
     });
-    console.log("linux Request:", response);
     // 检查响应
     if (response.status === 403 || response.status === 401) {
       throw new Error(

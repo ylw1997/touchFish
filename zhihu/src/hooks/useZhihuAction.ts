@@ -130,12 +130,10 @@ const useZhihuAction = () => {
   const changeQuestionOrder = useCallback(async (order: "default" | "updated") => {
     if (!currentQuestionId) return;
     if (order === questionOrder) return; // 相同无需刷新
-    console.log('[Zhihu] changeQuestionOrder ->', order, 'currentQuestionId=', currentQuestionId);
     setQuestionOrder(order);
     setQuestionData([]);
     setQuestionPagingMap((m) => ({ ...m, [currentQuestionId]: { is_end: false } }));
     const res = await apiClient.getQuestionDetail({ questionId: currentQuestionId, order });
-    console.log('[Zhihu] changeQuestionOrder fetched', res?.data?.length, 'items');
     if (res.data) {
       let newData = res.data;
       if (order === 'updated') {

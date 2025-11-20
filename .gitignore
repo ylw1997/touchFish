@@ -4,3 +4,11 @@ node_modules
 .vscode-test/
 *.vsix
 temp
+
+# Build outputs
+weibo/dist
+zhihu/dist
+xhs/dist
+
+# Old releases
+touchfish-*.vsix

@@ -6,6 +6,7 @@
  * 4. 子类仅需实现 handleCustomMessage 处理自身业务命令
  */
 import * as vscode from 'vscode';
+import { showInfo, showError } from '../utils/errorMessage';
 import { getWebviewHtml } from '../utils/webviewUtils';
 
 export interface BaseWebviewOptions {
@@ -62,7 +63,7 @@ export abstract class BaseWebviewProvider implements vscode.WebviewViewProvider 
           const newState = !!payload;
           const config = vscode.workspace.getConfiguration('touchfish');
           await config.update('showImg', newState, true);
-          vscode.window.showInformationMessage(`图片已设置为${newState ? '显示' : '隐藏'}`);
+          showInfo(`图片已设置为${newState ? '显示' : '隐藏'}`);
           if (this.options.imgToggledCommand) {
             webviewView.webview.postMessage({
               command: this.options.imgToggledCommand,
@@ -79,7 +80,7 @@ export abstract class BaseWebviewProvider implements vscode.WebviewViewProvider 
         await this.handleCustomMessage(msg, webviewView);
       } catch (err: any) {
         // 统一错误处理与回传
-        vscode.window.showErrorMessage(err?.message || 'Webview 请求发生错误');
+        showError(err?.message || 'Webview 请求发生错误');
         try {
           webviewView.webview.postMessage({
             payload: { ok: 0, msg: err?.message || '请求失败' },

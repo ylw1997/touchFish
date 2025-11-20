@@ -8,6 +8,7 @@
  * @Description:
  */
 import { WebviewView, ExtensionContext, Uri, window } from "vscode";
+import { showInfo } from '../utils/errorMessage';
 import {
   cancelfollowUser,
   cancelLike,
@@ -64,7 +65,7 @@ export class WeiboProvider extends BaseWebviewProvider {
               res = await getWeiboData(payload);
             }
           } else {
-            window.showInformationMessage("获取微博数据失败!");
+            showInfo("获取微博数据失败!");
           }
         }
         webviewView.webview.postMessage({
@@ -86,8 +87,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           const videoUri = Uri.file(videoPath);
           const webviewUri = webviewView.webview.asWebviewUri(videoUri);
           webviewView.webview.postMessage({ payload: webviewUri.toString(), uuid });
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
+        } catch {
           webviewView.webview.postMessage({ payload: { ok: 0, msg: "获取视频失败!" }, uuid });
         }
         break;

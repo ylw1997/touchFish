@@ -9,6 +9,7 @@
  */
 import axios from "axios";
 import * as vscode from "vscode";
+import { showError } from '../utils/errorMessage';
 import { getOrSetCookie, buildCommonHeaders } from "../utils/apiUtils";
 import { weiboCommentParams, weiboRepostParams } from "../../types/weibo";
 import ContextManager from "../utils/extensionContext";
@@ -23,9 +24,7 @@ axios.interceptors.response.use(
     if (error.response && error.response.status === 432) {
       return Promise.reject(error);
     }
-    vscode.window.showErrorMessage(
-      `请求失败:${error.message} -------&gt; ${error.config.url}`
-    );
+    showError(`请求失败:${error.message} -------&gt; ${error.config.url}`);
     return Promise.resolve({
       data: {
         ok: 0,
@@ -320,7 +319,7 @@ export const getWeiboSearch = async (
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return getWeiboSearch(containerid, retries - 1);
     } else {
-      vscode.window.showErrorMessage(`微博搜索请求失败: ${error.message}`);
+      showError(`微博搜索请求失败: ${error.message}`);
       return Promise.resolve({
         data: {
           ok: 0,

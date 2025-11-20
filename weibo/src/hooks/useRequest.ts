@@ -10,16 +10,9 @@
 import { App } from "antd";
 import { useCallback } from "react";
 import { CommandList } from "../../../types/commands";
+import { generateUUID } from "../../../types/utils";
 import { vscode } from "../utils/vscode";
 import { messageHandler } from "../utils/messageHandler";
-
-const generateUUID = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0,
-      v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
 
 export const useRequest = () => {
   const { message: messageApi } = App.useApp();
@@ -33,8 +26,6 @@ export const useRequest = () => {
         // a race where the extension posts a response before the handler is added.
         messageHandler.addRequest(uuid, resolve, reject);
         vscode.postMessage({ command, payload, uuid });
-      }).catch((error) => {
-        throw error; // Re-throw the error to be caught by the caller
       });
     },
     []

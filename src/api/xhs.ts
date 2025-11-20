@@ -240,8 +240,7 @@ export const getXhsUserPosted = async (params: {
   try {
     signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
   } catch (e: any) {
-    console.log("[xhs signature error]", e?.message || e);
-    throw new Error("小红书签名生成失败，请检查 Cookie 或稍后再试");
+    throw new Error(`小红书签名生成失败: ${e?.message || '请检查 Cookie'}`);
   }
   const xsecToken = queryObj.xsec_token.replace(/=/g, "%3D");
   const url = `https://edith.xiaohongshu.com${apiPath}?num=30&cursor=${queryObj.cursor}&user_id=${queryObj.user_id}&image_formats=jpg,webp,avif&xsec_token=${xsecToken}&xsec_source=${queryObj.xsec_source}`;

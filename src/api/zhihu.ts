@@ -226,7 +226,6 @@ export const getZhihuWebDetail = async (
 
   const xzse96 = await getZhihu96(signPath);
   const cookie = (await getOrSetZhihuCookie()) as string;
-  console.log("[ZhihuFeeds] order=", order, " signPath=", signPath);
   const res = await axios.get(requestUrl, {
     headers: {
       Cookie: cookie,

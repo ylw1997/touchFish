@@ -33,8 +33,7 @@ export const useExpandedStore = create<ExpandedState>((set, get) => ({
     const { items } = get();
     // 调用所有回调折叠
     Object.values(items).forEach(cb => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      try { cb(); } catch (e) { /* 忽略单项错误 */ }
+      try { cb(); } catch { /* 忽略单项错误 */ }
     });
     // 清空注册列表
     set({ items: {} });

@@ -76,7 +76,6 @@ export function getNoteOriginalImage(imgUrl: string): OriginalImageResult {
     msg = e instanceof Error ? e.message : '解析图片URL失败';
     isOriginal = false;
   }
-  console.log('获取原图结果:', {imgUrl, success, msg, newUrl, isOriginal });
   return {
     success,
     msg,

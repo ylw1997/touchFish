@@ -9,7 +9,7 @@
 import axios from "axios";
 import {load} from 'cheerio';
 import { NewsItem } from "../type/type";
-import * as vscode from 'vscode';
+import { showError } from '../utils/errorMessage';
 import { uniqueNews } from "../utils/util";
 
 // 获取新闻列表
@@ -32,8 +32,7 @@ export const getV2exList = async (tab="all")=>{
     });
     return uniqueNews(resArr);
   } catch (error) {
-    console.log(error);
-    vscode.window.showErrorMessage("获取V2EX新闻列表失败");
+    showError("获取V2EX新闻列表失败");
     return [];
   }
   
@@ -47,7 +46,6 @@ export const getV2exDetail = async (url:string)=>{
     const content = $("#Main").html();
     return content ? content.replace(/&nbsp;/g, '') : content;
   } catch (error) {
-    console.log(error);
     return "获取V2EX新闻内容失败!";
   }
   

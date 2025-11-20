@@ -11,6 +11,7 @@ import { NewsItem } from "../type/type";
 import { load } from "cheerio";
 import { TextDecoder } from "util";
 import * as vscode from "vscode";
+import { showInfo, showError } from '../utils/errorMessage';
 import { setConfigByKey } from "../core/config";
 import { uniqueNews } from "../utils/util";
 
@@ -58,14 +59,13 @@ export const getNgaList = async (tab?: string) => {
     });
     return resArr;
   } catch (error) {
-    console.log("nga--->出错", error);
-    vscode.window.showInformationMessage("nga加载失败,请刷新列表重试！");
+     showInfo("nga加载失败,请刷新列表重试！");
   }
   return uniqueNews(resArr);
 };
 
 // 获取nga文章详情
-export const getNgaNewsDetail = async (url: string) => {
+export const getNgaNewsDetail = async (url: string): Promise<string | null> => {
   try {
     const cookie = (await getOrSetNgaCookie()) as string;
     const { data } = await axios.get("https://bbs.nga.cn" + url, {
@@ -103,8 +103,7 @@ export const getNgaNewsDetail = async (url: string) => {
     const content = $("#m_posts").html();
     return content;
   } catch (error) {
-    console.log("获取详情出错", error);
-    // 弹出错误提示
-    vscode.window.showErrorMessage("获取nga新闻详情失败");
+     showError("获取nga新闻详情失败");
+    return null;
   }
 };

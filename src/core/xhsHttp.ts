@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import * as vscode from 'vscode';
+import { showError, showInfo } from '../utils/errorMessage';
 import { setConfigByKey } from './config';
 
 export const xhsHttp = axios.create({
@@ -14,8 +15,7 @@ xhsHttp.interceptors.response.use(
       if (data && typeof data === 'object') {
         if (data.code === -100) {
           const msg = data.msg || '登录已过期';
-          vscode.window
-            .showErrorMessage(msg, '重新输入 Cookie')
+          showError(msg, '重新输入 Cookie')
             .then(async (choice) => {
               if (choice === '重新输入 Cookie') {
                 const input = await vscode.window.showInputBox({
@@ -24,7 +24,7 @@ xhsHttp.interceptors.response.use(
                 });
                 if (input) {
                   await setConfigByKey('xhsCookie', input);
-                  vscode.window.showInformationMessage('已保存小红书 Cookie，请重试操作');
+                  showInfo('已保存小红书 Cookie，请重试操作');
                 }
               }
             });

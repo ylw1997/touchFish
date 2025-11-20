@@ -12,6 +12,7 @@
  */
 import { WebviewView, ExtensionContext } from "vscode";
 import * as vscode from "vscode";
+import { showWarn, showInfo, showError } from '../utils/errorMessage';
 import {
   getXhsFeed,
   getXhsFeedDetail,
@@ -160,9 +161,9 @@ export class XhsWebProvider extends BaseWebviewProvider {
               if (!response.data || dataLength === 0) throw new Error("下载的数据为空");
               downloadedData = response.data;
               imageType = "原图";
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            } catch (firstErr: any) {
-              vscode.window.showWarningMessage("原图下载失败，正在尝试下载展示图...");
+             
+            } catch {
+              showWarn("原图下载失败，正在尝试下载展示图...");
               const response = await axiosInstance.get(url, {
                 responseType: "arraybuffer",
                 headers: {
@@ -200,7 +201,7 @@ export class XhsWebProvider extends BaseWebviewProvider {
             });
             if (uri) {
               await vscode.workspace.fs.writeFile(uri, new Uint8Array(downloadedData));
-              vscode.window.showInformationMessage(`${imageType}已保存到: ${uri.fsPath}`);
+              showInfo(`${imageType}已保存到: ${uri.fsPath}`);
             }
           }
         } catch (downloadErr: any) {
@@ -208,7 +209,7 @@ export class XhsWebProvider extends BaseWebviewProvider {
             const errorMsg = downloadErr.response?.status === 404
               ? `下载失败: 图片不存在(404)`
               : `下载失败: ${downloadErr.message}`;
-            vscode.window.showErrorMessage(errorMsg);
+            showError(errorMsg);
             throw downloadErr; // 让基类捕获并回传
           }
         }
