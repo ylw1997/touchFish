@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [10.5.0](https://github.com/ylw1997/touchFish/compare/v10.4.0...v10.5.0) (2025-11-20)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 重置评论初始化标记，避免重复刷新笔记详情 ([6851e70](https://github.com/6851e702876b4b95c3e9df3330d382d7757a94fc))
+
+
+### ✨ Features | 新功能
+
+* 添加评论功能，包含评论输入组件及相关API支持 ([5414e17](https://github.com/5414e17bb36028737621a69219a95594bbf07c1f))
+
 ## [10.4.0](https://github.com/ylw1997/touchFish/compare/v10.3.2...v10.4.0) (2025-11-20)
 
 
