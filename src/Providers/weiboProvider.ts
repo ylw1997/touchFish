@@ -50,7 +50,7 @@ export class WeiboProvider extends BaseWebviewProvider {
   }
 
   protected async handleCustomMessage(message: IncomingMessage, webviewView: WebviewView) {
-    const { command, payload, uuid } = message as CommandsType<string | any>;
+    const { command, payload, uuid } = message;
     switch (command) {
       case "GETDATA": {
         let res = await getWeiboData(payload);
