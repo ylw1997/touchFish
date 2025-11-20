@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import type { ZhihuItemData } from "../../../type";
+import type { ZhihuItemData } from "../../../types/zhihu";
 import { useRequest } from "./useRequest";
 import { ZhihuApi } from "../api";
 

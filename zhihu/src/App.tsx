@@ -35,7 +35,7 @@ import { Suspense, lazy } from "react";
 const QuestionDetailDrawer = lazy(
   () => import("./components/QuestionDetailDrawer")
 );
-import type { ZhihuItemData } from "../../type";
+import type { ZhihuItemData } from "../../types/zhihu";
 import useZhihuAction from "./hooks/useZhihuAction";
 import { debounce } from "./utils";
 import { vscode } from "./utils/vscode";

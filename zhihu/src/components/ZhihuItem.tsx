@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import CommentItem from "./CommentItem";
 import { parseZhihuItemContent } from "../utils/textParser";
-import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
+import type { ZhihuCommentItem, ZhihuItemData } from "../../../types/zhihu";
 import { Avatar } from "@heroui/react";
 import useZhihuAction from "../hooks/useZhihuAction";
 import { loaderFunc } from "../utils/loader";

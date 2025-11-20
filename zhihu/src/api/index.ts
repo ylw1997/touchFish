@@ -8,7 +8,8 @@
  * @Description: Zhihu API requests
  */
 
-import type { ZhihuCommandList, ZhihuItemData } from "../../../type";
+import type { ZhihuCommandList } from "../../../types/commands";
+import type { ZhihuItemData } from "../../../types/zhihu";
 
 type RequestFunc = <T = any, P = any>(
   command: ZhihuCommandList,

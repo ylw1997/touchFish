@@ -2,7 +2,7 @@ import { Drawer, Button, Input, Form, List, Empty, Divider, Space } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
-import type { ZhihuItemData } from "../../../type";
+import type { ZhihuItemData } from "../../../types/zhihu";
 import ZhihuItem from "./ZhihuItem";
 import { loaderFunc } from "../utils/loader";
 import { useHasExpanded, useExpandedStore } from "../store/expanded";

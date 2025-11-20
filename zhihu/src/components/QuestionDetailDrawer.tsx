@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import React from "react";
 import { useHasExpanded, useExpandedStore } from "../store/expanded";
 import ZhihuItem from "./ZhihuItem";
-import type { ZhihuItemData } from "../../../type";
+import type { ZhihuItemData } from "../../../types/zhihu";
 import { loaderFunc } from "../utils/loader";
 
 interface QuestionDetailDrawerProps {
