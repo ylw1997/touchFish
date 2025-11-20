@@ -70,7 +70,7 @@ class MessageHandler {
   ) {
     const timeoutId = setTimeout(() => {
       this.pendingRequests.delete(uuid);
-      reject(new Error("Request timed out"));
+      reject(new Error("请求超时"));
     }, timeout);
 
     this.pendingRequests.set(uuid, { resolve, reject, timeoutId });

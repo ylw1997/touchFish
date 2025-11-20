@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-09-22 11:50:57
- * @LastEditTime: 2025-10-23 14:45:11
+ * @LastEditTime: 2025-11-20 16:15:04
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\utils\messageHandler.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
@@ -55,7 +55,7 @@ class MessageHandler {
   ) {
     const timeoutId = setTimeout(() => {
       this.pendingRequests.delete(uuid);
-      reject(new Error("Request timed out"));
+      reject(new Error("请求超时"));
     }, timeout);
 
     this.pendingRequests.set(uuid, { resolve, reject, timeoutId });
