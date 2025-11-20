@@ -23,6 +23,8 @@ import {
   followXhsUser,
   unfollowXhsUser,
   getXhsSubComments,
+  likeXhsNote,
+  dislikeXhsNote,
 } from "../api/xhs";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
@@ -140,6 +142,18 @@ export class XhsWebProvider extends BaseWebviewProvider {
       case "XHS_USER_UNFOLLOW": {
         const unfollowPayload = payload as any;
         const data = await unfollowXhsUser(unfollowPayload);
+        webviewView.webview.postMessage({ payload: data, uuid });
+        break;
+      }
+      case "XHS_NOTE_LIKE": {
+        const likePayload = payload as any;
+        const data = await likeXhsNote(likePayload);
+        webviewView.webview.postMessage({ payload: data, uuid });
+        break;
+      }
+      case "XHS_NOTE_DISLIKE": {
+        const dislikePayload = payload as any;
+        const data = await dislikeXhsNote(dislikePayload);
         webviewView.webview.postMessage({ payload: data, uuid });
         break;
       }

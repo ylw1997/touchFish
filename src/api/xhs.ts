@@ -403,3 +403,51 @@ export const unfollowXhsUser = async (params: { target_user_id: string }) => {
   if (!data) throw new Error("取消关注失败，返回数据为空");
   return data; // { fstatus: 'none' }
 };
+
+// 点赞笔记
+// POST https://edith.xiaohongshu.com/api/sns/web/v1/note/like { note_oid }
+export const likeXhsNote = async (params: { note_oid: string }) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  if (!params.note_oid) throw new Error("缺少 note_oid 参数");
+  const apiPath = "/api/sns/web/v1/note/like";
+  const body = { note_oid: params.note_oid };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error like]", e?.message || e);
+    throw new Error("点赞签名失败，请稍后重试");
+  }
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+  const data = resp.data?.data;
+  if (!data) throw new Error("点赞失败，返回数据为空");
+  return data; // { new_like: true }
+};
+
+// 取消点赞笔记
+// POST https://edith.xiaohongshu.com/api/sns/web/v1/note/dislike { note_oid }
+export const dislikeXhsNote = async (params: { note_oid: string }) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  if (!params.note_oid) throw new Error("缺少 note_oid 参数");
+  const apiPath = "/api/sns/web/v1/note/dislike";
+  const body = { note_oid: params.note_oid };
+  const { bodyString, bodyObj } = buildRequestBody(body);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error dislike]", e?.message || e);
+    throw new Error("取消点赞签名失败，请稍后重试");
+  }
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+  const data = resp.data?.data;
+  if (!data) throw new Error("取消点赞失败，返回数据为空");
+  return data; // { like_count: number }
+};

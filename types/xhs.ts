@@ -265,6 +265,10 @@ export interface XhsUnfollowResponse {
   msg?: string;
   [key: string]: any;
 }
+export interface XhsLikeNoteParams { note_oid: string }
+export interface XhsLikeNoteResponse { new_like: boolean; [k: string]: any }
+export interface XhsDislikeNoteParams { note_oid: string }
+export interface XhsDislikeNoteResponse { like_count: number; [k: string]: any }
 export interface XhsApiResponse<T = any> {
   code: number;
   success: boolean;
