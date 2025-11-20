@@ -23,6 +23,7 @@ import type {
   XhsFollowResponse,
   XhsUnfollowParams,
   XhsUnfollowResponse,
+  XhsSubCommentsResponseData,
 } from '../../../types/xhs';
 
 type RequestFunc = <T = any>(command: CommandList, payload: any, content?: string) => Promise<T>;
@@ -77,6 +78,24 @@ export class XhsApi {
       'XHS_GET_COMMENTS' as CommandList,
       payload,
       cursorLabel(payload.cursor)
+    );
+  }
+
+  /**
+   * 获取根评论的子评论
+   */
+  getSubComments(payload: {
+    note_id: string;
+    root_comment_id: string;
+    cursor?: string;
+    xsec_token: string;
+    num?: number;
+  }) {
+    const label = payload.cursor ? '加载更多子评论...' : '加载子评论中...';
+    return this.request<XhsSubCommentsResponseData>(
+      'XHS_GET_SUB_COMMENTS' as CommandList,
+      payload,
+      label
     );
   }
 

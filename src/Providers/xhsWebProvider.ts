@@ -22,6 +22,7 @@ import {
   getXhsUserHoverCard,
   followXhsUser,
   unfollowXhsUser,
+  getXhsSubComments,
 } from "../api/xhs";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
@@ -109,6 +110,12 @@ export class XhsWebProvider extends BaseWebviewProvider {
       case "XHS_GET_COMMENTS": {
         const commentPayload = payload as any;
         const data = await getXhsComments(commentPayload);
+        webviewView.webview.postMessage({ payload: data, uuid });
+        break;
+      }
+      case "XHS_GET_SUB_COMMENTS": {
+        const subPayload = payload as any;
+        const data = await getXhsSubComments(subPayload);
         webviewView.webview.postMessage({ payload: data, uuid });
         break;
       }

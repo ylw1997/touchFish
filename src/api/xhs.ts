@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-10-22 08:50:04
- * @LastEditTime: 2025-11-04 10:14:06
+ * @LastEditTime: 2025-11-20 15:27:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\api\xhs.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -168,6 +168,52 @@ export const getXhsComments = async (payload: {
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
   return resp.data?.data; // { comments, cursor, has_more, ... }
+};
+
+// 获取某条根评论的子评论列表
+// 接口：/api/sns/web/v2/comment/sub/page?note_id={note_id}&root_comment_id={root_comment_id}&num=10&cursor={cursor}&image_formats=jpg,webp,avif&top_comment_id=&xsec_token={xsec_token}
+// 说明：同主评论列表保持 GET + 签名策略；前端根据 sub_comment_has_more 决定是否触发。
+export const getXhsSubComments = async (payload: {
+  note_id: string;
+  root_comment_id: string;
+  cursor?: string;
+  xsec_token: string;
+}) => {
+  if (!payload?.note_id) throw new Error("缺少笔记ID note_id");
+  if (!payload?.root_comment_id) throw new Error("缺少根评论ID root_comment_id");
+  if (!payload?.xsec_token) throw new Error("缺少 xsec_token 参数");
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v2/comment/sub/page";
+  const queryObj = {
+    note_id: payload.note_id,
+    root_comment_id: payload.root_comment_id,
+    num: 10,
+    cursor: payload.cursor || "",
+    image_formats: "jpg,webp,avif",
+    top_comment_id: "",
+    xsec_token: payload.xsec_token,
+  };
+  let signObj: XhsSignature;
+  try {
+    // GET 签名模式
+    signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
+  } catch (e: any) {
+    console.error("[xhs signature error sub comments]", e?.message || e);
+    throw new Error("子评论签名生成失败，请稍后再试");
+  }
+  const safeToken = queryObj.xsec_token.replace(/=/g, "%3D");
+  const url = `https://edith.xiaohongshu.com${apiPath}?note_id=${queryObj.note_id}&root_comment_id=${queryObj.root_comment_id}&num=${queryObj.num}&cursor=${queryObj.cursor}&image_formats=${queryObj.image_formats}&top_comment_id=&xsec_token=${safeToken}`;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
+  // 后端实际返回字段为 comments 而非 sub_comments，这里做兼容转换
+  const raw = resp.data?.data;
+  if (!raw) return raw;
+  // 标准化：返回 { sub_comments, cursor, has_more, ... }
+  return {
+    ...raw,
+    sub_comments: raw.sub_comments || raw.comments || [],
+  };
 };
 
 // 搜索笔记

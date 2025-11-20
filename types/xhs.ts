@@ -345,3 +345,16 @@ export interface XhsCommentItem extends XhsSubCommentItem {
   sub_comment_has_more: boolean;
   status: number;
 }
+
+export interface XhsSubCommentsResponseData {
+  // 后端实际返回可能为 comments，这里统一标准化为 sub_comments
+  sub_comments: XhsSubCommentItem[];
+  comments?: XhsSubCommentItem[]; // 兼容原始字段，避免断言失败
+  cursor: string;
+  has_more: boolean;
+  note_id: string;
+  root_comment_id: string;
+  xsec_token: string;
+  time?: number;
+  [k: string]: any;
+}

@@ -25,6 +25,8 @@ interface CommentSectionProps {
   onLoadMore: () => void;
   /** 用户点击回调 */
   onUserClick: (comment: any) => void;
+  /** 展开子评论 */
+  onExpandSubComments?: (rootCommentId: string) => void;
 }
 
 /**
@@ -39,6 +41,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   scrollableTarget,
   onLoadMore,
   onUserClick,
+  onExpandSubComments,
 }) => {
   return (
     <Card
@@ -81,6 +84,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
               <CommonItem
                 c={comment}
                 onUserClick={() => onUserClick(comment)}
+                onExpandSubComments={() => onExpandSubComments?.(comment.id)}
               />
             )}
           />

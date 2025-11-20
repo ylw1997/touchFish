@@ -47,6 +47,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     commentHasMore,
     commentError,
     loadMoreComments,
+    fetchSubComments,
     shareNote,
   } = useNoteDetail({
     noteId: detail.note_id,
@@ -163,6 +164,7 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
           scrollableTarget="xhsFeedDetailScrollableDiv"
           onLoadMore={loadMoreComments}
           onUserClick={handleCommentUserClick}
+          onExpandSubComments={fetchSubComments}
         />
         {/* 用户主页 Drawer */}
         {!onUserClick && (

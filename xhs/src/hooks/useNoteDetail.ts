@@ -130,6 +130,41 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     fetchComments(commentCursor);
   }, [fetchComments, commentCursor]);
 
+  // 加载某条根评论的子评论
+  const fetchSubComments = useCallback(async (rootCommentId: string) => {
+    if (!noteId || !xsecToken || !rootCommentId) return;
+    setComments(prev => {
+      return prev.map(c => c.id === rootCommentId ? { ...c, sub_loading: true, sub_error: null } : c);
+    });
+    try {
+      const target = comments.find(c => c.id === rootCommentId);
+      const cursor = target?.sub_comment_cursor || '';
+      const data = await apiRef.current.getSubComments({
+        note_id: noteId,
+        root_comment_id: rootCommentId,
+        cursor,
+        xsec_token: xsecToken,
+      });
+      setComments(prev => prev.map(c => {
+        if (c.id !== rootCommentId) return c;
+        const existing = c.sub_comments || [];
+        // 后端返回可能是 data.sub_comments 或 data.comments
+        const list = (data.sub_comments || data.comments || []);
+        // 去重合并
+        const incoming = list.filter((sc: any) => !existing.some((e: any) => e.id === sc.id));
+        return {
+          ...c,
+          sub_comments: [...existing, ...incoming],
+          sub_comment_cursor: data.cursor,
+          sub_comment_has_more: !!data.has_more,
+          sub_loading: false,
+        };
+      }));
+    } catch (e: any) {
+      setComments(prev => prev.map(c => c.id === rootCommentId ? { ...c, sub_loading: false, sub_error: e?.message || '子评论加载失败' } : c));
+    }
+  }, [noteId, xsecToken, comments]);
+
   // 分享功能
   const shareNote = useCallback(() => {
     if (!note?.note_id) return;
@@ -182,6 +217,7 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
     commentHasMore,
     commentError,
     loadMoreComments,
+    fetchSubComments,
     
     // 方法
     shareNote,
