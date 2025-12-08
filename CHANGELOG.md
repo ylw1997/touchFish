@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [10.6.0](https://github.com/ylw1997/touchFish/compare/v10.5.0...v10.6.0) (2025-12-08)
+
+
+### ✨ Features | 新功能
+
+* 添加ChipHell Cookie设置功能，支持用户输入和配置保存 ([ca1f300](https://github.com/ca1f300928b14fff26e0dd95425556ca2c967312))
+* 移除Node.js依赖，使用crypto-js实现浏览器兼容的签名功能 ([714825b](https://github.com/714825b4bd04166bca35c7c6d413c95d2506746d))
+
 ## [10.5.0](https://github.com/ylw1997/touchFish/compare/v10.4.0...v10.5.0) (2025-11-20)
 
 
