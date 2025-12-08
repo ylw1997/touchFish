@@ -1,30 +1,46 @@
-import * as cryptoJs from "crypto-js";
-// Removed Node crypto dependency; introduce crypto-js & pure JS helpers
-const webCrypto =
-  typeof globalThis !== "undefined" &&
-  globalThis.crypto &&
-  globalThis.crypto.getRandomValues
-    ? globalThis.crypto
-    : null;
-let _seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
-function setSeed(s) {
-  if (Number.isInteger(s)) _seed = s >>> 0;
-}
-function _xorshift32() {
-  _seed ^= (_seed << 13) & 0xffffffff;
-  _seed ^= _seed >>> 17;
-  _seed ^= (_seed << 5) & 0xffffffff;
-  return _seed >>> 0;
-}
-function getRandomBytes(len) {
-  const out = new Uint8Array(len);
-  if (webCrypto) {
-    webCrypto.getRandomValues(out);
-    return out;
-  }
-  for (let i = 0; i < len; i++) out[i] = _xorshift32() & 0xff;
-  return out;
-}
+// Minimal JS implementation: only signXs (random mode)
+// Browser compatible version (No Node.js dependencies)
+// Usage:
+//   import { signXs } from './xhshow_min.js';
+//   const xs = signXs('POST','/api/sns/web/v1/homefeed', a1Value, 'xhs-pc-web', payload);
+
+import CryptoJS from "crypto-js";
+
+const CONFIG = {
+  BASE58_ALPHABET:
+    "NOPQRStuvwxWXYZabcyz012DEFTKLMdefghijkl4563GHIJBC7mnop89+/AUVqrsOPQefghijkABCDEFGuvwz0123456789xy",
+  CUSTOM_BASE64_ALPHABET:
+    "ZmserbBoHQtNP+wOcza/LpngG8yJq42KWYj0DSfdikx3VT16IlUAFM97hECvuRX5",
+  STANDARD_BASE64_ALPHABET:
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+  X3_BASE64_ALPHABET:
+    "MfgqrsbcyzPQRStuvC7mn501HIJBo2DEFTKdeNOwxWXYZap89+/A4UVLhijkl63G",
+  HEX_KEY:
+    "71a302257793271ddd273bcee3e4b98d9d7935e1da33f5765e2ea8afb6dc77a51a499d23b67c20660025860cbf13d4540d92497f58686c574e508f46e1956344f39139bf4faf22a3eef120b79258145b2feb5193b6478669961298e79bedca646e1a693a926154a5a7a1bd1cf0dedb742f917a747a1e388b234f2277",
+  VERSION_BYTES: [119, 104, 96, 41],
+  ENV_FINGERPRINT_XOR_KEY: 41,
+  SEQUENCE_VALUE_MIN: 15,
+  SEQUENCE_VALUE_MAX: 50,
+  WINDOW_PROPS_LENGTH_MIN: 900,
+  WINDOW_PROPS_LENGTH_MAX: 1200,
+  CHECKSUM_VERSION: 1,
+  CHECKSUM_XOR_KEY: 115,
+  CHECKSUM_FIXED_TAIL: [249, 65, 103, 103, 201, 181, 131, 99, 94, 7, 68, 250, 132, 21],
+  ENV_FINGERPRINT_TIME_OFFSET_MIN: 10,
+  ENV_FINGERPRINT_TIME_OFFSET_MAX: 50,
+  X3_PREFIX: "mns0301_",
+  XYS_PREFIX: "XYS_",
+  TEMPLATE: {
+    x0: "4.2.6",
+    x1: "xhs-pc-web",
+    x2: "Windows",
+    x3: "",
+    x4: "",
+  },
+};
+
+// --- Helpers ---
+
 function utf8Bytes(str) {
   const enc = encodeURIComponent(str);
   const arr = [];
@@ -35,45 +51,22 @@ function utf8Bytes(str) {
       i += 2;
     } else arr.push(ch.charCodeAt(0));
   }
-  return Uint8Array.from(arr);
+  return arr;
 }
-
-const CONFIG = {
-  BASE58_ALPHABET:
-    "NOPQRStuvwxWXYZabcyz012DEFTKLMdefghijkl4563GHIJBC7mnop89+/AUVqrsOPQefghijkABCDEFGuvwz0123456789xy",
-  CUSTOM_BASE64_ALPHABET:
-    "ZmserbBoHQtNP+wOcza/LpngG8yJq42KWYj0DSfdikx3VT16IlUAFM97hECvuRX5",
-  STANDARD_BASE64_ALPHABET:
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-  HEX_KEY:
-    "af572b95ca65b2d9ec76bb5d2e97cb653299cc663399cc663399cce673399cce6733190c06030100000000008040209048241289c4e271381c0e0703018040a05028148ac56231180c0683c16030984c2693c964b259ac56abd5eaf5fafd7e3f9f4f279349a4d2e9743a9d4e279349a4d2e9f47a3d1e8f47239148a4d269341a8d4623110884422190c86432994ca6d3e974baddee773b1d8e47a35128148ac5623198cce6f3f97c3e1f8f47a3d168b45aad562b158ac5e2f1f87c3e9f4f279349a4d269b45aad56",
-  VERSION_BYTES: [119, 104, 96, 41],
-  TIMESTAMP_XOR_KEY: 41,
-  FIXED_INT_VALUE_1: 15,
-  FIXED_INT_VALUE_2: 1291,
-  STARTUP_TIME_OFFSET_MIN: 1000,
-  STARTUP_TIME_OFFSET_MAX: 4000,
-  ENV_STATIC_BYTES: [
-    1, 249, 83, 102, 103, 201, 181, 131, 99, 94, 7, 68, 250, 132, 21,
-  ],
-  X3_PREFIX: "mns0101_",
-  XYS_PREFIX: "XYS_",
-  TEMPLATE: {
-    x0: "4.2.6",
-    x1: "xhs-pc-web",
-    x2: "Windows",
-    x3: "",
-    x4: "object",
-  },
-};
 
 function rand32() {
-  const b = getRandomBytes(4);
-  return (b[0] | (b[1] << 8) | (b[2] << 16) | (b[3] << 24)) >>> 0;
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0];
+  }
+  return Math.floor(Math.random() * 0xffffffff) >>> 0;
 }
+
 function randByte(min = 0, max = 255) {
   return min + (rand32() % (max - min + 1));
 }
+
 function intToLE(val, len = 4) {
   const out = [];
   let v = val >>> 0;
@@ -83,46 +76,43 @@ function intToLE(val, len = 4) {
   }
   return out;
 }
+
 function bytesFromHex(hex) {
   const out = [];
   for (let i = 0; i < hex.length; i += 2)
     out.push(parseInt(hex.slice(i, i + 2), 16));
   return out;
 }
+
 const HEX_KEY_BYTES = bytesFromHex(CONFIG.HEX_KEY);
+
 function xorArray(arr) {
   return arr.map((b, i) => (b ^ HEX_KEY_BYTES[i]) & 0xff);
 }
-function encodeTimestamp(ts) {
-  const raw = intToLE(ts, 8);
-  return raw
-    .map((b, i) => (b ^ CONFIG.TIMESTAMP_XOR_KEY) & 0xff)
-    .map((b, i) => (i === 0 ? randByte(0, 255) : b));
-}
-function base58Encode(bytes) {
-  let zeros = 0;
-  for (const b of bytes) {
-    if (b === 0) zeros++;
-    else break;
+
+function b64StdEncode(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
   }
-  let num = 0n;
-  for (const b of bytes) num = num * 256n + BigInt(b);
-  const chars = [];
-  const A = CONFIG.BASE58_ALPHABET;
-  while (num > 0n) {
-    const div = num / 58n;
-    const rem = num % 58n;
-    chars.push(A[Number(rem)]);
-    num = div;
-  }
-  for (let i = 0; i < zeros; i++) chars.push(A[0]);
-  return chars.reverse().join("");
+  return btoa(binary);
 }
+
+function encodeX3(bytes) {
+  const std = b64StdEncode(bytes);
+  let out = "";
+  const SA = CONFIG.STANDARD_BASE64_ALPHABET,
+    CA = CONFIG.X3_BASE64_ALPHABET;
+  for (const ch of std) {
+    const idx = SA.indexOf(ch);
+    out += idx !== -1 ? CA[idx] : ch;
+  }
+  return out;
+}
+
 function b64CustomEncode(s) {
   const bytes = utf8Bytes(s);
-  let bin = "";
-  for (const b of bytes) bin += String.fromCharCode(b);
-  const std = typeof btoa === "function" ? btoa(bin) : base64Fallback(bin);
+  const std = b64StdEncode(bytes);
   let out = "";
   const SA = CONFIG.STANDARD_BASE64_ALPHABET,
     CA = CONFIG.CUSTOM_BASE64_ALPHABET;
@@ -132,30 +122,10 @@ function b64CustomEncode(s) {
   }
   return out;
 }
-function base64Fallback(bin) {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  let out = "";
-  for (let i = 0; i < bin.length; i += 3) {
-    const c1 = bin.charCodeAt(i);
-    const c2 = bin.charCodeAt(i + 1);
-    const c3 = bin.charCodeAt(i + 2);
-    const triple = ((c1 || 0) << 16) | ((c2 || 0) << 8) | (c3 || 0);
-    out +=
-      chars[(triple >> 18) & 63] +
-      chars[(triple >> 12) & 63] +
-      (i + 1 < bin.length ? chars[(triple >> 6) & 63] : "=") +
-      (i + 2 < bin.length ? chars[triple & 63] : "=");
-  }
-  return out;
-}
+
 function buildContentString(method, uri, payload) {
-  // Mirrors Python implementation in client._build_content_string:
-  // POST: uri + compact JSON (no spaces, unicode preserved)
-  // GET: uri + key=value pairs joined by &; only '=' inside values replaced with '%3D'; commas kept.
   payload = payload || {};
   if (method === "POST") {
-    // JSON.stringify already produces compact form without spaces; unicode stays unescaped (similar to ensure_ascii=False)
     return uri + JSON.stringify(payload);
   }
   const entries = Object.entries(payload);
@@ -163,7 +133,6 @@ function buildContentString(method, uri, payload) {
   const parts = entries.map(([key, value]) => {
     let valStr;
     if (Array.isArray(value)) {
-      // Join array elements by comma (Python uses ','.join(str(v) for v in value))
       valStr = value
         .map((v) => (v !== undefined && v !== null ? String(v) : ""))
         .join(",");
@@ -172,56 +141,106 @@ function buildContentString(method, uri, payload) {
     } else {
       valStr = String(value);
     }
-    // Replace only '=' characters inside the value string
     valStr = valStr.replace(/=/g, "%3D");
     return `${key}=${valStr}`;
   });
   return uri + "?" + parts.join("&");
 }
+
 function md5Hex(s) {
-  if (cryptoJs && cryptoJs.MD5) return cryptoJs.MD5(s).toString();
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = (h * 0x01000193) >>> 0;
+  return CryptoJS.MD5(s).toString();
+}
+
+function structPackLittleEndianQ(ts) {
+  const data = new Array(8).fill(0);
+  for (let i = 0; i < 8; i++) {
+    data[i] = ts & 0xFF;
+    ts = Math.floor(ts / 256);
   }
-  const hex = ("00000000" + h.toString(16)).slice(-8);
-  return hex + hex + hex + hex;
+  return data;
 }
+
+function envFingerprintA(ts, xorKey) {
+  const data = structPackLittleEndianQ(ts);
+  
+  const sum1 = data[1] + data[2] + data[3] + data[4];
+  const sum2 = data[5] + data[6] + data[7];
+  
+  const mark = ((sum1 & 0xFF) + sum2) & 0xFF;
+  data[0] = mark;
+  
+  for (let i = 0; i < data.length; i++) {
+    data[i] ^= xorKey;
+  }
+  
+  return data;
+}
+
+function envFingerprintB(ts) {
+  return structPackLittleEndianQ(ts);
+}
+
 function buildPayload(dHex, a1, appId, content) {
-  const randNum = rand32();
-  const ts = Date.now();
-  const startupTs =
-    ts -
-    (CONFIG.STARTUP_TIME_OFFSET_MIN +
-      randByte(
-        0,
-        CONFIG.STARTUP_TIME_OFFSET_MAX - CONFIG.STARTUP_TIME_OFFSET_MIN
-      ));
-  const arr = [];
-  arr.push(...CONFIG.VERSION_BYTES);
-  const randBytes = intToLE(randNum, 4);
-  arr.push(...randBytes);
-  const xorKey = randBytes[0];
-  arr.push(...encodeTimestamp(ts));
-  arr.push(...intToLE(startupTs, 8));
-  arr.push(...intToLE(CONFIG.FIXED_INT_VALUE_1));
-  arr.push(...intToLE(CONFIG.FIXED_INT_VALUE_2));
-  const strLen = utf8Bytes(content).length;
-  arr.push(...intToLE(strLen));
-  const md5Bytes = bytesFromHex(dHex);
-  arr.push(...md5Bytes.slice(0, 8).map((b) => b ^ xorKey));
-  const a1Bytes = utf8Bytes(a1);
-  arr.push(a1Bytes.length, ...a1Bytes);
-  const appBytes = utf8Bytes(appId);
-  arr.push(appBytes.length, ...appBytes);
-  arr.push(
-    CONFIG.ENV_STATIC_BYTES[0],
-    randByte(0, 255),
-    ...CONFIG.ENV_STATIC_BYTES.slice(1)
+  const payload = [];
+  
+  payload.push(...CONFIG.VERSION_BYTES);
+  
+  const seed = rand32();
+  const seedBytes = intToLE(seed, 4);
+  payload.push(...seedBytes);
+  const seedByte0 = seedBytes[0];
+  
+  const timestamp = Date.now();
+  payload.push(...envFingerprintA(timestamp, CONFIG.ENV_FINGERPRINT_XOR_KEY));
+  
+  const timeOffset = randByte(
+    CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MIN,
+    CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MAX
   );
-  return arr;
+  payload.push(...envFingerprintB(timestamp - timeOffset * 1000));
+  
+  const sequenceValue = randByte(
+    CONFIG.SEQUENCE_VALUE_MIN,
+    CONFIG.SEQUENCE_VALUE_MAX
+  );
+  payload.push(...intToLE(sequenceValue, 4));
+  
+  const windowPropsLength = randByte(
+    CONFIG.WINDOW_PROPS_LENGTH_MIN,
+    CONFIG.WINDOW_PROPS_LENGTH_MAX
+  );
+  payload.push(...intToLE(windowPropsLength, 4));
+  
+  const uriLength = utf8Bytes(content).length;
+  payload.push(...intToLE(uriLength, 4));
+  
+  const md5Bytes = bytesFromHex(dHex);
+  for (let i = 0; i < 8; i++) {
+    payload.push(md5Bytes[i] ^ seedByte0);
+  }
+  
+  payload.push(52);
+  
+  const a1Bytes = utf8Bytes(a1);
+  const paddedA1 = new Array(52).fill(0);
+  for(let i=0; i<Math.min(a1Bytes.length, 52); i++) paddedA1[i] = a1Bytes[i];
+  payload.push(...paddedA1);
+  
+  payload.push(10);
+  
+  const sourceBytes = utf8Bytes(appId);
+  const paddedSource = new Array(10).fill(0);
+  for(let i=0; i<Math.min(sourceBytes.length, 10); i++) paddedSource[i] = sourceBytes[i];
+  payload.push(...paddedSource);
+  
+  payload.push(1);
+  payload.push(CONFIG.CHECKSUM_VERSION);
+  payload.push(seedByte0 ^ CONFIG.CHECKSUM_XOR_KEY);
+  payload.push(...CONFIG.CHECKSUM_FIXED_TAIL);
+  
+  return payload;
 }
+
 function signXs(
   method,
   uri,
@@ -230,6 +249,14 @@ function signXs(
   payload = null
 ) {
   method = method.toUpperCase();
+  
+  if (uri.indexOf("http") === 0) {
+    uri = uri.replace(/^https?:\/\/[^\/]+/, "");
+  }
+  if (uri.indexOf("?") !== -1) {
+    uri = uri.split("?")[0];
+  }
+
   const content = buildContentString(method, uri, payload);
   const dVal = md5Hex(content);
   const payloadArr = buildPayload(
@@ -238,13 +265,17 @@ function signXs(
     xsecAppid.trim(),
     content
   );
+  // console.log("XHSHOW_MIN.js payload:", payloadArr);
   const xorBytes = xorArray(payloadArr);
-  const x3Body = base58Encode(xorBytes);
+  const x3Body = encodeX3(xorBytes.slice(0, 124));
   const x3Full = CONFIG.X3_PREFIX + x3Body;
   const jsonCompact = JSON.stringify({ ...CONFIG.TEMPLATE, x3: x3Full });
   const encoded = b64CustomEncode(jsonCompact);
   return CONFIG.XYS_PREFIX + encoded;
 }
+
+// --- XsCommon and dependencies (Pure JS) ---
+
 for (
   var c = [],
     d = "ZmserbBoHQtNP+wOcza/LpngG8yJq42KWYj0DSfdikx3VT16IlUAFM97hECvuRX5",
@@ -316,28 +347,20 @@ function XsCommon(a1, xs, xt) {
     x1: "4.2.6",
     x2: "Windows",
     x3: "xhs-pc-web",
-    x4: "4.84.1",
+    x4: "4.86.0",
     x5: a1,
-    x6: xt,
-    x7: xs,
+    x6: "",
+    x7: "",
     x8: fff,
-    x9: gens9(xt.toString() + xs + fff),
+    x9: gens9(fff),
     x10: 0,
     x11: "normal",
   };
   let dataStr = JSON.stringify(d);
   return b64Encode(encodeUtf8(dataStr));
 }
-function generateXB3TraceId(len = 16) {
-  const chars = "abcdef0123456789";
-  let x_b3_traceid = "";
-  for (let i = 0; i < len; i++) {
-    x_b3_traceid += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return x_b3_traceid;
-}
 
-function get_request_headers_params(api, data, a1, method = "POST") {
+function get_request_headers_params(api, data, a1,method="POST") {
   let xs_xt = signXs(method, api, a1, "xhs-pc-web", data);
   let xs = xs_xt;
   let xt = new Date().getTime();
@@ -346,8 +369,15 @@ function get_request_headers_params(api, data, a1, method = "POST") {
     xs: xs,
     xt: xt,
     xs_common: xs_common,
-    x_b3_traceid: generateXB3TraceId(),
   };
 }
 
-export { signXs, get_request_headers_params, setSeed };
+export { signXs, get_request_headers_params };
+
+// Attach to window if available (for non-module usage)
+if (typeof window !== 'undefined') {
+  window.xhshow = {
+    signXs,
+    get_request_headers_params,
+  };
+}
