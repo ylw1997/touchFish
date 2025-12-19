@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [10.7.0](https://github.com/ylw1997/touchFish/compare/v10.6.0...v10.7.0) (2025-12-19)
+
+
+### ✨ Features | 新功能
+
+* 实现小红书API封装、主页Feed、笔记详情、搜索和用户主页等核心功能 ([b0a569d](https://github.com/b0a569d4064a5600254f5827ff06b4e68cc69215))
+* 新增微博服务提供者，实现微博数据获取、发布、互动等功能。 ([7eb3553](https://github.com/7eb35536d695db1cda191c94210d843d7aa736f3))
+* 新增微博集成，支持微博列表、用户操作、评论转发、搜索和发布等功能 ([35c26d5](https://github.com/35c26d594b0b456b7cf763e14ea83259ede7f63f))
+
 ## [10.6.0](https://github.com/ylw1997/touchFish/compare/v10.5.0...v10.6.0) (2025-12-08)
 
 
