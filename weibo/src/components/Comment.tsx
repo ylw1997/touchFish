@@ -37,8 +37,8 @@ export const renderComments = (
             transition={{ duration: 0.4 }}
             className="ant-list-item"
             style={{
-              display:'block',
-              padding: '0px',
+              display: "block",
+              padding: "0px",
             }}
           >
             <List.Item
@@ -74,7 +74,7 @@ export const renderComments = (
                 description={
                   <>
                     <div className="content comment-content">
-                      {parseWeiboText(item, getUserByName, onTopicClick, true)}
+                      {parseWeiboText(item, getUserByName, onTopicClick)}
                     </div>
                     {item.url_struct && item.url_struct.length > 0 && (
                       <div

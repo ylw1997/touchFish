@@ -7,8 +7,8 @@
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import { WebviewView, ExtensionContext, Uri, window } from "vscode";
-import { showInfo } from '../utils/errorMessage';
+import { WebviewView, ExtensionContext, Uri, window, workspace } from "vscode";
+import { showInfo } from "../utils/errorMessage";
 import {
   cancelfollowUser,
   cancelLike,
@@ -49,7 +49,10 @@ export class WeiboProvider extends BaseWebviewProvider {
     return super.resolveWebviewView(webviewView);
   }
 
-  protected async handleCustomMessage(message: IncomingMessage, webviewView: WebviewView) {
+  protected async handleCustomMessage(
+    message: IncomingMessage,
+    webviewView: WebviewView
+  ) {
     const { command, payload, uuid } = message;
     switch (command) {
       case "GETDATA": {
@@ -86,9 +89,15 @@ export class WeiboProvider extends BaseWebviewProvider {
           const videoPath = await downloadVideoAsFile(videoUrl);
           const videoUri = Uri.file(videoPath);
           const webviewUri = webviewView.webview.asWebviewUri(videoUri);
-          webviewView.webview.postMessage({ payload: webviewUri.toString(), uuid });
+          webviewView.webview.postMessage({
+            payload: webviewUri.toString(),
+            uuid,
+          });
         } catch {
-          webviewView.webview.postMessage({ payload: { ok: 0, msg: "获取视频失败!" }, uuid });
+          webviewView.webview.postMessage({
+            payload: { ok: 0, msg: "获取视频失败!" },
+            uuid,
+          });
         }
         break;
       }
@@ -142,7 +151,12 @@ export class WeiboProvider extends BaseWebviewProvider {
         const res = await uploadImage(uploadObj.base64);
         webviewView.webview.postMessage({
           command: `SENDUPLOADIMGURL`,
-          payload: { payload: uploadObj.uid, uid: uploadObj.uid, type: uploadObj.type, ...res.data },
+          payload: {
+            payload: uploadObj.uid,
+            uid: uploadObj.uid,
+            type: uploadObj.type,
+            ...res.data,
+          },
           uuid,
         } as CommandsType<weiboAJAX>);
         break;
@@ -210,6 +224,26 @@ export class WeiboProvider extends BaseWebviewProvider {
         } as CommandsType<weiboAJAX>);
         break;
       }
+      case "GET_MY_USER_INFO": {
+        const config = workspace.getConfiguration("touchfish");
+        const userId = config.get<string>("weiboUserId");
+        if (userId) {
+          const res = await getUserByName(userId);
+          webviewView.webview.postMessage({
+            command: `SENDUSERBYNAME`,
+            payload: { payload: userId, ...res.data },
+            uuid,
+          } as CommandsType<weiboAJAX>);
+        } else {
+          showInfo("请先设置微博用户ID!");
+          webviewView.webview.postMessage({
+            command: `SENDUSERBYNAME`,
+            payload: { ok: 0, msg: "未设置用户ID" },
+            uuid,
+          });
+        }
+        break;
+      }
       case "GETHOTSEARCH": {
         const res = await getHotSearch();
         webviewView.webview.postMessage({
@@ -222,4 +256,3 @@ export class WeiboProvider extends BaseWebviewProvider {
     }
   }
 }
-

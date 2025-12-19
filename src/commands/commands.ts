@@ -11,7 +11,7 @@ import { commands } from "vscode";
 import { NgaProvider } from "../Providers/ngaProvider";
 import { setConfigByKey } from "../core/config";
 import * as vscode from "vscode";
-import { showInfo } from '../utils/errorMessage';
+import { showInfo } from "../utils/errorMessage";
 import { V2exProvider } from "../Providers/v2exProvider";
 import { HupuProvider } from "../Providers/hupuProvider";
 
@@ -336,6 +336,23 @@ export const setWeiboTokenCommand = () => {
   );
 };
 
+// 设置微博用户ID
+export const setWeiboUserIdCommand = () => {
+  return vscode.commands.registerCommand(
+    "touchfish.setWeiboUserId",
+    async () => {
+      const weiboUserId = await vscode.window.showInputBox({
+        prompt: "请输入微博用户ID (例如 1669879400 或个性域名)",
+        placeHolder: "请输入微博用户ID",
+      });
+      if (weiboUserId !== undefined) {
+        await setConfigByKey("weiboUserId", weiboUserId);
+        await showInfo("微博用户ID设置成功!");
+      }
+    }
+  );
+};
+
 // 设置NGA-token
 export const setNgaTokenCommand = () => {
   return vscode.commands.registerCommand("touchfish.setNgaToken", async () => {
@@ -366,31 +383,37 @@ export const setXhsTokenCommand = () => {
 
 // 切换 Linux.do tab
 export const switchLinuxDoTab = () => {
-  return vscode.commands.registerCommand("touchfish.switchLinuxDoTab", async () => {
-    const tab = await vscode.window.showQuickPick([
-      { label: "最新", description: "latest" },
-      { label: "热门", description: "hot" },
-      { label: "排行榜", description: "top" },
-    ]);
-    if (tab) {
-      await setConfigByKey("linuxDoTab", tab.description);
-      await vscode.commands.executeCommand("linuxdo.refresh");
-      await showInfo(`Linux.do 切换为 ${tab.label}`);
+  return vscode.commands.registerCommand(
+    "touchfish.switchLinuxDoTab",
+    async () => {
+      const tab = await vscode.window.showQuickPick([
+        { label: "最新", description: "latest" },
+        { label: "热门", description: "hot" },
+        { label: "排行榜", description: "top" },
+      ]);
+      if (tab) {
+        await setConfigByKey("linuxDoTab", tab.description);
+        await vscode.commands.executeCommand("linuxdo.refresh");
+        await showInfo(`Linux.do 切换为 ${tab.label}`);
+      }
     }
-  });
+  );
 };
 
 // 设置 Linux.do cookie
 export const setLinuxDoTokenCommand = () => {
-  return vscode.commands.registerCommand("touchfish.setLinuxDoToken", async () => {
-    const linuxDoCookie = await vscode.window.showInputBox({
-      prompt: "请输入 Linux.do 的 Cookie",
-      placeHolder: "请输入 Linux.do 的 Cookie",
-    });
-    if (linuxDoCookie !== undefined) {
-      await setConfigByKey("linuxDoCookie", linuxDoCookie);
-      await showInfo("Linux.do Cookie 设置成功！");
-      await vscode.commands.executeCommand("linuxdo.refresh");
+  return vscode.commands.registerCommand(
+    "touchfish.setLinuxDoToken",
+    async () => {
+      const linuxDoCookie = await vscode.window.showInputBox({
+        prompt: "请输入 Linux.do 的 Cookie",
+        placeHolder: "请输入 Linux.do 的 Cookie",
+      });
+      if (linuxDoCookie !== undefined) {
+        await setConfigByKey("linuxDoCookie", linuxDoCookie);
+        await showInfo("Linux.do Cookie 设置成功！");
+        await vscode.commands.executeCommand("linuxdo.refresh");
+      }
     }
-  });
+  );
 };

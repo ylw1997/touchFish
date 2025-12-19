@@ -37,6 +37,7 @@ export type CommandList =
   | "SAVE_SCROLL_POSITION"
   | "RESTORE_SCROLL_POSITION"
   | "TOGGLE_SHOW_IMG"
+  | "GET_MY_USER_INFO"
   // XHS commands
   | "XHS_GET_HOME_FEED"
   | "XHS_SEARCH"

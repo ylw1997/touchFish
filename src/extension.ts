@@ -13,7 +13,7 @@ import {
   openCHUrl,
   openV2exUrl,
   openNgaUrl,
-  openLinuxDoUrl
+  openLinuxDoUrl,
 } from "./commands/openUrl";
 import {
   refresh,
@@ -31,6 +31,7 @@ import {
   openSetting,
   setZhihuTokenCommand,
   setWeiboTokenCommand,
+  setWeiboUserIdCommand,
   setNgaTokenCommand,
   setXhsTokenCommand,
   setLinuxDoTokenCommand,
@@ -41,15 +42,14 @@ import { V2exProvider } from "./Providers/v2exProvider";
 import { HupuProvider } from "./Providers/hupuProvider";
 import { NgaProvider } from "./Providers/ngaProvider";
 import { LinuxDoProvider } from "./Providers/linuxDoProvider";
-import { ZhihuWebProvider } from './Providers/zhihuWebProvider';
-import { XhsWebProvider } from './Providers/xhsWebProvider';
+import { ZhihuWebProvider } from "./Providers/zhihuWebProvider";
+import { XhsWebProvider } from "./Providers/xhsWebProvider";
 import { WeiboProvider } from "./Providers/weiboProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
 // config/index.ts 已移除，配置动态读取，不再需要 refrshConfig。
-import { ReadState } from './core/readState';
-
+import { ReadState } from "./core/readState";
 
 export function activate(context: vscode.ExtensionContext) {
   ContextManager.initialize(context);
@@ -106,6 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(openLinuxDoUrl);
   context.subscriptions.push(setZhihuTokenCommand());
   context.subscriptions.push(setWeiboTokenCommand());
+  context.subscriptions.push(setWeiboUserIdCommand());
   context.subscriptions.push(setNgaTokenCommand());
   context.subscriptions.push(setXhsTokenCommand());
   context.subscriptions.push(setLinuxDoTokenCommand());

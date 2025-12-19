@@ -80,8 +80,7 @@ const renderLinkTag = (url: string, page_info: any, key: string) => {
 export const parseWeiboText = (
   weiboItem: baseWeiboField,
   getUserByName: (username: string) => void,
-  onTopicClick: (topic: string) => void,
-  isComment = false
+  onTopicClick: (topic: string) => void
 ): React.ReactNode[] => {
   let { text_raw } = weiboItem;
   const { page_info } = weiboItem;
@@ -152,12 +151,7 @@ export const parseWeiboText = (
         </Tag>
       );
     } else if (part.startsWith("http")) {
-      if (isComment) {
-        // 在评论中，不渲染链接
-        nodes.push(null);
-      } else {
-        nodes.push(renderLinkTag(part, page_info, key));
-      }
+      nodes.push(renderLinkTag(part, page_info, key));
     }
 
     lastIndex = index + part.length;
@@ -171,7 +165,6 @@ export const parseWeiboText = (
 
   return nodes.filter(Boolean);
 };
-
 
 export const parseH5WeiboText = (
   text: string,

@@ -27,6 +27,7 @@ import {
   RedoOutlined,
   SearchOutlined,
   VerticalAlignTopOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -67,6 +68,7 @@ function App() {
     followUser,
     getListData,
     getUserByName,
+    getMyUserInfo,
     isFetching,
   } = useWeiboAction();
   // 状态管理
@@ -256,6 +258,12 @@ function App() {
           icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
           tooltip={{ title: "回到顶部", placement: "left" }}
           target={() => scrollableNodeRef.current || window}
+        />
+        {/* 用户按钮 */}
+        <FloatButton
+          onClick={getMyUserInfo}
+          icon={<UserOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "我的", placement: "left" }}
         />
         {/* 搜索按钮 */}
         <FloatButton

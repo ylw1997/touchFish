@@ -57,6 +57,10 @@
 					"type": "string",
 					"description": "微博cookie"
 				},
+				"touchfish.weiboUserId": {
+					"type": "string",
+					"description": "微博用户ID (数字ID或个性域名)"
+				},
 				"touchfish.showNewsNumber": {
 					"type": "number",
 					"default": 10,
@@ -353,6 +357,11 @@
 				"icon": "$(settings-gear)"
 			},
 			{
+				"command": "touchfish.setWeiboUserId",
+				"title": "设置微博用户ID",
+				"icon": "$(account)"
+			},
+			{
 				"command": "touchfish.setNgaToken",
 				"title": "设置NGA-Token",
 				"icon": "$(settings-gear)"
@@ -412,6 +421,11 @@
 				},
 				{
 					"command": "touchfish.setWeiboToken",
+					"when": "view == weibo",
+					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setWeiboUserId",
 					"when": "view == weibo",
 					"group": "navigation"
 				},
