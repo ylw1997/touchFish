@@ -4,10 +4,10 @@
  * @LastEditTime: 2025-11-05 11:00:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\xhs\src\api\index.ts
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description: 小红书 API 封装，提供完整的类型定义
  */
-import type { CommandList } from '../../../types/commands';
+import type { CommandList } from "../../../types/commands";
 import type {
   XhsFeedRawResponse,
   XhsSearchParams,
@@ -34,9 +34,13 @@ import type {
   XhsUncollectNoteResponse,
   XhsPostCommentParams,
   XhsPostCommentResponse,
-} from '../../../types/xhs';
+} from "../../../types/xhs";
 
-type RequestFunc = <T = any>(command: CommandList, payload: any, content?: string) => Promise<T>;
+type RequestFunc = <T = any>(
+  command: CommandList,
+  payload: any,
+  content?: string
+) => Promise<T>;
 
 export class XhsApi {
   constructor(private request: RequestFunc) {}
@@ -46,9 +50,9 @@ export class XhsApi {
    */
   getHomeFeed(params: { cursor?: string }) {
     return this.request<XhsFeedRawResponse>(
-      'XHS_GET_HOME_FEED' as CommandList,
+      "XHS_GET_HOME_FEED" as CommandList,
       params,
-      '加载首页推荐中...'
+      "加载首页推荐中..."
     );
   }
 
@@ -57,9 +61,9 @@ export class XhsApi {
    */
   searchNotes(params: XhsSearchParams) {
     return this.request<XhsSearchResponse>(
-      'XHS_SEARCH' as CommandList,
+      "XHS_SEARCH" as CommandList,
       params,
-      '搜索中...'
+      "搜索中..."
     );
   }
 
@@ -68,9 +72,9 @@ export class XhsApi {
    */
   getFeedDetail(payload: XhsFeedDetailParams) {
     return this.request<XhsFeedDetailResponse>(
-      'XHS_FEED_DETAIL' as CommandList,
+      "XHS_FEED_DETAIL" as CommandList,
       payload,
-      '加载笔记内容中...'
+      "加载笔记内容中..."
     );
   }
 
@@ -85,7 +89,7 @@ export class XhsApi {
     xsec_token: string;
   }) {
     return this.request<XhsCommentsResponseData>(
-      'XHS_GET_COMMENTS' as CommandList,
+      "XHS_GET_COMMENTS" as CommandList,
       payload,
       cursorLabel(payload.cursor)
     );
@@ -101,9 +105,9 @@ export class XhsApi {
     xsec_token: string;
     num?: number;
   }) {
-    const label = payload.cursor ? '加载更多子评论...' : '加载子评论中...';
+    const label = payload.cursor ? "加载更多子评论..." : "加载子评论中...";
     return this.request<XhsSubCommentsResponseData>(
-      'XHS_GET_SUB_COMMENTS' as CommandList,
+      "XHS_GET_SUB_COMMENTS" as CommandList,
       payload,
       label
     );
@@ -113,9 +117,9 @@ export class XhsApi {
    * 获取用户已发布笔记列表
    */
   getUserPosted(payload: XhsUserPostedParams) {
-    const label = payload.cursor ? '加载更多用户笔记...' : '加载用户笔记中...';
+    const label = payload.cursor ? "加载更多用户笔记..." : "加载用户笔记中...";
     return this.request<XhsUserPostedResponse>(
-      'XHS_GET_USER_POSTED' as CommandList,
+      "XHS_GET_USER_POSTED" as CommandList,
       payload,
       label
     );
@@ -127,9 +131,9 @@ export class XhsApi {
    */
   getUserHoverCard(payload: XhsUserHoverCardParams) {
     return this.request<XhsUserHoverCardResponse>(
-      'XHS_USER_HOVER_CARD' as CommandList,
+      "XHS_USER_HOVER_CARD" as CommandList,
       payload,
-      '加载用户信息中...'
+      "加载用户信息中..."
     );
   }
 
@@ -138,9 +142,9 @@ export class XhsApi {
    */
   followUser(payload: XhsFollowParams) {
     return this.request<XhsFollowResponse>(
-      'XHS_USER_FOLLOW' as CommandList,
+      "XHS_USER_FOLLOW" as CommandList,
       payload,
-      '关注中...'
+      "关注中..."
     );
   }
 
@@ -149,60 +153,68 @@ export class XhsApi {
    */
   unfollowUser(payload: XhsUnfollowParams) {
     return this.request<XhsUnfollowResponse>(
-      'XHS_USER_UNFOLLOW' as CommandList,
+      "XHS_USER_UNFOLLOW" as CommandList,
       payload,
-      '取消关注中...'
+      "取消关注中..."
     );
   }
 
   /** 点赞笔记 */
   likeNote(payload: XhsLikeNoteParams) {
     return this.request<XhsLikeNoteResponse>(
-      'XHS_NOTE_LIKE' as CommandList,
+      "XHS_NOTE_LIKE" as CommandList,
       payload,
-      '点赞中...'
+      "点赞中..."
     );
   }
 
   /** 取消点赞 */
   dislikeNote(payload: XhsDislikeNoteParams) {
     return this.request<XhsDislikeNoteResponse>(
-      'XHS_NOTE_DISLIKE' as CommandList,
+      "XHS_NOTE_DISLIKE" as CommandList,
       payload,
-      '取消点赞中...'
+      "取消点赞中..."
     );
   }
 
   /** 收藏笔记 */
   collectNote(payload: XhsCollectNoteParams) {
     return this.request<XhsCollectNoteResponse>(
-      'XHS_NOTE_COLLECT' as CommandList,
+      "XHS_NOTE_COLLECT" as CommandList,
       payload,
-      '收藏中...'
+      "收藏中..."
     );
   }
 
   /** 取消收藏 */
   uncollectNote(payload: XhsUncollectNoteParams) {
     return this.request<XhsUncollectNoteResponse>(
-      'XHS_NOTE_UNCOLLECT' as CommandList,
+      "XHS_NOTE_UNCOLLECT" as CommandList,
       payload,
-      '取消收藏中...'
+      "取消收藏中..."
     );
   }
 
   /** 发布评论 */
   postComment(payload: XhsPostCommentParams) {
     return this.request<XhsPostCommentResponse>(
-      'XHS_POST_COMMENT' as CommandList,
+      "XHS_POST_COMMENT" as CommandList,
       payload,
-      '发送中...'
+      "发送中..."
+    );
+  }
+
+  getMyUserInfo() {
+    return this.request<any>(
+      "XHS_GET_MY_USER_INFO" as CommandList,
+      null,
+      "获取我的信息..."
     );
   }
 }
 
 function cursorLabel(cursor?: string) {
-  return cursor ? '加载更多评论...' : '加载评论中...';
+  return cursor ? "加载更多评论..." : "加载评论中...";
 }
 
 export const createXhsApi = (request: RequestFunc) => new XhsApi(request);

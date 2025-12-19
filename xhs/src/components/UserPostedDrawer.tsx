@@ -24,9 +24,9 @@ interface UserPostedDrawerProps {
   // 初始参数：从点击的笔记中获取 note id 作为 cursor（或空字符串），以及 user 对象里的 user_id 与 xsec_token
   initParams: {
     xsec_source?: any;
-    cursor: string;
     user_id: string;
-    xsec_token: string;
+    cursor: string;
+    xsec_token?: string;
     user?: any;
   };
 }
@@ -65,7 +65,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
   const [hoverData, setHoverData] = useState<any>(null);
 
   const fetchHover = useCallback(async () => {
-    if (!initParams.user_id || !initParams.xsec_token) return;
+    if (!initParams.user_id) return;
     setHoverLoading(true);
     setHoverError(null);
     setHoverData(null);
@@ -74,7 +74,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
         target_user_id: initParams.user_id,
         image_formats: "jpg,webp,avif",
         xsec_source: "pc_comment",
-        xsec_token: initParams.xsec_token,
+        xsec_token: initParams.xsec_token || "",
       });
       // 兼容后端直接返回 data 或完整响应
       const dataLayer = res?.basic_info ? res : res?.data;
@@ -88,7 +88,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
 
   const fetchPosted = useCallback(
     async (reset: boolean = false, nextCursor?: string) => {
-      if (!initParams.user_id || !initParams.xsec_token) return;
+      if (!initParams.user_id) return;
       const useCursor = reset
         ? nextCursor ?? ""
         : nextCursor ?? cursorRef.current;
@@ -97,7 +97,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
         const res: any = await apiRef.current.getUserPosted({
           user_id: initParams.user_id,
           cursor: useCursor,
-          xsec_token: initParams.xsec_token,
+          xsec_token: initParams.xsec_token || "",
           xsec_source: initParams.xsec_source,
         });
         const incoming: XhsFeedRawItem[] = res?.items || [];
@@ -139,7 +139,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
     }
     // 仅在 open 或 initParams 关键字段变化时触发，不添加 fetchPosted 以避免重复请求
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initParams.cursor, initParams.user_id, initParams.xsec_token]);
+  }, [open, initParams.cursor, initParams.user_id]);
 
   const isFollowed =
     hoverData?.extraInfo_info?.fstatus &&

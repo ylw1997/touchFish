@@ -48,7 +48,8 @@ export type CommandList =
   | "XHS_GET_USER_POSTED"
   | "XHS_USER_HOVER_CARD"
   | "XHS_USER_FOLLOW"
-  | "XHS_USER_UNFOLLOW";
+  | "XHS_USER_UNFOLLOW"
+  | "XHS_GET_MY_USER_INFO";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"

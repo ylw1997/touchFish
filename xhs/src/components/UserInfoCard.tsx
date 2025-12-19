@@ -19,6 +19,7 @@ export interface UserInfo {
   nick_name?: string;
   avatar?: string;
   image?: string;
+  red_id?: string;
 }
 
 export interface UserHoverData {
@@ -161,6 +162,11 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
       >
         {nickname}
       </div>
+      {user.red_id && (
+        <div style={{ color: "#999", fontSize: 12, marginTop: -8 }}>
+          小红书号：{user.red_id}
+        </div>
+      )}
       <div
         style={{
           display: "flex",
@@ -170,7 +176,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
       >
         {loading && <Tag color="default">加载用户信息...</Tag>}
         {error && <Tag color="red">{error}</Tag>}
-        {!loading && !error && hoverData && (
+        {!loading && !error && hoverData && hoverData.interact_info && (
           <>
             <Tag icon={<UsergroupAddOutlined />} color="green">
               关注: {follows}
@@ -201,11 +207,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
           loading={followLoading}
           onClick={onFollowToggle}
         >
-          {followLoading
-            ? "处理中..."
-            : isFollowing
-            ? "取消关注"
-            : "关注"}
+          {followLoading ? "处理中..." : isFollowing ? "取消关注" : "关注"}
         </Button>
       )}
     </div>

@@ -12,7 +12,7 @@
  */
 import { WebviewView, ExtensionContext } from "vscode";
 import * as vscode from "vscode";
-import { showWarn, showInfo, showError } from '../utils/errorMessage';
+import { showWarn, showInfo, showError } from "../utils/errorMessage";
 import {
   getXhsFeed,
   getXhsFeedDetail,
@@ -28,6 +28,7 @@ import {
   collectXhsNote,
   uncollectXhsNote,
   postXhsComment,
+  getXhsUserMe,
 } from "../api/xhs";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
@@ -90,7 +91,10 @@ export class XhsWebProvider extends BaseWebviewProvider {
     return super.resolveWebviewView(webviewView);
   }
 
-  protected async handleCustomMessage(message: IncomingMessage, webviewView: WebviewView) {
+  protected async handleCustomMessage(
+    message: IncomingMessage,
+    webviewView: WebviewView
+  ) {
     const { command, payload, uuid } = message as XhsMessage;
     switch (command) {
       case "XHS_GET_HOME_FEED": {
@@ -127,6 +131,11 @@ export class XhsWebProvider extends BaseWebviewProvider {
       case "XHS_GET_USER_POSTED": {
         const userPayload = payload as any;
         const data = await getXhsUserPosted(userPayload);
+        webviewView.webview.postMessage({ payload: data, uuid });
+        break;
+      }
+      case "XHS_GET_MY_USER_INFO": {
+        const data = await getXhsUserMe();
         webviewView.webview.postMessage({ payload: data, uuid });
         break;
       }
@@ -179,7 +188,10 @@ export class XhsWebProvider extends BaseWebviewProvider {
         break;
       }
       case "XHS_DOWNLOAD_IMAGE": {
-        const { url, fileName } = (payload || {}) as { url: string; fileName: string };
+        const { url, fileName } = (payload || {}) as {
+          url: string;
+          fileName: string;
+        };
         if (!url) throw new Error("缺少图片URL");
         const originalUrl = getXhsOriginalImageUrl(url);
         const isOriginal = originalUrl !== url;
@@ -193,30 +205,35 @@ export class XhsWebProvider extends BaseWebviewProvider {
               const response = await axiosInstance.get(originalUrl, {
                 responseType: "arraybuffer",
                 headers: {
-                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                  "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                   Referer: "https://www.xiaohongshu.com/",
                 },
                 timeout: 10000,
                 validateStatus: (status) => status === 200,
               });
-              const dataLength = response.data?.length || response.data?.byteLength || 0;
-              if (!response.data || dataLength === 0) throw new Error("下载的数据为空");
+              const dataLength =
+                response.data?.length || response.data?.byteLength || 0;
+              if (!response.data || dataLength === 0)
+                throw new Error("下载的数据为空");
               downloadedData = response.data;
               imageType = "原图";
-             
             } catch {
               showWarn("原图下载失败，正在尝试下载展示图...");
               const response = await axiosInstance.get(url, {
                 responseType: "arraybuffer",
                 headers: {
-                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                  "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                   Referer: "https://www.xiaohongshu.com/",
                 },
                 timeout: 10000,
                 validateStatus: (status) => status === 200,
               });
-              const dataLength = response.data?.length || response.data?.byteLength || 0;
-              if (!response.data || dataLength === 0) throw new Error("下载的数据为空");
+              const dataLength =
+                response.data?.length || response.data?.byteLength || 0;
+              if (!response.data || dataLength === 0)
+                throw new Error("下载的数据为空");
               downloadedData = response.data;
               imageType = "展示图";
             }
@@ -224,14 +241,17 @@ export class XhsWebProvider extends BaseWebviewProvider {
             const response = await axiosInstance.get(url, {
               responseType: "arraybuffer",
               headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "User-Agent":
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 Referer: "https://www.xiaohongshu.com/",
               },
               timeout: 10000,
               validateStatus: (status) => status === 200,
             });
-            const dataLength = response.data?.length || response.data?.byteLength || 0;
-            if (!response.data || dataLength === 0) throw new Error("下载的数据为空");
+            const dataLength =
+              response.data?.length || response.data?.byteLength || 0;
+            if (!response.data || dataLength === 0)
+              throw new Error("下载的数据为空");
             downloadedData = response.data;
             imageType = "展示图";
           }
@@ -242,15 +262,19 @@ export class XhsWebProvider extends BaseWebviewProvider {
               filters: { Images: ["jpg", "jpeg", "png", "webp"] },
             });
             if (uri) {
-              await vscode.workspace.fs.writeFile(uri, new Uint8Array(downloadedData));
+              await vscode.workspace.fs.writeFile(
+                uri,
+                new Uint8Array(downloadedData)
+              );
               showInfo(`${imageType}已保存到: ${uri.fsPath}`);
             }
           }
         } catch (downloadErr: any) {
           if (!downloadedData) {
-            const errorMsg = downloadErr.response?.status === 404
-              ? `下载失败: 图片不存在(404)`
-              : `下载失败: ${downloadErr.message}`;
+            const errorMsg =
+              downloadErr.response?.status === 404
+                ? `下载失败: 图片不存在(404)`
+                : `下载失败: ${downloadErr.message}`;
             showError(errorMsg);
             throw downloadErr; // 让基类捕获并回传
           }

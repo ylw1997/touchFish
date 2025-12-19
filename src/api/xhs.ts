@@ -180,7 +180,8 @@ export const getXhsSubComments = async (payload: {
   xsec_token: string;
 }) => {
   if (!payload?.note_id) throw new Error("缺少笔记ID note_id");
-  if (!payload?.root_comment_id) throw new Error("缺少根评论ID root_comment_id");
+  if (!payload?.root_comment_id)
+    throw new Error("缺少根评论ID root_comment_id");
   if (!payload?.xsec_token) throw new Error("缺少 xsec_token 参数");
   const cookie = await getOrSetXhsCookie();
   if (!cookie) throw new Error("请先设置小红书 Cookie");
@@ -254,6 +255,28 @@ export const searchXhsNotes = async (params: {
   return resp.data?.data; // { items, has_more, ... }
 };
 
+// 获取当前登录用户信息
+// GET https://edith.xiaohongshu.com/api/sns/web/v2/user/me
+export const getXhsUserMe = async () => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v2/user/me";
+  const queryObj = {};
+  // GET 签名
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
+  } catch (e: any) {
+    throw new Error(`小红书签名生成失败: ${e?.message || "请检查 Cookie"}`);
+  }
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
+  const data = resp.data?.data; // { nickname, images, red_id, user_id, desc, ... }
+  if (!data) throw new Error("获取用户信息失败");
+  return data;
+};
+
 // 获取用户已发布笔记列表
 // 原始接口：GET /api/sns/web/v1/user_posted
 // 示例参数：{
@@ -286,7 +309,7 @@ export const getXhsUserPosted = async (params: {
   try {
     signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
   } catch (e: any) {
-    throw new Error(`小红书签名生成失败: ${e?.message || '请检查 Cookie'}`);
+    throw new Error(`小红书签名生成失败: ${e?.message || "请检查 Cookie"}`);
   }
   const xsecToken = queryObj.xsec_token.replace(/=/g, "%3D");
   const url = `https://edith.xiaohongshu.com${apiPath}?num=30&cursor=${queryObj.cursor}&user_id=${queryObj.user_id}&image_formats=jpg,webp,avif&xsec_token=${xsecToken}&xsec_source=${queryObj.xsec_source}`;
@@ -471,7 +494,10 @@ export const collectXhsNote = async (params: { note_id: string }) => {
   const url = "https://edith.xiaohongshu.com" + apiPath;
   const headers = buildXhsHeaders({ cookie, signObj });
   try {
-    const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+    const resp = await xhsHttp.post(url, bodyString, {
+      headers,
+      timeout: 10000,
+    });
     const data = resp.data;
     if (!data || !data.success) throw new Error(data?.msg || "收藏失败");
     return data; // { code: 0, success: true, msg: "成功" }
@@ -504,7 +530,10 @@ export const uncollectXhsNote = async (params: { note_ids: string }) => {
   const url = "https://edith.xiaohongshu.com" + apiPath;
   const headers = buildXhsHeaders({ cookie, signObj });
   try {
-    const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+    const resp = await xhsHttp.post(url, bodyString, {
+      headers,
+      timeout: 10000,
+    });
     const data = resp.data;
     if (!data || !data.success) throw new Error(data?.msg || "取消收藏失败");
     return data; // { code: 0, success: true, msg: "成功" }
@@ -529,7 +558,8 @@ export const postXhsComment = async (params: {
   const cookie = await getOrSetXhsCookie();
   if (!cookie) throw new Error("请先设置小红书 Cookie");
   if (!params.note_id) throw new Error("缺少 note_id 参数");
-  if (!params.content || !params.content.trim()) throw new Error("评论内容不能为空");
+  if (!params.content || !params.content.trim())
+    throw new Error("评论内容不能为空");
   const apiPath = "/api/sns/web/v1/comment/post";
   const body = {
     note_id: params.note_id,
@@ -547,7 +577,10 @@ export const postXhsComment = async (params: {
   const url = "https://edith.xiaohongshu.com" + apiPath;
   const headers = buildXhsHeaders({ cookie, signObj });
   try {
-    const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+    const resp = await xhsHttp.post(url, bodyString, {
+      headers,
+      timeout: 10000,
+    });
     const data = resp.data;
     if (!data || !data.success) throw new Error(data?.msg || "发布评论失败");
     return data; // { code: 0, success: true, msg: "成功", data: { comment, time, toast } }
