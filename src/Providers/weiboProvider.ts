@@ -235,7 +235,7 @@ export class WeiboProvider extends BaseWebviewProvider {
             uuid,
           } as CommandsType<weiboAJAX>);
         } else {
-          showInfo("请先设置微博用户ID!");
+          showInfo("请先点击标题栏右侧按钮,设置微博用户ID!");
           webviewView.webview.postMessage({
             command: `SENDUSERBYNAME`,
             payload: { ok: 0, msg: "未设置用户ID" },
