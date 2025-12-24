@@ -13,6 +13,8 @@ import { HeroUIProvider } from "@heroui/react";
 import { useState, useEffect, useMemo } from "react";
 import App from "./App";
 
+import { useFontSizeStore } from "./store/fontSize";
+
 const getTheme = () => {
   return (
     document.body.getAttribute("data-vscode-theme-kind") === "vscode-light"
@@ -21,6 +23,14 @@ const getTheme = () => {
 
 const ThemeWrapper = () => {
   const [isLightTheme, setIsLightTheme] = useState(getTheme());
+  const fontSize = useFontSizeStore((state) => state.fontSize);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--app-font-size",
+      `${fontSize}px`
+    );
+  }, [fontSize]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -39,7 +49,7 @@ const ThemeWrapper = () => {
     () => ({
       algorithm: isLightTheme ? theme.defaultAlgorithm : theme.darkAlgorithm,
       token: {
-        fontSize: 15,
+        fontSize: fontSize,
         fontSizeSM: 14,
         colorBorderSecondary: "var(--vscode-chat-requestBorder)",
         colorText: "var(--vscode-foreground)",
@@ -64,7 +74,7 @@ const ThemeWrapper = () => {
         },
       },
     }),
-    [isLightTheme]
+    [fontSize, isLightTheme]
   );
 
   return (

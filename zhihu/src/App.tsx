@@ -19,6 +19,8 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
   CompressOutlined,
+  PlusOutlined,
+  MinusOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -43,6 +45,7 @@ import { messageHandler } from "./utils/messageHandler";
 import { Tabs, Tab } from "@heroui/react";
 import { useHasExpanded, useExpandedStore } from "./store/expanded";
 import type { ExpandedState } from "./store/expanded";
+import { useFontSizeStore } from "./store/fontSize";
 
 function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
@@ -78,7 +81,10 @@ function App() {
 
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const hasExpanded = useHasExpanded();
-  const collapseAll = useExpandedStore((state: ExpandedState) => state.collapseAll);
+  const collapseAll = useExpandedStore(
+    (state: ExpandedState) => state.collapseAll
+  );
+  const { increase, decrease } = useFontSizeStore();
 
   useEffect(() => {
     const scrollableNode = scrollableNodeRef.current;
@@ -86,20 +92,22 @@ function App() {
 
     const handleScroll = debounce(() => {
       vscode.postMessage({
-        command: 'ZHIHU_SAVE_SCROLL_POSITION',
-        payload: scrollableNode.scrollTop
+        command: "ZHIHU_SAVE_SCROLL_POSITION",
+        payload: scrollableNode.scrollTop,
       });
     }, 500);
     scrollableNode.addEventListener("scroll", handleScroll);
 
     const unsolicitedMessageHandler = (command: string, payload: any) => {
-      if (command === 'ZHIHU_RESTORE_SCROLL_POSITION') {
+      if (command === "ZHIHU_RESTORE_SCROLL_POSITION") {
         if (scrollableNodeRef.current) {
           scrollableNodeRef.current.scrollTop = payload;
         }
       }
     };
-    const removeListener = messageHandler.addUnsolicitedListener(unsolicitedMessageHandler);
+    const removeListener = messageHandler.addUnsolicitedListener(
+      unsolicitedMessageHandler
+    );
 
     return () => {
       scrollableNode.removeEventListener("scroll", handleScroll);
@@ -136,7 +144,7 @@ function App() {
         classNames={{
           tabList: "backdrop-style",
           cursor: "tab-active-style",
-          tabContent: "vscode-foreground"
+          tabContent: "vscode-foreground dynamic-font-size",
         }}
       >
         {tabs.map((tab) => (
@@ -147,15 +155,15 @@ function App() {
         {loading && list.length === 0 ? (
           loaderFunc()
         ) : (
-            <InfiniteScroll
-              dataLength={list.length}
-              next={fetchData}
-              loader={loading ? loaderFunc() : null}
-              endMessage={<Divider plain>没有了🤐</Divider>}
-              hasMore={hasMore(activeKey as string)}
-              scrollThreshold={0.95}
-              scrollableTarget="scrollableDiv"
-            >
+          <InfiniteScroll
+            dataLength={list.length}
+            next={fetchData}
+            loader={loading ? loaderFunc() : null}
+            endMessage={<Divider plain>没有了🤐</Divider>}
+            hasMore={hasMore(activeKey as string)}
+            scrollThreshold={0.95}
+            scrollableTarget="scrollableDiv"
+          >
             {list.map((item: ZhihuItemData) => (
               <motion.div
                 key={item.id}
@@ -223,6 +231,16 @@ function App() {
             title: `${showImg ? "隐藏" : "显示"}图片`,
             placement: "left",
           }}
+        />
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
         />
       </FloatButton.Group>
       <Suspense fallback={<div>Loading...</div>}>

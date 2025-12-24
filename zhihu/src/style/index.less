@@ -74,7 +74,7 @@ a {
  * 通用内容块
  */
 .content {
-  font-size: 15px;
+  font-size: var(--app-font-size);
   color: var(--vscode-foreground);
   line-height: 2;
   word-break: break-all;
@@ -94,7 +94,7 @@ a {
   font-weight: bold;
   word-break: break-all;
   white-space: pre-wrap;
-  font-size: 15px;
+  font-size: var(--app-font-size);
   &:hover {
     cursor: pointer;
     color: var(--vscode-textLink-activeForeground);
@@ -108,7 +108,7 @@ a {
 .expand,
 .link-tag {
   cursor: pointer;
-  font-size: 15px;
+  font-size: var(--app-font-size);
   color: var(--vscode-foreground);
   &:hover {
     color: var(--vscode-textLink-activeForeground);
@@ -134,6 +134,10 @@ a {
   color: var(--vscode-foreground);
 }
 
+.dynamic-font-size {
+  font-size: var(--app-font-size);
+}
+
 /* ==========================================================================
    4. Ant Design 组件覆盖 (最小化)
    ========================================================================== */
@@ -152,7 +156,7 @@ a {
 }
 
 .info {
-  font-size: 14px;
+  font-size: var(--app-font-size);
 }
 
 /**
@@ -235,7 +239,7 @@ a {
   min-width: 40px;
   padding: 0 6px;
   height: 40px;
-  font-size: 20px;
+  font-size: calc(var(--app-font-size) + 6px);
   line-height: 1;
   font-weight: 600;
   background: var(--vscode-button-background);
@@ -246,14 +250,14 @@ a {
   user-select: none;
 }
 .rank-badge.top-1 {
-  background: linear-gradient(135deg,#ffb347,#ffcc33);
+  background: linear-gradient(135deg, #ffb347, #ffcc33);
   color: #3a2500;
 }
 .rank-badge.top-2 {
-  background: linear-gradient(135deg,#d9d9d9,#ffffff);
+  background: linear-gradient(135deg, #d9d9d9, #ffffff);
   color: #2a2a2a;
 }
 .rank-badge.top-3 {
-  background: linear-gradient(135deg,#f2c199,#e08a3a);
+  background: linear-gradient(135deg, #f2c199, #e08a3a);
   color: #3a2500;
 }

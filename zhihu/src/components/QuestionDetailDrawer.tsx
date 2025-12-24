@@ -52,7 +52,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   changeQuestionOrder,
 }) => {
   const hasExpanded = useHasExpanded();
-  const collapseAll = useExpandedStore(state => state.collapseAll);
+  const collapseAll = useExpandedStore((state) => state.collapseAll);
   return (
     <Drawer
       getContainer={false}
@@ -126,20 +126,26 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
               }}
             />
           </Card>
-          <Card
-            style={{ marginTop: 10 }}
-            size="small"
-            title="回答排序"
-          >
+          <Card style={{ marginTop: 10 }} size="small" title="回答排序">
             <Segmented
-                style={{ fontSize: 14 }}
-                options={[
-                  { label: <span style={{ padding: '4px 10px' }}>默认排序</span>, value: 'default' },
-                  { label: <span style={{ padding: '4px 10px' }}>按时间(最新)</span>, value: 'updated' },
-                ]}
-                value={questionOrder}
-                onChange={(val) => changeQuestionOrder && changeQuestionOrder(val as any)}
-              />
+              style={{}}
+              options={[
+                {
+                  label: <span style={{ padding: "4px 10px" }}>默认排序</span>,
+                  value: "default",
+                },
+                {
+                  label: (
+                    <span style={{ padding: "4px 10px" }}>按时间(最新)</span>
+                  ),
+                  value: "updated",
+                },
+              ]}
+              value={questionOrder}
+              onChange={(val) =>
+                changeQuestionOrder && changeQuestionOrder(val as any)
+              }
+            />
           </Card>
           <InfiniteScroll
             dataLength={questionData.length}
