@@ -17,7 +17,8 @@
     "framer-motion": "^12.23.19",
     "less": "^4.3.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

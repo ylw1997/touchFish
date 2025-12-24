@@ -3,12 +3,24 @@ import zhCN from "antd/locale/zh_CN";
 import { useState, useEffect, useMemo } from "react";
 import App from "./App";
 
+import { useFontSizeStore } from "./store/fontSize";
+
 const getTheme = () => {
-  return document.body.getAttribute('data-vscode-theme-kind') === 'vscode-light';
+  return (
+    document.body.getAttribute("data-vscode-theme-kind") === "vscode-light"
+  );
 };
 
 const ThemeWrapper = () => {
   const [isLightTheme, setIsLightTheme] = useState(getTheme());
+  const fontSize = useFontSizeStore((state) => state.fontSize);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--app-font-size",
+      `${fontSize}px`
+    );
+  }, [fontSize]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -17,40 +29,43 @@ const ThemeWrapper = () => {
 
     observer.observe(document.body, {
       attributes: true,
-      attributeFilter: ['data-vscode-theme-kind'],
+      attributeFilter: ["data-vscode-theme-kind"],
     });
 
     return () => observer.disconnect();
   }, []);
 
-  const antdTheme = useMemo(() => ({
-    algorithm: isLightTheme ? theme.defaultAlgorithm : theme.darkAlgorithm,
-    token: {
-      fontSize: 15,
-      fontSizeSM: 14,
-      colorBorderSecondary: "var(--vscode-chat-requestBorder)",
-      colorText: "var(--vscode-foreground)",
-      colorTextDescription: "var(--vscode-descriptionForeground)",
-      colorTextSecondary: "var(--vscode-descriptionForeground)",
-      colorBorder: "var(--vscode-chat-requestBorder)",
-      colorSplit: "var(--vscode-chat-requestBorder)",
-      colorLink: "var(--vscode-textLink-foreground)",
-      colorLinkHover: "var(--vscode-textLink-activeForeground)",
-      colorIcon: "var(--vscode-icon-foreground)",
-      colorIconHover: "var(--vscode-foreground)",
-      borderRadius: 10,
-    },
-    components: {
-      Card: {
-        colorBgContainer: "transparent",
-        padding: 10,
-        paddingLG: 10,
+  const antdTheme = useMemo(
+    () => ({
+      algorithm: isLightTheme ? theme.defaultAlgorithm : theme.darkAlgorithm,
+      token: {
+        fontSize: fontSize,
+        fontSizeSM: 14,
+        colorBorderSecondary: "var(--vscode-chat-requestBorder)",
+        colorText: "var(--vscode-foreground)",
+        colorTextDescription: "var(--vscode-descriptionForeground)",
+        colorTextSecondary: "var(--vscode-descriptionForeground)",
+        colorBorder: "var(--vscode-chat-requestBorder)",
+        colorSplit: "var(--vscode-chat-requestBorder)",
+        colorLink: "var(--vscode-textLink-foreground)",
+        colorLinkHover: "var(--vscode-textLink-activeForeground)",
+        colorIcon: "var(--vscode-icon-foreground)",
+        colorIconHover: "var(--vscode-foreground)",
+        borderRadius: 10,
       },
-      Drawer: {
-        colorBgElevated: "transparent",
+      components: {
+        Card: {
+          colorBgContainer: "transparent",
+          padding: 10,
+          paddingLG: 10,
+        },
+        Drawer: {
+          colorBgElevated: "transparent",
+        },
       },
-    },
-  }), [isLightTheme]);
+    }),
+    [isLightTheme, fontSize]
+  );
 
   return (
     <ConfigProvider theme={antdTheme} locale={zhCN}>

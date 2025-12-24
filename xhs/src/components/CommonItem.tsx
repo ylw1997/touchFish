@@ -101,7 +101,12 @@ const CommonItem: React.FC<CommonItemProps> = ({
             >
               {c.user_info?.nickname}
             </span>
-            <span style={{ color: "#999", fontSize: 12 }}>
+            <span
+              style={{
+                color: "#999",
+                fontSize: "calc(var(--app-font-size) - 2px)",
+              }}
+            >
               {formatTimestamp(c.create_time)}
             </span>
           </div>

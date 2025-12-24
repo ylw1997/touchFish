@@ -108,7 +108,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
             <span
               style={{
                 fontWeight: 600,
-                fontSize: 18,
+                fontSize: "calc(var(--app-font-size) + 4px)",
                 cursor: hasUserId ? "pointer" : "default",
               }}
               onClick={() => hasUserId && onUserClick?.()}
@@ -154,7 +154,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
       </Avatar>
       <div
         style={{
-          fontSize: 20,
+          fontSize: "calc(var(--app-font-size) + 6px)",
           fontWeight: "bolder",
           cursor: hasUserId ? "pointer" : "default",
         }}
@@ -163,7 +163,13 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
         {nickname}
       </div>
       {user.red_id && (
-        <div style={{ color: "#999", fontSize: 12, marginTop: -8 }}>
+        <div
+          style={{
+            color: "#999",
+            fontSize: "calc(var(--app-font-size) - 2px)",
+            marginTop: -8,
+          }}
+        >
           小红书号：{user.red_id}
         </div>
       )}

@@ -16,6 +16,8 @@ import {
   VerticalAlignTopOutlined,
   SearchOutlined,
   UserOutlined,
+  PlusOutlined,
+  MinusOutlined,
 } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
@@ -32,6 +34,7 @@ import XhsSearchDrawer from "./XhsSearchDrawer";
 import UserPostedDrawer from "./UserPostedDrawer";
 import { useRequest } from "../hooks/useRequest";
 import { createXhsApi } from "../api";
+import { useFontSizeStore } from "../store/fontSize";
 
 export default function Feed() {
   const { items, loadMore, hasMore, refresh } = useXhsFeed();
@@ -50,6 +53,7 @@ export default function Feed() {
     user?: any;
     xsec_source?: any;
   }>({ cursor: "", user_id: "" });
+  const { increase, decrease } = useFontSizeStore();
 
   const { request, messageApi } = useRequest();
   const apiRef = useRef(createXhsApi(request));
@@ -171,6 +175,16 @@ export default function Feed() {
           onClick={handleMyInfo}
           icon={<UserOutlined style={{ color: "#faad14" }} />}
           tooltip={{ title: "我的", placement: "left" }}
+        />
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
         />
       </FloatButton.Group>
       {items.length === 0 ? (

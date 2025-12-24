@@ -154,7 +154,12 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
                   _,
                   {
                     transform: { scale },
-                    actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight },
+                    actions: {
+                      onZoomOut,
+                      onZoomIn,
+                      onRotateLeft,
+                      onRotateRight,
+                    },
                   }
                 ) => (
                   <ImagePreviewToolbar
@@ -201,7 +206,11 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
                     <img
                       src={url}
                       alt={title}
-                      style={{ display: "block", width: "100%", cursor: "zoom-in" }}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        cursor: "zoom-in",
+                      }}
                     />
                   </div>
                 ))}
@@ -217,7 +226,12 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
                       _,
                       {
                         transform: { scale },
-                        actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight },
+                        actions: {
+                          onZoomOut,
+                          onZoomIn,
+                          onRotateLeft,
+                          onRotateRight,
+                        },
                         current,
                       }
                     ) => (
@@ -246,7 +260,11 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
         actions={[
           <Space
             key="like"
-            style={{ fontSize: "16px", cursor: likeLoading ? 'not-allowed' : 'pointer', opacity: likeLoading ? 0.6 : 1 }}
+            style={{
+              fontSize: "calc(var(--app-font-size) + 2px)",
+              cursor: likeLoading ? "not-allowed" : "pointer",
+              opacity: likeLoading ? 0.6 : 1,
+            }}
             onClick={() => {
               if (likeLoading) return;
               onToggleLike?.();
@@ -261,7 +279,11 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
           </Space>,
           <Space
             key="collect"
-            style={{ fontSize: "16px", cursor: collectLoading ? 'not-allowed' : 'pointer', opacity: collectLoading ? 0.6 : 1 }}
+            style={{
+              fontSize: "calc(var(--app-font-size) + 2px)",
+              cursor: collectLoading ? "not-allowed" : "pointer",
+              opacity: collectLoading ? 0.6 : 1,
+            }}
             onClick={() => {
               if (collectLoading) return;
               onToggleCollect?.();
@@ -274,11 +296,18 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
             )}
             <span>{formatCount(collectedCount)}</span>
           </Space>,
-          <Space key="comment" style={{ fontSize: "16px" }}>
+          <Space
+            key="comment"
+            style={{ fontSize: "calc(var(--app-font-size) + 2px)" }}
+          >
             <CommentOutlined />
             <span>{formatCount(commentCount)}</span>
           </Space>,
-          <Space key="share" style={{ fontSize: "16px" }} onClick={onShare}>
+          <Space
+            key="share"
+            style={{ fontSize: "calc(var(--app-font-size) + 2px)" }}
+            onClick={onShare}
+          >
             <ShareAltOutlined />
             <span>{shareCount > 0 ? formatCount(shareCount) : "分享"}</span>
           </Space>,
@@ -293,7 +322,7 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
               style={{
                 whiteSpace: "pre-wrap",
                 marginTop: 8,
-                fontSize: "16px",
+                fontSize: "calc(var(--app-font-size) + 2px)",
                 marginBottom: 8,
               }}
             >
@@ -328,7 +357,8 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
             )}
           </>
         ) : (
-          !images.length && !videoUrl && (
+          !images.length &&
+          !videoUrl && (
             <div style={{ padding: 20, textAlign: "center", color: "#999" }}>
               暂无更多内容
             </div>

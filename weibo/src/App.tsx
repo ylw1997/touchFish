@@ -27,6 +27,8 @@ import {
   RedoOutlined,
   SearchOutlined,
   VerticalAlignTopOutlined,
+  PlusOutlined,
+  MinusOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -38,6 +40,7 @@ import { loaderFunc } from "./utils/loader";
 import { defTab } from "./data/tabs";
 import useWeiboAction from "./hooks/useWeiboAction";
 import { vscode } from "./utils/vscode";
+import { useFontSizeStore } from "./store/fontSize";
 import { debounce } from "./utils";
 const SendWeiboDrawer = lazy(() => import("./components/SendWeiboDrawer"));
 const UserDetailDrawer = lazy(() => import("./components/UserDetailDrawer"));
@@ -79,6 +82,7 @@ function App() {
   const [searchKeyword, setSearchKeyword] = useState<string | undefined>();
   // 子菜单key
   const [subAcitiveKey, setSubActiveKey] = useState("");
+  const { increase, decrease } = useFontSizeStore();
 
   // showImg
   const [showImg, setShowImg] = useState(
@@ -307,6 +311,16 @@ function App() {
             title: `${showImg ? "隐藏" : "显示"}图片`,
             placement: "left",
           }}
+        />
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
         />
       </FloatButton.Group>
       <Suspense fallback={null}>
