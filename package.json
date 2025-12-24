@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do摸鱼聚合插件,沉浸式主题",
-	"version": "10.8.1",
+	"version": "10.8.2",
 	"icon": "logo.png",
 	"engines": {
 		"vscode": "^1.80.0"
@@ -472,9 +472,9 @@
 		"pretest": "pnpm compile-tests && pnpm compile && pnpm lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js",
-		"build": "vsce package",
+		"build": "vsce package --no-dependencies",
 		"changelog": "standard-version",
-		"publish": "vsce publish && ovsx publish",
+		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
 		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
