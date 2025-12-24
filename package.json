@@ -193,6 +193,11 @@
 						"热门",
 						"排行榜"
 					]
+				},
+				"touchfish.fontSize": {
+					"type": "number",
+					"default": 14,
+					"description": "全局字体大小"
 				}
 			}
 		},

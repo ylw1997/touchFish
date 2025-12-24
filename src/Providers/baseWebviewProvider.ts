@@ -77,6 +77,12 @@ export abstract class BaseWebviewProvider implements vscode.WebviewViewProvider 
           this.context.workspaceState.update(this.options.scrollKey, payload || 0);
           return;
         }
+        // 保存字体大小 conf
+        if (command === 'SAVE_FONT_SIZE') {
+          const config = vscode.workspace.getConfiguration('touchfish');
+          await config.update('fontSize', payload, true); // true for global/workspace setting
+          return;
+        }
         await this.handleCustomMessage(msg, webviewView);
       } catch (err: any) {
         // 统一错误处理与回传
@@ -96,6 +102,8 @@ export abstract class BaseWebviewProvider implements vscode.WebviewViewProvider 
     const config = vscode.workspace.getConfiguration('touchfish');
     let showImg = config.get('showImg') as boolean | undefined;
     if (showImg === undefined) showImg = true;
+    let fontSize = config.get('fontSize') as number | undefined;
+    if (fontSize === undefined) fontSize = 14;
 
     webviewView.webview.html = getWebviewHtml({
       webviewView,
@@ -103,7 +111,7 @@ export abstract class BaseWebviewProvider implements vscode.WebviewViewProvider 
       distPath: this.options.distPath,
       devPort: this.options.devPort,
       title: this.options.title,
-      windowConfig: { showImg },
+      windowConfig: { showImg, fontSize },
     });
   }
 }
