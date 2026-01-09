@@ -1,21 +1,18 @@
 {
-	"compilerOptions": {
-		"allowJs": true,
-		"module": "commonjs",
-		"target": "ES2020",
-		"lib": [
-			"ES2020"
-		],
-		"sourceMap": true,
-		"strict": true,   /* enable all strict type-checking options */
-		"skipLibCheck": true,
-		/* Additional Checks Enabled */
-		"noImplicitReturns": true, /* Ensure all functions return on every path */
-		"noFallthroughCasesInSwitch": true, /* Prevent unintended fallthrough */
-		// 保守起见暂不启用 noUnusedParameters，后续逐步清理后再打开
-	},
-	"include": [
-		"src/**/*.ts"
-	],
-	"exclude": ["weibo","zhihu","xhs"]
+  "compilerOptions": {
+    "allowJs": true,
+    "module": "commonjs",
+    "target": "ES2020",
+    "lib": ["ES2020"],
+    "sourceMap": true,
+    "strict": true /* enable all strict type-checking options */,
+    "skipLibCheck": true,
+    /* Additional Checks Enabled */
+    "noImplicitReturns": true /* Ensure all functions return on every path */,
+    "noFallthroughCasesInSwitch": true /* Prevent unintended fallthrough */,
+    "outDir": "./dist"
+    // 保守起见暂不启用 noUnusedParameters，后续逐步清理后再打开
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["weibo", "zhihu", "xhs", "bilibili"]
 }

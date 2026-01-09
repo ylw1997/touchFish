@@ -1,4 +1,5 @@
 packages:
-  - 'weibo'
-  - 'zhihu'
-  - 'xhs'
+  - "weibo"
+  - "zhihu"
+  - "xhs"
+  - "bilibili"

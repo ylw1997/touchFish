@@ -49,7 +49,10 @@ export type CommandList =
   | "XHS_USER_HOVER_CARD"
   | "XHS_USER_FOLLOW"
   | "XHS_USER_UNFOLLOW"
-  | "XHS_GET_MY_USER_INFO";
+  | "XHS_GET_MY_USER_INFO"
+  // Bilibili commands
+  | "BILIBILI_RECOMMEND"
+  | "BILIBILI_RECOMMEND_RESULT";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"

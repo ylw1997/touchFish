@@ -198,6 +198,10 @@
 					"type": "number",
 					"default": 14,
 					"description": "全局字体大小"
+				},
+				"touchfish.bilibiliCookie": {
+					"type": "string",
+					"description": "B站 cookie"
 				}
 			}
 		},
@@ -222,6 +226,11 @@
 					"id": "xhs",
 					"title": "TouchFish-Xhs",
 					"icon": "assets/xhs.svg"
+				},
+				{
+					"id": "bilibili",
+					"title": "TouchFish-Bilibili",
+					"icon": "assets/bilibili.svg"
 				}
 			]
 		},
@@ -248,6 +257,14 @@
 					"type": "webview",
 					"name": "小红书",
 					"id": "xhs"
+				}
+			],
+			"bilibili": [
+				{
+					"icon": "assets/bilibili.svg",
+					"type": "webview",
+					"name": "B站",
+					"id": "bilibili"
 				}
 			],
 			"touchfish": [
@@ -375,6 +392,11 @@
 				"command": "touchfish.setXhsToken",
 				"title": "设置小红书Cookie",
 				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "touchfish.setBilibiliToken",
+				"title": "设置B站Cookie",
+				"icon": "$(settings-gear)"
 			}
 		],
 		"menus": {
@@ -457,6 +479,11 @@
 				{
 					"command": "touchfish.setXhsToken",
 					"when": "view == xhs",
+					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setBilibiliToken",
+					"when": "view == bilibili",
 					"group": "navigation"
 				}
 			]

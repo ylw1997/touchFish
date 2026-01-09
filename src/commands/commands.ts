@@ -417,3 +417,20 @@ export const setLinuxDoTokenCommand = () => {
     }
   );
 };
+
+// 设置 B站 cookie
+export const setBilibiliTokenCommand = () => {
+  return vscode.commands.registerCommand(
+    "touchfish.setBilibiliToken",
+    async () => {
+      const bilibiliCookie = await vscode.window.showInputBox({
+        prompt: "请输入B站的Cookie",
+        placeHolder: "请输入B站的Cookie（从浏览器开发者工具中获取）",
+      });
+      if (bilibiliCookie !== undefined) {
+        await setConfigByKey("bilibiliCookie", bilibiliCookie);
+        await showInfo("B站Cookie设置成功！");
+      }
+    }
+  );
+};

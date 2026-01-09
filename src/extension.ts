@@ -36,6 +36,7 @@ import {
   setXhsTokenCommand,
   setLinuxDoTokenCommand,
   switchLinuxDoTab,
+  setBilibiliTokenCommand,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
@@ -45,6 +46,7 @@ import { LinuxDoProvider } from "./Providers/linuxDoProvider";
 import { ZhihuWebProvider } from "./Providers/zhihuWebProvider";
 import { XhsWebProvider } from "./Providers/xhsWebProvider";
 import { WeiboProvider } from "./Providers/weiboProvider";
+import { BilibiliProvider } from "./Providers/bilibiliProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
@@ -64,6 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
   const weiboProvider = new WeiboProvider(context);
   const zhihuWebProvider = new ZhihuWebProvider(context);
   const xhsWebProvider = new XhsWebProvider(context);
+  const bilibiliProvider = new BilibiliProvider(context);
   vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
   vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
   vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
@@ -81,6 +84,11 @@ export function activate(context: vscode.ExtensionContext) {
     },
   });
   vscode.window.registerWebviewViewProvider("xhs", xhsWebProvider, {
+    webviewOptions: {
+      retainContextWhenHidden: true,
+    },
+  });
+  vscode.window.registerWebviewViewProvider("bilibili", bilibiliProvider, {
     webviewOptions: {
       retainContextWhenHidden: true,
     },
@@ -111,6 +119,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(setXhsTokenCommand());
   context.subscriptions.push(setLinuxDoTokenCommand());
   context.subscriptions.push(switchLinuxDoTab());
+  context.subscriptions.push(setBilibiliTokenCommand());
   // 自动刷新
   vscode.commands.executeCommand("itHome.refresh");
   vscode.commands.executeCommand("chiphell.refresh");
