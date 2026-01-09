@@ -2,11 +2,7 @@
  * @Description: B站视频卡片组件
  */
 import React from "react";
-import {
-  PlayCircleOutlined,
-  MessageOutlined,
-  LikeOutlined,
-} from "@ant-design/icons";
+import { PlayCircleOutlined, MessageOutlined } from "@ant-design/icons";
 import type { BilibiliListItem } from "../types/bilibili";
 import dayjs from "dayjs";
 
@@ -37,18 +33,9 @@ const formatDuration = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
-const VideoCard: React.FC<VideoCardProps> = ({
-  item,
-  onCopyLink,
-  showImg = true,
-}) => {
+const VideoCard: React.FC<VideoCardProps> = ({ item, showImg = true }) => {
   const handleOpenVideo = () => {
     window.open(item.uri, "_blank");
-  };
-
-  const handleCopyLink = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onCopyLink?.(item.uri);
   };
 
   return (
@@ -69,10 +56,6 @@ const VideoCard: React.FC<VideoCardProps> = ({
         </div>
         {/* 封面右下角：时长 */}
         <div className="video-duration">{formatDuration(item.duration)}</div>
-        {/* 已关注标签 */}
-        {item.is_followed === 1 && (
-          <div className="video-followed-tag">已关注</div>
-        )}
       </div>
 
       {/* 标题 */}
@@ -80,12 +63,16 @@ const VideoCard: React.FC<VideoCardProps> = ({
         {item.title}
       </div>
 
-      {/* 底部信息：点赞 + 作者 + 日期 */}
+      {/* 底部信息：UP主头像 + UP主名称 · 日期 */}
       <div className="video-footer">
-        <span className="video-likes">
-          <LikeOutlined /> {formatCount(item.stat.like)}
-        </span>
+        <img
+          className="video-avatar"
+          src={item.owner.face}
+          alt={item.owner.name}
+          referrerPolicy="no-referrer"
+        />
         <span className="video-author">{item.owner.name}</span>
+        <span className="video-dot">·</span>
         <span className="video-date">
           {dayjs.unix(item.pubdate).format("YYYY-MM-DD")}
         </span>
