@@ -30,9 +30,6 @@ a {
    2. 共享/可复用样式
    ========================================================================== */
 
-/**
- * 通用毛玻璃背景效果
- */
 .backdrop-style {
   background-color: color-mix(
     in srgb,
@@ -42,189 +39,23 @@ a {
   backdrop-filter: saturate(180%) blur(15px);
 }
 
-/**
- * 激活状态的标签页样式
- */
-.tab-active-style {
-  background-color: color-mix(
-    in srgb,
-    var(--vscode-commandCenter-border) 60%,
-    transparent
-  );
-  backdrop-filter: saturate(180%) blur(15px);
-  color: var(--vscode-foreground);
-}
-
 /* ==========================================================================
-   3. 自定义组件与应用专属样式
+   3. 主滚动列表容器
    ========================================================================== */
 
-/**
- * 主滚动列表容器
- */
 .list {
   overflow-y: auto;
   height: 100vh;
   padding: 50px 5px 0;
 }
 
-/**
- * 通用内容块
- */
-.content {
-  font-size: var(--app-font-size);
-  color: var(--vscode-foreground);
-  line-height: 2;
-  word-break: break-all;
-  padding: 8px;
-  img {
-    width: 18px;
-    height: 18px;
-    vertical-align: -4px;
-    margin: 0 1px;
-  }
-}
-.comment-content {
-  padding: 0px 0px 5px 0px;
-}
-
-/**
- * 用户昵称
- */
-.nick-name {
-  color: var(--vscode-foreground);
-  font-weight: bold;
-  word-break: break-all;
-  white-space: pre-wrap;
-  font-size: var(--app-font-size);
-  &:hover {
-    cursor: pointer;
-    color: var(--vscode-textLink-activeForeground);
-  }
-}
-
-/**
- * 次要信息文本
- */
-.info {
-  font-size: calc(var(--app-font-size) - 1px);
-  color: var(--vscode-breadcrumb-foreground);
-}
-
-/**
- * 通用链接样式文本元素
- */
-.more {
-  cursor: pointer;
-  color: var(--vscode-activityBarTop-inactiveForeground);
-  align-self: flex-start;
-  margin: 5px;
-  font-size: calc(var(--app-font-size) + 3px);
-  display: flex;
-  &:hover {
-    color: var(--vscode-textLink-activeForeground);
-  }
-}
-.link,
-.expand,
-.link-tag {
-  cursor: pointer;
-  color: var(--vscode-breadcrumb-foreground);
-  &:hover {
-    color: var(--vscode-textLink-activeForeground);
-  }
-}
-
-.link-tag:hover {
-  text-decoration: underline;
-}
-
-/**
- * 评论中的图片
- */
-.comment-image {
-  border-radius: 10px;
-  max-width: 80%;
-}
-
-/**
- * 一个简单的辅助类，用于将元素的颜色设置为 VS Code 的前景主色。
- */
-.vscode-foreground {
-  color: var(--vscode-foreground);
-}
-
-/**
- * 通用上边框分割线
- */
-.border-top-divider {
-  border-top: 1px solid var(--vscode-chat-requestBorder);
-}
-
-.action-bar {
-  padding: 8px 0;
+.infinite-scroll-component {
+  overflow: hidden !important;
 }
 
 /* ==========================================================================
-   4. Ant Design 组件覆盖 (最小化)
+   4. Ant Design 组件覆盖
    ========================================================================== */
-
-/**
- * Drawer: 特定的毛玻璃效果
- * 背景、颜色和边框由 ConfigProvider 的 token 控制
- */
-.ant-drawer .ant-drawer-content-wrapper {
-  background-color: color-mix(
-    in srgb,
-    var(--vscode-editor-background) 80%,
-    transparent
-  );
-  backdrop-filter: saturate(180%) blur(15px);
-}
-
-.ant-list .ant-list-item .ant-list-item-meta .ant-list-item-meta-avatar {
-  margin-inline-end: 8px;
-}
-
-/**
- * Card: token 未覆盖的特定样式
- */
-.ant-card {
-  margin-top: 8px;
-  overflow: hidden;
-  background: color-mix(
-    in srgb,
-    var(--vscode-breadcrumbPicker-background) 50%,
-    transparent
-  );
-  .ant-card-head-title {
-    overflow: visible;
-    white-space: break-spaces;
-  }
-  .ant-card-head {
-    padding: 8px;
-    min-height: 45px;
-    font-weight: normal;
-  }
-  .ant-card-body {
-    padding: 0px;
-  }
-  .ant-card-actions li {
-    margin: 8px 0;
-  }
-}
-
-/**
- * Image: 自定义圆角
- */
-.ant-image {
-  margin: 0 auto;
-  width: fit-content;
-  img,
-  .ant-image-mask {
-    border-radius: 10px;
-  }
-}
 
 .ant-float-btn {
   .backdrop-style();
@@ -236,131 +67,9 @@ a {
   }
 }
 
-/**
- * Tag: 内部链接的自定义样式
- */
-.ant-tag a {
-  color: inherit;
-  &:hover {
-    color: inherit;
-    text-decoration: underline;
-  }
-}
-
-/* ==========================================================================
-   5. 响应式图片列表布局
-   ========================================================================== */
-
-.retweeted-status {
-  margin: 0px;
-  border-radius: 0;
-  border: none;
-  background: none;
-  position: relative;
-  padding-top: 5px;
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 10px;
-    background-color: var(--vscode-chart-guide);
-    mask-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 10'%3e%3cpath d='M 0 5 Q 5 0, 10 5 T 20 5' fill='none' stroke='%23fff' stroke-width='1'/%3e%3c/svg%3e");
-    mask-size: 15px 10px;
-    mask-repeat: repeat-x;
-    z-index: 1;
-  }
-}
-
-// 图片列表通用样式
-.imglist {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding: 0 8px 8px;
-
-  .video-item,
-  .img-item,
-  .img-only-item {
-    object-fit: cover;
-    border-radius: 10px;
-    min-height: 150px;
-  }
-}
-
-.infinite-scroll-component {
-  overflow: hidden !important;
-}
-// 分辨率小于等于320px
-@media screen and (max-width: 320px) {
-  .imglist {
-    .img-item,
-    .img-only-item {
-      width: 100vw;
-      height: 100vw;
-    }
-  }
-}
-
-// 分辨率321-768px
-@media screen and (min-width: 341px) and (max-width: 540px) {
-  .imglist {
-    .img-item {
-      width: calc(50vw - 26px);
-      height: calc(50vw - 26px);
-    }
-    .img-only-item {
-      width: calc(66.66vw - 26px);
-      max-width: 500px;
-      max-height: 500px;
-    }
-  }
-  .h5image-list {
-    .img-item {
-      width: calc(50vw - 32px);
-      height: calc(50vw - 32px);
-    }
-  }
-}
-
-// 分辨率大于等于769px
-@media screen and (min-width: 541px) {
-  .imglist {
-    .img-item {
-      width: calc(33.33vw - 21px);
-      height: calc(33.33vw - 21px);
-    }
-    .img-only-item {
-      width: calc(66.66vw - 25px);
-      max-width: 500px;
-      max-height: 500px;
-    }
-  }
-  .h5image-list {
-    .img-item,
-    .img-only-item {
-      width: calc(33.33vw - 24px);
-      height: calc(33.33vw - 24px);
-    }
-  }
-}
-
-/* ==========================================================================
-   6. Weibo Specific Styles
-   ========================================================================== */
-
-.icon-link {
-  width: 1em;
-  height: 1em;
-  margin-right: 2px;
-  vertical-align: -2px;
-}
-
 .ant-dropdown .ant-dropdown-menu,
 .ant-tabs-dropdown .ant-tabs-dropdown-menu,
-.ant-message .ant-message-notice-wrapper .ant-message-notice-content,
-.ant-select-dropdown {
+.ant-message .ant-message-notice-wrapper .ant-message-notice-content {
   .backdrop-style();
 }
 
@@ -384,67 +93,8 @@ a {
   margin: 0 0 0 26px;
 }
 
-.ant-form-item {
-  margin-bottom: 8px;
-}
-
-.weiboItemUrl {
-  font-size: calc(var(--app-font-size) - 2px);
-  margin-left: 5px;
-  color: var(--vscode-textLink-activeForeground);
-}
-.video-cover {
-  position: relative;
-  display: inline-block;
-  min-width: 100px;
-  min-height: 100px;
-  cursor: pointer;
-
-  .video-item {
-    width: 100%;
-  }
-
-  .video-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 48px;
-    color: rgba(255, 255, 255, 0.5);
-    transition: all 0.2s ease-in-out;
-    // pointer-events: none;
-  }
-
-  &:hover {
-    .video-icon {
-      color: rgba(255, 255, 255, 0.8);
-    }
-  }
-}
-
-.hot-search-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.hot-search-tag {
-  cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  transition: all 0.2s ease-in-out;
-  border: 1px solid transparent;
-  margin-inline-end: 0;
-
-  &:hover {
-    color: var(--vscode-textLink-activeForeground);
-  }
-}
-
 /* ==========================================================================
-   7. Bilibili Video Styles
+   5. Bilibili Video Styles
    ========================================================================== */
 
 .video-grid {
@@ -455,20 +105,9 @@ a {
 }
 
 .video-card {
-  background: color-mix(
-    in srgb,
-    var(--vscode-breadcrumbPicker-background) 50%,
-    transparent
-  );
+  border: 1px solid var(--vscode-chat-requestBorder);
   border-radius: 8px;
   overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  }
 
   .video-cover {
     position: relative;
@@ -481,6 +120,11 @@ a {
       aspect-ratio: 16 / 9;
       object-fit: cover;
       display: block;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+      &:hover {
+        filter: brightness(0.8);
+      }
     }
 
     // 左下角播放量和弹幕
@@ -536,6 +180,11 @@ a {
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--vscode-foreground);
+    cursor: pointer;
+    transition: color 0.2s ease;
+    &:hover {
+      color: var(--vscode-button-hoverBackground);
+    }
   }
 
   // 底部信息
@@ -553,6 +202,7 @@ a {
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
+      cursor: pointer;
     }
 
     .video-author {
@@ -560,6 +210,11 @@ a {
       text-overflow: ellipsis;
       white-space: nowrap;
       max-width: 120px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+      &:hover {
+        color: var(--vscode-button-hoverBackground);
+      }
     }
 
     .video-dot {
