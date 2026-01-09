@@ -9,7 +9,7 @@
  */
 import axios from "axios";
 import * as vscode from "vscode";
-import { showError } from '../utils/errorMessage';
+import { showError } from "../utils/errorMessage";
 import { getOrSetCookie, buildCommonHeaders } from "../utils/apiUtils";
 import { weiboCommentParams, weiboRepostParams } from "../../types/weibo";
 import ContextManager from "../utils/extensionContext";
@@ -306,12 +306,12 @@ export const getWeiboSearch = async (
   // console.log("Fetching Weibo Search Data:", url);
   try {
     return await axios.get(url, {
-      headers: {
+      headers: await getWeiboHeaders({
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
         "x-requested-with": "XMLHttpRequest",
         Referer: "https://m.weibo.cn/",
-      },
+      }),
     });
   } catch (error: any) {
     console.error("Error fetching Weibo Search Data:", error.data);
