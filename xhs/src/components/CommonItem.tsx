@@ -200,6 +200,7 @@ const CommonItem: React.FC<CommonItemProps> = ({
               renderItem={(subComment) => (
                 <CommonItem
                   c={subComment}
+                  onUserClick={onUserClick}
                   style={{
                     padding: "5px 0",
                   }}
