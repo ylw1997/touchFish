@@ -1,6 +1,21 @@
 # 更新历史 
 
 
+## [10.9.0](https://github.com/ylw1997/touchFish/compare/v10.8.2...v10.9.0) (2026-01-09)
+
+
+### 📦 Chores | 其他更新
+
+* Remove Yarn configuration and lock file. ([a034b63](https://github.com/a034b63e751d22e3b409b3f1c2d71faaaa084da8))
+
+
+### ✨ Features | 新功能
+
+* 微博icon合并 ([1d41de3](https://github.com/1d41de3fd94814cd4c3496f9a97518d20acf3577))
+* 小红书脚本更新 ([b0de2ef](https://github.com/b0de2ef35561d025ee8806d0552c39eede4db0b5))
+* 修复二级评论无法点击问题 ([7abcdd3](https://github.com/7abcdd3796af3d999897d469c2f131de22df19c0))
+* 修复微博无法搜索问题 ([5c8c63a](https://github.com/5c8c63a055a6ff5f61590131067f3547e91ddcf7))
+
 ### [10.8.2](https://github.com/ylw1997/touchFish/compare/v10.8.1...v10.8.2) (2025-12-24)
 
 ### [10.8.1](https://github.com/ylw1997/touchFish/compare/v10.8.0...v10.8.1) (2025-12-24)
