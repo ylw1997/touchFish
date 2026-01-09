@@ -25,7 +25,9 @@ const CONFIG = {
   WINDOW_PROPS_LENGTH_MAX: 1200,
   CHECKSUM_VERSION: 1,
   CHECKSUM_XOR_KEY: 115,
-  CHECKSUM_FIXED_TAIL: [249, 65, 103, 103, 201, 181, 131, 99, 94, 7, 68, 250, 132, 21],
+  CHECKSUM_FIXED_TAIL: [
+    249, 65, 103, 103, 201, 181, 131, 99, 94, 7, 68, 250, 132, 21,
+  ],
   ENV_FINGERPRINT_TIME_OFFSET_MIN: 10,
   ENV_FINGERPRINT_TIME_OFFSET_MAX: 50,
   X3_PREFIX: "mns0301_",
@@ -55,7 +57,7 @@ function utf8Bytes(str) {
 }
 
 function rand32() {
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
     const arr = new Uint32Array(1);
     crypto.getRandomValues(arr);
     return arr[0];
@@ -91,7 +93,7 @@ function xorArray(arr) {
 }
 
 function b64StdEncode(bytes) {
-  let binary = '';
+  let binary = "";
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
@@ -154,7 +156,7 @@ function md5Hex(s) {
 function structPackLittleEndianQ(ts) {
   const data = new Array(8).fill(0);
   for (let i = 0; i < 8; i++) {
-    data[i] = ts & 0xFF;
+    data[i] = ts & 0xff;
     ts = Math.floor(ts / 256);
   }
   return data;
@@ -162,17 +164,17 @@ function structPackLittleEndianQ(ts) {
 
 function envFingerprintA(ts, xorKey) {
   const data = structPackLittleEndianQ(ts);
-  
+
   const sum1 = data[1] + data[2] + data[3] + data[4];
   const sum2 = data[5] + data[6] + data[7];
-  
-  const mark = ((sum1 & 0xFF) + sum2) & 0xFF;
+
+  const mark = ((sum1 & 0xff) + sum2) & 0xff;
   data[0] = mark;
-  
+
   for (let i = 0; i < data.length; i++) {
     data[i] ^= xorKey;
   }
-  
+
   return data;
 }
 
@@ -182,62 +184,64 @@ function envFingerprintB(ts) {
 
 function buildPayload(dHex, a1, appId, content) {
   const payload = [];
-  
+
   payload.push(...CONFIG.VERSION_BYTES);
-  
+
   const seed = rand32();
   const seedBytes = intToLE(seed, 4);
   payload.push(...seedBytes);
   const seedByte0 = seedBytes[0];
-  
+
   const timestamp = Date.now();
   payload.push(...envFingerprintA(timestamp, CONFIG.ENV_FINGERPRINT_XOR_KEY));
-  
+
   const timeOffset = randByte(
     CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MIN,
     CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MAX
   );
   payload.push(...envFingerprintB(timestamp - timeOffset * 1000));
-  
+
   const sequenceValue = randByte(
     CONFIG.SEQUENCE_VALUE_MIN,
     CONFIG.SEQUENCE_VALUE_MAX
   );
   payload.push(...intToLE(sequenceValue, 4));
-  
+
   const windowPropsLength = randByte(
     CONFIG.WINDOW_PROPS_LENGTH_MIN,
     CONFIG.WINDOW_PROPS_LENGTH_MAX
   );
   payload.push(...intToLE(windowPropsLength, 4));
-  
-  const uriLength = utf8Bytes(content).length;
+
+  const uriLength = content.length;
   payload.push(...intToLE(uriLength, 4));
-  
+
   const md5Bytes = bytesFromHex(dHex);
   for (let i = 0; i < 8; i++) {
     payload.push(md5Bytes[i] ^ seedByte0);
   }
-  
+
   payload.push(52);
-  
+
   const a1Bytes = utf8Bytes(a1);
   const paddedA1 = new Array(52).fill(0);
-  for(let i=0; i<Math.min(a1Bytes.length, 52); i++) paddedA1[i] = a1Bytes[i];
+  for (let i = 0; i < Math.min(a1Bytes.length, 52); i++)
+    paddedA1[i] = a1Bytes[i];
   payload.push(...paddedA1);
-  
+
   payload.push(10);
-  
+
   const sourceBytes = utf8Bytes(appId);
   const paddedSource = new Array(10).fill(0);
-  for(let i=0; i<Math.min(sourceBytes.length, 10); i++) paddedSource[i] = sourceBytes[i];
+  for (let i = 0; i < Math.min(sourceBytes.length, 10); i++)
+    paddedSource[i] = sourceBytes[i];
   payload.push(...paddedSource);
-  
+
   payload.push(1);
   payload.push(CONFIG.CHECKSUM_VERSION);
   payload.push(seedByte0 ^ CONFIG.CHECKSUM_XOR_KEY);
   payload.push(...CONFIG.CHECKSUM_FIXED_TAIL);
-  
+
   return payload;
 }
 
@@ -249,7 +253,7 @@ function signXs(
   payload = null
 ) {
   method = method.toUpperCase();
-  
+
   if (uri.indexOf("http") === 0) {
     uri = uri.replace(/^https?:\/\/[^\/]+/, "");
   }
@@ -360,9 +364,8 @@ function XsCommon(a1, xs, xt) {
   return b64Encode(encodeUtf8(dataStr));
 }
 
-function get_request_headers_params(api, data, a1,method="POST") {
-  let xs_xt = signXs(method, api, a1, "xhs-pc-web", data);
-  let xs = xs_xt;
+function get_request_headers_params(api, data, a1, method = "POST") {
+  let xs = signXs(method, api, a1, "xhs-pc-web", data);
   let xt = new Date().getTime();
   let xs_common = XsCommon(a1, xs, xt);
   return {
@@ -375,7 +378,7 @@ function get_request_headers_params(api, data, a1,method="POST") {
 export { signXs, get_request_headers_params };
 
 // Attach to window if available (for non-module usage)
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.xhshow = {
     signXs,
     get_request_headers_params,
