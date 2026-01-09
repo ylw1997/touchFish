@@ -30,6 +30,7 @@ import {
   PlusOutlined,
   MinusOutlined,
   UserOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -255,14 +256,36 @@ function App() {
           </InfiniteScroll>
         )}
       </div>
-      <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
-        <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
-          icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
-          tooltip={{ title: "回到顶部", placement: "left" }}
-          target={() => scrollableNodeRef.current || window}
-        />
+      {/* 回到顶部按钮 */}
+      <FloatButton.BackTop
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+        target={() => scrollableNodeRef.current || window}
+      />
+      {/* 刷新按钮 */}
+      <FloatButton
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: 84 }}
+        onClick={() => {
+          const key = subAcitiveKey || activeKey;
+          clearList();
+          getListData(key, true);
+        }}
+        icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+        tooltip={{ title: "刷新", placement: "left" }}
+      />
+      {/* 更多功能按钮组 */}
+      <FloatButton.Group
+        shape="circle"
+        trigger="click"
+        style={{ insetInlineEnd: 24, bottom: 144 }}
+        icon={<AppstoreOutlined style={{ color: "#1890ff" }} />}
+        tooltip={{ title: "更多", placement: "left" }}
+      >
         {/* 用户按钮 */}
         <FloatButton
           onClick={getMyUserInfo}
@@ -280,15 +303,6 @@ function App() {
           icon={<EditOutlined style={{ color: "#69b1ff" }} />}
           onClick={() => setSendDrawerOpen((open) => !open)}
           tooltip={{ title: "发布微博", placement: "left" }}
-        />
-        <FloatButton
-          onClick={() => {
-            const key = subAcitiveKey || activeKey;
-            clearList();
-            getListData(key, true);
-          }}
-          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-          tooltip={{ title: "刷新", placement: "left" }}
         />
         {/* 显示图片 */}
         <FloatButton
