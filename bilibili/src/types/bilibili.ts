@@ -82,4 +82,67 @@ export interface BilibiliListItem {
   stat: BilibiliStat;
   is_followed: number;
   rcmd_reason?: RcmdReason;
+  // 动态相关
+  pub_time?: string; // "11分钟前"
+}
+
+// ============== 动态 API 类型 ==============
+
+// 动态作者信息
+export interface DynamicAuthor {
+  mid: number;
+  name: string;
+  face: string;
+  following: boolean;
+  pub_time: string;
+  pub_ts: number;
+}
+
+// 动态视频 archive 信息
+export interface DynamicArchive {
+  aid: string;
+  bvid: string;
+  cover: string;
+  title: string;
+  duration_text: string;
+  jump_url: string;
+  stat: {
+    danmaku: string;
+    play: string;
+  };
+}
+
+// 动态项
+export interface DynamicItem {
+  id_str: string;
+  modules: {
+    module_author: DynamicAuthor;
+    module_dynamic: {
+      major?: {
+        archive?: DynamicArchive;
+        type: string;
+      };
+    };
+    module_stat: {
+      comment: { count: number };
+      forward: { count: number };
+      like: { count: number; status: boolean };
+    };
+  };
+  type: string;
+  visible: boolean;
+}
+
+// 动态接口响应
+export interface BilibiliDynamicResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    has_more: boolean;
+    items: DynamicItem[];
+    offset: string;
+    update_baseline: string;
+    update_num: number;
+  };
 }

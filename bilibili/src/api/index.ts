@@ -2,7 +2,10 @@
  * @Description: Bilibili API requests
  */
 
-import type { BilibiliRecommendResponse } from "../types/bilibili";
+import type {
+  BilibiliRecommendResponse,
+  BilibiliDynamicResponse,
+} from "../types/bilibili";
 import type { CommandList } from "../../../types/commands";
 
 type RequestFunc = <T = any>(
@@ -24,6 +27,15 @@ export class BilibiliApi {
       "BILIBILI_RECOMMEND",
       null,
       "请求推荐视频中..."
+    );
+  }
+
+  // 获取动态列表
+  getDynamic(page: number = 1, offset?: string) {
+    return this.request<BilibiliDynamicResponse>(
+      "BILIBILI_DYNAMIC",
+      { page, offset },
+      "请求动态中..."
     );
   }
 }

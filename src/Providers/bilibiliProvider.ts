@@ -2,7 +2,7 @@
  * @Description: Bilibili Webview Provider
  */
 import { WebviewView, ExtensionContext, window } from "vscode";
-import { getRecommend } from "../api/bilibili";
+import { getRecommend, getDynamic } from "../api/bilibili";
 import { CommandsType } from "../../types/commands";
 import { setConfigByKey } from "../core/config";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
@@ -28,7 +28,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
     message: IncomingMessage,
     webviewView: WebviewView
   ) {
-    const { command, uuid } = message;
+    const { command, payload, uuid } = message;
     switch (command) {
       case "BILIBILI_RECOMMEND": {
         let res = await getRecommend();
@@ -49,6 +49,30 @@ export class BilibiliProvider extends BaseWebviewProvider {
         }
         webviewView.webview.postMessage({
           command: "BILIBILI_RECOMMEND_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_DYNAMIC": {
+        const { page, offset } = payload || { page: 1 };
+        let res = await getDynamic(page, offset);
+        if (res.data?.code !== 0) {
+          if (res.data?.code === -101) {
+            const cookie = await window.showInputBox({
+              placeHolder: "请输入B站的cookie",
+              prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+            });
+            if (cookie) {
+              await setConfigByKey("bilibiliCookie", cookie);
+              res = await getDynamic(page, offset);
+            }
+          } else {
+            showInfo(`获取B站动态失败: ${res.data?.message || "未知错误"}`);
+          }
+        }
+        webviewView.webview.postMessage({
+          command: "BILIBILI_DYNAMIC_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

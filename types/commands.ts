@@ -52,7 +52,9 @@ export type CommandList =
   | "XHS_GET_MY_USER_INFO"
   // Bilibili commands
   | "BILIBILI_RECOMMEND"
-  | "BILIBILI_RECOMMEND_RESULT";
+  | "BILIBILI_RECOMMEND_RESULT"
+  | "BILIBILI_DYNAMIC"
+  | "BILIBILI_DYNAMIC_RESULT";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"
