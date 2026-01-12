@@ -8,6 +8,7 @@ import {
   getWatchLater,
   getFavoriteFolders,
   getFavoriteDetail,
+  addToWatchLater,
 } from "../api/bilibili";
 import { CommandsType } from "../../types/commands";
 import { setConfigByKey } from "../core/config";
@@ -151,6 +152,16 @@ export class BilibiliProvider extends BaseWebviewProvider {
         }
         webviewView.webview.postMessage({
           command: "BILIBILI_FAVORITE_DETAIL_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_ADD_TO_WATCHLATER": {
+        const { bvid } = payload || {};
+        const res = await addToWatchLater(bvid);
+        webviewView.webview.postMessage({
+          command: "BILIBILI_ADD_TO_WATCHLATER_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

@@ -121,8 +121,55 @@ a {
       display: block;
       cursor: pointer;
       transition: filter 0.2s ease;
+    }
+
+    &:hover {
+      img {
+        filter: brightness(0.7);
+      }
+      .video-play-icon {
+        opacity: 1;
+      }
+      .video-add-watchlater {
+        opacity: 1;
+      }
+    }
+
+    // 中间播放图标
+    .video-play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      color: rgba(255, 255, 255, 0.9);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    // 右上角加入待看按钮
+    .video-add-watchlater {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.2s ease;
+
       &:hover {
-        filter: brightness(0.8);
+        background: #00a1d6;
+        transform: scale(1.1);
       }
     }
 

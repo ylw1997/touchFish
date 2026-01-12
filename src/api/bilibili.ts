@@ -167,3 +167,49 @@ export const getFavoriteDetail = async (
     };
   }
 };
+
+/**
+ * 从 cookie 中解析 CSRF Token (bili_jct)
+ */
+const getCsrfFromCookie = (cookie: string): string | null => {
+  const match = cookie.match(/bili_jct=([^;]+)/);
+  return match ? match[1] : null;
+};
+
+/**
+ * 加入待看
+ * https://api.bilibili.com/x/v2/history/toview/add
+ */
+export const addToWatchLater = async (bvid: string) => {
+  try {
+    const cookie = (await getOrSetBilibiliCookie()) as string;
+    const csrf = getCsrfFromCookie(cookie);
+    if (!csrf) {
+      showError("无法从 Cookie 中获取 CSRF Token，请确保 Cookie 包含 bili_jct");
+      return {
+        data: {
+          code: -1,
+          message: "无法获取 CSRF Token",
+        },
+      };
+    }
+    return await axios.post(
+      "https://api.bilibili.com/x/v2/history/toview/add",
+      `bvid=${bvid}&csrf=${csrf}`,
+      {
+        headers: {
+          ...(await getBilibiliHeaders()),
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+  } catch (error: any) {
+    showError(`加入待看失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+      },
+    };
+  }
+};

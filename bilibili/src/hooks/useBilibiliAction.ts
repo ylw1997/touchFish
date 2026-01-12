@@ -271,6 +271,20 @@ const useBilibiliAction = () => {
     [apiClient, list.length]
   );
 
+  // 加入待看
+  const addToWatchLater = useCallback(
+    async (bvid: string) => {
+      const result = await apiClient.addToWatchLater(bvid);
+      if (result.code === 0) {
+        messageApi.success("已加入待看");
+      } else {
+        messageApi.error(result.message || "加入待看失败");
+      }
+      return result;
+    },
+    [apiClient, messageApi]
+  );
+
   return {
     getListData,
     isFetching,
@@ -283,6 +297,7 @@ const useBilibiliAction = () => {
     messageApi,
     getFavoriteFolders,
     getFavoriteDetail,
+    addToWatchLater,
   };
 };
 

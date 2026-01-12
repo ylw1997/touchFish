@@ -2,13 +2,19 @@
  * @Description: B站视频卡片组件
  */
 import React from "react";
-import { PlayCircleOutlined, MessageOutlined } from "@ant-design/icons";
+import {
+  PlayCircleOutlined,
+  PlayCircleFilled,
+  MessageOutlined,
+  ClockCircleOutlined,
+} from "@ant-design/icons";
 import type { BilibiliListItem } from "../types/bilibili";
 import dayjs from "dayjs";
 
 export interface VideoCardProps {
   item: BilibiliListItem;
   onCopyLink?: (url: string) => void;
+  onAddToWatchLater?: (bvid: string) => void;
   showImg?: boolean;
 }
 
@@ -33,9 +39,20 @@ const formatDuration = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
-const VideoCard: React.FC<VideoCardProps> = ({ item, showImg = true }) => {
+const VideoCard: React.FC<VideoCardProps> = ({
+  item,
+  showImg = true,
+  onAddToWatchLater,
+}) => {
   const handleOpenVideo = () => {
     window.open(item.uri, "_blank");
+  };
+
+  const handleAddToWatchLater = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onAddToWatchLater && item.bvid) {
+      onAddToWatchLater(item.bvid);
+    }
   };
 
   const { is_folder, media_count } = item;
@@ -48,11 +65,27 @@ const VideoCard: React.FC<VideoCardProps> = ({ item, showImg = true }) => {
           <img
             src={
               item.pic ||
-              "https://i0.hdslb.com/bfs/static/jinkela/space/assets/fav-cover.png" // 默认收藏夹封面
+              "https://i0.hdslb.com/bfs/static/jinkela/space/assets/fav-cover.png"
             }
             alt={item.title}
             referrerPolicy="no-referrer"
           />
+        )}
+        {/* 播放图标 - hover 时显示 */}
+        {!is_folder && (
+          <div className="video-play-icon">
+            <PlayCircleFilled />
+          </div>
+        )}
+        {/* 加入待看按钮 - hover 时显示 */}
+        {!is_folder && item.bvid && (
+          <div
+            className="video-add-watchlater"
+            onClick={handleAddToWatchLater}
+            title="稍后再看"
+          >
+            <ClockCircleOutlined />
+          </div>
         )}
         {/* 封面左下角：播放量/视频数 */}
         <div className="video-stats-overlay">

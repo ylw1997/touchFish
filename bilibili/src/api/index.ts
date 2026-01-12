@@ -68,4 +68,13 @@ export class BilibiliApi {
       "请求收藏夹视频中..."
     );
   }
+
+  // 加入待看
+  addToWatchLater(bvid: string) {
+    return this.request<{ code: number; message: string }>(
+      "BILIBILI_ADD_TO_WATCHLATER",
+      { bvid },
+      "加入待看中..."
+    );
+  }
 }
