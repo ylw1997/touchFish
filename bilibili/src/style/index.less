@@ -331,18 +331,32 @@ a {
       }
     }
 
-    .playbar-title {
+    .playbar-text-info {
       flex: 1;
-      font-size: 13px;
-      color: var(--vscode-foreground);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      white-space: normal;
-      line-height: 1.3;
-      word-break: break-all;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      gap: 2px;
+      padding-right: 8px;
+
+      .playbar-title {
+        font-size: 13px;
+        color: var(--vscode-foreground);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: normal;
+      }
+
+      .playbar-author {
+        font-size: 11px;
+        color: var(--vscode-descriptionForeground);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: normal;
+      }
     }
   }
 

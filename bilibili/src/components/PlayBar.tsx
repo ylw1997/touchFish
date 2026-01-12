@@ -106,8 +106,13 @@ const PlayBar: React.FC = () => {
                 alt={currentVideo.title}
                 referrerPolicy="no-referrer"
               />
-              <div className="playbar-title" title={currentVideo.title}>
-                {currentVideo.title}
+              <div className="playbar-text-info">
+                <div className="playbar-title" title={currentVideo.title}>
+                  {currentVideo.title}
+                </div>
+                <div className="playbar-author" title={currentVideo.owner.name}>
+                  {currentVideo.owner.name}
+                </div>
               </div>
             </>
           ) : (
