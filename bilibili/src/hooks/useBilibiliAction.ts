@@ -17,6 +17,9 @@ const useBilibiliAction = () => {
   const dynamicOffsetRef = useRef<string | undefined>(undefined);
   const hasMoreRef = useRef(true);
 
+  // 待看分页相关
+  const watchLaterPageRef = useRef(1);
+
   const { request, messageApi } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
 
@@ -26,6 +29,7 @@ const useBilibiliAction = () => {
     dynamicPageRef.current = 1;
     dynamicOffsetRef.current = undefined;
     hasMoreRef.current = true;
+    watchLaterPageRef.current = 1;
   }, []);
 
   // 复制链接
@@ -141,8 +145,125 @@ const useBilibiliAction = () => {
             dynamicPageRef.current += 1;
             setTotal(hasMoreRef.current ? 999 : list.length + newList.length);
           }
+        } else if (payload === "watchlater") {
+          // 待看接口
+          if (replace) {
+            watchLaterPageRef.current = 1;
+          }
+
+          const result = await apiClient.getWatchLater(
+            watchLaterPageRef.current,
+            20
+          );
+
+          if (result.code === 0 && result.data?.list) {
+            const newList: BilibiliListItem[] = result.data.list.map(
+              (item) => ({
+                id: item.aid,
+                bvid: item.bvid,
+                cid: item.cid,
+                uri: item.uri,
+                pic: item.pic,
+                title: item.title,
+                duration: item.duration,
+                pubdate: item.pubdate,
+                owner: item.owner,
+                stat: {
+                  view: item.stat.view,
+                  like: item.stat.like,
+                  danmaku: item.stat.danmaku,
+                },
+                is_followed: 0,
+              })
+            );
+
+            setList((currentList) =>
+              replace ? newList : [...currentList, ...newList]
+            );
+
+            watchLaterPageRef.current += 1;
+            setTotal(result.data.count);
+          }
         }
-        // TODO: 待看、收藏夹接口
+      } finally {
+        setIsFetching(false);
+      }
+    },
+    [apiClient, list.length]
+  );
+
+  // 收藏夹分页
+  const favoritePageRef = useRef(1);
+  const favoriteHasMoreRef = useRef(true);
+  const currentFolderIdRef = useRef<number | null>(null);
+
+  // 获取收藏夹列表（用于二级 Tab）
+  const getFavoriteFolders = useCallback(async () => {
+    const result = await apiClient.getFavoriteFolders();
+    if (result.code === 0 && result.data?.list) {
+      return result.data.list.map((item) => ({
+        key: `fav_${item.id}`,
+        label: item.title,
+        id: item.id,
+        media_count: item.media_count,
+      }));
+    }
+    return [];
+  }, [apiClient]);
+
+  // 获取收藏夹详情（视频列表）
+  const getFavoriteDetail = useCallback(
+    async (mediaId: number, replace = false) => {
+      setIsFetching(true);
+      try {
+        if (replace || currentFolderIdRef.current !== mediaId) {
+          favoritePageRef.current = 1;
+          favoriteHasMoreRef.current = true;
+          currentFolderIdRef.current = mediaId;
+        }
+
+        if (!favoriteHasMoreRef.current && !replace) return;
+
+        const result = await apiClient.getFavoriteDetail(
+          mediaId,
+          favoritePageRef.current,
+          20
+        );
+
+        if (result.code === 0 && result.data) {
+          const medias = result.data.medias || [];
+          const newList: BilibiliListItem[] = medias.map((item) => ({
+            id: item.id,
+            bvid: item.bvid,
+            cid: 0,
+            uri: `https://www.bilibili.com/video/${item.bvid}`,
+            pic: item.cover,
+            title: item.title,
+            duration: item.duration,
+            pubdate: item.pubtime,
+            owner: {
+              mid: item.upper.mid,
+              name: item.upper.name,
+              face: item.upper.face,
+            },
+            stat: {
+              view: item.cnt_info.play,
+              like: 0,
+              danmaku: item.cnt_info.danmaku,
+            },
+            is_followed: 0,
+          }));
+
+          setList((currentList) =>
+            replace ? newList : [...currentList, ...newList]
+          );
+
+          favoriteHasMoreRef.current = result.data.has_more;
+          favoritePageRef.current += 1;
+          setTotal(
+            favoriteHasMoreRef.current ? 999 : list.length + newList.length
+          );
+        }
       } finally {
         setIsFetching(false);
       }
@@ -160,6 +281,8 @@ const useBilibiliAction = () => {
     copyLink,
     clearList,
     messageApi,
+    getFavoriteFolders,
+    getFavoriteDetail,
   };
 };
 

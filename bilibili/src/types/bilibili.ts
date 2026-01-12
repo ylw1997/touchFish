@@ -84,6 +84,9 @@ export interface BilibiliListItem {
   rcmd_reason?: RcmdReason;
   // 动态相关
   pub_time?: string; // "11分钟前"
+  // 收藏夹相关
+  is_folder?: boolean;
+  media_count?: number;
 }
 
 // ============== 动态 API 类型 ==============
@@ -144,5 +147,105 @@ export interface BilibiliDynamicResponse {
     offset: string;
     update_baseline: string;
     update_num: number;
+  };
+}
+
+// ============== 待看 API 类型 ==============
+
+// 待看视频项
+export interface WatchLaterItem {
+  aid: number;
+  bvid: string;
+  cid: number;
+  pic: string;
+  title: string;
+  duration: number;
+  pubdate: number;
+  owner: BilibiliOwner;
+  stat: {
+    view: number;
+    danmaku: number;
+    like: number;
+  };
+  uri: string;
+  viewed: boolean;
+  add_at: number;
+}
+
+// 待看接口响应
+export interface BilibiliWatchLaterResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    count: number;
+    list: WatchLaterItem[];
+  };
+}
+
+// ============== 收藏夹 API 类型 ==============
+
+// 收藏夹项
+export interface FavoriteFolderItem {
+  id: number;
+  fid: number;
+  mid: number;
+  attr: number;
+  title: string;
+  fav_state: number;
+  media_count: number;
+}
+
+// 收藏夹列表响应
+export interface BilibiliFavoriteFoldersResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    count: number;
+    list: FavoriteFolderItem[];
+  };
+}
+
+// 收藏夹内视频项
+export interface FavoriteMediaItem {
+  id: number;
+  type: number;
+  title: string;
+  cover: string;
+  intro: string;
+  page: number;
+  duration: number;
+  upper: {
+    mid: number;
+    name: string;
+    face: string;
+  };
+  cnt_info: {
+    collect: number;
+    play: number;
+    danmaku: number;
+  };
+  link: string;
+  ctime: number;
+  pubtime: number;
+  fav_time: number;
+  bvid: string;
+}
+
+// 收藏夹详情响应
+export interface BilibiliFavoriteDetailResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    info: {
+      id: number;
+      title: string;
+      cover: string;
+      media_count: number;
+    };
+    medias: FavoriteMediaItem[] | null;
+    has_more: boolean;
   };
 }

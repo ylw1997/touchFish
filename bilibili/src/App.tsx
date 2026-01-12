@@ -21,7 +21,7 @@ import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
 import VideoCard from "./components/VideoCard";
 import { loaderFunc } from "./utils/loader";
-import { defTab } from "./data/tabs";
+import { defTab, TabItem } from "./data/tabs";
 import useBilibiliAction from "./hooks/useBilibiliAction";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
@@ -30,15 +30,33 @@ import { debounce } from "./utils";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
+// 收藏夹 tab 项类型
+interface FavoriteTabItem {
+  key: string;
+  label: string;
+  id: number;
+  media_count: number;
+}
+
 function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
-  const { list, total, copyLink, clearList, getListData, isFetching } =
-    useBilibiliAction();
+  const {
+    list,
+    total,
+    copyLink,
+    clearList,
+    getListData,
+    isFetching,
+    getFavoriteFolders,
+    getFavoriteDetail,
+  } = useBilibiliAction();
 
   // 状态管理
-  const [tabs] = useState(defTab);
+  const [tabs] = useState<TabItem[]>(defTab);
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const [subActiveKey, setSubActiveKey] = useState("");
+  const [favoriteTabs, setFavoriteTabs] = useState<FavoriteTabItem[]>([]);
+  const [currentFolderId, setCurrentFolderId] = useState<number | null>(null);
   const { increase, decrease } = useFontSizeStore();
 
   // showImg
@@ -78,9 +96,20 @@ function App() {
 
   // 请求数据
   const fetchData = useCallback(() => {
-    const currentKey = subActiveKey || activeKey;
-    getListData(currentKey);
-  }, [subActiveKey, activeKey, getListData]);
+    // 如果当前是收藏夹 tab，使用收藏夹详情 API
+    if (activeKey === "favorites" && currentFolderId) {
+      getFavoriteDetail(currentFolderId, false);
+    } else {
+      const currentKey = subActiveKey || activeKey;
+      getListData(currentKey);
+    }
+  }, [
+    subActiveKey,
+    activeKey,
+    getListData,
+    currentFolderId,
+    getFavoriteDetail,
+  ]);
 
   // 初始化
   useEffect(() => {
@@ -93,32 +122,85 @@ function App() {
     return tabs.find((item) => item.key === activeKey);
   }, [activeKey, tabs]);
 
+  // 收藏夹二级 Tab 的 items
+  const favoriteTabItems = useMemo(() => {
+    return favoriteTabs.map((item) => ({
+      key: item.key,
+      label: item.label,
+    }));
+  }, [favoriteTabs]);
+
   // 子菜单切换
   const onSubChange = useCallback(
     (key: string) => {
       setSubActiveKey(key);
       clearList();
-      getListData(key, true);
+
+      // 如果是收藏夹 Tab
+      if (activeKey === "favorites") {
+        const folder = favoriteTabs.find((item) => item.key === key);
+        if (folder) {
+          setCurrentFolderId(folder.id);
+          getFavoriteDetail(folder.id, true);
+        }
+      } else {
+        getListData(key, true);
+      }
     },
-    [clearList, getListData]
+    [clearList, getListData, activeKey, favoriteTabs, getFavoriteDetail]
   );
 
   // tab切换
   const onChange = useCallback(
-    (key: string) => {
+    async (key: string) => {
       clearList();
       setActiveKey(key);
-      const curTab = tabs.find((item) => item.key === key);
-      if (curTab && curTab.childrenList && curTab.childrenList.length > 0) {
-        setSubActiveKey(curTab.childrenList?.[0]!.key || "");
-        getListData(curTab.childrenList?.[0]!.key || "", true);
+
+      // 如果切换到收藏夹 Tab，需要先加载收藏夹列表
+      if (key === "favorites") {
+        const folders = await getFavoriteFolders();
+        if (folders.length > 0) {
+          setFavoriteTabs(folders);
+          setSubActiveKey(folders[0].key);
+          setCurrentFolderId(folders[0].id);
+          // 自动请求第一个收藏夹的内容
+          getFavoriteDetail(folders[0].id, true);
+        } else {
+          setFavoriteTabs([]);
+          setSubActiveKey("");
+          setCurrentFolderId(null);
+        }
       } else {
-        setSubActiveKey("");
-        getListData(key, true);
+        setFavoriteTabs([]);
+        setCurrentFolderId(null);
+        const curTab = tabs.find((item) => item.key === key);
+        if (curTab && curTab.childrenList && curTab.childrenList.length > 0) {
+          setSubActiveKey(curTab.childrenList?.[0]!.key || "");
+          getListData(curTab.childrenList?.[0]!.key || "", true);
+        } else {
+          setSubActiveKey("");
+          getListData(key, true);
+        }
       }
     },
-    [clearList, getListData, tabs]
+    [clearList, getListData, tabs, getFavoriteFolders, getFavoriteDetail]
   );
+
+  // 判断是否有二级 Tab
+  const hasSubTabs = useMemo(() => {
+    if (activeKey === "favorites") {
+      return favoriteTabs.length > 0;
+    }
+    return curTab && curTab.childrenList && curTab.childrenList.length > 0;
+  }, [activeKey, favoriteTabs, curTab]);
+
+  // 获取当前二级 Tab items
+  const subTabItems = useMemo(() => {
+    if (activeKey === "favorites") {
+      return favoriteTabItems;
+    }
+    return curTab?.childrenList as TabsProps["items"];
+  }, [activeKey, favoriteTabItems, curTab]);
 
   return (
     <>
@@ -129,15 +211,15 @@ function App() {
         onChange={onChange}
         centered
       />
-      {curTab && curTab.childrenList && curTab.childrenList.length > 0 && (
+      {hasSubTabs && (
         <Tabs
           className="tabs"
-          items={curTab.childrenList as TabsProps["items"]}
+          items={subTabItems}
           activeKey={subActiveKey}
           onChange={onSubChange}
           centered
           style={{
-            top: "53px",
+            top: "46px",
           }}
         />
       )}
@@ -146,14 +228,8 @@ function App() {
         ref={scrollableNodeRef}
         className="list"
         style={{
-          paddingTop:
-            curTab && curTab.childrenList && curTab.childrenList.length > 0
-              ? "95px"
-              : "53px",
-          height:
-            curTab && curTab.childrenList && curTab.childrenList.length > 0
-              ? "calc(100vh - 90px)"
-              : "calc(100vh - 44px)",
+          paddingTop: hasSubTabs ? "96px" : "53px",
+          height: hasSubTabs ? "calc(100vh - 96px)" : "calc(100vh - 53px)",
         }}
       >
         {isFetching && list.length === 0 ? (
@@ -203,9 +279,13 @@ function App() {
         shape="circle"
         style={{ insetInlineEnd: 24, bottom: 84 }}
         onClick={() => {
-          const key = subActiveKey || activeKey;
           clearList();
-          getListData(key, true);
+          if (activeKey === "favorites" && currentFolderId) {
+            getFavoriteDetail(currentFolderId, true);
+          } else {
+            const key = subActiveKey || activeKey;
+            getListData(key, true);
+          }
         }}
         icon={<RedoOutlined style={{ color: "#fb7299" }} />}
         tooltip={{ title: "刷新", placement: "left" }}

@@ -38,24 +38,41 @@ const VideoCard: React.FC<VideoCardProps> = ({ item, showImg = true }) => {
     window.open(item.uri, "_blank");
   };
 
+  const { is_folder, media_count } = item;
+
   return (
     <div className="video-card" onClick={handleOpenVideo}>
       {/* 封面区域 */}
       <div className="video-cover">
         {showImg && (
-          <img src={item.pic} alt={item.title} referrerPolicy="no-referrer" />
+          <img
+            src={
+              item.pic ||
+              "https://i0.hdslb.com/bfs/static/jinkela/space/assets/fav-cover.png" // 默认收藏夹封面
+            }
+            alt={item.title}
+            referrerPolicy="no-referrer"
+          />
         )}
-        {/* 封面左下角：播放量和弹幕 */}
+        {/* 封面左下角：播放量/视频数 */}
         <div className="video-stats-overlay">
-          <span>
-            <PlayCircleOutlined /> {formatCount(item.stat.view)}
-          </span>
-          <span>
-            <MessageOutlined /> {formatCount(item.stat.danmaku)}
-          </span>
+          {is_folder ? (
+            <span>共{media_count}个视频</span>
+          ) : (
+            <>
+              <span>
+                <PlayCircleOutlined /> {formatCount(item.stat.view)}
+              </span>
+              <span>
+                <MessageOutlined /> {formatCount(item.stat.danmaku)}
+              </span>
+            </>
+          )}
         </div>
-        {/* 封面右下角：时长 */}
-        <div className="video-duration">{formatDuration(item.duration)}</div>
+        {/* 封面右下角：时长 (收藏夹不显示) */}
+        {!is_folder && (
+          <div className="video-duration">{formatDuration(item.duration)}</div>
+        )}
       </div>
 
       {/* 标题 */}
@@ -63,19 +80,27 @@ const VideoCard: React.FC<VideoCardProps> = ({ item, showImg = true }) => {
         {item.title}
       </div>
 
-      {/* 底部信息：UP主头像 + UP主名称 · 日期 */}
+      {/* 底部信息 */}
       <div className="video-footer">
-        <img
-          className="video-avatar"
-          src={item.owner.face}
-          alt={item.owner.name}
-          referrerPolicy="no-referrer"
-        />
-        <span className="video-author">{item.owner.name}</span>
-        <span className="video-dot">·</span>
-        <span className="video-date">
-          {dayjs.unix(item.pubdate).format("YYYY-MM-DD")}
-        </span>
+        {is_folder ? (
+          <span className="video-author" style={{ color: "#999" }}>
+            创建于 {dayjs.unix(item.pubdate).format("YYYY-MM-DD")}
+          </span>
+        ) : (
+          <>
+            <img
+              className="video-avatar"
+              src={item.owner.face}
+              alt={item.owner.name}
+              referrerPolicy="no-referrer"
+            />
+            <span className="video-author">{item.owner.name}</span>
+            <span className="video-dot">·</span>
+            <span className="video-date">
+              {item.pub_time || dayjs.unix(item.pubdate).format("MM-DD")}
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

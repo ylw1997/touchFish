@@ -2,7 +2,13 @@
  * @Description: Bilibili Webview Provider
  */
 import { WebviewView, ExtensionContext, window } from "vscode";
-import { getRecommend, getDynamic } from "../api/bilibili";
+import {
+  getRecommend,
+  getDynamic,
+  getWatchLater,
+  getFavoriteFolders,
+  getFavoriteDetail,
+} from "../api/bilibili";
 import { CommandsType } from "../../types/commands";
 import { setConfigByKey } from "../core/config";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
@@ -34,7 +40,6 @@ export class BilibiliProvider extends BaseWebviewProvider {
         let res = await getRecommend();
         if (res.data?.code !== 0) {
           if (res.data?.code === -101) {
-            // 未登录，请求设置 Cookie
             const cookie = await window.showInputBox({
               placeHolder: "请输入B站的cookie",
               prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
@@ -73,6 +78,79 @@ export class BilibiliProvider extends BaseWebviewProvider {
         }
         webviewView.webview.postMessage({
           command: "BILIBILI_DYNAMIC_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_WATCHLATER": {
+        const { page = 1, pageSize = 20 } = payload || {};
+        let res = await getWatchLater(page, pageSize);
+        if (res.data?.code !== 0) {
+          if (res.data?.code === -101) {
+            const cookie = await window.showInputBox({
+              placeHolder: "请输入B站的cookie",
+              prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+            });
+            if (cookie) {
+              await setConfigByKey("bilibiliCookie", cookie);
+              res = await getWatchLater(page, pageSize);
+            }
+          } else {
+            showInfo(`获取B站待看失败: ${res.data?.message || "未知错误"}`);
+          }
+        }
+        webviewView.webview.postMessage({
+          command: "BILIBILI_WATCHLATER_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_FAVORITE_FOLDERS": {
+        let res = await getFavoriteFolders();
+        if (res.data?.code !== 0) {
+          if (res.data?.code === -101) {
+            const cookie = await window.showInputBox({
+              placeHolder: "请输入B站的cookie",
+              prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+            });
+            if (cookie) {
+              await setConfigByKey("bilibiliCookie", cookie);
+              res = await getFavoriteFolders();
+            }
+          } else {
+            showInfo(`获取B站收藏夹失败: ${res.data?.message || "未知错误"}`);
+          }
+        }
+        webviewView.webview.postMessage({
+          command: "BILIBILI_FAVORITE_FOLDERS_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_FAVORITE_DETAIL": {
+        const { mediaId, page = 1, pageSize = 20 } = payload || {};
+        let res = await getFavoriteDetail(mediaId, page, pageSize);
+        if (res.data?.code !== 0) {
+          if (res.data?.code === -101) {
+            const cookie = await window.showInputBox({
+              placeHolder: "请输入B站的cookie",
+              prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+            });
+            if (cookie) {
+              await setConfigByKey("bilibiliCookie", cookie);
+              res = await getFavoriteDetail(mediaId, page, pageSize);
+            }
+          } else {
+            showInfo(
+              `获取B站收藏夹详情失败: ${res.data?.message || "未知错误"}`
+            );
+          }
+        }
+        webviewView.webview.postMessage({
+          command: "BILIBILI_FAVORITE_DETAIL_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

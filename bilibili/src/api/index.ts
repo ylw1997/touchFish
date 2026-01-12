@@ -5,6 +5,9 @@
 import type {
   BilibiliRecommendResponse,
   BilibiliDynamicResponse,
+  BilibiliWatchLaterResponse,
+  BilibiliFavoriteFoldersResponse,
+  BilibiliFavoriteDetailResponse,
 } from "../types/bilibili";
 import type { CommandList } from "../../../types/commands";
 
@@ -36,6 +39,33 @@ export class BilibiliApi {
       "BILIBILI_DYNAMIC",
       { page, offset },
       "请求动态中..."
+    );
+  }
+
+  // 获取待看列表
+  getWatchLater(page: number = 1, pageSize: number = 20) {
+    return this.request<BilibiliWatchLaterResponse>(
+      "BILIBILI_WATCHLATER",
+      { page, pageSize },
+      "请求待看列表中..."
+    );
+  }
+
+  // 获取收藏夹列表
+  getFavoriteFolders() {
+    return this.request<BilibiliFavoriteFoldersResponse>(
+      "BILIBILI_FAVORITE_FOLDERS",
+      null,
+      "请求收藏夹列表中..."
+    );
+  }
+
+  // 获取收藏夹详情（视频列表）
+  getFavoriteDetail(mediaId: number, page: number = 1, pageSize: number = 20) {
+    return this.request<BilibiliFavoriteDetailResponse>(
+      "BILIBILI_FAVORITE_DETAIL",
+      { mediaId, page, pageSize },
+      "请求收藏夹视频中..."
     );
   }
 }
