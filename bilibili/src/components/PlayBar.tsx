@@ -10,6 +10,7 @@ import {
   DownOutlined,
   PauseOutlined,
   CaretRightOutlined,
+  PlayCircleFilled,
 } from "@ant-design/icons";
 import { usePlayerStore } from "../store/player";
 import { useRequest } from "../hooks/useRequest";
@@ -72,11 +73,6 @@ const PlayBar: React.FC = () => {
       }
     }
   }, [isPlaying, videoUrl]);
-
-  // 没有正在播放的视频和播放列表时不显示
-  if (!currentVideo && playlist.length === 0) {
-    return null;
-  }
 
   const handlePlayVideo = async (video: typeof currentVideo) => {
     if (video) {
@@ -192,7 +188,11 @@ const PlayBar: React.FC = () => {
                 alt={currentVideo.title}
                 referrerPolicy="no-referrer"
               />
-            ) : null}
+            ) : (
+              <div className="playbar-video-loading">
+                <PlayCircleFilled style={{ fontSize: 24, opacity: 0.5 }} />
+              </div>
+            )}
             {/* 展开模式下的收起按钮 */}
             {isExpanded && (
               <div className="playbar-collapse-btn">

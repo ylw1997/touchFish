@@ -55,10 +55,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   addToPlaylist: (video) =>
     set((state) => {
       // 避免重复添加
-      if (state.playlist.some((v) => v.id === video.id)) {
+      const isExist = state.playlist.some((v) => v.id === video.id);
+
+      const newPlaylist = isExist ? state.playlist : [...state.playlist, video];
+
+      // 如果当前没有播放视频，则自动播放
+      if (!state.currentVideo) {
+        return {
+          playlist: newPlaylist,
+          currentVideo: video,
+          isPlaying: true,
+          videoUrl: null, // Reset videoUrl to trigger fetch
+        };
+      }
+
+      if (isExist) {
         return state;
       }
-      return { playlist: [...state.playlist, video] };
+
+      return { playlist: newPlaylist };
     }),
 
   removeFromPlaylist: (id) =>

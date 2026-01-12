@@ -11,6 +11,7 @@ import {
   LoadingOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
+import { message } from "antd";
 import type {
   BilibiliListItem,
   BilibiliPlayUrlResponse,
@@ -104,6 +105,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   const handleAddToPlaylist = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToPlaylist(item);
+    message.success("已加入播放列表");
   };
 
   const { is_folder, media_count } = item;
