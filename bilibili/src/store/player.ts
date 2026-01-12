@@ -7,6 +7,8 @@ import type { BilibiliListItem } from "../types/bilibili";
 interface PlayerState {
   // 当前播放的视频
   currentVideo: BilibiliListItem | null;
+  // 视频播放链接
+  videoUrl: string | null;
   // 是否正在播放
   isPlaying: boolean;
   // 播放列表
@@ -16,6 +18,7 @@ interface PlayerState {
 
   // Actions
   setCurrentVideo: (video: BilibiliListItem | null) => void;
+  setVideoUrl: (url: string | null) => void;
   setIsPlaying: (playing: boolean) => void;
   togglePlay: () => void;
   setPlaylist: (list: BilibiliListItem[]) => void;
@@ -29,11 +32,15 @@ interface PlayerState {
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentVideo: null,
+  videoUrl: null,
   isPlaying: false,
   playlist: [],
   isPlaylistOpen: false,
 
-  setCurrentVideo: (video) => set({ currentVideo: video, isPlaying: !!video }),
+  setCurrentVideo: (video) =>
+    set({ currentVideo: video, isPlaying: !!video, videoUrl: null }),
+
+  setVideoUrl: (url) => set({ videoUrl: url }),
 
   setIsPlaying: (playing) => set({ isPlaying: playing }),
 

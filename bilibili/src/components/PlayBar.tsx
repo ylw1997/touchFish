@@ -1,39 +1,97 @@
 /*
  * @Description: 悬浮播放条组件
  */
-import React from "react";
+import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import {
   PlayCircleFilled,
   PauseCircleFilled,
   MenuOutlined,
   CloseOutlined,
   DeleteOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import { usePlayerStore } from "../store/player";
+import { useRequest } from "../hooks/useRequest";
+import { BilibiliApi } from "../api";
 
 const PlayBar: React.FC = () => {
   const {
     currentVideo,
+    videoUrl,
     isPlaying,
     playlist,
     isPlaylistOpen,
     togglePlay,
     togglePlaylistOpen,
     setCurrentVideo,
+    setVideoUrl,
+    setIsPlaying,
     removeFromPlaylist,
     clearPlaylist,
   } = usePlayerStore();
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const { request } = useRequest();
+  const apiClient = useMemo(() => new BilibiliApi(request), [request]);
+
+  // 获取视频播放链接
+  const fetchPlayUrl = useCallback(
+    async (bvid: string, cid: number) => {
+      setIsLoading(true);
+      try {
+        const result = await apiClient.getPlayUrl(bvid, cid);
+        if (result.code === 0 && result.data?.durl?.[0]?.url) {
+          setVideoUrl(result.data.durl[0].url);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [apiClient, setVideoUrl]
+  );
+
+  // 当currentVideo变化时，获取播放链接
+  useEffect(() => {
+    if (currentVideo && !videoUrl) {
+      fetchPlayUrl(currentVideo.bvid, currentVideo.cid);
+    }
+  }, [currentVideo, videoUrl, fetchPlayUrl]);
+
+  // 同步播放状态与video元素
+  useEffect(() => {
+    if (videoRef.current && videoUrl) {
+      if (isPlaying) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying, videoUrl]);
 
   // 没有正在播放的视频和播放列表时不显示
   if (!currentVideo && playlist.length === 0) {
     return null;
   }
 
-  const handlePlayVideo = (video: typeof currentVideo) => {
+  const handlePlayVideo = async (video: typeof currentVideo) => {
     if (video) {
       setCurrentVideo(video);
-      window.open(video.uri, "_blank");
     }
+  };
+
+  const handlePlayPause = () => {
+    if (currentVideo) {
+      if (!videoUrl && !isLoading) {
+        fetchPlayUrl(currentVideo.bvid, currentVideo.cid);
+      }
+      togglePlay();
+    }
+  };
+
+  const handleVideoEnded = () => {
+    setIsPlaying(false);
   };
 
   return (
@@ -100,12 +158,27 @@ const PlayBar: React.FC = () => {
         <div className="playbar-info">
           {currentVideo ? (
             <>
-              <img
-                className={`playbar-cover ${isPlaying ? "playing" : ""}`}
-                src={currentVideo.pic}
-                alt={currentVideo.title}
-                referrerPolicy="no-referrer"
-              />
+              {isLoading ? (
+                <div className="playbar-video-loading">
+                  <LoadingOutlined spin />
+                </div>
+              ) : videoUrl ? (
+                <video
+                  ref={videoRef}
+                  className="playbar-video"
+                  src={videoUrl}
+                  onEnded={handleVideoEnded}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                />
+              ) : (
+                <img
+                  className={`playbar-cover ${isPlaying ? "playing" : ""}`}
+                  src={currentVideo.pic}
+                  alt={currentVideo.title}
+                  referrerPolicy="no-referrer"
+                />
+              )}
               <div className="playbar-text-info">
                 <div className="playbar-title" title={currentVideo.title}>
                   {currentVideo.title}
@@ -122,18 +195,17 @@ const PlayBar: React.FC = () => {
 
         <div className="playbar-controls">
           <span
-            onClick={() => {
-              if (currentVideo) {
-                togglePlay();
-                if (!isPlaying) {
-                  window.open(currentVideo.uri, "_blank");
-                }
-              }
-            }}
+            onClick={handlePlayPause}
             className="playbar-play-btn"
             title={isPlaying ? "暂停" : "播放"}
           >
-            {isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
+            {isLoading ? (
+              <LoadingOutlined spin />
+            ) : isPlaying ? (
+              <PauseCircleFilled />
+            ) : (
+              <PlayCircleFilled />
+            )}
           </span>
         </div>
 
