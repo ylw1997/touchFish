@@ -249,3 +249,32 @@ export interface BilibiliFavoriteDetailResponse {
     has_more: boolean;
   };
 }
+
+// ============== 视频播放链接 API 类型 ==============
+
+// 视频播放链接响应
+export interface BilibiliPlayUrlResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    from: string;
+    result: string;
+    quality: number;
+    format: string;
+    timelength: number;
+    durl: {
+      order: number;
+      length: number;
+      size: number;
+      url: string;
+      backup_url: string[] | null;
+    }[];
+    support_formats: {
+      quality: number;
+      format: string;
+      new_description: string;
+      display_desc: string;
+    }[];
+  } | null;
+}

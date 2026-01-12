@@ -285,6 +285,15 @@ const useBilibiliAction = () => {
     [apiClient, messageApi]
   );
 
+  // 获取视频播放链接
+  const getPlayUrl = useCallback(
+    async (bvid: string, cid: number) => {
+      const result = await apiClient.getPlayUrl(bvid, cid);
+      return result;
+    },
+    [apiClient]
+  );
+
   return {
     getListData,
     isFetching,
@@ -298,6 +307,7 @@ const useBilibiliAction = () => {
     getFavoriteFolders,
     getFavoriteDetail,
     addToWatchLater,
+    getPlayUrl,
   };
 };
 

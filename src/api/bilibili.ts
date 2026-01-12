@@ -213,3 +213,26 @@ export const addToWatchLater = async (bvid: string) => {
     };
   }
 };
+
+/**
+ * 获取视频播放链接
+ * https://api.bilibili.com/x/player/wbi/playurl
+ */
+export const getPlayUrl = async (bvid: string, cid: number) => {
+  try {
+    const url = `https://api.bilibili.com/x/player/wbi/playurl?bvid=${bvid}&cid=${cid}&qn=112&platform=html5&high_quality=1`;
+    console.log("获取视频播放链接", url);
+    return await axios.get(url, {
+      headers: await getBilibiliHeaders(),
+    });
+  } catch (error: any) {
+    showError(`获取视频播放链接失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: null,
+      },
+    };
+  }
+};

@@ -8,6 +8,7 @@ import type {
   BilibiliWatchLaterResponse,
   BilibiliFavoriteFoldersResponse,
   BilibiliFavoriteDetailResponse,
+  BilibiliPlayUrlResponse,
 } from "../types/bilibili";
 import type { CommandList } from "../../../types/commands";
 
@@ -75,6 +76,15 @@ export class BilibiliApi {
       "BILIBILI_ADD_TO_WATCHLATER",
       { bvid },
       "加入待看中..."
+    );
+  }
+
+  // 获取视频播放链接
+  getPlayUrl(bvid: string, cid: number) {
+    return this.request<BilibiliPlayUrlResponse>(
+      "BILIBILI_PLAYURL",
+      { bvid, cid },
+      "获取播放链接中..."
     );
   }
 }

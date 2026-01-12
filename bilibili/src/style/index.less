@@ -222,6 +222,43 @@ a {
       font-size: 12px;
       font-weight: 500;
     }
+
+    // 视频播放器容器
+    .video-player-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+
+      .video-player {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .video-close-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #fb7299;
+          transform: scale(1.1);
+        }
+      }
+    }
   }
 
   // 标题

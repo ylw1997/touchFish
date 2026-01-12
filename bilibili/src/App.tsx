@@ -53,6 +53,7 @@ function App() {
     getFavoriteFolders,
     getFavoriteDetail,
     addToWatchLater,
+    getPlayUrl,
   } = useBilibiliAction();
 
   // 收藏夹 Tab 逻辑 Hook
@@ -164,6 +165,7 @@ function App() {
                     onAddToWatchLater={
                       activeKey !== "watchlater" ? addToWatchLater : undefined
                     }
+                    onGetPlayUrl={getPlayUrl}
                     showImg={showImg}
                   />
                 </motion.div>
