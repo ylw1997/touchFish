@@ -15,6 +15,8 @@ interface PlayerState {
   playlist: BilibiliListItem[];
   // 播放列表是否展开
   isPlaylistOpen: boolean;
+  // 播放条是否展开
+  isExpanded: boolean;
 
   // Actions
   setCurrentVideo: (video: BilibiliListItem | null) => void;
@@ -26,6 +28,7 @@ interface PlayerState {
   removeFromPlaylist: (id: number) => void;
   clearPlaylist: () => void;
   togglePlaylistOpen: () => void;
+  toggleExpand: () => void;
   playNext: () => void;
   playPrev: () => void;
 }
@@ -36,6 +39,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isPlaying: false,
   playlist: [],
   isPlaylistOpen: false,
+  isExpanded: false,
 
   setCurrentVideo: (video) =>
     set({ currentVideo: video, isPlaying: !!video, videoUrl: null }),
@@ -63,11 +67,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     })),
 
   clearPlaylist: () =>
-    set({ playlist: [], currentVideo: null, isPlaying: false }),
+    set({
+      playlist: [],
+      currentVideo: null,
+      isPlaying: false,
+      isExpanded: false,
+    }),
 
   togglePlaylistOpen: () =>
     set((state) => ({
       isPlaylistOpen: !state.isPlaylistOpen,
+    })),
+
+  toggleExpand: () =>
+    set((state) => ({
+      isExpanded: !state.isExpanded,
     })),
 
   playNext: () => {

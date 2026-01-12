@@ -3,12 +3,13 @@
  */
 import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import {
-  PlayCircleFilled,
-  PauseCircleFilled,
-  MenuOutlined,
+  UnorderedListOutlined,
   CloseOutlined,
   DeleteOutlined,
   LoadingOutlined,
+  DownOutlined,
+  PauseOutlined,
+  CaretRightOutlined,
 } from "@ant-design/icons";
 import { usePlayerStore } from "../store/player";
 import { useRequest } from "../hooks/useRequest";
@@ -21,8 +22,10 @@ const PlayBar: React.FC = () => {
     isPlaying,
     playlist,
     isPlaylistOpen,
+    isExpanded,
     togglePlay,
     togglePlaylistOpen,
+    toggleExpand,
     setCurrentVideo,
     setVideoUrl,
     setIsPlaying,
@@ -94,11 +97,21 @@ const PlayBar: React.FC = () => {
     setIsPlaying(false);
   };
 
+  const handleExpandClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (currentVideo) {
+      toggleExpand();
+    }
+  };
+
   return (
     <>
       {/* 播放列表弹出层 */}
       {isPlaylistOpen && (
-        <div className="playbar-playlist">
+        <div
+          className="playbar-playlist"
+          style={{ bottom: isExpanded ? 280 : 76 }}
+        >
           <div className="playbar-playlist-header">
             <span className="playbar-playlist-title">
               播放列表 ({playlist.length})
@@ -154,31 +167,42 @@ const PlayBar: React.FC = () => {
       )}
 
       {/* 底部播放条 */}
-      <div className="playbar">
-        <div className="playbar-info">
-          {currentVideo ? (
-            <>
-              {isLoading ? (
-                <div className="playbar-video-loading">
-                  <LoadingOutlined spin />
-                </div>
-              ) : videoUrl ? (
-                <video
-                  ref={videoRef}
-                  className="playbar-video"
-                  src={videoUrl}
-                  onEnded={handleVideoEnded}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                />
-              ) : (
-                <img
-                  className={`playbar-cover ${isPlaying ? "playing" : ""}`}
-                  src={currentVideo.pic}
-                  alt={currentVideo.title}
-                  referrerPolicy="no-referrer"
-                />
-              )}
+      <div className={`playbar ${isExpanded ? "playbar-expanded" : ""}`}>
+        {/* 底部控制区域 */}
+        <div className="playbar-bottom">
+          {/* 单一视频容器 - 收起时在左侧，展开时在上方 */}
+          <div className="playbar-video-wrapper" onClick={handleExpandClick}>
+            {isLoading ? (
+              <div className="playbar-video-loading">
+                <LoadingOutlined spin />
+              </div>
+            ) : videoUrl ? (
+              <video
+                ref={videoRef}
+                className="playbar-video"
+                src={videoUrl}
+                onEnded={handleVideoEnded}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+            ) : currentVideo ? (
+              <img
+                className="playbar-video"
+                src={currentVideo.pic}
+                alt={currentVideo.title}
+                referrerPolicy="no-referrer"
+              />
+            ) : null}
+            {/* 展开模式下的收起按钮 */}
+            {isExpanded && (
+              <div className="playbar-collapse-btn">
+                <DownOutlined />
+              </div>
+            )}
+          </div>
+
+          <div className="playbar-info" onClick={handleExpandClick}>
+            {currentVideo ? (
               <div className="playbar-text-info">
                 <div className="playbar-title" title={currentVideo.title}>
                   {currentVideo.title}
@@ -187,36 +211,36 @@ const PlayBar: React.FC = () => {
                   {currentVideo.owner.name}
                 </div>
               </div>
-            </>
-          ) : (
-            <div className="playbar-title">暂无播放</div>
-          )}
-        </div>
-
-        <div className="playbar-controls">
-          <span
-            onClick={handlePlayPause}
-            className="playbar-play-btn"
-            title={isPlaying ? "暂停" : "播放"}
-          >
-            {isLoading ? (
-              <LoadingOutlined spin />
-            ) : isPlaying ? (
-              <PauseCircleFilled />
             ) : (
-              <PlayCircleFilled />
+              <div className="playbar-title">暂无播放</div>
             )}
-          </span>
-        </div>
+          </div>
 
-        <div className="playbar-actions">
-          <span
-            onClick={togglePlaylistOpen}
-            className={isPlaylistOpen ? "active" : ""}
-            title="播放列表"
-          >
-            <MenuOutlined />
-          </span>
+          <div className="playbar-controls">
+            <span
+              onClick={handlePlayPause}
+              className="playbar-play-btn"
+              title={isPlaying ? "暂停" : "播放"}
+            >
+              {isLoading ? (
+                <LoadingOutlined spin />
+              ) : isPlaying ? (
+                <PauseOutlined />
+              ) : (
+                <CaretRightOutlined />
+              )}
+            </span>
+          </div>
+
+          <div className="playbar-actions">
+            <span
+              onClick={togglePlaylistOpen}
+              className={`playbar-list-btn ${isPlaylistOpen ? "active" : ""}`}
+              title="播放列表"
+            >
+              <UnorderedListOutlined />
+            </span>
+          </div>
         </div>
       </div>
     </>
