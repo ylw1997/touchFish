@@ -7,7 +7,6 @@ import {
   CloseOutlined,
   DeleteOutlined,
   LoadingOutlined,
-  DownOutlined,
   PauseOutlined,
   CaretRightOutlined,
   PlayCircleFilled,
