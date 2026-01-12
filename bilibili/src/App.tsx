@@ -14,7 +14,9 @@ import {
   PlusOutlined,
   MinusOutlined,
   AppstoreOutlined,
+  PlaySquareOutlined,
 } from "@ant-design/icons";
+import { message } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
@@ -23,6 +25,7 @@ import VideoCard from "./components/VideoCard";
 import { loaderFunc } from "./utils/loader";
 import { defTab, TabItem } from "./data/tabs";
 import useBilibiliAction from "./hooks/useBilibiliAction";
+import { usePlayerStore } from "./store/player";
 import { useFavoriteTabs } from "./hooks/useFavoriteTabs";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
@@ -55,6 +58,8 @@ function App() {
     addToWatchLater,
     getPlayUrl,
   } = useBilibiliAction();
+
+  const { addListToPlaylist } = usePlayerStore();
 
   // 收藏夹 Tab 逻辑 Hook
   const {
@@ -235,6 +240,20 @@ function App() {
           tooltip={{ title: "减小字体", placement: "left" }}
         />
       </FloatButton.Group>
+
+      {/* 播放待看列表前10条 */}
+      {activeKey === "watchlater" && list.length > 0 && (
+        <FloatButton
+          style={{ insetInlineEnd: 24, bottom: 268 }}
+          onClick={() => {
+            const top10 = list.slice(0, 10);
+            addListToPlaylist(top10);
+            message.success(`已将前${top10.length}条加入播放列表`);
+          }}
+          icon={<PlaySquareOutlined style={{ color: "#fb7299" }} />}
+          tooltip={{ title: "播放前10条", placement: "left" }}
+        />
+      )}
 
       {/* 悬浮播放条 */}
       <PlayBar />
