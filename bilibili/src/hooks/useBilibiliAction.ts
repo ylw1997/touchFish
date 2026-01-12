@@ -294,6 +294,24 @@ const useBilibiliAction = () => {
     [apiClient]
   );
 
+  // 移除稍后再看
+  const delFromWatchLater = useCallback(
+    async (avid: string) => {
+      const result = await apiClient.delWatchLater(avid);
+      if (result.code === 0) {
+        messageApi.success("已移除");
+        // 从列表中移除
+        setList((currentList) =>
+          currentList.filter((item) => item.id.toString() !== avid)
+        );
+      } else {
+        messageApi.error(result.message || "移除失败");
+      }
+      return result;
+    },
+    [apiClient, messageApi]
+  );
+
   return {
     getListData,
     isFetching,
@@ -308,6 +326,7 @@ const useBilibiliAction = () => {
     getFavoriteDetail,
     addToWatchLater,
     getPlayUrl,
+    delFromWatchLater,
   };
 };
 

@@ -278,3 +278,10 @@ export interface BilibiliPlayUrlResponse {
     }[];
   } | null;
 }
+
+// 移除待看响应
+export interface BilibiliWatchLaterDelResponse {
+  code: number;
+  message: string;
+  ttl: number;
+}

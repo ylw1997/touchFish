@@ -10,6 +10,8 @@ import {
   getFavoriteDetail,
   addToWatchLater,
   getPlayUrl,
+  delWatchLater,
+  getBilibiliHeaders,
 } from "../api/bilibili";
 import { CommandsType } from "../../types/commands";
 import { setConfigByKey } from "../core/config";
@@ -173,6 +175,21 @@ export class BilibiliProvider extends BaseWebviewProvider {
         const res = await getPlayUrl(bvid, cid);
         webviewView.webview.postMessage({
           command: "BILIBILI_PLAYURL_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_WATCHLATER_DEL": {
+        const { avid } = payload || {};
+        // 从headers中获取cookie，再解析csrf
+        const headers = await getBilibiliHeaders();
+        const cookie = headers["Cookie"] || "";
+        const csrf = cookie.match(/bili_jct=([^;]+)/)?.[1] || "";
+
+        const res = await delWatchLater(avid, csrf);
+        webviewView.webview.postMessage({
+          command: "BILIBILI_WATCHLATER_DEL_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

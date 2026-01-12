@@ -9,6 +9,7 @@ import type {
   BilibiliFavoriteFoldersResponse,
   BilibiliFavoriteDetailResponse,
   BilibiliPlayUrlResponse,
+  BilibiliWatchLaterDelResponse,
 } from "../types/bilibili";
 import type { CommandList } from "../../../types/commands";
 
@@ -85,6 +86,15 @@ export class BilibiliApi {
       "BILIBILI_PLAYURL",
       { bvid, cid },
       "获取播放链接中..."
+    );
+  }
+
+  // 移除稍后再看
+  delWatchLater(avid: string) {
+    return this.request<BilibiliWatchLaterDelResponse>(
+      "BILIBILI_WATCHLATER_DEL",
+      { avid },
+      "移除待看中..."
     );
   }
 }

@@ -10,6 +10,7 @@ import {
   PlusCircleOutlined,
   LoadingOutlined,
   CloseCircleOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { App } from "antd";
 import type {
@@ -23,6 +24,7 @@ export interface VideoCardProps {
   item: BilibiliListItem;
   onCopyLink?: (url: string) => void;
   onAddToWatchLater?: (bvid: string) => void;
+  onDeleteFromWatchLater?: (avid: string) => void;
   onGetPlayUrl?: (
     bvid: string,
     cid: number
@@ -56,6 +58,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   item,
   showImg = true,
   onAddToWatchLater,
+  onDeleteFromWatchLater,
   onGetPlayUrl,
 }) => {
   const { message } = App.useApp();
@@ -109,6 +112,13 @@ const VideoCard: React.FC<VideoCardProps> = ({
     message.success("已加入播放列表");
   };
 
+  const handleDeleteFromWatchLater = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDeleteFromWatchLater && item.id) {
+      onDeleteFromWatchLater(item.id.toString());
+    }
+  };
+
   const { is_folder, media_count } = item;
 
   return (
@@ -152,9 +162,21 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 {isLoading ? <LoadingOutlined spin /> : <PlayCircleFilled />}
               </div>
             )}
+
             {/* 操作按钮区域 - hover 时显示 */}
             {!is_folder && (
               <div className="video-hover-actions">
+                {/* 待看列表的删除按钮 */}
+                {onDeleteFromWatchLater && (
+                  <div
+                    className="video-action-btn"
+                    onClick={handleDeleteFromWatchLater}
+                    title="移除待看"
+                  >
+                    <DeleteOutlined />
+                  </div>
+                )}
+
                 {/* 加入待看按钮 */}
                 {item.bvid && onAddToWatchLater && (
                   <div

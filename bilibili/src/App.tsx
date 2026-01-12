@@ -56,6 +56,7 @@ function App() {
     getFavoriteFolders,
     getFavoriteDetail,
     addToWatchLater,
+    delFromWatchLater,
     getPlayUrl,
   } = useBilibiliAction();
 
@@ -169,6 +170,9 @@ function App() {
                     onCopyLink={copyLink}
                     onAddToWatchLater={
                       activeKey !== "watchlater" ? addToWatchLater : undefined
+                    }
+                    onDeleteFromWatchLater={
+                      activeKey === "watchlater" ? delFromWatchLater : undefined
                     }
                     onGetPlayUrl={getPlayUrl}
                     showImg={showImg}

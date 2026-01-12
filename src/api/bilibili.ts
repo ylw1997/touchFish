@@ -11,7 +11,7 @@ export const getOrSetBilibiliCookie = async () => {
   return await getOrSetCookie("bilibiliCookie", "请输入B站的cookie");
 };
 
-const getBilibiliHeaders = async (extraHeaders = {}) => {
+export const getBilibiliHeaders = async (extraHeaders = {}) => {
   const cookie = (await getOrSetBilibiliCookie()) as string;
   return buildCommonHeaders(cookie, {
     Referer: "https://www.bilibili.com/",
@@ -232,6 +232,33 @@ export const getPlayUrl = async (bvid: string, cid: number) => {
         code: -1,
         message: error.message,
         data: null,
+      },
+    };
+  }
+};
+
+/**
+ * 移除稍后再看
+ * https://api.bilibili.com/x/v2/history/toview/del
+ */
+export const delWatchLater = async (avid: string, csrf: string) => {
+  try {
+    return await axios.post(
+      "https://api.bilibili.com/x/v2/history/toview/del",
+      `view_only=1&csrf=${csrf}&aid=${avid}`,
+      {
+        headers: {
+          ...(await getBilibiliHeaders()),
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+  } catch (error: any) {
+    showError(`移除待看失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
       },
     };
   }
