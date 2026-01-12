@@ -11,7 +11,7 @@ import {
   LoadingOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
-import { message } from "antd";
+import { App } from "antd";
 import type {
   BilibiliListItem,
   BilibiliPlayUrlResponse,
@@ -58,6 +58,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   onAddToWatchLater,
   onGetPlayUrl,
 }) => {
+  const { message } = App.useApp();
   const { addToPlaylist } = usePlayerStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);

@@ -332,7 +332,7 @@ a {
   bottom: 12px;
   left: calc(50% - 7px);
   transform: translateX(-50%);
-  width: calc(100% - 35px);
+  width: calc(100% - 20px);
   max-width: 600px;
   .backdrop-style();
   border: 1px solid var(--vscode-chat-requestBorder);
@@ -343,6 +343,7 @@ a {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   transition: all 0.3s ease;
+  user-select: none;
 
   // 单一视频容器 - 收起时在底部row中，展开时在顶部
   .playbar-video-wrapper {
@@ -356,6 +357,7 @@ a {
     overflow: hidden;
     position: relative;
     order: -1; // 在flex row中排在最前
+    margin-left: 5px;
 
     .playbar-video {
       width: 100%;
@@ -384,11 +386,13 @@ a {
     border-radius: 16px;
 
     .playbar-video-wrapper {
-      width: 100%;
+      width: calc(100% + 20px);
       height: auto;
       aspect-ratio: 16 / 9;
-      border-radius: 0;
+      border-radius: 12px;
       order: 0; // 恢复正常顺序
+      margin: -10px;
+      margin-bottom: 0px;
 
       .playbar-video {
         object-fit: contain;
@@ -435,7 +439,7 @@ a {
   .playbar-bottom {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: 8px;
     gap: 10px;
   }
 
