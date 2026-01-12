@@ -27,6 +27,7 @@ import { useFavoriteTabs } from "./hooks/useFavoriteTabs";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
 import { debounce } from "./utils";
+import PlayBar from "./components/PlayBar";
 
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
@@ -160,7 +161,9 @@ function App() {
                   <VideoCard
                     item={item}
                     onCopyLink={copyLink}
-                    onAddToWatchLater={addToWatchLater}
+                    onAddToWatchLater={
+                      activeKey !== "watchlater" ? addToWatchLater : undefined
+                    }
                     showImg={showImg}
                   />
                 </motion.div>
@@ -173,7 +176,7 @@ function App() {
       {/* 回到顶部 */}
       <FloatButton.BackTop
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 24 }}
+        style={{ insetInlineEnd: 24, bottom: 88 }}
         visibilityHeight={500}
         duration={1000}
         icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
@@ -184,7 +187,7 @@ function App() {
       {/* 刷新 */}
       <FloatButton
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 84 }}
+        style={{ insetInlineEnd: 24, bottom: 148 }}
         onClick={refreshData}
         icon={<RedoOutlined style={{ color: "#fb7299" }} />}
         tooltip={{ title: "刷新", placement: "left" }}
@@ -194,7 +197,7 @@ function App() {
       <FloatButton.Group
         shape="circle"
         trigger="click"
-        style={{ insetInlineEnd: 24, bottom: 144 }}
+        style={{ insetInlineEnd: 24, bottom: 208 }}
         icon={<AppstoreOutlined style={{ color: "#00a1d6" }} />}
         tooltip={{ title: "更多", placement: "left" }}
       >
@@ -230,6 +233,9 @@ function App() {
           tooltip={{ title: "减小字体", placement: "left" }}
         />
       </FloatButton.Group>
+
+      {/* 悬浮播放条 */}
+      <PlayBar />
     </>
   );
 }

@@ -7,8 +7,10 @@ import {
   PlayCircleFilled,
   MessageOutlined,
   ClockCircleOutlined,
+  PlusCircleOutlined,
 } from "@ant-design/icons";
 import type { BilibiliListItem } from "../types/bilibili";
+import { usePlayerStore } from "../store/player";
 import dayjs from "dayjs";
 
 export interface VideoCardProps {
@@ -44,6 +46,8 @@ const VideoCard: React.FC<VideoCardProps> = ({
   showImg = true,
   onAddToWatchLater,
 }) => {
+  const { addToPlaylist } = usePlayerStore();
+
   const handleOpenVideo = () => {
     window.open(item.uri, "_blank");
   };
@@ -53,6 +57,11 @@ const VideoCard: React.FC<VideoCardProps> = ({
     if (onAddToWatchLater && item.bvid) {
       onAddToWatchLater(item.bvid);
     }
+  };
+
+  const handleAddToPlaylist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToPlaylist(item);
   };
 
   const { is_folder, media_count } = item;
@@ -77,14 +86,27 @@ const VideoCard: React.FC<VideoCardProps> = ({
             <PlayCircleFilled />
           </div>
         )}
-        {/* 加入待看按钮 - hover 时显示 */}
-        {!is_folder && item.bvid && (
-          <div
-            className="video-add-watchlater"
-            onClick={handleAddToWatchLater}
-            title="稍后再看"
-          >
-            <ClockCircleOutlined />
+        {/* 操作按钮区域 - hover 时显示 */}
+        {!is_folder && (
+          <div className="video-hover-actions">
+            {/* 加入待看按钮 */}
+            {item.bvid && onAddToWatchLater && (
+              <div
+                className="video-action-btn"
+                onClick={handleAddToWatchLater}
+                title="稍后再看"
+              >
+                <ClockCircleOutlined />
+              </div>
+            )}
+            {/* 加入播放列表按钮 */}
+            <div
+              className="video-action-btn"
+              onClick={handleAddToPlaylist}
+              title="加入播放列表"
+            >
+              <PlusCircleOutlined />
+            </div>
           </div>
         )}
         {/* 封面左下角：播放量/视频数 */}

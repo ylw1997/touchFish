@@ -130,9 +130,6 @@ a {
       .video-play-icon {
         opacity: 1;
       }
-      .video-add-watchlater {
-        opacity: 1;
-      }
     }
 
     // 中间播放图标
@@ -149,28 +146,37 @@ a {
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     }
 
-    // 右上角加入待看按钮
-    .video-add-watchlater {
+    // 右上角操作按钮区域
+    .video-hover-actions {
       position: absolute;
       top: 8px;
       right: 8px;
-      width: 32px;
-      height: 32px;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 50%;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
+      gap: 6px;
       opacity: 0;
-      transition: all 0.2s ease;
+      transition: opacity 0.2s ease;
 
-      &:hover {
-        background: #00a1d6;
-        transform: scale(1.1);
+      .video-action-btn {
+        width: 28px;
+        height: 28px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #00a1d6;
+        }
       }
+    }
+
+    &:hover .video-hover-actions {
+      opacity: 1;
     }
 
     // 左下角播放量和弹幕
@@ -278,5 +284,233 @@ a {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 16px;
+  }
+}
+
+/* ==========================================================================
+   6. 悬浮播放条
+   ========================================================================== */
+
+.playbar {
+  position: fixed;
+  bottom: 12px;
+  left: calc(50% - 7px);
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 600px;
+  height: 52px;
+  .backdrop-style();
+  border: 1px solid var(--vscode-chat-requestBorder);
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 10px;
+  z-index: 100;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+  .playbar-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    cursor: pointer;
+
+    .playbar-cover {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      animation: rotate 10s linear infinite;
+      animation-play-state: paused;
+
+      &.playing {
+        animation-play-state: running;
+      }
+    }
+
+    .playbar-title {
+      flex: 1;
+      font-size: 13px;
+      color: var(--vscode-foreground);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+  }
+
+  .playbar-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .playbar-play-btn {
+      font-size: 32px;
+      color: #00a1d6;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+
+      &:hover {
+        color: #fb7299;
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  .playbar-actions {
+    display: flex;
+    align-items: center;
+
+    span {
+      cursor: pointer;
+      color: var(--vscode-descriptionForeground);
+      font-size: 20px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s ease;
+      padding-right: 5px;
+
+      &:hover,
+      &.active {
+        color: #00a1d6;
+      }
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.playbar-playlist {
+  position: fixed;
+  bottom: 76px;
+  right: 12px;
+  width: 320px;
+  max-height: 400px;
+  background: color-mix(
+    in srgb,
+    var(--vscode-editor-background) 95%,
+    transparent
+  );
+  backdrop-filter: saturate(180%) blur(15px);
+  border: 1px solid var(--vscode-chat-requestBorder);
+  border-radius: 12px;
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+
+  .playbar-playlist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--vscode-chat-requestBorder);
+
+    .playbar-playlist-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--vscode-foreground);
+    }
+
+    .playbar-playlist-actions {
+      display: flex;
+      gap: 12px;
+
+      span {
+        cursor: pointer;
+        color: var(--vscode-descriptionForeground);
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: #fb7299;
+        }
+      }
+    }
+  }
+
+  .playbar-playlist-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+
+    .playbar-playlist-empty {
+      text-align: center;
+      padding: 24px;
+      color: var(--vscode-descriptionForeground);
+      font-size: 13px;
+    }
+
+    .playbar-playlist-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: var(--vscode-list-hoverBackground);
+      }
+
+      &.active {
+        background: color-mix(in srgb, #00a1d6 20%, transparent);
+      }
+
+      img {
+        width: 48px;
+        height: 32px;
+        border-radius: 4px;
+        object-fit: cover;
+      }
+
+      .playbar-playlist-item-info {
+        flex: 1;
+        min-width: 0;
+
+        .playbar-playlist-item-title {
+          font-size: 13px;
+          color: var(--vscode-foreground);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .playbar-playlist-item-author {
+          font-size: 11px;
+          color: var(--vscode-descriptionForeground);
+          margin-top: 2px;
+        }
+      }
+
+      .playbar-playlist-item-remove {
+        opacity: 0;
+        color: var(--vscode-descriptionForeground);
+        transition: all 0.2s ease;
+
+        &:hover {
+          color: #fb7299;
+        }
+      }
+
+      &:hover .playbar-playlist-item-remove {
+        opacity: 1;
+      }
+    }
   }
 }
