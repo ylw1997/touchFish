@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [11.2.0](https://github.com/ylw1997/touchFish/compare/v11.1.0...v11.2.0) (2026-01-13)
+
+
+### ✨ Features | 新功能
+
+* 修复打包错误问题 ([0be6a0b](https://github.com/0be6a0b0edd228d6cf8c0292302911ee5abd992b))
+* 优化打包内容 ([3632c64](https://github.com/3632c64f865d2a4fba17d8266d746acdc1a1dbcb))
+
 ## [11.1.0](https://github.com/ylw1997/touchFish/compare/v10.9.0...v11.1.0) (2026-01-13)
 
 
