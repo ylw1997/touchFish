@@ -146,7 +146,11 @@ const VideoCard: React.FC<VideoCardProps> = ({
           // 视频播放器
           <div className="video-player-container">
             <div className="video-player" onClick={(e) => e.stopPropagation()}>
-              <ArtPlayerComponent url={videoUrl} danmakuData={danmakuData} />
+              <ArtPlayerComponent
+                key={videoUrl}
+                url={videoUrl}
+                danmakuData={danmakuData}
+              />
             </div>
             <div className="video-close-btn" onClick={handleCloseVideo}>
               <CloseCircleOutlined />

@@ -70,11 +70,23 @@ const PlayBar: React.FC = () => {
     [apiClient, setVideoUrl]
   );
 
-  // 当currentVideo变化时，获取播放链接
+  // 当currentVideo变化时，获取播放链接，并清理旧播放器
   useEffect(() => {
     if (currentVideo && !videoUrl) {
       fetchPlayUrl(currentVideo.bvid, currentVideo.cid);
     }
+    return () => {
+      // 强制销毁旧播放器实例
+      if (videoRef.current && videoRef.current.destroy) {
+        try {
+          videoRef.current.pause();
+          videoRef.current.destroy(true);
+        } catch {
+          // ignore
+        }
+        videoRef.current = null;
+      }
+    };
   }, [currentVideo, videoUrl, fetchPlayUrl]);
 
   // 同步播放状态与video元素
@@ -250,6 +262,7 @@ const PlayBar: React.FC = () => {
                 style={{ width: "100%", height: "100%" }}
               >
                 <ArtPlayerComponent
+                  key={videoUrl}
                   url={videoUrl}
                   danmakuData={danmakuData}
                   getInstance={handleArtInstance}

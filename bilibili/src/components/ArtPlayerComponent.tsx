@@ -32,7 +32,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
 
     // 如果实例已存在，先销毁
     if (playerRef.current) {
-      playerRef.current.destroy(false);
+      playerRef.current.destroy(true);
     }
 
     // 创建 Blob URL 用于弹幕
@@ -115,7 +115,12 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
         URL.revokeObjectURL(danmakuUrl);
       }
       if (playerRef.current && playerRef.current.destroy) {
-        playerRef.current.destroy(false);
+        try {
+          playerRef.current.pause();
+        } catch {
+          // ignore
+        }
+        playerRef.current.destroy(true);
         playerRef.current = null;
       }
     };
