@@ -26,106 +26,110 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   const artRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Artplayer | null>(null);
 
-  // 初始化 Artplayer - 只在 url 或 danmakuData 变化时重新初始化
+  // 初始化 Artplayer
   useEffect(() => {
-    if (!artRef.current || !url) return;
+    if (!artRef.current) return;
 
-    // 如果实例已存在，先销毁
-    if (playerRef.current) {
-      playerRef.current.destroy(true);
-    }
+    let instance = playerRef.current;
 
-    // 创建 Blob URL 用于弹幕
-    let danmakuUrl = "";
-    if (danmakuData) {
-      const blob = new Blob([danmakuData], { type: "text/xml" });
-      danmakuUrl = URL.createObjectURL(blob);
-    }
+    if (!instance) {
+      // 首次初始化
+      instance = new Artplayer({
+        container: artRef.current,
+        url: url,
+        volume: 0.5,
+        isLive: false,
+        muted: false,
+        autoplay: true,
+        autoSize: true,
+        autoMini: true,
+        screenshot: false,
+        setting: false,
+        pip: true,
+        fullscreen: false,
+        fullscreenWeb: false,
+        loop: false,
+        subtitleOffset: true,
+        miniProgressBar: true,
+        mutex: true,
+        backdrop: true,
+        playsInline: true,
+        autoPlayback: true,
+        airplay: true,
+        theme: "#23ade5",
+        plugins: [
+          artplayerPluginDanmuku({
+            danmuku: [], // 初始为空，稍后更新
+            speed: 10,
+            opacity: 1,
+            fontSize: 16,
+            color: "#FFFFFF",
+            mode: 0,
+            emitter: false,
+            margin: [10, "75%"],
+            antiOverlap: true,
+            synchronousPlayback: false,
+            filter: (danmu) => danmu.text.length <= 100,
+            lockTime: 5,
+            maxLength: 100,
+            theme: "light",
+            beforeEmit: () => {
+              return new Promise((resolve) => {
+                setTimeout(() => {
+                  resolve(true);
+                }, 500);
+              });
+            },
+          }),
+        ],
+      });
 
-    // 初始化 Artplayer
-    const art = new Artplayer({
-      container: artRef.current,
-      url: url,
-      volume: 0.5,
-      isLive: false,
-      muted: false,
-      autoplay: true,
-      autoSize: true,
-      autoMini: true,
-      screenshot: false,
-      setting: false,
-      pip: true,
-      fullscreen: false,
-      fullscreenWeb: false,
-      loop: false,
-      subtitleOffset: true,
-      miniProgressBar: true,
-      mutex: true,
-      backdrop: true,
-      playsInline: true,
-      autoPlayback: true,
-      airplay: true,
-      theme: "#23ade5",
-      plugins: [
-        artplayerPluginDanmuku({
-          danmuku: danmakuUrl,
-          speed: 10,
-          opacity: 1,
-          fontSize: 16,
-          color: "#FFFFFF",
-          mode: 0,
-          emitter: false,
-          margin: [10, "75%"],
-          antiOverlap: true,
-          synchronousPlayback: false,
-          filter: (danmu) => danmu.text.length <= 100,
-          lockTime: 5,
-          maxLength: 100,
-          theme: "light",
-          beforeEmit: (danmu) => {
-            return new Promise((resolve) => {
-              console.log(danmu);
-              setTimeout(() => {
-                resolve(true);
-              }, 500);
-            });
-          },
-        }),
-      ],
-    });
+      if (onPlay) instance.on("play", onPlay);
+      if (onPause) instance.on("pause", onPause);
+      if (onEnded) instance.on("video:ended", onEnded);
 
-    if (getInstance) {
-      getInstance(art);
-    }
+      if (getInstance) getInstance(instance);
 
-    if (onPlay) {
-      art.on("play", onPlay);
-    }
-    if (onPause) {
-      art.on("pause", onPause);
-    }
-    if (onEnded) {
-      art.on("video:ended", onEnded);
-    }
-
-    playerRef.current = art;
-
-    return () => {
-      if (danmakuUrl) {
-        URL.revokeObjectURL(danmakuUrl);
+      playerRef.current = instance;
+    } else {
+      // 更新 URL
+      if (url && url !== instance.option.url) {
+        instance.switchUrl(url).then(() => {
+          if (instance && instance.option.autoplay) {
+            instance.play().catch(() => {});
+          }
+        });
       }
-      if (playerRef.current && playerRef.current.destroy) {
-        try {
-          playerRef.current.pause();
-        } catch {
-          // ignore
+    }
+
+    // 弹幕更新逻辑
+    if (danmakuData && instance) {
+      const blob = new Blob([danmakuData], { type: "text/xml" });
+      const danmakuUrl = URL.createObjectURL(blob);
+
+      const danmukuPlugin = (instance.plugins as any).artplayerPluginDanmuku;
+      if (danmukuPlugin && danmukuPlugin.config) {
+        danmukuPlugin.config({ danmuku: danmakuUrl });
+        danmukuPlugin.load();
+      }
+
+      return () => {
+        URL.revokeObjectURL(danmakuUrl);
+      };
+    }
+  }, [url, danmakuData, getInstance, onPlay, onPause, onEnded]);
+
+  // 组件卸载时销毁
+  useEffect(() => {
+    return () => {
+      if (playerRef.current) {
+        if (playerRef.current.destroy) {
+          playerRef.current.destroy(true);
         }
-        playerRef.current.destroy(true);
         playerRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, danmakuData]);
+  }, []);
 
   return (
     <div

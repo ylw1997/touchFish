@@ -46,7 +46,7 @@ export const usePlayerStore = create<PlayerState>()(
       isExpanded: false,
 
       setCurrentVideo: (video) =>
-        set({ currentVideo: video, isPlaying: !!video, videoUrl: null }),
+        set({ currentVideo: video, isPlaying: !!video }), // Keep old videoUrl
 
       setVideoUrl: (url) => set({ videoUrl: url }),
 
@@ -71,7 +71,7 @@ export const usePlayerStore = create<PlayerState>()(
               playlist: newPlaylist,
               currentVideo: video,
               isPlaying: true,
-              videoUrl: null, // Reset videoUrl to trigger fetch
+              // videoUrl: null, // Keep old videoUrl
             };
           }
 
@@ -101,7 +101,7 @@ export const usePlayerStore = create<PlayerState>()(
               playlist: newPlaylist,
               currentVideo: newVideos[0],
               isPlaying: true,
-              videoUrl: null,
+              // videoUrl: null,
             };
           }
 
@@ -139,7 +139,11 @@ export const usePlayerStore = create<PlayerState>()(
           (v) => v.id === currentVideo.id
         );
         if (currentIndex < playlist.length - 1) {
-          set({ currentVideo: playlist[currentIndex + 1], isPlaying: true });
+          set({
+            currentVideo: playlist[currentIndex + 1],
+            isPlaying: true,
+            // videoUrl: null, // Keep old videoUrl
+          });
         }
       },
 
@@ -151,7 +155,11 @@ export const usePlayerStore = create<PlayerState>()(
           (v) => v.id === currentVideo.id
         );
         if (currentIndex > 0) {
-          set({ currentVideo: playlist[currentIndex - 1], isPlaying: true });
+          set({
+            currentVideo: playlist[currentIndex - 1],
+            isPlaying: true,
+            // videoUrl: null, // Keep old videoUrl
+          });
         }
       },
     }),

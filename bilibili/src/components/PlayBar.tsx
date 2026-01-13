@@ -70,40 +70,34 @@ const PlayBar: React.FC = () => {
     [apiClient, setVideoUrl]
   );
 
-  // 当currentVideo变化时，获取播放链接，并清理旧播放器
+  // 记录上一次播放的视频ID，用于检测视频切换
+  const lastVideoIdRef = useRef<number | null>(null);
+
+  // 当currentVideo变化时，获取播放链接
   useEffect(() => {
-    if (currentVideo && !videoUrl) {
+    // 只要有 currentVideo 且 ID 变了，就获取。不管 videoUrl 是否为空
+    if (currentVideo && currentVideo.id !== lastVideoIdRef.current) {
+      lastVideoIdRef.current = currentVideo.id;
+      // 清空旧弹幕，避免显示错误的弹幕
+      setDanmakuData("");
       fetchPlayUrl(currentVideo.bvid, currentVideo.cid);
     }
-    return () => {
-      // 强制销毁旧播放器实例
-      if (videoRef.current && videoRef.current.destroy) {
-        try {
-          videoRef.current.pause();
-          videoRef.current.destroy(true);
-        } catch {
-          // ignore
-        }
-        videoRef.current = null;
-      }
-    };
-  }, [currentVideo, videoUrl, fetchPlayUrl]);
+  }, [currentVideo, fetchPlayUrl]);
 
   // 同步播放状态与video元素
   useEffect(() => {
-    if (videoRef.current && videoUrl) {
+    if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.play().catch(() => {});
       } else {
         videoRef.current.pause();
       }
     }
-  }, [isPlaying, videoUrl]);
+  }, [isPlaying]);
 
   const handlePlayVideo = async (video: typeof currentVideo) => {
     if (video) {
-      // 先清除旧的播放链接和弹幕，确保旧播放器销毁
-      setVideoUrl(null);
+      // 不要 setVideoUrl(null)，保持组件挂载以复用实例
       setDanmakuData("");
       setCurrentVideo(video);
     }
@@ -119,7 +113,6 @@ const PlayBar: React.FC = () => {
   };
 
   const handleVideoEnded = () => {
-    setIsPlaying(false);
     // 自动播放下一个
     playNext();
   };
@@ -132,9 +125,24 @@ const PlayBar: React.FC = () => {
   };
 
   // 使用 useCallback 包裹回调函数，避免 PlayBar 重渲染导致 Artplayer 重复初始化
-  const handleArtInstance = useCallback((art: Artplayer) => {
-    videoRef.current = art;
-  }, []);
+  const handleArtInstance = useCallback(
+    (art: Artplayer) => {
+      videoRef.current = art;
+      // 实例创建时，如果状态是播放，则尝试播放
+      // 使用 getState 直接获取，避免添加依赖导致函数引用变化
+      if (usePlayerStore.getState().isPlaying) {
+        // 尝试立即播放
+        art.play().catch(() => {});
+        // 同时也监听 ready 事件确保播放（防止立即播放失败）
+        art.once("ready", () => {
+          art.play().catch(() => {});
+        });
+        // 强制同步 UI 状态
+        setIsPlaying(true);
+      }
+    },
+    [setIsPlaying]
+  );
 
   const handleArtPlay = useCallback(() => {
     setIsPlaying(true);
@@ -252,34 +260,55 @@ const PlayBar: React.FC = () => {
               }
             }}
           >
-            {isLoading ? (
-              <div className="playbar-video-loading">
-                <LoadingOutlined spin />
-              </div>
-            ) : videoUrl ? (
+            {/* 始终渲染 ArtPlayerComponent，通过 videoUrl 控制内容 */}
+            {currentVideo ? (
               <div
                 className="playbar-video"
-                style={{ width: "100%", height: "100%" }}
+                style={{ width: "100%", height: "100%", position: "relative" }}
               >
-                <ArtPlayerComponent
-                  key={videoUrl}
-                  url={videoUrl}
-                  danmakuData={danmakuData}
-                  getInstance={handleArtInstance}
-                  onPlay={handleArtPlay}
-                  onPause={handleArtPause}
-                  onEnded={handleVideoEnded}
-                  style={style}
-                  controls={isExpanded}
-                />
+                {/* 如果正在加载，显示 Loading 遮罩 */}
+                {isLoading && (
+                  <div
+                    className="playbar-video-loading"
+                    style={{
+                      position: "absolute",
+                      zIndex: 10,
+                      background: "rgba(0,0,0,0.5)",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    <LoadingOutlined
+                      spin
+                      style={{ fontSize: 24, color: "#fff" }}
+                    />
+                  </div>
+                )}
+
+                {/* 只要有 videoUrl (哪怕是旧的)，就渲染播放器，ArtPlayerComponent 内部会处理 switchUrl */}
+                {videoUrl && (
+                  <ArtPlayerComponent
+                    url={videoUrl}
+                    danmakuData={danmakuData}
+                    getInstance={handleArtInstance}
+                    onPlay={handleArtPlay}
+                    onPause={handleArtPause}
+                    onEnded={handleVideoEnded}
+                    style={style}
+                    controls={isExpanded}
+                  />
+                )}
+
+                {/* 如果没有 videoUrl 且不在加载中 (初始状态?)，显示封面 */}
+                {!videoUrl && !isLoading && (
+                  <img
+                    className="playbar-video"
+                    src={currentVideo.pic}
+                    alt={currentVideo.title}
+                    referrerPolicy="no-referrer"
+                  />
+                )}
               </div>
-            ) : currentVideo ? (
-              <img
-                className="playbar-video"
-                src={currentVideo.pic}
-                alt={currentVideo.title}
-                referrerPolicy="no-referrer"
-              />
             ) : (
               <div className="playbar-video-loading">
                 <PlayCircleFilled style={{ fontSize: 24, opacity: 0.5 }} />
