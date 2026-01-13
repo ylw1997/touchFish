@@ -10,6 +10,7 @@ import type {
   BilibiliFavoriteDetailResponse,
   BilibiliPlayUrlResponse,
   BilibiliWatchLaterDelResponse,
+  BilibiliDanmakuResponse,
 } from "../types/bilibili";
 import type { CommandList } from "../../../types/commands";
 
@@ -95,6 +96,15 @@ export class BilibiliApi {
       "BILIBILI_WATCHLATER_DEL",
       { avid },
       "移除待看中..."
+    );
+  }
+
+  // 获取弹幕
+  getDanmaku(cid: number) {
+    return this.request<BilibiliDanmakuResponse>(
+      "BILIBILI_GET_DANMAKU",
+      { cid },
+      "获取弹幕中..."
     );
   }
 }

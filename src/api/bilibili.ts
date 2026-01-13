@@ -4,6 +4,7 @@
 import axios from "axios";
 import { getOrSetCookie, buildCommonHeaders } from "../utils/apiUtils";
 import { showError } from "../utils/errorMessage";
+// import * as cheerio from "cheerio";
 
 axios.defaults.timeout = 10000;
 
@@ -298,6 +299,38 @@ export const getVideoInfo = async (bvid: string) => {
         code: -1,
         message: error.message,
         data: null,
+      },
+    };
+  }
+};
+
+/**
+ * 获取视频弹幕 (Artplayer format)
+ * https://api.bilibili.com/x/v1/dm/list.so
+ */
+export const getDanmaku = async (cid: number) => {
+  try {
+    const url = `https://api.bilibili.com/x/v1/dm/list.so?oid=${cid}`;
+    const response = await axios.get(url, {
+      headers: await getBilibiliHeaders(),
+      responseType: "text", // XML is text
+    });
+
+    // 直接返回 XML 字符串
+    return {
+      data: {
+        code: 0,
+        // eslint-disable-next-line no-control-regex
+        data: response.data.replace(/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]/g, ""),
+      },
+    };
+  } catch (error: any) {
+    showError(`获取弹幕失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: "", // Return empty string on error
       },
     };
   }

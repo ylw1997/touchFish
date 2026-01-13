@@ -16,9 +16,11 @@ import { App } from "antd";
 import type {
   BilibiliListItem,
   BilibiliPlayUrlResponse,
+  BilibiliDanmakuResponse,
 } from "../types/bilibili";
 import { usePlayerStore } from "../store/player";
 import dayjs from "dayjs";
+import ArtPlayerComponent from "./ArtPlayerComponent";
 
 export interface VideoCardProps {
   item: BilibiliListItem;
@@ -29,6 +31,7 @@ export interface VideoCardProps {
     bvid: string,
     cid: number
   ) => Promise<BilibiliPlayUrlResponse>;
+  onGetDanmaku?: (cid: number) => Promise<BilibiliDanmakuResponse>;
   onError?: (message: string) => void;
   showImg?: boolean;
 }
@@ -60,11 +63,13 @@ const VideoCard: React.FC<VideoCardProps> = ({
   onAddToWatchLater,
   onDeleteFromWatchLater,
   onGetPlayUrl,
+  onGetDanmaku,
 }) => {
   const { message } = App.useApp();
   const { addToPlaylist } = usePlayerStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [danmakuData, setDanmakuData] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -83,6 +88,19 @@ const VideoCard: React.FC<VideoCardProps> = ({
       const result = await onGetPlayUrl(item.bvid, item.cid);
       if (result.code === 0 && result.data?.durl?.[0]?.url) {
         setVideoUrl(result.data.durl[0].url);
+
+        // 获取弹幕
+        if (onGetDanmaku && item.cid) {
+          try {
+            const danmakuRes = await onGetDanmaku(item.cid);
+            if (danmakuRes.code === 0 && danmakuRes.data) {
+              setDanmakuData(danmakuRes.data);
+            }
+          } catch (e) {
+            console.error("获取弹幕失败", e);
+          }
+        }
+
         setIsPlaying(true);
       }
     } finally {
@@ -94,6 +112,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
     e.stopPropagation();
     setIsPlaying(false);
     setVideoUrl(null);
+    setDanmakuData("");
     if (videoRef.current) {
       videoRef.current.pause();
     }
@@ -128,14 +147,9 @@ const VideoCard: React.FC<VideoCardProps> = ({
         {isPlaying && videoUrl ? (
           // 视频播放器
           <div className="video-player-container">
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              controls
-              autoPlay
-              className="video-player"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div className="video-player" onClick={(e) => e.stopPropagation()}>
+              <ArtPlayerComponent url={videoUrl} danmakuData={danmakuData} />
+            </div>
             <div className="video-close-btn" onClick={handleCloseVideo}>
               <CloseCircleOutlined />
             </div>

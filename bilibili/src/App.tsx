@@ -58,6 +58,7 @@ function App() {
     addToWatchLater,
     delFromWatchLater,
     getPlayUrl,
+    getDanmaku,
   } = useBilibiliAction();
 
   const { addListToPlaylist } = usePlayerStore();
@@ -175,6 +176,7 @@ function App() {
                       activeKey === "watchlater" ? delFromWatchLater : undefined
                     }
                     onGetPlayUrl={getPlayUrl}
+                    onGetDanmaku={getDanmaku}
                     showImg={showImg}
                   />
                 </motion.div>

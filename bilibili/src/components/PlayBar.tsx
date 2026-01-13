@@ -16,6 +16,8 @@ import { usePlayerStore } from "../store/player";
 import { useRequest } from "../hooks/useRequest";
 import { BilibiliApi } from "../api";
 import { motion, AnimatePresence } from "framer-motion";
+import ArtPlayerComponent from "./ArtPlayerComponent";
+import Artplayer from "artplayer";
 
 const PlayBar: React.FC = () => {
   const {
@@ -35,8 +37,9 @@ const PlayBar: React.FC = () => {
     clearPlaylist,
   } = usePlayerStore();
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<Artplayer | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [danmakuData, setDanmakuData] = React.useState<string>("");
 
   const { request } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
@@ -49,6 +52,15 @@ const PlayBar: React.FC = () => {
         const result = await apiClient.getPlayUrl(bvid, cid);
         if (result.code === 0 && result.data?.durl?.[0]?.url) {
           setVideoUrl(result.data.durl[0].url);
+          // 获取弹幕
+          try {
+            const danmakuRes = await apiClient.getDanmaku(cid);
+            if (danmakuRes.code === 0) {
+              setDanmakuData(danmakuRes.data);
+            }
+          } catch (e) {
+            console.error("获取弹幕失败", e);
+          }
         }
       } finally {
         setIsLoading(false);
@@ -101,15 +113,49 @@ const PlayBar: React.FC = () => {
     }
   };
 
+  // 使用 useCallback 包裹回调函数，避免 PlayBar 重渲染导致 Artplayer 重复初始化
+  const handleArtInstance = useCallback((art: Artplayer) => {
+    videoRef.current = art;
+  }, []);
+
+  const handleArtPlay = useCallback(() => {
+    setIsPlaying(true);
+  }, [setIsPlaying]);
+
+  const handleArtPause = useCallback(() => {
+    setIsPlaying(false);
+  }, [setIsPlaying]);
+
+  const style = useMemo(
+    () =>
+      ({
+        width: "100%",
+        height: "100%",
+        pointerEvents: isExpanded ? "auto" : "none", // 收起时禁用鼠标交互
+      } as React.CSSProperties),
+    [isExpanded]
+  );
+
+  // 当展开/收起状态变化时，重新计算 Artplayer 尺寸
+  useEffect(() => {
+    if (videoRef.current) {
+      // 延迟执行以确保 DOM 已更新
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.autoSize();
+        }
+      }, 100);
+    }
+  }, [isExpanded]);
+
   return (
     <>
-      {/* 播放列表弹出层 */}
       {/* 播放列表弹出层 */}
       <AnimatePresence>
         {isPlaylistOpen && (
           <motion.div
             className="playbar-playlist"
-            style={{ bottom: isExpanded ? 280 : 76 }}
+            style={{ bottom: isExpanded ? 260 : 76 }}
             initial={{ opacity: 0, y: 20, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 20, x: "-50%" }}
@@ -175,21 +221,36 @@ const PlayBar: React.FC = () => {
         {/* 底部控制区域 */}
         <div className="playbar-bottom">
           {/* 单一视频容器 - 收起时在左侧，展开时在上方 */}
-          <div className="playbar-video-wrapper" onClick={handleExpandClick}>
+          <div
+            className="playbar-video-wrapper"
+            onClick={(e) => {
+              // 收起状态：点击展开；展开状态：让事件传递到 ArtPlayer 处理暂停
+              if (!isExpanded && currentVideo) {
+                e.stopPropagation();
+                toggleExpand();
+              }
+            }}
+          >
             {isLoading ? (
               <div className="playbar-video-loading">
                 <LoadingOutlined spin />
               </div>
             ) : videoUrl ? (
-              <video
-                ref={videoRef}
+              <div
                 className="playbar-video"
-                src={videoUrl}
-                onEnded={handleVideoEnded}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-                controls={isExpanded ? true : false}
-              />
+                style={{ width: "100%", height: "100%" }}
+              >
+                <ArtPlayerComponent
+                  url={videoUrl}
+                  danmakuData={danmakuData}
+                  getInstance={handleArtInstance}
+                  onPlay={handleArtPlay}
+                  onPause={handleArtPause}
+                  onEnded={handleVideoEnded}
+                  style={style}
+                  controls={isExpanded}
+                />
+              </div>
             ) : currentVideo ? (
               <img
                 className="playbar-video"

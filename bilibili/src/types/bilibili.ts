@@ -285,3 +285,18 @@ export interface BilibiliWatchLaterDelResponse {
   message: string;
   ttl: number;
 }
+
+// Artplayer 弹幕项
+export interface ArtplayerDanmakuItem {
+  text: string;
+  time: number;
+  color: string;
+  border: boolean;
+  mode: 0 | 1 | 2;
+}
+
+// 弹幕响应
+export interface BilibiliDanmakuResponse {
+  code: number;
+  data: string; // XML string
+}

@@ -12,6 +12,7 @@ import {
   getPlayUrl,
   delWatchLater,
   getBilibiliHeaders,
+  getDanmaku,
 } from "../api/bilibili";
 import { CommandsType } from "../../types/commands";
 import { setConfigByKey } from "../core/config";
@@ -190,6 +191,16 @@ export class BilibiliProvider extends BaseWebviewProvider {
         const res = await delWatchLater(avid, csrf);
         webviewView.webview.postMessage({
           command: "BILIBILI_WATCHLATER_DEL_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_GET_DANMAKU": {
+        const { cid } = payload || {};
+        const res = await getDanmaku(cid);
+        webviewView.webview.postMessage({
+          command: "BILIBILI_GET_DANMAKU_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

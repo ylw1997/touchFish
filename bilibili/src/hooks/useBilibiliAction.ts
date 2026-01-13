@@ -312,6 +312,15 @@ const useBilibiliAction = () => {
     [apiClient, messageApi]
   );
 
+  // 获取弹幕
+  const getDanmaku = useCallback(
+    async (cid: number) => {
+      const result = await apiClient.getDanmaku(cid);
+      return result;
+    },
+    [apiClient]
+  );
+
   return {
     getListData,
     isFetching,
@@ -327,6 +336,7 @@ const useBilibiliAction = () => {
     addToWatchLater,
     getPlayUrl,
     delFromWatchLater,
+    getDanmaku,
   };
 };
 
