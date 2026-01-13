@@ -40,6 +40,10 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 
 ![ScreenShot_2025-11-05_150613_386](https://github.com/user-attachments/assets/533fbebe-2f5c-468c-a3d1-c588c86664ec)
 
+### 💬 刷B站
+<img width="2879" height="1836" alt="image" src="https://github.com/user-attachments/assets/57c56e8a-d287-44c2-bdd5-8b68b969c112" />
+
+
 #### 💬 刷知乎
 
 ![ScreenShot_2025-11-05_150650_643](https://github.com/user-attachments/assets/6d34e1ab-b11e-4560-8d29-c95734e7080f)
