@@ -35,6 +35,7 @@ const PlayBar: React.FC = () => {
     setIsPlaying,
     removeFromPlaylist,
     clearPlaylist,
+    playNext,
   } = usePlayerStore();
 
   const videoRef = useRef<Artplayer | null>(null);
@@ -89,6 +90,9 @@ const PlayBar: React.FC = () => {
 
   const handlePlayVideo = async (video: typeof currentVideo) => {
     if (video) {
+      // 先清除旧的播放链接和弹幕，确保旧播放器销毁
+      setVideoUrl(null);
+      setDanmakuData("");
       setCurrentVideo(video);
     }
   };
@@ -104,6 +108,8 @@ const PlayBar: React.FC = () => {
 
   const handleVideoEnded = () => {
     setIsPlaying(false);
+    // 自动播放下一个
+    playNext();
   };
 
   const handleExpandClick = (e: React.MouseEvent) => {
@@ -150,74 +156,77 @@ const PlayBar: React.FC = () => {
 
   return (
     <>
-      {/* 播放列表弹出层 */}
-      <AnimatePresence>
-        {isPlaylistOpen && (
-          <motion.div
-            className="playbar-playlist"
-            style={{ bottom: isExpanded ? 260 : 76 }}
-            initial={{ opacity: 0, y: 20, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: 20, x: "-50%" }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="playbar-playlist-header">
-              <span className="playbar-playlist-title">
-                播放列表 ({playlist.length})
-              </span>
-              <div className="playbar-playlist-actions">
-                <span onClick={clearPlaylist} title="清空列表">
-                  <DeleteOutlined />
-                </span>
-                <span onClick={togglePlaylistOpen} title="关闭">
-                  <CloseOutlined />
-                </span>
-              </div>
-            </div>
-            <div className="playbar-playlist-content">
-              {playlist.length === 0 ? (
-                <div className="playbar-playlist-empty">暂无视频</div>
-              ) : (
-                playlist.map((video) => (
-                  <div
-                    key={video.id}
-                    className={`playbar-playlist-item ${
-                      currentVideo?.id === video.id ? "active" : ""
-                    }`}
-                    onClick={() => handlePlayVideo(video)}
-                  >
-                    <img
-                      src={video.pic}
-                      alt={video.title}
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="playbar-playlist-item-info">
-                      <div className="playbar-playlist-item-title">
-                        {video.title}
-                      </div>
-                      <div className="playbar-playlist-item-author">
-                        {video.owner.name}
-                      </div>
-                    </div>
-                    <span
-                      className="playbar-playlist-item-remove"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFromPlaylist(video.id);
-                      }}
-                    >
-                      <CloseOutlined />
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* 底部播放条 */}
-      <div className={`playbar ${isExpanded ? "playbar-expanded" : ""}`}>
+      <div
+        className={`playbar ${isExpanded ? "playbar-expanded" : ""} ${
+          isPlaylistOpen ? "playbar-playlist-open" : ""
+        }`}
+      >
+        {/* 播放列表区域 - 在 playbar 内部向下展开 */}
+        <AnimatePresence>
+          {isPlaylistOpen && (
+            <motion.div
+              className="playbar-playlist-inner"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="playbar-playlist-header">
+                <span className="playbar-playlist-title">
+                  播放列表 ({playlist.length})
+                </span>
+                <div className="playbar-playlist-actions">
+                  <span onClick={clearPlaylist} title="清空列表">
+                    <DeleteOutlined />
+                  </span>
+                  <span onClick={togglePlaylistOpen} title="关闭">
+                    <CloseOutlined />
+                  </span>
+                </div>
+              </div>
+              <div className="playbar-playlist-content">
+                {playlist.length === 0 ? (
+                  <div className="playbar-playlist-empty">暂无视频</div>
+                ) : (
+                  playlist.map((video) => (
+                    <div
+                      key={video.id}
+                      className={`playbar-playlist-item ${
+                        currentVideo?.id === video.id ? "active" : ""
+                      }`}
+                      onClick={() => handlePlayVideo(video)}
+                    >
+                      <img
+                        src={video.pic}
+                        alt={video.title}
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="playbar-playlist-item-info">
+                        <div className="playbar-playlist-item-title">
+                          {video.title}
+                        </div>
+                        <div className="playbar-playlist-item-author">
+                          {video.owner.name}
+                        </div>
+                      </div>
+                      <span
+                        className="playbar-playlist-item-remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromPlaylist(video.id);
+                        }}
+                      >
+                        <CloseOutlined />
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* 底部控制区域 */}
         <div className="playbar-bottom">
           {/* 单一视频容器 - 收起时在左侧，展开时在上方 */}
