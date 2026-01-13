@@ -1,6 +1,34 @@
 # 更新历史 
 
 
+## [11.1.0](https://github.com/ylw1997/touchFish/compare/v10.9.0...v11.1.0) (2026-01-13)
+
+
+### ✨ Features | 新功能
+
+* 待播放完成 ([471786e](https://github.com/471786eafb294261a4396604dca9a43440c202ec))
+* 待看可以一键播放 ([49b86ce](https://github.com/49b86ce4cde991263cd369e90fd5618b97d5cdd8))
+* 动态完成 ([0d80fbc](https://github.com/0d80fbcd9e055601c905cf612e3ae41673643f6a))
+* 删除待看完成 ([3696693](https://github.com/36966939ae3c18af749ba18badca44b0a3740807))
+* 视频播放成功! ([41b2707](https://github.com/41b27072a07d33c12560ffaefc269358913b5d37))
+* 收藏夹完成 ([c09549b](https://github.com/c09549b1ab9347f46a49387751276cbb05bca383))
+* 添加待看完成 ([e0e9c3f](https://github.com/e0e9c3f5aea71c2a7816cafbcef8c3ecc128187b))
+* 完成artplayer嵌入 ([89d726c](https://github.com/89d726c082941bf954658497b868228d008267d8))
+* 完成bar ([5381262](https://github.com/5381262c5f55d8d5a3379156bf74fc82ab7a6c68))
+* 修复视频没有cid问题 ([9abf3e2](https://github.com/9abf3e257b3a2af693a70a5f2e73e4aa98fec64e))
+* 修复未使用 ([a7130ed](https://github.com/a7130ed74812f02b3b8a842823d59e8126448111))
+* 修复问题 ([3eb8b23](https://github.com/3eb8b235abaee0edf01e67a7d376ab5ff25b62b6))
+* 修复样式错误问题 ([b4eb885](https://github.com/b4eb8858b3e42900cbcdabbeba635df390957e72))
+* 修复用户问题 ([7a60e77](https://github.com/7a60e77c341e3206d877ef2e42f177910cc9bcc1))
+* 优化播放bar组件 ([c05ac96](https://github.com/c05ac962a7a67607ed1edf98a4b59150848e2886))
+* 优化收起样式 ([ce29ca0](https://github.com/ce29ca0d63a710b070a1ab64ac0fd10f15383f20))
+* 优化样式 ([3ca6550](https://github.com/3ca65502ba8e8266f4fef88b7685accbe051a574))
+* 优化样式 ([e300502](https://github.com/e300502952ed3d35cf215e560fe2fa5719d292d8))
+* 增加播放bar ([059122d](https://github.com/059122d2feb04b4e4745d5647a3141e07a23097b))
+* 增加打包脚本 ([fd70c11](https://github.com/fd70c113b5ddb7e236e019bc034ba153500c9a0e))
+* 自动播放 ([bd78af4](https://github.com/bd78af44f912179b8e89f7fca4fc27c3318c9bb3))
+* bilibili初始化 ([a90f5a0](https://github.com/a90f5a085046987901e508b302cbefbbed283070))
+
 ## [10.9.0](https://github.com/ylw1997/touchFish/compare/v10.8.2...v10.9.0) (2026-01-09)
 
 
