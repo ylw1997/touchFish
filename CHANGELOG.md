@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.7.0](https://github.com/ylw1997/touchFish/compare/v11.6.0...v11.7.0) (2026-01-13)
+
+
+### ✨ Features | 新功能
+
+* 优化样式 ([0cb4492](https://github.com/0cb44925166798a3dd16e9e7a19103d0424b67fd))
+
 ## [11.6.0](https://github.com/ylw1997/touchFish/compare/v11.5.0...v11.6.0) (2026-01-13)
 
 
