@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.8.0](https://github.com/ylw1997/touchFish/compare/v11.7.0...v11.8.0) (2026-01-13)
+
+
+### ✨ Features | 新功能
+
+* 修复自动播放逻辑 ([e2ba00b](https://github.com/e2ba00be91a54683cf89215ec41f4f5f7ead8769))
+
 ## [11.7.0](https://github.com/ylw1997/touchFish/compare/v11.6.0...v11.7.0) (2026-01-13)
 
 
