@@ -9,6 +9,7 @@ temp
 weibo/dist
 zhihu/dist
 xhs/dist
+bilibili/dist
 
 # Old releases
 touchfish-*.vsix
