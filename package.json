@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do摸鱼聚合插件,沉浸式主题",
-	"version": "10.9.0",
+	"version": "11.0.0",
 	"icon": "logo.png",
 	"engines": {
 		"vscode": "^1.80.0"
@@ -503,9 +503,9 @@
 		"changelog": "standard-version",
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build",
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
-		"dev": "concurrently -n ZHIHU,WEIBO,XHS -c magenta,cyan,yellow \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\"",
+		"dev": "concurrently -n ZHIHU,WEIBO,XHS,BILIBILI -c magenta,cyan,yellow,blue \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\"",
 		"build-xhs": "pnpm --filter xhs build"
 	},
 	"devDependencies": {
