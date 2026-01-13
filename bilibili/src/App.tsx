@@ -7,14 +7,12 @@ import { Divider, FloatButton, Tabs, TabsProps } from "antd";
 import { motion } from "framer-motion";
 import "./style/index.less";
 import {
-  EyeInvisibleOutlined,
-  EyeOutlined,
   RedoOutlined,
   VerticalAlignTopOutlined,
   PlusOutlined,
   MinusOutlined,
-  AppstoreOutlined,
   PlaySquareOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -31,6 +29,7 @@ import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
 import { debounce } from "./utils";
 import PlayBar from "./components/PlayBar";
+import SearchDrawer from "./components/SearchDrawer";
 
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
@@ -40,10 +39,8 @@ function App() {
   const [tabs] = useState<TabItem[]>(defTab);
   const { increase, decrease } = useFontSizeStore();
 
-  // showImg
-  const [showImg, setShowImg] = useState(
-    window.showImg != undefined ? window.showImg : true
-  );
+  // 搜索抽屉状态
+  const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
   // 业务逻辑 Hook
   const {
@@ -177,7 +174,6 @@ function App() {
                     }
                     onGetPlayUrl={getPlayUrl}
                     onGetDanmaku={getDanmaku}
-                    showImg={showImg}
                   />
                 </motion.div>
               ))}
@@ -186,80 +182,64 @@ function App() {
         )}
       </div>
 
-      {/* 回到顶部 */}
-      <FloatButton.BackTop
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 88 }}
-        visibilityHeight={500}
-        duration={1000}
-        icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
-        tooltip={{ title: "回到顶部", placement: "left" }}
-        target={() => scrollableNodeRef.current || window}
-      />
-
-      {/* 刷新 */}
-      <FloatButton
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 148 }}
-        onClick={refreshData}
-        icon={<RedoOutlined style={{ color: "#fb7299" }} />}
-        tooltip={{ title: "刷新", placement: "left" }}
-      />
-
-      {/* 更多功能 */}
+      {/* 浮动按钮组 */}
       <FloatButton.Group
         shape="circle"
-        trigger="click"
-        style={{ insetInlineEnd: 24, bottom: 208 }}
-        icon={<AppstoreOutlined style={{ color: "#00a1d6" }} />}
-        tooltip={{ title: "更多", placement: "left" }}
+        style={{ insetInlineEnd: 24, bottom: 88 }}
       >
+        {/* 搜索按钮 */}
         <FloatButton
-          onClick={() => {
-            const newState = !showImg;
-            setShowImg(newState);
-            vscode.postMessage({
-              command: "TOGGLE_SHOW_IMG",
-              payload: newState,
-            });
-          }}
-          icon={
-            showImg ? (
-              <EyeOutlined style={{ color: "#13c2c2" }} />
-            ) : (
-              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
-            )
-          }
-          tooltip={{
-            title: `${showImg ? "隐藏" : "显示"}封面`,
-            placement: "left",
-          }}
+          onClick={() => setSearchDrawerOpen(true)}
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
         />
-        <FloatButton
-          onClick={increase}
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={{ title: "加大字体", placement: "left" }}
-        />
+        {/* 播放待看列表前10条 */}
+        {activeKey === "watchlater" && list.length > 0 && (
+          <FloatButton
+            onClick={() => {
+              const top10 = list.slice(0, 10);
+              addListToPlaylist(top10);
+              message.success(`已将前${top10.length}条加入播放列表`);
+            }}
+            icon={<PlaySquareOutlined style={{ color: "#fb7299" }} />}
+            tooltip={{ title: "播放前10条", placement: "left" }}
+          />
+        )}
+        {/* 减小字体 */}
         <FloatButton
           onClick={decrease}
           icon={<MinusOutlined style={{ color: "#52c41a" }} />}
           tooltip={{ title: "减小字体", placement: "left" }}
         />
+        {/* 加大字体 */}
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        {/* 刷新 */}
+        <FloatButton
+          onClick={refreshData}
+          icon={<RedoOutlined style={{ color: "#fb7299" }} />}
+          tooltip={{ title: "刷新", placement: "left" }}
+        />
+        {/* 回到顶部 */}
+        <FloatButton.BackTop
+          visibilityHeight={500}
+          duration={1000}
+          icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
+          tooltip={{ title: "回到顶部", placement: "left" }}
+          target={() => scrollableNodeRef.current || window}
+        />
       </FloatButton.Group>
 
-      {/* 播放待看列表前10条 */}
-      {activeKey === "watchlater" && list.length > 0 && (
-        <FloatButton
-          style={{ insetInlineEnd: 24, bottom: 268 }}
-          onClick={() => {
-            const top10 = list.slice(0, 10);
-            addListToPlaylist(top10);
-            message.success(`已将前${top10.length}条加入播放列表`);
-          }}
-          icon={<PlaySquareOutlined style={{ color: "#fb7299" }} />}
-          tooltip={{ title: "播放前10条", placement: "left" }}
-        />
-      )}
+      {/* 搜索抽屉 */}
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={() => setSearchDrawerOpen(false)}
+        onGetPlayUrl={getPlayUrl}
+        onGetDanmaku={getDanmaku}
+      />
 
       {/* 悬浮播放条 */}
       <PlayBar />

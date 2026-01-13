@@ -335,3 +335,32 @@ export const getDanmaku = async (cid: number) => {
     };
   }
 };
+
+/**
+ * 搜索视频
+ * https://api.bilibili.com/x/web-interface/wbi/search/all/v2?keyword=xxx
+ */
+export const searchAll = async (keyword: string, page: number = 1) => {
+  try {
+    const response = await axios.get(
+      `https://api.bilibili.com/x/web-interface/wbi/search/all/v2`,
+      {
+        params: {
+          keyword,
+          page,
+        },
+        headers: await getBilibiliHeaders(),
+      }
+    );
+    return response;
+  } catch (error: any) {
+    showError(`搜索失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: null,
+      },
+    };
+  }
+};

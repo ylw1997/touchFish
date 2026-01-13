@@ -300,3 +300,53 @@ export interface BilibiliDanmakuResponse {
   code: number;
   data: string; // XML string
 }
+
+// ============== 搜索 API 类型 ==============
+
+// 搜索视频项
+export interface BilibiliSearchVideoItem {
+  type: string;
+  id: number;
+  author: string;
+  mid: number;
+  typeid: string;
+  typename: string;
+  arcurl: string;
+  aid: number;
+  bvid: string;
+  title: string;
+  description: string;
+  pic: string;
+  play: number;
+  video_review: number;
+  favorites: number;
+  tag: string;
+  review: number;
+  pubdate: number;
+  senddate: number;
+  duration: string;
+  like: number;
+  upic: string;
+  danmaku: number;
+}
+
+// 搜索结果项
+export interface BilibiliSearchResultItem {
+  result_type: string;
+  data: BilibiliSearchVideoItem[];
+}
+
+// 搜索响应
+export interface BilibiliSearchResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    seid: string;
+    page: number;
+    pagesize: number;
+    numResults: number;
+    numPages: number;
+    result: BilibiliSearchResultItem[];
+  } | null;
+}

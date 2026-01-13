@@ -11,6 +11,7 @@ import type {
   BilibiliPlayUrlResponse,
   BilibiliWatchLaterDelResponse,
   BilibiliDanmakuResponse,
+  BilibiliSearchResponse,
 } from "../types/bilibili";
 import type { CommandList } from "../../../types/commands";
 
@@ -105,6 +106,15 @@ export class BilibiliApi {
       "BILIBILI_GET_DANMAKU",
       { cid },
       "获取弹幕中..."
+    );
+  }
+
+  // 搜索视频
+  search(keyword: string, page: number = 1) {
+    return this.request<BilibiliSearchResponse>(
+      "BILIBILI_SEARCH",
+      { keyword, page },
+      "搜索中..."
     );
   }
 }

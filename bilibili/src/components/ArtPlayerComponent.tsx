@@ -69,7 +69,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
       plugins: [
         artplayerPluginDanmuku({
           danmuku: danmakuUrl,
-          speed: 5,
+          speed: 10,
           opacity: 1,
           fontSize: 16,
           color: "#FFFFFF",

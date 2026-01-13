@@ -33,7 +33,6 @@ export interface VideoCardProps {
   ) => Promise<BilibiliPlayUrlResponse>;
   onGetDanmaku?: (cid: number) => Promise<BilibiliDanmakuResponse>;
   onError?: (message: string) => void;
-  showImg?: boolean;
 }
 
 // 格式化播放量
@@ -59,7 +58,6 @@ const formatDuration = (seconds: number): string => {
 
 const VideoCard: React.FC<VideoCardProps> = ({
   item,
-  showImg = true,
   onAddToWatchLater,
   onDeleteFromWatchLater,
   onGetPlayUrl,
@@ -156,16 +154,14 @@ const VideoCard: React.FC<VideoCardProps> = ({
           </div>
         ) : (
           <>
-            {showImg && (
-              <img
-                src={
-                  item.pic ||
-                  "https://i0.hdslb.com/bfs/static/jinkela/space/assets/fav-cover.png"
-                }
-                alt={item.title}
-                referrerPolicy="no-referrer"
-              />
-            )}
+            <img
+              src={
+                item.pic ||
+                "https://i0.hdslb.com/bfs/static/jinkela/space/assets/fav-cover.png"
+              }
+              alt={item.title}
+              referrerPolicy="no-referrer"
+            />
             {/* 播放图标 - hover 时显示 */}
             {!is_folder && (
               <div
@@ -176,7 +172,6 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 {isLoading ? <LoadingOutlined spin /> : <PlayCircleFilled />}
               </div>
             )}
-
             {/* 操作按钮区域 - hover 时显示 */}
             {!is_folder && (
               <div className="video-hover-actions">

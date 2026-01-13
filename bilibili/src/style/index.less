@@ -93,6 +93,22 @@ a {
   margin: 0 0 0 26px;
 }
 
+.ant-drawer {
+  z-index: 1101;
+  .ant-drawer-content-wrapper {
+    background-color: color-mix(
+      in srgb,
+      var(--vscode-editor-background) 80%,
+      transparent
+    );
+    backdrop-filter: saturate(180%) blur(15px);
+  }
+}
+
+.info {
+  font-size: var(--app-font-size);
+}
+
 /* ==========================================================================
    5. Bilibili Video Styles
    ========================================================================== */
@@ -351,7 +367,7 @@ a {
   border-radius: 26px;
   display: flex;
   flex-direction: column;
-  z-index: 9999;
+  z-index: 1100;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   transition: all 0.3s ease;
@@ -576,7 +592,7 @@ a {
   .backdrop-style();
   border: 1px solid var(--vscode-chat-requestBorder);
   border-radius: 12px;
-  z-index: 9999;
+  z-index: 1100;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);

@@ -321,6 +321,15 @@ const useBilibiliAction = () => {
     [apiClient]
   );
 
+  // 搜索视频
+  const searchBilibili = useCallback(
+    async (keyword: string, page: number = 1) => {
+      const result = await apiClient.search(keyword, page);
+      return result;
+    },
+    [apiClient]
+  );
+
   return {
     getListData,
     isFetching,
@@ -337,6 +346,7 @@ const useBilibiliAction = () => {
     getPlayUrl,
     delFromWatchLater,
     getDanmaku,
+    searchBilibili,
   };
 };
 
