@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [11.5.0](https://github.com/ylw1997/touchFish/compare/v11.4.0...v11.5.0) (2026-01-13)
+
+
+### ✨ Features | 新功能
+
+* 修改播放列表样式 ([be2fc11](https://github.com/be2fc111631e42e781923607fe68cf16e0872586))
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 修复视频切换后没有销毁问题 ([21c6465](https://github.com/21c64652bd60f2ac5f66ecc0c5b4ab77ee12ddf6))
+
 ## [11.4.0](https://github.com/ylw1997/touchFish/compare/v11.3.0...v11.4.0) (2026-01-13)
 
 
