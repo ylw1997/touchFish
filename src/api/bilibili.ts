@@ -220,7 +220,24 @@ export const addToWatchLater = async (bvid: string) => {
  */
 export const getPlayUrl = async (bvid: string, cid: number) => {
   try {
-    const url = `https://api.bilibili.com/x/player/wbi/playurl?bvid=${bvid}&cid=${cid}&qn=112&platform=html5&high_quality=1`;
+    let finalCid = cid;
+    // 如果没有cid，尝试获取
+    if (!finalCid) {
+      const infoRes = await getVideoInfo(bvid);
+      if (infoRes.data?.code === 0 && infoRes.data?.data?.cid) {
+        finalCid = infoRes.data.data.cid;
+      } else {
+        return {
+          data: {
+            code: -1,
+            message: "无法获取视频CID",
+            data: null,
+          },
+        };
+      }
+    }
+
+    const url = `https://api.bilibili.com/x/player/wbi/playurl?bvid=${bvid}&cid=${finalCid}&qn=112&platform=html5&high_quality=1`;
     console.log("获取视频播放链接", url);
     return await axios.get(url, {
       headers: await getBilibiliHeaders(),
@@ -259,6 +276,28 @@ export const delWatchLater = async (avid: string, csrf: string) => {
       data: {
         code: -1,
         message: error.message,
+      },
+    };
+  }
+};
+
+/**
+ * 获取视频详情（用于获取cid）
+ * https://api.bilibili.com/x/web-interface/view
+ */
+export const getVideoInfo = async (bvid: string) => {
+  try {
+    const url = `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`;
+    return await axios.get(url, {
+      headers: await getBilibiliHeaders(),
+    });
+  } catch (error: any) {
+    showError(`获取视频详情失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: null,
       },
     };
   }
