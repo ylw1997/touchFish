@@ -58,3 +58,19 @@ xhs/tsconfig.node.json
 xhs/vite.config.ts
 xhs/pnpm-lock.yaml
 xhs/temp/**
+
+# bilibili webview (exclude source & deps; only dist assets should be packed if needed)
+bilibili/src/**
+bilibili/node_modules/**
+bilibili/public/**
+bilibili/.gitignore
+bilibili/eslint.config.js
+bilibili/index.html
+bilibili/package.json
+bilibili/README.md
+bilibili/tsconfig.json
+bilibili/tsconfig.app.json
+bilibili/tsconfig.node.json
+bilibili/vite.config.ts
+bilibili/pnpm-lock.yaml
+bilibili/temp/**
