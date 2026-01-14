@@ -387,10 +387,7 @@ const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
         ) : videos.length === 0 && !cardLoading ? (
           <Empty description="暂无视频" image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
-          <div
-            id={scrollRef.current}
-            style={{ height: "calc(80vh - 180px)", overflow: "auto" }}
-          >
+          <div id={scrollRef.current}>
             <InfiniteScroll
               dataLength={videos.length}
               next={loadMore}

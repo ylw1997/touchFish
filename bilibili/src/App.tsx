@@ -252,6 +252,10 @@ function App() {
         onClose={() => setSearchDrawerOpen(false)}
         onGetPlayUrl={getPlayUrl}
         onGetDanmaku={getDanmaku}
+        onUserClick={(owner) => {
+          setSelectedUser(owner);
+          setUserProfileOpen(true);
+        }}
       />
 
       {/* 悬浮播放条 */}

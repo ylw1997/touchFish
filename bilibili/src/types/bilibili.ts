@@ -330,10 +330,32 @@ export interface BilibiliSearchVideoItem {
   danmaku: number;
 }
 
+// 搜索用户项
+export interface BilibiliSearchUserItem {
+  type: string;
+  mid: number;
+  uname: string;
+  usign: string;
+  upic: string;
+  videos: number;
+  fans: number;
+  verify_info: string;
+  level: number;
+  gender: number;
+  is_up: boolean;
+  is_live: number;
+  room_id: number;
+  res: any[];
+  official_verify: {
+    type: number;
+    desc: string;
+  };
+}
+
 // 搜索结果项
 export interface BilibiliSearchResultItem {
   result_type: string;
-  data: BilibiliSearchVideoItem[];
+  data: BilibiliSearchVideoItem[] | BilibiliSearchUserItem[];
 }
 
 // 搜索响应
