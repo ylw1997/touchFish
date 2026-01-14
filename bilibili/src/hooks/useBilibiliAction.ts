@@ -104,8 +104,8 @@ const useBilibiliAction = () => {
       try {
         if (payload === "recommend") {
           // 推荐接口 - 支持缓存
-          // 如果缓存有效且不是强制刷新，直接使用缓存
-          if (isRecommendCacheValid() && !forceRefresh) {
+          // 如果是初始加载(replace为true)且缓存有效且不是强制刷新，直接使用缓存
+          if (replace && isRecommendCacheValid() && !forceRefresh) {
             setList(recommendCachedList);
             setTotal(999);
           } else {

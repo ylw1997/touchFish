@@ -216,14 +216,17 @@ const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
         },
         body: {
           padding: 0,
-          paddingTop: 10,
           overflow: "hidden",
         },
       }}
     >
       <div
         id={scrollRef.current}
-        style={{ height: "calc(85vh - 60px)", overflow: "auto" }}
+        style={{
+          height: "calc(85vh - 60px)",
+          overflow: "auto",
+          padding: "10px 5px",
+        }}
       >
         {/* 用户信息卡片 - 不固定，跟随滚动 */}
         {cardLoading ? (
@@ -270,6 +273,7 @@ const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
                         {userCard.name}
                       </span>
                       <Tag
+                        color="green"
                         style={{
                           margin: 0,
                           fontSize: 11,
