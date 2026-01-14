@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [11.9.1](https://github.com/ylw1997/touchFish/compare/v11.9.0...v11.9.1) (2026-01-14)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 修复样式问题,修复推荐没有加载更多问题 ([2166f1c](https://github.com/2166f1cc7f3ed3963ada1e434d8c5d091844c6b2))
+
 ## [11.9.0](https://github.com/ylw1997/touchFish/compare/v11.8.0...v11.9.0) (2026-01-14)
 
 
