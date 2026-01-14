@@ -28,6 +28,8 @@ export interface UserProfileDrawerProps {
     act: 1 | 2
   ) => Promise<{ code: number; message: string }>;
   onAddToWatchLater?: (bvid: string) => void;
+  onGetPlayUrl?: (bvid: string, cid: number) => Promise<any>;
+  onGetDanmaku?: (cid: number) => Promise<any>;
 }
 
 // 格式化数字
@@ -81,6 +83,8 @@ const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
   onGetUserCard,
   onModifyRelation,
   onAddToWatchLater,
+  onGetPlayUrl,
+  onGetDanmaku,
 }) => {
   const [videos, setVideos] = useState<BilibiliListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -419,6 +423,8 @@ const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
                     <VideoCard
                       item={item}
                       onAddToWatchLater={onAddToWatchLater}
+                      onGetPlayUrl={onGetPlayUrl}
+                      onGetDanmaku={onGetDanmaku}
                     />
                   </motion.div>
                 ))}

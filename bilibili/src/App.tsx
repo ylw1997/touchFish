@@ -270,6 +270,8 @@ function App() {
         onGetUserCard={getUserCard}
         onModifyRelation={modifyRelation}
         onAddToWatchLater={addToWatchLater}
+        onGetPlayUrl={getPlayUrl}
+        onGetDanmaku={getDanmaku}
       />
     </>
   );

@@ -352,6 +352,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
                   onGetPlayUrl={onGetPlayUrl}
                   onGetDanmaku={onGetDanmaku}
                   onAddToWatchLater={addToWatchLater}
+                  onUserClick={onUserClick}
                 />
               </motion.div>
             )}
