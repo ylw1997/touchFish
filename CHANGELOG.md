@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [11.9.0](https://github.com/ylw1997/touchFish/compare/v11.8.0...v11.9.0) (2026-01-14)
+
+
+### ✨ Features | 新功能
+
+* 搜索增加用户展示 ([33f3c67](https://github.com/33f3c6790cb994c294ecdaef8083b212e35d37c0))
+* 用户信息和关注取关功能开发完成 ([bfa2833](https://github.com/bfa2833c5b2c1389672ae077f22551b83814cee3))
+
 ## [11.8.0](https://github.com/ylw1997/touchFish/compare/v11.7.0...v11.8.0) (2026-01-13)
 
 
