@@ -37,7 +37,8 @@ export interface VideoCardProps {
 }
 
 // 格式化播放量
-const formatCount = (count: number): string => {
+const formatCount = (count: number | undefined | null): string => {
+  if (!count) return "0";
   if (count >= 10000) {
     return (count / 10000).toFixed(1) + "万";
   }
