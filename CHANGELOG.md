@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [11.10.0](https://github.com/ylw1997/touchFish/compare/v11.9.1...v11.10.0) (2026-01-14)
+
+
+### ✨ Features | 新功能
+
+* 修复搜索点击用户无法打开问题,修复用户详情无法播放视频问题 ([b13a685](https://github.com/b13a685556bc013c6532c1d2e0f4825a9a847e59))
+* 修复bug ([faee99e](https://github.com/faee99e741d4dea98841af7d79a6dd20731b98b3))
+
 ### [11.9.1](https://github.com/ylw1997/touchFish/compare/v11.9.0...v11.9.1) (2026-01-14)
 
 
