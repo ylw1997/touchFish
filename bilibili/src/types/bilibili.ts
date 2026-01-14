@@ -350,3 +350,83 @@ export interface BilibiliSearchResponse {
     result: BilibiliSearchResultItem[];
   } | null;
 }
+
+// ============== 用户视频列表 API 类型 ==============
+
+// 用户视频项
+export interface UserVideoArchive {
+  aid: number;
+  title: string;
+  pubdate: number;
+  ctime: number;
+  state: number;
+  pic: string;
+  duration: number;
+  stat: {
+    view: number;
+  };
+  bvid: string;
+  ugc_pay: number;
+  interactive_video: boolean;
+  enable_vt: number;
+  vt_display: string;
+  playback_position: number;
+  desc: string;
+  upMid: number;
+}
+
+// 用户视频列表响应
+export interface BilibiliUserVideosResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    archives: UserVideoArchive[];
+    page: {
+      num: number;
+      size: number;
+      total: number;
+    };
+  } | null;
+}
+
+// ============== 用户卡片 API 类型 ==============
+
+// 用户卡片信息
+export interface BilibiliUserCard {
+  mid: string;
+  name: string;
+  sex: string;
+  face: string;
+  fans: number;
+  attention: number;
+  sign: string;
+  level_info: {
+    current_level: number;
+  };
+  Official?: {
+    role: number;
+    title: string;
+    desc: string;
+    type: number;
+  };
+  vip?: {
+    type: number;
+    status: number;
+  };
+}
+
+// 用户卡片响应
+export interface BilibiliUserCardResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    card: BilibiliUserCard;
+    following: boolean;
+    archive_count: number;
+    article_count: number;
+    follower: number;
+    like_num: number;
+  } | null;
+}

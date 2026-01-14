@@ -5,6 +5,7 @@ import { useCallback, useState, useMemo, useRef } from "react";
 import type { BilibiliListItem, DynamicItem } from "../types/bilibili";
 import { useRequest } from "./useRequest";
 import { BilibiliApi } from "../api";
+import { useRecommendCacheStore } from "../store/recommendCache";
 
 const useBilibiliAction = () => {
   // 视频列表相关状态
@@ -22,6 +23,15 @@ const useBilibiliAction = () => {
 
   const { request, messageApi } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
+
+  // 推荐视频缓存
+  const {
+    cachedList: recommendCachedList,
+    setCachedList: setRecommendCache,
+    appendCachedList: appendRecommendCache,
+    clearCache: clearRecommendCache,
+    isCacheValid: isRecommendCacheValid,
+  } = useRecommendCacheStore();
 
   // 清空列表
   const clearList = useCallback(() => {
@@ -87,34 +97,51 @@ const useBilibiliAction = () => {
   };
 
   // 获取列表数据
+  // forceRefresh: 强制刷新（手动点刷新按钮时使用）
   const getListData = useCallback(
-    async (payload: string, replace = false) => {
+    async (payload: string, replace = false, forceRefresh = false) => {
       setIsFetching(true);
       try {
         if (payload === "recommend") {
-          // 推荐接口
-          const result = await apiClient.getRecommend();
-          if (result.code === 0 && result.data?.item) {
-            const newList: BilibiliListItem[] = result.data.item.map(
-              (item) => ({
-                id: item.id,
-                bvid: item.bvid,
-                cid: item.cid,
-                uri: item.uri,
-                pic: item.pic,
-                title: item.title,
-                duration: item.duration,
-                pubdate: item.pubdate,
-                owner: item.owner,
-                stat: item.stat,
-                is_followed: item.is_followed,
-                rcmd_reason: item.rcmd_reason,
-              })
-            );
-            setList((currentList) =>
-              replace ? newList : [...currentList, ...newList]
-            );
+          // 推荐接口 - 支持缓存
+          // 如果缓存有效且不是强制刷新，直接使用缓存
+          if (isRecommendCacheValid() && !forceRefresh) {
+            setList(recommendCachedList);
             setTotal(999);
+          } else {
+            // 强制刷新时清空缓存
+            if (forceRefresh) {
+              clearRecommendCache();
+            }
+
+            const result = await apiClient.getRecommend();
+            if (result.code === 0 && result.data?.item) {
+              const newList: BilibiliListItem[] = result.data.item.map(
+                (item) => ({
+                  id: item.id,
+                  bvid: item.bvid,
+                  cid: item.cid,
+                  uri: item.uri,
+                  pic: item.pic,
+                  title: item.title,
+                  duration: item.duration,
+                  pubdate: item.pubdate,
+                  owner: item.owner,
+                  stat: item.stat,
+                  is_followed: item.is_followed,
+                  rcmd_reason: item.rcmd_reason,
+                })
+              );
+
+              if (replace || forceRefresh) {
+                setList(newList);
+                setRecommendCache(newList); // 替换缓存
+              } else {
+                setList((currentList) => [...currentList, ...newList]);
+                appendRecommendCache(newList); // 追加到缓存
+              }
+              setTotal(999);
+            }
           }
         } else if (payload === "dynamic") {
           // 动态接口
@@ -189,7 +216,15 @@ const useBilibiliAction = () => {
         setIsFetching(false);
       }
     },
-    [apiClient, list.length]
+    [
+      apiClient,
+      list.length,
+      appendRecommendCache,
+      clearRecommendCache,
+      isRecommendCacheValid,
+      recommendCachedList,
+      setRecommendCache,
+    ]
   );
 
   // 收藏夹分页
@@ -330,6 +365,33 @@ const useBilibiliAction = () => {
     [apiClient]
   );
 
+  // 获取用户上传的视频列表
+  const getUserVideos = useCallback(
+    async (mid: number, page: number = 1) => {
+      const result = await apiClient.getUserVideos(mid, page);
+      return result;
+    },
+    [apiClient]
+  );
+
+  // 获取用户卡片信息
+  const getUserCard = useCallback(
+    async (mid: number) => {
+      const result = await apiClient.getUserCard(mid);
+      return result;
+    },
+    [apiClient]
+  );
+
+  // 关注/取消关注用户
+  const modifyRelation = useCallback(
+    async (fid: number, act: 1 | 2) => {
+      const result = await apiClient.modifyRelation(fid, act);
+      return result;
+    },
+    [apiClient]
+  );
+
   return {
     getListData,
     isFetching,
@@ -347,6 +409,9 @@ const useBilibiliAction = () => {
     delFromWatchLater,
     getDanmaku,
     searchBilibili,
+    getUserVideos,
+    getUserCard,
+    modifyRelation,
   };
 };
 

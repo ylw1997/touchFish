@@ -16,7 +16,11 @@ interface UseFavoriteTabsOptions {
   tabs: TabItem[];
   getFavoriteFolders: () => Promise<FavoriteTabItem[]>;
   getFavoriteDetail: (mediaId: number, replace?: boolean) => Promise<void>;
-  getListData: (key: string, replace?: boolean) => Promise<void>;
+  getListData: (
+    key: string,
+    replace?: boolean,
+    forceRefresh?: boolean
+  ) => Promise<void>;
   clearList: () => void;
 }
 
@@ -84,7 +88,8 @@ export const useFavoriteTabs = ({
       getFavoriteDetail(currentFolderId, true);
     } else {
       const key = subActiveKey || activeKey;
-      getListData(key, true);
+      // 刷新时传入 forceRefresh=true，强制清空缓存并重新请求
+      getListData(key, true, true);
     }
   }, [
     activeKey,

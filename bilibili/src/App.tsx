@@ -30,6 +30,8 @@ import { useFontSizeStore } from "./store/fontSize";
 import { debounce } from "./utils";
 import PlayBar from "./components/PlayBar";
 import SearchDrawer from "./components/SearchDrawer";
+import UserProfileDrawer from "./components/UserProfileModal";
+import type { BilibiliOwner } from "./types/bilibili";
 
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
@@ -41,6 +43,10 @@ function App() {
 
   // 搜索抽屉状态
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
+
+  // 用户主页弹窗状态
+  const [userProfileOpen, setUserProfileOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<BilibiliOwner | null>(null);
 
   // 业务逻辑 Hook
   const {
@@ -56,6 +62,9 @@ function App() {
     delFromWatchLater,
     getPlayUrl,
     getDanmaku,
+    getUserVideos,
+    getUserCard,
+    modifyRelation,
   } = useBilibiliAction();
 
   const { addListToPlaylist } = usePlayerStore();
@@ -174,6 +183,10 @@ function App() {
                     }
                     onGetPlayUrl={getPlayUrl}
                     onGetDanmaku={getDanmaku}
+                    onUserClick={(owner) => {
+                      setSelectedUser(owner);
+                      setUserProfileOpen(true);
+                    }}
                   />
                 </motion.div>
               ))}
@@ -243,6 +256,17 @@ function App() {
 
       {/* 悬浮播放条 */}
       <PlayBar />
+
+      {/* 用户主页抽屉 */}
+      <UserProfileDrawer
+        open={userProfileOpen}
+        user={selectedUser}
+        onClose={() => setUserProfileOpen(false)}
+        onGetUserVideos={getUserVideos}
+        onGetUserCard={getUserCard}
+        onModifyRelation={modifyRelation}
+        onAddToWatchLater={addToWatchLater}
+      />
     </>
   );
 }

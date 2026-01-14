@@ -14,6 +14,9 @@ import {
   getBilibiliHeaders,
   getDanmaku,
   searchAll,
+  getUserVideos,
+  getUserCard,
+  modifyRelation,
 } from "../api/bilibili";
 import { CommandsType } from "../../types/commands";
 import { setConfigByKey } from "../core/config";
@@ -212,6 +215,36 @@ export class BilibiliProvider extends BaseWebviewProvider {
         const res = await searchAll(keyword, page || 1);
         webviewView.webview.postMessage({
           command: "BILIBILI_SEARCH_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_USER_VIDEOS": {
+        const { mid, page } = payload || {};
+        const res = await getUserVideos(mid, page || 1);
+        webviewView.webview.postMessage({
+          command: "BILIBILI_USER_VIDEOS_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_USER_CARD": {
+        const { mid } = payload || {};
+        const res = await getUserCard(mid);
+        webviewView.webview.postMessage({
+          command: "BILIBILI_USER_CARD_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_MODIFY_RELATION": {
+        const { fid, act } = payload || {};
+        const res = await modifyRelation(fid, act);
+        webviewView.webview.postMessage({
+          command: "BILIBILI_MODIFY_RELATION_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

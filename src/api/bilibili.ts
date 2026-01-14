@@ -364,3 +364,98 @@ export const searchAll = async (keyword: string, page: number = 1) => {
     };
   }
 };
+
+/**
+ * 获取用户上传的视频列表
+ * https://api.bilibili.com/x/series/recArchivesByKeywords?mid=xxx&keywords&pn=1
+ */
+export const getUserVideos = async (mid: number, page: number = 1) => {
+  try {
+    const response = await axios.get(
+      `https://api.bilibili.com/x/series/recArchivesByKeywords`,
+      {
+        params: {
+          mid,
+          keywords: "",
+          pn: page,
+        },
+        headers: await getBilibiliHeaders(),
+      }
+    );
+    return response;
+  } catch (error: any) {
+    showError(`获取用户视频失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: null,
+      },
+    };
+  }
+};
+
+/**
+ * 获取用户卡片信息
+ * https://api.bilibili.com/x/web-interface/card?mid=xxx
+ */
+export const getUserCard = async (mid: number) => {
+  try {
+    const response = await axios.get(
+      `https://api.bilibili.com/x/web-interface/card`,
+      {
+        params: { mid },
+        headers: await getBilibiliHeaders(),
+      }
+    );
+    return response;
+  } catch (error: any) {
+    showError(`获取用户信息失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: null,
+      },
+    };
+  }
+};
+
+/**
+ * 关注/取消关注用户
+ * https://api.bilibili.com/x/relation/modify
+ * act: 1=关注, 2=取消关注
+ */
+export const modifyRelation = async (fid: number, act: 1 | 2) => {
+  try {
+    const cookie = (await getOrSetBilibiliCookie()) as string;
+    const csrf = cookie.match(/bili_jct=([^;]+)/)?.[1] || "";
+    if (!csrf) {
+      return {
+        data: {
+          code: -1,
+          message: "无法获取CSRF Token",
+        },
+      };
+    }
+    const response = await axios.post(
+      "https://api.bilibili.com/x/relation/modify",
+      `fid=${fid}&act=${act}&csrf=${csrf}`,
+      {
+        headers: {
+          ...(await getBilibiliHeaders()),
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+    return response;
+  } catch (error: any) {
+    showError(`${act === 1 ? "关注" : "取消关注"}失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+      },
+    };
+  }
+};

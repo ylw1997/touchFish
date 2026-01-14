@@ -33,6 +33,7 @@ export interface VideoCardProps {
   ) => Promise<BilibiliPlayUrlResponse>;
   onGetDanmaku?: (cid: number) => Promise<BilibiliDanmakuResponse>;
   onError?: (message: string) => void;
+  onUserClick?: (owner: BilibiliListItem["owner"]) => void;
 }
 
 // 格式化播放量
@@ -62,6 +63,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   onDeleteFromWatchLater,
   onGetPlayUrl,
   onGetDanmaku,
+  onUserClick,
 }) => {
   const { message } = App.useApp();
   const { addToPlaylist } = usePlayerStore();
@@ -249,12 +251,24 @@ const VideoCard: React.FC<VideoCardProps> = ({
         ) : (
           <>
             <img
-              className="video-avatar"
+              className="video-avatar clickable"
               src={item.owner.face}
               alt={item.owner.name}
               referrerPolicy="no-referrer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUserClick?.(item.owner);
+              }}
             />
-            <span className="video-author">{item.owner.name}</span>
+            <span
+              className="video-author clickable"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUserClick?.(item.owner);
+              }}
+            >
+              {item.owner.name}
+            </span>
             <span className="video-dot">·</span>
             <span className="video-date">
               {item.pub_time || dayjs.unix(item.pubdate).format("MM-DD")}

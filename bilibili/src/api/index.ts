@@ -12,6 +12,8 @@ import type {
   BilibiliWatchLaterDelResponse,
   BilibiliDanmakuResponse,
   BilibiliSearchResponse,
+  BilibiliUserVideosResponse,
+  BilibiliUserCardResponse,
 } from "../types/bilibili";
 import type { CommandList } from "../../../types/commands";
 
@@ -115,6 +117,33 @@ export class BilibiliApi {
       "BILIBILI_SEARCH",
       { keyword, page },
       "搜索中..."
+    );
+  }
+
+  // 获取用户上传的视频列表
+  getUserVideos(mid: number, page: number = 1) {
+    return this.request<BilibiliUserVideosResponse>(
+      "BILIBILI_USER_VIDEOS",
+      { mid, page },
+      "获取用户视频中..."
+    );
+  }
+
+  // 获取用户卡片信息
+  getUserCard(mid: number) {
+    return this.request<BilibiliUserCardResponse>(
+      "BILIBILI_USER_CARD",
+      { mid },
+      "获取用户信息中..."
+    );
+  }
+
+  // 关注/取消关注用户
+  modifyRelation(fid: number, act: 1 | 2) {
+    return this.request<{ code: number; message: string }>(
+      "BILIBILI_MODIFY_RELATION",
+      { fid, act },
+      act === 1 ? "关注中..." : "取消关注中..."
     );
   }
 }
