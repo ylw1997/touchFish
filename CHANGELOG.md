@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.11.0](https://github.com/ylw1997/touchFish/compare/v11.10.0...v11.11.0) (2026-01-14)
+
+
+### ✨ Features | 新功能
+
+* 修复竖屏视频占用过小问题 ([54c95fb](https://github.com/54c95fb9fa0b9d15b845d8e88acf28c9a6ef5a04))
+
 ## [11.10.0](https://github.com/ylw1997/touchFish/compare/v11.9.1...v11.10.0) (2026-01-14)
 
 
