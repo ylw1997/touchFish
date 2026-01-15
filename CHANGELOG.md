@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.13.0](https://github.com/ylw1997/touchFish/compare/v11.12.0...v11.13.0) (2026-01-15)
+
+
+### ✨ Features | 新功能
+
+* 修复没有全屏问题 ([9f343c6](https://github.com/9f343c6b1d3f406023a9b31e4fe23d40cc73b7cd))
+
 ## [11.12.0](https://github.com/ylw1997/touchFish/compare/v11.11.0...v11.12.0) (2026-01-15)
 
 
