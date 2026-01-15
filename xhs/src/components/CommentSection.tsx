@@ -56,9 +56,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     >
       {loading && !comments.length && loaderFunc(2)}
       {error && (
-        <div style={{ color: "#ff4d4f", padding: "8px 0" }}>
-          {error}
-        </div>
+        <div style={{ color: "#ff4d4f", padding: "8px 0" }}>{error}</div>
       )}
       {!loading && !comments.length && !error && (
         <div style={{ color: "#999", padding: "8px" }}>暂无评论</div>
@@ -83,7 +81,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             renderItem={(comment) => (
               <CommonItem
                 c={comment}
-                onUserClick={() => onUserClick(comment)}
+                onUserClick={(userInfo) => onUserClick({ user_info: userInfo })}
                 onExpandSubComments={() => onExpandSubComments?.(comment.id)}
               />
             )}
