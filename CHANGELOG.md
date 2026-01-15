@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [11.12.0](https://github.com/ylw1997/touchFish/compare/v11.11.0...v11.12.0) (2026-01-15)
+
+
+### ✨ Features | 新功能
+
+* 初始化应用核心样式，包含全局设置、组件覆盖及视频相关UI样式。 ([966a987](https://github.com/966a98758967794a5562294b23805de129e255fc))
+* 更新readme.md ([0159d47](https://github.com/0159d478df5be74ee86b0834ae4d8a875e1d21d5))
+* 修复小红书评论用户打开问题 ([6c4b458](https://github.com/6c4b45841d2e3e29924444291aa5a5d1ff62aec1))
+
 ## [11.11.0](https://github.com/ylw1997/touchFish/compare/v11.10.0...v11.11.0) (2026-01-14)
 
 
