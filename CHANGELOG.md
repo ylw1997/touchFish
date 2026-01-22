@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.14.0](https://github.com/ylw1997/touchFish/compare/v11.13.0...v11.14.0) (2026-01-22)
+
+
+### ✨ Features | 新功能
+
+* 修复首页问题 ([be1843d](https://github.com/be1843d3db34092ac93445f144ed1957d4714741))
+
 ## [11.13.0](https://github.com/ylw1997/touchFish/compare/v11.12.0...v11.13.0) (2026-01-15)
 
 
