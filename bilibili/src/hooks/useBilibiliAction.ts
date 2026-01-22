@@ -49,12 +49,12 @@ const useBilibiliAction = () => {
         messageApi.success("链接已复制到剪贴板");
       });
     },
-    [messageApi]
+    [messageApi],
   );
 
   // 将动态数据转换为统一的列表项格式
   const convertDynamicToListItem = (
-    item: DynamicItem
+    item: DynamicItem,
   ): BilibiliListItem | null => {
     const archive = item.modules.module_dynamic?.major?.archive;
     if (!archive) return null;
@@ -115,9 +115,11 @@ const useBilibiliAction = () => {
             }
 
             const result = await apiClient.getRecommend();
+            console.log(result);
             if (result.code === 0 && result.data?.item) {
-              const newList: BilibiliListItem[] = result.data.item.map(
-                (item) => ({
+              const newList: BilibiliListItem[] = result.data.item
+                .filter((item) => item.goto == "av")
+                .map((item) => ({
                   id: item.id,
                   bvid: item.bvid,
                   cid: item.cid,
@@ -130,8 +132,7 @@ const useBilibiliAction = () => {
                   stat: item.stat,
                   is_followed: item.is_followed,
                   rcmd_reason: item.rcmd_reason,
-                })
-              );
+                }));
 
               if (replace || forceRefresh) {
                 setList(newList);
@@ -154,7 +155,7 @@ const useBilibiliAction = () => {
 
           const result = await apiClient.getDynamic(
             dynamicPageRef.current,
-            dynamicOffsetRef.current
+            dynamicOffsetRef.current,
           );
 
           if (result.code === 0 && result.data?.items) {
@@ -163,7 +164,7 @@ const useBilibiliAction = () => {
               .filter((item): item is BilibiliListItem => item !== null);
 
             setList((currentList) =>
-              replace ? newList : [...currentList, ...newList]
+              replace ? newList : [...currentList, ...newList],
             );
 
             // 更新分页状态
@@ -180,7 +181,7 @@ const useBilibiliAction = () => {
 
           const result = await apiClient.getWatchLater(
             watchLaterPageRef.current,
-            20
+            20,
           );
 
           if (result.code === 0 && result.data?.list) {
@@ -201,11 +202,11 @@ const useBilibiliAction = () => {
                   danmaku: item.stat.danmaku,
                 },
                 is_followed: 0,
-              })
+              }),
             );
 
             setList((currentList) =>
-              replace ? newList : [...currentList, ...newList]
+              replace ? newList : [...currentList, ...newList],
             );
 
             watchLaterPageRef.current += 1;
@@ -224,7 +225,7 @@ const useBilibiliAction = () => {
       isRecommendCacheValid,
       recommendCachedList,
       setRecommendCache,
-    ]
+    ],
   );
 
   // 收藏夹分页
@@ -262,7 +263,7 @@ const useBilibiliAction = () => {
         const result = await apiClient.getFavoriteDetail(
           mediaId,
           favoritePageRef.current,
-          20
+          20,
         );
 
         if (result.code === 0 && result.data) {
@@ -290,20 +291,20 @@ const useBilibiliAction = () => {
           }));
 
           setList((currentList) =>
-            replace ? newList : [...currentList, ...newList]
+            replace ? newList : [...currentList, ...newList],
           );
 
           favoriteHasMoreRef.current = result.data.has_more;
           favoritePageRef.current += 1;
           setTotal(
-            favoriteHasMoreRef.current ? 999 : list.length + newList.length
+            favoriteHasMoreRef.current ? 999 : list.length + newList.length,
           );
         }
       } finally {
         setIsFetching(false);
       }
     },
-    [apiClient, list.length]
+    [apiClient, list.length],
   );
 
   // 加入待看
@@ -317,7 +318,7 @@ const useBilibiliAction = () => {
       }
       return result;
     },
-    [apiClient, messageApi]
+    [apiClient, messageApi],
   );
 
   // 获取视频播放链接
@@ -326,7 +327,7 @@ const useBilibiliAction = () => {
       const result = await apiClient.getPlayUrl(bvid, cid);
       return result;
     },
-    [apiClient]
+    [apiClient],
   );
 
   // 移除稍后再看
@@ -337,14 +338,14 @@ const useBilibiliAction = () => {
         messageApi.success("已移除");
         // 从列表中移除
         setList((currentList) =>
-          currentList.filter((item) => item.id.toString() !== avid)
+          currentList.filter((item) => item.id.toString() !== avid),
         );
       } else {
         messageApi.error(result.message || "移除失败");
       }
       return result;
     },
-    [apiClient, messageApi]
+    [apiClient, messageApi],
   );
 
   // 获取弹幕
@@ -353,7 +354,7 @@ const useBilibiliAction = () => {
       const result = await apiClient.getDanmaku(cid);
       return result;
     },
-    [apiClient]
+    [apiClient],
   );
 
   // 搜索视频
@@ -362,7 +363,7 @@ const useBilibiliAction = () => {
       const result = await apiClient.search(keyword, page);
       return result;
     },
-    [apiClient]
+    [apiClient],
   );
 
   // 获取用户上传的视频列表
@@ -371,7 +372,7 @@ const useBilibiliAction = () => {
       const result = await apiClient.getUserVideos(mid, page);
       return result;
     },
-    [apiClient]
+    [apiClient],
   );
 
   // 获取用户卡片信息
@@ -380,7 +381,7 @@ const useBilibiliAction = () => {
       const result = await apiClient.getUserCard(mid);
       return result;
     },
-    [apiClient]
+    [apiClient],
   );
 
   // 关注/取消关注用户
@@ -389,7 +390,7 @@ const useBilibiliAction = () => {
       const result = await apiClient.modifyRelation(fid, act);
       return result;
     },
-    [apiClient]
+    [apiClient],
   );
 
   return {

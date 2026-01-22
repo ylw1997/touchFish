@@ -28,10 +28,10 @@ export const getBilibiliHeaders = async (extraHeaders = {}) => {
 export const getRecommend = async () => {
   try {
     return await axios.get(
-      `https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd`,
+      `https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd?web_location=1430650&y_num=5&fresh_type=3&feed_version=V8&homepage_ver=1&ps=10&last_y_num=5&screen=2010-595`,
       {
         headers: await getBilibiliHeaders(),
-      }
+      },
     );
   } catch (error: any) {
     showError(`获取B站推荐失败: ${error.message}`);
@@ -76,14 +76,14 @@ export const getDynamic = async (page: number = 1, offset?: string) => {
  */
 export const getWatchLater = async (
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
 ) => {
   try {
     return await axios.get(
       `https://api.bilibili.com/x/v2/history/toview/web?pn=${page}&ps=${pageSize}`,
       {
         headers: await getBilibiliHeaders(),
-      }
+      },
     );
   } catch (error: any) {
     showError(`获取B站待看失败: ${error.message}`);
@@ -127,7 +127,7 @@ export const getFavoriteFolders = async () => {
       `https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${userId}`,
       {
         headers: await getBilibiliHeaders(),
-      }
+      },
     );
   } catch (error: any) {
     showError(`获取B站收藏夹失败: ${error.message}`);
@@ -148,14 +148,14 @@ export const getFavoriteFolders = async () => {
 export const getFavoriteDetail = async (
   mediaId: number,
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
 ) => {
   try {
     return await axios.get(
       `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${mediaId}&pn=${page}&ps=${pageSize}`,
       {
         headers: await getBilibiliHeaders(),
-      }
+      },
     );
   } catch (error: any) {
     showError(`获取B站收藏夹详情失败: ${error.message}`);
@@ -202,7 +202,7 @@ export const addToWatchLater = async (bvid: string) => {
           ...(await getBilibiliHeaders()),
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
     );
   } catch (error: any) {
     showError(`加入待看失败: ${error.message}`);
@@ -269,7 +269,7 @@ export const delWatchLater = async (avid: string, csrf: string) => {
           ...(await getBilibiliHeaders()),
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
     );
   } catch (error: any) {
     showError(`移除待看失败: ${error.message}`);
@@ -350,7 +350,7 @@ export const searchAll = async (keyword: string, page: number = 1) => {
           page,
         },
         headers: await getBilibiliHeaders(),
-      }
+      },
     );
     return response;
   } catch (error: any) {
@@ -380,7 +380,7 @@ export const getUserVideos = async (mid: number, page: number = 1) => {
           pn: page,
         },
         headers: await getBilibiliHeaders(),
-      }
+      },
     );
     return response;
   } catch (error: any) {
@@ -406,7 +406,7 @@ export const getUserCard = async (mid: number) => {
       {
         params: { mid },
         headers: await getBilibiliHeaders(),
-      }
+      },
     );
     return response;
   } catch (error: any) {
@@ -446,7 +446,7 @@ export const modifyRelation = async (fid: number, act: 1 | 2) => {
           ...(await getBilibiliHeaders()),
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
     );
     return response;
   } catch (error: any) {
