@@ -18,6 +18,7 @@ import { BilibiliApi } from "../api";
 import { motion, AnimatePresence } from "framer-motion";
 import ArtPlayerComponent from "./ArtPlayerComponent";
 import Artplayer from "artplayer";
+import { Button } from "antd";
 
 const PlayBar: React.FC = () => {
   const {
@@ -197,14 +198,17 @@ const PlayBar: React.FC = () => {
                 <span className="playbar-playlist-title">
                   播放列表 ({playlist.length})
                 </span>
-                <div className="playbar-playlist-actions">
-                  <span onClick={clearPlaylist} title="清空列表">
+                {playlist.length > 0 && (
+                  <Button
+                    color="red"
+                    variant="filled"
+                    onClick={clearPlaylist}
+                    title="清空列表"
+                    shape="circle"
+                  >
                     <DeleteOutlined />
-                  </span>
-                  <span onClick={togglePlaylistOpen} title="关闭">
-                    <CloseOutlined />
-                  </span>
-                </div>
+                  </Button>
+                )}
               </div>
               <div className="playbar-playlist-content">
                 {playlist.length === 0 ? (
@@ -318,13 +322,15 @@ const PlayBar: React.FC = () => {
           </div>
           {/* 展开模式下的收起按钮 */}
           {isExpanded && (
-            <span
+            <Button
+              color="default"
+              variant="filled"
               onClick={handleExpandClick}
-              className={`playbar-list-btn`}
               title="收起"
+              shape="circle"
             >
               <FullscreenExitOutlined />
-            </span>
+            </Button>
           )}
           <div className="playbar-info" onClick={handleExpandClick}>
             {currentVideo ? (
@@ -341,31 +347,25 @@ const PlayBar: React.FC = () => {
             )}
           </div>
 
-          <div className="playbar-controls">
-            <span
-              onClick={handlePlayPause}
-              className="playbar-play-btn"
-              title={isPlaying ? "暂停" : "播放"}
-            >
-              {isLoading ? (
-                <LoadingOutlined spin />
-              ) : isPlaying ? (
-                <PauseOutlined />
-              ) : (
-                <CaretRightOutlined />
-              )}
-            </span>
-          </div>
+          <Button
+            color="default"
+            variant="filled"
+            onClick={handlePlayPause}
+            title={isPlaying ? "暂停" : "播放"}
+            shape="circle"
+          >
+            {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
+          </Button>
 
-          <div className="playbar-actions">
-            <span
-              onClick={togglePlaylistOpen}
-              className={`playbar-list-btn ${isPlaylistOpen ? "active" : ""}`}
-              title="播放列表"
-            >
-              <UnorderedListOutlined />
-            </span>
-          </div>
+          <Button
+            color={isPlaylistOpen ? "primary" : "default"}
+            variant="filled"
+            onClick={togglePlaylistOpen}
+            title="播放列表"
+            shape="circle"
+          >
+            <UnorderedListOutlined />
+          </Button>
         </div>
       </div>
     </>

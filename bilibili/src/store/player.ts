@@ -27,6 +27,7 @@ interface PlayerState {
   setPlaylist: (list: BilibiliListItem[]) => void;
   addToPlaylist: (video: BilibiliListItem) => void;
   addListToPlaylist: (list: BilibiliListItem[]) => void;
+  replacePlaylistAndPlay: (list: BilibiliListItem[]) => void;
   removeFromPlaylist: (id: number) => void;
   clearPlaylist: () => void;
   togglePlaylistOpen: () => void;
@@ -86,7 +87,7 @@ export const usePlayerStore = create<PlayerState>()(
         set((state) => {
           // 过滤掉已经在播放列表中的视频
           const newVideos = list.filter(
-            (video) => !state.playlist.some((v) => v.id === video.id)
+            (video) => !state.playlist.some((v) => v.id === video.id),
           );
 
           if (newVideos.length === 0) {
@@ -136,7 +137,7 @@ export const usePlayerStore = create<PlayerState>()(
         if (!currentVideo || playlist.length === 0) return;
 
         const currentIndex = playlist.findIndex(
-          (v) => v.id === currentVideo.id
+          (v) => v.id === currentVideo.id,
         );
         if (currentIndex < playlist.length - 1) {
           set({
@@ -147,12 +148,20 @@ export const usePlayerStore = create<PlayerState>()(
         }
       },
 
+      replacePlaylistAndPlay: (list) =>
+        set({
+          playlist: list,
+          currentVideo: list.length > 0 ? list[0] : null,
+          isPlaying: list.length > 0,
+          isExpanded: true, // 自动展开播放器以显示视频
+        }),
+
       playPrev: () => {
         const { currentVideo, playlist } = get();
         if (!currentVideo || playlist.length === 0) return;
 
         const currentIndex = playlist.findIndex(
-          (v) => v.id === currentVideo.id
+          (v) => v.id === currentVideo.id,
         );
         if (currentIndex > 0) {
           set({
@@ -173,6 +182,6 @@ export const usePlayerStore = create<PlayerState>()(
         isPlaylistOpen: state.isPlaylistOpen,
         isExpanded: state.isExpanded,
       }),
-    }
-  )
+    },
+  ),
 );

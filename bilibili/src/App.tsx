@@ -67,7 +67,7 @@ function App() {
     modifyRelation,
   } = useBilibiliAction();
 
-  const { addListToPlaylist } = usePlayerStore();
+  //   const { addListToPlaylist } = usePlayerStore();
 
   // 收藏夹 Tab 逻辑 Hook
   const {
@@ -211,8 +211,8 @@ function App() {
           <FloatButton
             onClick={() => {
               const top10 = list.slice(0, 10);
-              addListToPlaylist(top10);
-              message.success(`已将前${top10.length}条加入播放列表`);
+              usePlayerStore.getState().replacePlaylistAndPlay(top10);
+              message.success(`已开始播放前${top10.length}条视频`);
             }}
             icon={<PlaySquareOutlined style={{ color: "#fb7299" }} />}
             tooltip={{ title: "播放前10条", placement: "left" }}
