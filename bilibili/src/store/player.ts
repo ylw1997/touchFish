@@ -110,9 +110,33 @@ export const usePlayerStore = create<PlayerState>()(
         }),
 
       removeFromPlaylist: (id) =>
-        set((state) => ({
-          playlist: state.playlist.filter((v) => v.id !== id),
-        })),
+        set((state) => {
+          const newPlaylist = state.playlist.filter((v) => v.id !== id);
+
+          // 如果列表空了，清空所有状态
+          if (newPlaylist.length === 0) {
+            return {
+              playlist: [],
+              currentVideo: null,
+              isPlaying: false,
+              isExpanded: false,
+              videoUrl: null,
+            };
+          }
+
+          // 如果删除的是当前播放的视频，自动切到第一个
+          if (state.currentVideo && state.currentVideo.id === id) {
+            return {
+              playlist: newPlaylist,
+              currentVideo: newPlaylist[0],
+              isPlaying: true,
+            };
+          }
+
+          return {
+            playlist: newPlaylist,
+          };
+        }),
 
       clearPlaylist: () =>
         set({
