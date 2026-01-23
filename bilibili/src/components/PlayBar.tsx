@@ -67,7 +67,7 @@ const PlayBar: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [apiClient, setVideoUrl]
+    [apiClient, setVideoUrl],
   );
 
   // 记录上一次播放的视频ID，用于检测视频切换
@@ -141,7 +141,7 @@ const PlayBar: React.FC = () => {
         setIsPlaying(true);
       }
     },
-    [setIsPlaying]
+    [setIsPlaying],
   );
 
   const handleArtPlay = useCallback(() => {
@@ -157,9 +157,10 @@ const PlayBar: React.FC = () => {
       ({
         width: "100%",
         height: "100%",
+        minHeight: "0", // 覆盖默认的 200px，防止在收起状态下显示黑边
         pointerEvents: isExpanded ? "auto" : "none", // 收起时禁用鼠标交互
-      } as React.CSSProperties),
-    [isExpanded]
+      }) as React.CSSProperties,
+    [isExpanded],
   );
 
   // 当展开/收起状态变化时，重新计算 Artplayer 尺寸

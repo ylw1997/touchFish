@@ -137,7 +137,6 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
       style={{
         width: "100%",
         height: "100%",
-        minHeight: "200px",
         ...style,
         pointerEvents: controls ? "auto" : "none",
       }}

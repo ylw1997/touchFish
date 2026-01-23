@@ -727,6 +727,10 @@ a {
     display: none !important;
   }
 }
+// PlayBar 收起状态下，强制 ArtPlayer 视频元素 cover 填充
+.playbar:not(.playbar-expanded) .art-video-player video {
+  object-fit: cover !important;
+}
 
 // 可点击元素样式
 .clickable {
