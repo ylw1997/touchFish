@@ -115,7 +115,6 @@ const useBilibiliAction = () => {
             }
 
             const result = await apiClient.getRecommend();
-            console.log(result);
             if (result.code === 0 && result.data?.item) {
               const newList: BilibiliListItem[] = result.data.item
                 .filter((item) => item.goto == "av")
