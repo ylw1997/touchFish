@@ -1,6 +1,16 @@
 # 更新历史 
 
 
+## [11.15.0](https://github.com/ylw1997/touchFish/compare/v11.14.0...v11.15.0) (2026-01-23)
+
+
+### ✨ Features | 新功能
+
+* 删除最后一个自动结束所有播放 ([723d149](https://github.com/723d14989adcbb54abdb3a24dc6cd2c586c45b8c))
+* 优化播放按钮样式 ([2231072](https://github.com/223107291a076cd595ef046e0932afdf5a75e0a1))
+* 优化播放列表 ([5b0ffd1](https://github.com/5b0ffd16a00116eac2ec83b2dadf34fe40f6211a))
+* 优化播放样式 ([d0b8a14](https://github.com/d0b8a14c662b17944b9dbe9f069f7742f2ac0984))
+
 ## [11.14.0](https://github.com/ylw1997/touchFish/compare/v11.13.0...v11.14.0) (2026-01-22)
 
 
