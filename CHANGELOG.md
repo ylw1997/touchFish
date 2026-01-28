@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [11.17.0](https://github.com/ylw1997/touchFish/compare/v11.16.0...v11.17.0) (2026-01-28)
+
+
+### ✨ Features | 新功能
+
+* 更新b站显示的时间 ([8e1673d](https://github.com/8e1673deb826e60f14f1458ca3ea2499ad95598e))
+* 知乎隐藏图片同时隐藏头像 ([1bb68f1](https://github.com/1bb68f122f54108eeeeccd6bb413733e199f3aae))
+
 ## [11.16.0](https://github.com/ylw1997/touchFish/compare/v11.15.0...v11.16.0) (2026-01-28)
 
 
