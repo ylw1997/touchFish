@@ -29,7 +29,7 @@ export interface VideoCardProps {
   onDeleteFromWatchLater?: (avid: string) => void;
   onGetPlayUrl?: (
     bvid: string,
-    cid: number
+    cid: number,
   ) => Promise<BilibiliPlayUrlResponse>;
   onGetDanmaku?: (cid: number) => Promise<BilibiliDanmakuResponse>;
   onError?: (message: string) => void;
@@ -272,7 +272,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
             </span>
             <span className="video-dot">·</span>
             <span className="video-date">
-              {item.pub_time || dayjs.unix(item.pubdate).format("MM-DD")}
+              {item.pub_time || dayjs.unix(item.pubdate).format("YYYY-MM-DD")}
             </span>
           </>
         )}
