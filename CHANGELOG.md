@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.16.0](https://github.com/ylw1997/touchFish/compare/v11.15.0...v11.16.0) (2026-01-28)
+
+
+### ✨ Features | 新功能
+
+* 更新小红书js方法,更新微博样式 ([7b04504](https://github.com/7b045041645dd7315b71a9047d7737e909c53ff6))
+
 ## [11.15.0](https://github.com/ylw1997/touchFish/compare/v11.14.0...v11.15.0) (2026-01-23)
 
 
