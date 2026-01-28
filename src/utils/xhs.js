@@ -143,8 +143,9 @@ function buildContentString(method, uri, payload) {
     } else {
       valStr = String(value);
     }
-    valStr = valStr.replace(/=/g, "%3D");
-    return `${key}=${valStr}`;
+    // URL encode but keep commas unencoded (matching Python urllib.parse.quote with safe=",")
+    const encodedValue = encodeURIComponent(valStr).replace(/%2C/g, ",");
+    return `${key}=${encodedValue}`;
   });
   return uri + "?" + parts.join("&");
 }
@@ -197,19 +198,19 @@ function buildPayload(dHex, a1, appId, content) {
 
   const timeOffset = randByte(
     CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MIN,
-    CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MAX
+    CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MAX,
   );
   payload.push(...envFingerprintB(timestamp - timeOffset * 1000));
 
   const sequenceValue = randByte(
     CONFIG.SEQUENCE_VALUE_MIN,
-    CONFIG.SEQUENCE_VALUE_MAX
+    CONFIG.SEQUENCE_VALUE_MAX,
   );
   payload.push(...intToLE(sequenceValue, 4));
 
   const windowPropsLength = randByte(
     CONFIG.WINDOW_PROPS_LENGTH_MIN,
-    CONFIG.WINDOW_PROPS_LENGTH_MAX
+    CONFIG.WINDOW_PROPS_LENGTH_MAX,
   );
   payload.push(...intToLE(windowPropsLength, 4));
 
@@ -250,7 +251,7 @@ function signXs(
   uri,
   a1Value,
   xsecAppid = "xhs-pc-web",
-  payload = null
+  payload = null,
 ) {
   method = method.toUpperCase();
 
@@ -267,7 +268,7 @@ function signXs(
     dVal,
     a1Value.trim(),
     xsecAppid.trim(),
-    content
+    content,
   );
   // console.log("XHSHOW_MIN.js payload:", payloadArr);
   const xorBytes = xorArray(payloadArr);
@@ -294,9 +295,9 @@ function tripletToBase64(e) {
 }
 function encodeChunk(e, a, r) {
   for (var c, d = [], s = a; s < r; s += 3)
-    (c =
+    ((c =
       ((e[s] << 16) & 0xff0000) + ((e[s + 1] << 8) & 65280) + (255 & e[s + 2])),
-      d.push(tripletToBase64(c));
+      d.push(tripletToBase64(c)));
   return d.join("");
 }
 function encodeUtf8(e) {
@@ -304,7 +305,7 @@ function encodeUtf8(e) {
     var d = a.charAt(c);
     if ("%" === d) {
       var s = parseInt(a.charAt(c + 1) + a.charAt(c + 2), 16);
-      r.push(s), (c += 2);
+      (r.push(s), (c += 2));
     } else r.push(d.charCodeAt(0));
   }
   return r;

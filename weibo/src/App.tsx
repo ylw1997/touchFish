@@ -87,7 +87,7 @@ function App() {
 
   // showImg
   const [showImg, setShowImg] = useState(
-    window.showImg != undefined ? window.showImg : true
+    window.showImg != undefined ? window.showImg : true,
   );
 
   const handleTopicClick = useCallback((topic: string) => {
@@ -150,7 +150,7 @@ function App() {
       clearList();
       getListData(key, true);
     },
-    [clearList, getListData]
+    [clearList, getListData],
   );
 
   // tab��换
@@ -167,7 +167,7 @@ function App() {
         getListData(key, true);
       }
     },
-    [clearList, getListData, tabs]
+    [clearList, getListData, tabs],
   );
 
   return (
@@ -200,7 +200,7 @@ function App() {
           onChange={onSubChange}
           centered
           style={{
-            top: "47px",
+            top: "46px",
           }}
         />
       )}
