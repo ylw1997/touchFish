@@ -37,8 +37,8 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     return item.content && item.content.length > 2000;
   }, [item.content]);
   const [expanded, setExpanded] = useState(!isLoneContent);
-  const register = useExpandedStore(state => state.register);
-  const unregister = useExpandedStore(state => state.unregister);
+  const register = useExpandedStore((state) => state.register);
+  const unregister = useExpandedStore((state) => state.unregister);
   const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -48,7 +48,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const imagesVisible = globalShowImg || overrideShow;
   const hasImages = useMemo(
     () => (item.content && item.content.includes("<img")) || item.image_area,
-    [item.content, item.image_area]
+    [item.content, item.image_area],
   );
 
   const backToView = () => {
@@ -117,7 +117,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         >
           {item.index}
         </span>
-      ) : (
+      ) : imagesVisible ? (
         <Avatar
           isBordered
           radius="sm"
@@ -126,7 +126,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         >
           {item.author?.name}
         </Avatar>
-      )}
+      ) : null}
       <div style={{ marginLeft: 10 }}>
         <span
           className={"nick-name"}
@@ -155,7 +155,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         onClick={() =>
           handleVote(
             item.id,
-            item.vote_next_step === "unvote" ? "neutral" : "up"
+            item.vote_next_step === "unvote" ? "neutral" : "up",
           )
         }
       >
@@ -165,7 +165,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
           <LikeOutlined />
         )}{" "}
         {item.voteup_count}
-      </span>
+      </span>,
     );
   }
   if (item.comment_count != undefined) {
@@ -180,7 +180,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             <MessageOutlined /> {item.comment_count}
           </span>
         )}
-      </span>
+      </span>,
     );
   }
   if (isLoneContent) {
@@ -195,14 +195,14 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             <DownOutlined /> 全文
           </>
         )}
-      </span>
+      </span>,
     );
   }
   if (item.metrics_area) {
     actions.push(
       <span key="metrics">
         <FireOutlined /> {item.metrics_area}
-      </span>
+      </span>,
     );
   }
 
@@ -224,15 +224,17 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       }}
     >
       <ShareAltOutlined /> 分享
-    </span>
+    </span>,
   );
 
   return (
-    <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
+    <div
+      ref={cardRef}
+      style={{ scrollMarginTop: "50px" }}
+      className={!imagesVisible ? "hide-images" : ""}
+    >
       <Card key={item.id} title={renderTitle()} actions={actions}>
-        <div
-          className={`content ${!imagesVisible ? "hide-images" : ""}`.trim()}
-        >
+        <div className="content">
           {item.content ? (
             parseZhihuItemContent(expanded ? item.content : item.excerpt)
           ) : (
