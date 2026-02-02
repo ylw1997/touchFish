@@ -7,9 +7,9 @@
  * @Description: +
  */
 import * as vscode from "vscode";
-import { ReadState } from '../core/readState';
-import { BaseNewsProvider } from '../core/baseNewsProvider';
-import ContextManager from '../utils/extensionContext';
+import { ReadState } from "../core/readState";
+import { BaseNewsProvider } from "../core/baseNewsProvider";
+import ContextManager from "../utils/extensionContext";
 import { getChipHellNewsDetail } from "../api/chipHell";
 import { getNewsDetail } from "../api/ithome";
 import { getV2exDetail } from "../api/v2ex";
@@ -48,7 +48,7 @@ const acquirePanel = (): vscode.WebviewPanel => {
     "touchfish.newsDetail",
     "新闻",
     vscode.ViewColumn.One,
-    { retainContextWhenHidden: false, enableScripts: false }
+    { retainContextWhenHidden: false, enableScripts: false },
   );
   panel.onDidDispose(() => (panel = null));
   return panel;
@@ -70,7 +70,7 @@ const createWebviewHtml = (
   originalUrl?: string,
   extraCss = "",
   extraHead = "",
-  showTitle = true
+  showTitle = true,
 ) => {
   const buttonHtml = originalUrl
     ? `<a class="open-article-btn" href="${originalUrl}" >打开原文章</a>`
@@ -91,7 +91,7 @@ const createWebviewHtml = (
 const openDetailView = async (
   title: string,
   fetchData: () => Promise<any>,
-  processData: (data: any) => ProcessResult
+  processData: (data: any) => ProcessResult,
 ) => {
   const webviewPanel = acquirePanel();
   webviewPanel.title = title;
@@ -107,7 +107,7 @@ const openDetailView = async (
       originalUrl,
       extraCss,
       extraHead,
-      showTitle
+      showTitle,
     );
   } catch (error) {
     console.error("[touchfish] detail fetch error", error);
@@ -118,7 +118,11 @@ const openDetailView = async (
 // 通用注册器（未来新增来源时更容易）
 const registerArticleCommand = (
   commandId: string,
-  handler: (title: string, idOrUrl: any, uniqueId?: string) => Promise<ProcessResult>
+  handler: (
+    title: string,
+    idOrUrl: any,
+    uniqueId?: string,
+  ) => Promise<ProcessResult>,
 ): vscode.Disposable => {
   return vscode.commands.registerCommand(
     commandId,
@@ -126,14 +130,14 @@ const registerArticleCommand = (
       await openDetailView(
         title,
         () => handler(title, idOrUrl, uniqueId),
-        (r) => r
+        (r) => r,
       );
       // 标记已读并局部更新（不再全量刷新）
       if (uniqueId) {
         ReadState.markRead(ContextManager.context, uniqueId);
         BaseNewsProvider.markReadGlobally(uniqueId);
       }
-    }
+    },
   );
 };
 
@@ -149,7 +153,7 @@ export const openUrl = registerArticleCommand(
       '<link rel="stylesheet" href="https://www.ithome.com/css/detail.min.css">';
     const content = res?.data?.detail;
     return { content: content || "内容加载失败", extraCss, extraHead };
-  }
+  },
 );
 
 // 打开chiphell新闻详情
@@ -162,7 +166,7 @@ export const openCHUrl = registerArticleCommand(
       originalUrl: url,
       extraCss: `.news_detail { font-size: 16px; }`,
     };
-  }
+  },
 );
 
 // 打开v2ex新闻详情
@@ -183,7 +187,7 @@ export const openV2exUrl = registerArticleCommand(
       extraCss,
       showTitle: false,
     };
-  }
+  },
 );
 
 // 打开虎扑新闻详情
@@ -223,13 +227,23 @@ export const openHupuUrl = registerArticleCommand(
       extraCss,
       showTitle: false,
     };
-  }
+  },
 );
 
+// 打开nga新闻详情
 // 打开nga新闻详情
 export const openNgaUrl = registerArticleCommand(
   "nga.openUrl",
   async (_title, url: string) => {
+    // 处理配置 cookie 的特殊 item
+    if (url === "configure_nga_cookie") {
+      vscode.commands.executeCommand("touchfish.setNgaToken");
+      return {
+        content: "正在配置 NGA Cookie，请关注顶部输入框...",
+        extraCss: "",
+      };
+    }
+
     const res = await getNgaNewsDetail(url);
     const extraCss = `
     p,span { font-size:16px; }
@@ -250,16 +264,25 @@ export const openNgaUrl = registerArticleCommand(
       originalUrl: "https://bbs.nga.cn" + url,
       extraCss,
     };
-  }
+  },
 );
 
 // 打开 Linux.do 话题详情
 export const openLinuxDoUrl = registerArticleCommand(
   "linuxdo.openUrl",
   async (_title, url: string) => {
+    // 处理配置 cookie 的特殊 item
+    if (url === "configure_linuxdo_cookie") {
+      vscode.commands.executeCommand("touchfish.setLinuxDoToken");
+      return {
+        content: "正在配置 LinuxDo Cookie，请关注顶部输入框...",
+        extraCss: "",
+      };
+    }
+
     const { getNewsDetail } = await import("../api/linuxDo");
     const html = await getNewsDetail(url);
-    
+
     const extraCss = `
       .news_detail {
         font-size: 16px;
@@ -376,12 +399,12 @@ export const openLinuxDoUrl = registerArticleCommand(
         text-decoration: underline; 
       }
     `;
-    
+
     return {
       content: html || "内容加载失败",
       originalUrl: url,
       extraCss,
       showTitle: false,
     };
-  }
+  },
 );

@@ -11,23 +11,12 @@ import { NewsItem } from "../type/type";
 import { load } from "cheerio";
 import { TextDecoder } from "util";
 import * as vscode from "vscode";
-import { showInfo, showError } from '../utils/errorMessage';
-import { setConfigByKey } from "../core/config";
+import { showInfo, showError } from "../utils/errorMessage";
 import { uniqueNews } from "../utils/util";
 
-export const getOrSetNgaCookie = async () => {
+export const getNgaCookie = () => {
   const config = vscode.workspace.getConfiguration("touchfish");
-  let cookie = config.get("ngaCookie") as string | undefined;
-  // 如果没有就请输入cookie
-  if (!cookie) {
-    cookie = await vscode.window.showInputBox({
-      placeHolder: "请输入nga的cookie",
-      prompt: "请输入nga的cookie",
-    });
-    if (cookie) {
-      await setConfigByKey("ngaCookie", cookie);
-    }
-  }
+  const cookie = config.get("ngaCookie") as string | undefined;
   return cookie;
 };
 
@@ -35,7 +24,15 @@ export const getOrSetNgaCookie = async () => {
 export const getNgaList = async (tab?: string) => {
   const resArr: NewsItem[] = [];
   try {
-    const cookie = (await getOrSetNgaCookie()) as string;
+    const cookie = getNgaCookie();
+    if (!cookie) {
+      return [
+        {
+          title: "NGA Cookie 未配置 (点击配置)",
+          url: "configure_nga_cookie",
+        },
+      ];
+    }
     const res = await axios.get("https://bbs.nga.cn/thread.php?fid=" + tab, {
       maxRedirects: 50,
       headers: {
@@ -58,8 +55,8 @@ export const getNgaList = async (tab?: string) => {
       });
     });
     return resArr;
-  } catch (error) {
-     showInfo("nga加载失败,请刷新列表重试！");
+  } catch {
+    showInfo("nga加载失败,请刷新列表重试！");
   }
   return uniqueNews(resArr);
 };
@@ -67,7 +64,10 @@ export const getNgaList = async (tab?: string) => {
 // 获取nga文章详情
 export const getNgaNewsDetail = async (url: string): Promise<string | null> => {
   try {
-    const cookie = (await getOrSetNgaCookie()) as string;
+    const cookie = getNgaCookie();
+    if (!cookie) {
+      return null;
+    }
     const { data } = await axios.get("https://bbs.nga.cn" + url, {
       maxRedirects: 50,
       headers: {
@@ -85,7 +85,7 @@ export const getNgaNewsDetail = async (url: string): Promise<string | null> => {
     // 找到[img]开头[/img]结尾的字符串,替换为img标签,并src添加http://img4.nga.178.com
     ngaContext = datastr.replace(
       /\[img\](.*?)\[\/img\]/g,
-      '<img src="https://img.nga.178.com/attachments/$1" />'
+      '<img src="https://img.nga.178.com/attachments/$1" />',
     );
     // 删除 [pid= 开头 [/b] 结尾的字符串
     ngaContext = ngaContext.replace(/\[pid=(.*?)\](.*?)\[\/b\]/g, "");
@@ -102,8 +102,8 @@ export const getNgaNewsDetail = async (url: string): Promise<string | null> => {
     const $ = load(ngaContext);
     const content = $("#m_posts").html();
     return content;
-  } catch (error) {
-     showError("获取nga新闻详情失败");
+  } catch {
+    showError("获取nga新闻详情失败");
     return null;
   }
 };

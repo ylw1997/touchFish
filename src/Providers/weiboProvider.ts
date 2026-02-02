@@ -51,7 +51,7 @@ export class WeiboProvider extends BaseWebviewProvider {
 
   protected async handleCustomMessage(
     message: IncomingMessage,
-    webviewView: WebviewView
+    webviewView: WebviewView,
   ) {
     const { command, payload, uuid } = message;
     switch (command) {

@@ -41,22 +41,30 @@ export class BilibiliProvider extends BaseWebviewProvider {
 
   protected async handleCustomMessage(
     message: IncomingMessage,
-    webviewView: WebviewView
+    webviewView: WebviewView,
   ) {
     const { command, payload, uuid } = message;
     switch (command) {
       case "BILIBILI_RECOMMEND": {
-        let res = await getRecommend();
+        const res = await getRecommend();
         if (res.data?.code !== 0) {
           if (res.data?.code === -101) {
-            const cookie = await window.showInputBox({
-              placeHolder: "请输入B站的cookie",
-              prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
-            });
-            if (cookie) {
-              await setConfigByKey("bilibiliCookie", cookie);
-              res = await getRecommend();
-            }
+            showInfo("B站 Cookie 失效或未配置", "配置 Cookie").then(
+              async (selection) => {
+                if (selection === "配置 Cookie") {
+                  const cookie = await window.showInputBox({
+                    placeHolder: "请输入B站的cookie",
+                    prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                  });
+                  if (cookie) {
+                    await setConfigByKey("bilibiliCookie", cookie);
+                    window.showInformationMessage(
+                      "Cookie 设置成功，请点击刷新按钮",
+                    );
+                  }
+                }
+              },
+            );
           } else {
             showInfo(`获取B站推荐失败: ${res.data?.message || "未知错误"}`);
           }
@@ -70,17 +78,25 @@ export class BilibiliProvider extends BaseWebviewProvider {
       }
       case "BILIBILI_DYNAMIC": {
         const { page, offset } = payload || { page: 1 };
-        let res = await getDynamic(page, offset);
+        const res = await getDynamic(page, offset);
         if (res.data?.code !== 0) {
           if (res.data?.code === -101) {
-            const cookie = await window.showInputBox({
-              placeHolder: "请输入B站的cookie",
-              prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
-            });
-            if (cookie) {
-              await setConfigByKey("bilibiliCookie", cookie);
-              res = await getDynamic(page, offset);
-            }
+            showInfo("B站 Cookie 失效或未配置", "配置 Cookie").then(
+              async (selection) => {
+                if (selection === "配置 Cookie") {
+                  const cookie = await window.showInputBox({
+                    placeHolder: "请输入B站的cookie",
+                    prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                  });
+                  if (cookie) {
+                    await setConfigByKey("bilibiliCookie", cookie);
+                    window.showInformationMessage(
+                      "Cookie 设置成功，请点击刷新按钮",
+                    );
+                  }
+                }
+              },
+            );
           } else {
             showInfo(`获取B站动态失败: ${res.data?.message || "未知错误"}`);
           }
@@ -94,17 +110,25 @@ export class BilibiliProvider extends BaseWebviewProvider {
       }
       case "BILIBILI_WATCHLATER": {
         const { page = 1, pageSize = 20 } = payload || {};
-        let res = await getWatchLater(page, pageSize);
+        const res = await getWatchLater(page, pageSize);
         if (res.data?.code !== 0) {
           if (res.data?.code === -101) {
-            const cookie = await window.showInputBox({
-              placeHolder: "请输入B站的cookie",
-              prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
-            });
-            if (cookie) {
-              await setConfigByKey("bilibiliCookie", cookie);
-              res = await getWatchLater(page, pageSize);
-            }
+            showInfo("B站 Cookie 失效或未配置", "配置 Cookie").then(
+              async (selection) => {
+                if (selection === "配置 Cookie") {
+                  const cookie = await window.showInputBox({
+                    placeHolder: "请输入B站的cookie",
+                    prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                  });
+                  if (cookie) {
+                    await setConfigByKey("bilibiliCookie", cookie);
+                    window.showInformationMessage(
+                      "Cookie 设置成功，请点击刷新按钮",
+                    );
+                  }
+                }
+              },
+            );
           } else {
             showInfo(`获取B站待看失败: ${res.data?.message || "未知错误"}`);
           }
@@ -141,20 +165,28 @@ export class BilibiliProvider extends BaseWebviewProvider {
       }
       case "BILIBILI_FAVORITE_DETAIL": {
         const { mediaId, page = 1, pageSize = 20 } = payload || {};
-        let res = await getFavoriteDetail(mediaId, page, pageSize);
+        const res = await getFavoriteDetail(mediaId, page, pageSize);
         if (res.data?.code !== 0) {
           if (res.data?.code === -101) {
-            const cookie = await window.showInputBox({
-              placeHolder: "请输入B站的cookie",
-              prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
-            });
-            if (cookie) {
-              await setConfigByKey("bilibiliCookie", cookie);
-              res = await getFavoriteDetail(mediaId, page, pageSize);
-            }
+            showInfo("B站 Cookie 失效或未配置", "配置 Cookie").then(
+              async (selection) => {
+                if (selection === "配置 Cookie") {
+                  const cookie = await window.showInputBox({
+                    placeHolder: "请输入B站的cookie",
+                    prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                  });
+                  if (cookie) {
+                    await setConfigByKey("bilibiliCookie", cookie);
+                    window.showInformationMessage(
+                      "Cookie 设置成功，请点击刷新按钮",
+                    );
+                  }
+                }
+              },
+            );
           } else {
             showInfo(
-              `获取B站收藏夹详情失败: ${res.data?.message || "未知错误"}`
+              `获取B站收藏夹详情失败: ${res.data?.message || "未知错误"}`,
             );
           }
         }
