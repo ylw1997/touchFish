@@ -65,19 +65,24 @@ export const getNgaList = async (tab?: string) => {
 export const getNgaNewsDetail = async (
   url: string,
   page?: number,
+  authorId?: number,
 ): Promise<{
   html: string | null;
   totalPages: number;
   currentPage: number;
+  authorUid: number;
 }> => {
   try {
     const cookie = getNgaCookie();
     if (!cookie) {
-      return { html: null, totalPages: 1, currentPage: 1 };
+      return { html: null, totalPages: 1, currentPage: 1, authorUid: 0 };
     }
     let fullUrl = "https://bbs.nga.cn" + url;
     if (page && page > 1) {
       fullUrl += "&page=" + page;
+    }
+    if (authorId) {
+      fullUrl += "&authorid=" + authorId;
     }
     const { data } = await axios.get(fullUrl, {
       maxRedirects: 50,
@@ -94,6 +99,15 @@ export const getNgaNewsDetail = async (
     // 解析总页数 - __PAGE 格式: {0:'url',1:总页数,2:当前页,3:每页数}
     let totalPages = 1;
     let currentPage = 1;
+    let authorUid = 0;
+
+    // 解析楼主 UID - 从 commonui.postArg.setDefault(fid,0,tid,authorUid,...) 提取第4个参数
+    const authorMatch = datastr.match(
+      /commonui\.postArg\.setDefault\([^,]+,[^,]+,[^,]+,(\d+)/,
+    );
+    if (authorMatch) {
+      authorUid = parseInt(authorMatch[1], 10) || 0;
+    }
 
     // 使用非贪婪匹配查找 1:数字 (总页数) 和 2:数字 (当前页)
     const pageMatch = datastr.match(/__PAGE\s*=\s*\{.*?\b1\s*:\s*(\d+)/);
@@ -135,9 +149,9 @@ export const getNgaNewsDetail = async (
     ngaContext = ngaContext.replace(/\[b\](.*?)\[\/b\]/g, "");
     const $ = load(ngaContext);
     const content = $("#m_posts").html();
-    return { html: content, totalPages, currentPage };
+    return { html: content, totalPages, currentPage, authorUid };
   } catch {
     showError("获取nga新闻详情失败");
-    return { html: null, totalPages: 1, currentPage: 1 };
+    return { html: null, totalPages: 1, currentPage: 1, authorUid: 0 };
   }
 };

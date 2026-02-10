@@ -233,15 +233,28 @@ export const openHupuUrl = registerArticleCommand(
 // 打开nga新闻详情
 // 打开nga新闻详情 - 支持分页
 let ngaPanel: vscode.WebviewPanel | null = null;
-let ngaState = { url: "", page: 1, title: "", totalPages: 1 };
+let ngaState = {
+  url: "",
+  page: 1,
+  title: "",
+  totalPages: 1,
+  authorId: 0,
+  opAuthorId: 0,
+};
 
 const loadNgaPage = async () => {
   if (!ngaPanel) return;
   ngaPanel.webview.html = "加载中...";
-  const { html, totalPages, currentPage } = await getNgaNewsDetail(
+  const { html, totalPages, currentPage, authorUid } = await getNgaNewsDetail(
     ngaState.url,
     ngaState.page,
+    ngaState.authorId || undefined,
   );
+
+  // 记录楼主 UID
+  if (authorUid > 0) {
+    ngaState.opAuthorId = authorUid;
+  }
 
   // 同步状态：如果返回了当前页，说明可能发生了重定向或初始加载
   if (currentPage > 0) {
@@ -272,12 +285,18 @@ const loadNgaPage = async () => {
   const safe = sanitizeHtml(content)
     .replace(/<img/g, '<img referrerpolicy="no-referrer"')
     .replace(/<video/g, '<video referrerpolicy="no-referrer"');
-  const originalUrl =
+  let originalUrl =
     "https://bbs.nga.cn" +
     ngaState.url +
     (ngaState.page > 1 ? "&page=" + ngaState.page : "");
+  if (ngaState.authorId) {
+    originalUrl += "&authorid=" + ngaState.authorId;
+  }
 
   const isLastPage = ngaState.page >= totalPages;
+  const isFiltering = ngaState.authorId > 0;
+  const filterBtnText = isFiltering ? "查看全部" : "只看楼主";
+  const filterBtnId = isFiltering ? "clearFilterBtn" : "filterAuthorBtn";
 
   ngaPanel.webview.html = `<!DOCTYPE html><html lang="zh-cn"><head><meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -287,6 +306,7 @@ const loadNgaPage = async () => {
     <a class="open-article-btn" href="${originalUrl}">打开原文章</a>
     <div class="news_detail">${safe}</div>
     <div class="pagination">
+      <button class="page-btn" id="${filterBtnId}">${filterBtnText}</button>
       <button class="page-btn" id="prevBtn" ${ngaState.page <= 1 ? "disabled" : ""}>上一页</button>
       <span class="page-info">第 ${ngaState.page}/${totalPages} 页</span>
       <button class="page-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
@@ -299,6 +319,18 @@ const loadNgaPage = async () => {
       document.getElementById('nextBtn').addEventListener('click', () => {
         vscode.postMessage({ command: 'nextPage' });
       });
+      const filterBtn = document.getElementById('filterAuthorBtn');
+      const clearBtn = document.getElementById('clearFilterBtn');
+      if (filterBtn) {
+        filterBtn.addEventListener('click', () => {
+          vscode.postMessage({ command: 'filterAuthor' });
+        });
+      }
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          vscode.postMessage({ command: 'clearFilter' });
+        });
+      }
     </script>
     </body></html>`;
 };
@@ -320,7 +352,14 @@ export const openNgaUrl = vscode.commands.registerCommand(
     }
 
     // 更新状态
-    ngaState = { url, page: initialPage, title, totalPages: 1 };
+    ngaState = {
+      url,
+      page: initialPage,
+      title,
+      totalPages: 1,
+      authorId: 0,
+      opAuthorId: 0,
+    };
 
     // 创建专用的 NGA panel（启用脚本），只在首次创建时注册消息处理器
     if (!ngaPanel) {
@@ -342,6 +381,17 @@ export const openNgaUrl = vscode.commands.registerCommand(
           await loadNgaPage();
         } else if (message.command === "prevPage" && ngaState.page > 1) {
           ngaState.page--;
+          await loadNgaPage();
+        } else if (
+          message.command === "filterAuthor" &&
+          ngaState.opAuthorId > 0
+        ) {
+          ngaState.authorId = ngaState.opAuthorId;
+          ngaState.page = 1;
+          await loadNgaPage();
+        } else if (message.command === "clearFilter") {
+          ngaState.authorId = 0;
+          ngaState.page = 1;
           await loadNgaPage();
         }
       });
