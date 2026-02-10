@@ -1,18 +1,27 @@
 /* Registry of all news sources */
-import { NewsSource, NewsListItem } from './types';
-import { getV2exList, getV2exDetail } from '../api/v2ex';
-import { getChipHellNews, getChipHellNewsDetail } from '../api/chipHell';
-import { getNgaList, getNgaNewsDetail } from '../api/nga';
-import { getNewsList as getIthomeList, getNewsDetail as getIthomeDetail } from '../api/ithome';
-import { getHupuList, getHupuDetail } from '../api/hupu';
-import { getNewsList as getLinuxDoList, getNewsDetail as getLinuxDoDetail } from '../api/linuxDo';
+import { NewsSource, NewsListItem } from "./types";
+import { getV2exList, getV2exDetail } from "../api/v2ex";
+import { getChipHellNews, getChipHellNewsDetail } from "../api/chipHell";
+import { getNgaList, getNgaNewsDetail } from "../api/nga";
+import {
+  getNewsList as getIthomeList,
+  getNewsDetail as getIthomeDetail,
+} from "../api/ithome";
+import { getHupuList, getHupuDetail } from "../api/hupu";
+import {
+  getNewsList as getLinuxDoList,
+  getNewsDetail as getLinuxDoDetail,
+} from "../api/linuxDo";
 // Zhihu / Weibo can be integrated later (they have more complex flows)
 
-function normalizeList(items: { title: string; url: string }[], source: NewsSource['key']): NewsListItem[] {
+function normalizeList(
+  items: { title: string; url: string }[],
+  source: NewsSource["key"],
+): NewsListItem[] {
   return items.map((item) => ({
     id: `${source}:${item.url}`,
     title: item.title.trim(),
-    url: item.url.startsWith('http') ? item.url : item.url,
+    url: item.url.startsWith("http") ? item.url : item.url,
     source,
     supportsDetail: true,
   }));
@@ -20,37 +29,42 @@ function normalizeList(items: { title: string; url: string }[], source: NewsSour
 
 export const newsSources: NewsSource[] = [
   {
-    key: 'v2ex',
+    key: "v2ex",
     supportsDetail: true,
-    fetchList: async (params?: { tab?: string }) => normalizeList(await getV2exList(params?.tab || 'all'), 'v2ex'),
+    fetchList: async (params?: { tab?: string }) =>
+      normalizeList(await getV2exList(params?.tab || "all"), "v2ex"),
     fetchDetail: async (url) => {
-      const html = await getV2exDetail(url.replace('https://www.v2ex.com',''));
+      const html = await getV2exDetail(url.replace("https://www.v2ex.com", ""));
       return html || undefined;
     },
   },
   {
-    key: 'chiphell',
+    key: "chiphell",
     supportsDetail: true,
-    fetchList: async () => normalizeList(await getChipHellNews(), 'chiphell'),
+    fetchList: async () => normalizeList(await getChipHellNews(), "chiphell"),
     fetchDetail: getChipHellNewsDetail,
   },
   {
-    key: 'nga',
+    key: "nga",
     supportsDetail: true,
-    fetchList: async (params?: { tab?: string }) => normalizeList((await getNgaList(params?.tab)) || [], 'nga'),
+    fetchList: async (params?: { tab?: string }) =>
+      normalizeList((await getNgaList(params?.tab)) || [], "nga"),
     fetchDetail: async (url) => {
-      const html = await getNgaNewsDetail(url);
+      const { html } = await getNgaNewsDetail(url);
       return html || undefined;
     },
   },
   {
-    key: 'ithome',
+    key: "ithome",
     supportsDetail: true,
     fetchList: async () => {
       const res = await getIthomeList();
       // itHome 返回结构: axios response -> data.newslist ? 未严格定义
       const list = res.data?.newslist || res.data || [];
-      return normalizeList(list.map((n: any) => ({ title: n.title, url: n.newsid+'' })), 'ithome');
+      return normalizeList(
+        list.map((n: any) => ({ title: n.title, url: n.newsid + "" })),
+        "ithome",
+      );
     },
     fetchDetail: async (id) => {
       const res = await getIthomeDetail(Number(id));
@@ -58,26 +72,27 @@ export const newsSources: NewsSource[] = [
     },
   },
   {
-    key: 'hupu',
+    key: "hupu",
     supportsDetail: true,
-    fetchList: async (params?: { tab?: string }) => normalizeList(await getHupuList(params?.tab || 'all-gambia'), 'hupu'),
+    fetchList: async (params?: { tab?: string }) =>
+      normalizeList(await getHupuList(params?.tab || "all-gambia"), "hupu"),
     fetchDetail: async (url) => {
       const html = await getHupuDetail(url);
       return html || undefined;
-    }
+    },
   },
   {
-    key: 'linuxdo',
+    key: "linuxdo",
     supportsDetail: true,
     fetchList: async (params?: any) => {
-      const tab = params?.tab || 'latest';
+      const tab = params?.tab || "latest";
       const res = await getLinuxDoList(tab);
       const list = res.data || [];
       return list.map((item: any) => ({
         id: `linuxdo:${item.guid || item.url}`,
         title: item.title.trim(),
         url: item.url,
-        source: 'linuxdo' as const,
+        source: "linuxdo" as const,
         supportsDetail: true,
         time: item.time,
         author: item.author,
@@ -87,10 +102,10 @@ export const newsSources: NewsSource[] = [
     fetchDetail: async (url) => {
       const html = await getLinuxDoDetail(url);
       return html || undefined;
-    }
+    },
   },
 ];
 
 export function getNewsSource(key: string) {
-  return newsSources.find(s => s.key === key);
+  return newsSources.find((s) => s.key === key);
 }

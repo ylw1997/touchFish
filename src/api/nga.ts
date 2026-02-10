@@ -62,13 +62,24 @@ export const getNgaList = async (tab?: string) => {
 };
 
 // 获取nga文章详情
-export const getNgaNewsDetail = async (url: string): Promise<string | null> => {
+export const getNgaNewsDetail = async (
+  url: string,
+  page?: number,
+): Promise<{
+  html: string | null;
+  totalPages: number;
+  currentPage: number;
+}> => {
   try {
     const cookie = getNgaCookie();
     if (!cookie) {
-      return null;
+      return { html: null, totalPages: 1, currentPage: 1 };
     }
-    const { data } = await axios.get("https://bbs.nga.cn" + url, {
+    let fullUrl = "https://bbs.nga.cn" + url;
+    if (page && page > 1) {
+      fullUrl += "&page=" + page;
+    }
+    const { data } = await axios.get(fullUrl, {
       maxRedirects: 50,
       headers: {
         Cookie: cookie,
@@ -79,6 +90,29 @@ export const getNgaNewsDetail = async (url: string): Promise<string | null> => {
       responseEncoding: "utf8",
     });
     const datastr = new TextDecoder("gbk").decode(data);
+
+    // 解析总页数 - __PAGE 格式: {0:'url',1:总页数,2:当前页,3:每页数}
+    let totalPages = 1;
+    let currentPage = 1;
+
+    // 使用非贪婪匹配查找 1:数字 (总页数) 和 2:数字 (当前页)
+    const pageMatch = datastr.match(/__PAGE\s*=\s*\{.*?\b1\s*:\s*(\d+)/);
+    const currentMatch = datastr.match(/__PAGE\s*=\s*\{.*?\b2\s*:\s*(\d+)/);
+
+    if (pageMatch) {
+      totalPages = parseInt(pageMatch[1], 10) || 1;
+    }
+    if (currentMatch) {
+      currentPage = parseInt(currentMatch[1], 10) || 1;
+    }
+
+    console.log(
+      "[NGA] Parsed totalPages:",
+      totalPages,
+      "currentPage:",
+      currentPage,
+    );
+
     let ngaContext = "";
     // 把所有[img]./替换为[img]
     datastr.replace(/\[img\].\//g, "[img]");
@@ -101,9 +135,9 @@ export const getNgaNewsDetail = async (url: string): Promise<string | null> => {
     ngaContext = ngaContext.replace(/\[b\](.*?)\[\/b\]/g, "");
     const $ = load(ngaContext);
     const content = $("#m_posts").html();
-    return content;
+    return { html: content, totalPages, currentPage };
   } catch {
     showError("获取nga新闻详情失败");
-    return null;
+    return { html: null, totalPages: 1, currentPage: 1 };
   }
 };

@@ -231,21 +231,25 @@ export const openHupuUrl = registerArticleCommand(
 );
 
 // 打开nga新闻详情
-// 打开nga新闻详情
-export const openNgaUrl = registerArticleCommand(
-  "nga.openUrl",
-  async (_title, url: string) => {
-    // 处理配置 cookie 的特殊 item
-    if (url === "configure_nga_cookie") {
-      vscode.commands.executeCommand("touchfish.setNgaToken");
-      return {
-        content: "正在配置 NGA Cookie，请关注顶部输入框...",
-        extraCss: "",
-      };
-    }
+// 打开nga新闻详情 - 支持分页
+let ngaPanel: vscode.WebviewPanel | null = null;
+let ngaState = { url: "", page: 1, title: "", totalPages: 1 };
 
-    const res = await getNgaNewsDetail(url);
-    const extraCss = `
+const loadNgaPage = async () => {
+  if (!ngaPanel) return;
+  ngaPanel.webview.html = "加载中...";
+  const { html, totalPages, currentPage } = await getNgaNewsDetail(
+    ngaState.url,
+    ngaState.page,
+  );
+
+  // 同步状态：如果返回了当前页，说明可能发生了重定向或初始加载
+  if (currentPage > 0) {
+    ngaState.page = currentPage;
+  }
+  ngaState.totalPages = totalPages;
+
+  const extraCss = `
     p,span { font-size:16px; }
     .c1, .posterinfo, .postrow span br, h3, .postbodysubtitle, .comment_c .postInfo, .small_colored_text_btn { display:none; }
     img { max-height:600px; display:block; }
@@ -258,12 +262,101 @@ export const openNgaUrl = registerArticleCommand(
     .comment_c { background: var(--vscode-list-inactiveSelectionBackground); padding:10px; margin:0 5px 5px 0; word-break: break-word; }
     .comment_c img { max-height:200px; }
     .comment_c .comment_c_1 { display:none; }
+    .pagination { position:fixed; bottom:15px; right:15px; display:flex; gap:6px; z-index:9999; background: var(--vscode-editor-background); padding: 5px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.3); }
+    .page-btn { background-color: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border,transparent); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+    .page-btn:hover { background-color: var(--vscode-button-hoverBackground); }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-info { color: var(--vscode-editor-foreground); padding: 4px 8px; font-size: 12px; display: flex; align-items: center; }
   `;
-    return {
-      content: res || "内容加载失败",
-      originalUrl: "https://bbs.nga.cn" + url,
-      extraCss,
-    };
+  const content = html || "内容加载失败";
+  const safe = sanitizeHtml(content)
+    .replace(/<img/g, '<img referrerpolicy="no-referrer"')
+    .replace(/<video/g, '<video referrerpolicy="no-referrer"');
+  const originalUrl =
+    "https://bbs.nga.cn" +
+    ngaState.url +
+    (ngaState.page > 1 ? "&page=" + ngaState.page : "");
+
+  const isLastPage = ngaState.page >= totalPages;
+
+  ngaPanel.webview.html = `<!DOCTYPE html><html lang="zh-cn"><head><meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${ngaState.title}</title>
+    <style>${BASE_CSS}${extraCss}</style></head><body>
+    <h1 style="text-align:center">${ngaState.title}</h1>
+    <a class="open-article-btn" href="${originalUrl}">打开原文章</a>
+    <div class="news_detail">${safe}</div>
+    <div class="pagination">
+      <button class="page-btn" id="prevBtn" ${ngaState.page <= 1 ? "disabled" : ""}>上一页</button>
+      <span class="page-info">第 ${ngaState.page}/${totalPages} 页</span>
+      <button class="page-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+    </div>
+    <script>
+      const vscode = acquireVsCodeApi();
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        vscode.postMessage({ command: 'prevPage' });
+      });
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        vscode.postMessage({ command: 'nextPage' });
+      });
+    </script>
+    </body></html>`;
+};
+
+export const openNgaUrl = vscode.commands.registerCommand(
+  "nga.openUrl",
+  async (title: string, url: string, uniqueId?: string) => {
+    // 处理配置 cookie 的特殊 item
+    if (url === "configure_nga_cookie") {
+      vscode.commands.executeCommand("touchfish.setNgaToken");
+      return;
+    }
+
+    // 尝试从 URL 中解析 page 参数
+    let initialPage = 1;
+    const pageMatch = url.match(/[?&]page=(\d+)/);
+    if (pageMatch) {
+      initialPage = parseInt(pageMatch[1], 10) || 1;
+    }
+
+    // 更新状态
+    ngaState = { url, page: initialPage, title, totalPages: 1 };
+
+    // 创建专用的 NGA panel（启用脚本），只在首次创建时注册消息处理器
+    if (!ngaPanel) {
+      ngaPanel = vscode.window.createWebviewPanel(
+        "touchfish.ngaDetail",
+        title,
+        vscode.ViewColumn.One,
+        { retainContextWhenHidden: true, enableScripts: true },
+      );
+      ngaPanel.onDidDispose(() => (ngaPanel = null));
+
+      // 只在创建时注册一次消息处理器
+      ngaPanel.webview.onDidReceiveMessage(async (message) => {
+        if (
+          message.command === "nextPage" &&
+          ngaState.page < ngaState.totalPages
+        ) {
+          ngaState.page++;
+          await loadNgaPage();
+        } else if (message.command === "prevPage" && ngaState.page > 1) {
+          ngaState.page--;
+          await loadNgaPage();
+        }
+      });
+    } else {
+      ngaPanel.title = title;
+    }
+
+    ngaPanel.reveal();
+    await loadNgaPage();
+
+    // 标记已读
+    if (uniqueId) {
+      ReadState.markRead(ContextManager.context, uniqueId);
+      BaseNewsProvider.markReadGlobally(uniqueId);
+    }
   },
 );
 
