@@ -238,21 +238,31 @@ let ngaState = {
   page: 1,
   title: "",
   totalPages: 1,
-  authorId: 0,
+  filtering: false,
   opAuthorId: 0,
 };
 
 const loadNgaPage = async () => {
   if (!ngaPanel) return;
   ngaPanel.webview.html = "加载中...";
+  // 构建筛选参数
+  let filterQuery: string | undefined;
+  if (ngaState.filtering && ngaState.opAuthorId !== 0) {
+    if (ngaState.opAuthorId > 0) {
+      filterQuery = "&authorid=" + ngaState.opAuthorId;
+    } else {
+      filterQuery = "&pid=0&opt=512";
+    }
+  }
+
   const { html, totalPages, currentPage, authorUid } = await getNgaNewsDetail(
     ngaState.url,
     ngaState.page,
-    ngaState.authorId || undefined,
+    filterQuery,
   );
 
-  // 记录楼主 UID
-  if (authorUid > 0) {
+  // 记录楼主 UID（包括负数/匿名）
+  if (authorUid !== 0) {
     ngaState.opAuthorId = authorUid;
   }
 
@@ -289,12 +299,12 @@ const loadNgaPage = async () => {
     "https://bbs.nga.cn" +
     ngaState.url +
     (ngaState.page > 1 ? "&page=" + ngaState.page : "");
-  if (ngaState.authorId) {
-    originalUrl += "&authorid=" + ngaState.authorId;
+  if (ngaState.filtering && filterQuery) {
+    originalUrl += filterQuery;
   }
 
   const isLastPage = ngaState.page >= totalPages;
-  const isFiltering = ngaState.authorId > 0;
+  const isFiltering = ngaState.filtering;
   const filterBtnText = isFiltering ? "查看全部" : "只看楼主";
   const filterBtnId = isFiltering ? "clearFilterBtn" : "filterAuthorBtn";
 
@@ -357,7 +367,7 @@ export const openNgaUrl = vscode.commands.registerCommand(
       page: initialPage,
       title,
       totalPages: 1,
-      authorId: 0,
+      filtering: false,
       opAuthorId: 0,
     };
 
@@ -384,13 +394,13 @@ export const openNgaUrl = vscode.commands.registerCommand(
           await loadNgaPage();
         } else if (
           message.command === "filterAuthor" &&
-          ngaState.opAuthorId > 0
+          ngaState.opAuthorId !== 0
         ) {
-          ngaState.authorId = ngaState.opAuthorId;
+          ngaState.filtering = true;
           ngaState.page = 1;
           await loadNgaPage();
         } else if (message.command === "clearFilter") {
-          ngaState.authorId = 0;
+          ngaState.filtering = false;
           ngaState.page = 1;
           await loadNgaPage();
         }

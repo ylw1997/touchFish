@@ -65,7 +65,7 @@ export const getNgaList = async (tab?: string) => {
 export const getNgaNewsDetail = async (
   url: string,
   page?: number,
-  authorId?: number,
+  filterQuery?: string,
 ): Promise<{
   html: string | null;
   totalPages: number;
@@ -81,8 +81,8 @@ export const getNgaNewsDetail = async (
     if (page && page > 1) {
       fullUrl += "&page=" + page;
     }
-    if (authorId) {
-      fullUrl += "&authorid=" + authorId;
+    if (filterQuery) {
+      fullUrl += filterQuery;
     }
     const { data } = await axios.get(fullUrl, {
       maxRedirects: 50,
@@ -102,11 +102,12 @@ export const getNgaNewsDetail = async (
     let authorUid = 0;
 
     // 解析楼主 UID - 从 commonui.postArg.setDefault(fid,0,tid,authorUid,...) 提取第4个参数
+    // 注意：匿名帖的 authorUid 是负数（如 -5）
     const authorMatch = datastr.match(
-      /commonui\.postArg\.setDefault\([^,]+,[^,]+,[^,]+,(\d+)/,
+      /commonui\.postArg\.setDefault\([^,]+,[^,]+,[^,]+,(-?\d+)/,
     );
     if (authorMatch) {
-      authorUid = parseInt(authorMatch[1], 10) || 0;
+      authorUid = parseInt(authorMatch[1], 10);
     }
 
     // 使用非贪婪匹配查找 1:数字 (总页数) 和 2:数字 (当前页)
