@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.19.0](https://github.com/ylw1997/touchFish/compare/v11.18.0...v11.19.0) (2026-02-10)
+
+
+### ✨ Features | 新功能
+
+* nga分页功能开发 ([55ecb0a](https://github.com/55ecb0a6441d7a9a11145f60fd8e0c7e1978ea57))
+
 ## [11.18.0](https://github.com/ylw1997/touchFish/compare/v11.17.0...v11.18.0) (2026-02-02)
 
 
