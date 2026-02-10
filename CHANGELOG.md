@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.20.0](https://github.com/ylw1997/touchFish/compare/v11.19.0...v11.20.0) (2026-02-10)
+
+
+### ✨ Features | 新功能
+
+* nga只看楼主功能完成 ([460ddde](https://github.com/460dddeb7fe1ba7b89b5b27c9af568472c7e2526))
+
 ## [11.19.0](https://github.com/ylw1997/touchFish/compare/v11.18.0...v11.19.0) (2026-02-10)
 
 
