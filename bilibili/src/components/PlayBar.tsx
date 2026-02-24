@@ -11,6 +11,7 @@ import {
   CaretRightOutlined,
   PlayCircleFilled,
   FullscreenExitOutlined,
+  SwitcherOutlined,
 } from "@ant-design/icons";
 import { usePlayerStore } from "../store/player";
 import { useRequest } from "../hooks/useRequest";
@@ -42,6 +43,7 @@ const PlayBar: React.FC = () => {
   const videoRef = useRef<Artplayer | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [danmakuData, setDanmakuData] = React.useState<string>("");
+  const [isPip, setIsPip] = React.useState(false);
 
   const { request } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
@@ -125,6 +127,13 @@ const PlayBar: React.FC = () => {
     }
   };
 
+  const handlePipClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.pip = !videoRef.current.pip;
+    }
+  };
+
   // 使用 useCallback 包裹回调函数，避免 PlayBar 重渲染导致 Artplayer 重复初始化
   const handleArtInstance = useCallback(
     (art: Artplayer) => {
@@ -141,6 +150,11 @@ const PlayBar: React.FC = () => {
         // 强制同步 UI 状态
         setIsPlaying(true);
       }
+
+      // 监听画中画状态
+      art.on("pip", (state: boolean) => {
+        setIsPip(state);
+      });
     },
     [setIsPlaying],
   );
@@ -355,6 +369,17 @@ const PlayBar: React.FC = () => {
             shape="circle"
           >
             {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
+          </Button>
+
+          <Button
+            color={isPip ? "primary" : "default"}
+            variant="filled"
+            onClick={handlePipClick}
+            title="画中画"
+            shape="circle"
+            disabled={!videoUrl}
+          >
+            <SwitcherOutlined />
           </Button>
 
           <Button
