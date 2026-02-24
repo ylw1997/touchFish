@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.22.0](https://github.com/ylw1997/touchFish/compare/v11.21.0...v11.22.0) (2026-02-24)
+
+
+### ✨ Features | 新功能
+
+* 修复小红书无法使用问题 ([4404ee9](https://github.com/4404ee94e3c0a5f4f649fdede9e13c504ec62c74))
+
 ## [11.21.0](https://github.com/ylw1997/touchFish/compare/v11.20.0...v11.21.0) (2026-02-10)
 
 
