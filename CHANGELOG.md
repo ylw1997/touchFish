@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.23.0](https://github.com/ylw1997/touchFish/compare/v11.22.0...v11.23.0) (2026-02-24)
+
+
+### ✨ Features | 新功能
+
+* bilibili播放bar增加画中画功能 ([6719293](https://github.com/67192933528370fc7e7db5ad1e91753f96173ebf))
+
 ## [11.22.0](https://github.com/ylw1997/touchFish/compare/v11.21.0...v11.22.0) (2026-02-24)
 
 
