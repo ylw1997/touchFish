@@ -1,7 +1,7 @@
 // Minimal JS implementation: only signXs (random mode)
 // Browser compatible version (No Node.js dependencies)
 // Usage:
-//   import { signXs } from './xhshow_min.js';
+//   import { signXs } from './xhs.js';
 //   const xs = signXs('POST','/api/sns/web/v1/homefeed', a1Value, 'xhs-pc-web', payload);
 
 import CryptoJS from "crypto-js";
@@ -16,18 +16,27 @@ const CONFIG = {
   X3_BASE64_ALPHABET:
     "MfgqrsbcyzPQRStuvC7mn501HIJBo2DEFTKdeNOwxWXYZap89+/A4UVLhijkl63G",
   HEX_KEY:
-    "71a302257793271ddd273bcee3e4b98d9d7935e1da33f5765e2ea8afb6dc77a51a499d23b67c20660025860cbf13d4540d92497f58686c574e508f46e1956344f39139bf4faf22a3eef120b79258145b2feb5193b6478669961298e79bedca646e1a693a926154a5a7a1bd1cf0dedb742f917a747a1e388b234f2277",
-  VERSION_BYTES: [119, 104, 96, 41],
+    "71a302257793271ddd273bcee3e4b98d9d7935e1da33f5765e2ea8afb6dc77a51a499d23b67c20660025860cbf13d4540d92497f58686c574e508f46e1956344f39139bf4faf22a3eef120b79258145b2feb5193b6478669961298e79bedca646e1a693a926154a5a7a1bd1cf0dedb742f917a747a1e388b234f2277516db7116035439730fa61e9822a0eca7bff72d8",
+  VERSION_BYTES: [121, 104, 96, 41],
+  PAYLOAD_LENGTH: 144,
+  A1_LENGTH: 52,
+  APP_ID_LENGTH: 10,
+  MD5_XOR_LENGTH: 8,
+  TIMESTAMP_LE_LENGTH: 8,
   ENV_FINGERPRINT_XOR_KEY: 41,
   SEQUENCE_VALUE_MIN: 15,
   SEQUENCE_VALUE_MAX: 50,
-  WINDOW_PROPS_LENGTH_MIN: 900,
+  WINDOW_PROPS_LENGTH_MIN: 1000,
   WINDOW_PROPS_LENGTH_MAX: 1200,
   CHECKSUM_VERSION: 1,
   CHECKSUM_XOR_KEY: 115,
   CHECKSUM_FIXED_TAIL: [
     249, 65, 103, 103, 201, 181, 131, 99, 94, 7, 68, 250, 132, 21,
   ],
+  ENV_TABLE: [115, 248, 83, 102, 103, 201, 181, 131, 99, 94, 4, 68, 250, 132, 21],
+  ENV_CHECKS_DEFAULT: [0, 1, 18, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0],
+  HASH_IV: [1831565813, 461845907, 2246822507, 3266489909],
+  A3_PREFIX: [2, 97, 51, 16],
   ENV_FINGERPRINT_TIME_OFFSET_MIN: 10,
   ENV_FINGERPRINT_TIME_OFFSET_MAX: 50,
   X3_PREFIX: "mns0301_",
@@ -74,7 +83,22 @@ function intToLE(val, len = 4) {
   let v = val >>> 0;
   for (let i = 0; i < len; i++) {
     out.push(v & 0xff);
-    v >>= 8;
+    v = v >>> 8;
+  }
+  // For len > 4 (e.g. 8-byte timestamp), pad with zeros
+  while (out.length < len) {
+    out.push(0);
+  }
+  return out;
+}
+
+function intToLE8(val) {
+  // Convert a potentially large integer (e.g. timestamp ms) to 8-byte LE
+  const out = [];
+  let v = val;
+  for (let i = 0; i < 8; i++) {
+    out.push(v & 0xff);
+    v = Math.floor(v / 256);
   }
   return out;
 }
@@ -89,7 +113,9 @@ function bytesFromHex(hex) {
 const HEX_KEY_BYTES = bytesFromHex(CONFIG.HEX_KEY);
 
 function xorArray(arr) {
-  return arr.map((b, i) => (b ^ HEX_KEY_BYTES[i]) & 0xff);
+  return arr.map((b, i) =>
+    i < HEX_KEY_BYTES.length ? (b ^ HEX_KEY_BYTES[i]) & 0xff : b & 0xff,
+  );
 }
 
 function b64StdEncode(bytes) {
@@ -154,94 +180,167 @@ function md5Hex(s) {
   return CryptoJS.MD5(s).toString();
 }
 
-function structPackLittleEndianQ(ts) {
-  const data = new Array(8).fill(0);
-  for (let i = 0; i < 8; i++) {
-    data[i] = ts & 0xff;
-    ts = Math.floor(ts / 256);
+// --- Extract API path from content string ---
+
+function extractApiPath(contentString) {
+  const bracePos = contentString.indexOf("{");
+  const questionPos = contentString.indexOf("?");
+
+  if (bracePos !== -1 && questionPos !== -1) {
+    return contentString.slice(0, Math.min(bracePos, questionPos));
+  } else if (bracePos !== -1) {
+    return contentString.slice(0, bracePos);
+  } else if (questionPos !== -1) {
+    return contentString.slice(0, questionPos);
+  } else {
+    return contentString;
   }
-  return data;
 }
 
-function envFingerprintA(ts, xorKey) {
-  const data = structPackLittleEndianQ(ts);
+// --- Custom hash v2 (128-bit) ---
 
-  const sum1 = data[1] + data[2] + data[3] + data[4];
-  const sum2 = data[5] + data[6] + data[7];
+function rotateLeft32(val, n) {
+  return ((val << n) | (val >>> (32 - n))) >>> 0;
+}
 
-  const mark = ((sum1 & 0xff) + sum2) & 0xff;
-  data[0] = mark;
+function customHashV2(inputBytes) {
+  let [s0, s1, s2, s3] = CONFIG.HASH_IV;
+  const length = inputBytes.length;
 
-  for (let i = 0; i < data.length; i++) {
-    data[i] ^= xorKey;
+  s0 = (s0 ^ length) >>> 0;
+  s1 = (s1 ^ ((length << 8) >>> 0)) >>> 0;
+  s2 = (s2 ^ ((length << 16) >>> 0)) >>> 0;
+  s3 = (s3 ^ ((length << 24) >>> 0)) >>> 0;
+
+  for (let i = 0; i < Math.floor(length / 8); i++) {
+    // Read two 32-bit LE values
+    let v0 = 0,
+      v1 = 0;
+    for (let j = 0; j < 4; j++) {
+      v0 |= (inputBytes[i * 8 + j] & 0xff) << (j * 8);
+      v1 |= (inputBytes[i * 8 + 4 + j] & 0xff) << (j * 8);
+    }
+    v0 = v0 >>> 0;
+    v1 = v1 >>> 0;
+
+    s0 = rotateLeft32(((s0 + v0) >>> 0) ^ s2, 7);
+    s1 = rotateLeft32(((v0 ^ s1) + s3) >>> 0, 11);
+    s2 = rotateLeft32(((s2 + v1) >>> 0) ^ s0, 13);
+    s3 = rotateLeft32(((s3 ^ v1) + s1) >>> 0, 17);
   }
 
-  return data;
+  let t0 = (s0 ^ length) >>> 0;
+  let t1 = (s1 ^ t0) >>> 0;
+  let t2 = (s2 + t1) >>> 0;
+  let t3 = (s3 ^ t2) >>> 0;
+
+  const rt0 = rotateLeft32(t0, 9);
+  const rt1 = rotateLeft32(t1, 13);
+  const rt2 = rotateLeft32(t2, 17);
+  const rt3 = rotateLeft32(t3, 19);
+
+  s0 = (rt0 + rt2) >>> 0;
+  s1 = (rt1 ^ rt3) >>> 0;
+  s2 = (rt2 + s0) >>> 0;
+  s3 = (rt3 ^ s1) >>> 0;
+
+  const result = [];
+  for (const s of [s0, s1, s2, s3]) {
+    for (let j = 0; j < 4; j++) {
+      result.push((s >>> (j * 8)) & 0xff);
+    }
+  }
+  return result;
 }
 
-function envFingerprintB(ts) {
-  return structPackLittleEndianQ(ts);
-}
+// --- Build 144-byte payload ---
 
 function buildPayload(dHex, a1, appId, content) {
   const payload = [];
+  const timestamp = Date.now();
 
+  // Version bytes [4]
   payload.push(...CONFIG.VERSION_BYTES);
 
+  // Seed [4]
   const seed = rand32();
   const seedBytes = intToLE(seed, 4);
   payload.push(...seedBytes);
-  const seedByte0 = seedBytes[0];
+  const seedByte = seedBytes[0];
 
-  const timestamp = Date.now();
-  payload.push(...envFingerprintA(timestamp, CONFIG.ENV_FINGERPRINT_XOR_KEY));
+  // Timestamp LE [8] - direct, no fingerprint A
+  const tsBytes = intToLE8(timestamp);
+  payload.push(...tsBytes);
 
+  // Page load timestamp LE [8] - direct, no fingerprint B
   const timeOffset = randByte(
     CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MIN,
     CONFIG.ENV_FINGERPRINT_TIME_OFFSET_MAX,
   );
-  payload.push(...envFingerprintB(timestamp - timeOffset * 1000));
+  const effectiveTsMs = timestamp - timeOffset * 1000;
+  payload.push(...intToLE8(effectiveTsMs));
 
+  // Sequence value [4]
   const sequenceValue = randByte(
     CONFIG.SEQUENCE_VALUE_MIN,
     CONFIG.SEQUENCE_VALUE_MAX,
   );
   payload.push(...intToLE(sequenceValue, 4));
 
+  // Window props length [4]
   const windowPropsLength = randByte(
     CONFIG.WINDOW_PROPS_LENGTH_MIN,
     CONFIG.WINDOW_PROPS_LENGTH_MAX,
   );
   payload.push(...intToLE(windowPropsLength, 4));
 
-  const uriLength = content.length;
+  // URI length [4] - UTF-8 byte length
+  const uriLength = utf8Bytes(content).length;
   payload.push(...intToLE(uriLength, 4));
 
-  const md5Bytes = bytesFromHex(dHex);
-  for (let i = 0; i < 8; i++) {
-    payload.push(md5Bytes[i] ^ seedByte0);
+  // MD5 XOR segment [8]
+  const md5BytesArr = bytesFromHex(dHex);
+  for (let i = 0; i < CONFIG.MD5_XOR_LENGTH; i++) {
+    payload.push(md5BytesArr[i] ^ seedByte);
   }
 
-  payload.push(52);
-
+  // A1 [1 + 52]
   const a1Bytes = utf8Bytes(a1);
-  const paddedA1 = new Array(52).fill(0);
-  for (let i = 0; i < Math.min(a1Bytes.length, 52); i++)
+  const paddedA1 = new Array(CONFIG.A1_LENGTH).fill(0);
+  for (let i = 0; i < Math.min(a1Bytes.length, CONFIG.A1_LENGTH); i++)
     paddedA1[i] = a1Bytes[i];
+  payload.push(paddedA1.length);
   payload.push(...paddedA1);
 
-  payload.push(10);
-
+  // App ID [1 + 10]
   const sourceBytes = utf8Bytes(appId);
-  const paddedSource = new Array(10).fill(0);
-  for (let i = 0; i < Math.min(sourceBytes.length, 10); i++)
+  const paddedSource = new Array(CONFIG.APP_ID_LENGTH).fill(0);
+  for (let i = 0; i < Math.min(sourceBytes.length, CONFIG.APP_ID_LENGTH); i++)
     paddedSource[i] = sourceBytes[i];
+  payload.push(paddedSource.length);
   payload.push(...paddedSource);
 
-  payload.push(1);
-  payload.push(CONFIG.CHECKSUM_VERSION);
-  payload.push(seedByte0 ^ CONFIG.CHECKSUM_XOR_KEY);
-  payload.push(...CONFIG.CHECKSUM_FIXED_TAIL);
+  // Part 11: environment detection XOR [16]
+  const part11 = [1, seedByte ^ CONFIG.ENV_TABLE[0]];
+  for (let i = 1; i < 15; i++) {
+    part11.push(CONFIG.ENV_TABLE[i] ^ CONFIG.ENV_CHECKS_DEFAULT[i]);
+  }
+  payload.push(...part11);
+
+  // A3 field: A3_PREFIX [4] + customHashV2(tsBytes + md5PathBytes) XOR seedByte [16]
+  const apiPath = extractApiPath(content);
+  const apiPathMd5Hex = CryptoJS.MD5(
+    CryptoJS.lib.WordArray.create(new Uint8Array(utf8Bytes(apiPath))),
+  ).toString();
+  const md5PathBytes = bytesFromHex(apiPathMd5Hex);
+
+  const hashInput = [...tsBytes, ...md5PathBytes];
+  const hashResult = customHashV2(hashInput);
+
+  payload.push(...CONFIG.A3_PREFIX);
+  for (let i = 0; i < hashResult.length; i++) {
+    payload.push(hashResult[i] ^ seedByte);
+  }
 
   return payload;
 }
@@ -270,9 +369,8 @@ function signXs(
     xsecAppid.trim(),
     content,
   );
-  // console.log("XHSHOW_MIN.js payload:", payloadArr);
   const xorBytes = xorArray(payloadArr);
-  const x3Body = encodeX3(xorBytes.slice(0, 124));
+  const x3Body = encodeX3(xorBytes.slice(0, CONFIG.PAYLOAD_LENGTH));
   const x3Full = CONFIG.X3_PREFIX + x3Body;
   const jsonCompact = JSON.stringify({ ...CONFIG.TEMPLATE, x3: x3Full });
   const encoded = b64CustomEncode(jsonCompact);
