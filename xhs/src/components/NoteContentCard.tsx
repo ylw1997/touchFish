@@ -160,7 +160,7 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
                       onRotateLeft,
                       onRotateRight,
                     },
-                  }
+                  },
                 ) => (
                   <ImagePreviewToolbar
                     imageUrl={images[0]}
@@ -233,7 +233,7 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
                           onRotateRight,
                         },
                         current,
-                      }
+                      },
                     ) => (
                       <ImagePreviewToolbar
                         imageUrl={images[current]}
@@ -344,7 +344,7 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
                 {publishTime > 0 && (
                   <span className="descriptionForeground">
                     <ClockCircleOutlined style={{ marginRight: 4 }} />
-                    {formatTimestamp(publishTime * 1000)}
+                    {formatTimestamp(publishTime)}
                   </span>
                 )}
                 {ipLocation && (
