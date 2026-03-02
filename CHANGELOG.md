@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.24.0](https://github.com/ylw1997/touchFish/compare/v11.23.0...v11.24.0) (2026-03-02)
+
+
+### ✨ Features | 新功能
+
+* 修复小红书发帖时间格式化错误问题 ([86b3a7f](https://github.com/86b3a7ffdee5f0b53fd219aff8989ee7ca4718e5))
+
 ## [11.23.0](https://github.com/ylw1997/touchFish/compare/v11.22.0...v11.23.0) (2026-02-24)
 
 
