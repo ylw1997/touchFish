@@ -18,6 +18,7 @@ import {
   getZhihuQuestionDetailFunc,
   followQuestion,
   unfollowQuestion,
+  readZhihuItems,
 } from "../api/zhihu";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { ZhihuCommandsType } from "../../types/commands";
@@ -37,24 +38,48 @@ export class ZhihuWebProvider extends BaseWebviewProvider {
     return super.resolveWebviewView(webviewView);
   }
 
-  protected async handleCustomMessage(message: IncomingMessage, webviewView: WebviewView) {
-    const { command, payload, uuid } = message as ZhihuCommandsType<string | any>;
+  protected async handleCustomMessage(
+    message: IncomingMessage,
+    webviewView: WebviewView,
+  ) {
+    const { command, payload, uuid } = message as ZhihuCommandsType<
+      string | any
+    >;
     switch (command) {
       case "ZHIHU_GETDATA": {
         const { tab, nextUrl } = payload as { tab: string; nextUrl?: string };
         const data = await getZhihuWebData(tab as any, nextUrl);
+
+        if (tab === "recommend" && data?.data) {
+          const itemsToRead = data.data
+            .filter((item: any) => item.type && item.id)
+            .map((item: any) => ({ type: item.type, id: String(item.id) }));
+          if (itemsToRead.length > 0) {
+            readZhihuItems(itemsToRead).catch((err: any) => {
+              console.error("Failed to read zhihu items", err);
+            });
+          }
+        }
+
         webviewView.webview.postMessage({ payload: data, uuid });
         break;
       }
       case "getZhihuComment": {
         const comments = await getZhihuComment(payload);
-        webviewView.webview.postMessage({ payload: { data: comments, answerId: payload }, uuid });
+        webviewView.webview.postMessage({
+          payload: { data: comments, answerId: payload },
+          uuid,
+        });
         break;
       }
       case "getZhihuChildComment": {
         const res = await getZhihuChildComment(payload);
         webviewView.webview.postMessage({
-          payload: { data: res.data, paging: res.paging, commentIdOrNextUrl: payload },
+          payload: {
+            data: res.data,
+            paging: res.paging,
+            commentIdOrNextUrl: payload,
+          },
           uuid,
         });
         break;
@@ -65,10 +90,18 @@ export class ZhihuWebProvider extends BaseWebviewProvider {
           nextUrl?: string;
           order?: "default" | "updated";
         };
-        const detailRes = await getZhihuWebDetail(nextUrl ? nextUrl : questionId, order || "default");
+        const detailRes = await getZhihuWebDetail(
+          nextUrl ? nextUrl : questionId,
+          order || "default",
+        );
         const detailObj = await getZhihuQuestionDetailFunc(questionId);
         webviewView.webview.postMessage({
-          payload: { data: detailRes.data, paging: detailRes.paging, payload: questionId, ...detailObj },
+          payload: {
+            data: detailRes.data,
+            paging: detailRes.paging,
+            payload: questionId,
+            ...detailObj,
+          },
           uuid,
         });
         break;
