@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.25.0](https://github.com/ylw1997/touchFish/compare/v11.24.0...v11.25.0) (2026-03-09)
+
+
+### ✨ Features | 新功能
+
+* 自动调用知乎已读接口 ([cc1741e](https://github.com/cc1741eeeddd5dc15d2e6d52f67699960df26bb9))
+
 ## [11.24.0](https://github.com/ylw1997/touchFish/compare/v11.23.0...v11.24.0) (2026-03-02)
 
 
