@@ -1,8 +1,8 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2025-11-14 10:05:43
- * @LastEditors: YangLiwei 1280426581@qq.com
+ * @LastEditTime: 2026-03-12 14:20:26
+ * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
  */
@@ -169,64 +169,296 @@ export const openCHUrl = registerArticleCommand(
   },
 );
 
-// 打开v2ex新闻详情
-export const openV2exUrl = registerArticleCommand(
-  "v2ex.openUrl",
-  async (_title, url: string) => {
-    const res = await getV2exDetail(url);
-    const extraCss = `
+// 打开v2ex新闻详情 - 支持分页
+let v2exPanel: vscode.WebviewPanel | null = null;
+let v2exState = {
+  url: "",
+  page: 1,
+  title: "",
+  totalPages: 1,
+};
+
+const loadV2exPage = async () => {
+  if (!v2exPanel) return;
+  v2exPanel.webview.html = "加载中...";
+
+  const res = await getV2exDetail(v2exState.url, v2exState.page);
+
+  // V2EX 每页100条回复，通过内容判断总页数（估算）
+  // 这里简化处理，假设最多10页，实际应该从页面解析
+  const replyCountMatch = res?.match(/(\d+)\s*条回复/);
+  if (replyCountMatch) {
+    const replyCount = parseInt(replyCountMatch[1], 10);
+    v2exState.totalPages = Math.ceil(replyCount / 100) || 1;
+  } else {
+    // 如果没有回复数，检查是否有分页控件
+    v2exState.totalPages = 1;
+  }
+
+  const extraCss = `
     .open-article-btn{ top:90px; }
     .topic_content,.reply_content { font-size: 16px; }
     .cell { padding:10px 0; font-size:14px; line-height:150%; text-align:left; border-bottom:1px solid var(--vscode-textBlockQuote-border); }
     .tag,.votes { display:none; }
     .fr { float:right; text-align:right; }
+    .pagination { position:fixed; bottom:15px; right:15px; display:flex; gap:6px; z-index:9999; background: var(--vscode-editor-background); padding: 5px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.3); }
+    .page-btn { background-color: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border,transparent); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+    .page-btn:hover { background-color: var(--vscode-button-hoverBackground); }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-info { color: var(--vscode-editor-foreground); padding: 4px 8px; font-size: 12px; display: flex; align-items: center; }
   `;
-    return {
-      content: res || "内容加载失败",
-      originalUrl: "https://www.v2ex.com" + url,
-      extraCss,
-      showTitle: false,
+  const content = res || "内容加载失败";
+  const safe = sanitizeHtml(content)
+    .replace(/<img/g, '<img referrerpolicy="no-referrer"')
+    .replace(/<video/g, '<video referrerpolicy="no-referrer"');
+  const originalUrl =
+    "https://www.v2ex.com" +
+    v2exState.url +
+    (v2exState.page > 1 ? "?p=" + v2exState.page : "");
+
+  const isLastPage = v2exState.page >= v2exState.totalPages;
+
+  v2exPanel.webview.html = `<!DOCTYPE html><html lang="zh-cn"><head><meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${v2exState.title}</title>
+    <style>${BASE_CSS}${extraCss}</style></head><body>
+    <h1 style="text-align:center">${v2exState.title}</h1>
+    <a class="open-article-btn" href="${originalUrl}">打开原文章</a>
+    <div class="news_detail">${safe}</div>
+    <div class="pagination">
+      <button class="page-btn" id="prevBtn" ${v2exState.page <= 1 ? "disabled" : ""}>上一页</button>
+      <span class="page-info">第 ${v2exState.page}${v2exState.totalPages > 1 ? "/" + v2exState.totalPages : ""} 页</span>
+      <button class="page-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+    </div>
+    <script>
+      const vscode = acquireVsCodeApi();
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        vscode.postMessage({ command: 'prevPage' });
+      });
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        vscode.postMessage({ command: 'nextPage' });
+      });
+    </script>
+    </body></html>`;
+};
+
+export const openV2exUrl = vscode.commands.registerCommand(
+  "v2ex.openUrl",
+  async (title: string, url: string, uniqueId?: string) => {
+    // 尝试从 URL 中解析 page 参数
+    let initialPage = 1;
+    const pageMatch = url.match(/[?&]p=(\d+)/);
+    if (pageMatch) {
+      initialPage = parseInt(pageMatch[1], 10) || 1;
+    }
+
+    // 更新状态
+    v2exState = {
+      url,
+      page: initialPage,
+      title,
+      totalPages: 1,
     };
+
+    // 创建专用的 V2EX panel（启用脚本）
+    if (!v2exPanel) {
+      v2exPanel = vscode.window.createWebviewPanel(
+        "touchfish.v2exDetail",
+        title,
+        vscode.ViewColumn.One,
+        { retainContextWhenHidden: true, enableScripts: true },
+      );
+      v2exPanel.onDidDispose(() => (v2exPanel = null));
+
+      // 只在创建时注册一次消息处理器
+      v2exPanel.webview.onDidReceiveMessage(async (message) => {
+        if (
+          message.command === "nextPage" &&
+          v2exState.page < v2exState.totalPages
+        ) {
+          v2exState.page++;
+          await loadV2exPage();
+        } else if (message.command === "prevPage" && v2exState.page > 1) {
+          v2exState.page--;
+          await loadV2exPage();
+        }
+      });
+    } else {
+      v2exPanel.title = title;
+    }
+
+    v2exPanel.reveal();
+    await loadV2exPage();
+
+    // 标记已读
+    if (uniqueId) {
+      ReadState.markRead(ContextManager.context, uniqueId);
+      BaseNewsProvider.markReadGlobally(uniqueId);
+    }
   },
 );
 
-// 打开虎扑新闻详情
-export const openHupuUrl = registerArticleCommand(
+// 打开虎扑新闻详情 - 支持分页
+let hupuPanel: vscode.WebviewPanel | null = null;
+let hupuState = {
+  url: "",
+  page: 1,
+  title: "",
+  totalPages: 1,
+};
+
+const loadHupuPage = async () => {
+  if (!hupuPanel) return;
+  hupuPanel.webview.html = "加载中...";
+
+  const res = await getHupuDetail(hupuState.url, hupuState.page);
+
+  // 解析总页数 - 查找分页链接中的最大页码
+  // 格式: href="637854698-18.html" 或 href="637854698-2.html"
+  const pageLinks = res?.match(/href="\d+-([0-9]+)\.html"/g);
+  if (pageLinks && pageLinks.length > 0) {
+    const pages = pageLinks.map(link => {
+      const match = link.match(/-(\d+)\.html/);
+      return match ? parseInt(match[1], 10) : 1;
+    });
+    hupuState.totalPages = Math.max(...pages, 1);
+  } else {
+    // 如果没有找到分页链接，只有1页
+    hupuState.totalPages = 1;
+  }
+
+  console.log('[Hupu] Current page:', hupuState.page, 'Total pages:', hupuState.totalPages);
+
+  const extraCss = `
+    p{font-size:16px;}
+    .post-user_post-user-comp{min-height:54px;display:flex;align-items:flex-start;}
+    .post-user_post-user-comp-avatar-wrapper{flex:0 0 48px;margin-right:10px;border-radius:50%;}
+    .post-user_post-user-comp-info{flex:1 1 auto;display:flex;align-items:flex-start;justify-content:space-around;flex-direction:column;font-weight:400;font-size:14px;}
+    .post-user_post-user-comp-info-top{display:flex;align-items:center;}
+    .post-user_post-user-comp-info-top-name{color:#4b8dc3;margin-right:8px;line-height:1;}
+    .post-user_post-user-comp-info-bottom{line-height:1.5;}
+    .post-user_post-user-comp-info-bottom-title{font-size:14px;}
+    .post-user_post-user-comp-info-bottom-from{font-size:12px;color:#96999f;margin-left:7px;}
+    .post-user_post-user-comp-info-bottom-link{color:#96999f;margin-left:7px;}
+    .seo-dom,.index_bbs-post-web-quote-title-container,.post-wrapper_toggle-tool,.index_pagination,.index_br,.post-operate_post-operate-comp-wrapper{display:none;}
+    .post-reply-list-user-info-top-time{margin:0 10px;}
+    .post-reply-list-wrapper{padding:14px 0;border-bottom:1px solid var(--vscode-textBlockQuote-border);}
+    .post-user_post-user-comp-info-top-tip{margin:0 8px;background:#d8d8d8;border-radius:9px;color:#191c22;font-size:12px;padding:1px 6px;cursor:default;}
+    .post-wrapper_bbs-post-wrapper.post-wrapper_light{padding:0 14px;border:1px solid var(--vscode-scrollbar-shadow);box-sizing:border-box;background:var(--vscode-input-background);}
+    .post-reply-list_post-reply-list-wrapper .post-reply-list .post-reply-list-container{display:flex;align-items:flex-start;justify-content:flex-start;}
+    .post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar-wrapper .avatar,.post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar-wrapper .avatar-placeholder img{width:36px;height:36px;border-radius:50%;}
+    .post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar{flex:0 0 36px;width:36px;margin-right:10px;}
+    .post-wrapper_bbs-post-wrapper-title{height:46px;line-height:46px;padding-left:19px;font-family:PingFangSC-Semibold;font-weight:700;font-size:16px;color:#191c22;position:relative;letter-spacing:0;display:flex;align-items:center;justify-content:flex-start;}
+    .post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-content .post-reply-list-operate{font-family:PingFangSC-Regular;font-size:14px;color:#7b7e86;display:flex;align-items:center;justify-content:flex-start;margin-top:16px;margin-left:-10px;}
+    .index_bbs-thread-comp-container{position:relative;padding:10px 14px;background:var(--vscode-button-secondaryBackground);}
+    .todo-list{margin:0 10px;}
+    .index_bbs-thread-comp img,.index_bbs-thread-comp video{max-width:50%;}
+    div{color:var(--vscode-editor-foreground)!important;}
+    .pagination { position:fixed; bottom:15px; right:15px; display:flex; gap:6px; z-index:9999; background: var(--vscode-editor-background); padding: 5px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.3); }
+    .page-btn { background-color: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border,transparent); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+    .page-btn:hover { background-color: var(--vscode-button-hoverBackground); }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-info { color: var(--vscode-editor-foreground); padding: 4px 8px; font-size: 12px; display: flex; align-items: center; }
+  `;
+  const content = res || "内容加载失败";
+  const safe = sanitizeHtml(content)
+    .replace(/<img/g, '<img referrerpolicy="no-referrer"')
+    .replace(/<video/g, '<video referrerpolicy="no-referrer"');
+
+  // 构建原始 URL
+  let originalUrl = "https://bbs.hupu.com" + hupuState.url;
+  if (hupuState.page > 1) {
+    // 替换 .html 为 -page.html
+    originalUrl = originalUrl.replace(/\.html$/, `-${hupuState.page}.html`);
+  }
+
+  const isLastPage = hupuState.page >= hupuState.totalPages;
+
+  hupuPanel.webview.html = `<!DOCTYPE html><html lang="zh-cn"><head><meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${hupuState.title}</title>
+    <style>${BASE_CSS}${extraCss}</style></head><body>
+    <h1 style="text-align:center">${hupuState.title}</h1>
+    <a class="open-article-btn" href="${originalUrl}">打开原文章</a>
+    <div class="news_detail">${safe}</div>
+    <div class="pagination">
+      <button class="page-btn" id="prevBtn" ${hupuState.page <= 1 ? "disabled" : ""}>上一页</button>
+      <span class="page-info">第 ${hupuState.page}${hupuState.totalPages > 1 ? "/" + hupuState.totalPages : ""} 页</span>
+      <button class="page-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+    </div>
+    <script>
+      const vscode = acquireVsCodeApi();
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        vscode.postMessage({ command: 'prevPage' });
+      });
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        vscode.postMessage({ command: 'nextPage' });
+      });
+    </script>
+    </body></html>`;
+};
+
+export const openHupuUrl = vscode.commands.registerCommand(
   "hupu.openUrl",
-  async (_title, url: string) => {
-    const res = await getHupuDetail(url);
-    const extraCss = `
-      p{font-size:16px;}
-      .post-user_post-user-comp{min-height:54px;display:flex;align-items:flex-start;}
-      .post-user_post-user-comp-avatar-wrapper{flex:0 0 48px;margin-right:10px;border-radius:50%;}
-      .post-user_post-user-comp-info{flex:1 1 auto;display:flex;align-items:flex-start;justify-content:space-around;flex-direction:column;font-weight:400;font-size:14px;}
-      .post-user_post-user-comp-info-top{display:flex;align-items:center;}
-      .post-user_post-user-comp-info-top-name{color:#4b8dc3;margin-right:8px;line-height:1;}
-      .post-user_post-user-comp-info-bottom{line-height:1.5;}
-      .post-user_post-user-comp-info-bottom-title{font-size:14px;}
-      .post-user_post-user-comp-info-bottom-from{font-size:12px;color:#96999f;margin-left:7px;}
-      .post-user_post-user-comp-info-bottom-link{color:#96999f;margin-left:7px;}
-      .seo-dom,.index_bbs-post-web-quote-title-container,.post-wrapper_toggle-tool,.index_pagination,.index_br,.post-operate_post-operate-comp-wrapper{display:none;}
-      .post-reply-list-user-info-top-time{margin:0 10px;}
-      .post-reply-list-wrapper{padding:14px 0;border-bottom:1px solid var(--vscode-textBlockQuote-border);}
-      .post-user_post-user-comp-info-top-tip{margin:0 8px;background:#d8d8d8;border-radius:9px;color:#191c22;font-size:12px;padding:1px 6px;cursor:default;}
-      .post-wrapper_bbs-post-wrapper.post-wrapper_light{padding:0 14px;border:1px solid var(--vscode-scrollbar-shadow);box-sizing:border-box;background:var(--vscode-input-background);}
-      .post-reply-list_post-reply-list-wrapper .post-reply-list .post-reply-list-container{display:flex;align-items:flex-start;justify-content:flex-start;}
-      .post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar-wrapper .avatar,.post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar-wrapper .avatar-placeholder img{width:36px;height:36px;border-radius:50%;}
-      .post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-avatar{flex:0 0 36px;width:36px;margin-right:10px;}
-      .post-wrapper_bbs-post-wrapper-title{height:46px;line-height:46px;padding-left:19px;font-family:PingFangSC-Semibold;font-weight:700;font-size:16px;color:#191c22;position:relative;letter-spacing:0;display:flex;align-items:center;justify-content:flex-start;}
-      .post-reply-list_post-reply-list-wrapper .post-reply-list .reply-list-content .post-reply-list-operate{font-family:PingFangSC-Regular;font-size:14px;color:#7b7e86;display:flex;align-items:center;justify-content:flex-start;margin-top:16px;margin-left:-10px;}
-      .index_bbs-thread-comp-container{position:relative;padding:10px 14px;background:var(--vscode-button-secondaryBackground);}
-      .todo-list{margin:0 10px;}
-      .index_bbs-thread-comp img,.index_bbs-thread-comp video{max-width:50%;}
-      div{color:var(--vscode-editor-foreground)!important;}
-    `;
-    return {
-      content: res || "内容加载失败",
-      originalUrl: "https://bbs.hupu.com" + url,
-      extraCss,
-      showTitle: false,
+  async (title: string, url: string, uniqueId?: string) => {
+    // 确保 URL 是相对路径格式（以 / 开头）
+    if (!url.startsWith("/") && !url.startsWith("http")) {
+      url = "/" + url;
+    }
+
+    // 移除 URL 中可能存在的页码，获取基础 URL
+    const baseUrl = url.replace(/-\d+\.html$/, ".html");
+
+    // 尝试从 URL 中解析 page 参数
+    let initialPage = 1;
+    const pageMatch = url.match(/-(\d+)\.html$/);
+    if (pageMatch) {
+      initialPage = parseInt(pageMatch[1], 10) || 1;
+    }
+
+    // 更新状态
+    hupuState = {
+      url: baseUrl,
+      page: initialPage,
+      title,
+      totalPages: 1,
     };
+
+    // 创建专用的虎扑 panel（启用脚本）
+    if (!hupuPanel) {
+      hupuPanel = vscode.window.createWebviewPanel(
+        "touchfish.hupuDetail",
+        title,
+        vscode.ViewColumn.One,
+        { retainContextWhenHidden: true, enableScripts: true },
+      );
+      hupuPanel.onDidDispose(() => (hupuPanel = null));
+
+      // 只在创建时注册一次消息处理器
+      hupuPanel.webview.onDidReceiveMessage(async (message) => {
+        if (
+          message.command === "nextPage" &&
+          hupuState.page < hupuState.totalPages
+        ) {
+          hupuState.page++;
+          await loadHupuPage();
+        } else if (message.command === "prevPage" && hupuState.page > 1) {
+          hupuState.page--;
+          await loadHupuPage();
+        }
+      });
+    } else {
+      hupuPanel.title = title;
+    }
+
+    hupuPanel.reveal();
+    await loadHupuPage();
+
+    // 标记已读
+    if (uniqueId) {
+      ReadState.markRead(ContextManager.context, uniqueId);
+      BaseNewsProvider.markReadGlobally(uniqueId);
+    }
   },
 );
 

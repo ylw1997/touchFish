@@ -39,14 +39,17 @@ export const getV2exList = async (tab="all")=>{
 };
 
 // 获取新闻详情
-export const getV2exDetail = async (url:string)=>{
+export const getV2exDetail = async (url: string, page?: number) => {
   try {
-    const res =  await axios.get("https://www.v2ex.com"+url);
+    let fullUrl = "https://www.v2ex.com" + url;
+    if (page && page > 1) {
+      fullUrl += (url.includes('?') ? '&' : '?') + 'p=' + page;
+    }
+    const res = await axios.get(fullUrl);
     const $ = load(res.data);
     const content = $("#Main").html();
     return content ? content.replace(/&nbsp;/g, '') : content;
   } catch (error) {
     return "获取V2EX新闻内容失败!";
   }
-  
 };
