@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [11.26.0](https://github.com/ylw1997/touchFish/compare/v11.25.0...v11.26.0) (2026-03-12)
+
+
+### ✨ Features | 新功能
+
+* 修复打开原文按钮样式 ([3d6a73e](https://github.com/3d6a73e44c117667f1f71805c024bf028e9ac8ea))
+
 ## [11.25.0](https://github.com/ylw1997/touchFish/compare/v11.24.0...v11.25.0) (2026-03-09)
 
 
