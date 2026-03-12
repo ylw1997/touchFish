@@ -60,7 +60,7 @@ const BASE_CSS = `
   a { color: var(--vscode-textLink-foreground); }
   img,video { max-width: 100%; }
   pre,code { font-family: var(--vscode-editor-font-family, monospace); }
-  .open-article-btn { position: absolute; font-size: 14px; right: 20px; top: 20px; background-color: var(--vscode-button-background); max-width: 300px; box-sizing: border-box; display: flex; width: 160px; padding: 4px 8px; border-radius: 4px; text-align: center; cursor: pointer; justify-content: center; align-items: center; border: 1px solid var(--vscode-button-border,transparent); line-height: 16px; text-decoration: none; color: var(--vscode-button-foreground); }
+  .open-article-btn { position: fixed; font-size: 14px; right: 20px; top: 20px; background-color: var(--vscode-button-background); max-width: 300px; box-sizing: border-box; display: flex; width: 160px; padding: 4px 8px; border-radius: 4px; text-align: center; cursor: pointer; justify-content: center; align-items: center; border: 1px solid var(--vscode-button-border,transparent); line-height: 16px; text-decoration: none; color: var(--vscode-button-foreground); z-index: 9999; }
   .open-article-btn:hover { background-color: var(--vscode-button-hoverBackground); }
 `;
 
