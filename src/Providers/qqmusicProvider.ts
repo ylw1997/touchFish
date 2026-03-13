@@ -1,0 +1,257 @@
+/**
+ * QQ音乐 Webview Provider
+ */
+import { WebviewView, ExtensionContext } from "vscode";
+import {
+  searchSongs,
+  searchSingers,
+  getSongUrl,
+  getSongDetail,
+  getLyric,
+  getRecommendPlaylists,
+  getPlaylistDetail,
+  getRankLists,
+  getRankDetail,
+  getQQLoginQR,
+  getWXLoginQR,
+  checkLoginStatus,
+  getUserInfo,
+  getMyFavorite,
+  getMyPlaylists,
+  setGlobalCredential,
+} from "../api/qqmusic";
+import { CommandsType } from "../../types/commands";
+import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
+
+export class QQMusicProvider extends BaseWebviewProvider {
+  private credential: { musicid: string; musickey: string } | null = null;
+
+  constructor(context: ExtensionContext) {
+    super(context, {
+      distPath: "qqmusic/dist",
+      devPort: 5177,
+      title: "QQ音乐",
+      scrollKey: "qqmusicScrollPosition",
+      restoreCommand: "QQMUSIC_RESTORE_SCROLL_POSITION",
+      saveCommand: "QQMUSIC_SAVE_SCROLL_POSITION",
+    });
+  }
+
+  public override resolveWebviewView(webviewView: WebviewView) {
+    return super.resolveWebviewView(webviewView);
+  }
+
+  protected async handleCustomMessage(
+    message: IncomingMessage,
+    webviewView: WebviewView
+  ) {
+    const { command, payload, uuid } = message;
+
+    try {
+      switch (command) {
+        // ==================== 搜索 ====================
+        case "QQMUSIC_SEARCH": {
+          const { keyword, page, num } = payload || {};
+          const result = await searchSongs(keyword, page || 1, num || 20);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_SEARCH_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_SEARCH_SINGER": {
+          const { keyword, page, num } = payload || {};
+          const result = await searchSingers(keyword, page || 1, num || 20);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_SEARCH_SINGER_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        // ==================== 歌曲 ====================
+        case "QQMUSIC_GET_SONG_URL": {
+          const { mid, quality, credential } = payload || {};
+          const result = await getSongUrl(mid, quality || 128, credential);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_SONG_URL_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_SONG_DETAIL": {
+          const { mid } = payload || {};
+          const result = await getSongDetail(mid);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_SONG_DETAIL_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_LYRIC": {
+          const { mid } = payload || {};
+          const result = await getLyric(mid);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_LYRIC_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        // ==================== 歌单 ====================
+        case "QQMUSIC_GET_RECOMMEND_PLAYLISTS": {
+          const { num } = payload || {};
+          const result = await getRecommendPlaylists(num || 10);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_RECOMMEND_PLAYLISTS_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_PLAYLIST_DETAIL": {
+          const { dissid, page, num } = payload || {};
+          const result = await getPlaylistDetail(dissid, page || 1, num || 30);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_PLAYLIST_DETAIL_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        // ==================== 排行榜 ====================
+        case "QQMUSIC_GET_RANK_LISTS": {
+          const result = await getRankLists();
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_RANK_LISTS_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_RANK_DETAIL": {
+          const { topId, page, num } = payload || {};
+          const result = await getRankDetail(topId, page || 1, num || 30);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_RANK_DETAIL_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        // ==================== 登录 ====================
+        case "QQMUSIC_GET_LOGIN_QR": {
+          const { type } = payload || {};
+          if (type === "qq") {
+            const result = await getQQLoginQR();
+            webviewView.webview.postMessage({
+              command: "QQMUSIC_GET_LOGIN_QR_RESULT",
+              payload: result,
+              uuid,
+            } as CommandsType<any>);
+          } else {
+            // 微信登录
+            const result = await getWXLoginQR();
+            webviewView.webview.postMessage({
+              command: "QQMUSIC_GET_LOGIN_QR_RESULT",
+              payload: result,
+              uuid,
+            } as CommandsType<any>);
+          }
+          break;
+        }
+
+        case "QQMUSIC_CHECK_LOGIN_STATUS": {
+          const { identifier, type } = payload || {};
+          const result = await checkLoginStatus(identifier, type);
+          // 如果登录成功，保存 credential 到全局
+          if (result.code === 0 && result.data?.userInfo) {
+            this.credential = {
+              musicid: result.data.userInfo.musicid,
+              musickey: result.data.userInfo.musickey,
+            };
+            // 设置全局 credential
+            setGlobalCredential(this.credential);
+          }
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_CHECK_LOGIN_STATUS_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_LOGIN_WITH_CREDENTIAL": {
+          const { credential } = payload || {};
+          const result = await getUserInfo(credential);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_LOGIN_WITH_CREDENTIAL_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        // ==================== 用户 ====================
+        case "QQMUSIC_GET_USER_INFO": {
+          const { credential } = payload || {};
+          const result = await getUserInfo(credential);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_USER_INFO_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_MY_FAVORITE": {
+          const { credential, page, num } = payload || {};
+          const result = await getMyFavorite(credential, page || 1, num || 30);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_MY_FAVORITE_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_MY_PLAYLISTS": {
+          const { credential } = payload || {};
+          const result = await getMyPlaylists(credential);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_MY_PLAYLISTS_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        default:
+          console.warn(`未知的命令: ${command}`);
+          break;
+      }
+    } catch (error: any) {
+      console.error(`处理命令 ${command} 失败:`, error);
+      webviewView.webview.postMessage({
+        command: `${command}_RESULT`,
+        payload: {
+          code: -1,
+          message: error.message || "请求失败",
+        },
+        uuid,
+      } as CommandsType<any>);
+    }
+  }
+}

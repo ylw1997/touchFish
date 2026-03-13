@@ -233,6 +233,11 @@
 					"id": "xhs",
 					"title": "TouchFish-Xhs",
 					"icon": "assets/xhs.svg"
+				},
+				{
+					"id": "qqmusic",
+					"title": "TouchFish-QQMusic",
+					"icon": "assets/qqmusic.svg"
 				}
 			]
 		},
@@ -267,6 +272,14 @@
 					"type": "webview",
 					"name": "B站",
 					"id": "bilibili"
+				}
+			],
+			"qqmusic": [
+				{
+					"icon": "assets/qqmusic.svg",
+					"type": "webview",
+					"name": "QQ音乐",
+					"id": "qqmusic"
 				}
 			],
 			"touchfish": [

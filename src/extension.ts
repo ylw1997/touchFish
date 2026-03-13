@@ -47,6 +47,7 @@ import { ZhihuWebProvider } from "./Providers/zhihuWebProvider";
 import { XhsWebProvider } from "./Providers/xhsWebProvider";
 import { WeiboProvider } from "./Providers/weiboProvider";
 import { BilibiliProvider } from "./Providers/bilibiliProvider";
+import { QQMusicProvider } from "./Providers/qqmusicProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
@@ -67,6 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
   const zhihuWebProvider = new ZhihuWebProvider(context);
   const xhsWebProvider = new XhsWebProvider(context);
   const bilibiliProvider = new BilibiliProvider(context);
+  const qqmusicProvider = new QQMusicProvider(context);
   vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
   vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
   vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
@@ -89,6 +91,11 @@ export function activate(context: vscode.ExtensionContext) {
     },
   });
   vscode.window.registerWebviewViewProvider("bilibili", bilibiliProvider, {
+    webviewOptions: {
+      retainContextWhenHidden: true,
+    },
+  });
+  vscode.window.registerWebviewViewProvider("qqmusic", qqmusicProvider, {
     webviewOptions: {
       retainContextWhenHidden: true,
     },

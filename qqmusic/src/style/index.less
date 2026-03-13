@@ -707,3 +707,600 @@ a {
   // 主窗口中的播放器在独立窗口打开时保持不变
   opacity: 1;
 }
+
+/* ==========================================================================
+   QQ音乐特定样式
+   ========================================================================== */
+
+.qqmusic-app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.qqmusic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-chat-requestBorder);
+}
+
+.qqmusic-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.qqmusic-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.qqmusic-login-status {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  padding: 4px 8px;
+  background: var(--vscode-button-secondaryBackground);
+  border-radius: 4px;
+}
+
+.qqmusic-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.qqmusic-tabs {
+  .ant-tabs-nav {
+    margin: 0;
+    padding: 0 16px;
+    background: var(--vscode-editor-background);
+  }
+
+  .ant-tabs-content {
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding: 16px;
+  }
+}
+
+.qqmusic-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    color: var(--vscode-foreground);
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.qqmusic-user-info,
+.qqmusic-login-prompt {
+  padding: 20px;
+  text-align: center;
+
+  h3 {
+    margin: 0 0 12px;
+    color: var(--vscode-foreground);
+  }
+
+  p {
+    margin: 0;
+    color: var(--vscode-descriptionForeground);
+  }
+}
+
+.qqmusic-playbar-placeholder {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  background: var(--vscode-editor-background);
+  border-top: 1px solid var(--vscode-chat-requestBorder);
+  text-align: center;
+  font-size: 14px;
+  color: var(--vscode-foreground);
+}
+
+.qqmusic-footer {
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  border-top: 1px solid var(--vscode-chat-requestBorder);
+}
+
+// ==================== 推荐歌单样式 ====================
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--vscode-foreground);
+  }
+}
+
+.playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.playlist-card {
+  .ant-card-cover {
+    position: relative;
+    padding-top: 100%; // 1:1 比例
+    overflow: hidden;
+
+    .playlist-cover-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+
+      &:hover .playlist-play-overlay {
+        opacity: 1;
+      }
+
+      &:hover .playlist-cover {
+        transform: scale(1.05);
+      }
+    }
+
+    .playlist-cover {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .playlist-play-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+
+      .play-icon {
+        font-size: 48px;
+        color: white;
+      }
+    }
+
+    .playlist-play-count {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+
+  .ant-card-meta-title {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .ant-card-meta-description {
+    font-size: 12px;
+  }
+
+  .playlist-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .playlist-song-count {
+    font-size: 10px;
+  }
+}
+
+// ==================== 排行榜样式 ====================
+.rank-header {
+  margin-bottom: 16px;
+
+  .rank-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+
+    .ant-btn {
+      white-space: nowrap;
+    }
+  }
+}
+
+// ==================== 歌曲列表样式 ====================
+.song-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.song-card {
+  .ant-card-body {
+    padding: 12px;
+  }
+
+  &.song-card-playing {
+    border: 1px solid var(--vscode-textLink-foreground);
+  }
+
+  .song-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .song-card-cover {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+
+    .song-cover-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .song-playing-indicator {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+
+      .playing-bar {
+        width: 3px;
+        height: 12px;
+        background: #31c27c;
+        animation: playing-animation 1s ease-in-out infinite;
+
+        &:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+
+        &:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+      }
+    }
+  }
+
+  .song-card-info {
+    flex: 1;
+    min-width: 0;
+
+    .song-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+
+      .song-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--vscode-foreground);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .song-artist,
+    .song-album {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .song-duration {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .song-actions {
+    display: flex;
+    gap: 4px;
+  }
+}
+
+@keyframes playing-animation {
+  0%,
+  100% {
+    height: 4px;
+  }
+  50% {
+    height: 16px;
+  }
+}
+
+// ==================== 登录弹窗样式 ====================
+.login-qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+
+  .login-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .login-qr-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    .login-qr-image {
+      width: 200px;
+      height: 200px;
+      border: 1px solid var(--vscode-chat-requestBorder);
+      border-radius: 8px;
+    }
+
+    .login-status-text {
+      font-size: 14px;
+      color: var(--vscode-descriptionForeground);
+    }
+  }
+
+  .login-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.login-tips {
+  padding: 16px;
+  background: var(--vscode-editor-inactiveSelectionBackground);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+
+  p {
+    margin: 0 0 8px;
+    font-weight: 500;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 16px;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+}
+
+// ==================== 我的页面样式 ====================
+.my-content {
+  .user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    border-radius: 8px;
+
+    .user-info {
+      h2 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        color: var(--vscode-foreground);
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--vscode-descriptionForeground);
+      }
+    }
+  }
+
+  .my-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .my-section {
+      padding: 16px;
+      background: var(--vscode-editor-inactiveSelectionBackground);
+      border-radius: 8px;
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        color: var(--vscode-foreground);
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--vscode-descriptionForeground);
+      }
+    }
+  }
+}
+
+.login-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 20px;
+    color: var(--vscode-foreground);
+  }
+
+  p {
+    margin: 0 0 24px;
+    font-size: 14px;
+    color: var(--vscode-descriptionForeground);
+  }
+}
+
+// ==================== 播放器条样式 ====================
+.qqmusic-playbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--vscode-editor-background);
+  border-top: 1px solid var(--vscode-chat-requestBorder);
+  padding: 12px 16px;
+  z-index: 1000;
+
+  .qqmusic-playbar-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+
+    .time-current,
+    .time-total {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      min-width: 40px;
+    }
+
+    .progress-slider {
+      flex: 1;
+    }
+  }
+
+  .qqmusic-playbar-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .qqmusic-playbar-song-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+
+      .qqmusic-playbar-cover {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        object-fit: cover;
+      }
+
+      .qqmusic-playbar-song-meta {
+        min-width: 0;
+
+        .qqmusic-playbar-song-name {
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--vscode-foreground);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .qqmusic-playbar-singer {
+          font-size: 12px;
+          color: var(--vscode-descriptionForeground);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    .qqmusic-playbar-play-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qqmusic-playbar-right-controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex: 1;
+    }
+  }
+}
+
+// ==================== 播放列表抽屉样式 ====================
+.playlist-drawer {
+  .playlist-item {
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--vscode-list-hoverBackground);
+    }
+
+    &.playlist-item-current {
+      background: var(--vscode-list-activeSelectionBackground);
+    }
+
+    .playlist-item-cover {
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+  }
+}

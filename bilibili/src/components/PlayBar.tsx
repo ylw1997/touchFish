@@ -12,6 +12,8 @@ import {
   PlayCircleFilled,
   FullscreenExitOutlined,
   SwitcherOutlined,
+  ExportOutlined,
+  ImportOutlined,
 } from "@ant-design/icons";
 import { usePlayerStore } from "../store/player";
 import { useRequest } from "../hooks/useRequest";
@@ -20,6 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ArtPlayerComponent from "./ArtPlayerComponent";
 import Artplayer from "artplayer";
 import { Button } from "antd";
+import { vscode } from "../utils/vscode";
 
 const PlayBar: React.FC = () => {
   const {
@@ -38,12 +41,14 @@ const PlayBar: React.FC = () => {
     removeFromPlaylist,
     clearPlaylist,
     playNext,
+    playPrev,
   } = usePlayerStore();
 
   const videoRef = useRef<Artplayer | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [danmakuData, setDanmakuData] = React.useState<string>("");
   const [isPip, setIsPip] = React.useState(false);
+  const [isDocumentPip, setIsDocumentPip] = React.useState(false);
 
   const { request } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
@@ -134,6 +139,110 @@ const PlayBar: React.FC = () => {
     }
   };
 
+  // 画中画功能 - 通过 VS Code WebviewPanel 实现
+  const enterDocumentPip = () => {
+    // 发送消息到 VS Code 后端创建画中画窗口
+    vscode.postMessage({
+      command: "BILIBILI_OPEN_PIP_WINDOW",
+      payload: {
+        currentVideo,
+        isPlaying,
+        playlist,
+      },
+    });
+    setIsDocumentPip(true);
+
+    // 展开播放器
+    if (!isExpanded) {
+      toggleExpand();
+    }
+    // 打开播放列表
+    if (!isPlaylistOpen) {
+      togglePlaylistOpen();
+    }
+  };
+
+  const exitDocumentPip = () => {
+    // 发送消息到 VS Code 后端关闭画中画窗口
+    vscode.postMessage({
+      command: "BILIBILI_CLOSE_PIP_WINDOW",
+    });
+    setIsDocumentPip(false);
+  };
+
+  const toggleDocumentPip = () => {
+    if (isDocumentPip) {
+      exitDocumentPip();
+    } else {
+      enterDocumentPip();
+    }
+  };
+
+  // 监听来自 VS Code 的消息（画中画窗口控制）
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { command, payload } = event.data;
+      switch (command) {
+        case "BILIBILI_PIP_WINDOW_CLOSED":
+          setIsDocumentPip(false);
+          break;
+        case "PIP_PLAY_VIDEO":
+          // 画中画窗口请求播放指定视频
+          if (payload?.videoId) {
+            const video = playlist.find((v) => v.id === payload.videoId);
+            if (video) {
+              setCurrentVideo(video);
+              setIsPlaying(true);
+            }
+          }
+          break;
+        case "PIP_TOGGLE_PLAY":
+          // 画中画窗口请求切换播放状态
+          togglePlay();
+          break;
+        case "PIP_PREV_VIDEO":
+          // 画中画窗口请求上一首
+          playPrev();
+          break;
+        case "PIP_NEXT_VIDEO":
+          // 画中画窗口请求下一首
+          playNext();
+          break;
+        case "PIP_CLOSE":
+          // 画中画窗口请求关闭
+          exitDocumentPip();
+          break;
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [
+    playlist,
+    isDocumentPip,
+    togglePlay,
+    playPrev,
+    playNext,
+    setCurrentVideo,
+    setIsPlaying,
+  ]);
+
+  // 当播放状态变化时，同步到画中画窗口
+  useEffect(() => {
+    if (isDocumentPip) {
+      vscode.postMessage({
+        command: "PIP_UPDATE_STATE",
+        payload: {
+          currentVideo,
+          isPlaying,
+          playlist,
+        },
+      });
+    }
+  }, [currentVideo, isPlaying, playlist, isDocumentPip]);
+
   // 使用 useCallback 包裹回调函数，避免 PlayBar 重渲染导致 Artplayer 重复初始化
   const handleArtInstance = useCallback(
     (art: Artplayer) => {
@@ -192,11 +301,28 @@ const PlayBar: React.FC = () => {
 
   return (
     <>
+      {/* 画中画占位提示 - 当 PlayBar 被弹出到画中画时显示 */}
+      {isDocumentPip && (
+        <div className="playbar-placeholder">
+          <div className="playbar-placeholder-content">
+            <ExportOutlined style={{ fontSize: 24, marginBottom: 8 }} />
+            <div>播放器已弹出到独立窗口</div>
+            <Button
+              size="small"
+              onClick={exitDocumentPip}
+              style={{ marginTop: 8 }}
+            >
+              收回播放器
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* 底部播放条 */}
       <div
         className={`playbar ${isExpanded ? "playbar-expanded" : ""} ${
           isPlaylistOpen ? "playbar-playlist-open" : ""
-        }`}
+        } ${isDocumentPip ? "playbar-in-pip" : ""}`}
       >
         {/* 播放列表区域 - 在 playbar 内部向下展开 */}
         <AnimatePresence>
@@ -334,8 +460,8 @@ const PlayBar: React.FC = () => {
               </div>
             )}
           </div>
-          {/* 展开模式下的收起按钮 */}
-          {isExpanded && (
+          {/* 展开模式下的收起按钮 - 画中画模式下禁用 */}
+          {isExpanded && !isDocumentPip && (
             <Button
               color="default"
               variant="filled"
@@ -346,7 +472,10 @@ const PlayBar: React.FC = () => {
               <FullscreenExitOutlined />
             </Button>
           )}
-          <div className="playbar-info" onClick={handleExpandClick}>
+          <div
+            className="playbar-info"
+            onClick={!isDocumentPip ? handleExpandClick : undefined}
+          >
             {currentVideo ? (
               <div className="playbar-text-info">
                 <div className="playbar-title" title={currentVideo.title}>
@@ -375,11 +504,22 @@ const PlayBar: React.FC = () => {
             color={isPip ? "primary" : "default"}
             variant="filled"
             onClick={handlePipClick}
-            title="画中画"
+            title="视频画中画"
             shape="circle"
             disabled={!videoUrl}
           >
             <SwitcherOutlined />
+          </Button>
+
+          <Button
+            color={isDocumentPip ? "primary" : "default"}
+            variant="filled"
+            onClick={toggleDocumentPip}
+            title={isDocumentPip ? "收回播放器" : "弹出画中画"}
+            shape="circle"
+            disabled={!currentVideo}
+          >
+            {isDocumentPip ? <ImportOutlined /> : <ExportOutlined />}
           </Button>
 
           <Button
@@ -388,6 +528,7 @@ const PlayBar: React.FC = () => {
             onClick={togglePlaylistOpen}
             title="播放列表"
             shape="circle"
+            disabled={isDocumentPip}
           >
             <UnorderedListOutlined />
           </Button>

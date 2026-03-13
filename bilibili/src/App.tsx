@@ -258,8 +258,10 @@ function App() {
         }}
       />
 
-      {/* 悬浮播放条 */}
-      <PlayBar />
+      {/* 悬浮播放条容器 */}
+      <div id="playbar-container">
+        <PlayBar />
+      </div>
 
       {/* 用户主页抽屉 */}
       <UserProfileDrawer
