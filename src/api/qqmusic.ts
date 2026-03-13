@@ -90,7 +90,7 @@ const buildCommonParams = () => {
 };
 
 // 基础 POST 请求
-const postRequest = async (data: any, enableSign: boolean = false) => {
+const postRequest = async (data: any, enableSign: boolean = false, credential?: { musicid?: string; musickey?: string }) => {
   try {
     const requestData = { ...data };
     if (!requestData.comm) {
@@ -103,8 +103,14 @@ const postRequest = async (data: any, enableSign: boolean = false) => {
       params.sign = sign(requestData);
     }
 
+    const headers: any = getBaseHeaders();
+    const creds = credential || globalCredential;
+    if (creds?.musicid && creds?.musickey) {
+      headers["Cookie"] = `uin=${creds.musicid}; qm_keyst=${creds.musickey};`;
+    }
+
     const response = await axios.post(url, requestData, {
-      headers: getBaseHeaders(),
+      headers,
       params,
       timeout: 30000,
     });
@@ -258,7 +264,7 @@ export const getSongUrl = async (
       },
     };
 
-    const result = await postRequest(data);
+    const result = await postRequest(data, false, credential);
     const urlInfo = result["music.vkey.GetVkey"]?.data?.midurlinfo?.[0];
 
     if (!urlInfo?.purl) {

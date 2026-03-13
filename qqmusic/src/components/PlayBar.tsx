@@ -1,33 +1,17 @@
-/**
- * 播放器底部控制条
- */
 import React, { useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Button,
-  Slider,
-  Space,
-  Tooltip,
-  Drawer,
-  List,
-  Empty,
-  Popover,
-  Select,
-} from "antd";
-import {
-  PlayCircleOutlined,
-  PauseCircleOutlined,
-  StepBackwardOutlined,
-  StepForwardOutlined,
-  DeleteOutlined,
-  ClearOutlined,
-  SoundOutlined,
-  MutedOutlined,
   UnorderedListOutlined,
   CloseOutlined,
-  SettingOutlined,
+  DeleteOutlined,
+  PauseOutlined,
+  CaretRightOutlined,
+  StepBackwardOutlined,
+  StepForwardOutlined,
+  PlayCircleFilled,
 } from "@ant-design/icons";
+import { Button, Space } from "antd";
 import { usePlayerStore } from "../store/player";
-import { SongQuality } from "../types/qqmusic";
 import type { Song } from "../types/qqmusic";
 
 const PlayBar: React.FC = () => {
@@ -37,23 +21,15 @@ const PlayBar: React.FC = () => {
     currentSong,
     currentSongUrl,
     isPlaying,
-    currentTime,
-    duration,
-    volume,
     playlist,
-    currentIndex,
-    songQuality,
     isPlaylistOpen,
     togglePlaylistOpen,
-    setCurrentTime,
-    setDuration,
-    setVolume,
     togglePlay,
     playNext,
     playPrev,
     removeFromPlaylist,
     clearPlaylist,
-    setSongQuality,
+    play,
   } = usePlayerStore();
 
   // 音频事件监听
@@ -61,34 +37,17 @@ const PlayBar: React.FC = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => {
-      setCurrentTime(audio.currentTime);
-    };
+    const handleEnded = () => playNext();
+    const handleError = () => console.error("音频加载失败");
 
-    const handleLoadedMetadata = () => {
-      setDuration(audio.duration);
-    };
-
-    const handleEnded = () => {
-      playNext();
-    };
-
-    const handleError = () => {
-      console.error("音频加载失败");
-    };
-
-    audio.addEventListener("timeupdate", handleTimeUpdate);
-    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("error", handleError);
 
     return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate);
-      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
-  }, [setCurrentTime, setDuration, playNext]);
+  }, [playNext]);
 
   // 播放/暂停控制
   useEffect(() => {
@@ -96,255 +55,171 @@ const PlayBar: React.FC = () => {
     if (!audio || !currentSongUrl) return;
 
     if (isPlaying) {
-      audio.play().catch((err) => {
-        console.error("播放失败:", err);
-      });
+      audio.play().catch((err) => console.error("播放失败:", err));
     } else {
       audio.pause();
     }
   }, [isPlaying, currentSongUrl]);
 
-  // 音量控制
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.volume = volume;
-    }
-  }, [volume]);
-
-  // 格式化时间
-  const formatTime = (time: number): string => {
-    if (!time || isNaN(time)) return "00:00";
-    const mins = Math.floor(time / 60);
-    const secs = Math.floor(time % 60);
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  // 获取歌手名
   const getSingerName = (song: Song): string => {
     if (!song.singer || song.singer.length === 0) return "未知歌手";
     return song.singer.map((s) => s.name).join(" / ");
   };
 
-  // 获取专辑封面
   const getAlbumCover = (song: Song): string => {
     if (song.album?.pmid) {
-      return `https://y.gtimg.cn/music/photo_new/T002R150x150M000${song.album.pmid}.jpg`;
+      return `https://y.gtimg.cn/music/photo_new/T002R300x300M000${song.album.pmid}.jpg`;
     }
     return "https://y.gtimg.cn/mediastyle/global/img/album_300.png";
   };
 
-  // 音质选项
-  const qualityOptions = [
-    { label: "标准", value: SongQuality.STANDARD },
-    { label: "高品质", value: SongQuality.HIGH },
-    { label: "无损", value: SongQuality.LOSSLESS },
-  ];
-
-  // 如果没有当前歌曲，不显示播放器
-  if (!currentSong) {
-    return null;
-  }
+  const handlePlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    togglePlay();
+  };
 
   return (
     <>
-      {/* 音频元素 */}
       <audio ref={audioRef} src={currentSongUrl || ""} preload="metadata" />
 
-      {/* 播放器条 */}
-      <div className="qqmusic-playbar">
-        {/* 进度条 */}
-        <div className="qqmusic-playbar-progress">
-          <span className="time-current">{formatTime(currentTime)}</span>
-          <Slider
-            value={currentTime}
-            max={duration || 100}
-            onChange={(value) => {
-              if (audioRef.current) {
-                audioRef.current.currentTime = value;
-                setCurrentTime(value);
-              }
-            }}
-            className="progress-slider"
-            tooltip={{ formatter: (val) => formatTime(val || 0) }}
-          />
-          <span className="time-total">{formatTime(duration)}</span>
-        </div>
-
-        {/* 控制区域 */}
-        <div className="qqmusic-playbar-controls">
-          {/* 歌曲信息 */}
-          <div className="qqmusic-playbar-song-info">
-            <img
-              src={getAlbumCover(currentSong)}
-              alt={currentSong.name}
-              className="qqmusic-playbar-cover"
-            />
-            <div className="qqmusic-playbar-song-meta">
-              <div className="qqmusic-playbar-song-name" title={currentSong.name}>
-                {currentSong.name}
+      <div
+        className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""}`}
+      >
+        <AnimatePresence>
+          {isPlaylistOpen && (
+            <motion.div
+              className="playbar-playlist-inner"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="playbar-playlist-header">
+                <span className="playbar-playlist-title">
+                  播放列表 ({playlist.length})
+                </span>
+                {playlist.length > 0 && (
+                  <Button
+                    color="red"
+                    variant="filled"
+                    onClick={clearPlaylist}
+                    title="清空列表"
+                    shape="circle"
+                  >
+                    <DeleteOutlined />
+                  </Button>
+                )}
               </div>
-              <div className="qqmusic-playbar-singer" title={getSingerName(currentSong)}>
-                {getSingerName(currentSong)}
+              <div className="playbar-playlist-content">
+                {playlist.length === 0 ? (
+                  <div className="playbar-playlist-empty">暂无歌曲</div>
+                ) : (
+                  playlist.map((song, index) => (
+                    <div
+                      key={song.mid + index}
+                      className={`playbar-playlist-item ${
+                        currentSong?.mid === song.mid ? "active" : ""
+                      }`}
+                      onClick={() => play(song)}
+                    >
+                      <img src={getAlbumCover(song)} alt={song.name} />
+                      <div className="playbar-playlist-item-info">
+                        <div className="playbar-playlist-item-title">
+                          {song.name}
+                        </div>
+                        <div className="playbar-playlist-item-author">
+                          {getSingerName(song)}
+                        </div>
+                      </div>
+                      <span
+                        className="playbar-playlist-item-remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromPlaylist(index);
+                        }}
+                      >
+                        <CloseOutlined />
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
-            </div>
-          </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* 播放控制 */}
-          <div className="qqmusic-playbar-play-controls">
-            <Space>
-              <Tooltip title="上一首">
-                <Button
-                  type="text"
-                  shape="circle"
-                  icon={<StepBackwardOutlined />}
-                  onClick={playPrev}
-                  size="large"
-                />
-              </Tooltip>
-              <Tooltip title={isPlaying ? "暂停" : "播放"}>
-                <Button
-                  type="primary"
-                  shape="circle"
-                  icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                  onClick={togglePlay}
-                  size="large"
-                />
-              </Tooltip>
-              <Tooltip title="下一首">
-                <Button
-                  type="text"
-                  shape="circle"
-                  icon={<StepForwardOutlined />}
-                  onClick={playNext}
-                  size="large"
-                />
-              </Tooltip>
-            </Space>
-          </div>
-
-          {/* 右侧控制 */}
-          <div className="qqmusic-playbar-right-controls">
-            <Space>
-              {/* 音质选择 */}
-              <Popover
-                content={
-                  <Select
-                    value={songQuality}
-                    options={qualityOptions}
-                    onChange={(value) => setSongQuality(value as SongQuality)}
-                    style={{ width: 100 }}
-                  />
-                }
-                title="音质选择"
-                trigger="click"
-              >
-                <Button type="text" icon={<SettingOutlined />}>
-                  {qualityOptions.find((q) => q.value === songQuality)?.label}
-                </Button>
-              </Popover>
-
-              {/* 音量控制 */}
-              <Popover
-                content={
-                  <Slider
-                    value={volume}
-                    max={1}
-                    step={0.1}
-                    onChange={(val) => setVolume(val)}
-                    style={{ width: 100 }}
-                  />
-                }
-                title="音量"
-                trigger="click"
-              >
-                <Button
-                  type="text"
-                  icon={volume === 0 ? <MutedOutlined /> : <SoundOutlined />}
-                />
-              </Popover>
-
-              {/* 播放列表 */}
-              <Tooltip title="播放列表">
-                <Button
-                  type={isPlaylistOpen ? "primary" : "text"}
-                  icon={<UnorderedListOutlined />}
-                  onClick={togglePlaylistOpen}
-                >
-                  {playlist.length}
-                </Button>
-              </Tooltip>
-            </Space>
-          </div>
-        </div>
-      </div>
-
-      {/* 播放列表抽屉 */}
-      <Drawer
-        title={`播放列表 (${playlist.length}首)`}
-        placement="right"
-        open={isPlaylistOpen}
-        onClose={togglePlaylistOpen}
-        width={400}
-        className="playlist-drawer"
-        extra={
-          <Space>
-            <Tooltip title="清空列表">
-              <Button
-                type="text"
-                danger
-                icon={<ClearOutlined />}
-                onClick={clearPlaylist}
+        <div className="playbar-bottom">
+          <div className="playbar-video-wrapper">
+            {currentSong ? (
+              <img
+                className="playbar-video"
+                src={getAlbumCover(currentSong)}
+                alt={currentSong.name}
+                referrerPolicy="no-referrer"
               />
-            </Tooltip>
+            ) : (
+              <div className="playbar-video-loading">
+                <PlayCircleFilled style={{ fontSize: 24, opacity: 0.5 }} />
+              </div>
+            )}
+          </div>
+
+          <div className="playbar-info">
+            {currentSong ? (
+              <div className="playbar-text-info">
+                <div className="playbar-title" title={currentSong.name}>
+                  {currentSong.name}
+                </div>
+                <div
+                  className="playbar-author"
+                  title={getSingerName(currentSong)}
+                >
+                  {getSingerName(currentSong)}
+                </div>
+              </div>
+            ) : (
+              <div className="playbar-title">暂无播放</div>
+            )}
+          </div>
+
+          {/* 控制按钮放在右侧，仿 Bilibili 风格 */}
+          <Space size="small" style={{ marginLeft: "auto" }}>
             <Button
               type="text"
-              icon={<CloseOutlined />}
-              onClick={togglePlaylistOpen}
+              shape="circle"
+              icon={<StepBackwardOutlined />}
+              onClick={playPrev}
             />
+
+            <Button
+              color="default"
+              variant="filled"
+              onClick={handlePlayPause}
+              title={isPlaying ? "暂停" : "播放"}
+              shape="circle"
+            >
+              {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
+            </Button>
+
+            <Button
+              type="text"
+              shape="circle"
+              icon={<StepForwardOutlined />}
+              onClick={playNext}
+            />
+
+            <Button
+              color={isPlaylistOpen ? "primary" : "default"}
+              variant="filled"
+              onClick={togglePlaylistOpen}
+              title="播放列表"
+              shape="circle"
+            >
+              <UnorderedListOutlined />
+            </Button>
           </Space>
-        }
-      >
-        {playlist.length === 0 ? (
-          <Empty description="播放列表为空" />
-        ) : (
-          <List
-            dataSource={playlist}
-            renderItem={(song, index) => (
-              <List.Item
-                className={`playlist-item ${
-                  index === currentIndex ? "playlist-item-current" : ""
-                }`}
-                actions={[
-                  <Button
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => removeFromPlaylist(index)}
-                  />,
-                ]}
-                onClick={() => {
-                  usePlayerStore.getState().play(song);
-                }}
-              >
-                <List.Item.Meta
-                  avatar={
-                    <img
-                      src={getAlbumCover(song)}
-                      alt={song.name}
-                      className="playlist-item-cover"
-                    />
-                  }
-                  title={song.name}
-                  description={getSingerName(song)}
-                />
-              </List.Item>
-            )}
-          />
-        )}
-      </Drawer>
+        </div>
+      </div>
     </>
   );
 };
