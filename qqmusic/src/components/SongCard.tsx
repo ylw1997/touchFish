@@ -6,6 +6,7 @@ import { Button, Tag, Space, Tooltip } from "antd";
 import {
   PlusOutlined,
   HeartOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 import type { Song } from "../types/qqmusic";
 
@@ -50,51 +51,78 @@ const SongCard: React.FC<SongCardProps> = ({
 
   return (
     <div
-      className={`playbar-playlist-item ${isCurrent ? "active" : ""}`}
+      className={`song-card ${isCurrent ? "song-card-playing" : ""}`}
       onClick={() => onPlay?.(song)}
     >
-      <img src={getAlbumCover()} alt={song.name} />
-      
-      <div className="playbar-playlist-item-info">
-        <div className="playbar-playlist-item-title">
-          {song.name}
-          {song.pay?.pay_play === 1 && <Tag color="gold" style={{ marginLeft: 6, fontSize: 10, lineHeight: '14px' }}>VIP</Tag>}
-          {song.isonly === 1 && <Tag color="blue" style={{ marginLeft: 4, fontSize: 10, lineHeight: '14px' }}>独家</Tag>}
+      <div className="song-card-content">
+        {/* 封面 */}
+        <div className="song-card-cover">
+          <img
+            src={getAlbumCover()}
+            alt={song.name}
+            className="song-cover-img"
+          />
+          {isPlaying && (
+            <div className="song-playing-indicator">
+              <span className="playing-bar"></span>
+              <span className="playing-bar"></span>
+              <span className="playing-bar"></span>
+            </div>
+          )}
         </div>
-        <div className="playbar-playlist-item-author">{getSingerName()} - {song.album?.name || "未知专辑"}</div>
-      </div>
 
-      <div className="song-duration" style={{ color: "var(--vscode-descriptionForeground)", fontSize: 12 }}>
-        {formatDuration(song.interval)}
-      </div>
-
-      {showActions && (
-        <div className="song-actions" onClick={(e) => e.stopPropagation()}>
-          <Space>
-            <Tooltip title="添加到播放列表">
-              <Button
-                type="text"
-                shape="circle"
-                icon={<PlusOutlined />}
-                onClick={() => onAddToPlaylist?.(song)}
-                size="small"
-                className="playbar-playlist-item-remove"
-                style={{ opacity: 1 }}
-              />
-            </Tooltip>
-            <Tooltip title="添加到我喜欢">
-              <Button
-                type="text"
-                shape="circle"
-                icon={<HeartOutlined />}
-                size="small"
-                className="playbar-playlist-item-remove"
-                style={{ opacity: 1 }}
-              />
-            </Tooltip>
-          </Space>
+        {/* 歌曲信息 */}
+        <div className="song-card-info">
+          <div className="song-title-row">
+            <span className="song-name" title={song.name}>
+              {song.name}
+            </span>
+            {song.pay?.pay_play === 1 && (
+              <Tag color="gold" style={{ fontSize: 10, lineHeight: '14px' }}>VIP</Tag>
+            )}
+            {song.isonly === 1 && (
+              <Tag color="blue" style={{ fontSize: 10, lineHeight: '14px' }}>独家</Tag>
+            )}
+          </div>
+          <div className="song-artist" title={getSingerName()}>
+            {getSingerName()}
+          </div>
+          <div className="song-album" title={song.album?.name}>
+            {song.album?.name || "未知专辑"}
+          </div>
         </div>
-      )}
+
+        {/* 时长 */}
+        <div className="song-duration">
+          <ClockCircleOutlined />
+          <span>{formatDuration(song.interval)}</span>
+        </div>
+
+        {/* 操作按钮 */}
+        {showActions && (
+          <div className="song-actions" onClick={(e) => e.stopPropagation()}>
+            <Space>
+              <Tooltip title="添加到播放列表">
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<PlusOutlined />}
+                  onClick={() => onAddToPlaylist?.(song)}
+                  size="small"
+                />
+              </Tooltip>
+              <Tooltip title="添加到我喜欢">
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<HeartOutlined />}
+                  size="small"
+                />
+              </Tooltip>
+            </Space>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

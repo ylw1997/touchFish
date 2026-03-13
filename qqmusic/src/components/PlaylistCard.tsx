@@ -24,8 +24,8 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onClick }) => {
   };
 
   return (
-    <div className="video-card" onClick={() => onClick?.(playlist)}>
-      <div className="video-cover">
+    <div className="playlist-card" onClick={() => onClick?.(playlist)}>
+      <div className="playlist-cover-wrapper">
         <img
           alt={playlist.dissname}
           src={
@@ -33,23 +33,26 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onClick }) => {
             playlist.diss_cover ||
             "https://y.gtimg.cn/mediastyle/global/img/playlist_300.png"
           }
+          className="playlist-cover"
         />
-        <PlayCircleOutlined className="video-play-icon" />
+        <div className="playlist-play-overlay">
+          <PlayCircleOutlined className="play-icon" />
+        </div>
         {playlist.listennum && (
-          <div className="video-stats-overlay">
-            <span>
-              <CustomerServiceOutlined />
-              {formatPlayCount(playlist.listennum)}
-            </span>
+          <div className="playlist-play-count">
+            <CustomerServiceOutlined />
+            <span>{formatPlayCount(playlist.listennum)}</span>
           </div>
         )}
-        <div className="video-duration">{playlist.songnum}首</div>
       </div>
-      <div className="video-title" title={playlist.dissname}>
-        {playlist.dissname}
-      </div>
-      <div className="video-footer">
-        <span className="video-author">{playlist.nick || "QQ音乐"}</span>
+      <div className="playlist-info">
+        <div className="playlist-title" title={playlist.dissname}>
+          {playlist.dissname}
+        </div>
+        <div className="playlist-meta">
+          <span className="playlist-creator">{playlist.nick || "QQ音乐"}</span>
+          <span className="playlist-song-count">{playlist.songnum}首</span>
+        </div>
       </div>
     </div>
   );
