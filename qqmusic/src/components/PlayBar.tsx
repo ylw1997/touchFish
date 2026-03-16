@@ -26,9 +26,12 @@ const PlayBar: React.FC = () => {
     removeSongsFromPlaylist,
     messageApi,
     getGuessRecommend,
+    getLyric,
   } = useQQMusic();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [lyrics, setLyrics] = useState<{ time: number; text: string }[]>([]);
+  const [currentLyric, setCurrentLyric] = useState<string>("");
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const {
@@ -158,6 +161,54 @@ const PlayBar: React.FC = () => {
     };
   }, [currentSong, currentSong?.mid, getSongUrl, setCurrentSongUrl]);
 
+  // 获取并解析歌词
+  useEffect(() => {
+    let active = true;
+    if (!currentSong) {
+      setLyrics([]);
+      setCurrentLyric("");
+      return;
+    }
+
+    getLyric(currentSong.mid).then((res) => {
+      if (active && res.code === 0 && res.data) {
+        let lyricStr = res.data;
+        try {
+          // 检查是否大概率是 Base64 (不包含 [ 等 LRC 标志)
+          if (lyricStr && !lyricStr.includes("[")) {
+            lyricStr = decodeURIComponent(escape(window.atob(lyricStr)));
+          }
+        } catch (err) {
+          console.error("[PlayBar] 歌词解码失败:", err);
+        }
+
+        const lines = lyricStr.split("\n");
+        const parsed: { time: number; text: string }[] = [];
+        const timeRegex = /\[(\d+):(\d+\.\d+)\]/;
+
+        for (const line of lines) {
+          const matches = timeRegex.exec(line);
+          if (matches) {
+            const min = parseInt(matches[1], 10);
+            const sec = parseFloat(matches[2]);
+            const time = min * 60 + sec;
+            const text = line.replace(timeRegex, "").trim();
+            if (text) {
+              parsed.push({ time, text });
+            }
+          }
+        }
+        setLyrics(parsed);
+        // 重置当前行
+        setCurrentLyric("");
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [currentSong, currentSong?.mid, getLyric]);
+
   const getSingerName = (song: Song): string => {
     if (!song.singer || song.singer.length === 0) return "未知歌手";
     return song.singer.map((s) => s.name).join(" / ");
@@ -181,7 +232,16 @@ const PlayBar: React.FC = () => {
         ref={audioRef}
         src={currentSongUrl || ""}
         preload="metadata"
-        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => {
+          const currTime = e.currentTarget.currentTime;
+          setCurrentTime(currTime);
+          if (lyrics.length > 0) {
+            const line = lyrics.filter((l) => l.time <= currTime).pop();
+            if (line && line.text !== currentLyric) {
+              setCurrentLyric(line.text);
+            }
+          }
+        }}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onEnded={() => playNext()}
       />
@@ -275,14 +335,36 @@ const PlayBar: React.FC = () => {
           <div className="playbar-info">
             {currentSong ? (
               <div className="playbar-text-info">
-                <div className="playbar-title" title={currentSong.name}>
-                  {currentSong.name}
+                <div
+                  className="playbar-title"
+                  title={`${currentSong.name} - ${getSingerName(currentSong)}`}
+                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                >
+                  <span>{currentSong.name}</span>
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      color: "rgba(255, 255, 255, 0.45)",
+                      fontWeight: "normal",
+                    }}
+                  >
+                    - {getSingerName(currentSong)}
+                  </span>
                 </div>
                 <div
-                  className="playbar-author"
-                  title={getSingerName(currentSong)}
+                  className="playbar-lyric"
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(255, 255, 255, 0.85)",
+                    marginTop: "2px",
+                    minHeight: "16px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={currentLyric}
                 >
-                  {getSingerName(currentSong)}
+                  {currentLyric || "聆听美好音乐"}
                 </div>
               </div>
             ) : (
