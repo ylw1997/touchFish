@@ -122,7 +122,7 @@ function App() {
   // 加载推荐歌单
   const loadRecommendPlaylists = useCallback(async () => {
     console.log("[App] 开始加载推荐歌单...");
-    const result = await getRecommendPlaylists(12);
+    const result = await getRecommendPlaylists(24);
     console.log("[App] 推荐歌单结果:", result);
     if (result.code === 0 && result.data) {
       console.log("[App] 设置推荐歌单:", result.data.length, "个");
