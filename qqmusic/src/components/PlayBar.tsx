@@ -9,6 +9,7 @@ import {
   PlayCircleFilled,
   HeartOutlined,
   HeartFilled,
+  StepForwardOutlined,
 } from "@ant-design/icons";
 import { Button, Space, message } from "antd";
 import { usePlayerStore } from "../store/player";
@@ -18,7 +19,7 @@ import type { Song } from "../types/qqmusic";
 
 const PlayBar: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { playSong, getSongUrl, addSongsToPlaylist, removeSongsFromPlaylist, messageApi } = useQQMusic();
+  const { playSong, getSongUrl, addSongsToPlaylist, removeSongsFromPlaylist, messageApi, getGuessRecommend } = useQQMusic();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -35,10 +36,37 @@ const PlayBar: React.FC = () => {
     playNext,
     removeFromPlaylist,
     clearPlaylist,
+    isRadioMode,
   } = usePlayerStore();
 
   const { likedSongMids, toggleLikeSong } = useUserStore();
   const isLiked = currentSong ? likedSongMids.includes(currentSong.mid) : false;
+
+  // 猜你喜欢 (电台) 自动续播预加载
+  useEffect(() => {
+    if (isRadioMode && currentSong && playlist.length > 0) {
+      const currIdx = playlist.findIndex((s) => s.mid === currentSong.mid);
+      const remaining = playlist.length - (currIdx + 1);
+      
+      if (currIdx >= 0 && remaining <= 1) {
+        console.log("[PlayBar] 电台队列快空了，自动预加载下一批...");
+        getGuessRecommend().then((res) => {
+          if (res.code === 0 && res.data) {
+            const songs = res.data.tracks || res.data.songlist || res.data.v_song || res.data.list || [];
+            if (songs.length > 0) {
+              const player = usePlayerStore.getState();
+              // 过滤掉已经在列表中的歌曲，防止重复
+              const newSongs = songs.filter((s: Song) => !player.playlist.some((p) => p.mid === s.mid));
+              if (newSongs.length > 0) {
+                newSongs.forEach((s: Song) => player.addToPlaylist(s));
+                console.log(`[PlayBar] 电台成功追加 ${newSongs.length} 首歌曲`);
+              }
+            }
+          }
+        }).catch((err) => console.error("[PlayBar] 续播加载失败:", err));
+      }
+    }
+  }, [currentSong, playlist, isRadioMode, getGuessRecommend]);
 
   const handleToggleLike = async () => {
     if (!currentSong) return;
@@ -271,15 +299,26 @@ const PlayBar: React.FC = () => {
               {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
             </Button>
 
-            <Button
-              color={isPlaylistOpen ? "primary" : "default"}
-              variant="filled"
-              onClick={togglePlaylistOpen}
-              title="播放列表"
-              shape="circle"
-            >
-              <UnorderedListOutlined />
-            </Button>
+            {isRadioMode ? (
+              <Button
+                color="default"
+                shape="circle"
+                variant="filled"
+                icon={<StepForwardOutlined />}
+                onClick={playNext}
+                title="下一首"
+              />
+            ) : (
+              <Button
+                color={isPlaylistOpen ? "primary" : "default"}
+                variant="filled"
+                onClick={togglePlaylistOpen}
+                title="播放列表"
+                shape="circle"
+              >
+                <UnorderedListOutlined />
+              </Button>
+            )}
           </Space>
         </div>
       </div>

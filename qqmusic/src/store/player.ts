@@ -25,6 +25,7 @@ interface PlayerState {
   // UI 状态
   isPlaylistOpen: boolean;
   isLyricOpen: boolean;
+  isRadioMode: boolean;
 
   // Actions
   setCurrentSong: (song: Song | null) => void;
@@ -53,6 +54,7 @@ interface PlayerState {
   addToPlaylist: (song: Song) => void;
   removeFromPlaylist: (index: number) => void;
   clearPlaylist: () => void;
+  setIsRadioMode: (isRadioMode: boolean) => void;
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -74,6 +76,7 @@ export const usePlayerStore = create<PlayerState>()(
 
       isPlaylistOpen: false,
       isLyricOpen: false,
+      isRadioMode: false,
 
       // Setters
       setCurrentSong: (song) => set({ currentSong: song }),
@@ -92,6 +95,7 @@ export const usePlayerStore = create<PlayerState>()(
         set((state) => ({ isPlaylistOpen: !state.isPlaylistOpen })),
       toggleLyricOpen: () =>
         set((state) => ({ isLyricOpen: !state.isLyricOpen })),
+      setIsRadioMode: (isRadioMode) => set({ isRadioMode }),
 
       // 播放控制
       play: (song) => {

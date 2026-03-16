@@ -21,6 +21,8 @@ import {
   setGlobalCredential,
   addSongsToPlaylist,
   removeSongsFromPlaylist,
+  getRadarRecommend,
+  getGuessRecommend,
 } from "../api/qqmusic";
 import { CommandsType } from "../../types/commands";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
@@ -328,6 +330,26 @@ export class QQMusicProvider extends BaseWebviewProvider {
           const result = await removeSongsFromPlaylist(dirid, songIds);
           webviewView.webview.postMessage({
             command: "QQMUSIC_REMOVE_SONGS_FROM_PLAYLIST_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_RADAR_RECOMMEND": {
+          const result = await getRadarRecommend();
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_RADAR_RECOMMEND_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_GUESS_RECOMMEND": {
+          const result = await getGuessRecommend();
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_GUESS_RECOMMEND_RESULT",
             payload: result,
             uuid,
           } as CommandsType<any>);

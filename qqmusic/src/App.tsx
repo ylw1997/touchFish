@@ -77,6 +77,9 @@ function App() {
     playSong,
     getMyPlaylists,
     getMyFavorite,
+    getRadarRecommend,
+    getGuessRecommend,
+    messageApi,
   } = useQQMusic();
 
   const [recommendPlaylists, setRecommendPlaylists] = useState<Playlist[]>([]);
@@ -219,10 +222,62 @@ function App() {
   }, [isLoggedIn, loadRecommendPlaylists, loadRankLists, loadMyData]);
 
   // 处理歌单点击
-  const handlePlaylistClick = useCallback(async (playlist: Playlist) => {
-    setSelectedPlaylist(playlist);
-    setPlaylistDrawerOpen(true);
-  }, []);
+  const handlePlaylistClick = useCallback(
+    async (playlist: Playlist) => {
+      if (playlist.dissid === 999991) {
+        // 专属雷达
+        try {
+          const res = await getRadarRecommend();
+          console.log("[App] 雷达数据 res:", JSON.stringify(res));
+          const songs = res.data?.VecSongs
+            ? res.data.VecSongs.map((item: any) => item.Track).filter(Boolean)
+            : res.data?.tracks || res.data?.songlist || res.data?.v_song || res.data?.list || [];
+          if (songs.length > 0) {
+            const player = usePlayerStore.getState();
+            player.clearPlaylist();
+            player.setPlaylist(songs);
+            player.setCurrentIndex(0);
+            player.setIsRadioMode(false); // 不是电台无限流
+            await playSong(songs[0]);
+            messageApi.success("专属雷达开启，已载入播放列表");
+          } else {
+            messageApi.warning("暂无雷达推荐歌曲");
+          }
+        } catch {
+          messageApi.error("加载新雷达失败");
+        }
+        return;
+      }
+
+      if (playlist.dissid === 999992) {
+        // 猜你喜欢 (个性电台)
+        try {
+          const res = await getGuessRecommend();
+          console.log("[App] 电台数据 res:", JSON.stringify(res));
+          const songs =
+            res.data?.tracks || res.data?.songlist || res.data?.v_song || res.data?.list || [];
+          if (songs.length > 0) {
+            const player = usePlayerStore.getState();
+            player.clearPlaylist();
+            player.setPlaylist(songs);
+            player.setCurrentIndex(0);
+            player.setIsRadioMode(true); // 开启电台标记
+            await playSong(songs[0]);
+            messageApi.success("猜你喜欢电台开启");
+          } else {
+            message.warning("暂无极速电台推荐歌曲");
+          }
+        } catch {
+          message.error("加载个性电台失败");
+        }
+        return;
+      }
+
+      setSelectedPlaylist(playlist);
+      setPlaylistDrawerOpen(true);
+    },
+    [getRadarRecommend, getGuessRecommend, playSong, messageApi],
+  );
 
   // 处理歌曲播放
   const handlePlaySong = useCallback(
@@ -267,7 +322,23 @@ function App() {
             </Button>
           </div>
           <div className="playlist-grid">
-            {recommendPlaylists.map((playlist) => (
+            {[
+              {
+                dissid: 999991,
+                dissname: "专属雷达",
+                logo: "https://y.gtimg.cn/mediastyle/yqq/img/logo.png",
+                nick: "每日个性推荐",
+                songnum: 30,
+              },
+              {
+                dissid: 999992,
+                dissname: "猜你喜欢 (电台)",
+                logo: "https://y.gtimg.cn/mediastyle/yqq/img/logo.png",
+                nick: "无限流个性推歌",
+                songnum: 5,
+              },
+              ...recommendPlaylists,
+            ].map((playlist) => (
               <PlaylistCard
                 key={playlist.dissid}
                 playlist={playlist}

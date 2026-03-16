@@ -186,6 +186,20 @@ export const useQQMusic = () => {
     [request]
   );
 
+  const getRadarRecommend = useCallback(
+    async () => {
+      return request("QQMUSIC_GET_RADAR_RECOMMEND", {});
+    },
+    [request]
+  );
+
+  const getGuessRecommend = useCallback(
+    async () => {
+      return request("QQMUSIC_GET_GUESS_RECOMMEND", {});
+    },
+    [request]
+  );
+
   return {
     isLoading,
     searchSongs,
@@ -201,6 +215,8 @@ export const useQQMusic = () => {
     getMyPlaylists,
     addSongsToPlaylist,
     removeSongsFromPlaylist,
+    getRadarRecommend,
+    getGuessRecommend,
     messageApi,
   };
 };

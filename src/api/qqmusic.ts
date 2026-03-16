@@ -83,14 +83,20 @@ const buildCommonParams = () => {
     params.uid = globalCredential.musicid;
     params.qq = globalCredential.musicid;
     params.authst = globalCredential.musickey;
-    params.tmeLoginType = globalCredential.musickey.startsWith("W_X") ? "1" : "2";
+    params.tmeLoginType = globalCredential.musickey.startsWith("W_X")
+      ? "1"
+      : "2";
   }
 
   return params;
 };
 
 // 基础 POST 请求
-const postRequest = async (data: any, enableSign: boolean = false, credential?: { musicid?: string; musickey?: string }) => {
+const postRequest = async (
+  data: any,
+  enableSign: boolean = false,
+  credential?: { musicid?: string; musickey?: string },
+) => {
   try {
     const requestData = { ...data };
     if (!requestData.comm) {
@@ -107,25 +113,25 @@ const postRequest = async (data: any, enableSign: boolean = false, credential?: 
 
     const headers: any = getBaseHeaders();
     const creds = credential || globalCredential;
-    console.log(`[postRequest] Using credential: musicid=${creds?.musicid || 'NONE'}, musickey=${creds?.musickey?.substring(0, 20) || 'NONE'}...`);
     if (creds?.musicid && creds?.musickey) {
       const isWx = creds.musickey.startsWith("W_X");
       const loginType = isWx ? "1" : "2";
 
-      headers["Cookie"] = `uin=${creds.musicid}; qqmusic_key=${creds.musickey}; qm_keyst=${creds.musickey}; tmeLoginType=${loginType};`;
+      headers["Cookie"] =
+        `uin=${creds.musicid}; qqmusic_key=${creds.musickey}; qm_keyst=${creds.musickey}; tmeLoginType=${loginType};`;
       if (isWx) {
-         headers["Cookie"] += ` wxuin=${creds.musicid};`;
+        headers["Cookie"] += ` wxuin=${creds.musicid};`;
       }
-      
+
       requestData.comm.uid = creds.musicid; // Setup uid unconditionally
-      
+
       if (!requestData.comm.qq) {
         requestData.comm.qq = creds.musicid;
         requestData.comm.authst = creds.musickey;
         requestData.comm.tmeLoginType = loginType;
         requestData.comm.loginUin = creds.musicid;
         requestData.comm.tmeAppID = "qqmusic";
-    }
+      }
     }
 
     const response = await axios.post(url, requestData, {
@@ -284,16 +290,17 @@ export const getSongUrl = async (
     };
 
     const result = await postRequest(data, false, credential);
-    const vkeyData = result["music.vkey.GetVkey.UrlGetVkey"] || result["music.vkey.GetVkey"];
-    console.log("[getSongUrl] RAW vkeyData:", JSON.stringify(vkeyData, null, 2));
+    const vkeyData =
+      result["music.vkey.GetVkey.UrlGetVkey"] || result["music.vkey.GetVkey"];
 
     const urlInfo = vkeyData?.data?.midurlinfo?.[0];
 
     if (!urlInfo?.purl) {
       let errorMessage = "无法获取播放链接（可能需要登录或歌曲无版权）";
-      
+
       if (urlInfo?.pneedbuy === 1) {
-        errorMessage = "该歌曲为数字专辑/单曲，需在 QQ音乐 App 内单独购买后播放";
+        errorMessage =
+          "该歌曲为数字专辑/单曲，需在 QQ音乐 App 内单独购买后播放";
       } else if (urlInfo?.uiAlert === 7) {
         errorMessage = "该歌曲可能需要单独购买数字专辑后播放";
       } else if (urlInfo?.uiAlert === 41 || urlInfo?.uiAlert === 42) {
@@ -634,19 +641,21 @@ export const getRankDetail = async (
       update_key: resData.update_key,
     };
 
-    const songs: Song[] = (resData.songInfoList || resData.song || []).map((item: any) => ({
-      mid: item.mid,
-      id: item.id,
-      name: item.name || item.title,
-      title: item.title,
-      singer: item.singer || [],
-      album: item.album,
-      interval: item.interval,
-      isonly: item.isonly,
-      pay: item.pay,
-      file: item.file,
-      mv: item.mv,
-    }));
+    const songs: Song[] = (resData.songInfoList || resData.song || []).map(
+      (item: any) => ({
+        mid: item.mid,
+        id: item.id,
+        name: item.name || item.title,
+        title: item.title,
+        singer: item.singer || [],
+        album: item.album,
+        interval: item.interval,
+        isonly: item.isonly,
+        pay: item.pay,
+        file: item.file,
+        mv: item.mv,
+      }),
+    );
 
     return {
       code: 0,
@@ -770,7 +779,9 @@ export const checkLoginStatus = async (
       // 解析登录结果 (例如: ptuiCB('0','0','https://...','0','登录成功!', 'Nickname');)
       if (data.includes("登录成功")) {
         // 尝试从回调中提取昵称
-        const ptuiMatch = data.match(/ptuiCB\('0','0','[^']*','0','登录成功!',\s*'([^']*)'/);
+        const ptuiMatch = data.match(
+          /ptuiCB\('0','0','[^']*','0','登录成功!',\s*'([^']*)'/,
+        );
         const nickname = ptuiMatch ? ptuiMatch[1] : "QQ用户";
 
         // 提取用户信息
@@ -917,10 +928,13 @@ export const checkLoginStatus = async (
 
 export const getEuin = async (musicid: string): Promise<string> => {
   try {
-    const response = await axios.get("https://c6.y.qq.com/rsc/fcgi-bin/fcg_get_profile_homepage.fcg", {
-      params: { ct: 20, cv: 4747474, cid: 205360838, userid: musicid },
-      headers: getBaseHeaders(),
-    });
+    const response = await axios.get(
+      "https://c6.y.qq.com/rsc/fcgi-bin/fcg_get_profile_homepage.fcg",
+      {
+        params: { ct: 20, cv: 4747474, cid: 205360838, userid: musicid },
+        headers: getBaseHeaders(),
+      },
+    );
     return response.data?.data?.creator?.encrypt_uin || "";
   } catch {
     return "";
@@ -1218,7 +1232,9 @@ const authorizeWXQR = async (
     }
 
     // 从响应中提取凭证
-    const loginResult = response.data["music.login.LoginServer.Login"] || response.data["music.login.LoginServer"];
+    const loginResult =
+      response.data["music.login.LoginServer.Login"] ||
+      response.data["music.login.LoginServer"];
 
     if (!loginResult) {
       console.error("[authorizeWXQR] No music.login.LoginServer in response");
@@ -1243,8 +1259,14 @@ const authorizeWXQR = async (
     }
 
     const loginData = loginResult.data;
-    console.log("[authorizeWXQR] FULL loginResult:", JSON.stringify(loginResult, null, 2));
-    console.log("[authorizeWXQR] FULL loginData:", JSON.stringify(loginData, null, 2));
+    console.log(
+      "[authorizeWXQR] FULL loginResult:",
+      JSON.stringify(loginResult, null, 2),
+    );
+    console.log(
+      "[authorizeWXQR] FULL loginData:",
+      JSON.stringify(loginData, null, 2),
+    );
 
     if (!loginData || !loginData.musicid || !loginData.musickey) {
       console.error("[authorizeWXQR] Missing musicid or musickey in data");
@@ -1285,7 +1307,7 @@ const authorizeWXQR = async (
  */
 export const addSongsToPlaylist = async (
   dirid: number,
-  songIds: number[]
+  songIds: number[],
 ): Promise<ApiResponse<boolean>> => {
   try {
     const data = {
@@ -1320,7 +1342,7 @@ export const addSongsToPlaylist = async (
  */
 export const removeSongsFromPlaylist = async (
   dirid: number,
-  songIds: number[]
+  songIds: number[],
 ): Promise<ApiResponse<boolean>> => {
   try {
     const data = {
@@ -1345,6 +1367,75 @@ export const removeSongsFromPlaylist = async (
     return {
       code: -1,
       data: false,
+      message: error.message,
+    };
+  }
+};
+
+/**
+ * 获取雷达推荐列表
+ */
+export const getRadarRecommend = async (): Promise<ApiResponse<any>> => {
+  try {
+    const data = {
+      comm: buildCommonParams(),
+      "music.recommend.TrackRelationServer": {
+        method: "GetRadarSong",
+        module: "music.recommend.TrackRelationServer",
+        param: {
+          Page: 1,
+          ReqType: 0,
+          FavSongs: [],
+          EntranceSongs: [],
+        },
+      },
+    };
+
+    const result = await postRequest(data);
+    return {
+      code: 0,
+      data: result["music.recommend.TrackRelationServer"]?.data,
+    };
+  } catch (error: any) {
+    return {
+      code: -1,
+      data: null,
+      message: error.message,
+    };
+  }
+};
+
+/**
+ * 获取猜你喜欢 (个性电台)
+ */
+export const getGuessRecommend = async (): Promise<ApiResponse<any>> => {
+  try {
+    const data = {
+      comm: buildCommonParams(),
+      "music.radioProxy.MbTrackRadioSvr": {
+        method: "get_radio_track",
+        module: "music.radioProxy.MbTrackRadioSvr",
+        param: {
+          id: 99,
+          num: 5,
+          from: 0,
+          scene: 0,
+          song_ids: [],
+          ext: { bluetooth: "" },
+          should_count_down: 1,
+        },
+      },
+    };
+
+    const result = await postRequest(data);
+    return {
+      code: 0,
+      data: result["music.radioProxy.MbTrackRadioSvr"]?.data,
+    };
+  } catch (error: any) {
+    return {
+      code: -1,
+      data: null,
       message: error.message,
     };
   }
