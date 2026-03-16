@@ -2,10 +2,7 @@
  * 歌单卡片组件
  */
 import React from "react";
-import {
-  PlayCircleOutlined,
-  CustomerServiceOutlined,
-} from "@ant-design/icons";
+import { PlayCircleFilled, CustomerServiceFilled } from "@ant-design/icons";
 import type { Playlist } from "../types/qqmusic";
 
 interface PlaylistCardProps {
@@ -36,11 +33,11 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onClick }) => {
           className="playlist-cover"
         />
         <div className="playlist-play-overlay">
-          <PlayCircleOutlined className="play-icon" />
+          <PlayCircleFilled className="play-icon" />
         </div>
         {playlist.listennum && (
           <div className="playlist-play-count">
-            <CustomerServiceOutlined />
+            <CustomerServiceFilled />
             <span>{formatPlayCount(playlist.listennum)}</span>
           </div>
         )}

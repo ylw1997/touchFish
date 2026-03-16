@@ -763,14 +763,18 @@ a {
     background: var(--vscode-editor-background);
   }
 
+  .tab-content {
+    padding: 10px 5px;
+  }
   .ant-tabs-content {
     height: calc(100vh - 100px);
-    overflow-y: hidden;
+    overflow-y: auto;
     padding: 0px;
   }
   .sub-tabs {
     .ant-tabs-content {
       overflow-y: auto;
+      height: calc(100vh - 146px);
     }
   }
 }
@@ -849,7 +853,7 @@ a {
 
 .playlist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 16px;
 }
 
@@ -951,8 +955,6 @@ a {
 
 // ==================== 排行榜样式 ====================
 .rank-header {
-  margin-bottom: 16px;
-
   .rank-tabs {
     display: flex;
     gap: 8px;
@@ -970,6 +972,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 5px;
 }
 
 .song-card {
@@ -1153,11 +1156,15 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    margin-bottom: 20px;
-    background: var(--vscode-editor-inactiveSelectionBackground);
-    border-radius: 8px;
-
+    padding: 10px 0px;
+    margin-bottom: 10px;
+    background: none;
+    border-radius: 0;
+    margin-top: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
     .user-info {
       h2 {
         margin: 0 0 8px;
@@ -1179,9 +1186,9 @@ a {
     gap: 16px;
 
     .my-section {
-      padding: 16px;
-      background: var(--vscode-editor-inactiveSelectionBackground);
-      border-radius: 8px;
+      padding: 10px 0px;
+      background: none;
+      border-radius: 0;
 
       h3 {
         margin: 0 0 8px;
@@ -1381,7 +1388,17 @@ a {
     transform: rotate(360deg);
   }
 }
-
+.ant-drawer {
+  .ant-drawer-body {
+    padding: 0px;
+  }
+  .ant-drawer-header {
+    padding: 12px;
+  }
+  .ant-drawer-content {
+    overflow: hidden;
+  }
+}
 // 内部播放列表样式（在 playbar 内向下展开）
 .playbar-playlist-inner {
   width: 100%;

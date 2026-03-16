@@ -278,7 +278,6 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="tab-content"
         >
           <div className="rank-header">
             <Tabs
@@ -294,27 +293,32 @@ function App() {
               items={rankLists.slice(0, 10).map((rank) => ({
                 key: rank.topId.toString(),
                 label: rank.title,
-                children: (
-                  isRankLoading ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-                      <Spin size="large" />
-                    </div>
-                  ) : (
-                    <div className="song-list">
-                      {rankSongs.map((song) => (
-                        <SongCard
-                          key={song.mid}
-                          song={song}
-                          isPlaying={currentSongMid === song.mid}
-                          isCurrent={currentSongMid === song.mid}
-                          onPlay={handlePlaySong}
-                          onAddToPlaylist={(song) => {
-                            usePlayerStore.getState().addToPlaylist(song);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )
+                children: isRankLoading ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "200px",
+                    }}
+                  >
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <div className="song-list">
+                    {rankSongs.map((song) => (
+                      <SongCard
+                        key={song.mid}
+                        song={song}
+                        isPlaying={currentSongMid === song.mid}
+                        isCurrent={currentSongMid === song.mid}
+                        onPlay={handlePlaySong}
+                        onAddToPlaylist={(song) => {
+                          usePlayerStore.getState().addToPlaylist(song);
+                        }}
+                      />
+                    ))}
+                  </div>
                 ),
               }))}
             />
@@ -335,49 +339,30 @@ function App() {
         >
           {isLoggedIn ? (
             <div className="my-content">
-              <div
-                className="user-header"
-                style={{
-                  padding: "24px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  borderRadius: "12px",
-                  marginBottom: "20px",
-                }}
-              >
-                <div
-                  className="user-info"
-                  style={{ display: "flex", alignItems: "center" }}
-                >
-                  {userInfo?.avatar && (
-                    <Avatar
-                      src={userInfo.avatar}
-                      size={56}
-                      style={{
-                        marginRight: 16,
-                        border: "2px solid var(--ant-primary-color)",
-                      }}
-                    />
-                  )}
-                  <div>
-                    <h2
-                      style={{
-                        margin: 0,
-                        fontSize: "20px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      欢迎回来, {userInfo?.nickname || "用户"}
-                    </h2>
-                    <p
-                      style={{
-                        margin: "4px 0 0 0",
-                        opacity: 0.6,
-                        fontSize: "13px",
-                      }}
-                    >
-                      享受你的音乐时光
-                    </p>
-                  </div>
+              <div className="user-header">
+                {userInfo?.avatar && (
+                  <Avatar
+                    src={userInfo.avatar}
+                    size={72}
+                    style={{
+                      border: "2px solid var(--ant-primary-color)",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    }}
+                  />
+                )}
+                <div style={{ textAlign: "center" }}>
+                  <h2
+                    style={{
+                      margin: "4px 0",
+                      fontSize: "20px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {userInfo?.nickname || "用户"}
+                  </h2>
+                  <p style={{ margin: "0", opacity: 0.5, fontSize: "13px" }}>
+                    享受你的音乐时光
+                  </p>
                 </div>
               </div>
               <div className="my-sections">

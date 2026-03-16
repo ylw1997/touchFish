@@ -13,7 +13,11 @@ interface PlaylistDrawerProps {
   playlist: Playlist | null;
 }
 
-const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({ open, onClose, playlist }) => {
+const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({
+  open,
+  onClose,
+  playlist,
+}) => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { request } = useRequest();
@@ -48,7 +52,7 @@ const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({ open, onClose, playlist
 
     const playerStore = usePlayerStore.getState();
     playerStore.setPlaylist(songs); // 替换整个播放列表
-    
+
     try {
       await playSong(songs[0]); // 播放第一首
       message.success(`已开始播放: ${playlist?.dissname}`);
@@ -73,22 +77,32 @@ const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({ open, onClose, playlist
         message.error(error.message || "无法播放歌曲");
       }
     },
-    [playSong]
+    [playSong],
   );
 
   return (
     <Drawer
       title={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingRight: '20px' }}>
-          <span style={{ fontWeight: 'bold' }}>{playlist?.dissname || "歌单详情"}</span>
-          <Button 
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            width: "100%",
+            paddingRight: "20px",
+          }}
+        >
+          <span style={{ fontWeight: "bold" }}>
+            {playlist?.dissname || "歌单详情"}
+          </span>
+          <Button
             color="default"
             variant="filled"
-            icon={<PlayCircleOutlined />} 
+            icon={<PlayCircleOutlined />}
             onClick={handlePlayAll}
             disabled={songs.length === 0}
           >
-            播放全部
+            播放
           </Button>
         </div>
       }
@@ -99,7 +113,15 @@ const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({ open, onClose, playlist
       className="playlist-drawer"
     >
       {isLoading ? (
-        <div className="drawer-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <div
+          className="drawer-loading"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
           <Spin size="large" />
         </div>
       ) : songs.length > 0 ? (
@@ -111,7 +133,9 @@ const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({ open, onClose, playlist
               isPlaying={currentSong?.mid === song.mid}
               isCurrent={currentSong?.mid === song.mid}
               onPlay={handlePlaySong}
-              onAddToPlaylist={(s) => usePlayerStore.getState().addToPlaylist(s)}
+              onAddToPlaylist={(s) =>
+                usePlayerStore.getState().addToPlaylist(s)
+              }
             />
           ))}
         </div>
