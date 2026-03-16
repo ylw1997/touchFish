@@ -22,8 +22,9 @@ import {
   MinusOutlined,
   LoginOutlined,
   LogoutOutlined,
-  RedoOutlined,
   VerticalAlignTopOutlined,
+  RadarChartOutlined,
+  CustomerServiceOutlined,
 } from "@ant-design/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFontSizeStore } from "./store/fontSize";
@@ -70,7 +71,6 @@ function App() {
   const currentSongMid = currentSong?.mid;
 
   const {
-    isLoading,
     getRecommendPlaylists,
     getRankLists,
     getRankDetail,
@@ -231,7 +231,11 @@ function App() {
           console.log("[App] 雷达数据 res:", JSON.stringify(res));
           const songs = res.data?.VecSongs
             ? res.data.VecSongs.map((item: any) => item.Track).filter(Boolean)
-            : res.data?.tracks || res.data?.songlist || res.data?.v_song || res.data?.list || [];
+            : res.data?.tracks ||
+              res.data?.songlist ||
+              res.data?.v_song ||
+              res.data?.list ||
+              [];
           if (songs.length > 0) {
             const player = usePlayerStore.getState();
             player.clearPlaylist();
@@ -255,7 +259,11 @@ function App() {
           const res = await getGuessRecommend();
           console.log("[App] 电台数据 res:", JSON.stringify(res));
           const songs =
-            res.data?.tracks || res.data?.songlist || res.data?.v_song || res.data?.list || [];
+            res.data?.tracks ||
+            res.data?.songlist ||
+            res.data?.v_song ||
+            res.data?.list ||
+            [];
           if (songs.length > 0) {
             const player = usePlayerStore.getState();
             player.clearPlaylist();
@@ -311,34 +319,139 @@ function App() {
           className="tab-content"
         >
           <div className="section-title">
-            <h2>推荐歌单</h2>
-            <Button
-              type="text"
-              icon={<RedoOutlined />}
-              onClick={loadRecommendPlaylists}
-              loading={isLoading}
+            <h2>专属推荐</h2>
+          </div>
+          <div
+            className="special-recommend-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "14px",
+              marginBottom: "24px",
+            }}
+          >
+            {/* 专属雷达 */}
+            <div
+              className="custom-special-card"
+              onClick={() =>
+                handlePlaylistClick({
+                  dissid: 999991,
+                  dissname: "专属雷达",
+                  logo: "",
+                  nick: "",
+                  songnum: 30,
+                })
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                background: "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(25px)",
+                WebkitBackdropFilter: "blur(25px)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "14px",
+                padding: "12px 14px",
+                cursor: "pointer",
+                gap: "12px",
+                transition: "all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+              }}
             >
-              刷新
-            </Button>
+              <RadarChartOutlined
+                style={{ fontSize: "28px", color: "#00c6ff" }}
+              />
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: "#fff",
+                    marginBottom: "1px",
+                  }}
+                >
+                  专属雷达
+                </div>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "rgba(255, 255, 255, 0.45)",
+                    letterSpacing: "0.2px",
+                  }}
+                >
+                  每日个性推歌
+                </div>
+              </div>
+            </div>
+
+            {/* 个性电台 */}
+            <div
+              className="custom-special-card"
+              onClick={() =>
+                handlePlaylistClick({
+                  dissid: 999992,
+                  dissname: "猜你喜欢",
+                  logo: "",
+                  nick: "",
+                  songnum: 5,
+                })
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                background: "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(25px)",
+                WebkitBackdropFilter: "blur(25px)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "14px",
+                padding: "12px 14px",
+                cursor: "pointer",
+                gap: "12px",
+                transition: "all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+              }}
+            >
+              <CustomerServiceOutlined
+                style={{ fontSize: "28px", color: "#f857a6" }}
+              />
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: "#fff",
+                    marginBottom: "1px",
+                  }}
+                >
+                  猜你喜欢
+                </div>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "rgba(255, 255, 255, 0.45)",
+                    letterSpacing: "0.2px",
+                  }}
+                >
+                  无限流个性漫游
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="section-title">
+            <h2>推荐歌单</h2>
           </div>
           <div className="playlist-grid">
-            {[
-              {
-                dissid: 999991,
-                dissname: "专属雷达",
-                logo: "https://y.gtimg.cn/mediastyle/yqq/img/logo.png",
-                nick: "每日个性推荐",
-                songnum: 30,
-              },
-              {
-                dissid: 999992,
-                dissname: "猜你喜欢 (电台)",
-                logo: "https://y.gtimg.cn/mediastyle/yqq/img/logo.png",
-                nick: "无限流个性推歌",
-                songnum: 5,
-              },
-              ...recommendPlaylists,
-            ].map((playlist) => (
+            {recommendPlaylists.map((playlist) => (
               <PlaylistCard
                 key={playlist.dissid}
                 playlist={playlist}

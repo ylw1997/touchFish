@@ -618,7 +618,9 @@ a {
   transition: background 0.2s ease;
 
   &:hover {
-    background: var(--vscode-list-hoverBackground);
+    .playlist-info {
+      color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);
+    }
   }
 
   .playlist-cover-wrapper {
@@ -668,12 +670,12 @@ a {
 
   .playlist-play-count {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: rgba(0, 0, 0, 0.6);
+    bottom: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.8);
     color: white;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 11px;
     display: flex;
     align-items: center;
@@ -681,12 +683,12 @@ a {
   }
 
   .playlist-info {
+    color: var(--vscode-foreground);
     padding: 8px 4px;
   }
 
   .playlist-title {
     font-size: 13px;
-    color: var(--vscode-foreground);
     margin-bottom: 4px;
     display: -webkit-box;
     -webkit-box-orient: vertical;
