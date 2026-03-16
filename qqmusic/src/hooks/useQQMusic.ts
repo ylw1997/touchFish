@@ -32,6 +32,23 @@ export const useQQMusic = () => {
     [request]
   );
 
+  const searchSingers = useCallback(
+    async (keyword: string, page: number = 1, num: number = 20) => {
+      setIsLoading(true);
+      try {
+        const result = await request("QQMUSIC_SEARCH_SINGER", {
+          keyword,
+          page,
+          num,
+        });
+        return result;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [request]
+  );
+
   // ==================== 歌曲 ====================
   const getSongUrl = useCallback(
     async (mid: string, quality: SongQuality = SongQuality.STANDARD) => {
@@ -203,6 +220,7 @@ export const useQQMusic = () => {
   return {
     isLoading,
     searchSongs,
+    searchSingers,
     getSongUrl,
     getSongDetail,
     getLyric,

@@ -59,14 +59,14 @@ export class QQMusicProvider extends BaseWebviewProvider {
   private async saveCredential(cred: { musicid: string; musickey: string }) {
     this.credential = cred;
     setGlobalCredential(cred);
-    
+
     try {
       await setConfigByKey("qqmusicMusicid", cred.musicid);
       await setConfigByKey("qqmusicMusickey", cred.musickey);
     } catch (err) {
       console.error("[QQMusic] 写入配置文件失败:", err);
     }
-    
+
     console.log(`[QQMusic] 凭证已保存: musicid=${cred.musicid}`);
   }
 
@@ -74,14 +74,14 @@ export class QQMusicProvider extends BaseWebviewProvider {
   private async clearCredential() {
     this.credential = null;
     setGlobalCredential(null);
-    
+
     try {
       await setConfigByKey("qqmusicMusicid", "");
       await setConfigByKey("qqmusicMusickey", "");
     } catch (err) {
       console.error("[QQMusic] 清除配置文件失败:", err);
     }
-    
+
     console.log(`[QQMusic] 凭证已清除`);
   }
 
@@ -91,7 +91,7 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
   protected async handleCustomMessage(
     message: IncomingMessage,
-    webviewView: WebviewView
+    webviewView: WebviewView,
   ) {
     const { command, payload, uuid } = message;
 
@@ -110,8 +110,8 @@ export class QQMusicProvider extends BaseWebviewProvider {
         }
 
         case "QQMUSIC_SEARCH_SINGER": {
-          const { keyword, page, num } = payload || {};
-          const result = await searchSingers(keyword, page || 1, num || 20);
+          const { keyword } = payload || {};
+          const result = await searchSingers(keyword);
           webviewView.webview.postMessage({
             command: "QQMUSIC_SEARCH_SINGER_RESULT",
             payload: result,
@@ -273,8 +273,14 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
         case "QQMUSIC_SET_CREDENTIAL": {
           const setCred = payload?.credential || payload;
-          console.log("[QQMusic] 收到 QQMUSIC_SET_CREDENTIAL Payload:", JSON.stringify(payload));
-          console.log("[QQMusic] 收到 QQMUSIC_SET_CREDENTIAL setCred:", JSON.stringify(setCred));
+          console.log(
+            "[QQMusic] 收到 QQMUSIC_SET_CREDENTIAL Payload:",
+            JSON.stringify(payload),
+          );
+          console.log(
+            "[QQMusic] 收到 QQMUSIC_SET_CREDENTIAL setCred:",
+            JSON.stringify(setCred),
+          );
           if (setCred?.musicid && setCred?.musickey) {
             this.saveCredential({
               musicid: setCred.musicid.toString(), // Force string just in case

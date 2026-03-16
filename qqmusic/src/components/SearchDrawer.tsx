@@ -2,15 +2,7 @@
  * 搜索抽屉组件
  */
 import React, { useState, useCallback } from "react";
-import {
-  Drawer,
-  Input,
-  Empty,
-  Spin,
-  Tabs,
-  Button,
-  message,
-} from "antd";
+import { Drawer, Input, Empty, Spin, Tabs, Button, message } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useQQMusic } from "../hooks/useQQMusic";
 import SongCard from "./SongCard";
@@ -28,9 +20,10 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
   const [keyword, setKeyword] = useState("");
   const [activeTab, setActiveTab] = useState("song");
   const [songs, setSongs] = useState<Song[]>([]);
+  const [singers, setSingers] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const { searchSongs, isLoading, playSong } = useQQMusic();
+  const { searchSongs, searchSingers, isLoading, playSong } = useQQMusic();
   const { currentSong } = usePlayerStore();
 
   const handleSearch = useCallback(async () => {
@@ -43,11 +36,16 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
         if (result.code === 0 && result.data) {
           setSongs(result.data);
         }
+      } else if (activeTab === "singer") {
+        const result = await searchSingers(keyword, 1, 30);
+        if (result.code === 0 && result.data) {
+          setSingers(result.data);
+        }
       }
     } finally {
       setIsSearching(false);
     }
-  }, [keyword, activeTab, searchSongs]);
+  }, [keyword, activeTab, searchSongs, searchSingers]);
 
   const handlePlaySong = useCallback(
     async (song: Song) => {
@@ -57,8 +55,23 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
         message.error(error.message || "无法播放歌曲");
       }
     },
-    [playSong]
+    [playSong],
   );
+
+  const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [keyword]);
+
+  React.useEffect(() => {
+    if (debouncedKeyword.trim()) {
+      handleSearch();
+    }
+  }, [activeTab, handleSearch, debouncedKeyword]);
 
   const tabItems = [
     {
@@ -94,7 +107,42 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
       key: "singer",
       label: "歌手",
       children: (
-        <Empty description="歌手搜索功能开发中" />
+        <div className="search-results">
+          {isSearching || isLoading ? (
+            <div className="search-loading">
+              <Spin size="large" />
+            </div>
+          ) : singers.length > 0 ? (
+            <div className="singer-list">
+              {singers.map((singer) => (
+                <div
+                  key={singer.mid || singer.singer_MID}
+                  className="song-card"
+                >
+                  <div className="song-card-content">
+                    <div className="song-card-cover">
+                      <img
+                        src={
+                          singer.pic ||
+                          "https://y.gtimg.cn/mediastyle/global/img/singer_300.png"
+                        }
+                        alt={singer.name}
+                        className="song-cover-img"
+                      />
+                    </div>
+                    <div className="song-card-info">
+                      <div className="song-title">{singer.name}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : keyword ? (
+            <Empty description="未找到相关歌手" />
+          ) : (
+            <Empty description="请输入关键词搜索" />
+          )}
+        </div>
       ),
     },
   ];
@@ -102,11 +150,16 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
   return (
     <Drawer
       title="搜索"
-      placement="right"
+      placement="bottom"
       open={open}
       onClose={onClose}
-      width={500}
-      className="search-drawer"
+      destroyOnHidden
+      height="90%"
+      styles={{
+        body: {
+          paddingTop: "10px",
+        },
+      }}
     >
       <div className="search-header">
         <Search

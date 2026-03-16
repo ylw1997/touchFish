@@ -14,7 +14,7 @@ import type {
   UserInfo,
   ApiResponse,
 } from "../../qqmusic/src/types/qqmusic";
-import { SearchType, LoginType } from "../../qqmusic/src/types/qqmusic";
+import { LoginType } from "../../qqmusic/src/types/qqmusic";
 
 // API 基础配置
 const BASE_URL = "https://u.y.qq.com/cgi-bin/musicu.fcg";
@@ -44,11 +44,6 @@ const createSession = () => {
 
 // 微信登录专用 session（保持 cookies）
 let wxSession: any = null;
-
-// 生成搜索 ID
-const generateSearchId = () => {
-  return Math.floor(Math.random() * 1000000000000000000).toString();
-};
 
 // 生成 GUID (32位十六进制，无连字符，与 Python SDK 保持一致)
 const generateGuid = () => {
@@ -162,40 +157,58 @@ export const searchSongs = async (
   num: number = 20,
 ): Promise<ApiResponse<Song[]>> => {
   try {
-    const data = {
-      "music.search.SearchCgiService": {
-        method: "DoSearchForQQMusicMobile",
-        module: "music.search.SearchCgiService",
-        param: {
-          searchid: generateSearchId(),
-          query: keyword,
-          search_type: SearchType.SONG,
-          num_per_page: num,
-          page_num: page,
-          highlight: true,
-          grp: true,
+    const res = await axios.get(
+      "https://c.y.qq.com/soso/fcgi-bin/client_search_cp",
+      {
+        params: {
+          p: page,
+          n: num,
+          w: keyword,
+        },
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          Referer: "https://y.qq.com/",
+          Origin: "https://y.qq.com",
         },
       },
-    };
+    );
 
-    const result = await postRequest(data);
-    const songs =
-      result["music.search.SearchCgiService"]?.data?.body?.item_song || [];
+    const text = res.data;
+    if (typeof text !== "string" || !text.includes("(")) {
+      throw new Error("返回格式异常");
+    }
+
+    const jsonText = text.substring(
+      text.indexOf("(") + 1,
+      text.lastIndexOf(")"),
+    );
+    const result = JSON.parse(jsonText);
+
+    if (result.code !== 0) {
+      throw new Error("搜索请求失败");
+    }
+
+    const songs = result.data?.song?.list || [];
 
     return {
       code: 0,
       data: songs.map((item: any) => ({
-        mid: item.mid,
-        id: item.id,
-        name: item.name || item.title,
-        title: item.title,
+        mid: item.songmid,
+        id: item.songid,
+        name: item.songname,
+        title: item.songname,
         singer: item.singer || [],
-        album: item.album,
-        interval: item.interval,
-        isonly: item.isonly,
+        album: {
+          name: item.albumname,
+          mid: item.albummid,
+          pmid: item.albummid,
+        },
+        interval: item.interval || 0,
+        isonly: item.isonly || 0,
         pay: item.pay,
-        file: item.file,
-        mv: item.mv,
+        file: { media_mid: item.strMediaMid || item.media_mid },
+        mv: { vid: item.vid },
       })),
     };
   } catch (error: any) {
@@ -212,33 +225,31 @@ export const searchSongs = async (
  */
 export const searchSingers = async (
   keyword: string,
-  page: number = 1,
-  num: number = 20,
 ): Promise<ApiResponse<any[]>> => {
   try {
-    const data = {
-      "music.search.SearchCgiService": {
-        method: "DoSearchForQQMusicMobile",
-        module: "music.search.SearchCgiService",
-        param: {
-          searchid: generateSearchId(),
-          query: keyword,
-          search_type: SearchType.SINGER,
-          num_per_page: num,
-          page_num: page,
-          highlight: true,
-          grp: true,
+    const res = await axios.get(
+      "https://c.y.qq.com/splcloud/fcgi-bin/smartbox_new.fcg",
+      {
+        params: { key: keyword },
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          Referer: "https://y.qq.com/",
+          Origin: "https://y.qq.com",
         },
       },
-    };
+    );
 
-    const result = await postRequest(data);
-    const singers =
-      result["music.search.SearchCgiService"]?.data?.body?.singer || [];
+    if (res.data?.code !== 0) {
+      throw new Error("搜索请求失败");
+    }
+
+    const singerData = res.data.data?.singer;
+    const list = singerData?.itemlist || [];
 
     return {
       code: 0,
-      data: singers,
+      data: list,
     };
   } catch (error: any) {
     return {
