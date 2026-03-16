@@ -12,6 +12,7 @@ import {
   Avatar,
   Dropdown,
   Space,
+  Spin,
 } from "antd";
 import {
   HomeOutlined,
@@ -81,6 +82,7 @@ function App() {
   const [rankLists, setRankLists] = useState<RankList[]>([]);
   const [selectedRank, setSelectedRank] = useState<RankList | null>(null);
   const [rankSongs, setRankSongs] = useState<Song[]>([]);
+  const [isRankLoading, setIsRankLoading] = useState(false);
 
   // 我的数据
 
@@ -135,9 +137,14 @@ function App() {
         setSelectedRank(result.data[0]);
         // to avoid dependency cycle with selectedRank in loadRankDetail,
         // we just fetch the detail directly with the topId:
-        const detailResult = await getRankDetail(result.data[0].topId, 1, 50);
-        if (detailResult.code === 0 && detailResult.data) {
-          setRankSongs(detailResult.data.songs);
+        setIsRankLoading(true);
+        try {
+          const detailResult = await getRankDetail(result.data[0].topId, 1, 50);
+          if (detailResult.code === 0 && detailResult.data) {
+            setRankSongs(detailResult.data.songs);
+          }
+        } finally {
+          setIsRankLoading(false);
         }
       }
     } else {
@@ -148,9 +155,14 @@ function App() {
   // 加载排行榜详情
   const loadRankDetail = useCallback(
     async (topId: number) => {
-      const result = await getRankDetail(topId, 1, 50);
-      if (result.code === 0 && result.data) {
-        setRankSongs(result.data.songs);
+      setIsRankLoading(true);
+      try {
+        const result = await getRankDetail(topId, 1, 50);
+        if (result.code === 0 && result.data) {
+          setRankSongs(result.data.songs);
+        }
+      } finally {
+        setIsRankLoading(false);
       }
     },
     [getRankDetail], // safe to exclude setRankSongs
@@ -283,20 +295,26 @@ function App() {
                 key: rank.topId.toString(),
                 label: rank.title,
                 children: (
-                  <div className="song-list">
-                    {rankSongs.map((song) => (
-                      <SongCard
-                        key={song.mid}
-                        song={song}
-                        isPlaying={currentSongMid === song.mid}
-                        isCurrent={currentSongMid === song.mid}
-                        onPlay={handlePlaySong}
-                        onAddToPlaylist={(song) => {
-                          usePlayerStore.getState().addToPlaylist(song);
-                        }}
-                      />
-                    ))}
-                  </div>
+                  isRankLoading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                      <Spin size="large" />
+                    </div>
+                  ) : (
+                    <div className="song-list">
+                      {rankSongs.map((song) => (
+                        <SongCard
+                          key={song.mid}
+                          song={song}
+                          isPlaying={currentSongMid === song.mid}
+                          isCurrent={currentSongMid === song.mid}
+                          onPlay={handlePlaySong}
+                          onAddToPlaylist={(song) => {
+                            usePlayerStore.getState().addToPlaylist(song);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )
                 ),
               }))}
             />
