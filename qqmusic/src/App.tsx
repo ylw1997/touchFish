@@ -2,7 +2,7 @@
  * QQ音乐主应用
  */
 import { useEffect, useState, useCallback } from "react";
-import { Tabs, TabsProps, Button, FloatButton, message } from "antd";
+import { Tabs, TabsProps, Button, FloatButton, message, Modal, Avatar, Dropdown, Space } from "antd";
 import {
   HomeOutlined,
   TrophyOutlined,
@@ -28,6 +28,7 @@ import PlaylistCard from "./components/PlaylistCard";
 import SongCard from "./components/SongCard";
 import PlayBar from "./components/PlayBar";
 import SearchDrawer from "./components/SearchDrawer";
+import PlaylistDrawer from "./components/PlaylistDrawer";
 import type { Playlist, RankList, Song } from "./types/qqmusic";
 import "./style/index.less";
 
@@ -35,13 +36,24 @@ function App() {
   const [activeTab, setActiveTab] = useState("recommend");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
+  const [playlistDrawerOpen, setPlaylistDrawerOpen] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
   const { fontSize, increase, decrease } = useFontSizeStore();
   const { isLoggedIn, userInfo, logout } = useUserStore();
 
-  // 退出登录：通知后端清除凭证 + 清除前端状态
+  // 退出登录：通知后端清除凭证 + 清除前端状态 (增加确认弹窗)
   const handleLogout = useCallback(() => {
-    vscode.postMessage({ command: "QQMUSIC_LOGOUT" });
-    logout();
+    Modal.confirm({
+      title: "确认退出",
+      content: "您确定要退出 QQ音乐 登录吗？",
+      okText: "确认",
+      cancelText: "取消",
+      onOk: () => {
+        vscode.postMessage({ command: "QQMUSIC_LOGOUT" });
+        logout();
+        message.success("已退出登录");
+      }
+    });
   }, [logout]);
   const currentSong = usePlayerStore((state) => state.currentSong);
   const currentSongMid = currentSong?.mid;
@@ -173,8 +185,8 @@ function App() {
   // 处理歌单点击
   const handlePlaylistClick = useCallback(
     async (playlist: Playlist) => {
-      message.info(`加载歌单: ${playlist.dissname}`);
-      // TODO: 显示歌单详情
+      setSelectedPlaylist(playlist);
+      setPlaylistDrawerOpen(true);
     },
     []
   );
@@ -291,9 +303,14 @@ function App() {
           {isLoggedIn ? (
             <div className="my-content">
               <div className="user-header">
-                <div className="user-info">
-                  <h2>欢迎回来, {userInfo?.nickname || "用户"}</h2>
-                  <p>享受你的音乐时光</p>
+                <div className="user-info" style={{ display: 'flex', alignItems: 'center' }}>
+                  {userInfo?.avatar && (
+                    <Avatar src={userInfo.avatar} size={48} style={{ marginRight: 12 }} />
+                  )}
+                  <div>
+                    <h2>欢迎回来, {userInfo?.nickname || "用户"}</h2>
+                    <p style={{ margin: 0, opacity: 0.8 }}>享受你的音乐时光</p>
+                  </div>
                 </div>
                 <Button icon={<LogoutOutlined />} onClick={handleLogout}>
                   退出登录
@@ -365,9 +382,25 @@ function App() {
         <h1 className="qqmusic-title">QQ音乐</h1>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
-            <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>
-              退出
-            </Button>
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: "logout",
+                    icon: <LogoutOutlined />,
+                    label: "退出登录",
+                    onClick: handleLogout,
+                  },
+                ],
+              }}
+              placement="bottomRight"
+              trigger={['hover']}
+            >
+              <Space style={{ cursor: 'pointer' }}>
+                {userInfo?.avatar && <Avatar src={userInfo.avatar} size="small" />}
+                {userInfo?.nickname && <span style={{ fontSize: '14px', color: 'var(--text-color)' }}>{userInfo.nickname}</span>}
+              </Space>
+            </Dropdown>
           ) : (
             <Button
               type="text"
@@ -398,6 +431,13 @@ function App() {
 
       {/* 搜索抽屉 */}
       <SearchDrawer open={searchDrawerOpen} onClose={() => setSearchDrawerOpen(false)} />
+
+      {/* 歌单详情抽屉 */}
+      <PlaylistDrawer 
+        open={playlistDrawerOpen} 
+        onClose={() => setPlaylistDrawerOpen(false)} 
+        playlist={selectedPlaylist} 
+      />
 
       {/* 浮动按钮 */}
       <FloatButton.Group
