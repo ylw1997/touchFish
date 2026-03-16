@@ -2,7 +2,17 @@
  * QQ音乐主应用
  */
 import { useEffect, useState, useCallback } from "react";
-import { Tabs, TabsProps, Button, FloatButton, message, Modal, Avatar, Dropdown, Space } from "antd";
+import {
+  Tabs,
+  TabsProps,
+  Button,
+  FloatButton,
+  message,
+  Modal,
+  Avatar,
+  Dropdown,
+  Space,
+} from "antd";
 import {
   HomeOutlined,
   TrophyOutlined,
@@ -20,9 +30,7 @@ import { useUserStore } from "./store/user";
 import { usePlayerStore } from "./store/player";
 import { vscode } from "./utils/vscode";
 import { useQQMusic } from "./hooks/useQQMusic";
-import {
-  SearchOutlined,
-} from "@ant-design/icons";
+import { SearchOutlined } from "@ant-design/icons";
 import LoginModal from "./components/LoginModal";
 import PlaylistCard from "./components/PlaylistCard";
 import SongCard from "./components/SongCard";
@@ -37,7 +45,9 @@ function App() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const [playlistDrawerOpen, setPlaylistDrawerOpen] = useState(false);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
+    null,
+  );
   const { fontSize, increase, decrease } = useFontSizeStore();
   const { isLoggedIn, userInfo, logout } = useUserStore();
 
@@ -52,7 +62,7 @@ function App() {
         vscode.postMessage({ command: "QQMUSIC_LOGOUT" });
         logout();
         message.success("已退出登录");
-      }
+      },
     });
   }, [logout]);
   const currentSong = usePlayerStore((state) => state.currentSong);
@@ -64,7 +74,6 @@ function App() {
     getRankLists,
     getRankDetail,
     playSong,
-    getMyFavorite,
     getMyPlaylists,
   } = useQQMusic();
 
@@ -72,9 +81,9 @@ function App() {
   const [rankLists, setRankLists] = useState<RankList[]>([]);
   const [selectedRank, setSelectedRank] = useState<RankList | null>(null);
   const [rankSongs, setRankSongs] = useState<Song[]>([]);
-  
+
   // 我的数据
-  const [myFavoriteSongs, setMyFavoriteSongs] = useState<Song[]>([]);
+
   const [myPlaylists, setMyPlaylists] = useState<Playlist[]>([]);
 
   // =================== State Initialized ===================
@@ -82,22 +91,22 @@ function App() {
   // 加载我的数据
   const loadMyData = useCallback(async () => {
     if (!userInfo?.musicid || !userInfo?.musickey) return;
-    
-    const credential = { musicid: userInfo.musicid, musickey: userInfo.musickey };
-    
-    // 获取我喜欢
-    const favResult = await getMyFavorite(credential);
-    if (favResult.code === 0 && favResult.data) {
-      setMyFavoriteSongs(favResult.data.songs);
-    }
-    
+
+    const credential = {
+      musicid: userInfo.musicid,
+      musickey: userInfo.musickey,
+    };
+
     // 获取我的歌单
     const plResult = await getMyPlaylists(credential);
-    console.log("[App] getMyPlaylists Result:", JSON.stringify(plResult, null, 2));
+    console.log(
+      "[App] getMyPlaylists Result:",
+      JSON.stringify(plResult, null, 2),
+    );
     if (plResult.code === 0 && plResult.data) {
       setMyPlaylists(plResult.data);
     }
-  }, [userInfo, getMyFavorite, getMyPlaylists]);
+  }, [userInfo, getMyPlaylists]);
 
   // 加载推荐歌单
   const loadRecommendPlaylists = useCallback(async () => {
@@ -124,7 +133,7 @@ function App() {
         // We defer calling loadRankDetail via an effect or avoid selectedRank dependency here,
         // but since we want to initialize:
         setSelectedRank(result.data[0]);
-        // to avoid dependency cycle with selectedRank in loadRankDetail, 
+        // to avoid dependency cycle with selectedRank in loadRankDetail,
         // we just fetch the detail directly with the topId:
         const detailResult = await getRankDetail(result.data[0].topId, 1, 50);
         if (detailResult.code === 0 && detailResult.data) {
@@ -144,7 +153,7 @@ function App() {
         setRankSongs(result.data.songs);
       }
     },
-    [getRankDetail] // safe to exclude setRankSongs
+    [getRankDetail], // safe to exclude setRankSongs
   );
 
   // 初始化：推送凭证到后端 + 加载数据
@@ -169,7 +178,13 @@ function App() {
     loadRecommendPlaylists();
     // 加载排行榜
     loadRankLists();
-  }, [isLoggedIn, userInfo?.musicid, userInfo?.musickey, loadRecommendPlaylists, loadRankLists]);
+  }, [
+    isLoggedIn,
+    userInfo?.musicid,
+    userInfo?.musickey,
+    loadRecommendPlaylists,
+    loadRankLists,
+  ]);
 
   // 登录状态变化时刷新数据
   useEffect(() => {
@@ -183,13 +198,10 @@ function App() {
   }, [isLoggedIn, loadRecommendPlaylists, loadRankLists, loadMyData]);
 
   // 处理歌单点击
-  const handlePlaylistClick = useCallback(
-    async (playlist: Playlist) => {
-      setSelectedPlaylist(playlist);
-      setPlaylistDrawerOpen(true);
-    },
-    []
-  );
+  const handlePlaylistClick = useCallback(async (playlist: Playlist) => {
+    setSelectedPlaylist(playlist);
+    setPlaylistDrawerOpen(true);
+  }, []);
 
   // 处理歌曲播放
   const handlePlaySong = useCallback(
@@ -201,7 +213,7 @@ function App() {
         message.error(error.message || "无法播放歌曲");
       }
     },
-    [playSong]
+    [playSong],
   );
 
   // Tab 切换
@@ -257,34 +269,37 @@ function App() {
           className="tab-content"
         >
           <div className="rank-header">
-            <div className="rank-tabs">
-              {rankLists.slice(0, 10).map((rank) => (
-                <Button
-                  key={rank.topId}
-                  type={selectedRank?.topId === rank.topId ? "primary" : "text"}
-                  onClick={() => {
-                    setSelectedRank(rank);
-                    loadRankDetail(rank.topId);
-                  }}
-                >
-                  {rank.title}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div className="song-list">
-            {rankSongs.map((song) => (
-              <SongCard
-                key={song.mid}
-                song={song}
-                isPlaying={currentSongMid === song.mid}
-                isCurrent={currentSongMid === song.mid}
-                onPlay={handlePlaySong}
-                onAddToPlaylist={(song) => {
-                  usePlayerStore.getState().addToPlaylist(song);
-                }}
-              />
-            ))}
+            <Tabs
+              activeKey={selectedRank?.topId?.toString()}
+              onChange={(key) => {
+                const rank = rankLists.find((r) => r.topId.toString() === key);
+                if (rank) {
+                  setSelectedRank(rank);
+                  loadRankDetail(rank.topId);
+                }
+              }}
+              className="sub-tabs"
+              items={rankLists.slice(0, 10).map((rank) => ({
+                key: rank.topId.toString(),
+                label: rank.title,
+                children: (
+                  <div className="song-list">
+                    {rankSongs.map((song) => (
+                      <SongCard
+                        key={song.mid}
+                        song={song}
+                        isPlaying={currentSongMid === song.mid}
+                        isCurrent={currentSongMid === song.mid}
+                        onPlay={handlePlaySong}
+                        onAddToPlaylist={(song) => {
+                          usePlayerStore.getState().addToPlaylist(song);
+                        }}
+                      />
+                    ))}
+                  </div>
+                ),
+              }))}
+            />
           </div>
         </motion.div>
       ),
@@ -302,42 +317,52 @@ function App() {
         >
           {isLoggedIn ? (
             <div className="my-content">
-              <div className="user-header">
-                <div className="user-info" style={{ display: 'flex', alignItems: 'center' }}>
+              <div
+                className="user-header"
+                style={{
+                  padding: "24px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "12px",
+                  marginBottom: "20px",
+                }}
+              >
+                <div
+                  className="user-info"
+                  style={{ display: "flex", alignItems: "center" }}
+                >
                   {userInfo?.avatar && (
-                    <Avatar src={userInfo.avatar} size={48} style={{ marginRight: 12 }} />
+                    <Avatar
+                      src={userInfo.avatar}
+                      size={56}
+                      style={{
+                        marginRight: 16,
+                        border: "2px solid var(--ant-primary-color)",
+                      }}
+                    />
                   )}
                   <div>
-                    <h2>欢迎回来, {userInfo?.nickname || "用户"}</h2>
-                    <p style={{ margin: 0, opacity: 0.8 }}>享受你的音乐时光</p>
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize: "20px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      欢迎回来, {userInfo?.nickname || "用户"}
+                    </h2>
+                    <p
+                      style={{
+                        margin: "4px 0 0 0",
+                        opacity: 0.6,
+                        fontSize: "13px",
+                      }}
+                    >
+                      享受你的音乐时光
+                    </p>
                   </div>
                 </div>
-                <Button icon={<LogoutOutlined />} onClick={handleLogout}>
-                  退出登录
-                </Button>
               </div>
               <div className="my-sections">
-                <div className="my-section">
-                  <h3>我喜欢</h3>
-                  {myFavoriteSongs.length > 0 ? (
-                    <div className="song-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                      {myFavoriteSongs.map((song) => (
-                        <SongCard
-                          key={song.mid}
-                          song={song}
-                          isPlaying={currentSongMid === song.mid}
-                          isCurrent={currentSongMid === song.mid}
-                          onPlay={handlePlaySong}
-                          onAddToPlaylist={(song) => {
-                            usePlayerStore.getState().addToPlaylist(song);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <p>暂无喜欢的歌曲</p>
-                  )}
-                </div>
                 <div className="my-section">
                   <h3>我的歌单</h3>
                   {myPlaylists.length > 0 ? (
@@ -394,11 +419,19 @@ function App() {
                 ],
               }}
               placement="bottomRight"
-              trigger={['hover']}
+              trigger={["hover"]}
             >
-              <Space style={{ cursor: 'pointer' }}>
-                {userInfo?.avatar && <Avatar src={userInfo.avatar} size="small" />}
-                {userInfo?.nickname && <span style={{ fontSize: '14px', color: 'var(--text-color)' }}>{userInfo.nickname}</span>}
+              <Space style={{ cursor: "pointer" }}>
+                {userInfo?.avatar && (
+                  <Avatar src={userInfo.avatar} size="small" />
+                )}
+                {userInfo?.nickname && (
+                  <span
+                    style={{ fontSize: "14px", color: "var(--text-color)" }}
+                  >
+                    {userInfo.nickname}
+                  </span>
+                )}
               </Space>
             </Dropdown>
           ) : (
@@ -424,19 +457,25 @@ function App() {
       </div>
 
       {/* 登录弹窗 */}
-      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <LoginModal
+        open={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+      />
 
       {/* 播放器条 */}
       <AnimatePresence>{currentSong && <PlayBar />}</AnimatePresence>
 
       {/* 搜索抽屉 */}
-      <SearchDrawer open={searchDrawerOpen} onClose={() => setSearchDrawerOpen(false)} />
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={() => setSearchDrawerOpen(false)}
+      />
 
       {/* 歌单详情抽屉 */}
-      <PlaylistDrawer 
-        open={playlistDrawerOpen} 
-        onClose={() => setPlaylistDrawerOpen(false)} 
-        playlist={selectedPlaylist} 
+      <PlaylistDrawer
+        open={playlistDrawerOpen}
+        onClose={() => setPlaylistDrawerOpen(false)}
+        playlist={selectedPlaylist}
       />
 
       {/* 浮动按钮 */}

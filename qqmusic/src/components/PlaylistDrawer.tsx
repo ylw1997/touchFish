@@ -1,8 +1,6 @@
-/**
- * 歌单详情抽屉组件
- */
 import React, { useState, useEffect, useCallback } from "react";
-import { Drawer, Spin, Empty, message } from "antd";
+import { Drawer, Spin, Empty, message, Button } from "antd";
+import { PlayCircleOutlined } from "@ant-design/icons";
 import { useQQMusic } from "../hooks/useQQMusic";
 import { useRequest } from "../hooks/useRequest";
 import { usePlayerStore } from "../store/player";
@@ -30,7 +28,7 @@ const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({ open, onClose, playlist
       const result = await request("QQMUSIC_GET_PLAYLIST_DETAIL", {
         dissid: playlist.dissid,
         page: 1,
-        num: 100, // 尽量多加载一点
+        num: 100,
       });
 
       if (result.code === 0 && result.data) {
@@ -45,11 +43,25 @@ const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({ open, onClose, playlist
     }
   }, [playlist?.dissid, request]);
 
+  const handlePlayAll = useCallback(async () => {
+    if (songs.length === 0) return;
+
+    const playerStore = usePlayerStore.getState();
+    playerStore.setPlaylist(songs); // 替换整个播放列表
+    
+    try {
+      await playSong(songs[0]); // 播放第一首
+      message.success(`已开始播放: ${playlist?.dissname}`);
+    } catch (error: any) {
+      message.error(error.message || "无法播放歌曲列表");
+    }
+  }, [songs, playSong, playlist?.dissname]);
+
   useEffect(() => {
     if (open && playlist?.dissid) {
       loadPlaylistDetail();
     } else if (!open) {
-      setSongs([]); // 关闭时清空，防止下次打开闪烁旧数据
+      setSongs([]);
     }
   }, [open, playlist?.dissid, loadPlaylistDetail]);
 
@@ -66,11 +78,24 @@ const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({ open, onClose, playlist
 
   return (
     <Drawer
-      title={playlist?.dissname || "歌单详情"}
-      placement="right"
+      title={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingRight: '20px' }}>
+          <span style={{ fontWeight: 'bold' }}>{playlist?.dissname || "歌单详情"}</span>
+          <Button 
+            color="default"
+            variant="filled"
+            icon={<PlayCircleOutlined />} 
+            onClick={handlePlayAll}
+            disabled={songs.length === 0}
+          >
+            播放全部
+          </Button>
+        </div>
+      }
+      placement="bottom"
+      height="90%"
       open={open}
       onClose={onClose}
-      width={450}
       className="playlist-drawer"
     >
       {isLoading ? (
