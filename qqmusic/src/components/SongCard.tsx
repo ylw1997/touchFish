@@ -11,6 +11,7 @@ import {
 } from "@ant-design/icons";
 import type { Song } from "../types/qqmusic";
 import { useUserStore } from "../store/user";
+import { useQQMusic } from "../hooks/useQQMusic";
 
 interface SongCardProps {
   song: Song;
@@ -30,7 +31,37 @@ const SongCard: React.FC<SongCardProps> = ({
   showActions = true,
 }) => {
   const { likedSongMids, toggleLikeSong } = useUserStore();
+  const { addSongsToPlaylist, removeSongsFromPlaylist, messageApi } = useQQMusic();
   const isLiked = likedSongMids.includes(song.mid);
+
+  const handleToggleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!song.id) {
+      messageApi.error("歌曲 ID 缺失，无法同步状态");
+      return;
+    }
+    try {
+      if (isLiked) {
+        const res = await removeSongsFromPlaylist(201, [song.id]);
+        if (res.code === 0) {
+          toggleLikeSong(song.mid);
+          messageApi.success("已从我喜欢的列表中移除");
+        } else {
+          messageApi.error("操作失败: " + res.message);
+        }
+      } else {
+        const res = await addSongsToPlaylist(201, [song.id]);
+        if (res.code === 0) {
+          toggleLikeSong(song.mid);
+          messageApi.success("已添加到我喜欢的列表");
+        } else {
+          messageApi.error("操作失败: " + res.message);
+        }
+      }
+    } catch (err: any) {
+      messageApi.error("操作异常: " + err.message);
+    }
+  };
 
   // 格式化时长
   const formatDuration = (seconds?: number): string => {
@@ -118,13 +149,17 @@ const SongCard: React.FC<SongCardProps> = ({
               </Tooltip>
               <Tooltip title={isLiked ? "取消我喜欢" : "添加到我喜欢"}>
                 <Button
-                  type="text"
-                  shape="circle"
-                  icon={isLiked ? <HeartFilled style={{ color: "#ff4d4f" }} /> : <HeartOutlined />}
-                  size="small"
-                  onClick={() => toggleLikeSong(song.mid)}
-                />
-              </Tooltip>
+              type="text"
+              shape="circle"
+              icon={
+                isLiked ? (
+                  <HeartFilled style={{ color: "#ff4d4f" }} />
+                ) : (
+                  <HeartOutlined />
+                )
+              }
+              onClick={handleToggleLike}
+            />  </Tooltip>
             </Space>
           </div>
         )}

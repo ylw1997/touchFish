@@ -18,7 +18,7 @@ import type { Song } from "../types/qqmusic";
 
 const PlayBar: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { playSong, getSongUrl } = useQQMusic();
+  const { playSong, getSongUrl, addSongsToPlaylist, removeSongsFromPlaylist, messageApi } = useQQMusic();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -39,6 +39,35 @@ const PlayBar: React.FC = () => {
 
   const { likedSongMids, toggleLikeSong } = useUserStore();
   const isLiked = currentSong ? likedSongMids.includes(currentSong.mid) : false;
+
+  const handleToggleLike = async () => {
+    if (!currentSong) return;
+    if (!currentSong.id) {
+      messageApi.error("歌曲 ID 缺失，无法操作");
+      return;
+    }
+    try {
+      if (isLiked) {
+        const res = await removeSongsFromPlaylist(201, [currentSong.id]);
+        if (res.code === 0) {
+          toggleLikeSong(currentSong.mid);
+          messageApi.success("已从我喜欢的列表中移除");
+        } else {
+          messageApi.error("操作失败: " + res.message);
+        }
+      } else {
+        const res = await addSongsToPlaylist(201, [currentSong.id]);
+        if (res.code === 0) {
+          toggleLikeSong(currentSong.mid);
+          messageApi.success("已添加到我喜欢的列表");
+        } else {
+          messageApi.error("操作失败: " + res.message);
+        }
+      }
+    } catch (err: any) {
+      messageApi.error("操作异常: " + err.message);
+    }
+  };
 
   // 播放/暂停控制
   useEffect(() => {
@@ -228,7 +257,7 @@ const PlayBar: React.FC = () => {
                   <HeartOutlined />
                 )
               }
-              onClick={() => currentSong && toggleLikeSong(currentSong.mid)}
+              onClick={handleToggleLike}
               title={isLiked ? "取消我喜欢" : "添加到我喜欢"}
             />
 

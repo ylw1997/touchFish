@@ -1279,3 +1279,73 @@ const authorizeWXQR = async (
     };
   }
 };
+
+/**
+ * 添加歌曲到歌单 (dirid 201 为我喜欢)
+ */
+export const addSongsToPlaylist = async (
+  dirid: number,
+  songIds: number[]
+): Promise<ApiResponse<boolean>> => {
+  try {
+    const data = {
+      comm: buildCommonParams(),
+      "music.musicasset.PlaylistDetailWrite": {
+        method: "AddSonglist",
+        module: "music.musicasset.PlaylistDetailWrite",
+        param: {
+          dirId: dirid,
+          v_songInfo: songIds.map((id) => ({ songType: 0, songId: id })),
+        },
+      },
+    };
+
+    const result = await postRequest(data);
+    const resData = result["music.musicasset.PlaylistDetailWrite"]?.data;
+    return {
+      code: 0,
+      data: !!resData?.result?.updateTime,
+    };
+  } catch (error: any) {
+    return {
+      code: -1,
+      data: false,
+      message: error.message,
+    };
+  }
+};
+
+/**
+ * 从歌单删除歌曲 (dirid 201 为我喜欢)
+ */
+export const removeSongsFromPlaylist = async (
+  dirid: number,
+  songIds: number[]
+): Promise<ApiResponse<boolean>> => {
+  try {
+    const data = {
+      comm: buildCommonParams(),
+      "music.musicasset.PlaylistDetailWrite": {
+        method: "DelSonglist",
+        module: "music.musicasset.PlaylistDetailWrite",
+        param: {
+          dirId: dirid,
+          v_songInfo: songIds.map((id) => ({ songType: 0, songId: id })),
+        },
+      },
+    };
+
+    const result = await postRequest(data);
+    const resData = result["music.musicasset.PlaylistDetailWrite"]?.data;
+    return {
+      code: 0,
+      data: !!resData?.result?.updateTime,
+    };
+  } catch (error: any) {
+    return {
+      code: -1,
+      data: false,
+      message: error.message,
+    };
+  }
+};

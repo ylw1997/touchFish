@@ -9,7 +9,7 @@ import { SongQuality } from "../types/qqmusic";
 import type { Song } from "../types/qqmusic";
 
 export const useQQMusic = () => {
-  const { request } = useRequest();
+  const { request, messageApi } = useRequest();
   const { play, setCurrentSongUrl } = usePlayerStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -172,6 +172,20 @@ export const useQQMusic = () => {
     [request]
   );
 
+  const addSongsToPlaylist = useCallback(
+    async (dirid: number, songIds: number[]) => {
+      return request("QQMUSIC_ADD_SONGS_TO_PLAYLIST", { dirid, songIds });
+    },
+    [request]
+  );
+
+  const removeSongsFromPlaylist = useCallback(
+    async (dirid: number, songIds: number[]) => {
+      return request("QQMUSIC_REMOVE_SONGS_FROM_PLAYLIST", { dirid, songIds });
+    },
+    [request]
+  );
+
   return {
     isLoading,
     searchSongs,
@@ -185,6 +199,9 @@ export const useQQMusic = () => {
     getRankDetail,
     getMyFavorite,
     getMyPlaylists,
+    addSongsToPlaylist,
+    removeSongsFromPlaylist,
+    messageApi,
   };
 };
 

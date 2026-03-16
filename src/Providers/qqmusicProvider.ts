@@ -19,6 +19,8 @@ import {
   getMyFavorite,
   getMyPlaylists,
   setGlobalCredential,
+  addSongsToPlaylist,
+  removeSongsFromPlaylist,
 } from "../api/qqmusic";
 import { CommandsType } from "../../types/commands";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
@@ -304,6 +306,28 @@ export class QQMusicProvider extends BaseWebviewProvider {
           const result = await getMyPlaylists(credential);
           webviewView.webview.postMessage({
             command: "QQMUSIC_GET_MY_PLAYLISTS_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_ADD_SONGS_TO_PLAYLIST": {
+          const { dirid, songIds } = payload || {};
+          const result = await addSongsToPlaylist(dirid, songIds);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_ADD_SONGS_TO_PLAYLIST_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_REMOVE_SONGS_FROM_PLAYLIST": {
+          const { dirid, songIds } = payload || {};
+          const result = await removeSongsFromPlaylist(dirid, songIds);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_REMOVE_SONGS_FROM_PLAYLIST_RESULT",
             payload: result,
             uuid,
           } as CommandsType<any>);
