@@ -6,12 +6,13 @@ import {
   DeleteOutlined,
   PauseOutlined,
   CaretRightOutlined,
-  StepBackwardOutlined,
-  StepForwardOutlined,
   PlayCircleFilled,
+  HeartOutlined,
+  HeartFilled,
 } from "@ant-design/icons";
 import { Button, Space, message } from "antd";
 import { usePlayerStore } from "../store/player";
+import { useUserStore } from "../store/user";
 import { useQQMusic } from "../hooks/useQQMusic";
 import type { Song } from "../types/qqmusic";
 
@@ -28,28 +29,12 @@ const PlayBar: React.FC = () => {
     isPlaylistOpen,
     togglePlaylistOpen,
     togglePlay,
-    playNext,
-    playPrev,
     removeFromPlaylist,
     clearPlaylist,
   } = usePlayerStore();
 
-  // 音频事件监听
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleEnded = () => playNext();
-    const handleError = () => console.error("音频加载失败");
-
-    audio.addEventListener("ended", handleEnded);
-    audio.addEventListener("error", handleError);
-
-    return () => {
-      audio.removeEventListener("ended", handleEnded);
-      audio.removeEventListener("error", handleError);
-    };
-  }, [playNext]);
+  const { likedSongMids, toggleLikeSong } = useUserStore();
+  const isLiked = currentSong ? likedSongMids.includes(currentSong.mid) : false;
 
   // 播放/暂停控制
   useEffect(() => {
@@ -218,10 +203,18 @@ const PlayBar: React.FC = () => {
           {/* 控制按钮放在右侧，仿 Bilibili 风格 */}
           <Space size="small" style={{ marginLeft: "auto" }}>
             <Button
-              type="text"
+              color="default"
               shape="circle"
-              icon={<StepBackwardOutlined />}
-              onClick={playPrev}
+              variant="filled"
+              icon={
+                isLiked ? (
+                  <HeartFilled style={{ color: "#ff4d4f" }} />
+                ) : (
+                  <HeartOutlined />
+                )
+              }
+              onClick={() => currentSong && toggleLikeSong(currentSong.mid)}
+              title={isLiked ? "取消我喜欢" : "添加到我喜欢"}
             />
 
             <Button
@@ -233,13 +226,6 @@ const PlayBar: React.FC = () => {
             >
               {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
             </Button>
-
-            <Button
-              type="text"
-              shape="circle"
-              icon={<StepForwardOutlined />}
-              onClick={playNext}
-            />
 
             <Button
               color={isPlaylistOpen ? "primary" : "default"}

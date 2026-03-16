@@ -76,6 +76,7 @@ function App() {
     getRankDetail,
     playSong,
     getMyPlaylists,
+    getMyFavorite,
   } = useQQMusic();
 
   const [recommendPlaylists, setRecommendPlaylists] = useState<Playlist[]>([]);
@@ -108,7 +109,15 @@ function App() {
     if (plResult.code === 0 && plResult.data) {
       setMyPlaylists(plResult.data);
     }
-  }, [userInfo, getMyPlaylists]);
+
+    // 获取我喜欢的歌曲 MIDs
+    const favResult = await getMyFavorite(credential);
+    if (favResult.code === 0 && favResult.data) {
+      useUserStore
+        .getState()
+        .setLikedSongMids(favResult.data.songs.map((s: Song) => s.mid));
+    }
+  }, [userInfo, getMyPlaylists, getMyFavorite]);
 
   // 加载推荐歌单
   const loadRecommendPlaylists = useCallback(async () => {

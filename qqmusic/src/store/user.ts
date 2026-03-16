@@ -15,11 +15,18 @@ interface UserState {
   // QR 码登录
   qrCodeInfo: QRCodeInfo | null;
 
+  // 我喜欢的歌曲 mid 列表
+  likedSongMids: string[];
+
   // Actions
   setIsLoggedIn: (loggedIn: boolean) => void;
   setUserInfo: (userInfo: UserInfo | null) => void;
   setLoginStatus: (status: LoginStatus) => void;
   setQRCodeInfo: (qrInfo: QRCodeInfo | null) => void;
+
+  // 我喜欢列表操作
+  setLikedSongMids: (mids: string[]) => void;
+  toggleLikeSong: (mid: string) => void;
 
   // 登录/登出
   login: (userInfo: UserInfo) => void;
@@ -37,12 +44,21 @@ export const useUserStore = create<UserState>()(
       userInfo: null,
           loginStatus: LoginStatus.PENDING,
       qrCodeInfo: null,
+      likedSongMids: [],
 
       // Setters
       setIsLoggedIn: (loggedIn) => set({ isLoggedIn: loggedIn }),
       setUserInfo: (userInfo) => set({ userInfo }),
       setLoginStatus: (status) => set({ loginStatus: status }),
       setQRCodeInfo: (qrInfo) => set({ qrCodeInfo: qrInfo }),
+
+      setLikedSongMids: (mids) => set({ likedSongMids: mids }),
+      toggleLikeSong: (mid) =>
+        set((state) => ({
+          likedSongMids: state.likedSongMids.includes(mid)
+            ? state.likedSongMids.filter((id) => id !== mid)
+            : [...state.likedSongMids, mid],
+        })),
 
       // 登录
       login: (userInfo) => {

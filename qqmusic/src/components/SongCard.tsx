@@ -6,9 +6,11 @@ import { Button, Tag, Space, Tooltip } from "antd";
 import {
   PlusOutlined,
   HeartOutlined,
+  HeartFilled,
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import type { Song } from "../types/qqmusic";
+import { useUserStore } from "../store/user";
 
 interface SongCardProps {
   song: Song;
@@ -27,6 +29,9 @@ const SongCard: React.FC<SongCardProps> = ({
   onAddToPlaylist,
   showActions = true,
 }) => {
+  const { likedSongMids, toggleLikeSong } = useUserStore();
+  const isLiked = likedSongMids.includes(song.mid);
+
   // 格式化时长
   const formatDuration = (seconds?: number): string => {
     if (!seconds) return "--:--";
@@ -111,12 +116,13 @@ const SongCard: React.FC<SongCardProps> = ({
                   size="small"
                 />
               </Tooltip>
-              <Tooltip title="添加到我喜欢">
+              <Tooltip title={isLiked ? "取消我喜欢" : "添加到我喜欢"}>
                 <Button
                   type="text"
                   shape="circle"
-                  icon={<HeartOutlined />}
+                  icon={isLiked ? <HeartFilled style={{ color: "#ff4d4f" }} /> : <HeartOutlined />}
                   size="small"
+                  onClick={() => toggleLikeSong(song.mid)}
                 />
               </Tooltip>
             </Space>
