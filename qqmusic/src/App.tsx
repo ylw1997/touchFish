@@ -81,6 +81,7 @@ function App() {
     
     // 获取我的歌单
     const plResult = await getMyPlaylists(credential);
+    console.log("[App] getMyPlaylists Result:", JSON.stringify(plResult, null, 2));
     if (plResult.code === 0 && plResult.data) {
       setMyPlaylists(plResult.data);
     }
@@ -143,7 +144,6 @@ function App() {
     // 如果已登录，推送凭证到后端（后端重启后 globalCredential 会丢失）
     if (isLoggedIn && userInfo?.musicid && userInfo?.musickey) {
       console.log("[App] 推送已保存的凭证到后端...");
-      console.log(`[App] musickey(full): ${userInfo.musickey}`);
       vscode.postMessage({
         command: "QQMUSIC_SET_CREDENTIAL",
         payload: {
@@ -186,7 +186,7 @@ function App() {
         await playSong(song);
         message.success(`开始播放: ${song.name}`);
       } catch (error: any) {
-        message.error(error.message || "播放失败");
+        message.error(error.message || "无法播放歌曲");
       }
     },
     [playSong]

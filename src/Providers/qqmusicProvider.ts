@@ -207,6 +207,20 @@ export class QQMusicProvider extends BaseWebviewProvider {
               musicid: result.data.userInfo.musicid,
               musickey: result.data.userInfo.musickey,
             });
+
+            // 登录成功后，使用 GetLoginUserInfo 获取真实的称呼和头像
+            try {
+              const detailedUserInfo = await getUserInfo({
+                musicid: result.data.userInfo.musicid,
+                musickey: result.data.userInfo.musickey,
+              });
+              if (detailedUserInfo.code === 0 && detailedUserInfo.data) {
+                result.data.userInfo.nickname = detailedUserInfo.data.nickname;
+                result.data.userInfo.avatar = detailedUserInfo.data.avatar;
+              }
+            } catch (err) {
+              console.error("[QQMusic] 获取用户信息失败:", err);
+            }
           }
           webviewView.webview.postMessage({
             command: "QQMUSIC_CHECK_LOGIN_STATUS_RESULT",

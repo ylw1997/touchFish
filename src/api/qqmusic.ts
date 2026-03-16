@@ -955,13 +955,15 @@ export const getUserInfo = async (credential: {
       };
     }
 
+    const info = userData.info || {};
+
     return {
       code: 0,
       data: {
         musicid: credential.musicid,
         musickey: credential.musickey,
-        nickname: userData.nick,
-        avatar: userData.pic,
+        nickname: info.nick || "",
+        avatar: info.logo || "",
       },
     };
   } catch (error: any) {
@@ -1065,12 +1067,12 @@ export const getMyPlaylists = async (credential: {
     return {
       code: 0,
       data: playlists.map((item: any) => ({
-        dissid: item.dissid,
-        dirid: item.dirid,
-        dissname: item.dissname,
-        logo: item.logo,
+        dissid: item.tid, // Use tid for dissid
+        dirid: item.dirId,
+        dissname: item.dirName,
+        logo: item.picUrl,
         nick: item.nick,
-        songnum: item.songnum,
+        songnum: item.songNum,
       })),
     };
   } catch (error: any) {

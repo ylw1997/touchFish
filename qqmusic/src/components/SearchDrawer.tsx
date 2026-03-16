@@ -9,6 +9,7 @@ import {
   Spin,
   Tabs,
   Button,
+  message,
 } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useQQMusic } from "../hooks/useQQMusic";
@@ -53,7 +54,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
       try {
         await playSong(song);
       } catch (error: any) {
-        // 错误已在 playSong 中处理
+        message.error(error.message || "无法播放歌曲");
       }
     },
     [playSong]
