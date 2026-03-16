@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   UnorderedListOutlined,
@@ -19,6 +19,9 @@ import type { Song } from "../types/qqmusic";
 const PlayBar: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { playSong, getSongUrl } = useQQMusic();
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const {
     currentSong,
@@ -29,6 +32,7 @@ const PlayBar: React.FC = () => {
     isPlaylistOpen,
     togglePlaylistOpen,
     togglePlay,
+    playNext,
     removeFromPlaylist,
     clearPlaylist,
   } = usePlayerStore();
@@ -98,7 +102,14 @@ const PlayBar: React.FC = () => {
 
   return (
     <>
-      <audio ref={audioRef} src={currentSongUrl || ""} preload="metadata" />
+      <audio
+        ref={audioRef}
+        src={currentSongUrl || ""}
+        preload="metadata"
+        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onEnded={() => playNext()}
+      />
 
       <div
         className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""}`}
@@ -167,10 +178,14 @@ const PlayBar: React.FC = () => {
         </AnimatePresence>
 
         <div className="playbar-bottom">
+          <div
+            className="playbar-progress-bg"
+            style={{ width: `${progress}%` }}
+          />
           <div className="playbar-video-wrapper">
             {currentSong ? (
               <img
-                className="playbar-video"
+                className={`playbar-video ${isPlaying ? "playing" : ""}`}
                 src={getAlbumCover(currentSong)}
                 alt={currentSong.name}
                 referrerPolicy="no-referrer"
