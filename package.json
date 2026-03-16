@@ -2,7 +2,7 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do摸鱼聚合插件,沉浸式主题",
+	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do摸鱼聚合插件,沉浸式主题,qq音乐",
 	"version": "11.26.0",
 	"icon": "logo.png",
 	"engines": {
@@ -33,7 +33,9 @@
 		"xiaohongshu",
 		"xhs",
 		"bilibili",
-		"b站"
+		"b站",
+		"qqmusic",
+		"qq音乐"
 	],
 	"categories": [
 		"Other"
@@ -526,9 +528,9 @@
 		"changelog": "standard-version",
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build",
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
-		"dev": "concurrently -n ZHIHU,WEIBO,XHS,BILIBILI -c magenta,cyan,yellow,blue \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\"",
+		"dev": "concurrently -n ZHIHU,WEIBO,XHS,BILIBILI,QQMUSIC -c magenta,cyan,yellow,blue,green \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\"",
 		"build-xhs": "pnpm --filter xhs build"
 	},
 	"devDependencies": {

@@ -14,5 +14,5 @@
     // 保守起见暂不启用 noUnusedParameters，后续逐步清理后再打开
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["weibo", "zhihu", "xhs", "bilibili"]
+  "exclude": ["weibo", "zhihu", "xhs", "bilibili", "qqmusic"]
 }

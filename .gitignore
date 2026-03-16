@@ -10,6 +10,7 @@ weibo/dist
 zhihu/dist
 xhs/dist
 bilibili/dist
+qqmusic/dist
 
 # Old releases
 touchfish-*.vsix

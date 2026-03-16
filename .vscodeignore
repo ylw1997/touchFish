@@ -74,3 +74,21 @@ bilibili/tsconfig.node.json
 bilibili/vite.config.ts
 bilibili/pnpm-lock.yaml
 bilibili/temp/**
+
+# qqmusic webview (exclude source & deps; only dist assets should be packed if needed)
+qqmusic/src/**
+qqmusic/node_modules/**
+qqmusic/public/**
+qqmusic/.gitignore
+qqmusic/eslint.config.js
+qqmusic/index.html
+qqmusic/package.json
+qqmusic/README.md
+qqmusic/tsconfig.json
+qqmusic/tsconfig.app.json
+qqmusic/tsconfig.node.json
+qqmusic/vite.config.ts
+qqmusic/pnpm-lock.yaml
+qqmusic/temp/**
+
+qqmusic-api-test/**
