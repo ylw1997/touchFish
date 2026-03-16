@@ -47,6 +47,7 @@ const PlayBar: React.FC = () => {
     removeFromPlaylist,
     clearPlaylist,
     isRadioMode,
+    openSingerDrawer,
   } = usePlayerStore();
 
   const { likedSongMids, toggleLikeSong } = useUserStore();
@@ -348,7 +349,20 @@ const PlayBar: React.FC = () => {
                       fontWeight: "normal",
                     }}
                   >
-                    - {getSingerName(currentSong)}
+                    -
+                    {currentSong.singer.map((s, index) => (
+                      <span
+                        key={s.mid || index}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openSingerDrawer(s.mid, s.name);
+                        }}
+                        className="playbar-singer"
+                      >
+                        {" " + s.name}
+                        {index < currentSong.singer.length - 1 ? " / " : ""}
+                      </span>
+                    ))}
                   </span>
                 </div>
                 <div

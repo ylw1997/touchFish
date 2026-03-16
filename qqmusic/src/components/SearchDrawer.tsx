@@ -24,7 +24,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
   const [isSearching, setIsSearching] = useState(false);
 
   const { searchSongs, searchSingers, isLoading, playSong } = useQQMusic();
-  const { currentSong } = usePlayerStore();
+  const { currentSong, openSingerDrawer } = usePlayerStore();
 
   const handleSearch = useCallback(async () => {
     if (!keyword.trim()) return;
@@ -118,6 +118,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
                 <div
                   key={singer.mid || singer.singer_MID}
                   className="song-card"
+                  onClick={() => openSingerDrawer(singer.mid || singer.singer_MID, singer.name || singer.singer_name)}
+                  style={{ cursor: "pointer" }}
                 >
                   <div className="song-card-content">
                     <div className="song-card-cover">

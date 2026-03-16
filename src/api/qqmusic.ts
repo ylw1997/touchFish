@@ -1445,3 +1445,92 @@ export const getGuessRecommend = async (): Promise<ApiResponse<any>> => {
     };
   }
 };
+
+/**
+ * 获取歌手基本信息
+ */
+export const getSingerInfo = async (mid: string): Promise<ApiResponse<any>> => {
+  try {
+    const data = {
+      comm: buildCommonParams(),
+      "music.UnifiedHomepage.UnifiedHomepageSrv": {
+        method: "GetHomepageHeader",
+        module: "music.UnifiedHomepage.UnifiedHomepageSrv",
+        param: { SingerMid: mid }
+      }
+    };
+
+    const result = await postRequest(data);
+
+    return {
+      code: 0,
+      data: result["music.UnifiedHomepage.UnifiedHomepageSrv"]?.data || {}
+    };
+  } catch (error: any) {
+    return {
+      code: -1,
+      data: null,
+      message: error.message,
+    };
+  }
+};
+
+/**
+ * 获取歌手歌曲列表
+ */
+export const getSingerSongs = async (
+  mid: string,
+  page: number = 1,
+  num: number = 20
+): Promise<ApiResponse<Song[]>> => {
+  try {
+    const data = {
+      comm: buildCommonParams(),
+      "musichall.song_list_server": {
+        method: "GetSingerSongList",
+        module: "musichall.song_list_server",
+        param: {
+          singerMid: mid,
+          order: 1,
+          number: num,
+          begin: (page - 1) * num
+        }
+      }
+    };
+
+    const result = await postRequest(data);
+
+    const songs = result["musichall.song_list_server"]?.data?.songList || [];
+
+    return {
+      code: 0,
+      data: songs.map((item: any) => {
+        const song = item.songInfo || item || {};
+        const singerList = song.singer || [];
+        return {
+          mid: song.songmid || song.mid,
+          id: song.songid || song.id,
+          name: song.name || song.songname || song.title || "未知歌曲",
+          title: song.title || song.songname || song.name || "未知歌曲",
+          singer: Array.isArray(singerList) ? singerList.map((s: any) => ({ name: s.name, mid: s.mid || s.singer_MID })) : [],
+          album: {
+            name: song.album?.name || song.albumname || "未知专辑",
+            mid: song.album?.mid || song.albummid || "",
+            pmid: song.album?.pmid || song.album?.mid || song.albummid || ""
+          },
+          interval: song.interval || 0,
+          isonly: song.isonly || 0,
+          pay: song.pay,
+          file: { media_mid: song.strMediaMid || song.media_mid || song.file?.media_mid },
+          mv: { vid: song.vid || song.mv?.vid },
+        };
+      })
+    };
+  } catch (error: any) {
+    return {
+      code: -1,
+      data: [],
+      message: error.message,
+    };
+  }
+};

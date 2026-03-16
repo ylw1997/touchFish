@@ -26,6 +26,9 @@ interface PlayerState {
   isPlaylistOpen: boolean;
   isLyricOpen: boolean;
   isRadioMode: boolean;
+  isSingerOpen: boolean;
+  currentSingerMid: string | null;
+  currentSingerName: string | null;
 
   // Actions
   setCurrentSong: (song: Song | null) => void;
@@ -42,6 +45,8 @@ interface PlayerState {
 
   togglePlaylistOpen: () => void;
   toggleLyricOpen: () => void;
+  openSingerDrawer: (mid: string, name?: string) => void;
+  closeSingerDrawer: () => void;
 
   // 播放控制
   play: (song: Song) => void;
@@ -77,6 +82,9 @@ export const usePlayerStore = create<PlayerState>()(
       isPlaylistOpen: false,
       isLyricOpen: false,
       isRadioMode: false,
+      isSingerOpen: false,
+      currentSingerMid: null,
+      currentSingerName: null,
 
       // Setters
       setCurrentSong: (song) => set({ currentSong: song }),
@@ -95,6 +103,8 @@ export const usePlayerStore = create<PlayerState>()(
         set((state) => ({ isPlaylistOpen: !state.isPlaylistOpen })),
       toggleLyricOpen: () =>
         set((state) => ({ isLyricOpen: !state.isLyricOpen })),
+      openSingerDrawer: (mid, name) => set({ isSingerOpen: true, currentSingerMid: mid, currentSingerName: name || null }),
+      closeSingerDrawer: () => set({ isSingerOpen: false, currentSingerMid: null, currentSingerName: null }),
       setIsRadioMode: (isRadioMode) => set({ isRadioMode }),
 
       // 播放控制

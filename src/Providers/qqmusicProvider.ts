@@ -5,6 +5,8 @@ import { WebviewView, ExtensionContext, workspace } from "vscode";
 import {
   searchSongs,
   searchSingers,
+  getSingerInfo,
+  getSingerSongs,
   getSongUrl,
   getSongDetail,
   getLyric,
@@ -117,6 +119,28 @@ export class QQMusicProvider extends BaseWebviewProvider {
             payload: result,
             uuid,
           } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_GET_SINGER_INFO": {
+          const { mid } = payload || {};
+          const result = await getSingerInfo(mid);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_SINGER_INFO_RESULT",
+            payload: result,
+            uuid,
+          } as any);
+          break;
+        }
+
+        case "QQMUSIC_GET_SINGER_SONGS": {
+          const { mid, page, num } = payload || {};
+          const result = await getSingerSongs(mid, page || 1, num || 30);
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_SINGER_SONGS_RESULT",
+            payload: result,
+            uuid,
+          } as any);
           break;
         }
 

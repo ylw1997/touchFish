@@ -114,6 +114,11 @@ a {
   }
 }
 
+.singer-header-card {
+  margin-bottom: 15px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
 .info {
   font-size: var(--app-font-size);
 }
@@ -1144,6 +1149,16 @@ a {
         text-overflow: ellipsis;
         white-space: nowrap;
         line-height: normal;
+
+        .playbar-singer {
+          cursor: pointer;
+          color: var(--vscode-descriptionForeground);
+          transition: color 0.2s;
+
+          &:hover {
+            color: var(--vscode-foreground);
+          }
+        }
       }
 
       .playbar-author {

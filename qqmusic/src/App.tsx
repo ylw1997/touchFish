@@ -39,6 +39,7 @@ import SongCard from "./components/SongCard";
 import PlayBar from "./components/PlayBar";
 import SearchDrawer from "./components/SearchDrawer";
 import PlaylistDrawer from "./components/PlaylistDrawer";
+import { SingerDrawer } from "./components/SingerDrawer";
 import type { Playlist, RankList, Song } from "./types/qqmusic";
 import "./style/index.less";
 
@@ -673,6 +674,9 @@ function App() {
         onClose={() => setPlaylistDrawerOpen(false)}
         playlist={selectedPlaylist}
       />
+
+      {/* 歌手详情抽屉 */}
+      <SingerDrawer />
 
       {/* 浮动按钮 */}
       <FloatButton.Group
