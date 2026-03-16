@@ -37,6 +37,12 @@ function App() {
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const { fontSize, increase, decrease } = useFontSizeStore();
   const { isLoggedIn, userInfo, logout } = useUserStore();
+
+  // 退出登录：通知后端清除凭证 + 清除前端状态
+  const handleLogout = useCallback(() => {
+    vscode.postMessage({ command: "QQMUSIC_LOGOUT" });
+    logout();
+  }, [logout]);
   const currentSong = usePlayerStore((state) => state.currentSong);
   const currentSongMid = currentSong?.mid;
 
@@ -128,16 +134,30 @@ function App() {
     [getRankDetail] // safe to exclude setRankSongs
   );
 
-  // 初始化
+  // 初始化：推送凭证到后端 + 加载数据
   useEffect(() => {
     vscode.postMessage({
       command: "QQMUSIC_RESTORE_SCROLL_POSITION",
     });
+
+    // 如果已登录，推送凭证到后端（后端重启后 globalCredential 会丢失）
+    if (isLoggedIn && userInfo?.musicid && userInfo?.musickey) {
+      console.log("[App] 推送已保存的凭证到后端...");
+      console.log(`[App] musickey(full): ${userInfo.musickey}`);
+      vscode.postMessage({
+        command: "QQMUSIC_SET_CREDENTIAL",
+        payload: {
+          musicid: userInfo.musicid,
+          musickey: userInfo.musickey,
+        },
+      });
+    }
+
     // 加载推荐歌单
     loadRecommendPlaylists();
     // 加载排行榜
     loadRankLists();
-  }, [loadRecommendPlaylists, loadRankLists]);
+  }, [isLoggedIn, userInfo?.musicid, userInfo?.musickey, loadRecommendPlaylists, loadRankLists]);
 
   // 登录状态变化时刷新数据
   useEffect(() => {
@@ -275,7 +295,7 @@ function App() {
                   <h2>欢迎回来, {userInfo?.nickname || "用户"}</h2>
                   <p>享受你的音乐时光</p>
                 </div>
-                <Button icon={<LogoutOutlined />} onClick={logout}>
+                <Button icon={<LogoutOutlined />} onClick={handleLogout}>
                   退出登录
                 </Button>
               </div>
@@ -345,7 +365,7 @@ function App() {
         <h1 className="qqmusic-title">QQ音乐</h1>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
-            <Button type="text" icon={<LogoutOutlined />} onClick={logout}>
+            <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>
               退出
             </Button>
           ) : (

@@ -25,6 +25,7 @@ import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
 export class QQMusicProvider extends BaseWebviewProvider {
   private credential: { musicid: string; musickey: string } | null = null;
+  private static readonly CREDENTIAL_KEY = "qqmusic-credential";
 
   constructor(context: ExtensionContext) {
     super(context, {
@@ -35,6 +36,30 @@ export class QQMusicProvider extends BaseWebviewProvider {
       restoreCommand: "QQMUSIC_RESTORE_SCROLL_POSITION",
       saveCommand: "QQMUSIC_SAVE_SCROLL_POSITION",
     });
+
+    // 从 globalState 恢复凭证
+    const saved = this.context.globalState.get<{ musicid: string; musickey: string }>(QQMusicProvider.CREDENTIAL_KEY);
+    if (saved?.musicid && saved?.musickey) {
+      this.credential = saved;
+      setGlobalCredential(saved);
+      console.log(`[QQMusic] 从 globalState 恢复凭证: musicid=${saved.musicid}`);
+    }
+  }
+
+  /** 保存凭证到 globalState */
+  private saveCredential(cred: { musicid: string; musickey: string }) {
+    this.credential = cred;
+    setGlobalCredential(cred);
+    this.context.globalState.update(QQMusicProvider.CREDENTIAL_KEY, cred);
+    console.log(`[QQMusic] 凭证已保存: musicid=${cred.musicid}`);
+  }
+
+  /** 清除凭证 */
+  private clearCredential() {
+    this.credential = null;
+    setGlobalCredential(null);
+    this.context.globalState.update(QQMusicProvider.CREDENTIAL_KEY, undefined);
+    console.log(`[QQMusic] 凭证已清除`);
   }
 
   public override resolveWebviewView(webviewView: WebviewView) {
@@ -178,12 +203,10 @@ export class QQMusicProvider extends BaseWebviewProvider {
           const result = await checkLoginStatus(identifier, type);
           // 如果登录成功，保存 credential 到全局
           if (result.code === 0 && result.data?.userInfo) {
-            this.credential = {
+            this.saveCredential({
               musicid: result.data.userInfo.musicid,
               musickey: result.data.userInfo.musickey,
-            };
-            // 设置全局 credential
-            setGlobalCredential(this.credential);
+            });
           }
           webviewView.webview.postMessage({
             command: "QQMUSIC_CHECK_LOGIN_STATUS_RESULT",
@@ -194,11 +217,46 @@ export class QQMusicProvider extends BaseWebviewProvider {
         }
 
         case "QQMUSIC_LOGIN_WITH_CREDENTIAL": {
-          const { credential } = payload || {};
-          const result = await getUserInfo(credential);
+          const { credential: cred } = payload || {};
+          const loginCred = cred || payload; // handle both { credential: {...} } and direct {...}
+          if (loginCred?.musicid && loginCred?.musickey) {
+            this.saveCredential({
+              musicid: loginCred.musicid,
+              musickey: loginCred.musickey,
+            });
+          }
+          const result = await getUserInfo(loginCred);
           webviewView.webview.postMessage({
             command: "QQMUSIC_LOGIN_WITH_CREDENTIAL_RESULT",
             payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_SET_CREDENTIAL": {
+          const setCred = payload?.credential || payload;
+          console.log("[QQMusic] 收到 QQMUSIC_SET_CREDENTIAL Payload:", JSON.stringify(payload));
+          console.log("[QQMusic] 收到 QQMUSIC_SET_CREDENTIAL setCred:", JSON.stringify(setCred));
+          if (setCred?.musicid && setCred?.musickey) {
+            this.saveCredential({
+              musicid: setCred.musicid.toString(), // Force string just in case
+              musickey: setCred.musickey,
+            });
+          }
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_SET_CREDENTIAL_RESULT",
+            payload: { code: 0, data: true },
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "QQMUSIC_LOGOUT": {
+          this.clearCredential();
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_LOGOUT_RESULT",
+            payload: { code: 0, data: true },
             uuid,
           } as CommandsType<any>);
           break;

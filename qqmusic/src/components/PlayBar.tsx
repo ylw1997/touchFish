@@ -10,16 +10,19 @@ import {
   StepForwardOutlined,
   PlayCircleFilled,
 } from "@ant-design/icons";
-import { Button, Space } from "antd";
+import { Button, Space, message } from "antd";
 import { usePlayerStore } from "../store/player";
+import { useQQMusic } from "../hooks/useQQMusic";
 import type { Song } from "../types/qqmusic";
 
 const PlayBar: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const { playSong, getSongUrl } = useQQMusic();
 
   const {
     currentSong,
     currentSongUrl,
+    setCurrentSongUrl,
     isPlaying,
     playlist,
     isPlaylistOpen,
@@ -29,7 +32,6 @@ const PlayBar: React.FC = () => {
     playPrev,
     removeFromPlaylist,
     clearPlaylist,
-    play,
   } = usePlayerStore();
 
   // 音频事件监听
@@ -60,6 +62,37 @@ const PlayBar: React.FC = () => {
       audio.pause();
     }
   }, [isPlaying, currentSongUrl]);
+
+  // Handle auto-fetching the song URL when currentSong changes
+  useEffect(() => {
+    let active = true;
+    const fetchUrl = async () => {
+      if (!currentSong) {
+        setCurrentSongUrl(null);
+        return;
+      }
+      try {
+        const res = await getSongUrl(currentSong.mid);
+        if (!active) return;
+        if (res.code === 0 && res.data) {
+          setCurrentSongUrl(res.data);
+        } else {
+          message.error(`无法播放《${currentSong.name}》: 可能是VIP或独家单曲`);
+          setCurrentSongUrl(null);
+        }
+      } catch (err: any) {
+        if (!active) return;
+        message.error(`获取拉取链接失败: ${err.message}`);
+        setCurrentSongUrl(null);
+      }
+    };
+
+    fetchUrl();
+
+    return () => {
+      active = false;
+    };
+  }, [currentSong, currentSong?.mid, getSongUrl, setCurrentSongUrl]);
 
   const getSingerName = (song: Song): string => {
     if (!song.singer || song.singer.length === 0) return "未知歌手";
@@ -120,7 +153,7 @@ const PlayBar: React.FC = () => {
                       className={`playbar-playlist-item ${
                         currentSong?.mid === song.mid ? "active" : ""
                       }`}
-                      onClick={() => play(song)}
+                      onClick={() => playSong(song)}
                     >
                       <img src={getAlbumCover(song)} alt={song.name} />
                       <div className="playbar-playlist-item-info">

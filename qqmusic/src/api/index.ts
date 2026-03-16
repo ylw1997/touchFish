@@ -47,10 +47,10 @@ export class QQMusicApi {
 
   // ==================== 歌曲 ====================
   // 获取歌曲播放链接
-  getSongUrl(mid: string, quality: SongQuality = 128) {
+  getSongUrl(mid: string, quality: SongQuality = 128, credential?: any) {
     return this.request<ApiResponse<string>>(
       "QQMUSIC_GET_SONG_URL",
-      { mid, quality },
+      { mid, quality, credential },
       "获取播放链接中..."
     );
   }

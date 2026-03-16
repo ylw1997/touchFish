@@ -50,12 +50,10 @@ const generateSearchId = () => {
   return Math.floor(Math.random() * 1000000000000000000).toString();
 };
 
-// 生成 GUID
+// 生成 GUID (32位十六进制，无连字符，与 Python SDK 保持一致)
 const generateGuid = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
+  return "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".replace(/[x]/g, function () {
+    return ((Math.random() * 16) | 0).toString(16);
   });
 };
 
@@ -82,8 +80,10 @@ const buildCommonParams = () => {
 
   // 使用全局 credential
   if (globalCredential?.musicid && globalCredential?.musickey) {
+    params.uid = globalCredential.musicid;
     params.qq = globalCredential.musicid;
     params.authst = globalCredential.musickey;
+    params.tmeLoginType = globalCredential.musickey.startsWith("W_X") ? "1" : "2";
   }
 
   return params;
@@ -95,6 +95,8 @@ const postRequest = async (data: any, enableSign: boolean = false, credential?: 
     const requestData = { ...data };
     if (!requestData.comm) {
       requestData.comm = buildCommonParams();
+    } else {
+      requestData.comm = { ...buildCommonParams(), ...requestData.comm };
     }
 
     const url = enableSign ? ENC_BASE_URL : BASE_URL;
@@ -105,8 +107,25 @@ const postRequest = async (data: any, enableSign: boolean = false, credential?: 
 
     const headers: any = getBaseHeaders();
     const creds = credential || globalCredential;
+    console.log(`[postRequest] Using credential: musicid=${creds?.musicid || 'NONE'}, musickey=${creds?.musickey?.substring(0, 20) || 'NONE'}...`);
     if (creds?.musicid && creds?.musickey) {
-      headers["Cookie"] = `uin=${creds.musicid}; qm_keyst=${creds.musickey};`;
+      const isWx = creds.musickey.startsWith("W_X");
+      const loginType = isWx ? "1" : "2";
+
+      headers["Cookie"] = `uin=${creds.musicid}; qqmusic_key=${creds.musickey}; qm_keyst=${creds.musickey}; tmeLoginType=${loginType};`;
+      if (isWx) {
+         headers["Cookie"] += ` wxuin=${creds.musicid};`;
+      }
+      
+      requestData.comm.uid = creds.musicid; // Setup uid unconditionally
+      
+      if (!requestData.comm.qq) {
+        requestData.comm.qq = creds.musicid;
+        requestData.comm.authst = creds.musickey;
+        requestData.comm.tmeLoginType = loginType;
+        requestData.comm.loginUin = creds.musicid;
+        requestData.comm.tmeAppID = "qqmusic";
+    }
     }
 
     const response = await axios.post(url, requestData, {
@@ -248,8 +267,11 @@ export const getSongUrl = async (
 
     const filename = `${fileType}${mid}${mid}${extension}`;
 
-    const data = {
-      "music.vkey.GetVkey": {
+    const data: any = {
+      comm: {
+        ct: "19", // Force ct: 19 explicitly for Vkey fetches like Python lib
+      },
+      "music.vkey.GetVkey.UrlGetVkey": {
         method: "UrlGetVkey",
         module: "music.vkey.GetVkey",
         param: {
@@ -257,21 +279,31 @@ export const getSongUrl = async (
           guid: generateGuid(),
           songmid: [mid],
           songtype: [0],
-          uin: credential?.musicid || "0",
-          loginflag: credential ? 1 : 0,
-          platform: "20",
         },
       },
     };
 
     const result = await postRequest(data, false, credential);
-    const urlInfo = result["music.vkey.GetVkey"]?.data?.midurlinfo?.[0];
+    const vkeyData = result["music.vkey.GetVkey.UrlGetVkey"] || result["music.vkey.GetVkey"];
+    console.log("[getSongUrl] RAW vkeyData:", JSON.stringify(vkeyData, null, 2));
+
+    const urlInfo = vkeyData?.data?.midurlinfo?.[0];
 
     if (!urlInfo?.purl) {
+      let errorMessage = "无法获取播放链接（可能需要登录或歌曲无版权）";
+      
+      if (urlInfo?.pneedbuy === 1) {
+        errorMessage = "该歌曲为数字专辑/单曲，需在 QQ音乐 App 内单独购买后播放";
+      } else if (urlInfo?.uiAlert === 7) {
+        errorMessage = "该歌曲可能需要单独购买数字专辑后播放";
+      } else if (urlInfo?.uiAlert === 41 || urlInfo?.uiAlert === 42) {
+        errorMessage = "该歌曲为 VIP 专享，请确保已登录 VIP 账号";
+      }
+
       return {
         code: -1,
         data: "",
-        message: "无法获取播放链接（可能需要登录或歌曲无版权）",
+        message: errorMessage,
       };
     }
 
@@ -1144,7 +1176,7 @@ const authorizeWXQR = async (
         ...buildCommonParams(),
         tmeLoginType: "1", // 微信登录类型
       },
-      "music.login.LoginServer": {
+      "music.login.LoginServer.Login": {
         method: "Login",
         module: "music.login.LoginServer",
         param: {
@@ -1184,7 +1216,7 @@ const authorizeWXQR = async (
     }
 
     // 从响应中提取凭证
-    const loginResult = response.data["music.login.LoginServer"];
+    const loginResult = response.data["music.login.LoginServer.Login"] || response.data["music.login.LoginServer"];
 
     if (!loginResult) {
       console.error("[authorizeWXQR] No music.login.LoginServer in response");
@@ -1209,7 +1241,8 @@ const authorizeWXQR = async (
     }
 
     const loginData = loginResult.data;
-    console.log("[authorizeWXQR] Login data:", loginData);
+    console.log("[authorizeWXQR] FULL loginResult:", JSON.stringify(loginResult, null, 2));
+    console.log("[authorizeWXQR] FULL loginData:", JSON.stringify(loginData, null, 2));
 
     if (!loginData || !loginData.musicid || !loginData.musickey) {
       console.error("[authorizeWXQR] Missing musicid or musickey in data");
@@ -1223,13 +1256,16 @@ const authorizeWXQR = async (
     return {
       code: 0,
       data: {
-        musicid: loginData.musicid.toString(),
+        // CRITICAL: use str_musicid instead of musicid.toString()
+        // because musicid is a large integer that exceeds Number.MAX_SAFE_INTEGER
+        // and JSON.parse silently corrupts it (e.g. 1152921504719684275 -> 1152921504719684400)
+        musicid: loginData.str_musicid || loginData.musicid.toString(),
         musickey: loginData.musickey,
         refresh_key: loginData.refresh_key || "",
         refresh_token: loginData.refresh_token || "",
         openid: loginData.openid || "",
         nickname: loginData.nick || "",
-        avatar: loginData.pic || "",
+        avatar: loginData.logo || loginData.pic || "",
       },
     };
   } catch (error: any) {
