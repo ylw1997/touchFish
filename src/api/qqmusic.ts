@@ -435,17 +435,11 @@ export const getRecommendPlaylists = async (
     };
 
     const result = await postRequest(data);
-    console.log(
-      "[API getRecommendPlaylists] Raw result:",
-      JSON.stringify(result, null, 2),
-    );
 
     // API 返回的是 List 数组，每个元素包含 Playlist 对象
     const list =
       result["music.playlist.PlaylistSquare.GetRecommendFeed"]?.data?.List ||
       [];
-    console.log("[API getRecommendPlaylists] List:", list.length);
-
     // 映射数据结构 - 从 Playlist.basic 中提取字段
     const playlists = list.map((item: any) => {
       const basic = item.Playlist?.basic || {};

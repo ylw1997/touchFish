@@ -204,6 +204,14 @@
 				"touchfish.bilibiliCookie": {
 					"type": "string",
 					"description": "B站 cookie"
+				},
+				"touchfish.qqmusicMusicid": {
+					"type": "string",
+					"description": "QQ音乐 MusicID"
+				},
+				"touchfish.qqmusicMusickey": {
+					"type": "string",
+					"description": "QQ音乐 MusicKey"
 				}
 			}
 		},

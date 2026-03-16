@@ -1,7 +1,7 @@
 /**
  * QQ音乐 Webview Provider
  */
-import { WebviewView, ExtensionContext } from "vscode";
+import { WebviewView, ExtensionContext, workspace } from "vscode";
 import {
   searchSongs,
   searchSingers,
@@ -26,6 +26,7 @@ import {
 } from "../api/qqmusic";
 import { CommandsType } from "../../types/commands";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
+import { setConfigByKey } from "../core/config";
 
 export class QQMusicProvider extends BaseWebviewProvider {
   private credential: { musicid: string; musickey: string } | null = null;
@@ -41,28 +42,46 @@ export class QQMusicProvider extends BaseWebviewProvider {
       saveCommand: "QQMUSIC_SAVE_SCROLL_POSITION",
     });
 
-    // 从 globalState 恢复凭证
-    const saved = this.context.globalState.get<{ musicid: string; musickey: string }>(QQMusicProvider.CREDENTIAL_KEY);
-    if (saved?.musicid && saved?.musickey) {
-      this.credential = saved;
-      setGlobalCredential(saved);
-      console.log(`[QQMusic] 从 globalState 恢复凭证: musicid=${saved.musicid}`);
+    // 从 configuration 恢复凭证
+    const config = workspace.getConfiguration("touchfish");
+    const configId = config.get<string>("qqmusicMusicid");
+    const configKey = config.get<string>("qqmusicMusickey");
+
+    if (configId && configKey) {
+      const cred = { musicid: configId, musickey: configKey };
+      this.credential = cred;
+      setGlobalCredential(cred);
+      console.log(`[QQMusic] 从 configuration 恢复凭证: musicid=${configId}`);
     }
   }
 
-  /** 保存凭证到 globalState */
-  private saveCredential(cred: { musicid: string; musickey: string }) {
+  /** 保存凭证到配置文件 */
+  private async saveCredential(cred: { musicid: string; musickey: string }) {
     this.credential = cred;
     setGlobalCredential(cred);
-    this.context.globalState.update(QQMusicProvider.CREDENTIAL_KEY, cred);
+    
+    try {
+      await setConfigByKey("qqmusicMusicid", cred.musicid);
+      await setConfigByKey("qqmusicMusickey", cred.musickey);
+    } catch (err) {
+      console.error("[QQMusic] 写入配置文件失败:", err);
+    }
+    
     console.log(`[QQMusic] 凭证已保存: musicid=${cred.musicid}`);
   }
 
   /** 清除凭证 */
-  private clearCredential() {
+  private async clearCredential() {
     this.credential = null;
     setGlobalCredential(null);
-    this.context.globalState.update(QQMusicProvider.CREDENTIAL_KEY, undefined);
+    
+    try {
+      await setConfigByKey("qqmusicMusicid", "");
+      await setConfigByKey("qqmusicMusickey", "");
+    } catch (err) {
+      console.error("[QQMusic] 清除配置文件失败:", err);
+    }
+    
     console.log(`[QQMusic] 凭证已清除`);
   }
 
