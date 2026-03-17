@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [12.4.0](https://github.com/ylw1997/touchFish/compare/v12.3.0...v12.4.0) (2026-03-17)
+
+
+### ✨ Features | 新功能
+
+* 优化打包文件 ([644b0b9](https://github.com/644b0b9d90e5c1a3ecbcb220c204da56be33c775))
+* 状态栏操作不激活界面 ([5851e67](https://github.com/5851e67a254684c9e1db96c2fa2733ea897a172d))
+
 ## [12.3.0](https://github.com/ylw1997/touchFish/compare/v12.2.0...v12.3.0) (2026-03-17)
 
 
