@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [12.2.0](https://github.com/ylw1997/touchFish/compare/v12.1.0...v12.2.0) (2026-03-17)
+
+
+### ✨ Features | 新功能
+
+* 修复打包错误问题 ([7d02725](https://github.com/7d027257778c1013bcdfa34e7aa67b4bf25f48ae))
+* 增加md ([5024284](https://github.com/502428418c3ee79f39ebb8e5d17ab7602e4bd745))
+
 ## [12.1.0](https://github.com/ylw1997/touchFish/compare/v11.26.0...v12.1.0) (2026-03-17)
 
 
