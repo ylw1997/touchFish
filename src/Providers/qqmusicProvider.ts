@@ -47,6 +47,7 @@ export class QQMusicProvider extends BaseWebviewProvider {
   private currentLyric: string = "";
   private isPlaying: boolean = false;
   private showStatusBarLyric: boolean = true;
+  private statusBarShowLyric: boolean = true;
 
   constructor(context: ExtensionContext) {
     super(context, {
@@ -66,7 +67,10 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
     // 监听配置变化
     workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("touchfish.qqmusicShowStatusBar")) {
+      if (
+        e.affectsConfiguration("touchfish.qqmusicShowStatusBar") ||
+        e.affectsConfiguration("touchfish.qqmusicStatusBarShowLyric")
+      ) {
         this.loadConfig();
         this.updateStatusBar();
       }
@@ -119,6 +123,10 @@ export class QQMusicProvider extends BaseWebviewProvider {
   private loadConfig() {
     const config = workspace.getConfiguration("touchfish");
     this.showStatusBarLyric = config.get<boolean>("qqmusicShowStatusBar", true);
+    this.statusBarShowLyric = config.get<boolean>(
+      "qqmusicStatusBarShowLyric",
+      true,
+    );
   }
 
   /** 计算文本的视觉宽度（中文字符计为2） */
@@ -126,7 +134,11 @@ export class QQMusicProvider extends BaseWebviewProvider {
     let width = 0;
     for (const char of str) {
       // 中文字符、全角字符计为2
-      if (/[\u4e00-\u9fa5\uff00-\uffef\u3000-\u303f\u3040-\u309f\u30a0-\u30ff]/.test(char)) {
+      if (
+        /[\u4e00-\u9fa5\uff00-\uffef\u3000-\u303f\u3040-\u309f\u30a0-\u30ff]/.test(
+          char,
+        )
+      ) {
         width += 2;
       } else {
         width += 1;
@@ -140,7 +152,12 @@ export class QQMusicProvider extends BaseWebviewProvider {
     let width = 0;
     let result = "";
     for (const char of str) {
-      const charWidth = /[\u4e00-\u9fa5\uff00-\uffef\u3000-\u303f\u3040-\u309f\u30a0-\u30ff]/.test(char) ? 2 : 1;
+      const charWidth =
+        /[\u4e00-\u9fa5\uff00-\uffef\u3000-\u303f\u3040-\u309f\u30a0-\u30ff]/.test(
+          char,
+        )
+          ? 2
+          : 1;
       if (width + charWidth > maxWidth) {
         return result + "..";
       }
@@ -207,49 +224,36 @@ export class QQMusicProvider extends BaseWebviewProvider {
       return;
     }
 
-    // 主状态栏：固定音乐图标 + 歌词/歌名，固定视觉宽度
+    // 主状态栏：固定音乐图标 + 歌词/歌名
+    // 采用简单策略：固定显示15个字符，不足不补，超出截断
     const musicIcon = "$(music)";
-    // 图标占约2个单位宽度（包括前后空格效果）
-    const iconWidth = 3;
-    const totalWidth = 40; // 总视觉宽度
-    const contentWidth = totalWidth - iconWidth; // 内容可用宽度
 
     let content = "";
 
-    // 有歌词时优先显示歌词，否则显示歌名
-    if (this.currentLyric && this.currentLyric.trim()) {
+    // 有歌词时优先显示歌词，否则显示歌名（根据配置）
+    if (
+      this.statusBarShowLyric &&
+      this.currentLyric &&
+      this.currentLyric.trim()
+    ) {
       content = this.currentLyric.trim();
     } else {
       content = this.currentSongName;
     }
 
-    // 按视觉宽度截断内容
-    content = this.truncateByWidth(content, contentWidth);
-
-    // 计算当前内容视觉宽度
-    const currentContentWidth = this.getVisualWidth(content);
-    // 计算需要填充的空格数（每个空格算1个宽度）
-    const paddingSpaces = contentWidth - currentContentWidth;
-
-    // 组合文本：图标 + 空格 + 内容 + 填充空格
-    let displayText = `${musicIcon} ${content}`;
-    if (paddingSpaces > 0) {
-      displayText += " ".repeat(paddingSpaces);
-    }
+    // 组合文本（不填充空格，接受轻微宽度差异）
+    const displayText = `${musicIcon} ${content}`;
 
     this.statusBarItem.text = displayText;
     this.statusBarItem.tooltip = `${this.currentSongName}${this.currentLyric ? "\n歌词: " + this.currentLyric : ""}\n\n点击: 打开QQ音乐面板`;
     this.statusBarItem.command = "touchfish.openQQMusic";
 
     // 显示控制按钮
-    // 更新播放/暂停按钮图标
     this.playPauseButton!.text = this.isPlaying
       ? "$(debug-pause)"
       : "$(debug-start)";
     this.playPauseButton!.tooltip = this.isPlaying ? "暂停" : "播放";
     this.playPauseButton?.show();
-
-    // 显示下一首按钮
     this.nextSongButton?.show();
   }
 

@@ -219,6 +219,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "是否在状态栏显示QQ音乐播放信息"
+				},
+				"touchfish.qqmusicStatusBarShowLyric": {
+					"type": "boolean",
+					"default": true,
+					"description": "QQ音乐状态栏显示歌词（关闭则显示歌名）"
 				}
 			}
 		},
