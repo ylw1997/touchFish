@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [12.3.0](https://github.com/ylw1997/touchFish/compare/v12.2.0...v12.3.0) (2026-03-17)
+
+
+### ✨ Features | 新功能
+
+* 优化界面,优化样式 ([e007bad](https://github.com/e007bad39ee5c7d2eb3916b1dfe4e08538f01e41))
+* 增加播放,下一曲快捷键 ([bf1251f](https://github.com/bf1251ff5a40b99d2eec12e8ec5ffa1b756e21ee))
+
 ## [12.2.0](https://github.com/ylw1997/touchFish/compare/v12.1.0...v12.2.0) (2026-03-17)
 
 
