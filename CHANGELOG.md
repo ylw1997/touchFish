@@ -1,6 +1,38 @@
 # 更新历史 
 
 
+## [12.1.0](https://github.com/ylw1997/touchFish/compare/v11.26.0...v12.1.0) (2026-03-17)
+
+
+### ✨ Features | 新功能
+
+* 猜你喜欢和专属雷达完成 ([097549b](https://github.com/097549b717af99d353cac830566fcb22a5c1bb33))
+* 电台模式增加播放列表 ([2afa779](https://github.com/2afa779d15cbb0220590bd0e2823c39647bb3ba4))
+* 歌词显示完成 ([deb9f29](https://github.com/deb9f29bb053fe6054485e3c90cfe6f7ab6d82ca))
+* 更新版本号 ([cc49a48](https://github.com/cc49a48d8b2d564b84ce3dd2bb7297116623ab36))
+* 排行榜优化 ([4c893af](https://github.com/4c893af83c55fa27f5462257040e5f8a6e52aa5c))
+* 首页增加推荐歌单 ([2dffbf1](https://github.com/2dffbf121b1591c9066dea3916eae6caae4ff36e))
+* 搜索功能完成 ([600c76b](https://github.com/600c76bfae8345db02362f1c092cc4afd8515bb7))
+* 添加到我喜欢功能完成 ([e8511af](https://github.com/e8511afba946f9735aa926f6e276312fca5b0cbd))
+* 完美进度条 ([011476d](https://github.com/011476d211ab7b186747607e7795585089362ea4))
+* 修复歌单显示错误问题 ([3c4fc2c](https://github.com/3c4fc2c72dea76cd2d27b25ee86dbd10dfa50513))
+* 修改palybar样式 ([ea35430](https://github.com/ea3543006360fcd188ddf4f378833a470f32e464))
+* 优化 ([a841710](https://github.com/a8417103ad00974d1238c73c3013969b3c5aa0ab))
+* 优化播放器样式 ([77563ed](https://github.com/77563ed602adbb75aa5533b99c7f72e4c32c6b81))
+* 优化首页样式 ([936b3a3](https://github.com/936b3a364efa1853eb693a35c6f9e9ace9a4eadd))
+* 优化样式 ([0daab67](https://github.com/0daab6779e68a1d121835866e5a7f53277426288))
+* 优化账户显示 ([40d1d52](https://github.com/40d1d5205d26362cd2e60cfd77e08d611c3ce5cb))
+* 优化状态栏样式 ([72be5ec](https://github.com/72be5ec5315d783bf07aeeddfb9869714a66917b))
+* 优化less文件,删除重复样式 ([2f6f93c](https://github.com/2f6f93c9f3f5b839859029c75614748e1cb9448b))
+* 优化playbar ([200594e](https://github.com/200594ed272f8ed4419e4b97cc1b3149445b6677))
+* 增加laoding ([29fc6f6](https://github.com/29fc6f620163ceef54b5f7704cff0ec4d065d55f))
+* 增加qq音乐配置 ([f89b032](https://github.com/f89b032ee9a456869d08d45375c57f83044de42f))
+* 状态栏增加控制部分 ([1d323c1](https://github.com/1d323c1a6f9a7369bfff44b17cfbe64cbff6616c))
+* 字体大小 ([e84d8ae](https://github.com/e84d8aed9319ceae68707954ca1eaf543a3b19a9))
+* qq音乐发版准备 ([d9c05ec](https://github.com/d9c05ec1a3d3f5e81bbab4900458a398a8433293))
+* qq音乐开始 ([8e5394e](https://github.com/8e5394e2f5ba2024373e43005dd2e3f9f4e370c5))
+* vip歌曲搞定 ([734d4e4](https://github.com/734d4e47b6985977f1736950bdc8750a3ca7ffe6))
+
 ## [11.26.0](https://github.com/ylw1997/touchFish/compare/v11.25.0...v11.26.0) (2026-03-12)
 
 
