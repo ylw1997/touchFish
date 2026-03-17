@@ -137,14 +137,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.qqmusic.playPause", async () => {
-      await vscode.commands.executeCommand("qqmusic.focus");
       qqmusicProvider["sendPlayPauseCommand"]?.();
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.qqmusic.nextSong", async () => {
-      await vscode.commands.executeCommand("qqmusic.focus");
       qqmusicProvider["sendNextSongCommand"]?.();
     })
   );
