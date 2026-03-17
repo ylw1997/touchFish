@@ -26,6 +26,7 @@ interface PlayerState {
   isPlaylistOpen: boolean;
   isLyricOpen: boolean;
   isRadioMode: boolean;
+  playSource: "radar" | "guess" | "normal"; // 新增：播放来源
   isSingerOpen: boolean;
   currentSingerMid: string | null;
   currentSingerName: string | null;
@@ -60,6 +61,7 @@ interface PlayerState {
   removeFromPlaylist: (index: number) => void;
   clearPlaylist: () => void;
   setIsRadioMode: (isRadioMode: boolean) => void;
+  setPlaySource: (source: "radar" | "guess" | "normal") => void; // 新增
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -82,6 +84,7 @@ export const usePlayerStore = create<PlayerState>()(
       isPlaylistOpen: false,
       isLyricOpen: false,
       isRadioMode: false,
+      playSource: "normal", // 新增
       isSingerOpen: false,
       currentSingerMid: null,
       currentSingerName: null,
@@ -106,6 +109,7 @@ export const usePlayerStore = create<PlayerState>()(
       openSingerDrawer: (mid, name) => set({ isSingerOpen: true, currentSingerMid: mid, currentSingerName: name || null }),
       closeSingerDrawer: () => set({ isSingerOpen: false, currentSingerMid: null, currentSingerName: null }),
       setIsRadioMode: (isRadioMode) => set({ isRadioMode }),
+      setPlaySource: (playSource) => set({ playSource }), // 新增
 
       // 播放控制
       play: (song) => {

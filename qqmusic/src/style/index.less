@@ -50,7 +50,7 @@ a {
 }
 
 .infinite-scroll-component {
-  overflow: hidden !important;
+  overflow: hidden;
 }
 
 /* ==========================================================================
@@ -115,8 +115,8 @@ a {
 }
 
 .singer-header-card {
-  margin-bottom: 15px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
+  margin-bottom: 15px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .info {
@@ -367,8 +367,8 @@ a {
    6. 悬浮播放条
    ========================================================================== */
 .art-video-player {
-  width: 100% !important;
-  height: 100% !important;
+  width: 100%;
+  height: 100%;
 }
 
 /* ==========================================================================
@@ -376,40 +376,40 @@ a {
    ========================================================================== */
 .art-controls-hidden {
   .art-danmuku {
-    display: none !important;
+    display: none;
   }
   // 隐藏底部控制栏
   .art-bottom {
-    display: none !important;
+    display: none;
   }
   // 隐藏顶部信息栏
   .art-top {
-    display: none !important;
+    display: none;
   }
   // 隐藏设置面板
   .art-settings {
-    display: none !important;
+    display: none;
   }
   // 隐藏右侧控制按钮
   .art-contextmenus {
-    display: none !important;
+    display: none;
   }
   // 隐藏加载指示器
   .art-loading {
-    display: none !important;
+    display: none;
   }
   // 隐藏暂停图标
   .art-state {
-    display: none !important;
+    display: none;
   }
   // 隐藏 notice
   .art-notice {
-    display: none !important;
+    display: none;
   }
 }
 // PlayBar 收起状态下，强制 ArtPlayer 视频元素 cover 填充
 .playbar:not(.playbar-expanded) .art-video-player video {
-  object-fit: cover !important;
+  object-fit: cover;
 }
 
 // 可点击元素样式
@@ -477,6 +477,7 @@ a {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative; // 新增：提供定位原点
 }
 
 .qqmusic-header {
@@ -484,8 +485,15 @@ a {
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background: var(--vscode-editor-background);
   border-bottom: 1px solid var(--vscode-chat-requestBorder);
+
+  // 改造为悬浮
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  .backdrop-style(); // 毛玻璃
 }
 
 .qqmusic-title {
@@ -517,24 +525,50 @@ a {
 }
 
 .qqmusic-tabs {
-  .ant-tabs-nav {
+  & > .ant-tabs-nav {
     margin: 0;
     padding: 0 16px;
-    background: var(--vscode-editor-background);
+
+    // 改造为悬浮
+    position: fixed;
+    top: 45px; // 紧锁在 header 下方
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    .backdrop-style(); // 毛玻璃
+    border-bottom: 1px solid var(--vscode-chat-requestBorder);
   }
 
   .tab-content {
     padding: 10px 5px;
   }
+
   .ant-tabs-content {
-    height: calc(100vh - 100px);
-    overflow-y: auto;
-    padding: 0px;
+    height: 100vh;
+    overflow: visible; // 取消裁剪
   }
+
+  .ant-tabs-tabpane {
+    height: 100vh;
+    overflow-y: auto; // 主页签独立滚动
+    box-sizing: border-box;
+    padding-top: 91px; // 避让高度
+  }
+
+  // ==================== 修复子 Tab 嵌套 ====================
   .sub-tabs {
+    .ant-tabs-nav {
+      position: relative; // 子 Tab 不要 fixed
+      top: 0;
+    }
     .ant-tabs-content {
-      overflow-y: auto;
-      height: calc(100vh - 146px);
+      height: auto;
+      overflow: visible;
+    }
+    .ant-tabs-tabpane {
+      height: auto; // 子 Tabpane 正常撑开
+      overflow-y: visible; // 子 Tabpane 不带进度条！
+      padding-top: 0; // 移除避让！
     }
   }
 }
@@ -633,7 +667,7 @@ a {
     width: 100%;
     padding-top: 100%; // 1:1 比例
     overflow: hidden;
-    border-radius: 8px;
+    border-radius: 16px;
 
     &:hover .playlist-play-overlay {
       opacity: 1;
@@ -680,7 +714,7 @@ a {
     background: rgba(0, 0, 0, 0.8);
     color: white;
     padding: 2px 6px;
-    border-radius: 6px;
+    border-radius: 16px;
     font-size: calc(var(--app-font-size) - 3px);
     display: flex;
     align-items: center;
@@ -1122,10 +1156,15 @@ a {
       top: 0;
       left: 0;
       height: 100%;
-      background: #ffffff10;
+      background: rgba(0, 0, 0, 0.1); // 白色模式下用浅深色
       z-index: 0;
       transition: width 0.3s ease;
       pointer-events: none;
+    }
+
+    // 黑色模式下进度条颜色
+    .dark & .playbar-progress-bg {
+      background: rgba(255, 255, 255, 0.1);
     }
 
     // 确保子元素在进度条上方
@@ -1180,6 +1219,66 @@ a {
         line-height: normal;
       }
     }
+  }
+
+  // 专属雷达变色
+  &.playbar-radar {
+    background-color: color-mix(
+      in srgb,
+      color-mix(in srgb, #00c6ff 10%, var(--vscode-editor-background)) 70%,
+      transparent
+    );
+  }
+
+  // 猜你喜欢变色
+  &.playbar-guess {
+    background-color: color-mix(
+      in srgb,
+      color-mix(in srgb, #f857a6 8%, var(--vscode-editor-background)) 70%,
+      transparent
+    );
+  }
+}
+
+// 专属推荐卡片样式 (新加)
+.custom-special-card {
+  background: rgba(0, 0, 0, 0.03); // 白色主题浅背景
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  .anticon {
+    transition: transform 0.2s;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    .anticon {
+      transform: scale(1.1);
+    }
+  }
+
+  // 文字颜色适配
+  .custom-special-title {
+    color: var(--vscode-foreground);
+  }
+  .custom-special-desc {
+    color: var(--vscode-descriptionForeground);
+  }
+}
+
+// 黑色模式卡片适配
+.dark .custom-special-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .custom-special-title {
+    color: #fff;
+  }
+  .custom-special-desc {
+    color: rgba(255, 255, 255, 0.45);
   }
 }
 

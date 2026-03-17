@@ -49,6 +49,7 @@ const PlayBar: React.FC = () => {
     clearPlaylist,
     isRadioMode,
     openSingerDrawer,
+    playSource, // 新增
   } = usePlayerStore();
 
   const { likedSongMids, toggleLikeSong } = useUserStore();
@@ -280,7 +281,7 @@ const PlayBar: React.FC = () => {
       />
 
       <div
-        className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""}`}
+        className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${playSource === 'radar' ? 'playbar-radar' : playSource === 'guess' ? 'playbar-guess' : ''}`}
       >
         <AnimatePresence>
           {isPlaylistOpen && (

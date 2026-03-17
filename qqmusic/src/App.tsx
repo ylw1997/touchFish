@@ -243,6 +243,7 @@ function App() {
             player.setPlaylist(songs);
             player.setCurrentIndex(0);
             player.setIsRadioMode(false); // 不是电台无限流
+            player.setPlaySource("radar"); // 开启雷达变色
             await playSong(songs[0]);
             messageApi.success("专属雷达开启，已载入播放列表");
           } else {
@@ -271,6 +272,7 @@ function App() {
             player.setPlaylist(songs);
             player.setCurrentIndex(0);
             player.setIsRadioMode(true); // 开启电台标记
+            player.setPlaySource("guess"); // 开启电台变色
             await playSong(songs[0]);
             messageApi.success("猜你喜欢电台开启");
           } else {
@@ -282,6 +284,8 @@ function App() {
         return;
       }
 
+      // 普通歌单，重置变色
+      usePlayerStore.getState().setPlaySource("normal");
       setSelectedPlaylist(playlist);
       setPlaylistDrawerOpen(true);
     },
@@ -346,44 +350,23 @@ function App() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                background: "rgba(255, 255, 255, 0.05)",
-                backdropFilter: "blur(25px)",
-                WebkitBackdropFilter: "blur(25px)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
                 borderRadius: "14px",
                 padding: "12px 14px",
                 cursor: "pointer",
                 gap: "12px",
                 transition: "all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                backdropFilter: "blur(25px)",
+                WebkitBackdropFilter: "blur(25px)",
               }}
             >
               <RadarChartOutlined
                 style={{ fontSize: "28px", color: "#00c6ff" }}
               />
               <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: "#fff",
-                    marginBottom: "1px",
-                  }}
-                >
+                <div className="custom-special-title" style={{ fontSize: "14px", fontWeight: "600", marginBottom: "1px" }}>
                   专属雷达
                 </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "rgba(255, 255, 255, 0.45)",
-                    letterSpacing: "0.2px",
-                  }}
-                >
+                <div className="custom-special-desc" style={{ fontSize: "11px", letterSpacing: "0.2px" }}>
                   每日个性推歌
                 </div>
               </div>
@@ -404,44 +387,23 @@ function App() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                background: "rgba(255, 255, 255, 0.05)",
-                backdropFilter: "blur(25px)",
-                WebkitBackdropFilter: "blur(25px)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
                 borderRadius: "14px",
                 padding: "12px 14px",
                 cursor: "pointer",
                 gap: "12px",
                 transition: "all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                backdropFilter: "blur(25px)",
+                WebkitBackdropFilter: "blur(25px)",
               }}
             >
               <CustomerServiceOutlined
                 style={{ fontSize: "28px", color: "#f857a6" }}
               />
               <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: "#fff",
-                    marginBottom: "1px",
-                  }}
-                >
+                <div className="custom-special-title" style={{ fontSize: "14px", fontWeight: "600", marginBottom: "1px" }}>
                   猜你喜欢
                 </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "rgba(255, 255, 255, 0.45)",
-                    letterSpacing: "0.2px",
-                  }}
-                >
+                <div className="custom-special-desc" style={{ fontSize: "11px", letterSpacing: "0.2px" }}>
                   无限流个性漫游
                 </div>
               </div>
