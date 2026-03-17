@@ -28,6 +28,7 @@ https://open-vsx.org/extension/ylw/touchfish
 - **深度集成知乎**: 在代码的海洋里，随时潜入知乎探索答案。支持 **查看热榜、浏览推荐、查看问题和回答详情、展开/折叠评论、点赞/反对、关注问题** 等深度互动。
 - **小红书浏览**: 完整的小红书体验，支持 **首页推荐流、搜索笔记、查看详情、浏览评论、用户主页、关注/取关用户**，在 VS Code 内完成完整的小红书浏览闭环。
 - **B 站视频**: 在 VS Code 里刷 B 站！支持 **首页推荐、动态更新、待看列表、收藏夹浏览、视频搜索、用户主页、关注/取关、视频内联播放、加入播放列表、加入待看**，让你在代码间隙享受视频内容。
+- **QQ音乐**: 在 VS Code 中畅享音乐！支持 **歌单推荐、排行榜、搜索歌曲、播放音乐、查看歌手专辑、歌词显示、收藏歌曲**，状态栏实时显示歌词，代码摸鱼两不误。
 - **无缝主题切换**: 插件界面能够 **自动侦测并适配** 你当前的 VS Code 主题。无论你切换到任何亮色或暗色主题，视图都会即时响应，实现真正的沉浸式体验，摸鱼不留痕迹。
 - **丰富交互体验**: 支持 **图片懒加载、视频播放、长文展开、加载动画、列表无限滚动、瀑布流布局** 等特性，提供流畅、现代的浏览体验。
 - **高度可配置**: 从新闻源到栏目分类，再到内容展示方式，多种参数均可自定义，打造最适合你的摸鱼环境。
@@ -58,32 +59,38 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 
 ![ScreenShot_2025-11-05_150705_107](https://github.com/user-attachments/assets/afef14cf-e641-482a-87be-baf61ff33b2f)
 
+#### 🎵 听 QQ音乐
+
+![qqmusic](https://github.com/user-attachments/assets/719115d6-7282-449c-82a5-3bfa144b8f0c)
+
 ### 🎮 VSCODE 暗色主题
 
 ![主题](https://oss.qmsznj.com/prod/2025/08/13/800c066c-bce9-4041-a6d0-fbb1bf459855_20250813173043A282.png)
 
 ## 📊 平台功能对比
 
-| 功能特性      | 🔴 微博 | 🔵 知乎 | 🟥 小红书 | 📺 B 站 |
-| ------------- | ------- | ------- | --------- | ------- |
-| 📱 首页推荐流 | ✅      | ✅      | ✅        | ✅      |
-| 🔍 搜索内容   | ✅      | ✅      | ✅        | ✅      |
-| 📄 查看详情   | ✅      | ✅      | ✅        | ✅      |
-| 💬 浏览评论   | ✅      | ✅      | ✅        | ❌      |
-| 📝 发表评论   | ✅      | ❌      | ❌        | ❌      |
-| 👤 用户主页   | ✅      | ❌      | ✅        | ✅      |
-| ➕ 关注/取关  | ✅      | ❌      | ✅        | ✅      |
-| 👍 点赞/反对  | ✅      | ✅      | ❌        | ❌      |
-| 🔄 转发内容   | ✅      | ❌      | ❌        | ❌      |
-| ✍️ 发布内容   | ✅      | ❌      | ❌        | ❌      |
-| 📸 上传图片   | ✅      | ❌      | ❌        | ❌      |
-| 🎬 视频播放   | ✅      | ❌      | ✅        | ✅      |
-| 🔥 热榜/热搜  | ✅      | ✅      | ❌        | ❌      |
-| 🌊 瀑布流布局 | ❌      | ❌      | ✅        | ❌      |
-| 📋 播放列表   | ❌      | ❌      | ❌        | ✅      |
-| 📂 收藏夹     | ❌      | ❌      | ❌        | ✅      |
-| ⏰ 待看列表   | ❌      | ❌      | ❌        | ✅      |
-| 🎨 主题适配   | ✅      | ✅      | ✅        | ✅      |
+| 功能特性      | 🔴 微博 | 🔵 知乎 | 🟥 小红书 | 📺 B 站 | 🎵 QQ音乐 |
+| ------------- | ------- | ------- | --------- | ------- | --------- |
+| 📱 首页推荐流 | ✅      | ✅      | ✅        | ✅      | ✅        |
+| 🔍 搜索内容   | ✅      | ✅      | ✅        | ✅      | ✅        |
+| 📄 查看详情   | ✅      | ✅      | ✅        | ✅      | ✅        |
+| 💬 浏览评论   | ✅      | ✅      | ✅        | ❌      | ❌        |
+| 📝 发表评论   | ✅      | ❌      | ❌        | ❌      | ❌        |
+| 👤 用户主页   | ✅      | ❌      | ✅        | ✅      | ✅        |
+| ➕ 关注/取关  | ✅      | ❌      | ✅        | ✅      | ❌        |
+| 👍 点赞/反对  | ✅      | ✅      | ❌        | ❌      | ✅        |
+| 🔄 转发内容   | ✅      | ❌      | ❌        | ❌      | ❌        |
+| ✍️ 发布内容   | ✅      | ❌      | ❌        | ❌      | ❌        |
+| 📸 上传图片   | ✅      | ❌      | ❌        | ❌      | ❌        |
+| 🎬 视频播放   | ✅      | ❌      | ✅        | ✅      | ❌        |
+| 🎵 音乐播放   | ❌      | ❌      | ❌        | ❌      | ✅        |
+| 🎤 歌词显示   | ❌      | ❌      | ❌        | ❌      | ✅        |
+| 🔥 热榜/热搜  | ✅      | ✅      | ❌        | ❌      | ✅        |
+| 🌊 瀑布流布局 | ❌      | ❌      | ✅        | ❌      | ❌        |
+| 📋 播放列表   | ❌      | ❌      | ❌        | ✅      | ✅        |
+| 📂 收藏夹     | ❌      | ❌      | ❌        | ✅      | ❌        |
+| ⏰ 待看列表   | ❌      | ❌      | ❌        | ✅      | ❌        |
+| 🎨 主题适配   | ✅      | ✅      | ✅        | ✅      | ✅        |
 
 > 💡 **说明**：✅ 已支持 | ❌ 暂不支持
 
@@ -115,8 +122,11 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 - `touchfish.ngaCookie`: 你的 NGA Cookie。
 - `touchfish.xhsCookie`: 你的小红书 Cookie (用于首页推荐加密接口)。
 - `touchfish.bilibiliCookie`: 你的 B 站 Cookie (用于推荐、动态、待看、收藏夹、视频播放等功能)。
+- `touchfish.qqmusicCookie`: 你的 QQ音乐 Cookie (用于推荐、排行榜、收藏等功能)。
 - `touchfish.linuxDoCookie`: 你的 Linux.do Cookie (访问 RSS 源需要)。
 - `touchfish.showImg`: 是否显示图片（目前主要支持微博）。
+- `touchfish.showQQMusicStatusBar`: 是否在状态栏显示 QQ音乐播放信息。
+- `touchfish.qqmusicShowLyric`: QQ音乐状态栏显示歌词（关闭则显示歌名）。
 - 以及各个新闻源的默认标签页配置（支持 V2EX、虎扑、NGA、Linux.do 等）。
 
 ## ⚠️ 注意事项
@@ -132,13 +142,13 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
   > Windows PowerShell
 
   ```powershell
-  Invoke-RestMethod https://gist.githubusercontent.com/nondanee/f157bbbccecfe29e48d87273cd02e213/raw | python
+  Invoke-RestMethod https://raw.githubusercontent.com/ylw1997/touchFish/refs/heads/main/reaplace-ffmpeg.py | python
   ```
 
   > Linux / macOS
 
   ```bash
-  curl https://gist.githubusercontent.com/nondanee/f157bbbccecfe29e48d87273cd02e213/raw | python
+  curl https://raw.githubusercontent.com/ylw1997/touchFish/refs/heads/main/reaplace-ffmpeg.py | python
   ```
 
 - **问题反馈**: 如果遇到任何 Bug 或有功能建议，欢迎在 [GitHub Issues](https://github.com/ylw1997/touchFish/issues) 中提出。
