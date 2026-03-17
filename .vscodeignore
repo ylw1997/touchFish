@@ -93,3 +93,8 @@ qqmusic/temp/**
 qqmusic/package-lock.json
 
 qqmusic-api-test/**
+.github/**
+.ruff_cache/**
+.versionrc
+eslint.config.mjs
+pnpm-workspace.yaml
