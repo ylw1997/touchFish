@@ -1,7 +1,14 @@
 /**
  * QQ音乐 Webview Provider
  */
-import { WebviewView, ExtensionContext, workspace } from "vscode";
+import {
+  WebviewView,
+  ExtensionContext,
+  workspace,
+  StatusBarItem,
+  StatusBarAlignment,
+  window,
+} from "vscode";
 import {
   searchSongs,
   searchSingers,
@@ -33,6 +40,13 @@ import { setConfigByKey } from "../core/config";
 export class QQMusicProvider extends BaseWebviewProvider {
   private credential: { musicid: string; musickey: string } | null = null;
   private static readonly CREDENTIAL_KEY = "qqmusic-credential";
+  private statusBarItem: StatusBarItem | undefined;
+  private nextSongButton: StatusBarItem | undefined;
+  private playPauseButton: StatusBarItem | undefined;
+  private currentSongName: string = "";
+  private currentLyric: string = "";
+  private isPlaying: boolean = false;
+  private showStatusBarLyric: boolean = true;
 
   constructor(context: ExtensionContext) {
     super(context, {
@@ -42,6 +56,20 @@ export class QQMusicProvider extends BaseWebviewProvider {
       scrollKey: "qqmusicScrollPosition",
       restoreCommand: "QQMUSIC_RESTORE_SCROLL_POSITION",
       saveCommand: "QQMUSIC_SAVE_SCROLL_POSITION",
+    });
+
+    // 初始化状态栏
+    this.initStatusBar();
+
+    // 读取配置
+    this.loadConfig();
+
+    // 监听配置变化
+    workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("touchfish.qqmusicShowStatusBar")) {
+        this.loadConfig();
+        this.updateStatusBar();
+      }
     });
 
     // 从 configuration 恢复凭证
@@ -87,8 +115,169 @@ export class QQMusicProvider extends BaseWebviewProvider {
     console.log(`[QQMusic] 凭证已清除`);
   }
 
+  /** 加载配置 */
+  private loadConfig() {
+    const config = workspace.getConfiguration("touchfish");
+    this.showStatusBarLyric = config.get<boolean>("qqmusicShowStatusBar", true);
+  }
+
+  /** 计算文本的视觉宽度（中文字符计为2） */
+  private getVisualWidth(str: string): number {
+    let width = 0;
+    for (const char of str) {
+      // 中文字符、全角字符计为2
+      if (/[\u4e00-\u9fa5\uff00-\uffef\u3000-\u303f\u3040-\u309f\u30a0-\u30ff]/.test(char)) {
+        width += 2;
+      } else {
+        width += 1;
+      }
+    }
+    return width;
+  }
+
+  /** 按视觉宽度截断文本 */
+  private truncateByWidth(str: string, maxWidth: number): string {
+    let width = 0;
+    let result = "";
+    for (const char of str) {
+      const charWidth = /[\u4e00-\u9fa5\uff00-\uffef\u3000-\u303f\u3040-\u309f\u30a0-\u30ff]/.test(char) ? 2 : 1;
+      if (width + charWidth > maxWidth) {
+        return result + "..";
+      }
+      width += charWidth;
+      result += char;
+    }
+    return result;
+  }
+
+  /** 初始化状态栏 */
+  private initStatusBar() {
+    // 主状态栏项 - 显示歌曲信息和歌词
+    this.statusBarItem = window.createStatusBarItem(
+      StatusBarAlignment.Left,
+      100,
+    );
+    this.statusBarItem.text = "$(play-circle) QQ音乐";
+    this.statusBarItem.tooltip = "点击打开 QQ音乐";
+    this.statusBarItem.command = "touchfish.openQQMusic";
+    this.statusBarItem.show();
+
+    // 暂停/播放按钮
+    this.playPauseButton = window.createStatusBarItem(
+      StatusBarAlignment.Left,
+      99,
+    );
+    this.playPauseButton.text = "$(debug-start)";
+    this.playPauseButton.tooltip = "播放/暂停";
+    this.playPauseButton.command = "touchfish.qqmusic.playPause";
+    this.playPauseButton.hide();
+
+    // 下一首按钮
+    this.nextSongButton = window.createStatusBarItem(
+      StatusBarAlignment.Left,
+      98,
+    );
+    this.nextSongButton.text = "$(chevron-right)";
+    this.nextSongButton.tooltip = "下一首";
+    this.nextSongButton.command = "touchfish.qqmusic.nextSong";
+    this.nextSongButton.hide(); // 初始隐藏，等有歌曲播放时再显示
+  }
+
+  /** 更新状态栏显示 */
+  private updateStatusBar() {
+    if (!this.statusBarItem) return;
+
+    // 如果关闭状态栏显示，隐藏所有
+    if (!this.showStatusBarLyric) {
+      this.statusBarItem.hide();
+      this.playPauseButton?.hide();
+      this.nextSongButton?.hide();
+      return;
+    }
+
+    // 显示主状态栏
+    this.statusBarItem.show();
+
+    if (!this.currentSongName) {
+      this.statusBarItem.text = "$(music) QQ音乐";
+      this.statusBarItem.tooltip = "点击打开 QQ音乐";
+      this.statusBarItem.command = "touchfish.openQQMusic";
+      this.playPauseButton?.hide();
+      this.nextSongButton?.hide();
+      return;
+    }
+
+    // 主状态栏：固定音乐图标 + 歌词/歌名，固定视觉宽度
+    const musicIcon = "$(music)";
+    // 图标占约2个单位宽度（包括前后空格效果）
+    const iconWidth = 3;
+    const totalWidth = 40; // 总视觉宽度
+    const contentWidth = totalWidth - iconWidth; // 内容可用宽度
+
+    let content = "";
+
+    // 有歌词时优先显示歌词，否则显示歌名
+    if (this.currentLyric && this.currentLyric.trim()) {
+      content = this.currentLyric.trim();
+    } else {
+      content = this.currentSongName;
+    }
+
+    // 按视觉宽度截断内容
+    content = this.truncateByWidth(content, contentWidth);
+
+    // 计算当前内容视觉宽度
+    const currentContentWidth = this.getVisualWidth(content);
+    // 计算需要填充的空格数（每个空格算1个宽度）
+    const paddingSpaces = contentWidth - currentContentWidth;
+
+    // 组合文本：图标 + 空格 + 内容 + 填充空格
+    let displayText = `${musicIcon} ${content}`;
+    if (paddingSpaces > 0) {
+      displayText += " ".repeat(paddingSpaces);
+    }
+
+    this.statusBarItem.text = displayText;
+    this.statusBarItem.tooltip = `${this.currentSongName}${this.currentLyric ? "\n歌词: " + this.currentLyric : ""}\n\n点击: 打开QQ音乐面板`;
+    this.statusBarItem.command = "touchfish.openQQMusic";
+
+    // 显示控制按钮
+    // 更新播放/暂停按钮图标
+    this.playPauseButton!.text = this.isPlaying
+      ? "$(debug-pause)"
+      : "$(debug-start)";
+    this.playPauseButton!.tooltip = this.isPlaying ? "暂停" : "播放";
+    this.playPauseButton?.show();
+
+    // 显示下一首按钮
+    this.nextSongButton?.show();
+  }
+
   public override resolveWebviewView(webviewView: WebviewView) {
-    return super.resolveWebviewView(webviewView);
+    super.resolveWebviewView(webviewView);
+    this.webviewView = webviewView;
+  }
+
+  private webviewView: WebviewView | undefined;
+
+  /** 发送下一首命令到 webview */
+  public sendNextSongCommand() {
+    if (this.webviewView) {
+      this.webviewView.webview.postMessage({
+        command: "QQMUSIC_PLAY_NEXT_COMMAND",
+        payload: true,
+      });
+    }
+  }
+
+  /** 发送暂停/播放命令到 webview */
+  public sendPlayPauseCommand() {
+    if (this.webviewView) {
+      this.webviewView.webview.postMessage({
+        command: "QQMUSIC_PLAY_PAUSE_COMMAND",
+        payload: true,
+      });
+    }
   }
 
   protected async handleCustomMessage(
@@ -402,6 +591,16 @@ export class QQMusicProvider extends BaseWebviewProvider {
             payload: result,
             uuid,
           } as CommandsType<any>);
+          break;
+        }
+
+        // ==================== 播放状态同步到状态栏 ====================
+        case "QQMUSIC_UPDATE_PLAYING_STATUS": {
+          const { songName, lyric, isPlaying } = payload || {};
+          this.currentSongName = songName || "";
+          this.currentLyric = lyric || "";
+          this.isPlaying = isPlaying || false;
+          this.updateStatusBar();
           break;
         }
 

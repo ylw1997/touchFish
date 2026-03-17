@@ -15,6 +15,7 @@ import { Button, Space, message } from "antd";
 import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
 import { useQQMusic } from "../hooks/useQQMusic";
+import { vscode } from "../utils/vscode";
 import type { Song } from "../types/qqmusic";
 
 const PlayBar: React.FC = () => {
@@ -119,6 +120,22 @@ const PlayBar: React.FC = () => {
     }
   };
 
+  // 同步播放状态到 VS Code 状态栏
+  useEffect(() => {
+    const songName = currentSong ? currentSong.name : "";
+    const singerName = currentSong ? getSingerName(currentSong) : "";
+    const fullTitle = songName ? `${songName} - ${singerName}` : "";
+
+    vscode.postMessage({
+      command: "QQMUSIC_UPDATE_PLAYING_STATUS",
+      payload: {
+        songName: fullTitle,
+        lyric: currentLyric,
+        isPlaying,
+      },
+    });
+  }, [currentSong, currentLyric, isPlaying]);
+
   // 播放/暂停控制
   useEffect(() => {
     const audio = audioRef.current;
@@ -221,6 +238,21 @@ const PlayBar: React.FC = () => {
     }
     return "https://y.gtimg.cn/mediastyle/global/img/album_300.png";
   };
+
+  // 监听来自扩展端的消息（如状态栏点击下一首、暂停/播放）
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const message = event.data;
+      if (message?.command === "QQMUSIC_PLAY_NEXT_COMMAND") {
+        playNext();
+      } else if (message?.command === "QQMUSIC_PLAY_PAUSE_COMMAND") {
+        togglePlay();
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [playNext, togglePlay]);
 
   const handlePlayPause = (e: React.MouseEvent) => {
     e.stopPropagation();

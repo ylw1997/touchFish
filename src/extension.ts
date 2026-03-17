@@ -127,6 +127,28 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(setLinuxDoTokenCommand());
   context.subscriptions.push(switchLinuxDoTab());
   context.subscriptions.push(setBilibiliTokenCommand());
+
+  // 注册 QQ 音乐相关命令
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.openQQMusic", async () => {
+      await vscode.commands.executeCommand("qqmusic.focus");
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.qqmusic.playPause", async () => {
+      await vscode.commands.executeCommand("qqmusic.focus");
+      qqmusicProvider["sendPlayPauseCommand"]?.();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.qqmusic.nextSong", async () => {
+      await vscode.commands.executeCommand("qqmusic.focus");
+      qqmusicProvider["sendNextSongCommand"]?.();
+    })
+  );
+
   // 自动刷新
   vscode.commands.executeCommand("itHome.refresh");
   vscode.commands.executeCommand("chiphell.refresh");

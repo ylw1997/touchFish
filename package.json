@@ -214,6 +214,11 @@
 				"touchfish.qqmusicMusickey": {
 					"type": "string",
 					"description": "QQ音乐 MusicKey"
+				},
+				"touchfish.qqmusicShowStatusBar": {
+					"type": "boolean",
+					"default": true,
+					"description": "是否在状态栏显示QQ音乐播放信息"
 				}
 			}
 		},
@@ -422,6 +427,21 @@
 				"command": "touchfish.setBilibiliToken",
 				"title": "设置B站Cookie",
 				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "touchfish.openQQMusic",
+				"title": "打开 QQ音乐",
+				"icon": "$(play-circle)"
+			},
+			{
+				"command": "touchfish.qqmusic.playPause",
+				"title": "播放/暂停",
+				"icon": "$(play)"
+			},
+			{
+				"command": "touchfish.qqmusic.nextSong",
+				"title": "下一首",
+				"icon": "$(chevron-right)"
 			}
 		],
 		"menus": {
