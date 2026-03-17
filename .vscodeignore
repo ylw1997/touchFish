@@ -90,5 +90,6 @@ qqmusic/tsconfig.node.json
 qqmusic/vite.config.ts
 qqmusic/pnpm-lock.yaml
 qqmusic/temp/**
+qqmusic/package-lock.json
 
 qqmusic-api-test/**
