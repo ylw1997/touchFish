@@ -1006,6 +1006,16 @@ a {
   transition: all 0.3s ease;
   user-select: none;
 
+  .playbar-lyric {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-top: 2px;
+    min-height: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   // 单一视频容器 - 收起时在底部row中，展开时在顶部
   .playbar-video-wrapper {
     // 收起状态：小尺寸，在底部左侧
@@ -1144,7 +1154,7 @@ a {
 
       .playbar-title {
         font-size: calc(var(--app-font-size) - 1px);
-        color: var(--vscode-foreground);
+        color: var(--vscode-tab-activeForeground);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

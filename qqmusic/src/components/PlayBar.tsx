@@ -377,7 +377,6 @@ const PlayBar: React.FC = () => {
                   <span
                     style={{
                       fontSize: "13px",
-                      color: "rgba(255, 255, 255, 0.45)",
                       fontWeight: "normal",
                     }}
                   >
@@ -397,19 +396,7 @@ const PlayBar: React.FC = () => {
                     ))}
                   </span>
                 </div>
-                <div
-                  className="playbar-lyric"
-                  style={{
-                    fontSize: "12px",
-                    color: "rgba(255, 255, 255, 0.85)",
-                    marginTop: "2px",
-                    minHeight: "16px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                  title={currentLyric}
-                >
+                <div className="playbar-lyric" title={currentLyric}>
                   {currentLyric || "聆听美好音乐"}
                 </div>
               </div>

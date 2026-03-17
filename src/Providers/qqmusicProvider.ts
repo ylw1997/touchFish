@@ -225,8 +225,22 @@ export class QQMusicProvider extends BaseWebviewProvider {
     }
 
     // 主状态栏：固定音乐图标 + 歌词/歌名
-    // 采用简单策略：固定显示15个字符，不足不补，超出截断
+    // 根据字符宽度计算，中文=2，英文=1
     const musicIcon = "$(music)";
+    const MAX_WIDTH = 24;
+
+    // 计算字符串显示宽度
+    const getDisplayWidth = (str: string): number => {
+      let width = 0;
+      for (const char of str) {
+        if (/[\u4e00-\u9fa5]/.test(char)) {
+          width += 2; // 中文
+        } else {
+          width += 1; // 英文/数字/符号
+        }
+      }
+      return width;
+    };
 
     let content = "";
 
@@ -241,7 +255,27 @@ export class QQMusicProvider extends BaseWebviewProvider {
       content = this.currentSongName;
     }
 
-    // 组合文本（不填充空格，接受轻微宽度差异）
+    // 根据宽度截断或填充
+    const currentWidth = getDisplayWidth(content);
+    if (currentWidth > MAX_WIDTH) {
+      // 截断到最大宽度
+      let width = 0;
+      let truncated = "";
+      for (const char of content) {
+        const charWidth = /[\u4e00-\u9fa5]/.test(char) ? 2 : 1;
+        if (width + charWidth > MAX_WIDTH - 1) {
+          break;
+        }
+        width += charWidth;
+        truncated += char;
+      }
+      content = truncated + "..";
+    } else {
+      // 用全角空格填充到固定宽度
+      content = content + "\u3000".repeat(Math.ceil((MAX_WIDTH - currentWidth) / 2));
+    }
+
+    // 组合文本
     const displayText = `${musicIcon} ${content}`;
 
     this.statusBarItem.text = displayText;
