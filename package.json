@@ -449,6 +449,18 @@
 				"icon": "$(chevron-right)"
 			}
 		],
+		"keybindings": [
+			{
+				"command": "touchfish.qqmusic.playPause",
+				"key": "alt+p",
+				"mac": "alt+p"
+			},
+			{
+				"command": "touchfish.qqmusic.nextSong",
+				"key": "alt+n",
+				"mac": "alt+n"
+			}
+		],
 		"menus": {
 			"view/title": [
 				{
