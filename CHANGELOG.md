@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [12.5.0](https://github.com/ylw1997/touchFish/compare/v12.4.0...v12.5.0) (2026-03-18)
+
+
+### ✨ Features | 新功能
+
+* 修复样式错误 ([86b39b9](https://github.com/86b39b9e86748328a6a9f532e8a24ed9804ff9d6))
+* 优化播放器样式 ([896c126](https://github.com/896c126df21c2b60301f8bb3345352ceca1b28b7))
+
 ## [12.4.0](https://github.com/ylw1997/touchFish/compare/v12.3.0...v12.4.0) (2026-03-17)
 
 
