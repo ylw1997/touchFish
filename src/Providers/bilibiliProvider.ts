@@ -1,7 +1,7 @@
 /*
  * @Description: Bilibili Webview Provider
  */
-import { WebviewView, ExtensionContext, window, WebviewPanel, Uri } from "vscode";
+import { WebviewView, ExtensionContext, window, WebviewPanel } from "vscode";
 import {
   getRecommend,
   getDynamic,
@@ -60,7 +60,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [this.context.extensionUri],
-      }
+      },
     );
 
     // 设置窗口大小
@@ -101,7 +101,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
 
   private getPipHtml(payload: any): string {
     const { currentVideo, isPlaying, playlist } = payload || {};
-    
+
     return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -222,7 +222,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
     
     <div class="controls">
         <button class="btn" onclick="prevVideo()">⏮ 上一首</button>
-        <button class="btn" onclick="togglePlay()">${isPlaying ? '⏸ 暂停' : '▶ 播放'}</button>
+        <button class="btn" onclick="togglePlay()">${isPlaying ? "⏸ 暂停" : "▶ 播放"}</button>
         <button class="btn" onclick="nextVideo()">⏭ 下一首</button>
         <button class="btn btn-secondary" onclick="closePip()">✕ 关闭</button>
     </div>
