@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [12.6.0](https://github.com/ylw1997/touchFish/compare/v12.5.0...v12.6.0) (2026-03-18)
+
+
+### ✨ Features | 新功能
+
+* 修复qq音乐问题 ([5de3240](https://github.com/5de3240524ea70c0d03583a1194113eae767b2d3))
+
 ## [12.5.0](https://github.com/ylw1997/touchFish/compare/v12.4.0...v12.5.0) (2026-03-18)
 
 
