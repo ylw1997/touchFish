@@ -1277,6 +1277,11 @@ a {
   }
 }
 
+// 暂停时流光静止
+.playbar.paused .playbar-progress-bg::after {
+  animation-play-state: paused !important;
+}
+
 // 专属推荐卡片样式 (新加)
 .custom-special-card {
   background: rgba(0, 0, 0, 0.03); // 白色主题浅背景

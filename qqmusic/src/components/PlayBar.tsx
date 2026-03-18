@@ -281,7 +281,7 @@ const PlayBar: React.FC = () => {
       />
 
       <div
-        className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${playSource === 'radar' ? 'playbar-radar' : playSource === 'guess' ? 'playbar-guess' : ''}`}
+        className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${playSource === 'radar' ? 'playbar-radar' : playSource === 'guess' ? 'playbar-guess' : ''} ${isPlaying ? '' : 'paused'}`}
       >
         <AnimatePresence>
           {isPlaylistOpen && (
