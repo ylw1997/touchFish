@@ -115,8 +115,8 @@ a {
 }
 
 .singer-header-card {
-  margin-bottom: 15px;
   background: rgba(255, 255, 255, 0.05);
+  margin: 10px;
 }
 
 .info {
@@ -702,8 +702,8 @@ a {
     transition: opacity 0.3s ease;
 
     .play-icon {
-      font-size: 48px;
-      color: rgba(255, 255, 255, 0.9);
+      font-size: 38px;
+      color: rgba(255, 255, 255, 0.8);
     }
   }
 
@@ -1156,15 +1156,52 @@ a {
       top: 0;
       left: 0;
       height: 100%;
-      background: rgba(0, 0, 0, 0.1); // 白色模式下用浅深色
+      background: rgba(0, 0, 0, 0.1);
       z-index: 0;
       transition: width 0.3s ease;
       pointer-events: none;
+      overflow: hidden;
+
+      // 微妙的光带效果
+      &::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 80%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        animation: progress-shine 5s ease-in-out infinite;
+      }
     }
 
-    // 黑色模式下进度条颜色
+    @keyframes progress-shine {
+      0% {
+        left: -100%;
+      }
+      50%,
+      100% {
+        left: 200%;
+      }
+    }
+
+    // 深色模式进度条
     .dark & .playbar-progress-bg {
       background: rgba(255, 255, 255, 0.1);
+
+      &::after {
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.15),
+          transparent
+        );
+      }
     }
 
     // 确保子元素在进度条上方
