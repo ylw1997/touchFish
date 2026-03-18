@@ -1,4 +1,4 @@
-/**
+﻿/**
  * QQ音乐 API 封装 (TypeScript 版本)
  * 参考: https://github.com/L-1124/QQMusicApi
  */
@@ -85,6 +85,17 @@ const buildCommonParams = () => {
 
   return params;
 };
+
+const buildAnonymousCommonParams = () => ({
+  cv: VERSION_CODE,
+  v: VERSION_CODE,
+  ct: "11",
+  tmeAppID: "qqmusic",
+  format: "json",
+  inCharset: "utf-8",
+  outCharset: "utf-8",
+  uid: "0",
+});
 
 // 基础 POST 请求
 const postRequest = async (
@@ -949,11 +960,22 @@ export const getEuin = async (musicid: string): Promise<string> => {
 /**
  * 获取用户信息
  */
-export const getUserInfo = async (credential: {
-  musicid: string;
-  musickey: string;
-}): Promise<ApiResponse<UserInfo>> => {
+export const getUserInfo = async (
+  credential: {
+    musicid: string;
+    musickey: string;
+  } | null = null,
+): Promise<ApiResponse<UserInfo>> => {
   try {
+    const currentCredential = credential || globalCredential;
+    if (!currentCredential?.musicid || !currentCredential?.musickey) {
+      return {
+        code: -1,
+        data: null as any,
+        message: "未配置 QQ 音乐登录凭证",
+      };
+    }
+
     const data = {
       comm: buildCommonParams(),
       "music.UserInfo.userInfoServer": {
@@ -979,8 +1001,8 @@ export const getUserInfo = async (credential: {
     return {
       code: 0,
       data: {
-        musicid: credential.musicid,
-        musickey: credential.musickey,
+        musicid: currentCredential.musicid,
+        musickey: currentCredential.musickey,
         nickname: info.nick || "",
         avatar: info.logo || "",
       },
@@ -1186,16 +1208,10 @@ const authorizeWXQR = async (
   wxCode: string,
 ): Promise<ApiResponse<UserInfo>> => {
   try {
-    console.log(
-      "[authorizeWXQR] Starting with wxCode:",
-      wxCode.substring(0, 10) + "...",
-    );
-
-    // 微信登录 API 调用 - common 放在请求体的 comm 字段中
     const requestData = {
       comm: {
-        ...buildCommonParams(),
-        tmeLoginType: "1", // 微信登录类型
+        ...buildAnonymousCommonParams(),
+        tmeLoginType: "1",
       },
       "music.login.LoginServer.Login": {
         method: "Login",
@@ -1207,7 +1223,6 @@ const authorizeWXQR = async (
       },
     };
 
-    // 发送请求，使用 wxSession 保持 cookies
     if (!wxSession) {
       console.error("[authorizeWXQR] No wxSession available!");
       return {
@@ -1222,11 +1237,6 @@ const authorizeWXQR = async (
       timeout: 30000,
     });
 
-    console.log(
-      "[authorizeWXQR] Response:",
-      JSON.stringify(response.data, null, 2),
-    );
-
     if (response.data?.code !== 0) {
       console.error("[authorizeWXQR] API error:", response.data?.msg);
       return {
@@ -1236,7 +1246,6 @@ const authorizeWXQR = async (
       };
     }
 
-    // 从响应中提取凭证
     const loginResult =
       response.data["music.login.LoginServer.Login"] ||
       response.data["music.login.LoginServer"];
@@ -1250,11 +1259,14 @@ const authorizeWXQR = async (
       };
     }
 
-    // 检查返回码
     if (loginResult.code !== 0) {
       console.error(
         "[authorizeWXQR] LoginServer returned error code:",
         loginResult.code,
+      );
+      console.error(
+        "[authorizeWXQR] LoginServer payload:",
+        JSON.stringify(loginResult),
       );
       return {
         code: -1,
@@ -1264,14 +1276,6 @@ const authorizeWXQR = async (
     }
 
     const loginData = loginResult.data;
-    console.log(
-      "[authorizeWXQR] FULL loginResult:",
-      JSON.stringify(loginResult, null, 2),
-    );
-    console.log(
-      "[authorizeWXQR] FULL loginData:",
-      JSON.stringify(loginData, null, 2),
-    );
 
     if (!loginData || !loginData.musicid || !loginData.musickey) {
       console.error("[authorizeWXQR] Missing musicid or musickey in data");
@@ -1456,15 +1460,15 @@ export const getSingerInfo = async (mid: string): Promise<ApiResponse<any>> => {
       "music.UnifiedHomepage.UnifiedHomepageSrv": {
         method: "GetHomepageHeader",
         module: "music.UnifiedHomepage.UnifiedHomepageSrv",
-        param: { SingerMid: mid }
-      }
+        param: { SingerMid: mid },
+      },
     };
 
     const result = await postRequest(data);
 
     return {
       code: 0,
-      data: result["music.UnifiedHomepage.UnifiedHomepageSrv"]?.data || {}
+      data: result["music.UnifiedHomepage.UnifiedHomepageSrv"]?.data || {},
     };
   } catch (error: any) {
     return {
@@ -1481,7 +1485,7 @@ export const getSingerInfo = async (mid: string): Promise<ApiResponse<any>> => {
 export const getSingerSongs = async (
   mid: string,
   page: number = 1,
-  num: number = 20
+  num: number = 20,
 ): Promise<ApiResponse<Song[]>> => {
   try {
     const data = {
@@ -1493,9 +1497,9 @@ export const getSingerSongs = async (
           singerMid: mid,
           order: 1,
           number: num,
-          begin: (page - 1) * num
-        }
-      }
+          begin: (page - 1) * num,
+        },
+      },
     };
 
     const result = await postRequest(data);
@@ -1512,19 +1516,27 @@ export const getSingerSongs = async (
           id: song.songid || song.id,
           name: song.name || song.songname || song.title || "未知歌曲",
           title: song.title || song.songname || song.name || "未知歌曲",
-          singer: Array.isArray(singerList) ? singerList.map((s: any) => ({ name: s.name, mid: s.mid || s.singer_MID })) : [],
+          singer: Array.isArray(singerList)
+            ? singerList.map((s: any) => ({
+                name: s.name,
+                mid: s.mid || s.singer_MID,
+              }))
+            : [],
           album: {
             name: song.album?.name || song.albumname || "未知专辑",
             mid: song.album?.mid || song.albummid || "",
-            pmid: song.album?.pmid || song.album?.mid || song.albummid || ""
+            pmid: song.album?.pmid || song.album?.mid || song.albummid || "",
           },
           interval: song.interval || 0,
           isonly: song.isonly || 0,
           pay: song.pay,
-          file: { media_mid: song.strMediaMid || song.media_mid || song.file?.media_mid },
+          file: {
+            media_mid:
+              song.strMediaMid || song.media_mid || song.file?.media_mid,
+          },
           mv: { vid: song.vid || song.mv?.vid },
         };
-      })
+      }),
     };
   } catch (error: any) {
     return {

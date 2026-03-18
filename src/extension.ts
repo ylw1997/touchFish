@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 10:26:57
- * @LastEditTime: 2025-10-22 08:57:00
+ * @LastEditTime: 2026-03-18 12:15:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\extension.ts
  * @Description:
@@ -51,68 +51,221 @@ import { QQMusicProvider } from "./Providers/qqmusicProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
-// config/index.ts 已移除，配置动态读取，不再需要 refrshConfig。
 import { ReadState } from "./core/readState";
+
+type LazyTreeProviderInstance = vscode.TreeDataProvider<vscode.TreeItem> & {
+  getData(tabOverride?: string): Promise<void>;
+};
+
+function createLazyTreeProvider<T extends LazyTreeProviderInstance>(
+  factory: () => T,
+) {
+  let instance: T | undefined;
+  let innerSubscription: vscode.Disposable | undefined;
+  const emitter = new vscode.EventEmitter<
+    vscode.TreeItem | vscode.TreeItem[] | null | undefined | void
+  >();
+
+  const getInstance = () => {
+    if (!instance) {
+      instance = factory();
+      innerSubscription = instance.onDidChangeTreeData?.((event) => {
+        emitter.fire(event);
+      });
+    }
+    return instance;
+  };
+
+  const provider: vscode.TreeDataProvider<vscode.TreeItem> = {
+    onDidChangeTreeData: emitter.event,
+    getTreeItem(element) {
+      return getInstance().getTreeItem(element);
+    },
+    getChildren(element) {
+      return getInstance().getChildren(element);
+    },
+    getParent(element) {
+      return getInstance().getParent?.(element);
+    },
+  };
+
+  const dispose = () => {
+    innerSubscription?.dispose();
+    emitter.dispose();
+  };
+
+  return { provider, getInstance, dispose };
+}
+
+function createLazyWebviewProvider<T extends vscode.WebviewViewProvider>(
+  factory: () => T,
+) {
+  let instance: T | undefined;
+  const getInstance = () => {
+    if (!instance) {
+      instance = factory();
+    }
+    return instance;
+  };
+
+  const provider: vscode.WebviewViewProvider = {
+    resolveWebviewView(webviewView, context, token) {
+      return getInstance().resolveWebviewView(webviewView, context, token);
+    },
+  };
+
+  return { provider, getInstance };
+}
+
+function registerLazyTreeView(
+  context: vscode.ExtensionContext,
+  viewId: string,
+  provider: vscode.TreeDataProvider<vscode.TreeItem>,
+  refreshCommand: string,
+) {
+  const treeView = vscode.window.createTreeView(viewId, {
+    treeDataProvider: provider,
+    showCollapseAll: false,
+  });
+
+  let hasLoaded = false;
+  const loadOnce = async () => {
+    if (hasLoaded) return;
+    hasLoaded = true;
+    try {
+      await vscode.commands.executeCommand(refreshCommand);
+    } catch (error) {
+      hasLoaded = false;
+      console.error(`[touchfish] lazy refresh failed: ${viewId}`, error);
+    }
+  };
+
+  if (treeView.visible) {
+    void loadOnce();
+  }
+
+  context.subscriptions.push(
+    treeView.onDidChangeVisibility((event) => {
+      if (event.visible) {
+        void loadOnce();
+      }
+    }),
+    treeView,
+  );
+}
 
 export function activate(context: vscode.ExtensionContext) {
   ContextManager.initialize(context);
   ReadState.init(context);
-  // 注册树列表提供者,需要在json文件中注册(activationEvents)
-  const itHomeProvider = new ItHomeProvider();
-  const chiphellProvider = new ChipHellProvider();
-  const v2exProvicer = new V2exProvider();
-  const hupuProvider = new HupuProvider();
-  const ngaProvider = new NgaProvider();
-  const linuxDoProvider = new LinuxDoProvider();
-  const weiboProvider = new WeiboProvider(context);
-  const zhihuWebProvider = new ZhihuWebProvider(context);
-  const xhsWebProvider = new XhsWebProvider(context);
-  const bilibiliProvider = new BilibiliProvider(context);
-  const qqmusicProvider = new QQMusicProvider(context);
-  vscode.window.registerTreeDataProvider("view.ithomeList", itHomeProvider);
-  vscode.window.registerTreeDataProvider("view.chiphellList", chiphellProvider);
-  vscode.window.registerTreeDataProvider("view.v2exList", v2exProvicer);
-  vscode.window.registerTreeDataProvider("view.hupuList", hupuProvider);
-  vscode.window.registerTreeDataProvider("view.ngaList", ngaProvider);
-  vscode.window.registerTreeDataProvider("view.linuxdoList", linuxDoProvider);
-  vscode.window.registerWebviewViewProvider("weibo", weiboProvider, {
-    webviewOptions: {
-      retainContextWhenHidden: true,
-    },
-  });
-  vscode.window.registerWebviewViewProvider("zhihu", zhihuWebProvider, {
-    webviewOptions: {
-      retainContextWhenHidden: true,
-    },
-  });
-  vscode.window.registerWebviewViewProvider("xhs", xhsWebProvider, {
-    webviewOptions: {
-      retainContextWhenHidden: true,
-    },
-  });
-  vscode.window.registerWebviewViewProvider("bilibili", bilibiliProvider, {
-    webviewOptions: {
-      retainContextWhenHidden: true,
-    },
-  });
-  vscode.window.registerWebviewViewProvider("qqmusic", qqmusicProvider, {
-    webviewOptions: {
-      retainContextWhenHidden: true,
-    },
-  });
 
-  // 注册刷新指令
-  context.subscriptions.push(refresh(itHomeProvider));
-  context.subscriptions.push(refreshChipHellNews(chiphellProvider));
-  context.subscriptions.push(refreshV2exNews(v2exProvicer));
-  context.subscriptions.push(changeV2exTab(v2exProvicer));
-  context.subscriptions.push(refreshHupuNews(hupuProvider));
-  context.subscriptions.push(changeHupuTab(hupuProvider));
-  context.subscriptions.push(refreshNgaNews(ngaProvider));
-  context.subscriptions.push(changeNgaTab(ngaProvider));
-  context.subscriptions.push(refreshLinuxDoNews(linuxDoProvider));
+  const itHomeProvider = createLazyTreeProvider(() => new ItHomeProvider());
+  const chiphellProvider = createLazyTreeProvider(() => new ChipHellProvider());
+  const v2exProvicer = createLazyTreeProvider(() => new V2exProvider());
+  const hupuProvider = createLazyTreeProvider(() => new HupuProvider());
+  const ngaProvider = createLazyTreeProvider(() => new NgaProvider());
+  const linuxDoProvider = createLazyTreeProvider(() => new LinuxDoProvider());
 
-  //注册打开新闻链接指令
+  const weiboProvider = createLazyWebviewProvider(
+    () => new WeiboProvider(context),
+  );
+  const zhihuWebProvider = createLazyWebviewProvider(
+    () => new ZhihuWebProvider(context),
+  );
+  const xhsWebProvider = createLazyWebviewProvider(
+    () => new XhsWebProvider(context),
+  );
+  const bilibiliProvider = createLazyWebviewProvider(
+    () => new BilibiliProvider(context),
+  );
+  const qqmusicProvider = createLazyWebviewProvider(
+    () => new QQMusicProvider(context),
+  );
+
+  registerLazyTreeView(
+    context,
+    "view.ithomeList",
+    itHomeProvider.provider,
+    "itHome.refresh",
+  );
+  registerLazyTreeView(
+    context,
+    "view.chiphellList",
+    chiphellProvider.provider,
+    "chiphell.refresh",
+  );
+  registerLazyTreeView(
+    context,
+    "view.v2exList",
+    v2exProvicer.provider,
+    "v2ex.refresh",
+  );
+  registerLazyTreeView(
+    context,
+    "view.hupuList",
+    hupuProvider.provider,
+    "hupu.refresh",
+  );
+  registerLazyTreeView(
+    context,
+    "view.ngaList",
+    ngaProvider.provider,
+    "nga.refresh",
+  );
+  registerLazyTreeView(
+    context,
+    "view.linuxdoList",
+    linuxDoProvider.provider,
+    "linuxdo.refresh",
+  );
+
+  vscode.window.registerWebviewViewProvider("weibo", weiboProvider.provider, {
+    webviewOptions: {
+      retainContextWhenHidden: true,
+    },
+  });
+  vscode.window.registerWebviewViewProvider(
+    "zhihu",
+    zhihuWebProvider.provider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    },
+  );
+  vscode.window.registerWebviewViewProvider("xhs", xhsWebProvider.provider, {
+    webviewOptions: {
+      retainContextWhenHidden: true,
+    },
+  });
+  vscode.window.registerWebviewViewProvider(
+    "bilibili",
+    bilibiliProvider.provider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    },
+  );
+  vscode.window.registerWebviewViewProvider(
+    "qqmusic",
+    qqmusicProvider.provider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    },
+  );
+
+  context.subscriptions.push(refresh(itHomeProvider.getInstance));
+  context.subscriptions.push(refreshChipHellNews(chiphellProvider.getInstance));
+  context.subscriptions.push(refreshV2exNews(v2exProvicer.getInstance));
+  context.subscriptions.push(changeV2exTab(v2exProvicer.getInstance));
+  context.subscriptions.push(refreshHupuNews(hupuProvider.getInstance));
+  context.subscriptions.push(changeHupuTab(hupuProvider.getInstance));
+  context.subscriptions.push(refreshNgaNews(ngaProvider.getInstance));
+  context.subscriptions.push(changeNgaTab(ngaProvider.getInstance));
+  context.subscriptions.push(refreshLinuxDoNews(linuxDoProvider.getInstance));
+
   context.subscriptions.push(openUrl);
   context.subscriptions.push(openCHUrl);
   context.subscriptions.push(openSetting);
@@ -128,35 +281,34 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(switchLinuxDoTab());
   context.subscriptions.push(setBilibiliTokenCommand());
 
-  // 注册 QQ 音乐相关命令
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.openQQMusic", async () => {
       await vscode.commands.executeCommand("qqmusic.focus");
-    })
+    }),
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.qqmusic.playPause", async () => {
-      qqmusicProvider["sendPlayPauseCommand"]?.();
-    })
+      qqmusicProvider.getInstance()["sendPlayPauseCommand"]?.();
+    }),
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.qqmusic.nextSong", async () => {
-      qqmusicProvider["sendNextSongCommand"]?.();
-    })
+      qqmusicProvider.getInstance()["sendNextSongCommand"]?.();
+    }),
   );
 
-  // 自动刷新
-  vscode.commands.executeCommand("itHome.refresh");
-  vscode.commands.executeCommand("chiphell.refresh");
-  vscode.commands.executeCommand("v2ex.refresh");
-  vscode.commands.executeCommand("hupu.refresh");
-  vscode.commands.executeCommand("nga.refresh");
-  vscode.commands.executeCommand("linuxdo.refresh");
+  context.subscriptions.push(
+    { dispose: itHomeProvider.dispose },
+    { dispose: chiphellProvider.dispose },
+    { dispose: v2exProvicer.dispose },
+    { dispose: hupuProvider.dispose },
+    { dispose: ngaProvider.dispose },
+    { dispose: linuxDoProvider.dispose },
+  );
 }
 
-// this method is called when your extension is deactivated
 export function deactivate() {
   const tempDir = Uri.joinPath(ContextManager.context.extensionUri, "temp");
   if (fs.existsSync(tempDir.fsPath)) {

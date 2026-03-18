@@ -2,52 +2,54 @@
  * QQ音乐 Webview Provider
  */
 import {
-  WebviewView,
   ExtensionContext,
-  workspace,
-  StatusBarItem,
   StatusBarAlignment,
+  StatusBarItem,
+  WebviewView,
   window,
+  workspace,
 } from "vscode";
 import {
-  searchSongs,
-  searchSingers,
-  getSingerInfo,
-  getSingerSongs,
-  getSongUrl,
-  getSongDetail,
-  getLyric,
-  getRecommendPlaylists,
-  getPlaylistDetail,
-  getRankLists,
-  getRankDetail,
-  getQQLoginQR,
-  getWXLoginQR,
+  addSongsToPlaylist,
   checkLoginStatus,
-  getUserInfo,
+  getGuessRecommend,
+  getLyric,
   getMyFavorite,
   getMyPlaylists,
-  setGlobalCredential,
-  addSongsToPlaylist,
-  removeSongsFromPlaylist,
+  getPlaylistDetail,
+  getQQLoginQR,
+  getWXLoginQR,
   getRadarRecommend,
-  getGuessRecommend,
+  getRankDetail,
+  getRankLists,
+  getRecommendPlaylists,
+  getSingerInfo,
+  getSingerSongs,
+  getSongDetail,
+  getSongUrl,
+  getUserInfo,
+  removeSongsFromPlaylist,
+  searchSingers,
+  searchSongs,
+  setGlobalCredential,
 } from "../api/qqmusic";
+import { setConfigByKey } from "../core/config";
 import { CommandsType } from "../../types/commands";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
-import { setConfigByKey } from "../core/config";
+
+type QQMusicCredential = { musicid: string; musickey: string };
 
 export class QQMusicProvider extends BaseWebviewProvider {
-  private credential: { musicid: string; musickey: string } | null = null;
-  private static readonly CREDENTIAL_KEY = "qqmusic-credential";
+  private credential: QQMusicCredential | null = null;
+  private webviewView: WebviewView | null = null;
   private statusBarItem: StatusBarItem | undefined;
   private nextSongButton: StatusBarItem | undefined;
   private playPauseButton: StatusBarItem | undefined;
-  private currentSongName: string = "";
-  private currentLyric: string = "";
-  private isPlaying: boolean = false;
-  private showStatusBarLyric: boolean = true;
-  private statusBarShowLyric: boolean = true;
+  private currentSongName = "";
+  private currentLyric = "";
+  private isPlaying = false;
+  private showStatusBarLyric = true;
+  private statusBarShowLyric = true;
 
   constructor(context: ExtensionContext) {
     super(context, {
@@ -59,13 +61,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
       saveCommand: "QQMUSIC_SAVE_SCROLL_POSITION",
     });
 
-    // 初始化状态栏
     this.initStatusBar();
-
-    // 读取配置
     this.loadConfig();
 
-    // 监听配置变化
     workspace.onDidChangeConfiguration((e) => {
       if (
         e.affectsConfiguration("touchfish.qqmusicShowStatusBar") ||
@@ -74,23 +72,71 @@ export class QQMusicProvider extends BaseWebviewProvider {
         this.loadConfig();
         this.updateStatusBar();
       }
+
+      if (
+        e.affectsConfiguration("touchfish.qqmusicMusicid") ||
+        e.affectsConfiguration("touchfish.qqmusicMusickey")
+      ) {
+        void this.syncCredentialFromConfig(true);
+      }
     });
 
-    // 从 configuration 恢复凭证
-    const config = workspace.getConfiguration("touchfish");
-    const configId = config.get<string>("qqmusicMusicid");
-    const configKey = config.get<string>("qqmusicMusickey");
+    void this.syncCredentialFromConfig(false);
+  }
 
-    if (configId && configKey) {
-      const cred = { musicid: configId, musickey: configKey };
-      this.credential = cred;
-      setGlobalCredential(cred);
-      console.log(`[QQMusic] 从 configuration 恢复凭证: musicid=${configId}`);
+  public override resolveWebviewView(webviewView: WebviewView) {
+    this.webviewView = webviewView;
+    const resolved = super.resolveWebviewView(webviewView);
+    void this.notifyAuthState();
+    return resolved;
+  }
+
+  private getCredentialFromConfig(): QQMusicCredential | null {
+    const config = workspace.getConfiguration("touchfish");
+    const musicid = (config.get<string>("qqmusicMusicid") || "").trim();
+    const musickey = (config.get<string>("qqmusicMusickey") || "").trim();
+    if (!musicid || !musickey) return null;
+    return { musicid, musickey };
+  }
+
+  private async syncCredentialFromConfig(notifyWebview: boolean) {
+    this.credential = this.getCredentialFromConfig();
+    setGlobalCredential(this.credential);
+    if (notifyWebview) {
+      await this.notifyAuthState();
     }
   }
 
-  /** 保存凭证到配置文件 */
-  private async saveCredential(cred: { musicid: string; musickey: string }) {
+  private async notifyAuthState() {
+    if (!this.webviewView) return;
+
+    if (!this.credential) {
+      this.webviewView.webview.postMessage({
+        command: "QQMUSIC_AUTH_SYNC",
+        payload: { isLoggedIn: false, userInfo: null },
+      });
+      return;
+    }
+
+    try {
+      const result = await getUserInfo(this.credential);
+      this.webviewView.webview.postMessage({
+        command: "QQMUSIC_AUTH_SYNC",
+        payload: {
+          isLoggedIn: result.code === 0,
+          userInfo: result.code === 0 ? result.data : null,
+        },
+      });
+    } catch (error) {
+      console.error("[QQMusic] 同步登录状态失败:", error);
+      this.webviewView.webview.postMessage({
+        command: "QQMUSIC_AUTH_SYNC",
+        payload: { isLoggedIn: false, userInfo: null },
+      });
+    }
+  }
+
+  private async saveCredential(cred: QQMusicCredential) {
     this.credential = cred;
     setGlobalCredential(cred);
 
@@ -101,10 +147,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
       console.error("[QQMusic] 写入配置文件失败:", err);
     }
 
-    console.log(`[QQMusic] 凭证已保存: musicid=${cred.musicid}`);
+    await this.notifyAuthState();
   }
 
-  /** 清除凭证 */
   private async clearCredential() {
     this.credential = null;
     setGlobalCredential(null);
@@ -116,10 +161,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
       console.error("[QQMusic] 清除配置文件失败:", err);
     }
 
-    console.log(`[QQMusic] 凭证已清除`);
+    await this.notifyAuthState();
   }
 
-  /** 加载配置 */
   private loadConfig() {
     const config = workspace.getConfiguration("touchfish");
     this.showStatusBarLyric = config.get<boolean>("qqmusicShowStatusBar", true);
@@ -129,82 +173,29 @@ export class QQMusicProvider extends BaseWebviewProvider {
     );
   }
 
-  /** 计算文本的视觉宽度（中文字符计为2） */
-  private getVisualWidth(str: string): number {
-    let width = 0;
-    for (const char of str) {
-      // 中文字符、全角字符计为2
-      if (
-        /[\u4e00-\u9fa5\uff00-\uffef\u3000-\u303f\u3040-\u309f\u30a0-\u30ff]/.test(
-          char,
-        )
-      ) {
-        width += 2;
-      } else {
-        width += 1;
-      }
-    }
-    return width;
-  }
-
-  /** 按视觉宽度截断文本 */
-  private truncateByWidth(str: string, maxWidth: number): string {
-    let width = 0;
-    let result = "";
-    for (const char of str) {
-      const charWidth =
-        /[\u4e00-\u9fa5\uff00-\uffef\u3000-\u303f\u3040-\u309f\u30a0-\u30ff]/.test(
-          char,
-        )
-          ? 2
-          : 1;
-      if (width + charWidth > maxWidth) {
-        return result + "..";
-      }
-      width += charWidth;
-      result += char;
-    }
-    return result;
-  }
-
-  /** 初始化状态栏 */
   private initStatusBar() {
-    // 主状态栏项 - 显示歌曲信息和歌词
-    this.statusBarItem = window.createStatusBarItem(
-      StatusBarAlignment.Left,
-      100,
-    );
+    this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, 100);
     this.statusBarItem.text = "$(play-circle) QQ音乐";
     this.statusBarItem.tooltip = "点击打开 QQ音乐";
     this.statusBarItem.command = "touchfish.openQQMusic";
     this.statusBarItem.show();
 
-    // 暂停/播放按钮
-    this.playPauseButton = window.createStatusBarItem(
-      StatusBarAlignment.Left,
-      99,
-    );
+    this.playPauseButton = window.createStatusBarItem(StatusBarAlignment.Left, 99);
     this.playPauseButton.text = "$(debug-start)";
     this.playPauseButton.tooltip = "播放/暂停";
     this.playPauseButton.command = "touchfish.qqmusic.playPause";
     this.playPauseButton.hide();
 
-    // 下一首按钮
-    this.nextSongButton = window.createStatusBarItem(
-      StatusBarAlignment.Left,
-      98,
-    );
+    this.nextSongButton = window.createStatusBarItem(StatusBarAlignment.Left, 98);
     this.nextSongButton.text = "$(chevron-right)";
     this.nextSongButton.tooltip = "下一首";
     this.nextSongButton.command = "touchfish.qqmusic.nextSong";
-    this.nextSongButton.hide(); // 初始隐藏，等有歌曲播放时再显示
+    this.nextSongButton.hide();
   }
 
-  /** 更新状态栏显示 */
   private updateStatusBar() {
     if (!this.statusBarItem) return;
 
-    // 如果关闭状态栏显示，隐藏所有
     if (!this.showStatusBarLyric) {
       this.statusBarItem.hide();
       this.playPauseButton?.hide();
@@ -212,7 +203,6 @@ export class QQMusicProvider extends BaseWebviewProvider {
       return;
     }
 
-    // 显示主状态栏
     this.statusBarItem.show();
 
     if (!this.currentSongName) {
@@ -224,98 +214,39 @@ export class QQMusicProvider extends BaseWebviewProvider {
       return;
     }
 
-    // 主状态栏：固定音乐图标 + 歌词/歌名
-    // 根据字符宽度计算，中文=2，英文=1
-    const musicIcon = "$(music)";
-    const MAX_WIDTH = 24;
+    const content =
+      this.statusBarShowLyric && this.currentLyric.trim()
+        ? this.currentLyric.trim()
+        : this.currentSongName;
 
-    // 计算字符串显示宽度
-    const getDisplayWidth = (str: string): number => {
-      let width = 0;
-      for (const char of str) {
-        if (/[\u4e00-\u9fa5]/.test(char)) {
-          width += 2; // 中文
-        } else {
-          width += 1; // 英文/数字/符号
-        }
-      }
-      return width;
-    };
-
-    let content = "";
-
-    // 有歌词时优先显示歌词，否则显示歌名（根据配置）
-    if (
-      this.statusBarShowLyric &&
-      this.currentLyric &&
-      this.currentLyric.trim()
-    ) {
-      content = this.currentLyric.trim();
-    } else {
-      content = this.currentSongName;
-    }
-
-    // 根据宽度截断或填充
-    const currentWidth = getDisplayWidth(content);
-    if (currentWidth > MAX_WIDTH) {
-      // 截断到最大宽度
-      let width = 0;
-      let truncated = "";
-      for (const char of content) {
-        const charWidth = /[\u4e00-\u9fa5]/.test(char) ? 2 : 1;
-        if (width + charWidth > MAX_WIDTH - 1) {
-          break;
-        }
-        width += charWidth;
-        truncated += char;
-      }
-      content = truncated + "..";
-    } else {
-      // 用全角空格填充到固定宽度
-      content = content + "\u3000".repeat(Math.ceil((MAX_WIDTH - currentWidth) / 2));
-    }
-
-    // 组合文本
-    const displayText = `${musicIcon} ${content}`;
-
-    this.statusBarItem.text = displayText;
-    this.statusBarItem.tooltip = `${this.currentSongName}${this.currentLyric ? "\n歌词: " + this.currentLyric : ""}\n\n点击: 打开QQ音乐面板`;
+    this.statusBarItem.text = `$(music) ${content}`;
+    this.statusBarItem.tooltip = `${this.currentSongName}${
+      this.currentLyric ? `\n歌词: ${this.currentLyric}` : ""
+    }\n\n点击: 打开QQ音乐面板`;
     this.statusBarItem.command = "touchfish.openQQMusic";
 
-    // 显示控制按钮
-    this.playPauseButton!.text = this.isPlaying
-      ? "$(debug-pause)"
-      : "$(debug-start)";
-    this.playPauseButton!.tooltip = this.isPlaying ? "暂停" : "播放";
-    this.playPauseButton?.show();
+    if (this.playPauseButton) {
+      this.playPauseButton.text = this.isPlaying
+        ? "$(debug-pause)"
+        : "$(debug-start)";
+      this.playPauseButton.tooltip = this.isPlaying ? "暂停" : "播放";
+      this.playPauseButton.show();
+    }
     this.nextSongButton?.show();
   }
 
-  public override resolveWebviewView(webviewView: WebviewView) {
-    super.resolveWebviewView(webviewView);
-    this.webviewView = webviewView;
-  }
-
-  private webviewView: WebviewView | undefined;
-
-  /** 发送下一首命令到 webview */
   public sendNextSongCommand() {
-    if (this.webviewView) {
-      this.webviewView.webview.postMessage({
-        command: "QQMUSIC_PLAY_NEXT_COMMAND",
-        payload: true,
-      });
-    }
+    this.webviewView?.webview.postMessage({
+      command: "QQMUSIC_PLAY_NEXT_COMMAND",
+      payload: true,
+    });
   }
 
-  /** 发送暂停/播放命令到 webview */
   public sendPlayPauseCommand() {
-    if (this.webviewView) {
-      this.webviewView.webview.postMessage({
-        command: "QQMUSIC_PLAY_PAUSE_COMMAND",
-        payload: true,
-      });
-    }
+    this.webviewView?.webview.postMessage({
+      command: "QQMUSIC_PLAY_PAUSE_COMMAND",
+      payload: true,
+    });
   }
 
   protected async handleCustomMessage(
@@ -326,7 +257,6 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
     try {
       switch (command) {
-        // ==================== 搜索 ====================
         case "QQMUSIC_SEARCH": {
           const { keyword, page, num } = payload || {};
           const result = await searchSongs(keyword, page || 1, num || 20);
@@ -371,7 +301,6 @@ export class QQMusicProvider extends BaseWebviewProvider {
           break;
         }
 
-        // ==================== 歌曲 ====================
         case "QQMUSIC_GET_SONG_URL": {
           const { mid, quality, credential } = payload || {};
           const result = await getSongUrl(mid, quality || 128, credential);
@@ -405,7 +334,6 @@ export class QQMusicProvider extends BaseWebviewProvider {
           break;
         }
 
-        // ==================== 歌单 ====================
         case "QQMUSIC_GET_RECOMMEND_PLAYLISTS": {
           const { num } = payload || {};
           const result = await getRecommendPlaylists(num || 10);
@@ -428,7 +356,6 @@ export class QQMusicProvider extends BaseWebviewProvider {
           break;
         }
 
-        // ==================== 排行榜 ====================
         case "QQMUSIC_GET_RANK_LISTS": {
           const result = await getRankLists();
           webviewView.webview.postMessage({
@@ -450,52 +377,42 @@ export class QQMusicProvider extends BaseWebviewProvider {
           break;
         }
 
-        // ==================== 登录 ====================
         case "QQMUSIC_GET_LOGIN_QR": {
           const { type } = payload || {};
-          if (type === "qq") {
-            const result = await getQQLoginQR();
-            webviewView.webview.postMessage({
-              command: "QQMUSIC_GET_LOGIN_QR_RESULT",
-              payload: result,
-              uuid,
-            } as CommandsType<any>);
-          } else {
-            // 微信登录
-            const result = await getWXLoginQR();
-            webviewView.webview.postMessage({
-              command: "QQMUSIC_GET_LOGIN_QR_RESULT",
-              payload: result,
-              uuid,
-            } as CommandsType<any>);
-          }
+          const result = type === "qq" ? await getQQLoginQR() : await getWXLoginQR();
+          webviewView.webview.postMessage({
+            command: "QQMUSIC_GET_LOGIN_QR_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
           break;
         }
 
         case "QQMUSIC_CHECK_LOGIN_STATUS": {
           const { identifier, type } = payload || {};
           const result = await checkLoginStatus(identifier, type);
-          // 如果登录成功，保存 credential 到全局
+
           if (result.code === 0 && result.data?.userInfo) {
-            this.saveCredential({
-              musicid: result.data.userInfo.musicid,
-              musickey: result.data.userInfo.musickey,
+            const userInfo = result.data.userInfo;
+            await this.saveCredential({
+              musicid: userInfo.musicid,
+              musickey: userInfo.musickey,
             });
 
-            // 登录成功后，使用 GetLoginUserInfo 获取真实的称呼和头像
             try {
               const detailedUserInfo = await getUserInfo({
-                musicid: result.data.userInfo.musicid,
-                musickey: result.data.userInfo.musickey,
+                musicid: userInfo.musicid,
+                musickey: userInfo.musickey,
               });
               if (detailedUserInfo.code === 0 && detailedUserInfo.data) {
-                result.data.userInfo.nickname = detailedUserInfo.data.nickname;
-                result.data.userInfo.avatar = detailedUserInfo.data.avatar;
+                userInfo.nickname = detailedUserInfo.data.nickname;
+                userInfo.avatar = detailedUserInfo.data.avatar;
               }
             } catch (err) {
               console.error("[QQMusic] 获取用户信息失败:", err);
             }
           }
+
           webviewView.webview.postMessage({
             command: "QQMUSIC_CHECK_LOGIN_STATUS_RESULT",
             payload: result,
@@ -506,9 +423,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
         case "QQMUSIC_LOGIN_WITH_CREDENTIAL": {
           const { credential: cred } = payload || {};
-          const loginCred = cred || payload; // handle both { credential: {...} } and direct {...}
+          const loginCred = cred || payload;
           if (loginCred?.musicid && loginCred?.musickey) {
-            this.saveCredential({
+            await this.saveCredential({
               musicid: loginCred.musicid,
               musickey: loginCred.musickey,
             });
@@ -524,17 +441,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
         case "QQMUSIC_SET_CREDENTIAL": {
           const setCred = payload?.credential || payload;
-          console.log(
-            "[QQMusic] 收到 QQMUSIC_SET_CREDENTIAL Payload:",
-            JSON.stringify(payload),
-          );
-          console.log(
-            "[QQMusic] 收到 QQMUSIC_SET_CREDENTIAL setCred:",
-            JSON.stringify(setCred),
-          );
           if (setCred?.musicid && setCred?.musickey) {
-            this.saveCredential({
-              musicid: setCred.musicid.toString(), // Force string just in case
+            await this.saveCredential({
+              musicid: String(setCred.musicid),
               musickey: setCred.musickey,
             });
           }
@@ -547,7 +456,7 @@ export class QQMusicProvider extends BaseWebviewProvider {
         }
 
         case "QQMUSIC_LOGOUT": {
-          this.clearCredential();
+          await this.clearCredential();
           webviewView.webview.postMessage({
             command: "QQMUSIC_LOGOUT_RESULT",
             payload: { code: 0, data: true },
@@ -556,10 +465,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
           break;
         }
 
-        // ==================== 用户 ====================
         case "QQMUSIC_GET_USER_INFO": {
           const { credential } = payload || {};
-          const result = await getUserInfo(credential);
+          const result = await getUserInfo(credential || this.credential);
           webviewView.webview.postMessage({
             command: "QQMUSIC_GET_USER_INFO_RESULT",
             payload: result,
@@ -632,12 +540,11 @@ export class QQMusicProvider extends BaseWebviewProvider {
           break;
         }
 
-        // ==================== 播放状态同步到状态栏 ====================
         case "QQMUSIC_UPDATE_PLAYING_STATUS": {
           const { songName, lyric, isPlaying } = payload || {};
           this.currentSongName = songName || "";
           this.currentLyric = lyric || "";
-          this.isPlaying = isPlaying || false;
+          this.isPlaying = Boolean(isPlaying);
           this.updateStatusBar();
           break;
         }

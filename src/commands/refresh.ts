@@ -1,69 +1,60 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 14:11:31
- * @LastEditTime: 2025-08-06 09:55:58
+ * @LastEditTime: 2026-03-18 12:05:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\refresh.ts
  * @Description:
  */
 import * as vscode from "vscode";
-import { ItHomeProvider } from "../Providers/itHomeProvider";
-import { ChipHellProvider } from "../Providers/chipHellProvider";
-import { V2exProvider } from "../Providers/v2exProvider";
-import { HupuProvider } from "../Providers/hupuProvider";
-import { NgaProvider } from "../Providers/ngaProvider";
-import { LinuxDoProvider } from "../Providers/linuxDoProvider";
+
+type RefreshableProvider = {
+  getData(tabOverride?: string): Promise<void>;
+};
 
 /**
- * 刷新之家树列表
- * @param newsProvider  数据提供者
- * @returns  指令
+ * 鍒锋柊涔嬪鏍戝垪琛?
+ * @param getProvider 鏁版嵁鎻愪緵鑰呰幏鍙栧櫒
+ * @returns 鎸囦护
  */
-export const refresh = (newsProvider: ItHomeProvider) => {
-  // 提供一个async 会触发vscode加载小横条
+export const refresh = (getProvider: () => RefreshableProvider) => {
   return vscode.commands.registerCommand("itHome.refresh", async () => {
-    await newsProvider.getData();
+    await getProvider().getData();
   });
 };
 
-
-// 刷新chiphell文章列表
-export const refreshChipHellNews = (chiphellNewsProvider: ChipHellProvider) => {
+export const refreshChipHellNews = (getProvider: () => RefreshableProvider) => {
   return vscode.commands.registerCommand("chiphell.refresh", async () => {
-    await chiphellNewsProvider.getData();
+    await getProvider().getData();
   });
 };
 
-// 刷新v2ex文章列表
-export const refreshV2exNews = (provider: V2exProvider) => {
+export const refreshV2exNews = (getProvider: () => RefreshableProvider) => {
   return vscode.commands.registerCommand("v2ex.refresh", async () => {
-    await provider.getData(
-      vscode.workspace.getConfiguration("touchfish").get("v2exTab")
+    await getProvider().getData(
+      vscode.workspace.getConfiguration("touchfish").get("v2exTab") as string,
     );
   });
 };
 
-// 刷新hupu文章列表
-export const refreshHupuNews = (provider: HupuProvider) => {
+export const refreshHupuNews = (getProvider: () => RefreshableProvider) => {
   return vscode.commands.registerCommand("hupu.refresh", async () => {
-    await provider.getData(
-      vscode.workspace.getConfiguration("touchfish").get("hupuTab")
+    await getProvider().getData(
+      vscode.workspace.getConfiguration("touchfish").get("hupuTab") as string,
     );
   });
 };
 
-// 刷新hupu文章列表
-export const refreshNgaNews = (ngaProvider: NgaProvider) => {
+export const refreshNgaNews = (getProvider: () => RefreshableProvider) => {
   return vscode.commands.registerCommand("nga.refresh", async () => {
-    await ngaProvider.getData(
-      vscode.workspace.getConfiguration("touchfish").get("ngaTab")
+    await getProvider().getData(
+      vscode.workspace.getConfiguration("touchfish").get("ngaTab") as string,
     );
   });
 };
 
-// 刷新 Linux.do 文章列表
-export const refreshLinuxDoNews = (linuxDoProvider: LinuxDoProvider) => {
+export const refreshLinuxDoNews = (getProvider: () => RefreshableProvider) => {
   return vscode.commands.registerCommand("linuxdo.refresh", async () => {
-    await linuxDoProvider.getData();
+    await getProvider().getData();
   });
 };

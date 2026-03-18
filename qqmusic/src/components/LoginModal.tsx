@@ -1,9 +1,9 @@
 /**
  * QQ音乐登录组件
  */
-import React, { useState, useEffect, useCallback } from "react";
-import { Modal, Tabs, Button, Spin, message } from "antd";
-import { QqOutlined, WechatOutlined } from "@ant-design/icons";
+import React, { useCallback, useEffect, useState } from "react";
+import { Button, Modal, Spin, message } from "antd";
+import { WechatOutlined } from "@ant-design/icons";
 import { useRequest } from "../hooks/useRequest";
 import { useUserStore } from "../store/user";
 import { LoginStatus } from "../types/qqmusic";
@@ -15,22 +15,22 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
-  const [activeTab, setActiveTab] = useState<"qq" | "wx">("qq");
-  const [qrCode, setQrCode] = useState<string>("");
-  const [qrIdentifier, setQrIdentifier] = useState<string>("");
+  const [qrCode, setQrCode] = useState("");
+  const [qrIdentifier, setQrIdentifier] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginStatus, setLoginStatus] = useState<LoginStatus>(LoginStatus.PENDING);
-  
+
   const { request } = useRequest();
   const { login, setLoginStatus: setStoreLoginStatus } = useUserStore();
 
-  // 获取登录二维码
   const fetchQRCode = useCallback(async () => {
     setIsLoading(true);
+    setQrCode("");
+    setQrIdentifier("");
+
     try {
-      const result = await request("QQMUSIC_GET_LOGIN_QR", { type: activeTab });
-      console.log("[Login] QR Code result:", result);
-      
+      const result = await request<any>("QQMUSIC_GET_LOGIN_QR", { type: "wx" });
+
       if (result.code === 0 && result.data) {
         const qrData: QRCodeInfo = result.data;
         setQrCode(qrData.data);
@@ -46,37 +46,30 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, request, setStoreLoginStatus]);
+  }, [request, setStoreLoginStatus]);
 
-  // 检查登录状态
   const checkLoginStatus = useCallback(async () => {
     if (!qrIdentifier) return;
 
     try {
-      console.log("[Login] Checking status...", { type: activeTab, identifier: qrIdentifier.substring(0, 10) + "..." });
-      const result = await request("QQMUSIC_CHECK_LOGIN_STATUS", {
+      const result = await request<any>("QQMUSIC_CHECK_LOGIN_STATUS", {
         identifier: qrIdentifier,
-        type: activeTab,
+        type: "wx",
       });
-      
-      console.log("[Login] Status check result:", result);
-      
+
       if (result.code === 0 && result.data) {
         const { status, userInfo } = result.data;
-        console.log("[Login] Status:", status, "UserInfo:", userInfo);
-        
+
         switch (status) {
           case "success":
             setLoginStatus(LoginStatus.SUCCESS);
             setStoreLoginStatus(LoginStatus.SUCCESS);
-            if (userInfo) {
-              console.log("[Login] Logging in with userInfo:", userInfo);
+            if (userInfo?.musicid && userInfo?.musickey) {
               login(userInfo as UserInfo);
-              message.success("登录成功！");
+              message.success("登录成功");
               onClose();
             } else {
-              console.error("[Login] Success but no userInfo!");
-              message.error("登录成功但无法获取用户信息");
+              message.error("登录成功，但未拿到有效凭证");
             }
             break;
           case "scanning":
@@ -95,145 +88,106 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
           case "failed":
             setLoginStatus(LoginStatus.FAILED);
             setStoreLoginStatus(LoginStatus.FAILED);
-            message.error(result.data.message || "登录失败");
+            message.error(result.message || result.data.message || "登录失败");
             break;
           default:
             break;
         }
       } else if (result.code !== 0) {
-        console.error("[Login] Status check failed:", result.message);
+        message.error(result.message || "登录状态检查失败");
       }
     } catch (error) {
       console.error("[Login] 检查登录状态失败:", error);
     }
-  }, [qrIdentifier, activeTab, request, login, onClose, setStoreLoginStatus]);
+  }, [login, onClose, qrIdentifier, request, setStoreLoginStatus]);
 
-  // 打开时获取二维码
   useEffect(() => {
     if (open) {
-      fetchQRCode();
+      void fetchQRCode();
     }
   }, [open, fetchQRCode]);
 
-  // 轮询登录状态
   useEffect(() => {
     if (!open || !qrIdentifier || loginStatus === LoginStatus.SUCCESS) return;
 
-    console.log("[Login] Starting status polling...");
     const interval = setInterval(() => {
-      checkLoginStatus();
+      void checkLoginStatus();
     }, 2000);
 
     return () => {
-      console.log("[Login] Stopping status polling");
       clearInterval(interval);
     };
-  }, [open, qrIdentifier, loginStatus, checkLoginStatus]);
+  }, [checkLoginStatus, loginStatus, open, qrIdentifier]);
 
-  // 获取状态提示文字
   const getStatusText = () => {
     switch (loginStatus) {
       case LoginStatus.PENDING:
-        return activeTab === "qq" 
-          ? "请使用 QQ 扫码登录"
-          : "请使用微信扫码登录";
+        return "请使用微信扫码登录";
       case LoginStatus.SCANNING:
-        return activeTab === "qq"
-          ? "已扫码，请在 QQ 中确认登录"
-          : "已扫码，请在微信中确认";
+        return "已扫码，请在微信中确认登录";
       case LoginStatus.CONFIRMING:
-        return "正在确认...";
+        return "正在确认登录...";
       case LoginStatus.TIMEOUT:
         return "二维码已过期";
       case LoginStatus.FAILED:
         return "登录失败";
       case LoginStatus.SUCCESS:
-        return "登录成功！";
+        return "登录成功";
       default:
         return "";
     }
   };
 
-  const tabItems = [
-    {
-      key: "qq",
-      label: (
-        <span>
-          <QqOutlined /> QQ登录
-        </span>
-      ),
-    },
-    {
-      key: "wx",
-      label: (
-        <span>
-          <WechatOutlined /> 微信登录
-        </span>
-      ),
-    },
-  ];
-
   return (
     <Modal
-      title="登录QQ音乐"
+      title={
+        <span>
+          <WechatOutlined /> 微信扫码登录 QQ 音乐
+        </span>
+      }
       open={open}
       onCancel={onClose}
       footer={null}
       width={400}
       centered
     >
-      <Tabs
-        activeKey={activeTab}
-        items={tabItems}
-        onChange={(key) => {
-          setActiveTab(key as "qq" | "wx");
-          fetchQRCode();
-        }}
-        centered
-      />
-
       <div className="login-qr-container">
         {isLoading ? (
           <div className="login-loading">
             <Spin size="large" />
             <p>正在获取二维码...</p>
           </div>
-        ) : (
-          <>
-            {qrCode ? (
-              <div className="login-qr-wrapper">
-                <img
-                  src={qrCode}
-                  alt="登录二维码"
-                  className="login-qr-image"
-                />
-                <p className="login-status-text">{getStatusText()}</p>
-                {(loginStatus === LoginStatus.TIMEOUT ||
-                  loginStatus === LoginStatus.FAILED) && (
-                  <Button type="primary" onClick={fetchQRCode}>
-                    重新获取二维码
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="login-error">
-                <p>获取二维码失败</p>
-                <Button type="primary" onClick={fetchQRCode}>
-                  重试
-                </Button>
-              </div>
+        ) : qrCode ? (
+          <div className="login-qr-wrapper">
+            <img
+              src={qrCode}
+              alt="微信登录二维码"
+              className="login-qr-image"
+            />
+            <p className="login-status-text">{getStatusText()}</p>
+            {(loginStatus === LoginStatus.TIMEOUT ||
+              loginStatus === LoginStatus.FAILED) && (
+              <Button type="primary" onClick={() => void fetchQRCode()}>
+                重新获取二维码
+              </Button>
             )}
-          </>
+          </div>
+        ) : (
+          <div className="login-error">
+            <p>获取二维码失败</p>
+            <Button type="primary" onClick={() => void fetchQRCode()}>
+              重试
+            </Button>
+          </div>
         )}
       </div>
 
       <div className="login-tips">
         <p>登录说明：</p>
         <ul>
-          <li>QQ 登录：请确保手机已安装 QQ 客户端</li>
-          <li>微信登录：直接使用微信扫码即可</li>
-          <li>扫码后需要在手机上确认授权</li>
-          <li>二维码有效期为 5 分钟</li>
+          <li>请使用微信扫描二维码。</li>
+          <li>扫码后需要在手机上确认授权。</li>
+          <li>二维码有效期约 5 分钟，过期后可重新获取。</li>
         </ul>
       </div>
     </Modal>

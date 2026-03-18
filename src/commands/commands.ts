@@ -8,12 +8,13 @@
  */
 // 注册命令
 import { commands } from "vscode";
-import { NgaProvider } from "../Providers/ngaProvider";
 import { setConfigByKey } from "../core/config";
 import * as vscode from "vscode";
 import { showInfo } from "../utils/errorMessage";
-import { V2exProvider } from "../Providers/v2exProvider";
-import { HupuProvider } from "../Providers/hupuProvider";
+
+type TabProvider = {
+  getData(tabOverride?: string): Promise<void>;
+};
 
 // 打开设置
 export const openSetting = commands.registerCommand(
@@ -27,7 +28,7 @@ export const openSetting = commands.registerCommand(
 );
 
 // 更改v2ex tab
-export const changeV2exTab = (provider: V2exProvider) => {
+export const changeV2exTab = (getProvider: () => TabProvider) => {
   return vscode.commands.registerCommand("v2ex.changeTab", async () => {
     const tab = await vscode.window.showQuickPick([
       { label: "全部", description: "all" },
@@ -43,7 +44,7 @@ export const changeV2exTab = (provider: V2exProvider) => {
       { label: "R2", description: "r2" },
     ]);
     if (tab) {
-      await provider.getData(tab.description);
+      await getProvider().getData(tab.description);
       await setConfigByKey("v2exTab", tab.description);
       // await vscode.commands.executeCommand('v2ex.refresh');
       await showInfo(`v2ex 切换为 ${tab.label}`);
@@ -52,7 +53,7 @@ export const changeV2exTab = (provider: V2exProvider) => {
 };
 
 // 更改v2ex tab
-export const changeHupuTab = (provider: HupuProvider) => {
+export const changeHupuTab = (getProvider: () => TabProvider) => {
   return vscode.commands.registerCommand("hupu.changeTab", async () => {
     const tab = await vscode.window.showQuickPick([
       { label: "步行街热帖", description: "all-gambia" },
@@ -65,7 +66,7 @@ export const changeHupuTab = (provider: HupuProvider) => {
       { label: "职场区", description: "workplace" },
     ]);
     if (tab) {
-      await provider.getData(tab.description);
+      await getProvider().getData(tab.description);
       await setConfigByKey("hupuTab", tab.description);
       // await vscode.commands.executeCommand('hupu.refresh');
       await showInfo(`Hupu 切换为 ${tab.label}`);
@@ -74,7 +75,7 @@ export const changeHupuTab = (provider: HupuProvider) => {
 };
 
 // 更改ngatab
-export const changeNgaTab = (ngaProvider: NgaProvider) => {
+export const changeNgaTab = (getProvider: () => TabProvider) => {
   return vscode.commands.registerCommand("nga.changeTab", async () => {
     const tab = await vscode.window.showQuickPick([
       // 置顶版块
@@ -295,7 +296,7 @@ export const changeNgaTab = (ngaProvider: NgaProvider) => {
         tabLabel = customInput;
       }
 
-      await ngaProvider.getData(tabValue);
+      await getProvider().getData(tabValue);
       await setConfigByKey("ngaTab", tabValue);
       await showInfo(`nga 切换为 ${tabLabel}`);
     }

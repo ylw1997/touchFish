@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-19 12:00:43
- * @LastEditTime: 2026-03-12 14:20:26
+ * @LastEditTime: 2026-03-18 14:03:30
  * @LastEditors: yangliwei 1280426581@qq.com
  * @FilePath: \touchfish\src\commands\openUrl.ts
  * @Description: +
@@ -196,7 +196,6 @@ const loadV2exPage = async () => {
   }
 
   const extraCss = `
-    .open-article-btn{ top:90px; }
     .topic_content,.reply_content { font-size: 16px; }
     .cell { padding:10px 0; font-size:14px; line-height:150%; text-align:left; border-bottom:1px solid var(--vscode-textBlockQuote-border); }
     .tag,.votes { display:none; }
@@ -317,7 +316,7 @@ const loadHupuPage = async () => {
   // 格式: href="637854698-18.html" 或 href="637854698-2.html"
   const pageLinks = res?.match(/href="\d+-([0-9]+)\.html"/g);
   if (pageLinks && pageLinks.length > 0) {
-    const pages = pageLinks.map(link => {
+    const pages = pageLinks.map((link) => {
       const match = link.match(/-(\d+)\.html/);
       return match ? parseInt(match[1], 10) : 1;
     });
@@ -327,7 +326,12 @@ const loadHupuPage = async () => {
     hupuState.totalPages = 1;
   }
 
-  console.log('[Hupu] Current page:', hupuState.page, 'Total pages:', hupuState.totalPages);
+  console.log(
+    "[Hupu] Current page:",
+    hupuState.page,
+    "Total pages:",
+    hupuState.totalPages,
+  );
 
   const extraCss = `
     p{font-size:16px;}
