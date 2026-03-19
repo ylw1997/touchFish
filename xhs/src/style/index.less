@@ -1,0 +1,215 @@
+/* ==========================================================================
+   1. 全局样式与重置
+   ========================================================================== */
+* {
+  font-family: "Microsoft YaHei", var(--vscode-font-family);
+}
+
+html,
+body {
+  padding: 0;
+  background-color: var(--vscode-editor-background);
+  height: 100vh;
+  overflow: hidden;
+  scrollbar-color: var(--vscode-scrollbarSlider-background) #ffffff00;
+  scrollbar-width: thin;
+}
+
+*:focus {
+  outline: none;
+}
+
+a {
+  color: var(--vscode-textLink-foreground);
+  &:hover {
+    color: var(--vscode-textLink-activeForeground);
+  }
+}
+
+/* ==========================================================================
+   2. 共享/可复用样式
+   ========================================================================== */
+
+/**
+ * 通用毛玻璃背景效果
+ */
+.backdrop-style {
+  background-color: color-mix(
+    in srgb,
+    var(--vscode-editor-background) 50%,
+    transparent
+  );
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
+.ant-drawer .ant-drawer-content-wrapper {
+  background-color: color-mix(
+    in srgb,
+    var(--vscode-editor-background) 80%,
+    transparent
+  );
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
+.ant-float-btn-group > .ant-float-btn {
+  .backdrop-style();
+  &:hover {
+    background: var(--vscode-button-border);
+  }
+  .ant-float-btn-body {
+    background: none;
+  }
+}
+
+.ant-card {
+  overflow: hidden;
+  background: color-mix(
+    in srgb,
+    var(--vscode-breadcrumbPicker-background) 60%,
+    transparent
+  );
+  .ant-card-meta-title {
+    word-break: break-all;
+    overflow: auto;
+    white-space: wrap;
+  }
+}
+.ant-image {
+  display: block;
+  // max-height: 60vh;
+}
+
+.ant-card-hoverable {
+  &:hover {
+    border: 1px solid
+      color-mix(in srgb, var(--vscode-breadcrumb-foreground) 40%, transparent);
+    box-shadow: none;
+  }
+}
+/* ========================================================================
+   3. 小红书瀑布流布局 (React Masonry CSS)
+   使用 react-masonry-css 实现稳定的瀑布流，新数据添加到底部不会重排现有内容。
+   ======================================================================== */
+
+/* Masonry 容器 */
+.xhs-masonry {
+  display: flex;
+  margin-left: -12px; /* 抵消左边距 */
+  width: auto;
+  padding: 8px 12px 24px;
+  box-sizing: border-box;
+}
+
+/* Masonry 列 */
+.xhs-masonry-column {
+  padding-left: 12px; /* 列间距 */
+  background-clip: padding-box;
+}
+
+/* 瀑布流条目：每个卡片项目 */
+.xhs-waterfall-item {
+  margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  /* 启用硬件加速，减少重排 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* 淡入动画 */
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+/* 淡入动画关键帧 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+  }
+}
+
+.ant-carousel .slick-prev::after {
+  display: none;
+}
+
+.ant-carousel .slick-next::after {
+  display: none;
+}
+.ant-carousel .slick-prev,
+.ant-carousel .slick-next {
+  width: auto;
+  height: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.descriptionForeground {
+  color: var(--vscode-tab-inactiveForeground);
+}
+
+.xhs-carousel-arrow {
+  font-size: 32px;
+}
+
+.ant-typography {
+  line-height: 2;
+}
+
+.ant-image .ant-image-mask {
+  display: none;
+}
+
+.ant-image-img {
+  cursor: zoom-in;
+}
+.slick-slide {
+  .ant-image-img {
+    min-height: 300px;
+    cursor: zoom-in;
+  }
+}
+
+/* ==========================================================================
+   4. 图片预览工具栏样式
+   ========================================================================== */
+
+/**
+ * 自定义图片预览工具栏样式，保持与 antd 原生工具栏一致
+ */
+.xhs-image-preview-toolbar {
+  .backdrop-style();
+  padding: 8px 12px;
+  border-radius: 100px;
+
+  /* 图标按钮样式 */
+  .anticon {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 8px;
+    border-radius: 50px;
+
+    &:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    /* 禁用状态 */
+    &[disabled] {
+      color: rgba(255, 255, 255, 0.25);
+      cursor: not-allowed;
+
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
+}

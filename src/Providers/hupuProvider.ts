@@ -1,43 +1,21 @@
 /*
  * @Author: YangLiwei
  * @Date: 2022-05-18 15:21:22
- * @LastEditTime: 2024-10-30 13:42:34
- * @LastEditors: yangliwei 1280426581@qq.com
+ * @LastEditTime: 2025-10-09 10:23:08
+ * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\Providers\hupuProvider.ts
  * @Description: 
  */
-import { EventEmitter, ProviderResult, TreeDataProvider, TreeItem } from 'vscode';
-import { compareNews, formatData } from '../utils/util';
-import { hupuTab, showNewsNumber } from '../config/index';
+import { BaseNewsProvider } from '../core/baseNewsProvider';
 import { defaultHupuTab } from '../data/context';
-import { fetchNewsList } from '../news/fetch';
 
-export class HupuProvider implements TreeDataProvider<TreeItem>{
-
-  private update = new EventEmitter<TreeItem | void>(); // 用于触发刷新
-	readonly onDidChangeTreeData = this.update.event;
-  
-  private newsList:TreeItem[] = [];
-
+export class HupuProvider extends BaseNewsProvider {
   constructor() {
-	}
-
-  async getData(tab?:string){
-    const oldList = this.newsList;
-    const currentTab = tab || hupuTab || defaultHupuTab;
-    const list = await fetchNewsList('hupu', { tab: currentTab });
-    const plain = list.slice(0, showNewsNumber).map(i => ({ title: i.title, url: i.url || '' }));
-    const news = formatData(plain, 'hupu.openUrl');
-    this.newsList = compareNews(oldList, news, 'bell-dot', 'notebook-render-output');
-    this.update.fire();
+    super({
+      sourceKey: 'hupu',
+      commandName: 'hupu.openUrl',
+      tabConfigKey: 'hupuTab',
+      defaultTab: defaultHupuTab,
+    });
   }
-  
-  getTreeItem(element: TreeItem): TreeItem | Thenable<TreeItem> {
-    return element;
-  }
-  
-  getChildren(): ProviderResult<TreeItem[]> {
-    return this.newsList;
-  }
-  
 }

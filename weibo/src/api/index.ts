@@ -8,15 +8,15 @@
  * @Description: Weibo API requests
  */
 
+import type { CommandList } from "../../../types/commands";
 import type {
-  CommandList,
   payloadType,
   weiboCommentParams,
   weiboRepostParams,
   SearchType,
   uploadType,
   UploadImageResponsePayload,
-} from "../../../type";
+} from "../../../types/weibo";
 
 type RequestFunc = <T = any>(
   command: CommandList,
@@ -57,14 +57,14 @@ export class WeiboApi {
 
   getMoreComments(id: number, uid: number | undefined) {
     return this.request<any>(
-        "GETCOMMENT",
-        {
-          url: `/statuses/buildComments?flow=1&id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`,
-          id: id,
-          uid: uid,
-        },
-        "请求评论中..."
-      );
+      "GETCOMMENT",
+      {
+        url: `/statuses/buildComments?flow=1&id=${id}&is_show_bulletin=2uid=${uid}&locale=zh-CN`,
+        id: id,
+        uid: uid,
+      },
+      "请求评论中..."
+    );
   }
 
   getLongText(id: string | number) {
@@ -72,7 +72,11 @@ export class WeiboApi {
   }
 
   getUserByName(username: string) {
-    return this.request<payloadType>("GETUSERBYNAME", username, "获取用户信息中...");
+    return this.request<payloadType>(
+      "GETUSERBYNAME",
+      username,
+      "获取用户信息中..."
+    );
   }
 
   followUser(userId: number) {
@@ -81,6 +85,14 @@ export class WeiboApi {
 
   cancelFollow(userId: number) {
     return this.request("GETCANCELFOLLOW", userId, "取关中...");
+  }
+
+  getMyUserInfo() {
+    return this.request<payloadType>(
+      "GET_MY_USER_INFO",
+      null,
+      "获取我的信息及..."
+    );
   }
 
   getHotSearch() {

@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Button, Image } from "antd";
 import { PlayCircleFilled } from "@ant-design/icons";
-import { weiboItem } from "../../../type";
+import { weiboItem } from "../../../types/weibo";
 import YImg from "./YImg";
 
 interface WeiboCardMediaProps {

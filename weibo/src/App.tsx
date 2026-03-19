@@ -27,6 +27,10 @@ import {
   RedoOutlined,
   SearchOutlined,
   VerticalAlignTopOutlined,
+  PlusOutlined,
+  MinusOutlined,
+  UserOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -37,6 +41,7 @@ import { loaderFunc } from "./utils/loader";
 import { defTab } from "./data/tabs";
 import useWeiboAction from "./hooks/useWeiboAction";
 import { vscode } from "./utils/vscode";
+import { useFontSizeStore } from "./store/fontSize";
 import { debounce } from "./utils";
 const SendWeiboDrawer = lazy(() => import("./components/SendWeiboDrawer"));
 const UserDetailDrawer = lazy(() => import("./components/UserDetailDrawer"));
@@ -50,7 +55,6 @@ function App() {
     list,
     total,
     copyLink,
-    contextHolder,
     clearList,
     handleToggleComments,
     handleExpandLongWeibo,
@@ -68,6 +72,7 @@ function App() {
     followUser,
     getListData,
     getUserByName,
+    getMyUserInfo,
     isFetching,
   } = useWeiboAction();
   // 状态管理
@@ -78,10 +83,11 @@ function App() {
   const [searchKeyword, setSearchKeyword] = useState<string | undefined>();
   // 子菜单key
   const [subAcitiveKey, setSubActiveKey] = useState("");
+  const { increase, decrease } = useFontSizeStore();
 
   // showImg
   const [showImg, setShowImg] = useState(
-    window.showImg != undefined ? window.showImg : true
+    window.showImg != undefined ? window.showImg : true,
   );
 
   const handleTopicClick = useCallback((topic: string) => {
@@ -144,7 +150,7 @@ function App() {
       clearList();
       getListData(key, true);
     },
-    [clearList, getListData]
+    [clearList, getListData],
   );
 
   // tab��换
@@ -161,12 +167,11 @@ function App() {
         getListData(key, true);
       }
     },
-    [clearList, getListData, tabs]
+    [clearList, getListData, tabs],
   );
 
   return (
     <>
-      {contextHolder}
       <Suspense fallback={null}>
         <UserDetailDrawer
           visible={userDetailVisible}
@@ -195,7 +200,7 @@ function App() {
           onChange={onSubChange}
           centered
           style={{
-            top: "47px",
+            top: "46px",
           }}
         />
       )}
@@ -251,13 +256,41 @@ function App() {
           </InfiniteScroll>
         )}
       </div>
-      <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
-        <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
-          icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
-          tooltip={{ title: "回到顶部", placement: "left" }}
-          target={() => scrollableNodeRef.current || window}
+      {/* 回到顶部按钮 */}
+      <FloatButton.BackTop
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+        target={() => scrollableNodeRef.current || window}
+      />
+      {/* 刷新按钮 */}
+      <FloatButton
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: 84 }}
+        onClick={() => {
+          const key = subAcitiveKey || activeKey;
+          clearList();
+          getListData(key, true);
+        }}
+        icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+        tooltip={{ title: "刷新", placement: "left" }}
+      />
+      {/* 更多功能按钮组 */}
+      <FloatButton.Group
+        shape="circle"
+        trigger="click"
+        style={{ insetInlineEnd: 24, bottom: 144 }}
+        icon={<AppstoreOutlined style={{ color: "#1890ff" }} />}
+        tooltip={{ title: "更多", placement: "left" }}
+      >
+        {/* 用户按钮 */}
+        <FloatButton
+          onClick={getMyUserInfo}
+          icon={<UserOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "我的", placement: "left" }}
         />
         {/* 搜索按钮 */}
         <FloatButton
@@ -270,15 +303,6 @@ function App() {
           icon={<EditOutlined style={{ color: "#69b1ff" }} />}
           onClick={() => setSendDrawerOpen((open) => !open)}
           tooltip={{ title: "发布微博", placement: "left" }}
-        />
-        <FloatButton
-          onClick={() => {
-            const key = subAcitiveKey || activeKey;
-            clearList();
-            getListData(key, true);
-          }}
-          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-          tooltip={{ title: "刷新", placement: "left" }}
         />
         {/* 显示图片 */}
         <FloatButton
@@ -301,6 +325,16 @@ function App() {
             title: `${showImg ? "隐藏" : "显示"}图片`,
             placement: "left",
           }}
+        />
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
         />
       </FloatButton.Group>
       <Suspense fallback={null}>

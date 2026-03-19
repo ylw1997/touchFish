@@ -1,18 +1,19 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 16:55:54
- * @LastEditTime: 2025-09-29 16:23:37
+ * @LastEditTime: 2025-10-31 15:40:29
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\components\QuestionDetailDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, List, Card, Button, Divider } from "antd";
+import { Drawer, List, Card, Button, Divider, Segmented } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { motion } from "framer-motion";
 import React from "react";
+import { useHasExpanded, useExpandedStore } from "../store/expanded";
 import ZhihuItem from "./ZhihuItem";
-import type { ZhihuItemData } from "../../../type";
+import type { ZhihuItemData } from "../../../types/zhihu";
 import { loaderFunc } from "../utils/loader";
 
 interface QuestionDetailDrawerProps {
@@ -29,6 +30,8 @@ interface QuestionDetailDrawerProps {
   followHandler: () => void;
   unfollowHandler: () => void;
   showImg?: boolean;
+  questionOrder?: "default" | "updated";
+  changeQuestionOrder?: (order: "default" | "updated") => void;
 }
 
 const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
@@ -45,7 +48,11 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
   questionId,
   hasMore,
   showImg = true,
+  questionOrder = "default",
+  changeQuestionOrder,
 }) => {
+  const hasExpanded = useHasExpanded();
+  const collapseAll = useExpandedStore((state) => state.collapseAll);
   return (
     <Drawer
       getContainer={false}
@@ -55,7 +62,6 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       destroyOnHidden
       placement="bottom"
       height={questionData.length === 0 ? "auto" : "calc(100vh - 150px)"}
-      zIndex={1001}
       styles={{
         wrapper: {
           borderTopLeftRadius: "10px",
@@ -63,7 +69,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
           overflow: "hidden",
         },
         body: {
-          padding: 0,
+          padding: "5px",
           height: "100%",
           minHeight: 0,
           overflow: "auto",
@@ -73,13 +79,13 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       {questionData.length === 0 && open ? (
         loaderFunc()
       ) : (
-        // make the drawer body the scrollable target so InfiniteScroll can detect
-        // reaching bottom inside the drawer
         <div
           id="questionDetailScroll"
-          style={{ height: "100%", overflow: "auto", padding: "5px" }}
+          style={{ height: "100%", overflow: "auto" }}
         >
           <Card
+            title="问题详情"
+            size="small"
             actions={
               isFollowing === undefined
                 ? undefined
@@ -101,6 +107,15 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
                         关注问题
                       </Button>
                     ),
+                    hasExpanded ? (
+                      <Button
+                        variant="filled"
+                        color="default"
+                        onClick={() => collapseAll()}
+                      >
+                        折叠全部
+                      </Button>
+                    ) : null,
                   ]
             }
           >
@@ -109,6 +124,27 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
               dangerouslySetInnerHTML={{
                 __html: questionDetail ? questionDetail : title,
               }}
+            />
+          </Card>
+          <Card style={{ marginTop: 10 }} size="small" title="回答排序">
+            <Segmented
+              style={{}}
+              options={[
+                {
+                  label: <span style={{ padding: "4px 10px" }}>默认排序</span>,
+                  value: "default",
+                },
+                {
+                  label: (
+                    <span style={{ padding: "4px 10px" }}>按时间(最新)</span>
+                  ),
+                  value: "updated",
+                },
+              ]}
+              value={questionOrder}
+              onChange={(val) =>
+                changeQuestionOrder && changeQuestionOrder(val as any)
+              }
             />
           </Card>
           <InfiniteScroll

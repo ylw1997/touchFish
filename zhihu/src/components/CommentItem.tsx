@@ -10,7 +10,7 @@
 import { Flex, List, Space, Tag, Button } from "antd";
 import React, { useState } from "react";
 import dayjs from "dayjs";
-import type { ZhihuCommentItem } from "../../../type";
+import type { ZhihuCommentItem } from "../../../types/zhihu";
 import { useRequest } from "../hooks/useRequest";
 import { processCommentContent } from "../utils/textParser";
 import { CaretRightOutlined, LikeOutlined } from "@ant-design/icons";

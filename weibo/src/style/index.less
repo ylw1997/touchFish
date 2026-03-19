@@ -72,7 +72,7 @@ a {
  * 通用内容块
  */
 .content {
-  font-size: 15px;
+  font-size: var(--app-font-size);
   color: var(--vscode-foreground);
   line-height: 2;
   word-break: break-all;
@@ -96,7 +96,7 @@ a {
   font-weight: bold;
   word-break: break-all;
   white-space: pre-wrap;
-  font-size: 15px;
+  font-size: var(--app-font-size);
   &:hover {
     cursor: pointer;
     color: var(--vscode-textLink-activeForeground);
@@ -107,7 +107,7 @@ a {
  * 次要信息文本
  */
 .info {
-  font-size: 14px;
+  font-size: calc(var(--app-font-size) - 1px);
   color: var(--vscode-breadcrumb-foreground);
 }
 
@@ -119,7 +119,7 @@ a {
   color: var(--vscode-activityBarTop-inactiveForeground);
   align-self: flex-start;
   margin: 5px;
-  font-size: 18px;
+  font-size: calc(var(--app-font-size) + 3px);
   display: flex;
   &:hover {
     color: var(--vscode-textLink-activeForeground);
@@ -226,10 +226,7 @@ a {
   }
 }
 
-/**
- * FloatButton: 用户指定的自定义样式
- */
-.ant-float-btn-group > .ant-float-btn {
+.ant-float-btn {
   .backdrop-style();
   &:hover {
     background: var(--vscode-button-border);
@@ -288,11 +285,11 @@ a {
   .img-only-item {
     object-fit: cover;
     border-radius: 10px;
-    min-height: 150px ;
+    min-height: 150px;
   }
 }
 
-.infinite-scroll-component  {
+.infinite-scroll-component {
   overflow: hidden !important;
 }
 // 分辨率小于等于320px
@@ -392,7 +389,7 @@ a {
 }
 
 .weiboItemUrl {
-  font-size: 13px;
+  font-size: calc(var(--app-font-size) - 2px);
   margin-left: 5px;
   color: var(--vscode-textLink-activeForeground);
 }

@@ -1,4 +1,4 @@
-import { weiboItem } from "../../../type";
+import { weiboItem } from "../../../types/weibo";
 
 export function updateWeiboList(
   list: weiboItem[],

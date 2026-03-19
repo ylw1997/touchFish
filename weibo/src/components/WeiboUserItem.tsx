@@ -9,7 +9,7 @@
  */
 import { List, Avatar } from "antd";
 import YImg from "./YImg";
-import { weiboUser } from "../../../type";
+import { weiboUser } from "../../../types/weibo";
 export const WeiboUserItem = (item: weiboUser,showUser?: (item: weiboUser) => void) => (
   <List.Item>
     <List.Item.Meta

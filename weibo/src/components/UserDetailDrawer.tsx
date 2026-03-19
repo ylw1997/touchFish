@@ -5,7 +5,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import YImg from "./YImg";
 import WeiboCard from "./WeiboCard";
 import { loaderFunc } from "../utils/loader";
-import { weiboUser } from "../../../type";
+import { weiboUser } from "../../../types/weibo";
 import useWeiboAction from "../hooks/useWeiboAction";
 import {
   UsergroupAddOutlined,
@@ -37,7 +37,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     list: userWeiboList,
     total: userWeiboTotal,
     copyLink,
-    contextHolder,
     handleToggleComments,
     handleExpandLongWeibo,
     handleCommentOrRepost,
@@ -101,7 +100,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
 
   return (
     <>
-      {contextHolder}
       <Drawer
         destroyOnHidden
         closable

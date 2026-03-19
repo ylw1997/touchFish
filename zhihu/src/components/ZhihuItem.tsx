@@ -10,13 +10,14 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import CommentItem from "./CommentItem";
 import { parseZhihuItemContent } from "../utils/textParser";
-import type { ZhihuCommentItem, ZhihuItemData } from "../../../type";
+import type { ZhihuCommentItem, ZhihuItemData } from "../../../types/zhihu";
 import { Avatar } from "@heroui/react";
 import useZhihuAction from "../hooks/useZhihuAction";
 import { loaderFunc } from "../utils/loader";
+import { useExpandedStore } from "../store/expanded";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
@@ -36,16 +37,18 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     return item.content && item.content.length > 2000;
   }, [item.content]);
   const [expanded, setExpanded] = useState(!isLoneContent);
+  const register = useExpandedStore((state) => state.register);
+  const unregister = useExpandedStore((state) => state.unregister);
   const [comments, setComments] = useState<ZhihuCommentItem[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const { getZhihuComment, contextHolder, copyLink } = useZhihuAction();
+  const { getZhihuComment, copyLink } = useZhihuAction();
   const [overrideShow, setOverrideShow] = useState(false);
   const imagesVisible = globalShowImg || overrideShow;
   const hasImages = useMemo(
     () => (item.content && item.content.includes("<img")) || item.image_area,
-    [item.content, item.image_area]
+    [item.content, item.image_area],
   );
 
   const backToView = () => {
@@ -61,6 +64,26 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     if (expanded) backToView();
     setExpanded(!expanded);
   };
+
+  // 折叠自身的回调供全局 collapseAll 使用
+  const collapseSelf = () => {
+    if (expanded) {
+      backToView();
+    }
+    setExpanded(false);
+  };
+
+  // 监听 expanded 状态注册/注销到全局 store
+  // 只有长内容且展开时才注册(避免短内容初始展开状态误注册)
+  useEffect(() => {
+    const id = item.id;
+    if (expanded && isLoneContent) {
+      register(id, collapseSelf);
+    } else {
+      unregister(id);
+    }
+    return () => unregister(id);
+  }, [expanded, isLoneContent, item.id, register, unregister]);
 
   const getComments = async () => {
     if (showComments) {
@@ -87,17 +110,14 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const renderTitle = () => (
     <Flex align="center">
       {item.index != undefined ? (
-        <Avatar
-          isBordered
-          radius="sm"
-          size="sm"
-          style={{
-            flexShrink: 0,
-            fontSize: "20px",
-          }}
-          name={item.index + ""}
-        />
-      ) : (
+        // 自定义排名徽章（不用 Avatar，避免多位数字被截断）
+        <span
+          className={`rank-badge ${item.index <= 3 ? `top-${item.index}` : ""}`.trim()}
+          aria-label={`排名 ${item.index}`}
+        >
+          {item.index}
+        </span>
+      ) : imagesVisible ? (
         <Avatar
           isBordered
           radius="sm"
@@ -106,7 +126,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         >
           {item.author?.name}
         </Avatar>
-      )}
+      ) : null}
       <div style={{ marginLeft: 10 }}>
         <span
           className={"nick-name"}
@@ -135,7 +155,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         onClick={() =>
           handleVote(
             item.id,
-            item.vote_next_step === "unvote" ? "neutral" : "up"
+            item.vote_next_step === "unvote" ? "neutral" : "up",
           )
         }
       >
@@ -145,7 +165,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
           <LikeOutlined />
         )}{" "}
         {item.voteup_count}
-      </span>
+      </span>,
     );
   }
   if (item.comment_count != undefined) {
@@ -160,7 +180,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             <MessageOutlined /> {item.comment_count}
           </span>
         )}
-      </span>
+      </span>,
     );
   }
   if (isLoneContent) {
@@ -175,14 +195,14 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
             <DownOutlined /> 全文
           </>
         )}
-      </span>
+      </span>,
     );
   }
   if (item.metrics_area) {
     actions.push(
       <span key="metrics">
         <FireOutlined /> {item.metrics_area}
-      </span>
+      </span>,
     );
   }
 
@@ -204,16 +224,17 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       }}
     >
       <ShareAltOutlined /> 分享
-    </span>
+    </span>,
   );
 
   return (
-    <div ref={cardRef} style={{ scrollMarginTop: "50px" }}>
-      {contextHolder}
+    <div
+      ref={cardRef}
+      style={{ scrollMarginTop: "50px" }}
+      className={!imagesVisible ? "hide-images" : ""}
+    >
       <Card key={item.id} title={renderTitle()} actions={actions}>
-        <div
-          className={`content ${!imagesVisible ? "hide-images" : ""}`.trim()}
-        >
+        <div className="content">
           {item.content ? (
             parseZhihuItemContent(expanded ? item.content : item.excerpt)
           ) : (

@@ -1,4 +1,4 @@
-import { SearchType } from "../../../type";
+import { SearchType } from "../../../types/weibo";
 
 // Search Configuration
 export const SearchInfo: ReadonlyArray<SearchType> = [

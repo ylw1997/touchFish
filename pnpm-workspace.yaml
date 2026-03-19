@@ -1,0 +1,6 @@
+packages:
+  - "weibo"
+  - "zhihu"
+  - "xhs"
+  - "bilibili"
+  - "qqmusic"

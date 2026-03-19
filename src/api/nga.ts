@@ -11,22 +11,12 @@ import { NewsItem } from "../type/type";
 import { load } from "cheerio";
 import { TextDecoder } from "util";
 import * as vscode from "vscode";
-import { setConfigByKey } from "../config";
+import { showInfo, showError } from "../utils/errorMessage";
 import { uniqueNews } from "../utils/util";
 
-export const getOrSetNgaCookie = async () => {
+export const getNgaCookie = () => {
   const config = vscode.workspace.getConfiguration("touchfish");
-  let cookie = config.get("ngaCookie") as string | undefined;
-  // 如果没有就请输入cookie
-  if (!cookie) {
-    cookie = await vscode.window.showInputBox({
-      placeHolder: "请输入nga的cookie",
-      prompt: "请输入nga的cookie",
-    });
-    if (cookie) {
-      await setConfigByKey("ngaCookie", cookie);
-    }
-  }
+  const cookie = config.get("ngaCookie") as string | undefined;
   return cookie;
 };
 
@@ -34,7 +24,15 @@ export const getOrSetNgaCookie = async () => {
 export const getNgaList = async (tab?: string) => {
   const resArr: NewsItem[] = [];
   try {
-    const cookie = (await getOrSetNgaCookie()) as string;
+    const cookie = getNgaCookie();
+    if (!cookie) {
+      return [
+        {
+          title: "NGA Cookie 未配置 (点击配置)",
+          url: "configure_nga_cookie",
+        },
+      ];
+    }
     const res = await axios.get("https://bbs.nga.cn/thread.php?fid=" + tab, {
       maxRedirects: 50,
       headers: {
@@ -57,18 +55,36 @@ export const getNgaList = async (tab?: string) => {
       });
     });
     return resArr;
-  } catch (error) {
-    console.log("nga--->出错", error);
-    vscode.window.showInformationMessage("nga加载失败,请刷新列表重试！");
+  } catch {
+    showInfo("nga加载失败,请刷新列表重试！");
   }
   return uniqueNews(resArr);
 };
 
 // 获取nga文章详情
-export const getNgaNewsDetail = async (url: string) => {
+export const getNgaNewsDetail = async (
+  url: string,
+  page?: number,
+  filterQuery?: string,
+): Promise<{
+  html: string | null;
+  totalPages: number;
+  currentPage: number;
+  authorUid: number;
+}> => {
   try {
-    const cookie = (await getOrSetNgaCookie()) as string;
-    const { data } = await axios.get("https://bbs.nga.cn" + url, {
+    const cookie = getNgaCookie();
+    if (!cookie) {
+      return { html: null, totalPages: 1, currentPage: 1, authorUid: 0 };
+    }
+    let fullUrl = "https://bbs.nga.cn" + url;
+    if (page && page > 1) {
+      fullUrl += "&page=" + page;
+    }
+    if (filterQuery) {
+      fullUrl += filterQuery;
+    }
+    const { data } = await axios.get(fullUrl, {
       maxRedirects: 50,
       headers: {
         Cookie: cookie,
@@ -79,13 +95,46 @@ export const getNgaNewsDetail = async (url: string) => {
       responseEncoding: "utf8",
     });
     const datastr = new TextDecoder("gbk").decode(data);
+
+    // 解析总页数 - __PAGE 格式: {0:'url',1:总页数,2:当前页,3:每页数}
+    let totalPages = 1;
+    let currentPage = 1;
+    let authorUid = 0;
+
+    // 解析楼主 UID - 从 commonui.postArg.setDefault(fid,0,tid,authorUid,...) 提取第4个参数
+    // 注意：匿名帖的 authorUid 是负数（如 -5）
+    const authorMatch = datastr.match(
+      /commonui\.postArg\.setDefault\([^,]+,[^,]+,[^,]+,(-?\d+)/,
+    );
+    if (authorMatch) {
+      authorUid = parseInt(authorMatch[1], 10);
+    }
+
+    // 使用非贪婪匹配查找 1:数字 (总页数) 和 2:数字 (当前页)
+    const pageMatch = datastr.match(/__PAGE\s*=\s*\{.*?\b1\s*:\s*(\d+)/);
+    const currentMatch = datastr.match(/__PAGE\s*=\s*\{.*?\b2\s*:\s*(\d+)/);
+
+    if (pageMatch) {
+      totalPages = parseInt(pageMatch[1], 10) || 1;
+    }
+    if (currentMatch) {
+      currentPage = parseInt(currentMatch[1], 10) || 1;
+    }
+
+    console.log(
+      "[NGA] Parsed totalPages:",
+      totalPages,
+      "currentPage:",
+      currentPage,
+    );
+
     let ngaContext = "";
     // 把所有[img]./替换为[img]
     datastr.replace(/\[img\].\//g, "[img]");
     // 找到[img]开头[/img]结尾的字符串,替换为img标签,并src添加http://img4.nga.178.com
     ngaContext = datastr.replace(
       /\[img\](.*?)\[\/img\]/g,
-      '<img src="https://img.nga.178.com/attachments/$1" />'
+      '<img src="https://img.nga.178.com/attachments/$1" />',
     );
     // 删除 [pid= 开头 [/b] 结尾的字符串
     ngaContext = ngaContext.replace(/\[pid=(.*?)\](.*?)\[\/b\]/g, "");
@@ -101,10 +150,9 @@ export const getNgaNewsDetail = async (url: string) => {
     ngaContext = ngaContext.replace(/\[b\](.*?)\[\/b\]/g, "");
     const $ = load(ngaContext);
     const content = $("#m_posts").html();
-    return content;
-  } catch (error) {
-    console.log("获取详情出错", error);
-    // 弹出错误提示
-    vscode.window.showErrorMessage("获取nga新闻详情失败");
+    return { html: content, totalPages, currentPage, authorUid };
+  } catch {
+    showError("获取nga新闻详情失败");
+    return { html: null, totalPages: 1, currentPage: 1, authorUid: 0 };
   }
 };

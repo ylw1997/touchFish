@@ -12,7 +12,7 @@ import { Drawer, Button, Input, Form, Select, Upload } from "antd";
 import { SendOutlined, PlusOutlined } from "@ant-design/icons";
 import { weiboSendParams } from "../types";
 import { fileToBase64 } from "../utils";
-import { uploadType } from "../../../type";
+import { uploadType } from "../../../types/weibo";
 import useWeiboAction from "../hooks/useWeiboAction";
 
 interface SendWeiboDrawerProps {
@@ -43,7 +43,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   const [pictureList, setPictureList] = useState<
     { type: string; pid: string; uid: string }[]
   >([]);
-  const { uploadImage, contextHolder, messageApi } = useWeiboAction();
+  const { uploadImage, messageApi } = useWeiboAction();
 
   const handleSend = () => {
     form
@@ -109,7 +109,6 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
 
   return (
     <>
-      {contextHolder}
       <Drawer
         title="发送微博"
         placement="top"

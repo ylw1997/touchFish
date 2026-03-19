@@ -6,7 +6,7 @@ import {
   weiboUser,
   SearchType,
   uploadType,
-} from "../../../type";
+} from "../../../types/weibo";
 import { updateWeiboList } from "../utils/updateWeiboList";
 import { weiboSendParams } from "../types";
 import { parseArray } from "../utils";
@@ -30,7 +30,7 @@ const useWeiboAction = () => {
 
   // 发送状态相关
   const [sendLoading, setSendLoading] = useState(false);
-  const { request, contextHolder, messageApi } = useRequest();
+  const { request, messageApi } = useRequest();
 
   const apiClient = useMemo(() => new WeiboApi(request), [request]);
 
@@ -62,7 +62,10 @@ const useWeiboAction = () => {
         newPayload = newPayload.replace(/&?since_id=\d+/, "");
         // Add or replace max_id.
         if (newPayload.includes("max_id=")) {
-          newPayload = newPayload.replace(/max_id=\d+/, `max_id=${currentMaxId}`);
+          newPayload = newPayload.replace(
+            /max_id=\d+/,
+            `max_id=${currentMaxId}`
+          );
         } else {
           newPayload = `${newPayload}&max_id=${currentMaxId}`;
         }
@@ -92,7 +95,7 @@ const useWeiboAction = () => {
       try {
         const result = await apiClient.getUserBlogData(uid, page);
         const newList = result.data.list;
-        setList(currentList => [...currentList, ...newList]);
+        setList((currentList) => [...currentList, ...newList]);
         const wtotal = result.data?.total ?? 999;
         setTotal(wtotal);
       } finally {
@@ -227,6 +230,21 @@ const useWeiboAction = () => {
     [apiClient]
   );
 
+  const getMyUserInfo = useCallback(async () => {
+    try {
+      const result = await apiClient.getMyUserInfo();
+      if (result && result.data) {
+        setUserDetail({
+          ...result.data,
+          avatar_hd: result.data.avatar,
+        });
+        setUserDetailVisible(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [apiClient]);
+
   // 关注博主
   const followUser = useCallback(
     async (userInfo?: weiboUser) => {
@@ -269,16 +287,21 @@ const useWeiboAction = () => {
     return (result.data.realtime || []).slice(0, 20);
   }, [apiClient]);
 
-  const getWeiboSearch = useCallback(async (keyword: string, searchType: SearchType) => {
+  const getWeiboSearch = useCallback(
+    async (keyword: string, searchType: SearchType) => {
       const result = await apiClient.getWeiboSearch(keyword, searchType);
       return parseArray(result.data.cards, searchType);
-  }, [apiClient]);
+    },
+    [apiClient]
+  );
 
-  const uploadImage = useCallback(async (uploadData: uploadType) => {
-    const result = await apiClient.uploadImage(uploadData);
-    return result;
-  }, [apiClient]);
-
+  const uploadImage = useCallback(
+    async (uploadData: uploadType) => {
+      const result = await apiClient.uploadImage(uploadData);
+      return result;
+    },
+    [apiClient]
+  );
 
   // 发送微博功能
   const handleSendWeibo = useCallback(
@@ -381,7 +404,6 @@ const useWeiboAction = () => {
     setTotal,
     updateList,
     copyLink,
-    contextHolder,
     clearList,
     handleToggleComments,
     handleExpandLongWeibo,
@@ -402,6 +424,7 @@ const useWeiboAction = () => {
     userWeiboPage,
     setUserWeiboPage,
     getUserByName,
+    getMyUserInfo,
     getHotSearch,
     getWeiboSearch,
     uploadImage,

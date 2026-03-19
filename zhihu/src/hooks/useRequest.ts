@@ -7,22 +7,15 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { message } from "antd";
+import { App } from "antd";
 import { useCallback } from "react";
 import { vscode } from "../utils/vscode";
 import { messageHandler } from "../utils/messageHandler";
-import type { ZhihuCommandList } from "../../../type";
-
-const generateUUID = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0,
-      v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
+import type { ZhihuCommandList } from "../../../types/commands";
+import { generateUUID } from "../../../types/utils";
 
 export const useRequest = () => {
-  const [messageApi, contextHolder] = message.useMessage();
+  const { message: messageApi } = App.useApp();
 
   const request = useCallback(
     <T = any>(command: ZhihuCommandList, payload: any): Promise<T> => {
@@ -33,12 +26,10 @@ export const useRequest = () => {
         // a race where the extension posts a response before the handler is added.
         messageHandler.addRequest(uuid, resolve, reject);
         vscode.postMessage({ command, payload, uuid });
-      }).catch((error) => {
-        throw error; // Re-throw the error to be caught by the caller
       });
     },
     []
   );
 
-  return { request, contextHolder, messageApi };
+  return { request, messageApi };
 };

@@ -1,10 +1,11 @@
-import { Drawer, Button, Input, Form, List, Empty, Divider } from "antd";
+import { Drawer, Button, Input, Form, List, Empty, Divider, Space } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
-import type { ZhihuItemData } from "../../../type";
+import type { ZhihuItemData } from "../../../types/zhihu";
 import ZhihuItem from "./ZhihuItem";
 import { loaderFunc } from "../utils/loader";
+import { useHasExpanded, useExpandedStore } from "../store/expanded";
 import useZhihuAction from "../hooks/useZhihuAction";
 
 interface SearchDrawerProps {
@@ -28,22 +29,29 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<ZhihuItemData[]>([]);
-  const { searchZhihu, contextHolder } = useZhihuAction();
+  const { searchZhihu } = useZhihuAction();
+  const hasExpanded = useHasExpanded();
+  const collapseAll = useExpandedStore(state => state.collapseAll);
 
-  const handleSearch = useCallback(async () => {
-    try {
-      const values = await form.validateFields();
-      if (!values.keyword) return;
+  const handleSearch = useCallback(
+    async ({ keyword }: { keyword: string }) => {
+      const trimmed = keyword?.trim();
+      if (!trimmed) {
+        return;
+      }
       setSearchResults([]);
       setLoading(true);
-      const results = await searchZhihu(values.keyword);
-      setSearchResults(results || []);
-    } catch (error) {
-      console.error("Search failed:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [form, searchZhihu]);
+      try {
+        const results = await searchZhihu(trimmed);
+        setSearchResults(results || []);
+      } catch (error) {
+        console.error("Search failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [searchZhihu]
+  );
 
   const closeFunc = useCallback(() => {
     onClose();
@@ -54,7 +62,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   return (
     <>
-      {contextHolder}
       <Drawer
         getContainer={false}
         title="知乎搜索"
@@ -70,7 +77,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             overflow: "hidden",
           },
           body: {
-            padding: "10px",
+            padding: "5px",
             paddingTop: "20px",
             overflowY: "auto",
           },
@@ -89,9 +96,21 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
                   搜索
                 </Button>
               }
+              onSearch={() => form.submit()}
               loading={loading}
             />
           </Form.Item>
+          {hasExpanded && (
+            <Space style={{ marginBottom: 8 }}>
+              <Button
+                onClick={() => collapseAll()}
+                variant="filled"
+                color="default"
+              >
+                折叠全部
+              </Button>
+            </Space>
+          )}
         </Form>
         <Divider>搜索结果</Divider>
         {loading ? (

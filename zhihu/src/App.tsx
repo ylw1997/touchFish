@@ -1,7 +1,7 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-07 09:19:24
- * @LastEditTime: 2025-09-26 18:02:57
+ * @LastEditTime: 2025-11-14 10:23:32
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\zhihu\src\App.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
@@ -18,6 +18,9 @@ import {
   SearchOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  CompressOutlined,
+  PlusOutlined,
+  MinusOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -34,18 +37,20 @@ import { Suspense, lazy } from "react";
 const QuestionDetailDrawer = lazy(
   () => import("./components/QuestionDetailDrawer")
 );
-import type { ZhihuItemData } from "../../type";
+import type { ZhihuItemData } from "../../types/zhihu";
 import useZhihuAction from "./hooks/useZhihuAction";
 import { debounce } from "./utils";
 import { vscode } from "./utils/vscode";
 import { messageHandler } from "./utils/messageHandler";
 import { Tabs, Tab } from "@heroui/react";
+import { useHasExpanded, useExpandedStore } from "./store/expanded";
+import type { ExpandedState } from "./store/expanded";
+import { useFontSizeStore } from "./store/fontSize";
 
 function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const {
     list,
-    contextHolder,
     clearList,
     getListData,
     fetchNext,
@@ -65,6 +70,8 @@ function App() {
     followHandler,
     unfollowHandler,
     loading,
+    questionOrder,
+    changeQuestionOrder,
   } = useZhihuAction();
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -73,6 +80,11 @@ function App() {
   );
 
   const [activeKey, setActiveKey] = useState(defTab[0].key);
+  const hasExpanded = useHasExpanded();
+  const collapseAll = useExpandedStore(
+    (state: ExpandedState) => state.collapseAll
+  );
+  const { increase, decrease } = useFontSizeStore();
 
   useEffect(() => {
     const scrollableNode = scrollableNodeRef.current;
@@ -80,20 +92,22 @@ function App() {
 
     const handleScroll = debounce(() => {
       vscode.postMessage({
-        command: 'ZHIHU_SAVE_SCROLL_POSITION',
-        payload: scrollableNode.scrollTop
+        command: "ZHIHU_SAVE_SCROLL_POSITION",
+        payload: scrollableNode.scrollTop,
       });
     }, 500);
     scrollableNode.addEventListener("scroll", handleScroll);
 
     const unsolicitedMessageHandler = (command: string, payload: any) => {
-      if (command === 'ZHIHU_RESTORE_SCROLL_POSITION') {
+      if (command === "ZHIHU_RESTORE_SCROLL_POSITION") {
         if (scrollableNodeRef.current) {
           scrollableNodeRef.current.scrollTop = payload;
         }
       }
     };
-    const removeListener = messageHandler.addUnsolicitedListener(unsolicitedMessageHandler);
+    const removeListener = messageHandler.addUnsolicitedListener(
+      unsolicitedMessageHandler
+    );
 
     return () => {
       scrollableNode.removeEventListener("scroll", handleScroll);
@@ -122,7 +136,6 @@ function App() {
 
   return (
     <>
-      {contextHolder}
       <Tabs
         radius="full"
         className="fixed z-50 top-2.5 w-full justify-center "
@@ -131,7 +144,7 @@ function App() {
         classNames={{
           tabList: "backdrop-style",
           cursor: "tab-active-style",
-          tabContent: "vscode-foreground"
+          tabContent: "vscode-foreground dynamic-font-size",
         }}
       >
         {tabs.map((tab) => (
@@ -142,15 +155,15 @@ function App() {
         {loading && list.length === 0 ? (
           loaderFunc()
         ) : (
-            <InfiniteScroll
-              dataLength={list.length}
-              next={fetchData}
-              loader={loading ? loaderFunc() : null}
-              endMessage={<Divider plain>没有了🤐</Divider>}
-              hasMore={hasMore(activeKey as string)}
-              scrollThreshold={0.95}
-              scrollableTarget="scrollableDiv"
-            >
+          <InfiniteScroll
+            dataLength={list.length}
+            next={fetchData}
+            loader={loading ? loaderFunc() : null}
+            endMessage={<Divider plain>没有了🤐</Divider>}
+            hasMore={hasMore(activeKey as string)}
+            scrollThreshold={0.95}
+            scrollableTarget="scrollableDiv"
+          >
             {list.map((item: ZhihuItemData) => (
               <motion.div
                 key={item.id}
@@ -191,6 +204,13 @@ function App() {
           icon={<RedoOutlined style={{ color: "#b37feb" }} />}
           tooltip={{ title: "刷新", placement: "left" }}
         />
+        {hasExpanded && (
+          <FloatButton
+            onClick={() => collapseAll()}
+            icon={<CompressOutlined style={{ color: "#a0d911" }} />}
+            tooltip={{ title: "折叠已展开", placement: "left" }}
+          />
+        )}
         <FloatButton
           onClick={() => {
             const newState = !showImg;
@@ -212,6 +232,16 @@ function App() {
             placement: "left",
           }}
         />
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
+        />
       </FloatButton.Group>
       <Suspense fallback={<div>Loading...</div>}>
         <QuestionDetailDrawer
@@ -228,6 +258,8 @@ function App() {
           questionId={currentQuestionId}
           hasMore={hasMoreQuestion(currentQuestionId as string)}
           showImg={showImg}
+          questionOrder={questionOrder}
+          changeQuestionOrder={changeQuestionOrder}
         />
       </Suspense>
       <SearchDrawer

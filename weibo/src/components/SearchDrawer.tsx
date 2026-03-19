@@ -25,7 +25,7 @@ import {
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
-import { weiboUser, SearchType } from "../../../type";
+import { weiboUser, SearchType } from "../../../types/weibo";
 import { WeiboUserItem } from "./WeiboUserItem";
 import WeiboCard from "./WeiboCard";
 import useWeiboAction from "../hooks/useWeiboAction";
@@ -120,7 +120,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   const {
     list: weibos,
     copyLink,
-    contextHolder,
     handleToggleComments,
     handleExpandLongWeibo,
     handleCommentOrRepost,
@@ -221,7 +220,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   return (
     <>
-      {contextHolder}
       <Drawer
         title="微博搜索"
         placement="bottom"

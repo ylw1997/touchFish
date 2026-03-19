@@ -1,0 +1,80 @@
+.xhs-feed-card {
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+}
+
+.xhs-feed-card-cover {
+  position: relative;
+  line-height: 0; /* 去除下方间隙 */
+  cursor: pointer;
+  img {
+    width: 100%;
+    max-height: 300px;
+    display: block;
+    object-fit: cover;
+    border-radius: 16px; /* 图片四角圆角 */
+    transition: filter 0.25s ease, transform 0.25s ease; /* 平滑过渡 */
+  }
+
+  &:hover img {
+    filter: brightness(0.8);
+  }
+}
+
+.xhs-feed-card-play {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 20px;
+  color: #fff;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.xhs-feed-card-info {
+  padding: 10px 12px;
+}
+
+.xhs-feed-card-desc {
+  font-size: var(--app-font-size);
+  line-height: 20px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--vscode-foreground);
+  word-break: break-word;
+  cursor: pointer;
+  &:hover {
+    color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);
+  }
+}
+
+.xhs-feed-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.xhs-feed-card-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  .xhs-feed-card-username {
+    font-size: calc(var(--app-font-size) - 1px);
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    &:hover {
+      color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);
+    }
+  }
+}
+
+.xhs-feed-card-like {
+  font-size: calc(var(--app-font-size) - 2px);
+  color: var(--vscode-foreground);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
