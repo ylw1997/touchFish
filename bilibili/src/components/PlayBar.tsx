@@ -301,6 +301,18 @@ const PlayBar: React.FC = () => {
 
   return (
     <>
+      <AnimatePresence>
+        {isExpanded && !isDocumentPip && (
+          <motion.div
+            className="playbar-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={handleExpandClick}
+          />
+        )}
+      </AnimatePresence>
       {/* 画中画占位提示 - 当 PlayBar 被弹出到画中画时显示 */}
       {isDocumentPip && (
         <div className="playbar-placeholder">

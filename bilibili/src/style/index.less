@@ -356,6 +356,14 @@ a {
   width: 100% !important;
   height: 100% !important;
 }
+.playbar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, #000 80%, transparent);
+  backdrop-filter: blur(3px) saturate(90%);
+  z-index: 1090;
+  pointer-events: auto;
+}
 .playbar {
   position: fixed;
   bottom: 12px;
