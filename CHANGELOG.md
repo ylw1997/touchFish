@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [12.7.0](https://github.com/ylw1997/touchFish/compare/v12.6.0...v12.7.0) (2026-03-19)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 修复bilibili错误问题 ([7c5ab85](https://github.com/7c5ab85c5a2e16f55bfa08a664936258c12ddf92))
+
+
+### ✨ Features | 新功能
+
+* bilibili优化 ([e19eeb5](https://github.com/e19eeb579f24df40d825b3b9072af5fe57bc5f41))
+
 ## [12.6.0](https://github.com/ylw1997/touchFish/compare/v12.5.0...v12.6.0) (2026-03-18)
 
 
