@@ -110,12 +110,9 @@ function App() {
 
   // 退出登录
   const handleLogout = useCallback(async () => {
-    console.log("[App] handleLogout 被调用");
     try {
       vscode.postMessage({ command: "BILIBILI_LOGOUT" });
-      console.log("[App] 已发送 BILIBILI_LOGOUT 消息");
       logout();
-      console.log("[App] 已调用 store logout");
       message.success("已退出登录");
     } catch (error) {
       console.error("[App] 退出登录失败:", error);
@@ -126,9 +123,7 @@ function App() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const { command, payload } = event.data;
-      console.log("[App] 收到消息:", command, payload);
       if (command === "BILIBILI_AUTH_SYNC") {
-        console.log("[App] 收到登录状态同步:", payload);
         if (payload?.isLoggedIn && payload?.userInfo) {
           login(payload.userInfo);
         } else {
@@ -175,7 +170,6 @@ function App() {
 
   // 监听登录状态变化
   useEffect(() => {
-    console.log("[App] 登录状态变化:", isLoggedIn, userInfo);
   }, [isLoggedIn, userInfo]);
   useEffect(() => {
     if (list.length === 0) fetchData();

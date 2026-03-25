@@ -29,9 +29,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
     setQRCode(null, null);
 
     try {
-      console.log("[LoginModal] 开始请求二维码");
       const result = await request<any>("BILIBILI_GET_LOGIN_QR", null);
-      console.log("[LoginModal] 收到响应:", result);
 
       if (result.code === 0 && result.data) {
         const { url, qrcode_key } = result.data;

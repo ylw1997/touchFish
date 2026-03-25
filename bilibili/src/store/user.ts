@@ -54,7 +54,6 @@ export const useUserStore = create<UserState>()((set) => ({
     }),
 
   logout: () => {
-    console.log("[UserStore] 执行 logout");
     set({
       isLoggedIn: false,
       userInfo: null,
@@ -62,6 +61,5 @@ export const useUserStore = create<UserState>()((set) => ({
       qrCodeUrl: null,
       qrKey: null,
     });
-    console.log("[UserStore] logout 完成");
   },
 }));
