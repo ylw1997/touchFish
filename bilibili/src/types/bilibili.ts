@@ -68,6 +68,39 @@ export interface BilibiliRecommendResponse {
   };
 }
 
+// ============== 热门 API 类型 ==============
+
+// 热门视频项 (与推荐类似但字段略有不同)
+export interface PopularVideoItem {
+  aid: number;
+  bvid: string;
+  cid: number;
+  pic: string;
+  title: string;
+  duration: number;
+  pubdate: number;
+  owner: BilibiliOwner;
+  stat: {
+    view: number;
+    like: number;
+    danmaku: number;
+  };
+  rcmd_reason?: {
+    content?: string;
+  };
+}
+
+// 热门接口响应
+export interface BilibiliPopularResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    list: PopularVideoItem[];
+    no_more: boolean;
+  };
+}
+
 // 统一的列表项类型（用于渲染）
 export interface BilibiliListItem {
   id: number;

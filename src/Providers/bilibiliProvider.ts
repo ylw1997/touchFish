@@ -4,6 +4,7 @@
 import { WebviewView, ExtensionContext, window, WebviewPanel } from "vscode";
 import {
   getRecommend,
+  getPopular,
   getDynamic,
   getWatchLater,
   getFavoriteFolders,
@@ -417,6 +418,38 @@ export class BilibiliProvider extends BaseWebviewProvider {
         }
         webviewView.webview.postMessage({
           command: "BILIBILI_RECOMMEND_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_POPULAR": {
+        const { page = 1 } = payload || {};
+        const res = await getPopular(page);
+        if (res.data?.code !== 0) {
+          if (res.data?.code === -101) {
+            showInfo("B站 Cookie 失效或未配置", "配置 Cookie").then(
+              async (selection) => {
+                if (selection === "配置 Cookie") {
+                  const cookie = await window.showInputBox({
+                    placeHolder: "请输入B站的cookie",
+                    prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                  });
+                  if (cookie) {
+                    await setConfigByKey("bilibiliCookie", cookie);
+                    window.showInformationMessage(
+                      "Cookie 设置成功，请点击刷新按钮",
+                    );
+                  }
+                }
+              },
+            );
+          } else {
+            showInfo(`获取B站热门失败: ${res.data?.message || "未知错误"}`);
+          }
+        }
+        webviewView.webview.postMessage({
+          command: "BILIBILI_POPULAR_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

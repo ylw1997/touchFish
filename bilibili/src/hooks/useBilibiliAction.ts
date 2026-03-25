@@ -172,6 +172,43 @@ const useBilibiliAction = () => {
             dynamicPageRef.current += 1;
             setTotal(hasMoreRef.current ? 999 : list.length + newList.length);
           }
+        } else if (payload === "popular") {
+          // 热门接口 - 支持分页
+          if (replace) {
+            dynamicPageRef.current = 1;
+          }
+
+          const result = await apiClient.getPopular(dynamicPageRef.current);
+
+          if (result.code === 0 && result.data?.list) {
+            const newList: BilibiliListItem[] = result.data.list.map(
+              (item: any) => ({
+                id: item.aid,
+                bvid: item.bvid,
+                cid: 0,
+                uri: `https://www.bilibili.com/video/${item.bvid}`,
+                pic: item.pic.startsWith("http") ? item.pic : `https:${item.pic}`,
+                title: item.title,
+                duration: item.duration,
+                pubdate: item.pubdate,
+                owner: item.owner,
+                stat: {
+                  view: item.stat.view,
+                  like: item.stat.like,
+                  danmaku: item.stat.danmaku,
+                },
+                is_followed: 0,
+                rcmd_reason: item.rcmd_reason,
+              }),
+            );
+
+            setList((currentList) =>
+              replace ? newList : [...currentList, ...newList],
+            );
+
+            dynamicPageRef.current += 1;
+            setTotal(result.data.no_more ? list.length + newList.length : 999);
+          }
         } else if (payload === "watchlater") {
           // 待看接口
           if (replace) {

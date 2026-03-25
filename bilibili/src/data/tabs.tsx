@@ -14,6 +14,10 @@ export const defTab: TabItem[] = [
     label: "推荐",
   },
   {
+    key: "popular",
+    label: "热门",
+  },
+  {
     key: "dynamic",
     label: "动态",
   },

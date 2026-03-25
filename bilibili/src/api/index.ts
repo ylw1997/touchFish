@@ -4,6 +4,7 @@
 
 import type {
   BilibiliRecommendResponse,
+  BilibiliPopularResponse,
   BilibiliDynamicResponse,
   BilibiliWatchLaterResponse,
   BilibiliFavoriteFoldersResponse,
@@ -36,6 +37,15 @@ export class BilibiliApi {
       "BILIBILI_RECOMMEND",
       null,
       "请求推荐视频中..."
+    );
+  }
+
+  // 获取热门视频列表
+  getPopular(page: number = 1) {
+    return this.request<BilibiliPopularResponse>(
+      "BILIBILI_POPULAR",
+      { page },
+      "请求热门视频中..."
     );
   }
 

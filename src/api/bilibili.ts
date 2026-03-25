@@ -213,6 +213,31 @@ export const getLoginUserInfo = async (cookie: string) => {
 };
 
 /**
+ * 获取热门视频列表
+ * https://api.bilibili.com/x/web-interface/popular
+ */
+export const getPopular = async (pn: number = 1) => {
+  try {
+    return await axios.get(
+      `https://api.bilibili.com/x/web-interface/popular`,
+      {
+        params: { pn, ps: 20 },
+        headers: await getBilibiliHeaders(),
+      },
+    );
+  } catch (error: any) {
+    showError(`获取B站热门失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: { list: [], no_more: false },
+      },
+    };
+  }
+};
+
+/**
  * 获取推荐视频列表
  * https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd
  */
