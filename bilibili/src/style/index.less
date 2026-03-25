@@ -75,7 +75,7 @@ a {
 
 .tabs {
   position: fixed;
-  z-index: 9;
+  z-index: 100;
   width: 100%;
   top: 48px; // 为header留出空间
   .backdrop-style();
@@ -94,7 +94,7 @@ a {
   left: 0;
   right: 0;
   height: 48px;
-  z-index: 10;
+  z-index: 110;
   .backdrop-style();
   display: flex;
   align-items: center;
@@ -170,12 +170,16 @@ a {
 }
 
 .video-card {
+  position: relative;
+  z-index: 0;
   // border: 1px solid var(--vscode-chat-requestBorder);
   // border-radius: 8px;
   // overflow: hidden;
 
   .video-cover {
     position: relative;
+    z-index: 0;
+    isolation: isolate;
     overflow: hidden;
     background: #1a1a1a;
 
@@ -289,14 +293,19 @@ a {
     // 视频播放器容器
     .video-player-container {
       position: relative;
+      z-index: 0;
       width: 100%;
       aspect-ratio: 16 / 9;
       background: #000;
+      overflow: hidden;
+      border-radius: 16px;
 
       .video-player {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        overflow: hidden;
       }
 
       .video-close-btn {

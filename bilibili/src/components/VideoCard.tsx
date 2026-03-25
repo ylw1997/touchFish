@@ -112,9 +112,10 @@ const VideoCard: React.FC<VideoCardProps> = ({
         setVideoUrl(result.data.durl[0].url);
 
         // 获取弹幕
-        if (onGetDanmaku && item.cid) {
+        const danmakuCid = result.data?.cid || item.cid;
+        if (onGetDanmaku && danmakuCid) {
           try {
-            const danmakuRes = await onGetDanmaku(item.cid);
+            const danmakuRes = await onGetDanmaku(danmakuCid);
             if (danmakuRes.code === 0 && danmakuRes.data) {
               setDanmakuData(danmakuRes.data);
             }
@@ -175,6 +176,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 url={videoUrl}
                 danmakuData={danmakuData}
                 isLive={item.duration === 0}
+                autoSize={false}
               />
             </div>
             <div className="video-close-btn" onClick={handleCloseVideo}>

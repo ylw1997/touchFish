@@ -122,9 +122,14 @@ const PlayBar: React.FC = () => {
           setVideoUrl(result.data.durl[0].url);
 
           try {
-            const danmakuRes = await apiClient.getDanmaku(video.cid);
-            if (!isStaleRequest() && danmakuRes.code === 0) {
-              setDanmakuData(danmakuRes.data);
+            const danmakuCid = result.data?.cid || video.cid;
+            if (!danmakuCid) {
+              setDanmakuData("");
+            } else {
+              const danmakuRes = await apiClient.getDanmaku(danmakuCid);
+              if (!isStaleRequest() && danmakuRes.code === 0) {
+                setDanmakuData(danmakuRes.data);
+              }
             }
           } catch (error) {
             console.error("获取弹幕失败", error);

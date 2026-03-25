@@ -22,6 +22,7 @@ interface ArtPlayerComponentProps {
   ) => void;
   style?: React.CSSProperties;
   controls?: boolean;
+  autoSize?: boolean;
 }
 
 const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
@@ -36,6 +37,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   onError,
   style,
   controls = true,
+  autoSize = true,
 }) => {
   const artRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Artplayer | null>(null);
@@ -103,7 +105,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
       isLive: nextIsLive,
       muted: false,
       autoplay: true,
-      autoSize: true,
+      autoSize,
       autoMini: true,
       screenshot: false,
       setting: false,
@@ -238,7 +240,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
           console.error("Artplayer switchUrl failed:", error);
         });
     }
-  }, [url, isLive]);
+  }, [url, isLive, autoSize]);
 
   useEffect(() => {
     if (isLive || !danmakuData || !playerRef.current) return;

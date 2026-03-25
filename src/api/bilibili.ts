@@ -623,9 +623,13 @@ export const getPlayUrl = async (bvid: string, cid: number) => {
 
     const url = `https://api.bilibili.com/x/player/wbi/playurl?bvid=${bvid}&cid=${finalCid}&qn=112&platform=html5&high_quality=1`;
     console.log("获取视频播放链接", url);
-    return await axios.get(url, {
+    const response = await axios.get(url, {
       headers: await getBilibiliHeaders(),
     });
+    if (response.data?.data) {
+      response.data.data.cid = finalCid;
+    }
+    return response;
   } catch (error: any) {
     showError(`获取视频播放链接失败: ${error.message}`);
     return {
@@ -693,6 +697,16 @@ export const getVideoInfo = async (bvid: string) => {
  */
 export const getDanmaku = async (cid: number) => {
   try {
+    if (!cid) {
+      return {
+        data: {
+          code: -1,
+          message: "无效CID",
+          data: "",
+        },
+      };
+    }
+
     const url = `https://api.bilibili.com/x/v1/dm/list.so?oid=${cid}`;
     const response = await axios.get(url, {
       headers: await getBilibiliHeaders(),

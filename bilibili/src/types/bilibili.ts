@@ -344,6 +344,7 @@ export interface BilibiliPlayUrlResponse {
   data: {
     from: string;
     result: string;
+    cid?: number;
     quality: number;
     format: string;
     timelength: number;
