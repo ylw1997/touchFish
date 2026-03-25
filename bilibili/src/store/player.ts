@@ -126,9 +126,12 @@ export const usePlayerStore = create<PlayerState>()(
 
           // 如果删除的是当前播放的视频，自动切到第一个
           if (state.currentVideo && state.currentVideo.id === id) {
+            const removedIndex = state.playlist.findIndex((v) => v.id === id);
+            const nextIndex = Math.min(removedIndex, newPlaylist.length - 1);
+
             return {
               playlist: newPlaylist,
-              currentVideo: newPlaylist[0],
+              currentVideo: newPlaylist[nextIndex] ?? null,
               isPlaying: true,
             };
           }

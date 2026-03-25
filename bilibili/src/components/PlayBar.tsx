@@ -51,6 +51,38 @@ const PlayBar: React.FC = () => {
   const { request } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
 
+  const handlePlaybackFailure = useCallback(
+    (
+      video: NonNullable<typeof currentVideo>,
+      error: unknown,
+      options?: {
+        removeFailedLive?: boolean;
+        messageText?: string;
+      },
+    ) => {
+      if (usePlayerStore.getState().currentVideo?.id !== video.id) {
+        return;
+      }
+
+      console.error("Playback failed:", error);
+      requestSeqRef.current += 1;
+      setIsLoading(false);
+      setVideoUrl(null);
+      setDanmakuData("");
+      setIsPlaying(false);
+      setIsPip(false);
+
+      if (video.duration === 0 && options?.removeFailedLive) {
+        removeFromPlaylist(video.id);
+      }
+
+      if (options?.messageText) {
+        message.error(options.messageText);
+      }
+    },
+    [message, removeFromPlaylist, setIsPlaying, setVideoUrl],
+  );
+
   const fetchPlayUrl = useCallback(
     async (video: typeof currentVideo) => {
       if (!video) return;
@@ -72,6 +104,11 @@ const PlayBar: React.FC = () => {
           ) {
             setVideoUrl(result.data.durl[0].url);
             setDanmakuData("");
+          } else if (!isStaleRequest()) {
+            handlePlaybackFailure(video, result, {
+              removeFailedLive: true,
+              messageText: "直播播放失败，已从播放列表移除",
+            });
           }
           return;
         }
@@ -92,6 +129,20 @@ const PlayBar: React.FC = () => {
           } catch (error) {
             console.error("获取弹幕失败", error);
           }
+        } else if (!isStaleRequest()) {
+          handlePlaybackFailure(video, result, {
+            messageText: "视频播放失败，请稍后重试",
+          });
+        }
+      } catch (error) {
+        if (!isStaleRequest()) {
+          handlePlaybackFailure(video, error, {
+            removeFailedLive: video.duration === 0,
+            messageText:
+              video.duration === 0
+                ? "直播播放失败，已从播放列表移除"
+                : "视频播放失败，请稍后重试",
+          });
         }
       } finally {
         if (requestId === requestSeqRef.current) {
@@ -99,7 +150,7 @@ const PlayBar: React.FC = () => {
         }
       }
     },
-    [apiClient, setVideoUrl],
+    [apiClient, handlePlaybackFailure, setVideoUrl],
   );
 
   useEffect(() => {
@@ -130,6 +181,12 @@ const PlayBar: React.FC = () => {
     }
   }, [isPlaying]);
 
+  useEffect(() => {
+    if (!videoUrl) {
+      setIsPip(false);
+    }
+  }, [videoUrl]);
+
   const handlePlayVideo = (video: typeof currentVideo) => {
     if (video) {
       setDanmakuData("");
@@ -147,8 +204,22 @@ const PlayBar: React.FC = () => {
   };
 
   const handleVideoEnded = useCallback(() => {
+    const { currentVideo: playingVideo, playlist: queue } =
+      usePlayerStore.getState();
+
+    if (!playingVideo) {
+      setIsPlaying(false);
+      return;
+    }
+
+    const currentIndex = queue.findIndex((video) => video.id === playingVideo.id);
+    if (currentIndex === -1 || currentIndex >= queue.length - 1) {
+      setIsPlaying(false);
+      return;
+    }
+
     playNext();
-  }, [playNext]);
+  }, [playNext, setIsPlaying]);
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -192,19 +263,32 @@ const PlayBar: React.FC = () => {
   }, [setIsPlaying]);
 
   const handleArtError = useCallback(
-    (error: unknown) => {
-      const liveVideo = usePlayerStore.getState().currentVideo;
-      if (!liveVideo || liveVideo.duration !== 0) {
+    (
+      error: unknown,
+      context: {
+        mediaId?: number;
+        url: string;
+        isLive: boolean;
+      },
+    ) => {
+      if (!context.isLive || !context.mediaId) {
         return;
       }
 
-      console.error("Live playback failed, removing from playlist:", error);
-      removeFromPlaylist(liveVideo.id);
-      setVideoUrl(null);
-      setDanmakuData("");
-      message.error("直播播放失败，已从播放列表移除");
+      const failedVideo = usePlayerStore
+        .getState()
+        .playlist.find((video) => video.id === context.mediaId);
+
+      if (!failedVideo) {
+        return;
+      }
+
+      handlePlaybackFailure(failedVideo, error, {
+        removeFailedLive: true,
+        messageText: "直播播放失败，已从播放列表移除",
+      });
     },
-    [message, removeFromPlaylist, setVideoUrl],
+    [handlePlaybackFailure],
   );
 
   const style = useMemo(
@@ -351,6 +435,7 @@ const PlayBar: React.FC = () => {
                 {videoUrl && (
                   <ArtPlayerComponent
                     url={videoUrl}
+                    mediaId={currentVideo.id}
                     danmakuData={danmakuData}
                     isLive={currentVideo.duration === 0}
                     getInstance={handleArtInstance}

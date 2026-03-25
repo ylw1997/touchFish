@@ -5,19 +5,28 @@ import Hls from "hls.js";
 
 interface ArtPlayerComponentProps {
   url: string;
+  mediaId?: number;
   danmakuData?: string;
   isLive?: boolean;
   getInstance?: (art: Artplayer) => void;
   onPlay?: () => void;
   onPause?: () => void;
   onEnded?: () => void;
-  onError?: (error: unknown) => void;
+  onError?: (
+    error: unknown,
+    context: {
+      mediaId?: number;
+      url: string;
+      isLive: boolean;
+    },
+  ) => void;
   style?: React.CSSProperties;
   controls?: boolean;
 }
 
 const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   url,
+  mediaId,
   danmakuData,
   isLive = false,
   getInstance,
@@ -33,6 +42,11 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   const hlsRef = useRef<Hls | null>(null);
   const modeRef = useRef<"video" | "live" | null>(null);
   const handledErrorUrlRef = useRef<string | null>(null);
+  const mediaRef = useRef({
+    mediaId,
+    url,
+    isLive,
+  });
   const callbacksRef = useRef({
     getInstance,
     onPlay,
@@ -50,6 +64,14 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
       onError,
     };
   }, [getInstance, onPlay, onPause, onEnded, onError]);
+
+  useEffect(() => {
+    mediaRef.current = {
+      mediaId,
+      url,
+      isLive,
+    };
+  }, [mediaId, url, isLive]);
 
   useEffect(() => {
     handledErrorUrlRef.current = null;
@@ -113,7 +135,11 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
               console.error("HLS error:", data);
               if (data?.fatal && handledErrorUrlRef.current !== sourceUrl) {
                 handledErrorUrlRef.current = sourceUrl;
-                callbacksRef.current.onError?.(data);
+                callbacksRef.current.onError?.(data, {
+                  mediaId: mediaRef.current.mediaId,
+                  url: sourceUrl,
+                  isLive: true,
+                });
               }
             });
             hlsRef.current = hls;
@@ -123,6 +149,11 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
             art.notice.show = "Browser does not support HLS playback";
             callbacksRef.current.onError?.(
               new Error("Browser does not support HLS playback"),
+              {
+                mediaId: mediaRef.current.mediaId,
+                url: sourceUrl,
+                isLive: true,
+              },
             );
           }
         },
