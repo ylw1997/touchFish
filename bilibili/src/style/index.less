@@ -46,7 +46,7 @@ a {
 .list {
   overflow-y: auto;
   height: 100vh;
-  padding: 50px 5px 0;
+  padding: 98px 5px 0; // 48px header + 50px tabs
 }
 
 .infinite-scroll-component {
@@ -77,8 +77,58 @@ a {
   position: fixed;
   z-index: 9;
   width: 100%;
-  top: 0;
+  top: 48px; // 为header留出空间
   .backdrop-style();
+}
+
+// Bilibili 应用容器
+.bilibili-app {
+  height: 100vh;
+  overflow: hidden;
+}
+
+// 顶部导航栏
+.bilibili-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  z-index: 10;
+  .backdrop-style();
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--vscode-chat-requestBorder);
+
+  .bilibili-header-left {
+    display: flex;
+    align-items: center;
+
+    .bilibili-logo {
+      width: 60px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 2px rgba(0, 161, 214, 0.3));
+      transition: filter 0.2s ease;
+
+      &:hover {
+        filter: drop-shadow(0 0 4px rgba(0, 161, 214, 0.5));
+      }
+    }
+  }
+
+  .bilibili-header-right {
+    display: flex;
+    align-items: center;
+
+    .ant-btn {
+      color: var(--vscode-foreground);
+      &:hover {
+        color: #00a1d6;
+      }
+    }
+  }
 }
 
 .ant-tabs > .ant-tabs-nav {

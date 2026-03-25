@@ -22,6 +22,197 @@ export const getBilibiliHeaders = async (extraHeaders = {}) => {
 };
 
 /**
+ * 生成登录二维码
+ * https://passport.bilibili.com/x/passport-login/web/qrcode/generate
+ */
+export const generateQRCode = async () => {
+  try {
+    console.log("[generateQRCode] 开始请求二维码");
+    const res = await axios.get(
+      "https://passport.bilibili.com/x/passport-login/web/qrcode/generate",
+      {
+        timeout: 10000,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Referer: "https://www.bilibili.com",
+        },
+      }
+    );
+    console.log("[generateQRCode] 请求成功:", res.data);
+    return {
+      data: {
+        code: res.data.code,
+        message: res.data.message,
+        data: res.data.data,
+      },
+    };
+  } catch (error: any) {
+    console.error("[generateQRCode] Error:", error.message);
+    return {
+      data: {
+        code: -1,
+        message: error.message || "获取二维码失败",
+        data: null,
+      },
+    };
+  }
+};
+
+/**
+ * 轮询二维码登录状态
+ * https://passport.bilibili.com/x/passport-login/web/qrcode/poll
+ */
+export const pollQRCode = async (qrcode_key: string) => {
+  try {
+    const res = await axios.get(
+      "https://passport.bilibili.com/x/passport-login/web/qrcode/poll",
+      {
+        params: { qrcode_key },
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Referer: "https://www.bilibili.com",
+        },
+      }
+    );
+
+    const responseData = res.data;
+    const code = responseData.data?.code;
+
+    // 登录成功，提取完整cookie
+    if (code === 0) {
+      const setCookies = res.headers["set-cookie"];
+      let fullCookie = "";
+
+      if (setCookies && Array.isArray(setCookies)) {
+        // 提取所有必要的cookie字段
+        const cookieFields = [
+          "SESSDATA",
+          "bili_jct",
+          "DedeUserID",
+          "DedeUserID__ckMd5",
+          "sid",
+          "buvid3",
+          "buvid4",
+          "b_nut",
+        ];
+        const extractedCookies: string[] = [];
+
+        for (const cookieStr of setCookies) {
+          for (const field of cookieFields) {
+            const match = cookieStr.match(new RegExp(`${field}=([^;]+)`));
+            if (match && !extractedCookies.some((c) => c.startsWith(`${field}=`))) {
+              extractedCookies.push(`${field}=${match[1]}`);
+            }
+          }
+        }
+        fullCookie = extractedCookies.join("; ");
+      }
+
+      return {
+        data: {
+          code: 0,
+          message: "登录成功",
+          data: {
+            status: "success",
+            cookie: fullCookie,
+          },
+        },
+      };
+    }
+
+    // 二维码已扫码但未确认
+    if (code === 86090) {
+      return {
+        data: {
+          code: 0,
+          message: "已扫码",
+          data: {
+            status: "scanning",
+          },
+        },
+      };
+    }
+
+    // 二维码已过期
+    if (code === 86038) {
+      return {
+        data: {
+          code: 0,
+          message: "二维码已过期",
+          data: {
+            status: "timeout",
+          },
+        },
+      };
+    }
+
+    // 其他状态
+    return {
+      data: {
+        code: 0,
+        message: responseData.message,
+        data: {
+          status: "pending",
+        },
+      },
+    };
+  } catch (error: any) {
+    showError(`轮询登录状态失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: {
+          status: "failed",
+        },
+      },
+    };
+  }
+};
+
+/**
+ * 获取用户信息
+ * https://api.bilibili.com/x/web-interface/nav
+ */
+export const getLoginUserInfo = async (cookie: string) => {
+  try {
+    const res = await axios.get("https://api.bilibili.com/x/web-interface/nav", {
+      headers: buildCommonHeaders(cookie, {
+        Referer: "https://www.bilibili.com/",
+        Origin: "https://www.bilibili.com",
+      }),
+    });
+
+    if (res.data.code === 0) {
+      const { face, uname, mid, level_info } = res.data.data;
+      return {
+        code: 0,
+        data: {
+          mid,
+          uname,
+          face,
+          level: level_info?.current_level,
+        },
+      };
+    }
+
+    return {
+      code: res.data.code,
+      message: res.data.message,
+      data: null,
+    };
+  } catch (error: any) {
+    return {
+      code: -1,
+      message: error.message,
+      data: null,
+    };
+  }
+};
+
+/**
  * 获取推荐视频列表
  * https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd
  */

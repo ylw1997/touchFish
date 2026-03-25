@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(git clone:*)",
+      "Read(//tmp/**)",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}

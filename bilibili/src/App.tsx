@@ -2,8 +2,19 @@
  * @Description: Bilibili 扩展主应用
  */
 
-import { useEffect, useState, useRef } from "react";
-import { Divider, FloatButton, Tabs, TabsProps } from "antd";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { BilibiliLogo } from "./components/BilibiliLogo";
+import {
+  Divider,
+  FloatButton,
+  Tabs,
+  TabsProps,
+  Avatar,
+  Button,
+  Dropdown,
+  Space,
+  message,
+} from "antd";
 import { motion } from "framer-motion";
 import "./style/index.less";
 import {
@@ -13,8 +24,10 @@ import {
   MinusOutlined,
   PlaySquareOutlined,
   SearchOutlined,
+  LoginOutlined,
+  LogoutOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
-import { message } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
@@ -27,10 +40,12 @@ import { usePlayerStore } from "./store/player";
 import { useFavoriteTabs } from "./hooks/useFavoriteTabs";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
+import { useUserStore } from "./store/user";
 import { debounce } from "./utils";
 import PlayBar from "./components/PlayBar";
 import SearchDrawer from "./components/SearchDrawer";
 import UserProfileDrawer from "./components/UserProfileModal";
+import LoginModal from "./components/LoginModal";
 import type { BilibiliOwner } from "./types/bilibili";
 
 dayjs.locale("zh-cn");
@@ -44,9 +59,15 @@ function App() {
   // 搜索抽屉状态
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
+  // 登录弹窗状态
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+
   // 用户主页弹窗状态
   const [userProfileOpen, setUserProfileOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<BilibiliOwner | null>(null);
+
+  // 用户状态
+  const { isLoggedIn, userInfo, login, logout } = useUserStore();
 
   // 业务逻辑 Hook
   const {
@@ -87,6 +108,41 @@ function App() {
     clearList,
   });
 
+  // 退出登录
+  const handleLogout = useCallback(async () => {
+    console.log("[App] handleLogout 被调用");
+    try {
+      vscode.postMessage({ command: "BILIBILI_LOGOUT" });
+      console.log("[App] 已发送 BILIBILI_LOGOUT 消息");
+      logout();
+      console.log("[App] 已调用 store logout");
+      message.success("已退出登录");
+    } catch (error) {
+      console.error("[App] 退出登录失败:", error);
+    }
+  }, [logout]);
+
+  // 同步用户登录状态
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { command, payload } = event.data;
+      console.log("[App] 收到消息:", command, payload);
+      if (command === "BILIBILI_AUTH_SYNC") {
+        console.log("[App] 收到登录状态同步:", payload);
+        if (payload?.isLoggedIn && payload?.userInfo) {
+          login(payload.userInfo);
+        } else {
+          logout();
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [login, logout]);
+
   // 滚动位置保存与恢复
   useEffect(() => {
     const scrollableNode = scrollableNodeRef.current;
@@ -117,14 +173,65 @@ function App() {
     };
   }, []);
 
-  // 初始化加载
+  // 监听登录状态变化
+  useEffect(() => {
+    console.log("[App] 登录状态变化:", isLoggedIn, userInfo);
+  }, [isLoggedIn, userInfo]);
   useEffect(() => {
     if (list.length === 0) fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <>
+    <div className="bilibili-app">
+      {/* 顶部导航栏 */}
+      <div className="bilibili-header">
+        <div className="bilibili-header-left">
+          <BilibiliLogo className="bilibili-logo" />
+        </div>
+        <div className="bilibili-header-right">
+          {isLoggedIn ? (
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: "logout",
+                    icon: <LogoutOutlined />,
+                    label: "退出登录",
+                    onClick: handleLogout,
+                  },
+                ],
+              }}
+              placement="bottomRight"
+              trigger={["hover"]}
+            >
+              <Space style={{ cursor: "pointer" }}>
+                {userInfo?.face ? (
+                  <Avatar src={userInfo.face} size="small" />
+                ) : (
+                  <Avatar icon={<UserOutlined />} size="small" />
+                )}
+                {userInfo?.uname && (
+                  <span
+                    style={{ fontSize: "14px", color: "var(--text-color)" }}
+                  >
+                    {userInfo.uname}
+                  </span>
+                )}
+              </Space>
+            </Dropdown>
+          ) : (
+            <Button
+              type="text"
+              icon={<LoginOutlined />}
+              onClick={() => setLoginModalOpen(true)}
+            >
+              登录
+            </Button>
+          )}
+        </div>
+      </div>
+
       <Tabs
         className="tabs"
         items={tabs as TabsProps["items"]}
@@ -139,7 +246,7 @@ function App() {
           activeKey={subActiveKey}
           onChange={onSubChange}
           centered
-          style={{ top: "46px" }}
+          style={{ top: "94px" }}
         />
       )}
       <div
@@ -147,8 +254,8 @@ function App() {
         ref={scrollableNodeRef}
         className="list"
         style={{
-          paddingTop: hasSubTabs ? "96px" : "53px",
-          height: hasSubTabs ? "calc(100vh - 96px)" : "calc(100vh - 53px)",
+          paddingTop: hasSubTabs ? "153px" : "105px", // 48px header + 50px tabs (+ 48px subTabs)
+          height: hasSubTabs ? "calc(100vh - 153px)" : "calc(100vh - 105px)",
         }}
       >
         {isFetching && list.length === 0 ? (
@@ -275,7 +382,13 @@ function App() {
         onGetPlayUrl={getPlayUrl}
         onGetDanmaku={getDanmaku}
       />
-    </>
+
+      {/* 登录弹窗 */}
+      <LoginModal
+        open={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+      />
+    </div>
   );
 }
 

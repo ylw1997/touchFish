@@ -4,3 +4,8 @@ export const setConfigByKey = async (key: string, value: string) => {
   const cfg = vscode.workspace.getConfiguration('touchfish');
   return cfg.update(key, value, true);
 };
+
+export const getConfigByKey = (key: string): string | undefined => {
+  const cfg = vscode.workspace.getConfiguration('touchfish');
+  return cfg.get(key) as string | undefined;
+};

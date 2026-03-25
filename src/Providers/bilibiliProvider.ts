@@ -17,11 +17,21 @@ import {
   getUserVideos,
   getUserCard,
   modifyRelation,
+  generateQRCode,
+  pollQRCode,
+  getLoginUserInfo,
 } from "../api/bilibili";
 import { CommandsType } from "../../types/commands";
-import { setConfigByKey } from "../core/config";
+import { setConfigByKey, getConfigByKey } from "../core/config";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { showInfo } from "../utils/errorMessage";
+
+interface UserInfo {
+  mid: number;
+  uname: string;
+  face: string;
+  level?: number;
+}
 
 export class BilibiliProvider extends BaseWebviewProvider {
   private pipPanel: WebviewPanel | null = null;
@@ -40,7 +50,54 @@ export class BilibiliProvider extends BaseWebviewProvider {
 
   public override resolveWebviewView(webviewView: WebviewView) {
     this.mainWebviewView = webviewView;
+
+    // 同步登录状态
+    this.syncAuthState(webviewView);
+
     return super.resolveWebviewView(webviewView);
+  }
+
+  private async syncAuthState(webviewView: WebviewView) {
+    try {
+      const cookie = getConfigByKey("bilibiliCookie");
+      if (cookie) {
+        const userRes = await getLoginUserInfo(cookie);
+        if (userRes.code === 0 && userRes.data) {
+          const userInfo: UserInfo = {
+            mid: userRes.data.mid,
+            uname: userRes.data.uname,
+            face: userRes.data.face,
+            level: userRes.data.level,
+          };
+          webviewView.webview.postMessage({
+            command: "BILIBILI_AUTH_SYNC",
+            payload: {
+              isLoggedIn: true,
+              userInfo,
+            },
+          });
+        } else {
+          // Cookie已失效
+          webviewView.webview.postMessage({
+            command: "BILIBILI_AUTH_SYNC",
+            payload: {
+              isLoggedIn: false,
+              userInfo: null,
+            },
+          });
+        }
+      } else {
+        webviewView.webview.postMessage({
+          command: "BILIBILI_AUTH_SYNC",
+          payload: {
+            isLoggedIn: false,
+            userInfo: null,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("[BilibiliProvider] 同步登录状态失败:", error);
+    }
   }
 
   private createPipPanel(payload: any) {
@@ -590,6 +647,105 @@ export class BilibiliProvider extends BaseWebviewProvider {
           payload,
           uuid,
         });
+        break;
+      }
+      case "BILIBILI_GET_LOGIN_QR": {
+        console.log("[BilibiliProvider] 开始生成二维码");
+        try {
+          const res = await generateQRCode();
+          console.log("[BilibiliProvider] 生成二维码结果:", res);
+          webviewView.webview.postMessage({
+            command: "BILIBILI_GET_LOGIN_QR_RESULT",
+            payload: res.data,
+            uuid,
+          } as CommandsType<any>);
+        } catch (error: any) {
+          console.error("[BilibiliProvider] 生成二维码失败:", error);
+          webviewView.webview.postMessage({
+            command: "BILIBILI_GET_LOGIN_QR_RESULT",
+            payload: { code: -1, message: error.message },
+            uuid,
+          } as CommandsType<any>);
+        }
+        break;
+      }
+      case "BILIBILI_CHECK_LOGIN_STATUS": {
+        const { qrcode_key } = payload || {};
+        if (!qrcode_key) {
+          webviewView.webview.postMessage({
+            command: "BILIBILI_CHECK_LOGIN_STATUS_RESULT",
+            payload: { code: -1, message: "缺少二维码key" },
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        const res = await pollQRCode(qrcode_key);
+
+        // 如果登录成功，保存cookie并获取用户信息
+        if (res.data.code === 0 && res.data.data?.status === "success") {
+          const cookie = res.data.data.cookie;
+          if (cookie) {
+            await setConfigByKey("bilibiliCookie", cookie);
+
+            // 获取用户信息
+            const userRes = await getLoginUserInfo(cookie);
+            if (userRes.code === 0 && userRes.data) {
+              const userInfo: UserInfo = {
+                mid: userRes.data.mid,
+                uname: userRes.data.uname,
+                face: userRes.data.face,
+                level: userRes.data.level,
+              };
+
+              webviewView.webview.postMessage({
+                command: "BILIBILI_CHECK_LOGIN_STATUS_RESULT",
+                payload: {
+                  code: 0,
+                  data: {
+                    status: "success",
+                    userInfo,
+                  },
+                },
+                uuid,
+              } as CommandsType<any>);
+
+              // 发送登录状态同步消息
+              webviewView.webview.postMessage({
+                command: "BILIBILI_AUTH_SYNC",
+                payload: {
+                  isLoggedIn: true,
+                  userInfo,
+                },
+              });
+              break;
+            }
+          }
+        }
+
+        webviewView.webview.postMessage({
+          command: "BILIBILI_CHECK_LOGIN_STATUS_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_LOGOUT": {
+        console.log("[BilibiliProvider] 收到退出登录请求");
+        try {
+          await setConfigByKey("bilibiliCookie", "");
+          console.log("[BilibiliProvider] Cookie 已清除");
+          webviewView.webview.postMessage({
+            command: "BILIBILI_AUTH_SYNC",
+            payload: {
+              isLoggedIn: false,
+              userInfo: null,
+            },
+          });
+          console.log("[BilibiliProvider] 已发送退出登录状态同步");
+        } catch (error: any) {
+          console.error("[BilibiliProvider] 退出登录失败:", error);
+        }
         break;
       }
     }
