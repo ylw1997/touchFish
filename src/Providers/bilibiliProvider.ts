@@ -689,14 +689,6 @@ export class BilibiliProvider extends BaseWebviewProvider {
         } as CommandsType<any>);
         break;
       }
-      case "BILIBILI_OPEN_PIP_WINDOW": {
-        this.createPipPanel(payload);
-        break;
-      }
-      case "BILIBILI_CLOSE_PIP_WINDOW": {
-        this.closePipPanel();
-        break;
-      }
       case "PIP_PLAY_VIDEO":
       case "PIP_TOGGLE_PLAY":
       case "PIP_PREV_VIDEO":

@@ -5,14 +5,15 @@ import Hls from "hls.js";
 
 interface ArtPlayerComponentProps {
   url: string;
-  danmakuData?: string; // XML string
+  danmakuData?: string;
   isLive?: boolean;
   getInstance?: (art: Artplayer) => void;
   onPlay?: () => void;
   onPause?: () => void;
   onEnded?: () => void;
+  onError?: (error: unknown) => void;
   style?: React.CSSProperties;
-  controls?: boolean; // 控制 UI 元素是否可见/可交互
+  controls?: boolean;
 }
 
 const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
@@ -23,149 +24,212 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   onPlay,
   onPause,
   onEnded,
+  onError,
   style,
   controls = true,
 }) => {
   const artRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Artplayer | null>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const modeRef = useRef<"video" | "live" | null>(null);
+  const handledErrorUrlRef = useRef<string | null>(null);
+  const callbacksRef = useRef({
+    getInstance,
+    onPlay,
+    onPause,
+    onEnded,
+    onError,
+  });
 
-  // 初始化 Artplayer
   useEffect(() => {
-    if (!artRef.current) return;
+    callbacksRef.current = {
+      getInstance,
+      onPlay,
+      onPause,
+      onEnded,
+      onError,
+    };
+  }, [getInstance, onPlay, onPause, onEnded, onError]);
 
-    let instance = playerRef.current;
+  useEffect(() => {
+    handledErrorUrlRef.current = null;
+  }, [url]);
+
+  const destroyPlayer = () => {
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    if (playerRef.current?.destroy) {
+      playerRef.current.destroy(true);
+    }
+
+    playerRef.current = null;
+    modeRef.current = null;
+  };
+
+  const createPlayer = (nextUrl: string, nextIsLive: boolean) => {
+    if (!artRef.current) return null;
+
+    const isM3U8 = nextUrl.includes(".m3u8");
+    const instance = new Artplayer({
+      container: artRef.current,
+      url: nextUrl,
+      type: isM3U8 ? "m3u8" : "auto",
+      volume: 0.5,
+      isLive: nextIsLive,
+      muted: false,
+      autoplay: true,
+      autoSize: true,
+      autoMini: true,
+      screenshot: false,
+      setting: false,
+      pip: true,
+      fullscreen: false,
+      fullscreenWeb: false,
+      loop: false,
+      subtitleOffset: true,
+      miniProgressBar: true,
+      mutex: true,
+      backdrop: true,
+      playsInline: true,
+      autoPlayback: true,
+      airplay: true,
+      theme: "#23ade5",
+      customType: {
+        m3u8: (
+          video: HTMLVideoElement,
+          sourceUrl: string,
+          art: Artplayer,
+        ) => {
+          if (Hls.isSupported()) {
+            const hls = new Hls({
+              enableWorker: true,
+            });
+            hls.loadSource(sourceUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.ERROR, (_event, data) => {
+              console.error("HLS error:", data);
+              if (data?.fatal && handledErrorUrlRef.current !== sourceUrl) {
+                handledErrorUrlRef.current = sourceUrl;
+                callbacksRef.current.onError?.(data);
+              }
+            });
+            hlsRef.current = hls;
+          } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = sourceUrl;
+          } else {
+            art.notice.show = "Browser does not support HLS playback";
+            callbacksRef.current.onError?.(
+              new Error("Browser does not support HLS playback"),
+            );
+          }
+        },
+      },
+      plugins: nextIsLive
+        ? []
+        : [
+            artplayerPluginDanmuku({
+              danmuku: [],
+              speed: 10,
+              opacity: 1,
+              fontSize: 16,
+              color: "#FFFFFF",
+              mode: 0,
+              emitter: false,
+              margin: [10, "75%"],
+              antiOverlap: true,
+              synchronousPlayback: false,
+              filter: (danmu) => danmu.text.length <= 100,
+              lockTime: 5,
+              maxLength: 100,
+              theme: "light",
+              beforeEmit: () =>
+                new Promise((resolve) => {
+                  setTimeout(() => {
+                    resolve(true);
+                  }, 500);
+                }),
+            }),
+          ],
+    });
+
+    if (callbacksRef.current.onPlay) {
+      instance.on("play", callbacksRef.current.onPlay);
+    }
+    if (callbacksRef.current.onPause) {
+      instance.on("pause", callbacksRef.current.onPause);
+    }
+    if (callbacksRef.current.onEnded) {
+      instance.on("video:ended", callbacksRef.current.onEnded);
+    }
+
+    callbacksRef.current.getInstance?.(instance);
+
+    playerRef.current = instance;
+    modeRef.current = nextIsLive || isM3U8 ? "live" : "video";
+
+    return instance;
+  };
+
+  useEffect(() => {
+    if (!artRef.current || !url) return;
+
+    const nextMode = isLive || url.includes(".m3u8") ? "live" : "video";
+    const instance = playerRef.current;
 
     if (!instance) {
-      // 判断是否m3u8
-      const isM3U8 = url.includes(".m3u8");
+      createPlayer(url, isLive);
+      return;
+    }
 
-      // 首次初始化
-      instance = new Artplayer({
-        container: artRef.current,
-        url: url,
-        type: isM3U8 ? "m3u8" : "auto",
-        volume: 0.5,
-        isLive: isLive,
-        muted: false,
-        autoplay: true,
-        autoSize: true,
-        autoMini: true,
-        screenshot: false,
-        setting: false,
-        pip: true,
-        fullscreen: false,
-        fullscreenWeb: false,
-        loop: false,
-        subtitleOffset: true,
-        miniProgressBar: true,
-        mutex: true,
-        backdrop: true,
-        playsInline: true,
-        autoPlayback: true,
-        airplay: true,
-        theme: "#23ade5",
-        customType: {
-          m3u8: function (video: HTMLVideoElement, url: string, art: Artplayer) {
-            if (Hls.isSupported()) {
-              const hls = new Hls({
-                enableWorker: true,
-                xhrSetup: function(xhr) {
-                  xhr.setRequestHeader("Referer", "https://live.bilibili.com");
-                  xhr.setRequestHeader("Origin", "https://live.bilibili.com");
-                }
-              });
-              hls.loadSource(url);
-              hls.attachMedia(video);
-              hls.on(Hls.Events.ERROR, function(_event, data) {
-                console.error("HLS error:", data);
-              });
-              hlsRef.current = hls;
-            } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-              // Safari native support
-              video.src = url;
-            } else {
-              art.notice.show = "浏览器不支持 HLS 播放";
-            }
-          },
-        },
-        plugins: isLive
-          ? [] // 直播不使用弹幕
-          : [
-              artplayerPluginDanmuku({
-                danmuku: [], // 初始为空，稍后更新
-                speed: 10,
-                opacity: 1,
-                fontSize: 16,
-                color: "#FFFFFF",
-                mode: 0,
-                emitter: false,
-                margin: [10, "75%"],
-                antiOverlap: true,
-                synchronousPlayback: false,
-                filter: (danmu) => danmu.text.length <= 100,
-                lockTime: 5,
-                maxLength: 100,
-                theme: "light",
-                beforeEmit: () => {
-                  return new Promise((resolve) => {
-                    setTimeout(() => {
-                      resolve(true);
-                    }, 500);
-                  });
-                },
-              }),
-            ],
-      });
+    const shouldRecreate =
+      modeRef.current !== nextMode ||
+      (nextMode === "live" && url !== instance.option.url);
 
-      if (onPlay) instance.on("play", onPlay);
-      if (onPause) instance.on("pause", onPause);
-      if (onEnded) instance.on("video:ended", onEnded);
+    if (shouldRecreate) {
+      destroyPlayer();
+      createPlayer(url, isLive);
+      return;
+    }
 
-      if (getInstance) getInstance(instance);
-
-      playerRef.current = instance;
-    } else {
-      // 更新 URL
-      if (url && url !== instance.option.url) {
-        instance.switchUrl(url).then(() => {
-          if (instance && instance.option.autoplay) {
-            instance.play().catch(() => {});
+    if (url !== instance.option.url) {
+      void instance
+        .switchUrl(url)
+        .then(() => {
+          if (instance.option.autoplay) {
+            return instance.play().catch(() => {});
           }
+          return undefined;
+        })
+        .catch((error) => {
+          console.error("Artplayer switchUrl failed:", error);
         });
-      }
+    }
+  }, [url, isLive]);
+
+  useEffect(() => {
+    if (isLive || !danmakuData || !playerRef.current) return;
+
+    const instance = playerRef.current;
+    const blob = new Blob([danmakuData], { type: "text/xml" });
+    const danmakuUrl = URL.createObjectURL(blob);
+    const danmukuPlugin = (instance.plugins as any).artplayerPluginDanmuku;
+
+    if (danmukuPlugin?.config) {
+      danmukuPlugin.config({ danmuku: danmakuUrl });
+      danmukuPlugin.load();
     }
 
-    // 弹幕更新逻辑 (仅非直播)
-    if (danmakuData && instance && !isLive) {
-      const blob = new Blob([danmakuData], { type: "text/xml" });
-      const danmakuUrl = URL.createObjectURL(blob);
+    return () => {
+      URL.revokeObjectURL(danmakuUrl);
+    };
+  }, [danmakuData, isLive, url]);
 
-      const danmukuPlugin = (instance.plugins as any).artplayerPluginDanmuku;
-      if (danmukuPlugin && danmukuPlugin.config) {
-        danmukuPlugin.config({ danmuku: danmakuUrl });
-        danmukuPlugin.load();
-      }
-
-      return () => {
-        URL.revokeObjectURL(danmakuUrl);
-      };
-    }
-  }, [url, danmakuData, isLive, getInstance, onPlay, onPause, onEnded]);
-
-  // 组件卸载时销毁
   useEffect(() => {
     return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
-      if (playerRef.current) {
-        if (playerRef.current.destroy) {
-          playerRef.current.destroy(true);
-        }
-        playerRef.current = null;
-      }
+      destroyPlayer();
     };
   }, []);
 
