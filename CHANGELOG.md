@@ -1,6 +1,22 @@
 # 更新历史 
 
 
+## [12.8.0](https://github.com/ylw1997/touchFish/compare/v12.7.0...v12.8.0) (2026-03-25)
+
+
+### ✨ Features | 新功能
+
+* 删除log ([81b4929](https://github.com/ylw1997/touchFish/commit/81b49297ce5b9ad69ba98777caeccdf1c060c61f))
+* 修改自动生成changelog配置文件 ([d88368d](https://github.com/ylw1997/touchFish/commit/d88368dea7ba1cb9079adc31e5f59c141e242c36))
+* 优化播放 ([caca26b](https://github.com/ylw1997/touchFish/commit/caca26b7e84489b4e7c0651b94dbb05dc870122e))
+* 优化扫码登录体验 ([f962427](https://github.com/ylw1997/touchFish/commit/f962427fc1de4857afa4860a04d37498955cd1af))
+* 优化直播体验 ([4a1e3c1](https://github.com/ylw1997/touchFish/commit/4a1e3c14bddb53a6155b246715893ce9b37b795a))
+* 增加热门分类 ([477943f](https://github.com/ylw1997/touchFish/commit/477943fcebf07fbaf3b68b8db3774dca24a3195b))
+* 增加替换ffmpeg.dll脚本 ([a452961](https://github.com/ylw1997/touchFish/commit/a452961bf040adc935a0e9cf8470d13fbe93d118))
+* 直播显示关注的博主 ([f2a671c](https://github.com/ylw1997/touchFish/commit/f2a671c0eca59343ea100aeec0bfa80b0d6475bf))
+* biilbili直播功能完成 ([c04fe4e](https://github.com/ylw1997/touchFish/commit/c04fe4ec0508dc8b450a60a571b61d1beeb59833))
+* bilibili添加logo,登录方式增加扫码 ([7f3c6f5](https://github.com/ylw1997/touchFish/commit/7f3c6f5c200a8955a938ff201bdb555bf35df1b3))
+
 ## [12.7.0](https://github.com/ylw1997/touchFish/compare/v12.6.0...v12.7.0) (2026-03-19)
 
 
