@@ -11,7 +11,6 @@ import {
   LoadingOutlined,
   CloseCircleOutlined,
   DeleteOutlined,
-  VideoCameraOutlined,
 } from "@ant-design/icons";
 import { App } from "antd";
 import type {
@@ -32,9 +31,7 @@ export interface VideoCardProps {
     bvid: string,
     cid: number,
   ) => Promise<BilibiliPlayUrlResponse>;
-  onGetLivePlayUrl?: (
-    roomId: number,
-  ) => Promise<BilibiliPlayUrlResponse>;
+  onGetLivePlayUrl?: (roomId: number) => Promise<BilibiliPlayUrlResponse>;
   onGetDanmaku?: (cid: number) => Promise<BilibiliDanmakuResponse>;
   onError?: (message: string) => void;
   onUserClick?: (owner: BilibiliListItem["owner"]) => void;
@@ -145,7 +142,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
 
   const handleAddToWatchLater = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onAddToWatchLater && item.bvid) {
+    if (item.duration !== 0 && onAddToWatchLater && item.bvid) {
       onAddToWatchLater(item.bvid);
     }
   };
@@ -202,13 +199,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 style={{ pointerEvents: "auto", cursor: "pointer" }}
                 title={item.duration === 0 ? "进入直播间" : "播放"}
               >
-                {isLoading ? (
-                  <LoadingOutlined spin />
-                ) : item.duration === 0 ? (
-                  <VideoCameraOutlined />
-                ) : (
-                  <PlayCircleFilled />
-                )}
+                {isLoading ? <LoadingOutlined spin /> : <PlayCircleFilled />}
               </div>
             )}
             {/* 操作按钮区域 - hover 时显示 */}
@@ -226,7 +217,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 )}
 
                 {/* 加入待看按钮 */}
-                {item.bvid && onAddToWatchLater && (
+                {item.duration !== 0 && item.bvid && onAddToWatchLater && (
                   <div
                     className="video-action-btn"
                     onClick={handleAddToWatchLater}
@@ -261,6 +252,9 @@ const VideoCard: React.FC<VideoCardProps> = ({
               )}
             </div>
             {/* 封面右下角：时长 (收藏夹不显示) */}
+            {!is_folder && item.duration === 0 && item.is_followed === 1 && (
+              <div className="video-followed-tag">我的关注</div>
+            )}
             {!is_folder && (
               <div className="video-duration">
                 {formatDuration(item.duration)}

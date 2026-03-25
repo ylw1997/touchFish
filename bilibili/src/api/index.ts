@@ -5,6 +5,7 @@
 import type {
   BilibiliRecommendResponse,
   BilibiliPopularResponse,
+  BilibiliFollowedLiveResponse,
   BilibiliLiveResponse,
   BilibiliDynamicResponse,
   BilibiliWatchLaterResponse,
@@ -51,6 +52,14 @@ export class BilibiliApi {
   }
 
   // 获取直播列表
+  getFollowedLive(page: number = 1, pageSize: number = 50) {
+    return this.request<BilibiliFollowedLiveResponse>(
+      "BILIBILI_FOLLOWED_LIVE",
+      { page, pageSize },
+      "请求关注直播中..."
+    );
+  }
+
   getLive(page: number = 1) {
     return this.request<BilibiliLiveResponse>(
       "BILIBILI_LIVE",

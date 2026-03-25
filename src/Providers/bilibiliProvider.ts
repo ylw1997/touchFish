@@ -5,6 +5,7 @@ import { WebviewView, ExtensionContext, window, WebviewPanel } from "vscode";
 import {
   getRecommend,
   getPopular,
+  getFollowedLiveList,
   getLiveList,
   getLivePlayUrl,
   getDynamic,
@@ -465,6 +466,16 @@ export class BilibiliProvider extends BaseWebviewProvider {
         }
         webviewView.webview.postMessage({
           command: "BILIBILI_LIVE_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_FOLLOWED_LIVE": {
+        const { page = 1, pageSize = 50 } = payload || {};
+        const res = await getFollowedLiveList(page, pageSize);
+        webviewView.webview.postMessage({
+          command: "BILIBILI_FOLLOWED_LIVE_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

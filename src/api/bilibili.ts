@@ -3,6 +3,7 @@
  */
 import axios from "axios";
 import { getOrSetCookie, buildCommonHeaders } from "../utils/apiUtils";
+import { getConfigByKey } from "../core/config";
 import { showError } from "../utils/errorMessage";
 // import * as cheerio from "cheerio";
 
@@ -261,6 +262,51 @@ export const getLiveList = async (page: number = 1) => {
         code: -1,
         message: error.message,
         data: { list: [], has_more: false },
+      },
+    };
+  }
+};
+
+/**
+ * 获取关注的直播列表
+ * https://api.live.bilibili.com/xlive/web-ucenter/v1/xfetter/FeedList
+ */
+export const getFollowedLiveList = async (
+  page: number = 1,
+  pageSize: number = 50,
+) => {
+  try {
+    const cookie = getConfigByKey("bilibiliCookie");
+    if (!cookie) {
+      return {
+        data: {
+          code: -101,
+          message: "Cookie not configured",
+          data: { list: [] },
+        },
+      };
+    }
+
+    return await axios.get(
+      `https://api.live.bilibili.com/xlive/web-ucenter/v1/xfetter/FeedList`,
+      {
+        params: {
+          page,
+          page_size: pageSize,
+          platform: "web",
+        },
+        headers: buildCommonHeaders(cookie, {
+          Referer: "https://live.bilibili.com/",
+          Origin: "https://live.bilibili.com",
+        }),
+      },
+    );
+  } catch (error: any) {
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: { list: [] },
       },
     };
   }

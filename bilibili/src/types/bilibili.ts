@@ -130,6 +130,29 @@ export interface BilibiliLiveResponse {
 }
 
 // 统一的列表项类型（用于渲染）
+export interface FollowedLiveRoomItem {
+  room_id?: number;
+  roomid?: number;
+  uid: number;
+  title: string;
+  uname: string;
+  face: string;
+  cover?: string;
+  keyframe?: string;
+  online?: number;
+  area_v2_name?: string;
+  area_v2_parent_name?: string;
+}
+
+export interface BilibiliFollowedLiveResponse {
+  code: number;
+  message: string;
+  ttl?: number;
+  data: {
+    list: FollowedLiveRoomItem[];
+  };
+}
+
 export interface BilibiliListItem {
   id: number;
   bvid: string;

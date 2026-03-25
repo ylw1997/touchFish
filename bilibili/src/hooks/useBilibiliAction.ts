@@ -23,6 +23,7 @@ const useBilibiliAction = () => {
 
   // 直播分页相关
   const livePageRef = useRef(1);
+  const liveRecommendedLoadedRef = useRef(0);
 
   const { request, messageApi } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
@@ -44,6 +45,7 @@ const useBilibiliAction = () => {
     hasMoreRef.current = true;
     watchLaterPageRef.current = 1;
     livePageRef.current = 1;
+    liveRecommendedLoadedRef.current = 0;
   }, []);
 
   // 复制链接
@@ -57,6 +59,41 @@ const useBilibiliAction = () => {
   );
 
   // 将动态数据转换为统一的列表项格式
+  const convertLiveToListItem = useCallback(
+    (item: any, isFollowed: number = 0): BilibiliListItem => {
+      const roomId = item.room_id ?? item.roomid ?? 0;
+
+      return {
+        id: roomId,
+        bvid: roomId.toString(),
+        cid: 0,
+        uri: `https://live.bilibili.com/${roomId}`,
+        pic:
+          item.user_cover ||
+          item.cover ||
+          item.system_cover ||
+          item.keyframe ||
+          item.face ||
+          "",
+        title: item.title,
+        duration: 0,
+        pubdate: Date.now(),
+        owner: {
+          mid: item.uid,
+          name: item.uname,
+          face: item.face,
+        },
+        stat: {
+          view: item.online || 0,
+          like: 0,
+          danmaku: 0,
+        },
+        is_followed: isFollowed,
+      };
+    },
+    [],
+  );
+
   const convertDynamicToListItem = (
     item: DynamicItem,
   ): BilibiliListItem | null => {
@@ -217,41 +254,64 @@ const useBilibiliAction = () => {
           // 直播接口 - 支持分页
           if (replace) {
             livePageRef.current = 1;
+            liveRecommendedLoadedRef.current = 0;
+
+            const [followedResult, recommendedResult] = await Promise.allSettled(
+              [apiClient.getFollowedLive(), apiClient.getLive(1)],
+            );
+
+            const followedList =
+              followedResult.status === "fulfilled" &&
+              followedResult.value.code === 0 &&
+              followedResult.value.data?.list
+                ? followedResult.value.data.list.map((item: any) =>
+                    convertLiveToListItem(item, 1),
+                  )
+                : [];
+
+            const followedIds = new Set(followedList.map((item) => item.id));
+
+            if (
+              recommendedResult.status === "fulfilled" &&
+              recommendedResult.value.code === 0 &&
+              recommendedResult.value.data?.list
+            ) {
+              const recommendedRawList = recommendedResult.value.data.list;
+              const recommendedList = recommendedRawList
+                .map((item: any) => convertLiveToListItem(item, 0))
+                .filter((item) => !followedIds.has(item.id));
+              const mergedList = [...followedList, ...recommendedList];
+
+              setList(mergedList);
+              liveRecommendedLoadedRef.current = recommendedRawList.length;
+              livePageRef.current = 2;
+
+              const hasMore =
+                liveRecommendedLoadedRef.current <
+                recommendedResult.value.data.count;
+              setTotal(hasMore ? 999 : mergedList.length);
+            } else {
+              setList(followedList);
+              setTotal(followedList.length);
+            }
+
+            return;
           }
 
           const result = await apiClient.getLive(livePageRef.current);
 
           if (result.code === 0 && result.data?.list) {
-            const newList: BilibiliListItem[] = result.data.list.map(
-              (item: any) => ({
-                id: item.roomid,
-                bvid: item.roomid.toString(),
-                cid: 0,
-                uri: `https://live.bilibili.com/${item.roomid}`,
-                pic: item.user_cover || item.cover || item.system_cover,
-                title: item.title,
-                duration: 0,
-                pubdate: Date.now(),
-                owner: {
-                  mid: item.uid,
-                  name: item.uname,
-                  face: item.face,
-                },
-                stat: {
-                  view: item.online || 0,
-                  like: 0,
-                  danmaku: 0,
-                },
-                is_followed: 0,
-              }),
-            );
+            const existingIds = new Set(list.map((item) => item.id));
+            const newList = result.data.list
+              .map((item: any) => convertLiveToListItem(item, 0))
+              .filter((item) => !existingIds.has(item.id));
 
-            setList((currentList) =>
-              replace ? newList : [...currentList, ...newList],
-            );
+            setList((currentList) => [...currentList, ...newList]);
 
+            liveRecommendedLoadedRef.current += result.data.list.length;
             livePageRef.current += 1;
-            const hasMore = list.length + newList.length < result.data.count;
+            const hasMore =
+              liveRecommendedLoadedRef.current < result.data.count;
             setTotal(hasMore ? 999 : list.length + newList.length);
           }
         } else if (payload === "watchlater") {
@@ -303,6 +363,7 @@ const useBilibiliAction = () => {
       list.length,
       appendRecommendCache,
       clearRecommendCache,
+      convertLiveToListItem,
       isRecommendCacheValid,
       recommendCachedList,
       setRecommendCache,
