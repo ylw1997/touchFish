@@ -15,6 +15,8 @@ interface LoginModalProps {
 const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
   const [qrImageUrl, setQrImageUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // 并发锁，防止网络卡顿时 setInterval 堆积并发请求
+  const isCheckingRef = React.useRef(false);
 
   const { request, messageApi } = useRequest();
   const { loginStatus, setLoginStatus, setQRCode, qrKey, login } =
@@ -50,8 +52,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
 
   // 轮询登录状态
   const checkLoginStatus = useCallback(async () => {
-    if (!qrKey) return;
+    if (!qrKey || isCheckingRef.current) return;
 
+    isCheckingRef.current = true;
     try {
       const result = await request<any>("BILIBILI_CHECK_LOGIN_STATUS", {
         qrcode_key: qrKey,
@@ -89,6 +92,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
       }
     } catch (error) {
       console.error("[Login] 检查登录状态失败:", error);
+    } finally {
+      isCheckingRef.current = false;
     }
   }, [qrKey, request, setLoginStatus, login, onClose, messageApi]);
 
