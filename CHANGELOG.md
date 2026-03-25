@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [12.10.0](https://github.com/ylw1997/touchFish/compare/v12.9.0...v12.10.0) (2026-03-25)
+
+
+### ✨ Features | 新功能
+
+* 修复排行没有弹幕问题 ([b91497a](https://github.com/ylw1997/touchFish/commit/b91497a34d4495091138ffeb56e42bf7a879ec10))
+
 ## [12.9.0](https://github.com/ylw1997/touchFish/compare/v12.8.0...v12.9.0) (2026-03-25)
 
 
