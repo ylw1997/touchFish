@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [12.9.0](https://github.com/ylw1997/touchFish/compare/v12.8.0...v12.9.0) (2026-03-25)
+
+
+### ✨ Features | 新功能
+
+* 修复直播接口错误问题 ([1b230ef](https://github.com/ylw1997/touchFish/commit/1b230ef89888dba239d9db800bf5fa8c2bf7d610))
+
 ## [12.8.0](https://github.com/ylw1997/touchFish/compare/v12.7.0...v12.8.0) (2026-03-25)
 
 
