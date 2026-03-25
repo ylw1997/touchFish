@@ -318,21 +318,80 @@ export const getFollowedLiveList = async (
  */
 export const getLivePlayUrl = async (roomId: number, qn: number = 10000) => {
   try {
-    return await axios.get(
-      `https://api.live.bilibili.com/room/v1/Room/playUrl`,
+    const playInfoRes = await axios.get(
+      `https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo`,
       {
         params: {
-          cid: roomId,
-          qn,
-          platform: "h5", // 使用h5平台获取m3u8
+          room_id: roomId,
           protocol: "0,1",
-          format: "3", // 3=hls/m3u8
+          format: "0,1,2",
           codec: "0",
-          ptype: 8,
+          qn,
+          platform: "android",
         },
-        headers: await getBilibiliHeaders(),
+        headers: await getBilibiliHeaders({
+          Referer: "https://live.bilibili.com/",
+          Origin: "https://live.bilibili.com",
+        }),
       },
     );
+
+    const playurl = playInfoRes.data?.data?.playurl_info?.playurl;
+    const streams: any[] = playurl?.stream ?? [];
+
+    const resolveStreamUrl = (protocolName: string, preferredFormat?: string) => {
+      const stream = streams.find((item) => item.protocol_name === protocolName);
+      if (!stream) return "";
+
+      const format =
+        stream.format?.find((item: any) => item.format_name === preferredFormat) ??
+        stream.format?.[0];
+      const codec =
+        format?.codec?.find((item: any) => item.codec_name === "avc") ??
+        format?.codec?.[0];
+      const urlInfo = codec?.url_info?.[0];
+
+      if (!codec?.base_url || !urlInfo?.host) {
+        return "";
+      }
+
+      return `${urlInfo.host}${codec.base_url}${urlInfo.extra ?? ""}`;
+    };
+
+    const streamUrl =
+      resolveStreamUrl("http_hls", "fmp4") ||
+      resolveStreamUrl("http_hls") ||
+      resolveStreamUrl("http_stream");
+
+    if (!streamUrl) {
+      throw new Error(playInfoRes.data?.message || "未找到可用直播流");
+    }
+
+    return {
+      data: {
+        code: 0,
+        message: "success",
+        ttl: 1,
+        data: {
+          from: "live",
+          result: "success",
+          quality: qn,
+          format: streamUrl.includes(".m3u8") ? "hls" : "flv",
+          timelength: 0,
+          durl: [
+            {
+              order: 1,
+              length: 0,
+              size: 0,
+              url: streamUrl,
+              backup_url: null,
+            },
+          ],
+          support_formats: [],
+        },
+      },
+    };
+
   } catch (error: any) {
     showError(`获取直播流地址失败: ${error.message}`);
     return {
