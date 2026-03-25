@@ -5,6 +5,7 @@
 import type {
   BilibiliRecommendResponse,
   BilibiliPopularResponse,
+  BilibiliLiveResponse,
   BilibiliDynamicResponse,
   BilibiliWatchLaterResponse,
   BilibiliFavoriteFoldersResponse,
@@ -46,6 +47,24 @@ export class BilibiliApi {
       "BILIBILI_POPULAR",
       { page },
       "请求热门视频中..."
+    );
+  }
+
+  // 获取直播列表
+  getLive(page: number = 1) {
+    return this.request<BilibiliLiveResponse>(
+      "BILIBILI_LIVE",
+      { page },
+      "请求直播中..."
+    );
+  }
+
+  // 获取直播流地址
+  getLivePlayUrl(roomId: number, qn: number = 10000) {
+    return this.request<BilibiliPlayUrlResponse>(
+      "BILIBILI_LIVE_PLAYURL",
+      { roomId, qn },
+      "获取直播流中..."
     );
   }
 

@@ -28,6 +28,7 @@ interface SearchDrawerProps {
   open: boolean;
   onClose: () => void;
   onGetPlayUrl?: (bvid: string, cid: number) => Promise<any>;
+  onGetLivePlayUrl?: (roomId: number) => Promise<any>;
   onGetDanmaku?: (cid: number) => Promise<any>;
   onUserClick?: (owner: BilibiliOwner) => void;
 }
@@ -44,6 +45,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   open,
   onClose,
   onGetPlayUrl,
+  onGetLivePlayUrl,
   onGetDanmaku,
   onUserClick,
 }) => {
@@ -350,6 +352,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
                 <VideoCard
                   item={convertToListItem(item)}
                   onGetPlayUrl={onGetPlayUrl}
+                  onGetLivePlayUrl={onGetLivePlayUrl}
                   onGetDanmaku={onGetDanmaku}
                   onAddToWatchLater={addToWatchLater}
                   onUserClick={onUserClick}

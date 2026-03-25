@@ -101,6 +101,34 @@ export interface BilibiliPopularResponse {
   };
 }
 
+// ============== 直播 API 类型 ==============
+
+// 直播房间信息 (room/v3/area/getRoomList 接口)
+export interface LiveRoomItem {
+  roomid: number;
+  uid: number;
+  title: string;
+  uname: string;
+  face: string;
+  cover: string;
+  user_cover: string;
+  system_cover: string;
+  online: number;
+  link: string;
+  area_name: string;
+}
+
+// 直播接口响应
+export interface BilibiliLiveResponse {
+  code: number;
+  message: string;
+  ttl: number;
+  data: {
+    list: LiveRoomItem[];
+    count: number;
+  };
+}
+
 // 统一的列表项类型（用于渲染）
 export interface BilibiliListItem {
   id: number;

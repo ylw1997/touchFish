@@ -29,6 +29,7 @@ export interface UserProfileDrawerProps {
   ) => Promise<{ code: number; message: string }>;
   onAddToWatchLater?: (bvid: string) => void;
   onGetPlayUrl?: (bvid: string, cid: number) => Promise<any>;
+  onGetLivePlayUrl?: (roomId: number) => Promise<any>;
   onGetDanmaku?: (cid: number) => Promise<any>;
 }
 
@@ -84,6 +85,7 @@ const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
   onModifyRelation,
   onAddToWatchLater,
   onGetPlayUrl,
+  onGetLivePlayUrl,
   onGetDanmaku,
 }) => {
   const [videos, setVideos] = useState<BilibiliListItem[]>([]);
@@ -424,6 +426,7 @@ const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
                       item={item}
                       onAddToWatchLater={onAddToWatchLater}
                       onGetPlayUrl={onGetPlayUrl}
+                      onGetLivePlayUrl={onGetLivePlayUrl}
                       onGetDanmaku={onGetDanmaku}
                     />
                   </motion.div>

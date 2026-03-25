@@ -4,7 +4,12 @@
       "WebFetch(domain:github.com)",
       "Bash(git clone:*)",
       "Read(//tmp/**)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "WebSearch",
+      "Bash(curl -s \"https://api.live.bilibili.com/room/v1/Area/getList?order=online&page=1&page_size=5\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\")",
+      "Bash(curl -s \"https://api.live.bilibili.com/xlive/web-interface/v1/second/getListByArea?platform=web&sort=online&page=1&page_size=5\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\")",
+      "Bash(curl -s \"https://api.live.bilibili.com/room/v3/area/getRoomList?page=1&page_size=5&sort_type=online\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\")",
+      "Bash(curl -s \"https://api.live.bilibili.com/room/v1/Room/playUrl?cid=23114650&quality=4&protocol=0,1&format=0,1,2,3&codec=0,1&qn=10000&platform=web&ptype=8\" -H \"User-Agent: Mozilla/5.0\" -H \"Referer: https://live.bilibili.com\")"
     ]
   }
 }

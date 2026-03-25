@@ -86,6 +86,7 @@ function App() {
     getUserVideos,
     getUserCard,
     modifyRelation,
+    getLivePlayUrl,
   } = useBilibiliAction();
 
   //   const { addListToPlaylist } = usePlayerStore();
@@ -283,6 +284,7 @@ function App() {
                       activeKey === "watchlater" ? delFromWatchLater : undefined
                     }
                     onGetPlayUrl={getPlayUrl}
+                    onGetLivePlayUrl={getLivePlayUrl}
                     onGetDanmaku={getDanmaku}
                     onUserClick={(owner) => {
                       setSelectedUser(owner);
@@ -352,6 +354,7 @@ function App() {
         open={searchDrawerOpen}
         onClose={() => setSearchDrawerOpen(false)}
         onGetPlayUrl={getPlayUrl}
+        onGetLivePlayUrl={getLivePlayUrl}
         onGetDanmaku={getDanmaku}
         onUserClick={(owner) => {
           setSelectedUser(owner);
@@ -374,6 +377,7 @@ function App() {
         onModifyRelation={modifyRelation}
         onAddToWatchLater={addToWatchLater}
         onGetPlayUrl={getPlayUrl}
+        onGetLivePlayUrl={getLivePlayUrl}
         onGetDanmaku={getDanmaku}
       />
 

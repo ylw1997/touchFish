@@ -21,6 +21,9 @@ const useBilibiliAction = () => {
   // 待看分页相关
   const watchLaterPageRef = useRef(1);
 
+  // 直播分页相关
+  const livePageRef = useRef(1);
+
   const { request, messageApi } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
 
@@ -40,6 +43,7 @@ const useBilibiliAction = () => {
     dynamicOffsetRef.current = undefined;
     hasMoreRef.current = true;
     watchLaterPageRef.current = 1;
+    livePageRef.current = 1;
   }, []);
 
   // 复制链接
@@ -208,6 +212,47 @@ const useBilibiliAction = () => {
 
             dynamicPageRef.current += 1;
             setTotal(result.data.no_more ? list.length + newList.length : 999);
+          }
+        } else if (payload === "live") {
+          // 直播接口 - 支持分页
+          if (replace) {
+            livePageRef.current = 1;
+          }
+
+          const result = await apiClient.getLive(livePageRef.current);
+
+          if (result.code === 0 && result.data?.list) {
+            const newList: BilibiliListItem[] = result.data.list.map(
+              (item: any) => ({
+                id: item.roomid,
+                bvid: item.roomid.toString(),
+                cid: 0,
+                uri: `https://live.bilibili.com/${item.roomid}`,
+                pic: item.user_cover || item.cover || item.system_cover,
+                title: item.title,
+                duration: 0,
+                pubdate: Date.now(),
+                owner: {
+                  mid: item.uid,
+                  name: item.uname,
+                  face: item.face,
+                },
+                stat: {
+                  view: item.online || 0,
+                  like: 0,
+                  danmaku: 0,
+                },
+                is_followed: 0,
+              }),
+            );
+
+            setList((currentList) =>
+              replace ? newList : [...currentList, ...newList],
+            );
+
+            livePageRef.current += 1;
+            const hasMore = list.length + newList.length < result.data.count;
+            setTotal(hasMore ? 999 : list.length + newList.length);
           }
         } else if (payload === "watchlater") {
           // 待看接口
@@ -429,6 +474,15 @@ const useBilibiliAction = () => {
     [apiClient],
   );
 
+  // 获取直播流地址
+  const getLivePlayUrl = useCallback(
+    async (roomId: number) => {
+      const result = await apiClient.getLivePlayUrl(roomId);
+      return result;
+    },
+    [apiClient],
+  );
+
   return {
     getListData,
     isFetching,
@@ -449,6 +503,7 @@ const useBilibiliAction = () => {
     getUserVideos,
     getUserCard,
     modifyRelation,
+    getLivePlayUrl,
   };
 };
 

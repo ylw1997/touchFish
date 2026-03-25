@@ -5,6 +5,8 @@ import { WebviewView, ExtensionContext, window, WebviewPanel } from "vscode";
 import {
   getRecommend,
   getPopular,
+  getLiveList,
+  getLivePlayUrl,
   getDynamic,
   getWatchLater,
   getFavoriteFolders,
@@ -450,6 +452,32 @@ export class BilibiliProvider extends BaseWebviewProvider {
         }
         webviewView.webview.postMessage({
           command: "BILIBILI_POPULAR_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_LIVE": {
+        const { page = 1 } = payload || {};
+        const res = await getLiveList(page);
+        if (res.data?.code !== 0) {
+          showInfo(`获取B站直播失败: ${res.data?.message || "未知错误"}`);
+        }
+        webviewView.webview.postMessage({
+          command: "BILIBILI_LIVE_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_LIVE_PLAYURL": {
+        const { roomId, qn = 10000 } = payload || {};
+        const res = await getLivePlayUrl(roomId, qn);
+        if (res.data?.code !== 0) {
+          showInfo(`获取直播流地址失败: ${res.data?.message || "未知错误"}`);
+        }
+        webviewView.webview.postMessage({
+          command: "BILIBILI_LIVE_PLAYURL_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

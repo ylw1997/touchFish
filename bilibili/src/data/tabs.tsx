@@ -18,6 +18,10 @@ export const defTab: TabItem[] = [
     label: "热门",
   },
   {
+    key: "live",
+    label: "直播",
+  },
+  {
     key: "dynamic",
     label: "动态",
   },

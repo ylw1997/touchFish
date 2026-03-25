@@ -11,6 +11,7 @@ import {
   LoadingOutlined,
   CloseCircleOutlined,
   DeleteOutlined,
+  VideoCameraOutlined,
 } from "@ant-design/icons";
 import { App } from "antd";
 import type {
@@ -31,6 +32,9 @@ export interface VideoCardProps {
     bvid: string,
     cid: number,
   ) => Promise<BilibiliPlayUrlResponse>;
+  onGetLivePlayUrl?: (
+    roomId: number,
+  ) => Promise<BilibiliPlayUrlResponse>;
   onGetDanmaku?: (cid: number) => Promise<BilibiliDanmakuResponse>;
   onError?: (message: string) => void;
   onUserClick?: (owner: BilibiliListItem["owner"]) => void;
@@ -47,6 +51,7 @@ const formatCount = (count: number | undefined | null): string => {
 
 // 格式化时长
 const formatDuration = (seconds: number): string => {
+  if (seconds === 0) return "LIVE";
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
@@ -63,6 +68,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   onAddToWatchLater,
   onDeleteFromWatchLater,
   onGetPlayUrl,
+  onGetLivePlayUrl,
   onGetDanmaku,
   onUserClick,
 }) => {
@@ -80,6 +86,24 @@ const VideoCard: React.FC<VideoCardProps> = ({
 
   const handlePlayClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+
+    // 直播：获取直播流地址并播放
+    if (item.duration === 0 && onGetLivePlayUrl) {
+      setIsLoading(true);
+      try {
+        const result = await onGetLivePlayUrl(item.id);
+        if (result.code === 0 && result.data?.durl?.[0]?.url) {
+          setVideoUrl(result.data.durl[0].url);
+          setIsPlaying(true);
+        } else {
+          message.error("获取直播流失败");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     if (!onGetPlayUrl) {
       return;
     }
@@ -153,6 +177,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 key={videoUrl}
                 url={videoUrl}
                 danmakuData={danmakuData}
+                isLive={item.duration === 0}
               />
             </div>
             <div className="video-close-btn" onClick={handleCloseVideo}>
@@ -175,8 +200,15 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 className="video-play-icon"
                 onClick={handlePlayClick}
                 style={{ pointerEvents: "auto", cursor: "pointer" }}
+                title={item.duration === 0 ? "进入直播间" : "播放"}
               >
-                {isLoading ? <LoadingOutlined spin /> : <PlayCircleFilled />}
+                {isLoading ? (
+                  <LoadingOutlined spin />
+                ) : item.duration === 0 ? (
+                  <VideoCameraOutlined />
+                ) : (
+                  <PlayCircleFilled />
+                )}
               </div>
             )}
             {/* 操作按钮区域 - hover 时显示 */}

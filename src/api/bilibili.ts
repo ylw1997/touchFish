@@ -238,6 +238,68 @@ export const getPopular = async (pn: number = 1) => {
 };
 
 /**
+ * 获取直播列表
+ * https://api.live.bilibili.com/room/v3/area/getRoomList
+ */
+export const getLiveList = async (page: number = 1) => {
+  try {
+    return await axios.get(
+      `https://api.live.bilibili.com/room/v3/area/getRoomList`,
+      {
+        params: {
+          page,
+          page_size: 20,
+          sort_type: "online",
+        },
+        headers: await getBilibiliHeaders(),
+      },
+    );
+  } catch (error: any) {
+    showError(`获取B站直播失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: { list: [], has_more: false },
+      },
+    };
+  }
+};
+
+/**
+ * 获取直播间真实流地址 (HLS/m3u8格式)
+ * https://api.live.bilibili.com/room/v1/Room/playUrl
+ */
+export const getLivePlayUrl = async (roomId: number, qn: number = 10000) => {
+  try {
+    return await axios.get(
+      `https://api.live.bilibili.com/room/v1/Room/playUrl`,
+      {
+        params: {
+          cid: roomId,
+          qn,
+          platform: "h5", // 使用h5平台获取m3u8
+          protocol: "0,1",
+          format: "3", // 3=hls/m3u8
+          codec: "0",
+          ptype: 8,
+        },
+        headers: await getBilibiliHeaders(),
+      },
+    );
+  } catch (error: any) {
+    showError(`获取直播流地址失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: null,
+      },
+    };
+  }
+};
+
+/**
  * 获取推荐视频列表
  * https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd
  */
