@@ -566,6 +566,8 @@
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
 		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build",
+		"xhs:test": "node ./tools/xhs/test-xhs.js",
+		"xhs:test:live": "node ./tools/xhs/test-xhs.js",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
 		"dev": "concurrently -n ZHIHU,WEIBO,XHS,BILIBILI,QQMUSIC -c magenta,cyan,yellow,blue,green \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\"",
 		"build-xhs": "pnpm --filter xhs build"

@@ -14,6 +14,7 @@ import { execFile } from "child_process";
 import * as crypto from "crypto-js";
 
 const zhihuCode = require("./zhihu.raw.js");
+const xhsCode = require("./xhs.raw.js");
 
 let zhihuScript: vm.Script | null = null;
 
@@ -76,15 +77,25 @@ export function getXhsSignature(
       if (match) a1 = match[1];
     }
 
-    const xhsRawModulePath = path.join(__dirname, "xhs.raw.js");
     const encodedInput = Buffer.from(
       JSON.stringify({ apiPath, payload, a1, method }),
       "utf8"
     ).toString("base64");
+    const encodedSource = Buffer.from(xhsCode, "utf8").toString("base64");
+    const virtualFilename = path.join(__dirname, "xhs.raw.js");
 
     const runnerCode = `
       const input = JSON.parse(Buffer.from(process.argv[1], "base64").toString("utf8"));
-      const signer = require(process.argv[2]);
+      const source = Buffer.from(process.argv[2], "base64").toString("utf8");
+      const virtualFilename = process.argv[3];
+      const path = require("path");
+      const { Module, createRequire } = require("module");
+      const signerModule = new Module(virtualFilename, module.parent || module);
+      signerModule.filename = virtualFilename;
+      signerModule.paths = Module._nodeModulePaths(path.dirname(virtualFilename));
+      signerModule.require = createRequire(virtualFilename);
+      signerModule._compile(source, virtualFilename);
+      const signer = signerModule.exports;
       const result = signer.get_request_headers_params(
         input.apiPath,
         input.payload,
@@ -96,7 +107,7 @@ export function getXhsSignature(
 
     execFile(
       process.execPath,
-      ["-e", runnerCode, encodedInput, xhsRawModulePath],
+      ["-e", runnerCode, encodedInput, encodedSource, virtualFilename],
       { windowsHide: true, maxBuffer: 1024 * 1024 * 4 },
       (error, stdout, stderr) => {
         if (error) {

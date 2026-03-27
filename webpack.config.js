@@ -13,7 +13,6 @@
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require("path");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -56,16 +55,12 @@ const extensionConfig = {
         ],
       },
       {
-        test: /zhihu\.raw\.js$/,
+        test: /(zhihu|xhs)\.raw\.js$/,
         type: "asset/source",
       },
     ],
   },
-  plugins: [
-    new CopyWebpackPlugin({
-      patterns: [{ from: "src/utils/xhs.raw.js", to: "xhs.raw.js" }],
-    }),
-  ],
+  plugins: [],
   devtool: "nosources-source-map",
   infrastructureLogging: {
     level: "log", // enables logging required for problem matchers
