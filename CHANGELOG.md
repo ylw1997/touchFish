@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [12.11.0](https://github.com/ylw1997/touchFish/compare/v12.10.0...v12.11.0) (2026-03-27)
+
+
+### ✨ Features | 新功能
+
+* 小红书同步4.3.2版本 ([4a754c0](https://github.com/ylw1997/touchFish/commit/4a754c01573296810f27ed05ff7eb1020d6d9d15))
+
 ## [12.10.0](https://github.com/ylw1997/touchFish/compare/v12.9.0...v12.10.0) (2026-03-25)
 
 
