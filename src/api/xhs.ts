@@ -37,6 +37,25 @@ function buildRequestBody(body: any) {
   return { rawBody: body, bodyString, bodyObj: JSON.parse(bodyString) };
 }
 
+function buildGetPath(
+  apiPath: string,
+  query: Record<string, string | number | boolean | undefined | null>
+) {
+  const entries = Object.entries(query);
+  if (!entries.length) return apiPath;
+  return (
+    apiPath +
+    "?" +
+    entries
+      .map(([key, value]) => `${key}=${value === undefined || value === null ? "" : String(value)}`)
+      .join("&")
+  );
+}
+
+function buildGetUrl(pathWithQuery: string) {
+  return `https://edith.xiaohongshu.com${pathWithQuery}`;
+}
+
 export function generateXB3TraceId(len = 16) {
   const chars = "abcdef0123456789";
   let x_b3_traceid = "";
@@ -61,6 +80,7 @@ function buildXhsHeaders(params: {
     "x-s": signObj.xs,
     "x-t": signObj.xt.toString(),
     "x-s-common": signObj.xs_common,
+    xsecappid: "xhs-pc-web",
     authority: host,
     referer: "https://www.xiaohongshu.com/",
     accept: "application/json, text/plain, */*",
@@ -155,16 +175,16 @@ export const getXhsComments = async (payload: {
     image_formats: "jpg,webp,avif",
     xsec_token: payload.xsec_token,
   };
+  const pathWithQuery = buildGetPath(apiPath, queryObj);
   // GET 签名：仍然对 query 进行稳定排序后签名
-  const { bodyObj } = buildRequestBody(queryObj);
   let signObj: XhsSignature;
   try {
-    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+    signObj = await getXhsSignature(pathWithQuery, "", cookie, "GET");
   } catch (e: any) {
     console.error("[xhs signature error]", e?.message || e);
     throw new Error("小红书签名生成失败，请检查 Cookie 或稍后再试");
   }
-  const url = `https://edith.xiaohongshu.com${apiPath}?note_id=${payload.note_id}&cursor=${payload.cursor}&top_comment_id=&image_formats=jpg,webp,avif&xsec_token=${payload.xsec_token}`;
+  const url = buildGetUrl(pathWithQuery);
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
   return resp.data?.data; // { comments, cursor, has_more, ... }
@@ -195,16 +215,16 @@ export const getXhsSubComments = async (payload: {
     top_comment_id: "",
     xsec_token: payload.xsec_token,
   };
+  const pathWithQuery = buildGetPath(apiPath, queryObj);
   let signObj: XhsSignature;
   try {
     // GET 签名模式
-    signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
+    signObj = await getXhsSignature(pathWithQuery, "", cookie, "GET");
   } catch (e: any) {
     console.error("[xhs signature error sub comments]", e?.message || e);
     throw new Error("子评论签名生成失败，请稍后再试");
   }
-  const safeToken = queryObj.xsec_token.replace(/=/g, "%3D");
-  const url = `https://edith.xiaohongshu.com${apiPath}?note_id=${queryObj.note_id}&root_comment_id=${queryObj.root_comment_id}&num=${queryObj.num}&cursor=${queryObj.cursor}&image_formats=${queryObj.image_formats}&top_comment_id=&xsec_token=${safeToken}`;
+  const url = buildGetUrl(pathWithQuery);
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
   // 后端实际返回字段为 comments 而非 sub_comments，这里做兼容转换
@@ -262,14 +282,15 @@ export const getXhsUserMe = async () => {
   if (!cookie) throw new Error("请先设置小红书 Cookie");
   const apiPath = "/api/sns/web/v2/user/me";
   const queryObj = {};
+  const pathWithQuery = buildGetPath(apiPath, queryObj);
   // GET 签名
   let signObj: XhsSignature;
   try {
-    signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
+    signObj = await getXhsSignature(pathWithQuery, "", cookie, "GET");
   } catch (e: any) {
     throw new Error(`小红书签名生成失败: ${e?.message || "请检查 Cookie"}`);
   }
-  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const url = buildGetUrl(pathWithQuery);
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
   const data = resp.data?.data; // { nickname, images, red_id, user_id, desc, ... }
@@ -305,14 +326,14 @@ export const getXhsUserPosted = async (params: {
     xsec_token: params.xsec_token,
     xsec_source: params.xsec_source || "pc_feed",
   };
+  const pathWithQuery = buildGetPath(apiPath, queryObj);
   let signObj: XhsSignature;
   try {
-    signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
+    signObj = await getXhsSignature(pathWithQuery, "", cookie, "GET");
   } catch (e: any) {
     throw new Error(`小红书签名生成失败: ${e?.message || "请检查 Cookie"}`);
   }
-  const xsecToken = queryObj.xsec_token.replace(/=/g, "%3D");
-  const url = `https://edith.xiaohongshu.com${apiPath}?num=30&cursor=${queryObj.cursor}&user_id=${queryObj.user_id}&image_formats=jpg,webp,avif&xsec_token=${xsecToken}&xsec_source=${queryObj.xsec_source}`;
+  const url = buildGetUrl(pathWithQuery);
   const headers = buildXhsHeaders({ cookie, signObj });
   // console.log("xhs user posted url:", url);
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
@@ -365,16 +386,16 @@ export const getXhsUserHoverCard = async (params: {
     xsec_source: params.xsec_source || "pc_feed",
     xsec_token: params.xsec_token,
   };
+  const pathWithQuery = buildGetPath(apiPath, queryObj);
   let signObj: XhsSignature;
   try {
     // GET 签名模式
-    signObj = await getXhsSignature(apiPath, queryObj, cookie, "GET");
+    signObj = await getXhsSignature(pathWithQuery, "", cookie, "GET");
   } catch (e: any) {
     console.error("[xhs signature error hover_card]", e?.message || e);
     throw new Error("小红书签名生成失败，请稍后再试");
   }
-  const safeToken = queryObj.xsec_token.replace(/=/g, "%3D");
-  const url = `https://edith.xiaohongshu.com${apiPath}?target_user_id=${queryObj.target_user_id}&image_formats=${queryObj.image_formats}&xsec_source=${queryObj.xsec_source}&xsec_token=${safeToken}`;
+  const url = buildGetUrl(pathWithQuery);
   const headers = buildXhsHeaders({ cookie, signObj });
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
   const data = resp.data?.data;

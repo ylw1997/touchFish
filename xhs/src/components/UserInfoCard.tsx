@@ -178,6 +178,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
+          gap: "10px",
         }}
       >
         {loading && <Tag color="default">加载用户信息...</Tag>}

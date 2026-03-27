@@ -2,19 +2,27 @@
 /*
  * @Author: YangLiwei 1280426581@qq.com
  * @Date: 2025-08-05 08:51:35
- * @LastEditTime: 2025-11-03 11:18:38
+ * @LastEditTime: 2026-03-27 00:00:00
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\src\utils\signature.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 import * as vm from "vm";
+import * as path from "path";
+import { execFile } from "child_process";
 import * as crypto from "crypto-js";
-import { get_request_headers_params } from "./xhs";
 
 const zhihuCode = require("./zhihu.raw.js");
 
 let zhihuScript: vm.Script | null = null;
+
+function createSandboxRequire(moduleName: string) {
+  if (moduleName === "crypto-js") {
+    return crypto;
+  }
+  throw new Error(`Sandbox does not allow requiring module: ${moduleName}`);
+}
 
 function getZhihuScript(): vm.Script {
   if (!zhihuScript) {
@@ -26,28 +34,14 @@ function getZhihuScript(): vm.Script {
 export function getZhihuSignature(dataToSign: string): Promise<string> {
   return new Promise((resolve, reject) => {
     try {
-      // 为沙箱环境创建一个'require'函数，只允许加载'crypto-js'
-      const sandboxRequire = (moduleName: string) => {
-        if (moduleName === "crypto-js") {
-          return crypto;
-        }
-        throw new Error(
-          `Sandbox does not allow requiring module: ${moduleName}`
-        );
-      };
-
-      // 创建沙箱，并注入必要的模块和变量
       const sandbox = {
-        require: sandboxRequire,
+        require: createSandboxRequire,
         module: { exports: {} },
       };
 
       const context = vm.createContext(sandbox);
-
-      // 在沙箱中执行 zhihu.js
       getZhihuScript().runInContext(context);
 
-      // 从沙箱的 module.exports 中获取脚本的导出
       const zhihuModule = context.module.exports as any;
 
       if (typeof zhihuModule.encrypt !== "function") {
@@ -56,17 +50,13 @@ export function getZhihuSignature(dataToSign: string): Promise<string> {
         );
       }
 
-      // 调用加密函数并返回结果
-      const signature = zhihuModule.encrypt(dataToSign);
-      resolve(signature);
+      resolve(zhihuModule.encrypt(dataToSign));
     } catch (e: any) {
       reject(new Error(`Failed to execute zhihu.js in sandbox: ${e.message}`));
     }
   });
 }
 
-// 小红书签名生成：调用 xhs/xhs.js 中导出的 get_request_headers_params
-// 返回 { 'X-s': string; 'X-t': string }
 export interface XhsSignature {
   xs: string;
   xt: string;
@@ -80,27 +70,65 @@ export function getXhsSignature(
   method: "GET" | "POST" = "POST"
 ): Promise<XhsSignature> {
   return new Promise((resolve, reject) => {
-    try {
-      // 解析 cookie 中的 a1 值
-      let a1: string | undefined;
-      if (cookie) {
-        const m = cookie.match(/(?:^|;\s*)a1=([^;]+)/);
-        if (m) a1 = m[1];
-      }
-
-      // 直接调用导入的函数
-      const result = get_request_headers_params(apiPath, payload, a1, method);
-
-      const xs: string | undefined = result?.xs;
-      const xt: number | undefined = result?.xt;
-      const xs_common: string | undefined = result?.xs_common;
-
-      if (!xs || !xt || !xs_common) {
-        return reject(new Error("签名结果缺少 xs/xt/xs_common"));
-      }
-      resolve({ xs, xt: String(xt), xs_common });
-    } catch (e: any) {
-      reject(new Error(`Failed to execute xhs signature: ${e.message}`));
+    let a1 = "";
+    if (cookie) {
+      const match = cookie.match(/(?:^|;\s*)a1=([^;]+)/);
+      if (match) a1 = match[1];
     }
+
+    const xhsRawModulePath = path.join(__dirname, "xhs.raw.js");
+    const encodedInput = Buffer.from(
+      JSON.stringify({ apiPath, payload, a1, method }),
+      "utf8"
+    ).toString("base64");
+
+    const runnerCode = `
+      const input = JSON.parse(Buffer.from(process.argv[1], "base64").toString("utf8"));
+      const signer = require(process.argv[2]);
+      const result = signer.get_request_headers_params(
+        input.apiPath,
+        input.payload,
+        input.a1 || "",
+        input.method
+      );
+      process.stdout.write("__XHS_RESULT__" + JSON.stringify(result));
+    `;
+
+    execFile(
+      process.execPath,
+      ["-e", runnerCode, encodedInput, xhsRawModulePath],
+      { windowsHide: true, maxBuffer: 1024 * 1024 * 4 },
+      (error, stdout, stderr) => {
+        if (error) {
+          const details = stderr?.trim() || stdout?.trim() || error.message;
+          reject(new Error(`Failed to execute xhs signature: ${details}`));
+          return;
+        }
+
+        const marker = "__XHS_RESULT__";
+        const markerIndex = stdout.lastIndexOf(marker);
+        if (markerIndex === -1) {
+          const details = stderr?.trim() || stdout?.trim() || "empty output";
+          reject(new Error(`Failed to execute xhs signature: ${details}`));
+          return;
+        }
+
+        try {
+          const result = JSON.parse(stdout.slice(markerIndex + marker.length));
+          if (!result?.xs || !result?.xt || !result?.xs_common) {
+            reject(new Error("Failed to execute xhs signature: signature result missing xs/xt/xs_common"));
+            return;
+          }
+
+          resolve({
+            xs: result.xs,
+            xt: String(result.xt),
+            xs_common: result.xs_common,
+          });
+        } catch (e: any) {
+          reject(new Error(`Failed to execute xhs signature: ${e.message}`));
+        }
+      }
+    );
   });
 }
