@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [12.12.0](https://github.com/ylw1997/touchFish/compare/v12.11.0...v12.12.0) (2026-03-27)
+
+
+### ✨ Features | 新功能
+
+* 增加小红书测试文件,优化打包 ([57b697c](https://github.com/ylw1997/touchFish/commit/57b697c8625eb04c747cd0d2e230f68cad086039))
+
 ## [12.11.0](https://github.com/ylw1997/touchFish/compare/v12.10.0...v12.11.0) (2026-03-27)
 
 
