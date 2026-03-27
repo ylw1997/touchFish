@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [12.14.0](https://github.com/ylw1997/touchFish/compare/v12.13.0...v12.14.0) (2026-03-27)
+
+
+### ✨ Features | 新功能
+
+* 修复crypto报错问题 ([9853232](https://github.com/ylw1997/touchFish/commit/98532321844ff9607f75190624aff6f7bac6d1d5))
+
 ## [12.13.0](https://github.com/ylw1997/touchFish/compare/v12.12.0...v12.13.0) (2026-03-27)
 
 
