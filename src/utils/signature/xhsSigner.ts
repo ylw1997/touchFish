@@ -15,6 +15,7 @@ const XHS_REQUEST_TIMEOUT_MS = 15000;
 const XHS_RUNNER_CODE = `
   const readline = require("readline");
   const path = require("path");
+  const crypto = require("crypto");
   const { Module, createRequire } = require("module");
 
   let signer = null;
@@ -32,10 +33,30 @@ const XHS_RUNNER_CODE = `
   }
 
   function loadSigner(source, virtualFilename) {
+    const compatCryptoJs = {
+      MD5(value) {
+        const digest = crypto
+          .createHash("md5")
+          .update(String(value))
+          .digest("hex");
+        return {
+          toString() {
+            return digest;
+          },
+        };
+      },
+    };
+
     const signerModule = new Module(virtualFilename, module.parent || module);
     signerModule.filename = virtualFilename;
     signerModule.paths = Module._nodeModulePaths(path.dirname(virtualFilename));
-    signerModule.require = createRequire(virtualFilename);
+    const runtimeRequire = createRequire(virtualFilename);
+    signerModule.require = (moduleName) => {
+      if (moduleName === "crypto-js") {
+        return compatCryptoJs;
+      }
+      return runtimeRequire(moduleName);
+    };
     signerModule._compile(source, virtualFilename);
     return signerModule.exports;
   }
