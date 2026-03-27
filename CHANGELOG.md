@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [12.13.0](https://github.com/ylw1997/touchFish/compare/v12.12.0...v12.13.0) (2026-03-27)
+
+
+### ✨ Features | 新功能
+
+* 独立知乎和xhs签名 ([8b2d7aa](https://github.com/ylw1997/touchFish/commit/8b2d7aa26b190c2f769cdde06e143815a76be9aa))
+
 ## [12.12.0](https://github.com/ylw1997/touchFish/compare/v12.11.0...v12.12.0) (2026-03-27)
 
 
