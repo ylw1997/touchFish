@@ -67,7 +67,22 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
                       l.text === currentLyric ? "active" : ""
                     }`}
                   >
-                    {l.text}
+                    {l.text === currentLyric
+                      ? Array.from(l.text).map((char, charIdx, arr) => (
+                          <span
+                            key={charIdx}
+                            className="lyric-char"
+                            style={
+                              {
+                                "--char-start": (charIdx / arr.length) * 100,
+                                "--char-width": (1 / arr.length) * 100,
+                              } as React.CSSProperties
+                            }
+                          >
+                            {char}
+                          </span>
+                        ))
+                      : l.text}
                   </div>
                 ))
               ) : (

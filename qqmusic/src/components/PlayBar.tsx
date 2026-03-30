@@ -236,7 +236,7 @@ const PlayBar: React.FC = () => {
     });
   }, [currentSong, currentLyric, isPlaying]);
 
-  // 监听独立时钟来更新歌词状态 (替代原先的 onTimeUpdate state)
+  // 监听独立时钟来更新歌词状态与高亮进度
   useEffect(() => {
     let animationFrameId: number;
     let lastActiveLyric = currentLyric;
@@ -244,10 +244,33 @@ const PlayBar: React.FC = () => {
     const findLyric = () => {
       if (audioRef.current && lyrics.length > 0) {
         const currTime = audioRef.current.currentTime;
-        const line = lyrics.filter((l) => l.time <= currTime).pop();
-        if (line && line.text !== lastActiveLyric) {
-          lastActiveLyric = line.text;
-          setCurrentLyric(line.text); // 只在跨越新歌词时触发重绘
+        let idx = lyrics.length - 1;
+        while (idx >= 0 && lyrics[idx].time > currTime) {
+          idx--;
+        }
+
+        if (idx >= 0) {
+          const currentLine = lyrics[idx];
+          if (currentLine.text !== lastActiveLyric) {
+            lastActiveLyric = currentLine.text;
+            setCurrentLyric(currentLine.text); // 只在跨越新歌词时触发重绘
+          }
+
+          // 计算卡拉OK式的文本填充进度
+          const nextLine = lyrics[idx + 1];
+          // 如果是最后一句，给个默认填充时间为 4 秒
+          const duration = nextLine ? nextLine.time - currentLine.time : 4;
+          let progress = ((currTime - currentLine.time) / duration) * 100;
+          if (progress > 100) progress = 100;
+
+          // 使用 requestAnimationFrame 直接修改 DOM 级 CSS 变量，绕过 React 重绘
+          const lyricList = document.querySelector(".playbar-lyric-overlay");
+          if (lyricList) {
+            const activeEl = lyricList.querySelector(".lyric-line.active") as HTMLElement;
+            if (activeEl) {
+              activeEl.style.setProperty("--lyric-progress-raw", `${progress}`);
+            }
+          }
         }
       }
       animationFrameId = requestAnimationFrame(findLyric);

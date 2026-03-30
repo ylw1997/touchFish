@@ -1491,10 +1491,27 @@ a {
         }
 
         &.active {
-          color: var(--vscode-foreground);
           font-size: 16px;
           font-weight: 600;
-          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+          text-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
+          transform: scale(1.02);
+          transform-origin: left center;
+          
+          .lyric-char {
+            // 计算当前字符的相对进度，乘 1% 是给 calc 结果带上单位
+            --local-progress: calc((var(--lyric-progress-raw, 0) - var(--char-start)) / var(--char-width) * 100%);
+            
+            // 卡拉OK 渐变填充效果
+            background: linear-gradient(
+              to right,
+              var(--vscode-foreground, #fff) var(--local-progress),
+              rgba(255, 255, 255, 0.3) var(--local-progress)
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            display: inline-block; // 让它独立响应渐变 box
+          }
         }
       }
     }
