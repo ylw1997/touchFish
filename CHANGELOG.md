@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [12.15.2](https://github.com/ylw1997/touchFish/compare/v12.15.1...v12.15.2) (2026-03-30)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 修复任务栏歌词不更新问题 ([db098db](https://github.com/ylw1997/touchFish/commit/db098db42f67e8119cc7742e4498e0e5ac743576))
+
 ### [12.15.1](https://github.com/ylw1997/touchFish/compare/v12.15.0...v12.15.1) (2026-03-30)
 
 
