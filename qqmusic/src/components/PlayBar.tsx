@@ -307,6 +307,19 @@ const PlayBar: React.FC = () => {
       <div
         className={`playbar ${isLyricOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${playSource === "radar" ? "playbar-radar" : playSource === "guess" ? "playbar-guess" : ""} ${isPlaying ? "" : "paused"}`}
       >
+        {/* DOM顺序调换：在 column-reverse 模式下，第一个元素在最下方渲染。
+            我们要让播放列表在控制栏下方展开，所以必须把它放第一位 */}
+        <PlaylistDrawer
+          isPlaylistOpen={isPlaylistOpen}
+          playlist={playlist}
+          currentSong={currentSong}
+          playSong={playSong}
+          removeFromPlaylist={removeFromPlaylist}
+          clearPlaylist={clearPlaylist}
+          getAlbumCover={getAlbumCover}
+          getSingerName={getSingerName}
+        />
+
         <div className="playbar-bottom">
           <ProgressBar audioRef={audioRef} />
 
@@ -439,7 +452,7 @@ const PlayBar: React.FC = () => {
             </Button>
 
             <Button
-              color="default"
+              color={isPlaylistOpen ? "primary" : "default"}
               shape="circle"
               variant="filled"
               onClick={(e) => {
@@ -459,17 +472,6 @@ const PlayBar: React.FC = () => {
           lyrics={lyrics}
           currentLyric={currentLyric}
           getAlbumCover={getAlbumCover}
-        />
-
-        <PlaylistDrawer
-          isPlaylistOpen={isPlaylistOpen}
-          playlist={playlist}
-          currentSong={currentSong}
-          playSong={playSong}
-          removeFromPlaylist={removeFromPlaylist}
-          clearPlaylist={clearPlaylist}
-          getAlbumCover={getAlbumCover}
-          getSingerName={getSingerName}
         />
       </div>
     </>
