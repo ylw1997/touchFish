@@ -1,9 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   UnorderedListOutlined,
-  CloseOutlined,
-  DeleteOutlined,
   PauseOutlined,
   CaretRightOutlined,
   PlayCircleFilled,
@@ -13,15 +10,19 @@ import {
   FullscreenExitOutlined,
 } from "@ant-design/icons";
 import { Button, Space, message } from "antd";
+
 import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
 import { useQQMusic } from "../hooks/useQQMusic";
 import { vscode } from "../utils/vscode";
 import type { Song } from "../types/qqmusic";
 
+import { ProgressBar } from "./playbar/ProgressBar";
+import { LyricOverlay } from "./playbar/LyricOverlay";
+import { PlaylistDrawer } from "./playbar/PlaylistDrawer";
+
 const PlayBar: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const lyricContainerRef = useRef<HTMLDivElement>(null);
   const {
     playSong,
     getSongUrl,
@@ -31,33 +32,45 @@ const PlayBar: React.FC = () => {
     getGuessRecommend,
     getLyric,
   } = useQQMusic();
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+
   const [lyrics, setLyrics] = useState<{ time: number; text: string }[]>([]);
   const [currentLyric, setCurrentLyric] = useState<string>("");
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  const {
-    currentSong,
-    currentSongUrl,
-    setCurrentSongUrl,
-    isPlaying,
-    playlist,
-    isPlaylistOpen,
-    isLyricOpen,
-    togglePlaylistOpen,
-    toggleLyricOpen,
-    togglePlay,
-    playNext,
-    removeFromPlaylist,
-    clearPlaylist,
-    isRadioMode,
-    openSingerDrawer,
-    playSource, // 新增
-  } = usePlayerStore();
+  const currentSong = usePlayerStore((state) => state.currentSong);
+  const currentSongUrl = usePlayerStore((state) => state.currentSongUrl);
+  const setCurrentSongUrl = usePlayerStore((state) => state.setCurrentSongUrl);
+  const isPlaying = usePlayerStore((state) => state.isPlaying);
+  const playlist = usePlayerStore((state) => state.playlist);
+  const isPlaylistOpen = usePlayerStore((state) => state.isPlaylistOpen);
+  const isLyricOpen = usePlayerStore((state) => state.isLyricOpen);
+  const togglePlaylistOpen = usePlayerStore(
+    (state) => state.togglePlaylistOpen,
+  );
+  const toggleLyricOpen = usePlayerStore((state) => state.toggleLyricOpen);
+  const togglePlay = usePlayerStore((state) => state.togglePlay);
+  const playNext = usePlayerStore((state) => state.playNext);
+  const removeFromPlaylist = usePlayerStore(
+    (state) => state.removeFromPlaylist,
+  );
+  const clearPlaylist = usePlayerStore((state) => state.clearPlaylist);
+  const isRadioMode = usePlayerStore((state) => state.isRadioMode);
+  const openSingerDrawer = usePlayerStore((state) => state.openSingerDrawer);
+  const playSource = usePlayerStore((state) => state.playSource);
 
   const { likedSongMids, toggleLikeSong } = useUserStore();
   const isLiked = currentSong ? likedSongMids.includes(currentSong.mid) : false;
+
+  const getAlbumCover = (song: Song): string => {
+    if (song.album?.pmid) {
+      return `https://y.gtimg.cn/music/photo_new/T002R300x300M000${song.album.pmid}.jpg`;
+    }
+    return "https://y.gtimg.cn/mediastyle/global/img/album_300.png";
+  };
+
+  const getSingerName = (song: Song): string => {
+    if (!song.singer || song.singer.length === 0) return "未知歌手";
+    return song.singer.map((s) => s.name).join(" / ");
+  };
 
   // 猜你喜欢 (电台) 自动续播预加载
   useEffect(() => {
@@ -66,7 +79,6 @@ const PlayBar: React.FC = () => {
       const remaining = playlist.length - (currIdx + 1);
 
       if (currIdx >= 0 && remaining <= 1) {
-        console.log("[PlayBar] 电台队列快空了，自动预加载下一批...");
         getGuessRecommend()
           .then((res) => {
             if (res.code === 0 && res.data) {
@@ -78,15 +90,11 @@ const PlayBar: React.FC = () => {
                 [];
               if (songs.length > 0) {
                 const player = usePlayerStore.getState();
-                // 过滤掉已经在列表中的歌曲，防止重复
                 const newSongs = songs.filter(
                   (s: Song) => !player.playlist.some((p) => p.mid === s.mid),
                 );
                 if (newSongs.length > 0) {
                   newSongs.forEach((s: Song) => player.addToPlaylist(s));
-                  console.log(
-                    `[PlayBar] 电台成功追加 ${newSongs.length} 首歌曲`,
-                  );
                 }
               }
             }
@@ -125,22 +133,6 @@ const PlayBar: React.FC = () => {
     }
   };
 
-  // 同步播放状态到 VS Code 状态栏
-  useEffect(() => {
-    const songName = currentSong ? currentSong.name : "";
-    const singerName = currentSong ? getSingerName(currentSong) : "";
-    const fullTitle = songName ? `${songName} - ${singerName}` : "";
-
-    vscode.postMessage({
-      command: "QQMUSIC_UPDATE_PLAYING_STATUS",
-      payload: {
-        songName: fullTitle,
-        lyric: currentLyric,
-        isPlaying,
-      },
-    });
-  }, [currentSong, currentLyric, isPlaying]);
-
   // 播放/暂停控制
   useEffect(() => {
     const audio = audioRef.current;
@@ -152,17 +144,6 @@ const PlayBar: React.FC = () => {
       audio.pause();
     }
   }, [isPlaying, currentSongUrl]);
-
-  // Handle auto-scroll for lyrics when expanded
-  useEffect(() => {
-    if (isLyricOpen && lyricContainerRef.current) {
-      const activeLyric =
-        lyricContainerRef.current.querySelector(".lyric-line.active");
-      if (activeLyric) {
-        activeLyric.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }
-  }, [currentLyric, isLyricOpen]);
 
   // Handle auto-fetching the song URL when currentSong changes
   useEffect(() => {
@@ -181,9 +162,9 @@ const PlayBar: React.FC = () => {
           message.error(`无法播放《${currentSong.name}》: 可能是VIP或独家单曲`);
           setCurrentSongUrl(null);
         }
-      } catch (err: any) {
+      } catch {
         if (!active) return;
-        message.error(`获取拉取链接失败: ${err.message}`);
+        message.error(`获取拉取链接失败`);
         setCurrentSongUrl(null);
       }
     };
@@ -208,12 +189,11 @@ const PlayBar: React.FC = () => {
       if (active && res.code === 0 && res.data) {
         let lyricStr = res.data;
         try {
-          // 检查是否大概率是 Base64 (不包含 [ 等 LRC 标志)
           if (lyricStr && !lyricStr.includes("[")) {
             lyricStr = decodeURIComponent(escape(window.atob(lyricStr)));
           }
-        } catch (err) {
-          console.error("[PlayBar] 歌词解码失败:", err);
+        } catch {
+          console.error("获取歌词失败");
         }
 
         const lines = lyricStr.split("\n");
@@ -227,13 +207,10 @@ const PlayBar: React.FC = () => {
             const sec = parseFloat(matches[2]);
             const time = min * 60 + sec;
             const text = line.replace(timeRegex, "").trim();
-            if (text) {
-              parsed.push({ time, text });
-            }
+            if (text) parsed.push({ time, text });
           }
         }
         setLyrics(parsed);
-        // 重置当前行
         setCurrentLyric("");
       }
     });
@@ -243,19 +220,44 @@ const PlayBar: React.FC = () => {
     };
   }, [currentSong, currentSong?.mid, getLyric]);
 
-  const getSingerName = (song: Song): string => {
-    if (!song.singer || song.singer.length === 0) return "未知歌手";
-    return song.singer.map((s) => s.name).join(" / ");
-  };
+  // 同步播放状态到 VS Code 状态栏
+  useEffect(() => {
+    const songName = currentSong ? currentSong.name : "";
+    const singerName = currentSong ? getSingerName(currentSong) : "";
+    const fullTitle = songName ? `${songName} - ${singerName}` : "";
 
-  const getAlbumCover = (song: Song): string => {
-    if (song.album?.pmid) {
-      return `https://y.gtimg.cn/music/photo_new/T002R300x300M000${song.album.pmid}.jpg`;
-    }
-    return "https://y.gtimg.cn/mediastyle/global/img/album_300.png";
-  };
+    vscode.postMessage({
+      command: "QQMUSIC_UPDATE_PLAYING_STATUS",
+      payload: {
+        songName: fullTitle,
+        lyric: currentLyric,
+        isPlaying,
+      },
+    });
+  }, [currentSong, currentLyric, isPlaying]);
 
-  // 监听来自扩展端的消息（如状态栏点击下一首、暂停/播放）
+  // 监听独立时钟来更新歌词状态 (替代原先的 onTimeUpdate state)
+  useEffect(() => {
+    let animationFrameId: number;
+    let lastActiveLyric = currentLyric;
+
+    const findLyric = () => {
+      if (audioRef.current && lyrics.length > 0) {
+        const currTime = audioRef.current.currentTime;
+        const line = lyrics.filter((l) => l.time <= currTime).pop();
+        if (line && line.text !== lastActiveLyric) {
+          lastActiveLyric = line.text;
+          setCurrentLyric(line.text); // 只在跨越新歌词时触发重绘
+        }
+      }
+      animationFrameId = requestAnimationFrame(findLyric);
+    };
+
+    animationFrameId = requestAnimationFrame(findLyric);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [lyrics, currentLyric]);
+
+  // 监听来自扩展端的消息
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
@@ -270,102 +272,20 @@ const PlayBar: React.FC = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, [playNext, togglePlay]);
 
-  const handlePlayPause = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    togglePlay();
-  };
-
   return (
     <>
       <audio
         ref={audioRef}
         src={currentSongUrl || ""}
         preload="metadata"
-        onTimeUpdate={(e) => {
-          const currTime = e.currentTarget.currentTime;
-          setCurrentTime(currTime);
-          if (lyrics.length > 0) {
-            const line = lyrics.filter((l) => l.time <= currTime).pop();
-            if (line && line.text !== currentLyric) {
-              setCurrentLyric(line.text);
-            }
-          }
-        }}
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onEnded={() => playNext()}
       />
 
       <div
         className={`playbar ${isLyricOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${playSource === "radar" ? "playbar-radar" : playSource === "guess" ? "playbar-guess" : ""} ${isPlaying ? "" : "paused"}`}
       >
-        <AnimatePresence>
-          {isPlaylistOpen && (
-            <motion.div
-              className="playbar-playlist-inner"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="playbar-playlist-header">
-                <span className="playbar-playlist-title">
-                  播放列表 ({playlist.length})
-                </span>
-                {playlist.length > 0 && (
-                  <Button
-                    color="red"
-                    variant="filled"
-                    onClick={clearPlaylist}
-                    title="清空列表"
-                    shape="circle"
-                  >
-                    <DeleteOutlined />
-                  </Button>
-                )}
-              </div>
-              <div className="playbar-playlist-content">
-                {playlist.length === 0 ? (
-                  <div className="playbar-playlist-empty">暂无歌曲</div>
-                ) : (
-                  playlist.map((song, index) => (
-                    <div
-                      key={song.mid + index}
-                      className={`playbar-playlist-item ${
-                        currentSong?.mid === song.mid ? "active" : ""
-                      }`}
-                      onClick={() => playSong(song)}
-                    >
-                      <img src={getAlbumCover(song)} alt={song.name} />
-                      <div className="playbar-playlist-item-info">
-                        <div className="playbar-playlist-item-title">
-                          {song.name}
-                        </div>
-                        <div className="playbar-playlist-item-author">
-                          {getSingerName(song)}
-                        </div>
-                      </div>
-                      <span
-                        className="playbar-playlist-item-remove"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFromPlaylist(index);
-                        }}
-                      >
-                        <CloseOutlined />
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <div className="playbar-bottom">
-          <div
-            className="playbar-progress-bg"
-            style={{ width: `${progress}%` }}
-          />
+          <ProgressBar audioRef={audioRef} />
 
           <div
             className={`playbar-video-wrapper ${isLyricOpen ? "expanded-mode" : ""}`}
@@ -473,7 +393,10 @@ const PlayBar: React.FC = () => {
             <Button
               color="default"
               variant="filled"
-              onClick={handlePlayPause}
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlay();
+              }}
               title={isPlaying ? "暂停" : "播放"}
               shape="circle"
             >
@@ -483,67 +406,48 @@ const PlayBar: React.FC = () => {
               color="default"
               shape="circle"
               variant="filled"
-              icon={<StepForwardOutlined />}
-              onClick={playNext}
+              onClick={(e) => {
+                e.stopPropagation();
+                playNext();
+              }}
               title="下一首"
-            />
+            >
+              <StepForwardOutlined />
+            </Button>
+
             <Button
-              color={isPlaylistOpen ? "primary" : "default"}
-              variant="filled"
-              onClick={togglePlaylistOpen}
-              title="播放列表"
+              color="default"
               shape="circle"
+              variant="filled"
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlaylistOpen();
+              }}
+              title="播放列表"
             >
               <UnorderedListOutlined />
             </Button>
           </Space>
         </div>
 
-        <AnimatePresence>
-          {isLyricOpen && currentSong && (
-            <motion.div
-              className="playbar-lyric-overlay"
-              initial={{
-                height: 0,
-                opacity: 0,
-                marginBottom: 0,
-                paddingBlock: 0,
-              }}
-              animate={{
-                height: 180,
-                opacity: 1,
-                marginBottom: 0,
-                paddingBlock: 16,
-              }}
-              exit={{ height: 0, opacity: 0, marginBottom: 0, paddingBlock: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <div className="lyric-overlay-content">
-                <div className="lyric-cover-container">
-                  <img
-                    src={getAlbumCover(currentSong)}
-                    alt={currentSong.name}
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <div className="lyric-list-container" ref={lyricContainerRef}>
-                  {lyrics.length > 0 ? (
-                    lyrics.map((l, idx) => (
-                      <div
-                        key={idx}
-                        className={`lyric-line ${l.text === currentLyric ? "active" : ""}`}
-                      >
-                        {l.text}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="lyric-line">暂无歌词</div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <LyricOverlay
+          isLyricOpen={isLyricOpen}
+          currentSong={currentSong}
+          lyrics={lyrics}
+          currentLyric={currentLyric}
+          getAlbumCover={getAlbumCover}
+        />
+
+        <PlaylistDrawer
+          isPlaylistOpen={isPlaylistOpen}
+          playlist={playlist}
+          currentSong={currentSong}
+          playSong={playSong}
+          removeFromPlaylist={removeFromPlaylist}
+          clearPlaylist={clearPlaylist}
+          getAlbumCover={getAlbumCover}
+          getSingerName={getSingerName}
+        />
       </div>
     </>
   );
