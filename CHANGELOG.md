@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+### [12.15.1](https://github.com/ylw1997/touchFish/compare/v12.15.0...v12.15.1) (2026-03-30)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* 修复播放列表未知错误问题 ([09ecfb8](https://github.com/ylw1997/touchFish/commit/09ecfb8d07d15aa22a2f62d731bb6428e29f985d))
+* 修复进度条显示问题 ([fe7ac34](https://github.com/ylw1997/touchFish/commit/fe7ac349fe2610c876ab161b7875928ee51ad412))
+
 ## [12.15.0](https://github.com/ylw1997/touchFish/compare/v12.14.0...v12.15.0) (2026-03-30)
 
 
