@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [12.15.0](https://github.com/ylw1997/touchFish/compare/v12.14.0...v12.15.0) (2026-03-30)
+
+
+### ✨ Features | 新功能
+
+* 优化歌词显示 ([b7f5c5f](https://github.com/ylw1997/touchFish/commit/b7f5c5fa11ff17ea327e19229ef1d0bd63903066))
+* qq音乐性能优化 ([d6ef76d](https://github.com/ylw1997/touchFish/commit/d6ef76da0f2210ea725c79b1dd5a2aaf7752d1d1))
+* qqmusic playbar增加展开功能 ([e2cdd16](https://github.com/ylw1997/touchFish/commit/e2cdd167bdf52ed91bd12b34212ba6bb4935604e))
+
 ## [12.14.0](https://github.com/ylw1997/touchFish/compare/v12.13.0...v12.14.0) (2026-03-27)
 
 
