@@ -10,6 +10,7 @@ import {
   HeartOutlined,
   HeartFilled,
   StepForwardOutlined,
+  FullscreenExitOutlined,
 } from "@ant-design/icons";
 import { Button, Space, message } from "antd";
 import { usePlayerStore } from "../store/player";
@@ -20,6 +21,7 @@ import type { Song } from "../types/qqmusic";
 
 const PlayBar: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const lyricContainerRef = useRef<HTMLDivElement>(null);
   const {
     playSong,
     getSongUrl,
@@ -42,7 +44,9 @@ const PlayBar: React.FC = () => {
     isPlaying,
     playlist,
     isPlaylistOpen,
+    isLyricOpen,
     togglePlaylistOpen,
+    toggleLyricOpen,
     togglePlay,
     playNext,
     removeFromPlaylist,
@@ -148,6 +152,17 @@ const PlayBar: React.FC = () => {
       audio.pause();
     }
   }, [isPlaying, currentSongUrl]);
+
+  // Handle auto-scroll for lyrics when expanded
+  useEffect(() => {
+    if (isLyricOpen && lyricContainerRef.current) {
+      const activeLyric =
+        lyricContainerRef.current.querySelector(".lyric-line.active");
+      if (activeLyric) {
+        activeLyric.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [currentLyric, isLyricOpen]);
 
   // Handle auto-fetching the song URL when currentSong changes
   useEffect(() => {
@@ -281,7 +296,7 @@ const PlayBar: React.FC = () => {
       />
 
       <div
-        className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${playSource === 'radar' ? 'playbar-radar' : playSource === 'guess' ? 'playbar-guess' : ''} ${isPlaying ? '' : 'paused'}`}
+        className={`playbar ${isLyricOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${playSource === "radar" ? "playbar-radar" : playSource === "guess" ? "playbar-guess" : ""} ${isPlaying ? "" : "paused"}`}
       >
         <AnimatePresence>
           {isPlaylistOpen && (
@@ -351,8 +366,34 @@ const PlayBar: React.FC = () => {
             className="playbar-progress-bg"
             style={{ width: `${progress}%` }}
           />
-          <div className="playbar-video-wrapper">
-            {currentSong ? (
+
+          <div
+            className={`playbar-video-wrapper ${isLyricOpen ? "expanded-mode" : ""}`}
+            style={{
+              cursor: "pointer",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onClick={() => {
+              if (!isLyricOpen && currentSong) toggleLyricOpen();
+            }}
+            title={!isLyricOpen ? "展开" : ""}
+          >
+            {isLyricOpen ? (
+              <Button
+                color="default"
+                shape="circle"
+                variant="filled"
+                icon={<FullscreenExitOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleLyricOpen();
+                }}
+                title="收起"
+              />
+            ) : currentSong ? (
               <img
                 className={`playbar-video ${isPlaying ? "playing" : ""}`}
                 src={getAlbumCover(currentSong)}
@@ -366,7 +407,13 @@ const PlayBar: React.FC = () => {
             )}
           </div>
 
-          <div className="playbar-info">
+          <div
+            className="playbar-info"
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              if (!isLyricOpen && currentSong) toggleLyricOpen();
+            }}
+          >
             {currentSong ? (
               <div className="playbar-text-info">
                 <div
@@ -451,6 +498,52 @@ const PlayBar: React.FC = () => {
             </Button>
           </Space>
         </div>
+
+        <AnimatePresence>
+          {isLyricOpen && currentSong && (
+            <motion.div
+              className="playbar-lyric-overlay"
+              initial={{
+                height: 0,
+                opacity: 0,
+                marginBottom: 0,
+                paddingBlock: 0,
+              }}
+              animate={{
+                height: 180,
+                opacity: 1,
+                marginBottom: 0,
+                paddingBlock: 16,
+              }}
+              exit={{ height: 0, opacity: 0, marginBottom: 0, paddingBlock: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              <div className="lyric-overlay-content">
+                <div className="lyric-cover-container">
+                  <img
+                    src={getAlbumCover(currentSong)}
+                    alt={currentSong.name}
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div className="lyric-list-container" ref={lyricContainerRef}>
+                  {lyrics.length > 0 ? (
+                    lyrics.map((l, idx) => (
+                      <div
+                        key={idx}
+                        className={`lyric-line ${l.text === currentLyric ? "active" : ""}`}
+                      >
+                        {l.text}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="lyric-line">暂无歌词</div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
