@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface ProgressBarProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
 }
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({ audioRef }) => {
-  const [progress, setProgress] = useState(0);
+  const bgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let animationFrameId: number;
 
     const renderLoop = () => {
-      if (audioRef.current) {
+      if (audioRef.current && bgRef.current) {
         const { currentTime, duration } = audioRef.current;
         if (duration > 0) {
-          setProgress((currentTime / duration) * 100);
+          bgRef.current.style.width = `${(currentTime / duration) * 100}%`;
         } else {
-          setProgress(0);
+          bgRef.current.style.width = "0%";
         }
       }
       animationFrameId = requestAnimationFrame(renderLoop);
@@ -29,5 +29,5 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ audioRef }) => {
     };
   }, [audioRef]);
 
-  return <div className="playbar-progress-bg" style={{ width: `${progress}%` }} />;
+  return <div ref={bgRef} className="playbar-progress-bg" />;
 };
