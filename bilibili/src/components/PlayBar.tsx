@@ -44,6 +44,7 @@ const PlayBar: React.FC = () => {
   const videoRef = useRef<Artplayer | null>(null);
   const requestSeqRef = useRef(0);
   const lastVideoIdRef = useRef<number | null>(null);
+  const ignorePauseRef = useRef(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [danmakuData, setDanmakuData] = React.useState<string>("");
   const [isPip, setIsPip] = React.useState(false);
@@ -70,6 +71,7 @@ const PlayBar: React.FC = () => {
       setVideoUrl(null);
       setDanmakuData("");
       setIsPlaying(false);
+      ignorePauseRef.current = false;
       setIsPip(false);
 
       if (video.duration === 0 && options?.removeFailedLive) {
@@ -162,6 +164,7 @@ const PlayBar: React.FC = () => {
     if (!currentVideo) {
       requestSeqRef.current += 1;
       lastVideoIdRef.current = null;
+      ignorePauseRef.current = false;
       setIsLoading(false);
       setDanmakuData("");
       setVideoUrl(null);
@@ -169,9 +172,9 @@ const PlayBar: React.FC = () => {
     }
 
     if (currentVideo.id !== lastVideoIdRef.current) {
+      ignorePauseRef.current = true;
       lastVideoIdRef.current = currentVideo.id;
       setDanmakuData("");
-      setVideoUrl(null);
       fetchPlayUrl(currentVideo);
     }
   }, [currentVideo, fetchPlayUrl, setVideoUrl]);
@@ -194,6 +197,7 @@ const PlayBar: React.FC = () => {
 
   const handlePlayVideo = (video: typeof currentVideo) => {
     if (video) {
+      ignorePauseRef.current = true;
       setDanmakuData("");
       setCurrentVideo(video);
     }
@@ -220,9 +224,11 @@ const PlayBar: React.FC = () => {
     const currentIndex = queue.findIndex((video) => video.id === playingVideo.id);
     if (currentIndex === -1 || currentIndex >= queue.length - 1) {
       setIsPlaying(false);
+      ignorePauseRef.current = false;
       return;
     }
 
+    ignorePauseRef.current = true;
     playNext();
   }, [playNext, setIsPlaying]);
 
@@ -260,10 +266,15 @@ const PlayBar: React.FC = () => {
   );
 
   const handleArtPlay = useCallback(() => {
+    ignorePauseRef.current = false;
     setIsPlaying(true);
   }, [setIsPlaying]);
 
   const handleArtPause = useCallback(() => {
+    if (ignorePauseRef.current) {
+      return;
+    }
+
     setIsPlaying(false);
   }, [setIsPlaying]);
 
