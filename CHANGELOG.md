@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [12.15.3](https://github.com/ylw1997/touchFish/compare/v12.15.2...v12.15.3) (2026-03-31)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* keep bilibili autoplay when advancing playlist ([fa5cf6e](https://github.com/ylw1997/touchFish/commit/fa5cf6e5ba16506601a65cbe9d9ad26c25394560))
+
 ### [12.15.2](https://github.com/ylw1997/touchFish/compare/v12.15.1...v12.15.2) (2026-03-30)
 
 
