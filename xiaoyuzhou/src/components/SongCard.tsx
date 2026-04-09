@@ -1,24 +1,19 @@
-/**
- * 歌曲卡片组件
- */
 import React from "react";
-import { Button, Tag, Space, Tooltip } from "antd";
+import { Button, Tag, Space, Tooltip, App } from "antd";
 import {
   PlusOutlined,
   HeartOutlined,
   HeartFilled,
   ClockCircleOutlined,
 } from "@ant-design/icons";
-import type { Song } from "../types/qqmusic";
-import { useUserStore } from "../store/user";
-import { useQQMusic } from "../hooks/useQQMusic";
+import { getImageUrl } from "../hooks/useXiaoyuzhou";
 
 interface SongCardProps {
-  song: Song;
+  song: any; // 其实是小宇宙的 episode
   isPlaying?: boolean;
   isCurrent?: boolean;
-  onPlay?: (song: Song) => void;
-  onAddToPlaylist?: (song: Song) => void;
+  onPlay?: (song: any) => void;
+  onAddToPlaylist?: (song: any) => void;
   showActions?: boolean;
 }
 
@@ -30,37 +25,12 @@ const SongCard: React.FC<SongCardProps> = ({
   onAddToPlaylist,
   showActions = true,
 }) => {
-  const { likedSongMids, toggleLikeSong } = useUserStore();
-  const { addSongsToPlaylist, removeSongsFromPlaylist, messageApi } = useQQMusic();
-  const isLiked = likedSongMids.includes(song.mid);
+  const { message } = App.useApp();
+  const isLiked = song.isLiked || false;
 
-  const handleToggleLike = async (e: React.MouseEvent) => {
+  const handleToggleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!song.id) {
-      messageApi.error("歌曲 ID 缺失，无法同步状态");
-      return;
-    }
-    try {
-      if (isLiked) {
-        const res = await removeSongsFromPlaylist(201, [song.id]);
-        if (res.code === 0) {
-          toggleLikeSong(song.mid);
-          messageApi.success("已从我喜欢的列表中移除");
-        } else {
-          messageApi.error("操作失败: " + res.message);
-        }
-      } else {
-        const res = await addSongsToPlaylist(201, [song.id]);
-        if (res.code === 0) {
-          toggleLikeSong(song.mid);
-          messageApi.success("已添加到我喜欢的列表");
-        } else {
-          messageApi.error("操作失败: " + res.message);
-        }
-      }
-    } catch (err: any) {
-      messageApi.error("操作异常: " + err.message);
-    }
+    message.success(isLiked ? "已取消喜欢" : "已喜欢");
   };
 
   // 格式化时长
@@ -71,18 +41,14 @@ const SongCard: React.FC<SongCardProps> = ({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // 获取歌手名
+  // 获取播客名称
   const getSingerName = (): string => {
-    if (!song.singer || song.singer.length === 0) return "未知歌手";
-    return song.singer.map((s) => s.name).join(" / ");
+    return song.podcast?.title || song.podcast?.author || song.author || "未知播客";
   };
 
-  // 获取专辑封面
+  // 获取封面
   const getAlbumCover = (): string => {
-    if (song.album?.pmid) {
-      return `https://y.gtimg.cn/music/photo_new/T002R300x300M000${song.album.pmid}.jpg`;
-    }
-    return "https://y.gtimg.cn/mediastyle/global/img/album_300.png";
+    return getImageUrl(song) || "https://assets.xiaoyuzhoufm.com/favicon.ico";
   };
 
   return (
@@ -91,11 +57,10 @@ const SongCard: React.FC<SongCardProps> = ({
       onClick={() => onPlay?.(song)}
     >
       <div className="song-card-content">
-        {/* 封面 */}
         <div className="song-card-cover">
           <img
             src={getAlbumCover()}
-            alt={song.name}
+            alt={song.title}
             className="song-cover-img"
           />
           {isPlaying && (
@@ -107,38 +72,29 @@ const SongCard: React.FC<SongCardProps> = ({
           )}
         </div>
 
-        {/* 歌曲信息 */}
         <div className="song-card-info">
           <div className="song-title-row">
-            <span className="song-name" title={song.name}>
-              {song.name}
+            <span className="song-name" title={song.title || song.name}>
+              {song.title || song.name || "无标题"}
             </span>
-            {song.pay?.pay_play === 1 && (
-              <Tag color="gold" style={{ fontSize: 10, lineHeight: '14px' }}>VIP</Tag>
-            )}
-            {song.isonly === 1 && (
-              <Tag color="blue" style={{ fontSize: 10, lineHeight: '14px' }}>独家</Tag>
+            {song.isPaid && (
+              <Tag color="gold" style={{ fontSize: 10, lineHeight: '14px' }}>付费</Tag>
             )}
           </div>
           <div className="song-artist" title={getSingerName()}>
             {getSingerName()}
           </div>
-          <div className="song-album" title={song.album?.name}>
-            {song.album?.name || "未知专辑"}
-          </div>
         </div>
 
-        {/* 时长 */}
         <div className="song-duration">
           <ClockCircleOutlined />
-          <span>{formatDuration(song.interval)}</span>
+          <span>{formatDuration(song.duration)}</span>
         </div>
 
-        {/* 操作按钮 */}
         {showActions && (
           <div className="song-actions" onClick={(e) => e.stopPropagation()}>
             <Space>
-              <Tooltip title="添加到播放列表">
+              <Tooltip title="添加到稍后播放">
                 <Button
                   type="text"
                   shape="circle"
@@ -147,19 +103,14 @@ const SongCard: React.FC<SongCardProps> = ({
                   size="small"
                 />
               </Tooltip>
-              <Tooltip title={isLiked ? "取消我喜欢" : "添加到我喜欢"}>
+              <Tooltip title={isLiked ? "取消喜欢" : "喜欢该单集"}>
                 <Button
-              type="text"
-              shape="circle"
-              icon={
-                isLiked ? (
-                  <HeartFilled style={{ color: "#ff4d4f" }} />
-                ) : (
-                  <HeartOutlined />
-                )
-              }
-              onClick={handleToggleLike}
-            />  </Tooltip>
+                  type="text"
+                  shape="circle"
+                  icon={isLiked ? <HeartFilled style={{ color: "#ff4d4f" }} /> : <HeartOutlined />}
+                  onClick={handleToggleLike}
+                />
+              </Tooltip>
             </Space>
           </div>
         )}

@@ -53,9 +53,14 @@ function getCreatorHeaders() {
 function normalizeError(error: unknown) {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<any>;
+    if (axiosError.response?.status === 401) {
+      setGlobalCredential(null);
+    }
     const message =
       axiosError.response?.data?.message ||
       axiosError.response?.data?.msg ||
+      axiosError.response?.data?.error ||
+      `接口报错 ${axiosError.response?.status}: ${JSON.stringify(axiosError.response?.data)}` ||
       axiosError.message;
     return {
       code: axiosError.response?.status ?? -1,
@@ -77,15 +82,6 @@ function normalizeUserInfo(user: any): XiaoyuzhouUserInfo {
   };
 }
 
-function ensureCredential(
-  credential?: XiaoyuzhouCredential | null,
-): XiaoyuzhouCredential {
-  const activeCredential = getCredential(credential);
-  if (!activeCredential?.accessToken || !activeCredential?.refreshToken) {
-    throw new Error("小宇宙未登录，请先登录后再试");
-  }
-  return activeCredential;
-}
 
 export async function sendSmsCode(
   phoneNumber: string,
@@ -163,7 +159,7 @@ export async function getDiscoveryFeed(
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
   try {
-    const auth = ensureCredential(credential);
+    const auth = getCredential(credential);
     const response = await axios.post(
       `${APP_BASE_URL}/v1/discovery-feed/list`,
       {
@@ -172,8 +168,8 @@ export async function getDiscoveryFeed(
       },
       {
         headers: buildXiaoyuzhouHeaders({
-          accessToken: auth.accessToken,
-          refreshToken: auth.refreshToken,
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
           contentType: "application/json",
           localTime: getNowIsoString(),
         }),
@@ -199,13 +195,13 @@ export async function getTopList(
   };
 
   try {
-    const auth = ensureCredential(credential);
+    const auth = getCredential(credential);
     const response = await axios.get(
       `${APP_BASE_URL}/v1/top-list/get?category=${categoryMap[category]}`,
       {
         headers: buildXiaoyuzhouHeaders({
-          accessToken: auth.accessToken,
-          refreshToken: auth.refreshToken,
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
           localTime: getNowIsoString(),
         }),
         timeout: 15000,
@@ -225,7 +221,7 @@ export async function searchPodcasts(
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
   try {
-    const auth = ensureCredential(credential);
+    const auth = getCredential(credential);
     const response = await axios.post(
       `${APP_BASE_URL}/v1/search/create`,
       {
@@ -235,8 +231,8 @@ export async function searchPodcasts(
       },
       {
         headers: buildXiaoyuzhouHeaders({
-          accessToken: auth.accessToken,
-          refreshToken: auth.refreshToken,
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
           contentType: "application/json",
           localTime: getNowIsoString(),
         }),
@@ -256,11 +252,11 @@ export async function getPodcastDetail(
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
   try {
-    const auth = ensureCredential(credential);
+    const auth = getCredential(credential);
     const response = await axios.get(`${APP_BASE_URL}/v1/podcast/get?pid=${pid}`, {
       headers: buildXiaoyuzhouHeaders({
-        accessToken: auth.accessToken,
-        refreshToken: auth.refreshToken,
+        accessToken: auth?.accessToken,
+        refreshToken: auth?.refreshToken,
         localTime: getNowIsoString(),
       }),
       timeout: 15000,
@@ -280,7 +276,7 @@ export async function getEpisodeList(
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
   try {
-    const auth = ensureCredential(credential);
+    const auth = getCredential(credential);
     const response = await axios.post(
       `${APP_BASE_URL}/v1/episode/list`,
       {
@@ -290,8 +286,8 @@ export async function getEpisodeList(
       },
       {
         headers: buildXiaoyuzhouHeaders({
-          accessToken: auth.accessToken,
-          refreshToken: auth.refreshToken,
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
           contentType: "application/json",
           localTime: getNowIsoString(),
         }),
@@ -311,11 +307,11 @@ export async function getEpisodeDetail(
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
   try {
-    const auth = ensureCredential(credential);
+    const auth = getCredential(credential);
     const response = await axios.get(`${APP_BASE_URL}/v1/episode/get?eid=${eid}`, {
       headers: buildXiaoyuzhouHeaders({
-        accessToken: auth.accessToken,
-        refreshToken: auth.refreshToken,
+        accessToken: auth?.accessToken,
+        refreshToken: auth?.refreshToken,
         localTime: getNowIsoString(),
       }),
       timeout: 15000,

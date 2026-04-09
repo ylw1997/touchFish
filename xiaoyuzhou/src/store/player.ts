@@ -1,75 +1,52 @@
-/**
- * 播放器状态管理
- */
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Song, PlayMode, SongQuality } from "../types/qqmusic";
+
+type PlayMode = "order" | "single" | "random";
 
 interface PlayerState {
-  // 当前播放歌曲
-  currentSong: Song | null;
-  currentSongUrl: string | null;
+  currentEpisode: any | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
   volume: number;
 
-  // 播放列表
-  playlist: Song[];
+  playlist: any[];
   currentIndex: number;
   playMode: PlayMode;
 
-  // 音质
-  songQuality: SongQuality;
-
-  // UI 状态
   isPlaylistOpen: boolean;
-  isLyricOpen: boolean;
-  isRadioMode: boolean;
-  playSource: "radar" | "guess" | "normal"; // 新增：播放来源
-  isSingerOpen: boolean;
-  currentSingerMid: string | null;
-  currentSingerName: string | null;
+  isShownotesOpen: boolean; // 原来的 isLyricOpen
+  playSource: string;
 
-  // Actions
-  setCurrentSong: (song: Song | null) => void;
-  setCurrentSongUrl: (url: string | null) => void;
+  setCurrentEpisode: (episode: any | null) => void;
   setIsPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
   setDuration: (duration: number) => void;
   setVolume: (volume: number) => void;
 
-  setPlaylist: (playlist: Song[]) => void;
+  setPlaylist: (playlist: any[]) => void;
   setCurrentIndex: (index: number) => void;
   setPlayMode: (mode: PlayMode) => void;
-  setSongQuality: (quality: SongQuality) => void;
 
   togglePlaylistOpen: () => void;
-  toggleLyricOpen: () => void;
-  openSingerDrawer: (mid: string, name?: string) => void;
-  closeSingerDrawer: () => void;
+  toggleShownotesOpen: () => void;
 
-  // 播放控制
-  play: (song: Song) => void;
+  play: (episode: any) => void;
   pause: () => void;
   togglePlay: () => void;
   playNext: () => void;
   playPrev: () => void;
 
-  // 播放列表管理
-  addToPlaylist: (song: Song) => void;
+  addToPlaylist: (episode: any) => void;
   removeFromPlaylist: (index: number) => void;
   clearPlaylist: () => void;
-  setIsRadioMode: (isRadioMode: boolean) => void;
-  setPlaySource: (source: "radar" | "guess" | "normal") => void; // 新增
+  setPlaySource: (source: string) => void;
 }
 
 export const usePlayerStore = create<PlayerState>()(
   persist(
     (set, get) => ({
-      // 初始状态
-      currentSong: null,
-      currentSongUrl: null,
+      currentEpisode: null,
       isPlaying: false,
       currentTime: 0,
       duration: 0,
@@ -79,19 +56,11 @@ export const usePlayerStore = create<PlayerState>()(
       currentIndex: -1,
       playMode: "order",
 
-      songQuality: 128, // 默认标准音质
-
       isPlaylistOpen: false,
-      isLyricOpen: false,
-      isRadioMode: false,
-      playSource: "normal", // 新增
-      isSingerOpen: false,
-      currentSingerMid: null,
-      currentSingerName: null,
+      isShownotesOpen: false,
+      playSource: "normal",
 
-      // Setters
-      setCurrentSong: (song) => set({ currentSong: song }),
-      setCurrentSongUrl: (url) => set({ currentSongUrl: url }),
+      setCurrentEpisode: (ep) => set({ currentEpisode: ep }),
       setIsPlaying: (playing) => set({ isPlaying: playing }),
       setCurrentTime: (time) => set({ currentTime: time }),
       setDuration: (duration) => set({ duration }),
@@ -100,36 +69,29 @@ export const usePlayerStore = create<PlayerState>()(
       setPlaylist: (playlist) => set({ playlist }),
       setCurrentIndex: (index) => set({ currentIndex: index }),
       setPlayMode: (mode) => set({ playMode: mode }),
-      setSongQuality: (quality) => set({ songQuality: quality }),
 
-      togglePlaylistOpen: () =>
-        set((state) => ({ isPlaylistOpen: !state.isPlaylistOpen })),
-      toggleLyricOpen: () =>
-        set((state) => ({ isLyricOpen: !state.isLyricOpen })),
-      openSingerDrawer: (mid, name) => set({ isSingerOpen: true, currentSingerMid: mid, currentSingerName: name || null }),
-      closeSingerDrawer: () => set({ isSingerOpen: false, currentSingerMid: null, currentSingerName: null }),
-      setIsRadioMode: (isRadioMode) => set({ isRadioMode }),
-      setPlaySource: (playSource) => set({ playSource }), // 新增
+      togglePlaylistOpen: () => set((state) => ({ isPlaylistOpen: !state.isPlaylistOpen })),
+      toggleShownotesOpen: () => set((state) => ({ isShownotesOpen: !state.isShownotesOpen })),
+      setPlaySource: (playSource) => set({ playSource }),
 
-      // 播放控制
-      play: (song) => {
+      play: (episode) => {
         const { playlist } = get();
-        const existingIndex = playlist.findIndex((s) => s.mid === song.mid);
+        // 小宇宙id一般是 eid / pid
+        const idKey = episode.eid || episode.pid || episode.id;
+        const existingIndex = playlist.findIndex((s) => (s.eid || s.pid || s.id) === idKey);
 
         if (existingIndex >= 0) {
-          // 歌曲已在播放列表中
           set({
-            currentSong: song,
+            currentEpisode: episode,
             currentIndex: existingIndex,
             isPlaying: true,
             currentTime: 0,
           });
         } else {
-          // 添加新歌曲到播放列表
-          const newPlaylist = [...playlist, song];
+          const newPlaylist = [...playlist, episode];
           set({
             playlist: newPlaylist,
-            currentSong: song,
+            currentEpisode: episode,
             currentIndex: newPlaylist.length - 1,
             isPlaying: true,
             currentTime: 0,
@@ -140,8 +102,8 @@ export const usePlayerStore = create<PlayerState>()(
       pause: () => set({ isPlaying: false }),
 
       togglePlay: () => {
-        const { currentSong, isPlaying } = get();
-        if (currentSong) {
+        const { currentEpisode, isPlaying } = get();
+        if (currentEpisode) {
           set({ isPlaying: !isPlaying });
         }
       },
@@ -151,7 +113,6 @@ export const usePlayerStore = create<PlayerState>()(
         if (playlist.length === 0) return;
 
         let nextIndex: number;
-
         switch (playMode) {
           case "random":
             nextIndex = Math.floor(Math.random() * playlist.length);
@@ -170,7 +131,7 @@ export const usePlayerStore = create<PlayerState>()(
 
         set({
           currentIndex: nextIndex,
-          currentSong: playlist[nextIndex],
+          currentEpisode: playlist[nextIndex],
           isPlaying: true,
           currentTime: 0,
         });
@@ -187,18 +148,18 @@ export const usePlayerStore = create<PlayerState>()(
 
         set({
           currentIndex: prevIndex,
-          currentSong: playlist[prevIndex],
+          currentEpisode: playlist[prevIndex],
           isPlaying: true,
           currentTime: 0,
         });
       },
 
-      // 播放列表管理
-      addToPlaylist: (song) => {
+      addToPlaylist: (episode) => {
         const { playlist } = get();
-        const exists = playlist.some((s) => s.mid === song.mid);
+        const idKey = episode.eid || episode.pid || episode.id;
+        const exists = playlist.some((s) => (s.eid || s.pid || s.id) === idKey);
         if (!exists) {
-          set({ playlist: [...playlist, song] });
+          set({ playlist: [...playlist, episode] });
         }
       },
 
@@ -208,21 +169,16 @@ export const usePlayerStore = create<PlayerState>()(
 
         let newIndex = currentIndex;
         if (index === currentIndex) {
-          // 删除的是当前播放的歌曲
           newIndex = -1;
           set({
             playlist: newPlaylist,
             currentIndex: newIndex,
-            currentSong: null,
+            currentEpisode: null,
             isPlaying: false,
           });
         } else if (index < currentIndex) {
-          // 删除的是前面的歌曲
           newIndex = currentIndex - 1;
-          set({
-            playlist: newPlaylist,
-            currentIndex: newIndex,
-          });
+          set({ playlist: newPlaylist, currentIndex: newIndex });
         } else {
           set({ playlist: newPlaylist });
         }
@@ -232,20 +188,19 @@ export const usePlayerStore = create<PlayerState>()(
         set({
           playlist: [],
           currentIndex: -1,
-          currentSong: null,
+          currentEpisode: null,
           isPlaying: false,
         });
       },
     }),
     {
-      name: "qqmusic-player-storage",
+      name: "xiaoyuzhou-player-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         playlist: state.playlist,
-        currentSong: state.currentSong,
+        currentEpisode: state.currentEpisode,
         currentIndex: state.currentIndex,
         playMode: state.playMode,
-        songQuality: state.songQuality,
         volume: state.volume,
         isPlaylistOpen: state.isPlaylistOpen,
       }),

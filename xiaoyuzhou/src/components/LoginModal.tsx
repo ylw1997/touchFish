@@ -1,13 +1,8 @@
-/**
- * QQ音乐登录组件
- */
-import React, { useCallback, useEffect, useState } from "react";
-import { Button, Modal, Spin, message } from "antd";
-import { WechatOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import { Button, Modal, message, Input } from "antd";
+import { MobileOutlined, MessageOutlined } from "@ant-design/icons";
 import { useRequest } from "../hooks/useRequest";
 import { useUserStore } from "../store/user";
-import { LoginStatus } from "../types/qqmusic";
-import type { QRCodeInfo, UserInfo } from "../types/qqmusic";
 
 interface LoginModalProps {
   open: boolean;
@@ -15,126 +10,81 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
-  const [qrCode, setQrCode] = useState("");
-  const [qrIdentifier, setQrIdentifier] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [loginStatus, setLoginStatus] = useState<LoginStatus>(LoginStatus.PENDING);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [code, setCode] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   const { request } = useRequest();
-  const { login, setLoginStatus: setStoreLoginStatus } = useUserStore();
+  const { login } = useUserStore();
 
-  const fetchQRCode = useCallback(async () => {
-    setIsLoading(true);
-    setQrCode("");
-    setQrIdentifier("");
-
-    try {
-      const result = await request<any>("QQMUSIC_GET_LOGIN_QR", { type: "wx" });
-
-      if (result.code === 0 && result.data) {
-        const qrData: QRCodeInfo = result.data;
-        setQrCode(qrData.data);
-        setQrIdentifier(qrData.identifier);
-        setLoginStatus(LoginStatus.PENDING);
-        setStoreLoginStatus(LoginStatus.PENDING);
-      } else {
-        message.error(result.message || "获取二维码失败");
-      }
-    } catch (error) {
-      console.error("[Login] 获取二维码失败:", error);
-      message.error("获取二维码失败");
-    } finally {
-      setIsLoading(false);
+  const handleSendCode = async () => {
+    if (!phoneNumber || phoneNumber.length !== 11) {
+      message.error("请输入有效的11位手机号");
+      return;
     }
-  }, [request, setStoreLoginStatus]);
 
-  const checkLoginStatus = useCallback(async () => {
-    if (!qrIdentifier) return;
-
+    setIsSending(true);
     try {
-      const result = await request<any>("QQMUSIC_CHECK_LOGIN_STATUS", {
-        identifier: qrIdentifier,
-        type: "wx",
+      const result = await request<any>("XIAOYUZHOU_SEND_CODE" as any, {
+        phoneNumber
+      });
+      if (result.code === 0) {
+        message.success("验证码发送成功");
+        setCountdown(60);
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        message.error("发送失败, 请尝试其他方式");
+      }
+    } catch {
+      message.error("发送失败");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!phoneNumber || !code) {
+      message.error("请填写手机号和验证码");
+      return;
+    }
+
+    setIsLoggingIn(true);
+    try {
+      const result = await request<any>("XIAOYUZHOU_LOGIN_WITH_SMS" as any, {
+        phoneNumber,
+        verifyCode: code
       });
 
-      if (result.code === 0 && result.data) {
-        const { status, userInfo } = result.data;
-
-        switch (status) {
-          case "success":
-            setLoginStatus(LoginStatus.SUCCESS);
-            setStoreLoginStatus(LoginStatus.SUCCESS);
-            if (userInfo?.musicid && userInfo?.musickey) {
-              login(userInfo as UserInfo);
-              message.success("登录成功");
-              onClose();
-            } else {
-              message.error("登录成功，但未拿到有效凭证");
-            }
-            break;
-          case "scanning":
-            setLoginStatus(LoginStatus.SCANNING);
-            setStoreLoginStatus(LoginStatus.SCANNING);
-            break;
-          case "confirming":
-            setLoginStatus(LoginStatus.CONFIRMING);
-            setStoreLoginStatus(LoginStatus.CONFIRMING);
-            break;
-          case "timeout":
-            setLoginStatus(LoginStatus.TIMEOUT);
-            setStoreLoginStatus(LoginStatus.TIMEOUT);
-            message.error("二维码已过期，请重新获取");
-            break;
-          case "failed":
-            setLoginStatus(LoginStatus.FAILED);
-            setStoreLoginStatus(LoginStatus.FAILED);
-            message.error(result.message || result.data.message || "登录失败");
-            break;
-          default:
-            break;
-        }
-      } else if (result.code !== 0) {
-        message.error(result.message || "登录状态检查失败");
+      if (result.code === 0 && result.data?.userInfo) {
+        // 后台直接封装了 credential 和 userInfo 给前端
+        login({
+          nickname: result.data.userInfo.nickname,
+          avatar: result.data.userInfo.avatar,
+          uid: result.data.userInfo.uid,
+          token: result.data.credential.accessToken, // 保存认证token以供请求使用
+          // 为兼容原 qq 音乐部分验证字段提供备用口
+          musicid: result.data.userInfo.uid,
+          musickey: result.data.credential.accessToken || "dummy_key"
+        } as any);
+        message.success("登录成功");
+        onClose();
+      } else {
+        message.error("填写验证码错误或过期");
       }
-    } catch (error) {
-      console.error("[Login] 检查登录状态失败:", error);
-    }
-  }, [login, onClose, qrIdentifier, request, setStoreLoginStatus]);
-
-  useEffect(() => {
-    if (open) {
-      void fetchQRCode();
-    }
-  }, [open, fetchQRCode]);
-
-  useEffect(() => {
-    if (!open || !qrIdentifier || loginStatus === LoginStatus.SUCCESS) return;
-
-    const interval = setInterval(() => {
-      void checkLoginStatus();
-    }, 2000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [checkLoginStatus, loginStatus, open, qrIdentifier]);
-
-  const getStatusText = () => {
-    switch (loginStatus) {
-      case LoginStatus.PENDING:
-        return "请使用微信扫码登录";
-      case LoginStatus.SCANNING:
-        return "已扫码，请在微信中确认登录";
-      case LoginStatus.CONFIRMING:
-        return "正在确认登录...";
-      case LoginStatus.TIMEOUT:
-        return "二维码已过期";
-      case LoginStatus.FAILED:
-        return "登录失败";
-      case LoginStatus.SUCCESS:
-        return "登录成功";
-      default:
-        return "";
+    } catch {
+      message.error("登录异常");
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -142,7 +92,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
     <Modal
       title={
         <span>
-          <WechatOutlined /> 微信扫码登录 QQ 音乐
+          <MobileOutlined /> 小宇宙手机号登录
         </span>
       }
       open={open}
@@ -151,43 +101,51 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
       width={400}
       centered
     >
-      <div className="login-qr-container">
-        {isLoading ? (
-          <div className="login-loading">
-            <Spin size="large" />
-            <p>正在获取二维码...</p>
-          </div>
-        ) : qrCode ? (
-          <div className="login-qr-wrapper">
-            <img
-              src={qrCode}
-              alt="微信登录二维码"
-              className="login-qr-image"
-            />
-            <p className="login-status-text">{getStatusText()}</p>
-            {(loginStatus === LoginStatus.TIMEOUT ||
-              loginStatus === LoginStatus.FAILED) && (
-              <Button type="primary" onClick={() => void fetchQRCode()}>
-                重新获取二维码
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="login-error">
-            <p>获取二维码失败</p>
-            <Button type="primary" onClick={() => void fetchQRCode()}>
-              重试
-            </Button>
-          </div>
-        )}
+      <div className="login-qr-container" style={{ padding: '20px 0' }}>
+         <div style={{ marginBottom: 16 }}>
+           <Input
+             prefix={<MobileOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
+             placeholder="请输入11位手机号码"
+             value={phoneNumber}
+             onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 11))}
+             size="large"
+           />
+         </div>
+         <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+           <Input
+             prefix={<MessageOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
+             placeholder="短信验证码"
+             value={code}
+             onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+             size="large"
+           />
+           <Button
+             size="large"
+             onClick={handleSendCode}
+             disabled={isSending || countdown > 0 || phoneNumber.length !== 11}
+           >
+             {countdown > 0 ? `${countdown}s 后重新发送` : "获取验证码"}
+           </Button>
+         </div>
+
+         <Button
+           type="primary"
+           size="large"
+           block
+           onClick={handleLogin}
+           loading={isLoggingIn}
+           disabled={!phoneNumber || code.length < 4}
+         >
+           一键登录
+         </Button>
       </div>
 
       <div className="login-tips">
         <p>登录说明：</p>
         <ul>
-          <li>请使用微信扫描二维码。</li>
-          <li>扫码后需要在手机上确认授权。</li>
-          <li>二维码有效期约 5 分钟，过期后可重新获取。</li>
+          <li>使用小宇宙绑定的手机号登录。</li>
+          <li>将通过短信发送一个6位数或4位数的验证码。</li>
+          <li>只有登录后才能获取完整的体验。</li>
         </ul>
       </div>
     </Modal>
