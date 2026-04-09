@@ -1,14 +1,15 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
-  UnorderedListOutlined,
-  PauseOutlined,
   CaretRightOutlined,
-  PlayCircleFilled,
-  HeartOutlined,
-  HeartFilled,
   FullscreenExitOutlined,
+  HeartFilled,
+  HeartOutlined,
+  PauseOutlined,
+  PlayCircleFilled,
+  UnorderedListOutlined,
 } from "@ant-design/icons";
-import { Button, Space, App } from "antd";
+import { App, Button, Space } from "antd";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
@@ -26,25 +27,37 @@ const PlayBar: React.FC = () => {
   const playlist = usePlayerStore((state) => state.playlist);
   const isPlaylistOpen = usePlayerStore((state) => state.isPlaylistOpen);
   const isShownotesOpen = usePlayerStore((state) => state.isShownotesOpen);
-  
-  const togglePlaylistOpen = usePlayerStore((state) => state.togglePlaylistOpen);
-  const toggleShownotesOpen = usePlayerStore((state) => state.toggleShownotesOpen);
+
+  const togglePlaylistOpen = usePlayerStore(
+    (state) => state.togglePlaylistOpen,
+  );
+  const toggleShownotesOpen = usePlayerStore(
+    (state) => state.toggleShownotesOpen,
+  );
   const togglePlay = usePlayerStore((state) => state.togglePlay);
   const playNext = usePlayerStore((state) => state.playNext);
-  const removeFromPlaylist = usePlayerStore((state) => state.removeFromPlaylist);
+  const removeFromPlaylist = usePlayerStore(
+    (state) => state.removeFromPlaylist,
+  );
   const clearPlaylist = usePlayerStore((state) => state.clearPlaylist);
   const play = usePlayerStore((state) => state.play);
 
   const { likedSongMids, toggleLikeSong } = useUserStore();
-  // 伪造判断点赞状态
-  const isLiked = currentEpisode ? likedSongMids.includes(currentEpisode.eid || currentEpisode.pid) : false;
+  const isLiked = currentEpisode
+    ? likedSongMids.includes(currentEpisode.eid || currentEpisode.pid)
+    : false;
 
-  const getAlbumCover = (ep: any): string => {
-    return getImageUrl(ep) || "https://assets.xiaoyuzhoufm.com/favicon.ico";
+  const getAlbumCover = (episode: any): string => {
+    return getImageUrl(episode) || "https://assets.xiaoyuzhoufm.com/favicon.ico";
   };
 
-  const getSingerName = (ep: any): string => {
-    return ep.podcast?.title || ep.podcast?.author || ep.author || "未知播客";
+  const getSingerName = (episode: any): string => {
+    return (
+      episode.podcast?.title ||
+      episode.podcast?.author ||
+      episode.author ||
+      "未知播客"
+    );
   };
 
   const handleToggleLike = async () => {
@@ -76,53 +89,90 @@ const PlayBar: React.FC = () => {
       <div
         className={`playbar ${isShownotesOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${isPlaying ? "" : "paused"}`}
       >
-        <PlaylistDrawer
-          isPlaylistOpen={isPlaylistOpen}
-          playlist={playlist}
-          currentSong={currentEpisode}
-          playSong={play}
-          removeFromPlaylist={removeFromPlaylist}
-          clearPlaylist={clearPlaylist}
-          getAlbumCover={getAlbumCover}
-          getSingerName={getSingerName}
-        />
+        <AnimatePresence initial={false}>
+          {isShownotesOpen && currentEpisode ? (
+            <motion.div
+              key="shownotes"
+              className="playbar-shownotes-container"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <motion.div
+                className="playbar-shownotes-content"
+                initial={{ y: -8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -8, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h2 className="playbar-shownotes-title">{currentEpisode.title}</h2>
+                <div
+                  className="xy-html playbar-shownotes-html"
+                  dangerouslySetInnerHTML={{
+                    __html: currentEpisode.shownotes || "<p>暂无 Shownotes</p>",
+                  }}
+                />
+                <div className="playbar-shownotes-spacer"></div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {!isShownotesOpen ? (
+          <PlaylistDrawer
+            isPlaylistOpen={isPlaylistOpen}
+            playlist={playlist}
+            currentSong={currentEpisode}
+            playSong={play}
+            removeFromPlaylist={removeFromPlaylist}
+            clearPlaylist={clearPlaylist}
+            getAlbumCover={getAlbumCover}
+            getSingerName={getSingerName}
+          />
+        ) : null}
 
         <div className="playbar-bottom">
           <ProgressBar audioRef={audioRef} />
 
           <div
             className={`playbar-video-wrapper ${isShownotesOpen ? "expanded-mode" : ""}`}
-            style={{
-              cursor: "pointer",
-              margin: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+            onClick={(event) => {
+              event.stopPropagation();
+              if (currentEpisode) toggleShownotesOpen();
             }}
-            onClick={() => {
-              if (!isShownotesOpen && currentEpisode) toggleShownotesOpen();
-            }}
-            title={!isShownotesOpen ? "展开 Shownotes" : ""}
           >
-            {isShownotesOpen ? (
-              <Button
-                color="default"
-                shape="circle"
-                variant="filled"
-                icon={<FullscreenExitOutlined />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleShownotesOpen();
-                }}
-                title="收起"
-              />
-            ) : currentEpisode ? (
-              <img
-                className={`playbar-video ${isPlaying ? "playing" : ""}`}
-                src={getAlbumCover(currentEpisode)}
-                alt={currentEpisode.title}
-                referrerPolicy="no-referrer"
-              />
+            {currentEpisode ? (
+              isShownotesOpen ? (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Button
+                    shape="circle"
+                    color="default"
+                    variant="filled"
+                    icon={<FullscreenExitOutlined />}
+                    style={{
+                      border: "none",
+                      background: "rgba(120, 120, 120, 0.2)",
+                    }}
+                  />
+                </div>
+              ) : (
+                <img
+                  className={`playbar-video ${isPlaying ? "playing" : ""}`}
+                  src={getAlbumCover(currentEpisode)}
+                  alt={currentEpisode.title}
+                  referrerPolicy="no-referrer"
+                />
+              )
             ) : (
               <div className="playbar-video-loading">
                 <PlayCircleFilled style={{ fontSize: 24, opacity: 0.5 }} />
@@ -134,7 +184,10 @@ const PlayBar: React.FC = () => {
             className="playbar-info"
             style={{ cursor: "pointer" }}
             onClick={() => {
-              if (!isShownotesOpen && currentEpisode) toggleShownotesOpen();
+              if (currentEpisode && !isShownotesOpen) {
+                if (isPlaylistOpen) togglePlaylistOpen();
+                toggleShownotesOpen();
+              }
             }}
           >
             {currentEpisode ? (
@@ -142,23 +195,22 @@ const PlayBar: React.FC = () => {
                 <div
                   className="playbar-title"
                   title={`${currentEpisode.title} - ${getSingerName(currentEpisode)}`}
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
-                  <span>{currentEpisode.title}</span>
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: "normal",
-                    }}
-                  >
-                    -
-                    <span className="playbar-singer">
-                      {" " + getSingerName(currentEpisode)}
-                    </span>
+                  <span className="song-name">{currentEpisode.title}</span>
+                  <span className="playbar-singer">
+                    {" - " + getSingerName(currentEpisode)}
                   </span>
                 </div>
-                <div className="playbar-lyric">
-                     {currentEpisode.duration ? `${Math.floor(currentEpisode.duration / 60)} 分钟` : "聆听博客探索"}
+                <div
+                  className="playbar-lyric"
+                  style={{
+                    opacity: isShownotesOpen ? 0 : 1,
+                    transition: "opacity 0.2s",
+                  }}
+                >
+                  {currentEpisode.duration
+                    ? `${Math.floor(currentEpisode.duration / 60)} 分钟`
+                    : "聆听播客探索"}
                 </div>
               </div>
             ) : (
@@ -166,7 +218,6 @@ const PlayBar: React.FC = () => {
             )}
           </div>
 
-          {/* 控制按钮放在右侧，仿 Bilibili 风格 */}
           <Space size="small" style={{ marginLeft: "auto" }}>
             <Button
               color="default"
@@ -186,8 +237,8 @@ const PlayBar: React.FC = () => {
             <Button
               color="default"
               variant="filled"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 togglePlay();
               }}
               title={isPlaying ? "暂停" : "播放"}
@@ -200,8 +251,9 @@ const PlayBar: React.FC = () => {
               color={isPlaylistOpen ? "primary" : "default"}
               shape="circle"
               variant="filled"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
+                if (isShownotesOpen) toggleShownotesOpen();
                 togglePlaylistOpen();
               }}
               title="播放列表"
@@ -210,29 +262,6 @@ const PlayBar: React.FC = () => {
             </Button>
           </Space>
         </div>
-        
-        {/* 小宇宙特有：展开时渲染 Shownotes（原本原QQ音乐是渲染 LyricOverlay 结构动画） */}
-        {isShownotesOpen && currentEpisode && (
-          <div className="playbar-lyric-overlay" style={{
-              position: 'absolute',
-              top: 0,
-              left: 45,
-              right: 0,
-              height: 'calc(100% - 66px)',
-              padding: '24px 30px',
-              overflowY: 'auto',
-              color: 'var(--vscode-foreground)',
-              fontSize: '14px',
-              lineHeight: 1.6
-          }}>
-             <h2 style={{ fontSize: 20, marginBottom: 16 }}>{currentEpisode.title}</h2>
-             <div 
-                className="xy-html" 
-                dangerouslySetInnerHTML={{ __html: currentEpisode.shownotes || "<p>暂无 Shownotes</p>" }} 
-             />
-             <div style={{ paddingBottom: 100 }}></div>
-          </div>
-        )}
       </div>
     </>
   );

@@ -646,8 +646,8 @@ a {
 }
 
 .playlist-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
@@ -1033,12 +1033,19 @@ a {
   .backdrop-style();
   border-radius: 26px;
   display: flex;
-  flex-direction: column-reverse; // 让播放列表在下方展开
+  flex-direction: column;
   z-index: 1100;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+
+  &.playbar-expanded, &.playbar-playlist-open {
+    height: auto !important; // 由内容支撑高度
+    max-height: 500px;        // 封顶 500
+    border-radius: 20px;
+    backdrop-filter: saturate(180%) blur(25px);
+  }
 
   .playbar-lyric {
     font-size: 12px;
@@ -1066,7 +1073,32 @@ a {
     // 展开状态：移除黑色背景，保留原有尺寸以防布局闪烁
     &.expanded-mode {
       background: transparent;
-      border-radius: 0;
+      border-radius: 50%;
+    }
+
+    .playbar-shrink-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(120, 120, 120, 0.2);
+      color: var(--vscode-foreground);
+      font-size: 16px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(120, 120, 120, 0.35);
+        transform: scale(1.05);
+      }
+
+      .dark & {
+        background: rgba(255, 255, 255, 0.1);
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+      }
     }
 
     .playbar-video {
@@ -1232,6 +1264,39 @@ a {
 // 暂停时流光静止
 .playbar.paused .playbar-progress-bg::after {
   animation-play-state: paused !important;
+}
+
+.playbar-shownotes-container {
+  width: 100%;
+  border-bottom: 1px solid var(--vscode-chat-requestBorder);
+  overflow: hidden;
+}
+
+.playbar-shownotes-content {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 24px;
+  max-height: 250px;
+  overflow-y: auto;
+  color: var(--vscode-foreground);
+  font-size: 14px;
+  line-height: 1.6;
+  cursor: default;
+}
+
+.playbar-shownotes-title {
+  font-size: 18px;
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.playbar-shownotes-html {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.playbar-shownotes-spacer {
+  padding-bottom: 60px;
 }
 
 // 专属推荐卡片样式 (新加)
@@ -1477,10 +1542,11 @@ a {
       .lyric-line {
         color: rgba(255, 255, 255, 0.4);
         font-size: 13px;
-        transition: font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                    color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                    text-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition:
+          font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          text-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         text-align: left;
         line-height: 1.4;
         word-break: break-word;
@@ -1499,11 +1565,14 @@ a {
           text-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
           transform: scale(1.02);
           transform-origin: left center;
-          
+
           .lyric-char {
             // 计算当前字符的相对进度，乘 1% 是给 calc 结果带上单位
-            --local-progress: calc((var(--lyric-progress-raw, 0) - var(--char-start)) / var(--char-width) * 100%);
-            
+            --local-progress: calc(
+              (var(--lyric-progress-raw, 0) - var(--char-start)) /
+                var(--char-width) * 100%
+            );
+
             // 卡拉OK 渐变填充效果
             background: linear-gradient(
               to right,
