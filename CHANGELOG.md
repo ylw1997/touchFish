@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [12.15.4](https://github.com/ylw1997/touchFish/compare/v12.15.3...v12.15.4) (2026-04-09)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* **qqmusic:** 彻底解决歌词高亮过度动画同步闪烁问题 ([bef6536](https://github.com/ylw1997/touchFish/commit/bef65361006ba37725783c1f013a2784d02800bf))
+
 ### [12.15.3](https://github.com/ylw1997/touchFish/compare/v12.15.2...v12.15.3) (2026-03-31)
 
 
