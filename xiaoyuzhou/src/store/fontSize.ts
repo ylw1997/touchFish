@@ -20,7 +20,7 @@ export const useFontSizeStore = create<FontSizeState>()(
         const newSize = Math.min(get().fontSize + 1, 20);
         set({ fontSize: newSize });
         vscode.postMessage({
-          command: "SAVE_FONT_SIZE",
+          command: "SET_FONTSIZE",
           payload: newSize,
         });
       },
@@ -29,13 +29,13 @@ export const useFontSizeStore = create<FontSizeState>()(
         const newSize = Math.max(get().fontSize - 1, 12);
         set({ fontSize: newSize });
         vscode.postMessage({
-          command: "SAVE_FONT_SIZE",
+          command: "SET_FONTSIZE",
           payload: newSize,
         });
       },
     }),
     {
-      name: "xiaoyuzhou-fontsize-storage",
+      name: "qqmusic-fontsize-storage",
       storage: createJSONStorage(() => localStorage),
     }
   )

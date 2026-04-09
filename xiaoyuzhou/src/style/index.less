@@ -1,64 +1,1548 @@
-.xy-app {
-  padding: 16px;
+/* ==========================================================================
+   1. 全局样式与重置
+   ========================================================================== */
+* {
+  font-family: "Microsoft YaHei", var(--vscode-font-family);
+}
+
+html,
+body {
+  padding: 0;
+  background-color: var(--vscode-editor-background);
+  height: 100vh;
+  overflow: hidden;
+  scrollbar-color: var(--vscode-scrollbarSlider-background) #ffffff00;
+  scrollbar-width: thin;
+}
+
+*:focus {
+  outline: none;
+}
+
+a {
+  color: var(--vscode-textLink-foreground);
+  &:hover {
+    color: var(--vscode-textLink-activeForeground);
+  }
+}
+
+/* ==========================================================================
+   2. 共享/可复用样式
+   ========================================================================== */
+
+.backdrop-style {
+  background-color: color-mix(
+    in srgb,
+    var(--vscode-editor-background) 70%,
+    transparent
+  );
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
+/* ==========================================================================
+   3. 主滚动列表容器
+   ========================================================================== */
+
+.list {
+  overflow-y: auto;
+  height: 100vh;
+  padding: 50px 5px 0;
+}
+
+.infinite-scroll-component {
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   4. Ant Design 组件覆盖
+   ========================================================================== */
+
+.ant-float-btn {
+  .backdrop-style();
+  &:hover {
+    background: var(--vscode-button-border);
+  }
+  .ant-float-btn-body {
+    background: none;
+  }
+}
+
+.ant-dropdown .ant-dropdown-menu,
+.ant-tabs-dropdown .ant-tabs-dropdown-menu,
+.ant-message .ant-message-notice-wrapper .ant-message-notice-content {
+  .backdrop-style();
+}
+
+.tabs {
+  position: fixed;
+  z-index: 9;
+  width: 100%;
+  top: 0;
+  .backdrop-style();
+}
+
+.ant-tabs > .ant-tabs-nav {
+  margin: 0;
+}
+
+.ant-tabs-nav-list {
+  padding: 0 8px;
+}
+
+.ant-tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin: 0 0 0 26px;
+}
+
+.ant-drawer {
+  z-index: 1101;
+  .ant-drawer-content-wrapper {
+    background-color: color-mix(
+      in srgb,
+      var(--vscode-editor-background) 80%,
+      transparent
+    );
+    backdrop-filter: saturate(180%) blur(15px);
+  }
+  .ant-drawer-body {
+    padding: 0px;
+  }
+  .ant-drawer-header {
+    padding: 12px;
+  }
+  .ant-drawer-content {
+    overflow: hidden;
+  }
+}
+
+.singer-header-card {
+  background: rgba(255, 255, 255, 0.05);
+  margin: 10px;
+}
+
+.info {
+  font-size: var(--app-font-size);
+}
+
+/* ==========================================================================
+   5. Bilibili Video Styles
+   ========================================================================== */
+
+.video-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.video-card {
+  // border: 1px solid var(--vscode-chat-requestBorder);
+  // border-radius: 8px;
+  // overflow: hidden;
+
+  .video-cover {
+    position: relative;
+    overflow: hidden;
+    background: #1a1a1a;
+
+    img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+      border-radius: 16px;
+    }
+
+    &:hover {
+      .video-play-icon {
+        opacity: 1;
+      }
+    }
+
+    // 中间播放图标
+    .video-play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      color: rgba(255, 255, 255, 0.9);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    // 右上角操作按钮区域
+    .video-hover-actions {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+
+      .video-action-btn {
+        width: 28px;
+        height: 28px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: var(--app-font-size);
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #00a1d6;
+        }
+      }
+    }
+
+    &:hover .video-hover-actions {
+      opacity: 1;
+    }
+
+    // 左下角播放量和弹幕
+    .video-stats-overlay {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      display: flex;
+      gap: 12px;
+      color: #fff;
+      font-size: calc(var(--app-font-size) - 2px);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+
+      span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+    }
+
+    // 右下角时长
+    .video-duration {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: calc(var(--app-font-size) - 2px);
+      font-weight: 500;
+    }
+
+    // 左上角已关注标签
+    .video-followed-tag {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #00a1d6;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: calc(var(--app-font-size) - 2px);
+      font-weight: 500;
+    }
+
+    // 视频播放器容器
+    .video-player-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+
+      .video-player {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .video-close-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: calc(var(--app-font-size) + 4px);
+        cursor: pointer;
+        z-index: 40;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #fb7299;
+        }
+      }
+    }
+
+    &:hover {
+      .video-cover {
+        .video-play-icon {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+        .video-hover-actions {
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  // 标题
+  .video-title {
+    padding: 8px 0px;
+    font-size: var(--app-font-size);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    transition: color 0.2s ease;
+    &:hover {
+      color: var(--vscode-textLink-foreground);
+    }
+  }
+
+  // 底部信息
+  .video-footer {
+    padding: 0px;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: calc(var(--app-font-size) - 2px);
+    color: var(--vscode-breadcrumb-foreground);
+
+    .video-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .video-author {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 120px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+      &:hover {
+        color: var(--vscode-textLink-foreground);
+      }
+    }
+
+    .video-dot {
+      color: var(--vscode-descriptionForeground);
+    }
+    .video-date {
+      color: var(--vscode-descriptionForeground);
+      white-space: nowrap;
+    }
+  }
+}
+
+@media screen and (min-width: 400px) {
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+}
+
+/* ==========================================================================
+   6. 悬浮播放条
+   ========================================================================== */
+.art-video-player {
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   7. Artplayer 控件隐藏样式 (用于 PlayBar 收起状态)
+   ========================================================================== */
+.art-controls-hidden {
+  .art-danmuku {
+    display: none;
+  }
+  // 隐藏底部控制栏
+  .art-bottom {
+    display: none;
+  }
+  // 隐藏顶部信息栏
+  .art-top {
+    display: none;
+  }
+  // 隐藏设置面板
+  .art-settings {
+    display: none;
+  }
+  // 隐藏右侧控制按钮
+  .art-contextmenus {
+    display: none;
+  }
+  // 隐藏加载指示器
+  .art-loading {
+    display: none;
+  }
+  // 隐藏暂停图标
+  .art-state {
+    display: none;
+  }
+  // 隐藏 notice
+  .art-notice {
+    display: none;
+  }
+}
+// PlayBar 收起状态下，强制 ArtPlayer 视频元素 cover 填充
+.playbar:not(.playbar-expanded) .art-video-player video {
+  object-fit: cover;
+}
+
+// 可点击元素样式
+.clickable {
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+// 画中画占位提示
+.playbar-placeholder {
+  position: fixed;
+  bottom: 12px;
+  left: calc(50% - 7px);
+  transform: translateX(-50%);
+  width: calc(100% - 26px);
+  max-width: 600px;
+  height: 60px;
+  .backdrop-style();
+  border: 1px solid var(--vscode-chat-requestBorder);
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+  .playbar-placeholder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--vscode-foreground);
+    font-size: calc(var(--app-font-size) - 1px);
+  }
+}
+
+// PlayBar 容器
+#playbar-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+// 画中画状态样式 - 使用独立窗口时主窗口的播放器保持不变
+.playbar-in-pip {
+  // 主窗口中的播放器在独立窗口打开时保持不变
+  opacity: 1;
+}
+
+/* ==========================================================================
+   QQ音乐特定样式
+   ========================================================================== */
+
+.qqmusic-app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative; // 新增：提供定位原点
+}
+
+.qqmusic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--vscode-chat-requestBorder);
+
+  // 改造为悬浮
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  .backdrop-style(); // 毛玻璃
+}
+
+.qqmusic-title {
+  margin: 0;
+  font-size: calc(var(--app-font-size) + 4px);
+  font-weight: 600;
   color: var(--vscode-foreground);
 }
 
-.xy-header {
+.qqmusic-header-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  align-items: center;
 }
 
-.xy-title {
-  margin: 0 0 4px !important;
+.qqmusic-login-status {
+  font-size: calc(var(--app-font-size) - 2px);
+  color: var(--vscode-descriptionForeground);
+  padding: 4px 8px;
+  background: var(--vscode-button-secondaryBackground);
+  border-radius: 4px;
 }
 
-.xy-section-stack {
+.qqmusic-content {
+  flex: 1;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.qqmusic-tabs {
+  & > .ant-tabs-nav {
+    margin: 0;
+    padding: 0 16px;
+
+    // 改造为悬浮
+    position: fixed;
+    top: 45px; // 紧锁在 header 下方
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    .backdrop-style(); // 毛玻璃
+    border-bottom: 1px solid var(--vscode-chat-requestBorder);
+  }
+
+  .tab-content {
+    padding: 10px 5px;
+  }
+
+  .ant-tabs-content {
+    height: 100vh;
+    overflow: visible; // 取消裁剪
+  }
+
+  .ant-tabs-tabpane {
+    height: 100vh;
+    overflow-y: auto; // 主页签独立滚动
+    box-sizing: border-box;
+    padding-top: 91px; // 避让高度
+  }
+
+  // ==================== 修复子 Tab 嵌套 ====================
+  .sub-tabs {
+    .ant-tabs-nav {
+      position: relative; // 子 Tab 不要 fixed
+      top: 0;
+    }
+    .ant-tabs-content {
+      height: auto;
+      overflow: visible;
+    }
+    .ant-tabs-tabpane {
+      height: auto; // 子 Tabpane 正常撑开
+      overflow-y: visible; // 子 Tabpane 不带进度条！
+      padding-top: 0; // 移除避让！
+    }
+  }
+}
+
+.qqmusic-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: calc(var(--app-font-size) + 4px);
+    color: var(--vscode-foreground);
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--app-font-size);
+  }
+}
+
+.qqmusic-user-info,
+.qqmusic-login-prompt {
+  padding: 20px;
+  text-align: center;
+
+  h3 {
+    margin: 0 0 12px;
+    color: var(--vscode-foreground);
+  }
+
+  p {
+    margin: 0;
+    color: var(--vscode-descriptionForeground);
+  }
+}
+
+.qqmusic-playbar-placeholder {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  background: var(--vscode-editor-background);
+  border-top: 1px solid var(--vscode-chat-requestBorder);
+  text-align: center;
+  font-size: var(--app-font-size);
+  color: var(--vscode-foreground);
+}
+
+.qqmusic-footer {
+  padding: 8px 16px;
+  text-align: center;
+  font-size: calc(var(--app-font-size) - 2px);
+  color: var(--vscode-descriptionForeground);
+  border-top: 1px solid var(--vscode-chat-requestBorder);
+}
+
+// ==================== 推荐歌单样式 ====================
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: calc(var(--app-font-size) + 4px);
+    color: var(--vscode-foreground);
+  }
+}
+
+.playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 16px;
 }
 
-.xy-card {
-  border: 1px solid var(--vscode-chat-requestBorder);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--vscode-editor-background) 92%, #66c1a8 8%),
-      var(--vscode-editor-background)
-    );
-  box-shadow: none;
+.playlist-card {
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    .playlist-info {
+      color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);
+    }
+  }
+
+  .playlist-cover-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 100%; // 1:1 比例
+    overflow: hidden;
+    border-radius: 16px;
+
+    &:hover .playlist-play-overlay {
+      opacity: 1;
+    }
+
+    &:hover .playlist-cover {
+      transform: scale(1.05);
+    }
+  }
+
+  .playlist-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .playlist-play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+
+    .play-icon {
+      font-size: 38px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+
+  .playlist-play-count {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 16px;
+    font-size: calc(var(--app-font-size) - 3px);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .playlist-info {
+    color: var(--vscode-foreground);
+    padding: 8px 4px;
+  }
+
+  .playlist-title {
+    font-size: calc(var(--app-font-size) - 1px);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    line-height: 1.4;
+  }
+
+  .playlist-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: calc(var(--app-font-size) - 3px);
+    color: var(--vscode-descriptionForeground);
+  }
+
+  .playlist-song-count {
+    color: var(--vscode-descriptionForeground);
+  }
 }
 
-.xy-list-item {
-  align-items: flex-start !important;
+// ==================== 排行榜样式 ====================
+.rank-header {
+  .rank-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+
+    .ant-btn {
+      white-space: nowrap;
+    }
+  }
 }
 
-.xy-rank {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  display: inline-flex;
+// ==================== 歌曲列表样式 ====================
+.song-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 5px;
+}
+
+.song-card {
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--vscode-list-hoverBackground);
+  }
+
+  &.song-card-playing {
+    background: color-mix(in srgb, #00a1d6 15%, transparent);
+  }
+
+  .song-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .song-card-cover {
+    position: relative;
+    width: calc(var(--app-font-size) * 4.2);
+    height: calc(var(--app-font-size) * 4.2);
+    flex-shrink: 0;
+
+    .song-cover-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .song-playing-indicator {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+
+      .playing-bar {
+        width: 3px;
+        height: 12px;
+        background: #31c27c;
+        animation: playing-animation 1s ease-in-out infinite;
+
+        &:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+
+        &:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+      }
+    }
+  }
+
+  .song-card-info {
+    flex: 1;
+    min-width: 0;
+
+    .song-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+
+      .song-name {
+        font-size: var(--app-font-size);
+        font-weight: 500;
+        color: var(--vscode-foreground);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .song-artist,
+    .song-album {
+      font-size: calc(var(--app-font-size) - 2px);
+      color: var(--vscode-descriptionForeground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .song-duration {
+    font-size: calc(var(--app-font-size) - 2px);
+    color: var(--vscode-descriptionForeground);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .song-actions {
+    display: flex;
+    gap: 4px;
+  }
+}
+
+@keyframes playing-animation {
+  0%,
+  100% {
+    height: 4px;
+  }
+  50% {
+    height: 16px;
+  }
+}
+
+// ==================== 登录弹窗样式 ====================
+.login-qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+
+  .login-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .login-qr-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    .login-qr-image {
+      width: 200px;
+      height: 200px;
+      border: 1px solid var(--vscode-chat-requestBorder);
+      border-radius: 8px;
+    }
+
+    .login-status-text {
+      font-size: var(--app-font-size);
+      color: var(--vscode-descriptionForeground);
+    }
+  }
+
+  .login-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.login-tips {
+  padding: 16px;
+  background: var(--vscode-editor-inactiveSelectionBackground);
+  border-radius: 8px;
+  font-size: calc(var(--app-font-size) - 2px);
+  color: var(--vscode-descriptionForeground);
+
+  p {
+    margin: 0 0 8px;
+    font-weight: 500;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 16px;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+}
+
+// ==================== 我的页面样式 ====================
+.my-content {
+  .user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0px;
+    margin-bottom: 10px;
+    background: none;
+    border-radius: 0;
+    margin-top: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    .user-info {
+      h2 {
+        margin: 0 0 8px;
+        font-size: calc(var(--app-font-size) + 4px);
+        color: var(--vscode-foreground);
+      }
+
+      p {
+        margin: 0;
+        font-size: var(--app-font-size);
+        color: var(--vscode-descriptionForeground);
+      }
+    }
+  }
+
+  .my-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .my-section {
+      padding: 10px 0px;
+      background: none;
+      border-radius: 0;
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: calc(var(--app-font-size) + 2px);
+        color: var(--vscode-foreground);
+      }
+
+      p {
+        margin: 0;
+        font-size: var(--app-font-size);
+        color: var(--vscode-descriptionForeground);
+      }
+    }
+  }
+}
+
+.login-prompt {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
-  font-weight: 700;
-  background: color-mix(in srgb, var(--vscode-button-background) 20%, transparent);
-  color: var(--vscode-button-foreground);
+  padding: 60px 20px;
+  text-align: center;
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: calc(var(--app-font-size) + 6px);
+    color: var(--vscode-foreground);
+  }
+
+  p {
+    margin: 0 0 24px;
+    font-size: var(--app-font-size);
+    color: var(--vscode-descriptionForeground);
+  }
 }
 
-.xy-html {
-  line-height: 1.7;
-  word-break: break-word;
+/* === PlayBar === */
+.playbar {
+  position: fixed;
+  bottom: 12px;
+  left: calc(50% - 7px);
+  transform: translateX(-50%);
+  width: calc(100% - 26px);
+  max-width: 600px;
+  .backdrop-style();
+  border-radius: 26px;
+  display: flex;
+  flex-direction: column-reverse; // 让播放列表在下方展开
+  z-index: 1100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  user-select: none;
+
+  .playbar-lyric {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-top: 2px;
+    min-height: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // 单一视频容器 - 收起时在底部row中，展开时在顶部
+  .playbar-video-wrapper {
+    // 收起状态：小尺寸，在底部左侧
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    background: #000;
+    cursor: pointer;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    order: -1; // 在flex row中排在最前
+
+    // 展开状态：移除黑色背景，保留原有尺寸以防布局闪烁
+    &.expanded-mode {
+      background: transparent;
+      border-radius: 0;
+    }
+
+    .playbar-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+
+      &.playing {
+        animation: rotate 20s linear infinite;
+      }
+    }
+
+    .playbar-video-loading {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #00a1d6;
+      font-size: calc(var(--app-font-size) + 2px);
+    }
+
+    .playbar-collapse-btn {
+      display: none; // 收起时隐藏
+    }
+  }
+
+  // 底部信息和控制区域
+  .playbar-bottom {
+    display: flex;
+    align-items: center;
+    padding: 5px 8px;
+    gap: 10px;
+    position: relative;
+
+    .playbar-progress-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.1);
+      z-index: 0;
+      transition: width 0.3s ease;
+      pointer-events: none;
+      overflow: hidden;
+
+      // 微妙的光带效果
+      &::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 80%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        animation: progress-shine 5s ease-in-out infinite;
+      }
+    }
+
+    @keyframes progress-shine {
+      0% {
+        left: -100%;
+      }
+      50%,
+      100% {
+        left: 200%;
+      }
+    }
+
+    // 深色模式进度条
+    .dark & .playbar-progress-bg {
+      background: rgba(255, 255, 255, 0.1);
+
+      &::after {
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.15),
+          transparent
+        );
+      }
+    }
+
+    // 确保子元素在进度条上方
+    .playbar-video-wrapper,
+    .playbar-info,
+    .ant-space {
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  .playbar-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+
+    .playbar-text-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      gap: 2px;
+
+      .playbar-title {
+        font-size: calc(var(--app-font-size) - 1px);
+        color: var(--vscode-tab-activeForeground);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: normal;
+
+        .playbar-singer {
+          cursor: pointer;
+          color: var(--vscode-descriptionForeground);
+          transition: color 0.2s;
+
+          &:hover {
+            color: var(--vscode-foreground);
+          }
+        }
+      }
+
+      .playbar-author {
+        font-size: calc(var(--app-font-size) - 3px);
+        color: var(--vscode-descriptionForeground);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: normal;
+      }
+    }
+  }
+
+  // 专属雷达变色
+  &.playbar-radar {
+    background-color: color-mix(
+      in srgb,
+      color-mix(in srgb, #00c6ff 10%, var(--vscode-editor-background)) 70%,
+      transparent
+    );
+  }
+
+  // 猜你喜欢变色
+  &.playbar-guess {
+    background-color: color-mix(
+      in srgb,
+      color-mix(in srgb, #f857a6 8%, var(--vscode-editor-background)) 70%,
+      transparent
+    );
+  }
 }
 
-.xy-html img {
-  max-width: 100%;
-  border-radius: 12px;
+// 暂停时流光静止
+.playbar.paused .playbar-progress-bg::after {
+  animation-play-state: paused !important;
 }
 
-.xy-audio {
+// 专属推荐卡片样式 (新加)
+.custom-special-card {
+  background: rgba(0, 0, 0, 0.03); // 白色主题浅背景
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  .anticon {
+    transition: transform 0.2s;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    .anticon {
+      transform: scale(1.1);
+    }
+  }
+
+  // 文字颜色适配
+  .custom-special-title {
+    color: var(--vscode-foreground);
+  }
+  .custom-special-desc {
+    color: var(--vscode-descriptionForeground);
+  }
+}
+
+// 黑色模式卡片适配
+.dark .custom-special-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .custom-special-title {
+    color: #fff;
+  }
+  .custom-special-desc {
+    color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// 内部播放列表样式（在 playbar 内向下展开）
+.playbar-playlist-inner {
   width: 100%;
+  border-top: 1px solid var(--vscode-chat-requestBorder);
+  display: flex;
+  flex-direction: column;
+
+  .playbar-playlist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--vscode-chat-requestBorder);
+
+    .playbar-playlist-title {
+      font-size: var(--app-font-size);
+      font-weight: 500;
+      color: var(--vscode-foreground);
+    }
+  }
+
+  .playbar-playlist-content {
+    flex: 1;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 8px 0;
+
+    .playbar-playlist-empty {
+      text-align: center;
+      padding: 24px;
+      color: var(--vscode-descriptionForeground);
+      font-size: calc(var(--app-font-size) - 1px);
+    }
+
+    .playbar-playlist-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: var(--vscode-list-hoverBackground);
+      }
+
+      &.active {
+        background: color-mix(in srgb, #00a1d6 20%, transparent);
+      }
+
+      img {
+        width: 44px;
+        height: 44px;
+        border-radius: 4px;
+        object-fit: cover;
+      }
+
+      .playbar-playlist-item-info {
+        flex: 1;
+        min-width: 0;
+
+        .playbar-playlist-item-title {
+          font-size: calc(var(--app-font-size) - 1px);
+          color: var(--vscode-foreground);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .playbar-playlist-item-author {
+          font-size: calc(var(--app-font-size) - 3px);
+          color: var(--vscode-descriptionForeground);
+          margin-top: 2px;
+        }
+      }
+
+      .playbar-playlist-item-remove {
+        opacity: 0;
+        color: var(--vscode-descriptionForeground);
+        transition: all 0.2s ease;
+
+        &:hover {
+          color: #fb7299;
+        }
+      }
+
+      &:hover .playbar-playlist-item-remove {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.playbar-progress {
+  width: 100%;
+  padding: 0 16px;
+  margin-top: -8px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .time {
+    font-size: calc(var(--app-font-size) - 4px);
+    color: var(--vscode-descriptionForeground);
+  }
+
+  .ant-slider {
+    flex: 1;
+    margin: 10px 0;
+  }
+}
+
+// 歌词悬浮面板 (类 Apple Music Mini Player)
+.playbar-lyric-overlay {
+  display: flex;
+  flex-direction: row; // 横向排版
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  gap: 16px;
+  box-sizing: border-box;
+  position: relative;
+  -webkit-backdrop-filter: blur(24px); // 添加 webkit 前缀确保兼容性
+  border-radius: 12px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+
+  .dark & {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  .lyric-overlay-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    gap: 16px;
+
+    .lyric-cover-container {
+      flex: 0 0 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 140px;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    .lyric-list-container {
+      flex: 1;
+      height: 140px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0;
+      align-items: flex-start; // 左对齐
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
+      mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        black 15%,
+        black 85%,
+        transparent
+      );
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        black 15%,
+        black 85%,
+        transparent
+      );
+      mask-size: 100% 100%;
+
+      .lyric-line {
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 13px;
+        transition: font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    text-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: left;
+        line-height: 1.4;
+        word-break: break-word;
+
+        .dark & {
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        &:not(.dark) & {
+          color: rgba(0, 0, 0, 0.5);
+        }
+
+        &.active {
+          font-size: 16px;
+          font-weight: 600;
+          text-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
+          transform: scale(1.02);
+          transform-origin: left center;
+          
+          .lyric-char {
+            // 计算当前字符的相对进度，乘 1% 是给 calc 结果带上单位
+            --local-progress: calc((var(--lyric-progress-raw, 0) - var(--char-start)) / var(--char-width) * 100%);
+            
+            // 卡拉OK 渐变填充效果
+            background: linear-gradient(
+              to right,
+              var(--vscode-foreground, #fff) var(--local-progress),
+              rgba(255, 255, 255, 0.3) var(--local-progress)
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            display: inline-block; // 让它独立响应渐变 box
+          }
+        }
+      }
+    }
+  }
+}
+
+// 展开模式下的缩小按钮 (替换原先的小封面图)
+.playbar-shrink-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%; // 改成圆形，完美匹配截图
+  background: rgba(120, 120, 120, 0.2);
+  color: var(--vscode-foreground);
+  font-size: 16px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(120, 120, 120, 0.35);
+    transform: scale(1.05);
+  }
+
+  .dark & {
+    background: rgba(255, 255, 255, 0.1);
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
 }

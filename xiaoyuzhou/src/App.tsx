@@ -1,574 +1,646 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+/**
+ * QQ音乐主应用
+ */
+import { useCallback, useEffect, useState } from "react";
 import {
   Avatar,
   Button,
-  Card,
-  Drawer,
-  Empty,
-  Flex,
-  Input,
-  List,
+  Dropdown,
+  FloatButton,
+  message,
   Modal,
-  Segmented,
   Space,
   Spin,
   Tabs,
-  Typography,
+  type TabsProps,
 } from "antd";
 import {
   CustomerServiceOutlined,
-  FireOutlined,
+  HomeOutlined,
   LoginOutlined,
   LogoutOutlined,
   MinusOutlined,
   PlusOutlined,
-  ReloadOutlined,
+  RadarChartOutlined,
   SearchOutlined,
-  StarOutlined,
+  TrophyOutlined,
+  UserOutlined,
+  VerticalAlignTopOutlined,
 } from "@ant-design/icons";
+import { AnimatePresence, motion } from "framer-motion";
+import LoginModal from "./components/LoginModal";
+import PlayBar from "./components/PlayBar";
+import PlaylistCard from "./components/PlaylistCard";
+import PlaylistDrawer from "./components/PlaylistDrawer";
+import SearchDrawer from "./components/SearchDrawer";
+import { SingerDrawer } from "./components/SingerDrawer";
+import SongCard from "./components/SongCard";
+import { useQQMusic } from "./hooks/useQQMusic";
 import { useRequest } from "./hooks/useRequest";
 import { useFontSizeStore } from "./store/fontSize";
-import type {
-  ApiResponse,
-  XiaoyuzhouEpisode,
-  XiaoyuzhouPodcast,
-  XiaoyuzhouUserInfo,
-} from "./types/xiaoyuzhou";
-
-const { Title, Paragraph, Text } = Typography;
-
-type AuthPayload = {
-  isLoggedIn: boolean;
-  userInfo: XiaoyuzhouUserInfo | null;
-};
-
-function getImageUrl(entity: any) {
-  return (
-    entity?.image?.smallPicUrl ||
-    entity?.image?.middlePicUrl ||
-    entity?.image?.picUrl ||
-    entity?.avatar
-  );
-}
-
-function getPlayableUrl(episode: any) {
-  return (
-    episode?.enclosure?.url ||
-    episode?.media?.source?.url ||
-    episode?.media?.backupSource?.url ||
-    ""
-  );
-}
-
-function extractDiscoverySections(raw: any): Array<{ title: string; items: any[] }> {
-  const blocks = Array.isArray(raw?.data) ? raw.data : [];
-
-  return blocks
-    .flatMap((block: any) => (Array.isArray(block?.data) ? block.data : []))
-    .map((section: any) => ({
-      title:
-        section?.title ||
-        section?.header?.title ||
-        section?.rightContent?.text ||
-        section?.moduleType ||
-        "推荐",
-      items: Array.isArray(section?.target)
-        ? section.target.map((entry: any) => entry?.podcast || entry?.episode || entry)
-        : section?.url
-          ? [
-              {
-                title: section?.rightContent?.text || "推荐入口",
-                description: section?.url,
-                image: section?.leftImage?.images?.[0],
-              },
-            ]
-          : [],
-    }))
-    .filter((section: { title: string; items: any[] }) => section.items.length > 0);
-}
+import { usePlayerStore } from "./store/player";
+import { useUserStore } from "./store/user";
+import type { Playlist, RankList, Song } from "./types/qqmusic";
+import { vscode } from "./utils/vscode";
+import "./style/index.less";
 
 function App() {
-  const { request, messageApi } = useRequest();
-  const { fontSize, increase, decrease } = useFontSizeStore();
-
-  const [auth, setAuth] = useState<AuthPayload>({
-    isLoggedIn: false,
-    userInfo: null,
-  });
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [verifyCode, setVerifyCode] = useState("");
-  const [sendingCode, setSendingCode] = useState(false);
-  const [loggingIn, setLoggingIn] = useState(false);
-  const [discoverySections, setDiscoverySections] = useState<
-    Array<{ title: string; items: any[] }>
-  >([]);
-  const [topCategory, setTopCategory] = useState<"HOT" | "ROCK" | "NEW">("HOT");
-  const [topList, setTopList] = useState<any | null>(null);
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<XiaoyuzhouPodcast[]>([]);
-  const [podcastOpen, setPodcastOpen] = useState(false);
-  const [podcastDetail, setPodcastDetail] = useState<XiaoyuzhouPodcast | null>(null);
-  const [podcastEpisodes, setPodcastEpisodes] = useState<XiaoyuzhouEpisode[]>([]);
-  const [podcastLoading, setPodcastLoading] = useState(false);
-  const [episodeOpen, setEpisodeOpen] = useState(false);
-  const [episodeDetail, setEpisodeDetail] = useState<XiaoyuzhouEpisode | null>(null);
-  const [audioUrl, setAudioUrl] = useState("");
-
-  const syncAuth = useCallback(async () => {
-    const result = await request<ApiResponse<AuthPayload>>(
-      "XIAOYUZHOU_GET_USER_INFO",
-      null,
-    );
-
-    if (result.code === 0 && result.data) {
-      setAuth(result.data);
-    }
-  }, [request]);
-
-  const loadDiscovery = useCallback(async () => {
-    const result = await request<ApiResponse<any>>(
-      "XIAOYUZHOU_GET_DISCOVERY_FEED",
-      {},
-    );
-    if (result.code === 0 && result.data) {
-      setDiscoverySections(extractDiscoverySections(result.data));
-      return;
-    }
-    messageApi.error(result.message || "加载推荐失败");
-  }, [messageApi, request]);
-
-  const loadTopList = useCallback(
-    async (category: "HOT" | "ROCK" | "NEW") => {
-      const result = await request<ApiResponse<any>>("XIAOYUZHOU_GET_TOP_LIST", {
-        category,
-      });
-      if (result.code === 0 && result.data) {
-        setTopList(result.data?.data || null);
-        return;
-      }
-      messageApi.error(result.message || "加载榜单失败");
-    },
-    [messageApi, request],
+  const [activeTab, setActiveTab] = useState("recommend");
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
+  const [playlistDrawerOpen, setPlaylistDrawerOpen] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
+    null,
   );
+  const [recommendPlaylists, setRecommendPlaylists] = useState<Playlist[]>([]);
+  const [rankLists, setRankLists] = useState<RankList[]>([]);
+  const [selectedRank, setSelectedRank] = useState<RankList | null>(null);
+  const [rankSongs, setRankSongs] = useState<Song[]>([]);
+  const [isRankLoading, setIsRankLoading] = useState(false);
+  const [myPlaylists, setMyPlaylists] = useState<Playlist[]>([]);
 
-  const openPodcast = useCallback(
-    async (pid: string) => {
-      setPodcastLoading(true);
-      setPodcastOpen(true);
-      try {
-        const [detailResult, listResult] = await Promise.all([
-          request<ApiResponse<any>>("XIAOYUZHOU_GET_PODCAST_DETAIL", { pid }),
-          request<ApiResponse<any>>("XIAOYUZHOU_GET_EPISODE_LIST", { pid, order: "desc" }),
-        ]);
+  const { fontSize, increase, decrease } = useFontSizeStore();
+  const { isLoggedIn, userInfo, login, logout } = useUserStore();
+  const { request } = useRequest();
+  const currentSong = usePlayerStore((state) => state.currentSong);
+  const currentSongMid = currentSong?.mid;
 
-        if (detailResult.code === 0) {
-          setPodcastDetail(detailResult.data?.data || null);
+  const {
+    getRecommendPlaylists,
+    getRankLists,
+    getRankDetail,
+    playSong,
+    getMyPlaylists,
+    getMyFavorite,
+    getRadarRecommend,
+    getGuessRecommend,
+    messageApi,
+  } = useQQMusic();
+
+  const handleLogout = useCallback(() => {
+    Modal.confirm({
+      title: "确认退出",
+      content: "您确定要退出 QQ 音乐登录吗？",
+      okText: "确认",
+      cancelText: "取消",
+      onOk: () => {
+        vscode.postMessage({ command: "QQMUSIC_LOGOUT" });
+        logout();
+        message.success("已退出登录");
+      },
+    });
+  }, [logout]);
+
+  const loadMyData = useCallback(async () => {
+    if (!userInfo?.musicid || !userInfo?.musickey) return;
+
+    const credential = {
+      musicid: userInfo.musicid,
+      musickey: userInfo.musickey,
+    };
+
+    const playlistResult = await getMyPlaylists(credential);
+    if (playlistResult.code === 0 && playlistResult.data) {
+      setMyPlaylists(playlistResult.data);
+    }
+
+    const favoriteResult = await getMyFavorite(credential);
+    if (favoriteResult.code === 0 && favoriteResult.data) {
+      useUserStore
+        .getState()
+        .setLikedSongMids(favoriteResult.data.songs.map((song: Song) => song.mid));
+    }
+  }, [getMyFavorite, getMyPlaylists, userInfo]);
+
+  const loadRecommendData = useCallback(async () => {
+    const result = await getRecommendPlaylists(24);
+    if (result.code === 0 && result.data) {
+      setRecommendPlaylists(result.data);
+    } else {
+      console.error("[QQMusic] 加载推荐歌单失败:", result.message);
+    }
+  }, [getRecommendPlaylists]);
+
+  const loadRankData = useCallback(async () => {
+    const result = await getRankLists();
+    if (result.code === 0 && result.data) {
+      setRankLists(result.data);
+      if (result.data.length > 0) {
+        setSelectedRank(result.data[0]);
+        setIsRankLoading(true);
+        try {
+          const detailResult = await getRankDetail(result.data[0].topId, 1, 50);
+          if (detailResult.code === 0 && detailResult.data) {
+            setRankSongs(detailResult.data.songs);
+          }
+        } finally {
+          setIsRankLoading(false);
         }
-        if (listResult.code === 0) {
-          setPodcastEpisodes(listResult.data?.data || []);
+      }
+    } else {
+      console.error("[QQMusic] 加载排行榜失败:", result.message);
+    }
+  }, [getRankDetail, getRankLists]);
+
+  const loadRankDetailData = useCallback(
+    async (topId: number) => {
+      setIsRankLoading(true);
+      try {
+        const result = await getRankDetail(topId, 1, 50);
+        if (result.code === 0 && result.data) {
+          setRankSongs(result.data.songs);
         }
       } finally {
-        setPodcastLoading(false);
+        setIsRankLoading(false);
       }
     },
-    [request],
+    [getRankDetail],
   );
-
-  const openEpisode = useCallback(
-    async (eid: string) => {
-      const result = await request<ApiResponse<any>>("XIAOYUZHOU_GET_EPISODE_DETAIL", {
-        eid,
-      });
-
-      if (result.code !== 0 || !result.data?.data) {
-        messageApi.error(result.message || "加载单集详情失败");
-        return;
-      }
-
-      const detail = result.data.data as XiaoyuzhouEpisode;
-      setEpisodeDetail(detail);
-      setAudioUrl(getPlayableUrl(detail));
-      setEpisodeOpen(true);
-    },
-    [messageApi, request],
-  );
-
-  const handleSendCode = useCallback(async () => {
-    setSendingCode(true);
-    try {
-      const result = await request<ApiResponse<boolean>>("XIAOYUZHOU_SEND_CODE", {
-        areaCode: "+86",
-        phoneNumber,
-      });
-      if (result.code === 0) {
-        messageApi.success("验证码已发送");
-        return;
-      }
-      messageApi.error(result.message || "验证码发送失败");
-    } finally {
-      setSendingCode(false);
-    }
-  }, [messageApi, phoneNumber, request]);
-
-  const handleLogin = useCallback(async () => {
-    setLoggingIn(true);
-    try {
-      const result = await request<ApiResponse<any>>("XIAOYUZHOU_LOGIN_WITH_SMS", {
-        areaCode: "+86",
-        phoneNumber,
-        verifyCode,
-      });
-
-      if (result.code === 0 && result.data?.userInfo) {
-        setAuth({ isLoggedIn: true, userInfo: result.data.userInfo });
-        setLoginOpen(false);
-        setVerifyCode("");
-        messageApi.success("小宇宙登录成功");
-        await Promise.all([loadDiscovery(), loadTopList(topCategory)]);
-        return;
-      }
-
-      messageApi.error(result.message || "登录失败");
-    } finally {
-      setLoggingIn(false);
-    }
-  }, [loadDiscovery, loadTopList, messageApi, phoneNumber, request, topCategory, verifyCode]);
-
-  const handleLogout = useCallback(async () => {
-    await request("XIAOYUZHOU_LOGOUT", null);
-    setAuth({ isLoggedIn: false, userInfo: null });
-    setDiscoverySections([]);
-    setTopList(null);
-    setSearchResults([]);
-    messageApi.success("已退出小宇宙登录");
-  }, [messageApi, request]);
-
-  const handleSearch = useCallback(async () => {
-    if (!searchKeyword.trim()) return;
-    setSearching(true);
-    try {
-      const result = await request<ApiResponse<any>>("XIAOYUZHOU_SEARCH_PODCASTS", {
-        keyword: searchKeyword.trim(),
-      });
-      if (result.code === 0) {
-        setSearchResults(result.data?.data || []);
-        return;
-      }
-      messageApi.error(result.message || "搜索失败");
-    } finally {
-      setSearching(false);
-    }
-  }, [messageApi, request, searchKeyword]);
 
   useEffect(() => {
-    void syncAuth();
+    const syncAuthState = async () => {
+      try {
+        const result = await request<any>("QQMUSIC_GET_USER_INFO", null);
+        if (result.code === 0 && result.data) {
+          login(result.data);
+        } else {
+          logout();
+        }
+      } catch {
+        logout();
+      }
+    };
+
+    void syncAuthState();
 
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.command !== "XIAOYUZHOU_AUTH_SYNC") return;
-      setAuth(event.data.payload as AuthPayload);
+      const payload = event.data;
+      if (payload?.command !== "QQMUSIC_AUTH_SYNC") return;
+
+      if (payload.payload?.isLoggedIn && payload.payload?.userInfo) {
+        login(payload.payload.userInfo);
+      } else {
+        logout();
+      }
     };
 
     window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [syncAuth]);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [login, logout, request]);
 
   useEffect(() => {
-    if (auth.isLoggedIn) {
-      void loadDiscovery();
-      void loadTopList(topCategory);
+    vscode.postMessage({
+      command: "QQMUSIC_RESTORE_SCROLL_POSITION",
+    });
+
+    void loadRecommendData();
+    void loadRankData();
+  }, [loadRankData, loadRecommendData]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      void loadRecommendData();
+      void loadRankData();
+      void loadMyData();
+    } else {
+      setMyPlaylists([]);
     }
-  }, [auth.isLoggedIn, loadDiscovery, loadTopList, topCategory]);
+  }, [isLoggedIn, loadMyData, loadRankData, loadRecommendData]);
 
-  const topItems = useMemo(() => topList?.items || [], [topList]);
+  const handlePlaylistClick = useCallback(
+    async (playlist: Playlist) => {
+      if (playlist.dissid === 999991) {
+        try {
+          const res = await getRadarRecommend();
+          const songs = res.data?.VecSongs
+            ? res.data.VecSongs.map((item: any) => item.Track).filter(Boolean)
+            : res.data?.tracks ||
+              res.data?.songlist ||
+              res.data?.v_song ||
+              res.data?.list ||
+              [];
 
-  const tabs = [
+          if (songs.length > 0) {
+            const player = usePlayerStore.getState();
+            player.clearPlaylist();
+            player.setPlaylist(songs);
+            player.setCurrentIndex(0);
+            player.setIsRadioMode(false);
+            player.setPlaySource("radar");
+            await playSong(songs[0]);
+            messageApi.success("专属雷达已开启");
+          } else {
+            messageApi.warning("暂无雷达推荐歌曲");
+          }
+        } catch {
+          messageApi.error("加载专属雷达失败");
+        }
+        return;
+      }
+
+      if (playlist.dissid === 999992) {
+        try {
+          const res = await getGuessRecommend();
+          const songs =
+            res.data?.tracks ||
+            res.data?.songlist ||
+            res.data?.v_song ||
+            res.data?.list ||
+            [];
+
+          if (songs.length > 0) {
+            const player = usePlayerStore.getState();
+            player.clearPlaylist();
+            player.setPlaylist(songs);
+            player.setCurrentIndex(0);
+            player.setIsRadioMode(true);
+            player.setPlaySource("guess");
+            await playSong(songs[0]);
+            messageApi.success("猜你喜欢电台已开启");
+          } else {
+            message.warning("暂无猜你喜欢推荐歌曲");
+          }
+        } catch {
+          message.error("加载猜你喜欢电台失败");
+        }
+        return;
+      }
+
+      usePlayerStore.getState().setPlaySource("normal");
+      setSelectedPlaylist(playlist);
+      setPlaylistDrawerOpen(true);
+    },
+    [getGuessRecommend, getRadarRecommend, messageApi, playSong],
+  );
+
+  const handlePlaySong = useCallback(
+    async (song: Song) => {
+      try {
+        await playSong(song);
+        message.success(`开始播放: ${song.name}`);
+      } catch (error: any) {
+        message.error(error.message || "无法播放歌曲");
+      }
+    },
+    [playSong],
+  );
+
+  const tabsItems: TabsProps["items"] = [
     {
-      key: "discovery",
+      key: "recommend",
       label: "推荐",
-      icon: <StarOutlined />,
-      children: auth.isLoggedIn ? (
-        <div className="xy-section-stack">
-          {discoverySections.length === 0 ? (
-            <Empty description="暂无推荐内容" />
-          ) : (
-            discoverySections.map((section: { title: string; items: any[] }) => (
-              <Card key={section.title} title={section.title} className="xy-card">
-                <List
-                  dataSource={section.items}
-                  renderItem={(item: any) => (
-                    <List.Item
-                      className="xy-list-item"
-                      actions={
-                        item?.pid
-                          ? [<Button key="open" type="link" onClick={() => void openPodcast(item.pid)}>查看节目</Button>]
-                          : undefined
-                      }
-                    >
-                      <List.Item.Meta
-                        avatar={
-                          <Avatar shape="square" size={52} src={getImageUrl(item)} />
-                        }
-                        title={item?.title || item?.name || "推荐内容"}
-                        description={item?.description || item?.brief || item?.author}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
-            ))
-          )}
-        </div>
-      ) : (
-        <Empty description="登录后查看小宇宙推荐与精选" />
-      ),
-    },
-    {
-      key: "top",
-      label: "榜单",
-      icon: <FireOutlined />,
-      children: auth.isLoggedIn ? (
-        <div className="xy-section-stack">
-          <Flex justify="space-between" align="center" wrap gap={12}>
-            <Segmented
-              value={topCategory}
-              options={[
-                { label: "最热榜", value: "HOT" },
-                { label: "飙升榜", value: "ROCK" },
-                { label: "新星榜", value: "NEW" },
-              ]}
-              onChange={(value) => {
-                const category = value as "HOT" | "ROCK" | "NEW";
-                setTopCategory(category);
-                void loadTopList(category);
-              }}
-            />
-            <Button icon={<ReloadOutlined />} onClick={() => void loadTopList(topCategory)}>
-              刷新榜单
-            </Button>
-          </Flex>
-
-          <Card
-            title={topList?.title || "榜单"}
-            extra={topList?.publishDate ? <Text type="secondary">{topList.publishDate}</Text> : null}
-            className="xy-card"
+      icon: <HomeOutlined />,
+      children: (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="tab-content"
+        >
+          <div className="section-title">
+            <h2>专属推荐</h2>
+          </div>
+          <div
+            className="special-recommend-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "14px",
+              marginBottom: "24px",
+            }}
           >
-            <Paragraph type="secondary">{topList?.information}</Paragraph>
-            <List
-              dataSource={topItems}
-              renderItem={(entry: any, index) => {
-                const item = entry?.item || {};
-                return (
-                  <List.Item
-                    className="xy-list-item"
-                    actions={[
-                      <Button key="podcast" type="link" onClick={() => void openPodcast(item.pid)}>
-                        节目
-                      </Button>,
-                      <Button key="episode" type="link" onClick={() => void openEpisode(item.eid)}>
-                        播放
-                      </Button>,
-                    ]}
-                  >
-                    <div className="xy-rank">{index + 1}</div>
-                    <List.Item.Meta
-                      avatar={<Avatar shape="square" size={52} src={getImageUrl(item)} />}
-                      title={item.title}
-                      description={item.podcast?.title || item.description}
-                    />
-                  </List.Item>
-                );
+            <div
+              className="custom-special-card"
+              onClick={() =>
+                handlePlaylistClick({
+                  dissid: 999991,
+                  dissname: "专属雷达",
+                  logo: "",
+                  nick: "",
+                  songnum: 30,
+                })
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                borderRadius: "14px",
+                padding: "12px 14px",
+                cursor: "pointer",
+                gap: "12px",
+                transition: "all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                backdropFilter: "blur(25px)",
+                WebkitBackdropFilter: "blur(25px)",
               }}
-            />
-          </Card>
-        </div>
-      ) : (
-        <Empty description="登录后查看小宇宙榜单" />
+            >
+              <RadarChartOutlined
+                style={{ fontSize: "28px", color: "#00c6ff" }}
+              />
+              <div style={{ flex: 1 }}>
+                <div
+                  className="custom-special-title"
+                  style={{ fontSize: "14px", fontWeight: "600", marginBottom: "1px" }}
+                >
+                  专属雷达
+                </div>
+                <div
+                  className="custom-special-desc"
+                  style={{ fontSize: "11px", letterSpacing: "0.2px" }}
+                >
+                  每日个性推歌
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="custom-special-card"
+              onClick={() =>
+                handlePlaylistClick({
+                  dissid: 999992,
+                  dissname: "猜你喜欢",
+                  logo: "",
+                  nick: "",
+                  songnum: 5,
+                })
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                borderRadius: "14px",
+                padding: "12px 14px",
+                cursor: "pointer",
+                gap: "12px",
+                transition: "all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                backdropFilter: "blur(25px)",
+                WebkitBackdropFilter: "blur(25px)",
+              }}
+            >
+              <CustomerServiceOutlined
+                style={{ fontSize: "28px", color: "#f857a6" }}
+              />
+              <div style={{ flex: 1 }}>
+                <div
+                  className="custom-special-title"
+                  style={{ fontSize: "14px", fontWeight: "600", marginBottom: "1px" }}
+                >
+                  猜你喜欢
+                </div>
+                <div
+                  className="custom-special-desc"
+                  style={{ fontSize: "11px", letterSpacing: "0.2px" }}
+                >
+                  无限流个性漫游
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="section-title">
+            <h2>推荐歌单</h2>
+          </div>
+          <div className="playlist-grid">
+            {recommendPlaylists.map((playlist) => (
+              <PlaylistCard
+                key={playlist.dissid}
+                playlist={playlist}
+                onClick={handlePlaylistClick}
+              />
+            ))}
+          </div>
+        </motion.div>
       ),
     },
     {
-      key: "search",
-      label: "搜索",
-      icon: <SearchOutlined />,
-      children: auth.isLoggedIn ? (
-        <div className="xy-section-stack">
-          <Flex gap={12}>
-            <Input
-              value={searchKeyword}
-              placeholder="搜索播客节目，比如：科技、商业、喜剧"
-              onChange={(event) => setSearchKeyword(event.target.value)}
-              onPressEnter={() => void handleSearch()}
+      key: "rank",
+      label: "排行榜",
+      icon: <TrophyOutlined />,
+      children: (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="rank-header">
+            <Tabs
+              activeKey={selectedRank?.topId?.toString()}
+              onChange={(key) => {
+                const rank = rankLists.find((item) => item.topId.toString() === key);
+                if (rank) {
+                  setSelectedRank(rank);
+                  void loadRankDetailData(rank.topId);
+                }
+              }}
+              className="sub-tabs"
+              items={rankLists.slice(0, 10).map((rank) => ({
+                key: rank.topId.toString(),
+                label: rank.title,
+                children: isRankLoading ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "200px",
+                    }}
+                  >
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <div className="song-list">
+                    {rankSongs.map((song) => (
+                      <SongCard
+                        key={song.mid}
+                        song={song}
+                        isPlaying={currentSongMid === song.mid}
+                        isCurrent={currentSongMid === song.mid}
+                        onPlay={handlePlaySong}
+                        onAddToPlaylist={(item) => {
+                          usePlayerStore.getState().addToPlaylist(item);
+                        }}
+                      />
+                    ))}
+                  </div>
+                ),
+              }))}
             />
-            <Button
-              type="primary"
-              loading={searching}
-              icon={<SearchOutlined />}
-              onClick={() => void handleSearch()}
-            >
-              搜索
-            </Button>
-          </Flex>
-          <Card className="xy-card">
-            <List
-              locale={{ emptyText: "输入关键词开始搜索" }}
-              dataSource={searchResults}
-              renderItem={(item) => (
-                <List.Item
-                  className="xy-list-item"
-                  actions={[
-                    <Button key="open" type="link" onClick={() => void openPodcast(item.pid)}>
-                      查看节目
-                    </Button>,
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={<Avatar shape="square" size={52} src={getImageUrl(item)} />}
-                    title={item.title}
-                    description={item.description || item.brief || item.author}
+          </div>
+        </motion.div>
+      ),
+    },
+    {
+      key: "my",
+      label: "我的",
+      icon: <UserOutlined />,
+      children: (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="tab-content"
+        >
+          {isLoggedIn ? (
+            <div className="my-content">
+              <div className="user-header">
+                {userInfo?.avatar && (
+                  <Avatar
+                    src={userInfo.avatar}
+                    size={72}
+                    style={{
+                      border: "2px solid var(--ant-primary-color)",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    }}
                   />
-                </List.Item>
-              )}
-            />
-          </Card>
-        </div>
-      ) : (
-        <Empty description="登录后搜索小宇宙播客" />
+                )}
+                <div style={{ textAlign: "center" }}>
+                  <h2
+                    style={{
+                      margin: "4px 0",
+                      fontSize: "20px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {userInfo?.nickname || "用户"}
+                  </h2>
+                  <p style={{ margin: 0, opacity: 0.5, fontSize: "13px" }}>
+                    享受你的音乐时光
+                  </p>
+                </div>
+              </div>
+              <div className="my-sections">
+                <div className="my-section">
+                  <h3>我的歌单</h3>
+                  {myPlaylists.length > 0 ? (
+                    <div className="playlist-grid">
+                      {myPlaylists.map((playlist) => (
+                        <PlaylistCard
+                          key={playlist.dissid}
+                          playlist={playlist}
+                          onClick={handlePlaylistClick}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p>暂无歌单</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="login-prompt">
+              <h2>请先登录</h2>
+              <p>登录后可以查看“我喜欢”和“我的歌单”</p>
+              <Button
+                type="primary"
+                size="large"
+                icon={<LoginOutlined />}
+                onClick={() => setLoginModalOpen(true)}
+              >
+                立即登录
+              </Button>
+            </div>
+          )}
+        </motion.div>
       ),
     },
   ];
 
   return (
-    <div className="xy-app" style={{ fontSize: `${fontSize}px` }}>
-      <header className="xy-header">
-        <div>
-          <Title level={3} className="xy-title">
-            小宇宙
-          </Title>
-          <Text type="secondary">
-            首版已接通短信登录、推荐、榜单、搜索、播客详情和单集播放。
-          </Text>
-        </div>
-        <Space wrap>
-          <Button icon={<MinusOutlined />} onClick={decrease} />
-          <Button icon={<PlusOutlined />} onClick={increase} />
-          {auth.isLoggedIn ? (
-            <>
-              <Avatar src={auth.userInfo?.avatar} icon={<CustomerServiceOutlined />} />
-              <Text>{auth.userInfo?.nickname || "已登录"}</Text>
-              <Button icon={<LogoutOutlined />} onClick={() => void handleLogout()}>
-                退出
-              </Button>
-            </>
+    <div className="qqmusic-app" style={{ fontSize: `${fontSize}px` }}>
+      <div className="qqmusic-header">
+        <h1 className="qqmusic-title">QQ音乐</h1>
+        <div className="qqmusic-header-actions">
+          {isLoggedIn ? (
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: "logout",
+                    icon: <LogoutOutlined />,
+                    label: "退出登录",
+                    onClick: handleLogout,
+                  },
+                ],
+              }}
+              placement="bottomRight"
+              trigger={["hover"]}
+            >
+              <Space style={{ cursor: "pointer" }}>
+                {userInfo?.avatar && <Avatar src={userInfo.avatar} size="small" />}
+                {userInfo?.nickname && (
+                  <span style={{ fontSize: "14px", color: "var(--text-color)" }}>
+                    {userInfo.nickname}
+                  </span>
+                )}
+              </Space>
+            </Dropdown>
           ) : (
-            <Button type="primary" icon={<LoginOutlined />} onClick={() => setLoginOpen(true)}>
-              短信登录
+            <Button
+              type="text"
+              icon={<LoginOutlined />}
+              onClick={() => setLoginModalOpen(true)}
+            >
+              登录
             </Button>
           )}
-        </Space>
-      </header>
-
-      <Tabs items={tabs} />
-
-      <Drawer
-        open={podcastOpen}
-        title={podcastDetail?.title || "播客详情"}
-        width={520}
-        onClose={() => setPodcastOpen(false)}
-      >
-        <Spin spinning={podcastLoading}>
-          {podcastDetail ? (
-            <div className="xy-section-stack">
-              <Flex gap={12}>
-                <Avatar shape="square" size={88} src={getImageUrl(podcastDetail)} />
-                <div>
-                  <Title level={4}>{podcastDetail.title}</Title>
-                  <Text type="secondary">{podcastDetail.author}</Text>
-                  <Paragraph type="secondary">
-                    订阅 {podcastDetail.subscriptionCount || 0} · 单集 {podcastDetail.episodeCount || 0}
-                  </Paragraph>
-                </div>
-              </Flex>
-              <Paragraph>{podcastDetail.description || podcastDetail.brief}</Paragraph>
-              <Card title="最新单集" className="xy-card">
-                <List
-                  dataSource={podcastEpisodes}
-                  renderItem={(episode) => (
-                    <List.Item
-                      className="xy-list-item"
-                      actions={[
-                        <Button key="play" type="link" onClick={() => void openEpisode(episode.eid)}>
-                          查看 / 播放
-                        </Button>,
-                      ]}
-                    >
-                      <List.Item.Meta
-                        title={episode.title}
-                        description={episode.description}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
-            </div>
-          ) : (
-            <Empty description="暂无播客详情" />
-          )}
-        </Spin>
-      </Drawer>
-
-      <Drawer
-        open={episodeOpen}
-        title={episodeDetail?.title || "单集详情"}
-        width={560}
-        onClose={() => setEpisodeOpen(false)}
-      >
-        {episodeDetail ? (
-          <div className="xy-section-stack">
-            <Paragraph>{episodeDetail.description}</Paragraph>
-            {audioUrl ? (
-              <audio className="xy-audio" controls src={audioUrl} />
-            ) : (
-              <Empty description="当前单集没有可播放音频地址" />
-            )}
-            <Card title="Shownotes" className="xy-card">
-              <div
-                className="xy-html"
-                dangerouslySetInnerHTML={{ __html: episodeDetail.shownotes || "<p>暂无 shownotes</p>" }}
-              />
-            </Card>
-          </div>
-        ) : (
-          <Empty description="暂无单集详情" />
-        )}
-      </Drawer>
-
-      <Modal
-        open={loginOpen}
-        title="小宇宙短信登录"
-        onCancel={() => setLoginOpen(false)}
-        onOk={() => void handleLogin()}
-        confirmLoading={loggingIn}
-        okText="登录"
-      >
-        <div className="xy-section-stack">
-          <Input
-            value={phoneNumber}
-            placeholder="手机号"
-            onChange={(event) => setPhoneNumber(event.target.value)}
-          />
-          <Flex gap={12}>
-            <Input
-              value={verifyCode}
-              placeholder="短信验证码"
-              onChange={(event) => setVerifyCode(event.target.value)}
-            />
-            <Button loading={sendingCode} onClick={() => void handleSendCode()}>
-              发送验证码
-            </Button>
-          </Flex>
         </div>
-      </Modal>
+      </div>
+
+      <div className="qqmusic-content">
+        <Tabs
+          activeKey={activeTab}
+          items={tabsItems}
+          onChange={setActiveTab}
+          className="qqmusic-tabs"
+        />
+      </div>
+
+      <LoginModal
+        open={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+      />
+
+      <AnimatePresence>{currentSong && <PlayBar />}</AnimatePresence>
+
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={() => setSearchDrawerOpen(false)}
+      />
+
+      <PlaylistDrawer
+        open={playlistDrawerOpen}
+        onClose={() => setPlaylistDrawerOpen(false)}
+        playlist={selectedPlaylist}
+      />
+
+      <SingerDrawer />
+
+      <FloatButton.Group
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: currentSong ? 140 : 88 }}
+      >
+        <FloatButton
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
+          onClick={() => setSearchDrawerOpen(true)}
+        />
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
+        />
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "增大字体", placement: "left" }}
+        />
+        <FloatButton.BackTop
+          visibilityHeight={500}
+          duration={1000}
+          icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
+          tooltip={{ title: "回到顶部", placement: "left" }}
+        />
+      </FloatButton.Group>
     </div>
   );
 }
