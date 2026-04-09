@@ -1,0 +1,64 @@
+.xy-app {
+  padding: 16px;
+  color: var(--vscode-foreground);
+}
+
+.xy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.xy-title {
+  margin: 0 0 4px !important;
+}
+
+.xy-section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.xy-card {
+  border: 1px solid var(--vscode-chat-requestBorder);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--vscode-editor-background) 92%, #66c1a8 8%),
+      var(--vscode-editor-background)
+    );
+  box-shadow: none;
+}
+
+.xy-list-item {
+  align-items: flex-start !important;
+}
+
+.xy-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--vscode-button-background) 20%, transparent);
+  color: var(--vscode-button-foreground);
+}
+
+.xy-html {
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.xy-html img {
+  max-width: 100%;
+  border-radius: 12px;
+}
+
+.xy-audio {
+  width: 100%;
+}

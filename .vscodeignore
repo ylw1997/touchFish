@@ -92,6 +92,23 @@ qqmusic/pnpm-lock.yaml
 qqmusic/temp/**
 qqmusic/package-lock.json
 
+# xiaoyuzhou webview (exclude source & deps; only dist assets should be packed if needed)
+xiaoyuzhou/src/**
+xiaoyuzhou/node_modules/**
+xiaoyuzhou/public/**
+xiaoyuzhou/.gitignore
+xiaoyuzhou/eslint.config.js
+xiaoyuzhou/index.html
+xiaoyuzhou/package.json
+xiaoyuzhou/README.md
+xiaoyuzhou/tsconfig.json
+xiaoyuzhou/tsconfig.app.json
+xiaoyuzhou/tsconfig.node.json
+xiaoyuzhou/vite.config.ts
+xiaoyuzhou/pnpm-lock.yaml
+xiaoyuzhou/temp/**
+xiaoyuzhou/package-lock.json
+
 qqmusic-api-test/**
 .github/**
 .ruff_cache/**

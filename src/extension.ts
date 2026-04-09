@@ -37,6 +37,7 @@ import {
   setLinuxDoTokenCommand,
   switchLinuxDoTab,
   setBilibiliTokenCommand,
+  setXiaoyuzhouTokenCommand,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
@@ -48,6 +49,7 @@ import { XhsWebProvider } from "./Providers/xhsWebProvider";
 import { WeiboProvider } from "./Providers/weiboProvider";
 import { BilibiliProvider } from "./Providers/bilibiliProvider";
 import { QQMusicProvider } from "./Providers/qqmusicProvider";
+import { XiaoyuzhouProvider } from "./Providers/xiaoyuzhouProvider";
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
@@ -180,6 +182,9 @@ export function activate(context: vscode.ExtensionContext) {
   const qqmusicProvider = createLazyWebviewProvider(
     () => new QQMusicProvider(context),
   );
+  const xiaoyuzhouProvider = createLazyWebviewProvider(
+    () => new XiaoyuzhouProvider(context),
+  );
 
   registerLazyTreeView(
     context,
@@ -255,6 +260,15 @@ export function activate(context: vscode.ExtensionContext) {
       },
     },
   );
+  vscode.window.registerWebviewViewProvider(
+    "xiaoyuzhou",
+    xiaoyuzhouProvider.provider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    },
+  );
 
   context.subscriptions.push(refresh(itHomeProvider.getInstance));
   context.subscriptions.push(refreshChipHellNews(chiphellProvider.getInstance));
@@ -280,10 +294,16 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(setLinuxDoTokenCommand());
   context.subscriptions.push(switchLinuxDoTab());
   context.subscriptions.push(setBilibiliTokenCommand());
+  context.subscriptions.push(setXiaoyuzhouTokenCommand());
 
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.openQQMusic", async () => {
       await vscode.commands.executeCommand("qqmusic.focus");
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.openXiaoyuzhou", async () => {
+      await vscode.commands.executeCommand("xiaoyuzhou.focus");
     }),
   );
 

@@ -435,3 +435,28 @@ export const setBilibiliTokenCommand = () => {
     }
   );
 };
+
+export const setXiaoyuzhouTokenCommand = () => {
+  return vscode.commands.registerCommand(
+    "touchfish.setXiaoyuzhouToken",
+    async () => {
+      const accessToken = await vscode.window.showInputBox({
+        prompt: "请输入小宇宙 Access Token",
+        placeHolder: "x-jike-access-token",
+        password: true,
+      });
+      if (accessToken === undefined) return;
+
+      const refreshToken = await vscode.window.showInputBox({
+        prompt: "请输入小宇宙 Refresh Token",
+        placeHolder: "x-jike-refresh-token",
+        password: true,
+      });
+      if (refreshToken === undefined) return;
+
+      await setConfigByKey("xiaoyuzhouAccessToken", accessToken.trim());
+      await setConfigByKey("xiaoyuzhouRefreshToken", refreshToken.trim());
+      await showInfo("小宇宙 Token 设置成功，打开视图即可使用");
+    },
+  );
+};

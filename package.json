@@ -2,7 +2,7 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do摸鱼聚合插件,沉浸式主题,qq音乐,qqmusic",
+	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do摸鱼聚合插件,沉浸式主题,qq音乐,qqmusic,播客,xiaoyuzhou,小宇宙",
 	"version": "12.15.4",
 	"icon": "logo.png",
 	"engines": {
@@ -35,7 +35,10 @@
 		"bilibili",
 		"b站",
 		"qqmusic",
-		"qq音乐"
+		"qq音乐",
+		"xiaoyuzhou",
+		"小宇宙",
+		"播客"
 	],
 	"categories": [
 		"Other"
@@ -224,6 +227,19 @@
 					"type": "boolean",
 					"default": true,
 					"description": "QQ音乐状态栏显示歌词（关闭则显示歌名）"
+				},
+				"touchfish.xiaoyuzhouAccessToken": {
+					"type": "string",
+					"description": "Xiaoyuzhou x-jike-access-token"
+				},
+				"touchfish.xiaoyuzhouRefreshToken": {
+					"type": "string",
+					"description": "Xiaoyuzhou x-jike-refresh-token"
+				},
+				"touchfish.xiaoyuzhouUserInfo": {
+					"type": "string",
+					"default": "",
+					"description": "Cached Xiaoyuzhou user info (JSON)"
 				}
 			}
 		},
@@ -258,6 +274,11 @@
 					"id": "qqmusic",
 					"title": "TouchFish-QQMusic",
 					"icon": "assets/qqmusic.svg"
+				},
+				{
+					"id": "xiaoyuzhou",
+					"title": "TouchFish-Xiaoyuzhou",
+					"icon": "assets/xiaoyuzhou.svg"
 				}
 			]
 		},
@@ -338,6 +359,14 @@
 					"name": "设置",
 					"visibility": "hidden",
 					"icon": "assets/training.svg"
+				}
+			],
+			"xiaoyuzhou": [
+				{
+					"icon": "assets/xiaoyuzhou.svg",
+					"type": "webview",
+					"name": "Xiaoyuzhou",
+					"id": "xiaoyuzhou"
 				}
 			]
 		},
@@ -447,6 +476,16 @@
 				"command": "touchfish.qqmusic.nextSong",
 				"title": "下一首",
 				"icon": "$(chevron-right)"
+			},
+			{
+				"command": "touchfish.openXiaoyuzhou",
+				"title": "Open Xiaoyuzhou",
+				"icon": "$(radio-tower)"
+			},
+			{
+				"command": "touchfish.setXiaoyuzhouToken",
+				"title": "Set Xiaoyuzhou Token",
+				"icon": "$(settings-gear)"
 			}
 		],
 		"keybindings": [
@@ -547,6 +586,11 @@
 					"command": "touchfish.setBilibiliToken",
 					"when": "view == bilibili",
 					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setXiaoyuzhouToken",
+					"when": "view == xiaoyuzhou",
+					"group": "navigation"
 				}
 			]
 		}
@@ -565,11 +609,11 @@
 		"changelog": "standard-version",
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build",
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter xiaoyuzhou build",
 		"xhs:test": "node ./tools/xhs/test-xhs.js",
 		"xhs:test:live": "node ./tools/xhs/test-xhs.js",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
-		"dev": "concurrently -n ZHIHU,WEIBO,XHS,BILIBILI,QQMUSIC -c magenta,cyan,yellow,blue,green \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\"",
+		"dev": "concurrently -n ZHIHU,WEIBO,XHS,BILIBILI,QQMUSIC,XIAOYUZHOU -c magenta,cyan,yellow,blue,green,red \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter xiaoyuzhou dev\"",
 		"build-xhs": "pnpm --filter xhs build"
 	},
 	"devDependencies": {
