@@ -7,6 +7,7 @@ interface LyricOverlayProps {
   currentSong: Song | null;
   lyrics: { time: number; text: string }[];
   currentLyric: string;
+  activeIdx: number;
   getAlbumCover: (song: Song) => string;
 }
 
@@ -14,7 +15,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
   isLyricOpen,
   currentSong,
   lyrics,
-  currentLyric,
+  activeIdx,
   getAlbumCover,
 }) => {
   const lyricContainerRef = useRef<HTMLDivElement>(null);
@@ -28,7 +29,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
         activeLyric.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }
-  }, [currentLyric, isLyricOpen]);
+  }, [activeIdx, isLyricOpen]);
 
   return (
     <AnimatePresence>
@@ -63,11 +64,12 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
                 lyrics.map((l, idx) => (
                   <div
                     key={idx}
+                    data-index={idx}
                     className={`lyric-line ${
-                      l.text === currentLyric ? "active" : ""
+                      idx === activeIdx ? "active" : ""
                     }`}
                   >
-                    {l.text === currentLyric
+                    {idx === activeIdx
                       ? Array.from(l.text).map((char, charIdx, arr) => (
                           <span
                             key={charIdx}

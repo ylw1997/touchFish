@@ -1477,7 +1477,10 @@ a {
       .lyric-line {
         color: rgba(255, 255, 255, 0.4);
         font-size: 13px;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    text-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         text-align: left;
         line-height: 1.4;
         word-break: break-word;

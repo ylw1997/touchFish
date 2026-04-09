@@ -35,6 +35,7 @@ const PlayBar: React.FC = () => {
 
   const [lyrics, setLyrics] = useState<{ time: number; text: string }[]>([]);
   const [currentLyric, setCurrentLyric] = useState<string>("");
+  const [activeIdx, setActiveIdx] = useState<number>(-1);
 
   const currentSong = usePlayerStore((state) => state.currentSong);
   const currentSongUrl = usePlayerStore((state) => state.currentSongUrl);
@@ -182,6 +183,7 @@ const PlayBar: React.FC = () => {
     if (!currentSong) {
       setLyrics([]);
       setCurrentLyric("");
+      setActiveIdx(-1);
       return;
     }
 
@@ -212,6 +214,7 @@ const PlayBar: React.FC = () => {
         }
         setLyrics(parsed);
         setCurrentLyric("");
+        setActiveIdx(-1);
       }
     });
 
@@ -261,11 +264,12 @@ const PlayBar: React.FC = () => {
           // 使用 requestAnimationFrame 直接修改 DOM 级 CSS 变量，绕过 React 重绘
           const lyricList = document.querySelector(".playbar-lyric-overlay");
           if (lyricList) {
-            const activeEl = lyricList.querySelector(
-              ".lyric-line.active",
+            // 精确查询当前 index 对应的行，而非盲目查询 .active（防止 React 还没来得及更新 active 类时更新错位）
+            const targetEl = lyricList.querySelector(
+              `.lyric-line[data-index="${idx}"]`,
             ) as HTMLElement;
-            if (activeEl) {
-              activeEl.style.setProperty("--lyric-progress-raw", `${progress}`);
+            if (targetEl) {
+              targetEl.style.setProperty("--lyric-progress-raw", `${progress}`);
             }
           }
         }
@@ -305,6 +309,7 @@ const PlayBar: React.FC = () => {
     if (idx >= 0) {
       const lineText = lyrics[idx].text;
       setCurrentLyric((prev) => (prev !== lineText ? lineText : prev));
+      setActiveIdx((prev) => (prev !== idx ? idx : prev));
     }
   };
 
@@ -485,6 +490,7 @@ const PlayBar: React.FC = () => {
           currentSong={currentSong}
           lyrics={lyrics}
           currentLyric={currentLyric}
+          activeIdx={activeIdx}
           getAlbumCover={getAlbumCover}
         />
       </div>
