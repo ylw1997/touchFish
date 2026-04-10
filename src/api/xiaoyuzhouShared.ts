@@ -68,12 +68,14 @@ export function buildXiaoyuzhouHeaders(
 
   const headers: Record<string, string> = {
     Host: "api.xiaoyuzhoufm.com",
+    "User-Agent": "Xiaoyuzhou/2.57.1 (build:1576; iOS 17.4.1)",
     Market: "AppStore",
     "App-BuildNo": "1576",
     OS: "ios",
     "x-jike-device-id": deviceId,
     Manufacturer: "Apple",
     BundleID: "app.podcast.cosmos",
+    Connection: "keep-alive",
     "Accept-Language": acceptLanguage,
     Model: "iPhone14,2",
     "app-permissions": "4",
