@@ -155,6 +155,22 @@ export function useXiaoyuzhou() {
     [request],
   );
 
+  const getSubscriptions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await request<any>("XIAOYUZHOU_GET_SUBSCRIPTIONS", {});
+      if (result.code === 0 && result.data) {
+        return Array.isArray(result.data?.data) ? result.data.data : [];
+      }
+      return [];
+    } catch (e: any) {
+      console.error(e);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [request]);
+
   return {
     loading,
     getDiscovery,
@@ -162,5 +178,6 @@ export function useXiaoyuzhou() {
     doSearch,
     getEpisodeDetail,
     getPodcastDetail,
+    getSubscriptions,
   };
 }

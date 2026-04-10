@@ -22,5 +22,19 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/api/index.ts",
+    "src/components/index.ts",
+    "src/components/PlayBar.tsx",
+    "src/components/PlaylistCard.tsx",
+    "src/components/PlaylistDrawer.tsx",
+    "src/components/SearchDrawer.tsx",
+    "src/components/SingerDrawer.tsx",
+    "src/components/SongCard.tsx",
+    "src/components/playbar/**",
+    "src/data/**",
+    "src/hooks/useQQMusic.ts",
+    "src/store/player.ts"
+  ]
 }

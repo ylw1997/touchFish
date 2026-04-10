@@ -26,6 +26,9 @@ class VSCodeAPIWrapper {
     // context (i.e. VS Code development window or web browser)
     if (typeof acquireVsCodeApi === "function") {
       this.vsCodeApi = acquireVsCodeApi();
+      console.log("[xiaoyuzhou] VS Code API acquired successfully");
+    } else {
+      console.warn("[xiaoyuzhou] acquireVsCodeApi is not available - running outside VS Code webview?");
     }
   }
 
@@ -39,9 +42,10 @@ class VSCodeAPIWrapper {
    */
   public postMessage(message: unknown) {
     if (this.vsCodeApi) {
+      console.log("[xiaoyuzhou] Sending to extension:", message);
       this.vsCodeApi.postMessage(message);
     } else {
-      console.log(message);
+      console.log("[xiaoyuzhou] vscode.postMessage not available, message:", message);
     }
   }
 

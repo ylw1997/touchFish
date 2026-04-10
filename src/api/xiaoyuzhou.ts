@@ -123,6 +123,17 @@ async function doRefreshToken(
   }
 }
 
+export async function refreshXiaoyuzhouToken(
+  credential?: XiaoyuzhouCredential | null,
+): Promise<XiaoyuzhouCredential | null> {
+  const currentCredential = getCredential(credential);
+  if (!currentCredential) {
+    return null;
+  }
+
+  return doRefreshToken(currentCredential);
+}
+
 /**
  * Queue-based token refresh to handle concurrent requests
  */
@@ -458,6 +469,33 @@ export async function getEpisodeDetail(
         headers: buildXiaoyuzhouHeaders({
           accessToken: auth?.accessToken,
           refreshToken: auth?.refreshToken,
+          localTime: getNowIsoString(),
+        }),
+        timeout: 15000,
+      },
+    );
+    return response.data;
+  }, credential);
+}
+
+export async function getSubscriptions(
+  loadMoreKey?: { subscribedAt: string; id: string } | null,
+  credential?: XiaoyuzhouCredential | null,
+): Promise<XiaoyuzhouApiResult<any>> {
+  return withAutoRefresh(async (auth) => {
+    const response = await axios.post(
+      `${APP_BASE_URL}/v1/subscription/list`,
+      {
+        limit: "20",
+        sortOrder: "desc",
+        sortBy: "subscribedAt",
+        ...(loadMoreKey ? { loadMoreKey } : {}),
+      },
+      {
+        headers: buildXiaoyuzhouHeaders({
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
+          contentType: "application/json",
           localTime: getNowIsoString(),
         }),
         timeout: 15000,

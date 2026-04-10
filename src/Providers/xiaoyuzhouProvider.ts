@@ -1,9 +1,11 @@
 import { ExtensionContext, WebviewView, workspace } from "vscode";
 import {
+  getGlobalCredential,
   getDiscoveryFeed,
   getEpisodeDetail,
   getEpisodeList,
   getPodcastDetail,
+  getSubscriptions,
   getTopList,
   loginWithSms,
   searchPodcasts,
@@ -102,14 +104,59 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
   }
 
   private async clearAuthState() {
+    console.log("[xiaoyuzhouProvider] Clearing auth state...");
+
+    // 先清除内存状态
     this.authState = { credential: null, userInfo: null };
     setGlobalCredential(null);
+    console.log("[xiaoyuzhouProvider] Memory state cleared");
 
-    await Promise.all([
-      setConfigByKey("xiaoyuzhouAccessToken", ""),
-      setConfigByKey("xiaoyuzhouRefreshToken", ""),
-      setConfigByKey("xiaoyuzhouUserInfo", ""),
-    ]);
+    // 获取当前配置用于对比
+    const configBefore = workspace.getConfiguration("touchfish");
+    const accessTokenBefore = configBefore.get<string>("xiaoyuzhouAccessToken");
+    console.log("[xiaoyuzhouProvider] Before clear - has accessToken:", !!accessTokenBefore);
+
+    try {
+      console.log("[xiaoyuzhouProvider] Calling setConfigByKey to clear tokens...");
+      await Promise.all([
+        setConfigByKey("xiaoyuzhouAccessToken", ""),
+        setConfigByKey("xiaoyuzhouRefreshToken", ""),
+        setConfigByKey("xiaoyuzhouUserInfo", ""),
+      ]);
+      console.log("[xiaoyuzhouProvider] setConfigByKey calls completed");
+
+      // 验证配置是否被清除
+      const configAfter = workspace.getConfiguration("touchfish");
+      const accessTokenAfter = configAfter.get<string>("xiaoyuzhouAccessToken");
+      const refreshTokenAfter = configAfter.get<string>("xiaoyuzhouRefreshToken");
+
+      console.log("[xiaoyuzhouProvider] After clear - accessToken exists:", !!accessTokenAfter);
+      console.log("[xiaoyuzhouProvider] After clear - refreshToken exists:", !!refreshTokenAfter);
+
+      if (accessTokenAfter || refreshTokenAfter) {
+        console.error("[xiaoyuzhouProvider] ERROR: Tokens still exist after clearing!");
+      } else {
+        console.log("[xiaoyuzhouProvider] Tokens cleared successfully");
+      }
+    } catch (error) {
+      console.error("[xiaoyuzhouProvider] Failed to clear auth state:", error);
+      throw error;
+    }
+  }
+
+  private async persistRefreshedCredential() {
+    const latestCredential = getGlobalCredential();
+    if (
+      !latestCredential ||
+      !this.authState.credential ||
+      (latestCredential.accessToken === this.authState.credential.accessToken &&
+        latestCredential.refreshToken === this.authState.credential.refreshToken)
+    ) {
+      return;
+    }
+
+    await this.saveAuthState(latestCredential, this.authState.userInfo);
+    await this.notifyAuthState();
   }
 
   private async notifyAuthState() {
@@ -132,6 +179,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
     webviewView: WebviewView,
   ) {
     const { command, payload, uuid } = message;
+    console.log(`[xiaoyuzhouProvider] Received message: ${command}, uuid: ${uuid}`);
 
     try {
       switch (command) {
@@ -207,13 +255,24 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
         }
 
         case "XIAOYUZHOU_LOGOUT": {
-          await this.clearAuthState();
-          await this.notifyAuthState();
-          webviewView.webview.postMessage({
-            command: "XIAOYUZHOU_LOGOUT_RESULT",
-            payload: { code: 0, data: true },
-            uuid,
-          } as CommandsType<any>);
+          try {
+            console.log("[xiaoyuzhou] Handling logout command...");
+            await this.clearAuthState();
+            await this.notifyAuthState();
+            webviewView.webview.postMessage({
+              command: "XIAOYUZHOU_LOGOUT_RESULT",
+              payload: { code: 0, data: true },
+              uuid,
+            } as CommandsType<any>);
+            console.log("[xiaoyuzhou] Logout command completed");
+          } catch (error) {
+            console.error("[xiaoyuzhou] Logout failed:", error);
+            webviewView.webview.postMessage({
+              command: "XIAOYUZHOU_LOGOUT_RESULT",
+              payload: { code: -1, message: String(error), data: false },
+              uuid,
+            } as CommandsType<any>);
+          }
           break;
         }
 
@@ -222,6 +281,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
             payload?.loadMoreKey,
             this.authState.credential,
           );
+          await this.persistRefreshedCredential();
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_GET_DISCOVERY_FEED_RESULT",
             payload: result,
@@ -235,6 +295,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
             payload?.category || "HOT",
             this.authState.credential,
           );
+          await this.persistRefreshedCredential();
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_GET_TOP_LIST_RESULT",
             payload: result,
@@ -249,6 +310,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
             payload?.loadMoreKey,
             this.authState.credential,
           );
+          await this.persistRefreshedCredential();
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_SEARCH_PODCASTS_RESULT",
             payload: result,
@@ -262,6 +324,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
             String(payload?.pid || ""),
             this.authState.credential,
           );
+          await this.persistRefreshedCredential();
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_GET_PODCAST_DETAIL_RESULT",
             payload: result,
@@ -277,6 +340,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
             payload?.loadMoreKey,
             this.authState.credential,
           );
+          await this.persistRefreshedCredential();
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_GET_EPISODE_LIST_RESULT",
             payload: result,
@@ -290,8 +354,23 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
             String(payload?.eid || ""),
             this.authState.credential,
           );
+          await this.persistRefreshedCredential();
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_GET_EPISODE_DETAIL_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "XIAOYUZHOU_GET_SUBSCRIPTIONS": {
+          const result = await getSubscriptions(
+            payload?.loadMoreKey || null,
+            this.authState.credential,
+          );
+          await this.persistRefreshedCredential();
+          webviewView.webview.postMessage({
+            command: "XIAOYUZHOU_GET_SUBSCRIPTIONS_RESULT",
             payload: result,
             uuid,
           } as CommandsType<any>);
