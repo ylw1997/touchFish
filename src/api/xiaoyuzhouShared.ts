@@ -1,6 +1,42 @@
 export const XIAOYUZHOU_DEVICE_ID =
   "81ADBFD6-6921-482B-9AB9-A29E7CC7BB55";
 
+// 从 token 生成一致的 deviceId（同一用户始终使用相同 deviceId）
+function generateDeviceIdFromToken(token: string): string {
+  if (!token || token.length < 10) {
+    return XIAOYUZHOU_DEVICE_ID;
+  }
+
+  // 简单哈希：将 token 转换为数字
+  let hash = 0;
+  for (let i = 0; i < token.length; i++) {
+    const char = token.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+
+  // 转换为正数的 16 进制字符串并填充
+  const hashHex = Math.abs(hash).toString(16).padStart(32, "0");
+
+  // 生成 UUID 格式（8-4-4-4-12）
+  const part1 = hashHex.slice(0, 8);
+  const part2 = hashHex.slice(8, 12);
+  const part3 = "4" + hashHex.slice(13, 16);
+  const part4 = "8" + hashHex.slice(17, 20);
+  const part5 = hashHex.slice(20, 32);
+
+  const uuid = `${part1}-${part2}-${part3}-${part4}-${part5}`.toUpperCase();
+  return uuid.length === 36 ? uuid : XIAOYUZHOU_DEVICE_ID;
+}
+
+// 获取 deviceId：优先使用基于 token 的，回退到默认值
+export function getDeviceId(token?: string): string {
+  if (token && token.length > 10) {
+    return generateDeviceIdFromToken(token);
+  }
+  return XIAOYUZHOU_DEVICE_ID;
+}
+
 export interface XiaoyuzhouHeaderOptions {
   accessToken?: string;
   refreshToken?: string;
@@ -9,6 +45,7 @@ export interface XiaoyuzhouHeaderOptions {
   timezone?: string;
   acceptLanguage?: string;
   abtestInfo?: string;
+  deviceId?: string;
 }
 
 export interface XiaoyuzhouAuth {
@@ -27,15 +64,15 @@ export function buildXiaoyuzhouHeaders(
     timezone = "Asia/Shanghai",
     acceptLanguage = "zh-Hant-HK;q=1.0, zh-Hans-CN;q=0.9",
     abtestInfo = '{"old_user_discovery_feed":"enable"}',
-  } = options;
+    deviceId = XIAOYUZHOU_DEVICE_ID,
+                    } = options;
 
   const headers: Record<string, string> = {
     Host: "api.xiaoyuzhoufm.com",
-    "User-Agent": "Xiaoyuzhou/2.57.1 (build:1576; iOS 17.4.1)",
     Market: "AppStore",
     "App-BuildNo": "1576",
     OS: "ios",
-    "x-jike-device-id": XIAOYUZHOU_DEVICE_ID,
+    "x-jike-device-id": deviceId,
     Manufacturer: "Apple",
     BundleID: "app.podcast.cosmos",
     "Accept-Language": acceptLanguage,

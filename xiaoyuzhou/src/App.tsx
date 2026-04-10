@@ -8,7 +8,6 @@ import {
   FloatButton,
   Input,
   List,
-
   Segmented,
   Space,
   Spin,
@@ -20,19 +19,22 @@ import {
   LogoutOutlined,
   MinusOutlined,
   PlusOutlined,
+  ReloadOutlined,
   SearchOutlined,
   TrophyOutlined,
   UserOutlined,
   VerticalAlignTopOutlined,
 } from "@ant-design/icons";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 import LoginModal from "./components/LoginModal";
+import PlayBar from "./components/PlayBar";
 import PlaylistCard from "./components/PlaylistCard";
 import SongCard from "./components/SongCard";
 import { useXiaoyuzhou } from "./hooks/useXiaoyuzhou";
 import { useRequest } from "./hooks/useRequest";
 import { useFontSizeStore } from "./store/fontSize";
+import { usePlayerStore } from "./store/player";
 import { useUserStore } from "./store/user";
 
 import "./style/index.less";
@@ -41,6 +43,9 @@ function App() {
   const { request } = useRequest();
   const { fontSize, increase, decrease } = useFontSizeStore();
   const { isLoggedIn, userInfo, logout, login } = useUserStore();
+  const currentEpisode = usePlayerStore((state) => state.currentEpisode);
+  const playEpisode = usePlayerStore((state) => state.play);
+  const addToPlaylist = usePlayerStore((state) => state.addToPlaylist);
   const {
     loading,
     getDiscovery,
@@ -53,7 +58,7 @@ function App() {
 
   const [activeTab, setActiveTab] = useState("recommend");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [discoveryList, setDiscoveryList] = useState<any[]>([]);
+  const [discoveryBlocks, setDiscoveryBlocks] = useState<any[]>([]);
   const [topList, setTopList] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -84,7 +89,11 @@ function App() {
 
     const syncAuth = async () => {
       const result = await request<any>("XIAOYUZHOU_GET_USER_INFO" as any, {});
-      if (result.code === 0 && result.data?.isLoggedIn && result.data?.userInfo) {
+      if (
+        result.code === 0 &&
+        result.data?.isLoggedIn &&
+        result.data?.userInfo
+      ) {
         login(result.data.userInfo);
       }
     };
@@ -96,7 +105,7 @@ function App() {
 
   const loadDiscovery = useCallback(async () => {
     const data = await getDiscovery();
-    setDiscoveryList(data || []);
+    setDiscoveryBlocks(data || []);
   }, [getDiscovery]);
 
   const loadTopList = useCallback(
@@ -114,16 +123,26 @@ function App() {
     }
 
     const data = await getSubscriptions();
-    setSubscriptions(data.map((item: any) => item?.podcast || item).filter(Boolean));
+    setSubscriptions(
+      data.map((item: any) => item?.podcast || item).filter(Boolean),
+    );
   }, [getSubscriptions, isLoggedIn]);
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      setDiscoveryBlocks([]);
+      return;
+    }
     void loadDiscovery();
-  }, [loadDiscovery]);
+  }, [isLoggedIn, loadDiscovery]);
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      setTopList([]);
+      return;
+    }
     void loadTopList(topCategory);
-  }, [loadTopList, topCategory]);
+  }, [isLoggedIn, loadTopList, topCategory]);
 
   useEffect(() => {
     if (activeTab === "my") {
@@ -132,20 +151,40 @@ function App() {
   }, [activeTab, loadSubscriptions]);
 
   const handleLogout = useCallback(() => {
-    console.log("[xiaoyuzhou] handleLogout clicked, executing...");
     (async () => {
       try {
-        const result = await request<any>("XIAOYUZHOU_LOGOUT" as any, {});
-        console.log("[xiaoyuzhou] Logout request result:", result);
-      } catch (e) {
-        console.error("[xiaoyuzhou] Logout request failed:", e);
+        await request<any>("XIAOYUZHOU_LOGOUT" as any, {});
       } finally {
-        console.log("[xiaoyuzhou] Clearing frontend state...");
         logout();
         setSubscriptions([]);
       }
     })();
   }, [logout, request]);
+
+  const handleRefresh = useCallback(() => {
+    switch (activeTab) {
+      case "recommend":
+        void loadDiscovery();
+        break;
+      case "rank":
+        void loadTopList(topCategory);
+        break;
+      case "my":
+        if (isLoggedIn) {
+          void loadSubscriptions();
+        }
+        break;
+      default:
+        break;
+    }
+  }, [
+    activeTab,
+    loadDiscovery,
+    loadTopList,
+    loadSubscriptions,
+    topCategory,
+    isLoggedIn,
+  ]);
 
   const openPodcast = useCallback(
     async (podcast: any) => {
@@ -195,10 +234,19 @@ function App() {
     setSearchResults(data || []);
   }, [doSearch, searchKeyword]);
 
+  const handlePlayEpisode = useCallback(
+    (episode: any) => {
+      playEpisode(episode);
+    },
+    [playEpisode],
+  );
+
   const renderPodcastList = (items: any[], emptyText: string) => {
     if (loading && items.length === 0) {
       return (
-        <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+        <div
+          style={{ display: "flex", justifyContent: "center", padding: "40px" }}
+        >
           <Spin size="large" />
         </div>
       );
@@ -246,9 +294,16 @@ function App() {
               placement="bottomRight"
             >
               <Space style={{ cursor: "pointer" }}>
-                {userInfo?.avatar ? <Avatar src={userInfo.avatar} size="small" /> : null}
+                {userInfo?.avatar ? (
+                  <Avatar src={userInfo.avatar} size="small" />
+                ) : null}
                 {userInfo?.nickname ? (
-                  <span style={{ fontSize: "14px", color: "var(--vscode-foreground)" }}>
+                  <span
+                    style={{
+                      fontSize: "14px",
+                      color: "var(--vscode-foreground)",
+                    }}
+                  >
                     {userInfo.nickname}
                   </span>
                 ) : null}
@@ -283,10 +338,82 @@ function App() {
                   transition={{ duration: 0.25 }}
                   className="tab-content"
                 >
-                  <div className="section-title">
-                    <h2>播客推荐</h2>
-                  </div>
-                  {renderPodcastList(discoveryList, "暂无推荐内容")}
+                  {loading && discoveryBlocks.length === 0 ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        padding: "40px",
+                      }}
+                    >
+                      <Spin size="large" />
+                    </div>
+                  ) : discoveryBlocks.length === 0 ? (
+                    <Empty description="暂无推荐内容" />
+                  ) : (
+                    <div className="discovery-blocks">
+                      {discoveryBlocks.map((block: any, idx: number) => {
+                        if (block.type === "BANNER") {
+                          return (
+                            <div key={idx} className="banner-section">
+                              <div className="banner-carousel">
+                                {block.items.map((banner: any) => (
+                                  <div key={banner.id} className="banner-item">
+                                    <img
+                                      src={banner.image}
+                                      alt={banner.title}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (block.type === "EPISODES") {
+                          return (
+                            <div key={idx} className="section">
+                              <div className="section-title">
+                                <h2>{block.title}</h2>
+                              </div>
+                              <div className="song-list">
+                                {block.items.map((episode: any) => (
+                                  <SongCard
+                                    key={episode.eid}
+                                    song={episode}
+                                    onPlay={handlePlayEpisode}
+                                    showActions={false}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (block.type === "EDITOR_PICK") {
+                          return (
+                            <div key={idx} className="section">
+                              <div className="section-title">
+                                <h2>编辑精选</h2>
+                              </div>
+                              <div className="song-list">
+                                {block.items.map((item: any) => (
+                                  <SongCard
+                                    key={item.eid || item.id || item.pid}
+                                    song={item}
+                                    onPlay={handlePlayEpisode}
+                                    showActions={false}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return null;
+                      })}
+                    </div>
+                  )}
                 </motion.div>
               ),
             },
@@ -305,7 +432,9 @@ function App() {
                     <Segmented
                       className="rank-tabs"
                       value={topCategory}
-                      onChange={(value) => setTopCategory(value as "HOT" | "ROCK" | "NEW")}
+                      onChange={(value) =>
+                        setTopCategory(value as "HOT" | "ROCK" | "NEW")
+                      }
                       options={[
                         { label: "最热", value: "HOT" },
                         { label: "飙升", value: "ROCK" },
@@ -313,7 +442,13 @@ function App() {
                       ]}
                     />
                     {loading && topList.length === 0 ? (
-                      <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          padding: "40px",
+                        }}
+                      >
                         <Spin size="large" />
                       </div>
                     ) : (
@@ -322,8 +457,8 @@ function App() {
                           <SongCard
                             key={episode?.eid || idx}
                             song={episode}
-                            onPlay={() => void openEpisode(episode)}
-                            showActions={false}
+                            onPlay={handlePlayEpisode}
+                            onAddToPlaylist={addToPlaylist}
                           />
                         ))}
                       </div>
@@ -351,7 +486,10 @@ function App() {
                     onSearch={() => void handleSearch()}
                     style={{ marginBottom: 16 }}
                   />
-                  {renderPodcastList(searchResults, "输入关键词后搜索小宇宙播客")}
+                  {renderPodcastList(
+                    searchResults,
+                    "输入关键词后搜索小宇宙播客",
+                  )}
                 </motion.div>
               ),
             },
@@ -369,12 +507,26 @@ function App() {
                   {isLoggedIn ? (
                     <div className="my-content">
                       <div className="user-header">
-                        {userInfo?.avatar ? <Avatar src={userInfo.avatar} size={72} /> : null}
+                        {userInfo?.avatar ? (
+                          <Avatar src={userInfo.avatar} size={72} />
+                        ) : null}
                         <div style={{ textAlign: "center" }}>
-                          <h2 style={{ margin: "4px 0", fontSize: "20px", fontWeight: "bold" }}>
+                          <h2
+                            style={{
+                              margin: "4px 0",
+                              fontSize: "20px",
+                              fontWeight: "bold",
+                            }}
+                          >
                             {userInfo?.nickname || "用户"}
                           </h2>
-                          <p style={{ margin: 0, opacity: 0.5, fontSize: "13px" }}>
+                          <p
+                            style={{
+                              margin: 0,
+                              opacity: 0.5,
+                              fontSize: "13px",
+                            }}
+                          >
                             享受播客时光
                           </p>
                         </div>
@@ -382,7 +534,10 @@ function App() {
                       <div className="section-title">
                         <h2>我的订阅</h2>
                       </div>
-                      {renderPodcastList(subscriptions, "这个账号暂时还没有已订阅的节目。")}
+                      {renderPodcastList(
+                        subscriptions,
+                        "这个账号暂时还没有已订阅的节目。",
+                      )}
                     </div>
                   ) : (
                     <div className="login-prompt">
@@ -405,7 +560,12 @@ function App() {
         />
       </div>
 
-      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <LoginModal
+        open={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+      />
+
+      <AnimatePresence>{currentEpisode ? <PlayBar /> : null}</AnimatePresence>
 
       <Drawer
         title={podcastDetail?.title || "播客详情"}
@@ -415,7 +575,13 @@ function App() {
         onClose={() => setPodcastOpen(false)}
       >
         {podcastLoading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "40px",
+            }}
+          >
             <Spin size="large" />
           </div>
         ) : (
@@ -424,13 +590,24 @@ function App() {
             renderItem={(item) => (
               <List.Item
                 actions={[
-                  <Button key="open" type="link" onClick={() => void openEpisode(item)}>
+                  <Button
+                    key="open"
+                    type="link"
+                    onClick={() => void openEpisode(item)}
+                  >
                     打开
                   </Button>,
                 ]}
               >
                 <List.Item.Meta
-                  avatar={<Avatar src={item?.podcast?.image?.smallPicUrl || item?.image?.smallPicUrl} />}
+                  avatar={
+                    <Avatar
+                      src={
+                        item?.podcast?.image?.smallPicUrl ||
+                        item?.image?.smallPicUrl
+                      }
+                    />
+                  }
                   title={item?.title || "未命名单集"}
                   description={item?.description || item?.brief || ""}
                 />
@@ -450,11 +627,15 @@ function App() {
         {episodeDetail ? (
           <>
             <p>{episodeDetail.description || "暂无简介"}</p>
-            {episodeDetail.enclosure?.url || episodeDetail.media?.source?.url ? (
+            {episodeDetail.enclosure?.url ||
+            episodeDetail.media?.source?.url ? (
               <audio
                 controls
                 style={{ width: "100%", margin: "16px 0" }}
-                src={episodeDetail.enclosure?.url || episodeDetail.media?.source?.url}
+                src={
+                  episodeDetail.enclosure?.url ||
+                  episodeDetail.media?.source?.url
+                }
               />
             ) : null}
             {episodeDetail.shownotes ? (
@@ -469,7 +650,15 @@ function App() {
         )}
       </Drawer>
 
-      <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24, bottom: 88 }}>
+      <FloatButton.Group
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: currentEpisode ? 140 : 88 }}
+      >
+        <FloatButton
+          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+          tooltip={{ title: "刷新" }}
+          onClick={handleRefresh}
+        />
         <FloatButton
           icon={<SearchOutlined style={{ color: "#faad14" }} />}
           tooltip={{ title: "搜索" }}

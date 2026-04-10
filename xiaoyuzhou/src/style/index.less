@@ -646,9 +646,9 @@ a {
 }
 
 .playlist-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 .playlist-card {
@@ -753,12 +753,36 @@ a {
 .rank-header {
   .rank-tabs {
     display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 8px;
+    justify-content: center;
+    padding: 8px 0 16px;
 
-    .ant-btn {
-      white-space: nowrap;
+    .ant-segmented {
+      background: var(--vscode-button-secondaryBackground);
+      padding: 4px;
+      border-radius: 20px;
+
+      .ant-segmented-item {
+        min-width: 70px;
+        padding: 4px 16px;
+        border-radius: 16px;
+        transition: all 0.3s ease;
+
+        &:hover:not(.ant-segmented-item-selected) {
+          color: var(--vscode-foreground);
+          background: var(--vscode-button-hoverBackground);
+        }
+      }
+
+      .ant-segmented-item-selected {
+        background: var(--vscode-button-background);
+        color: var(--vscode-button-foreground);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .ant-segmented-thumb {
+        background: var(--vscode-button-background);
+        border-radius: 16px;
+      }
     }
   }
 }

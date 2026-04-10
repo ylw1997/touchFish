@@ -6,9 +6,11 @@ import {
   buildXiaoyuzhouHeaders,
   extractXiaoyuzhouAuth,
 } from "../api/xiaoyuzhouShared";
+import { parseXiaoyuzhouDiscoveryBlocks } from "../api/xiaoyuzhouDiscovery";
 import {
   getDiscoveryFeed,
   getSubscriptions,
+  loginWithSms,
   refreshXiaoyuzhouToken,
   setGlobalCredential,
 } from "../api/xiaoyuzhou";
@@ -147,5 +149,105 @@ describe("xiaoyuzhou shared api helpers", () => {
       axios.post = originalPost;
       setGlobalCredential(null);
     }
+  });
+
+  it("refreshes credential immediately after sms login and returns the refreshed tokens", async () => {
+    const originalPost = axios.post;
+    let callCount = 0;
+
+    axios.post = (async (url: string) => {
+      callCount += 1;
+
+      if (callCount === 1) {
+        assert.ok(String(url).includes("/v1/auth/login-with-sms"));
+        return {
+          headers: {
+            "x-jike-access-token": "login-access-token",
+            "x-jike-refresh-token": "login-refresh-token",
+          },
+          data: {
+            data: {
+              user: {
+                uid: "uid-1",
+                nickname: "tester",
+                avatar: { picture: { smallPicUrl: "avatar-url" } },
+              },
+            },
+          },
+        };
+      }
+
+      assert.ok(String(url).includes("/app_auth_tokens.refresh"));
+      return {
+        headers: {
+          "x-jike-access-token": "stable-access-token",
+          "x-jike-refresh-token": "stable-refresh-token",
+        },
+      };
+    }) as typeof axios.post;
+
+    try {
+      const result = await loginWithSms("17600000000", "1234");
+
+      assert.equal(result.code, 0);
+      assert.equal(callCount, 2);
+      assert.deepEqual(result.data?.credential, {
+        accessToken: "stable-access-token",
+        refreshToken: "stable-refresh-token",
+      });
+      assert.equal(result.data?.userInfo.nickname, "tester");
+    } finally {
+      axios.post = originalPost;
+      setGlobalCredential(null);
+    }
+  });
+
+  it("parses banner, recommendation, and editor pick blocks from discovery feed", () => {
+    const blocks = parseXiaoyuzhouDiscoveryBlocks([
+      {
+        type: "DISCOVERY_COVER_BANNER",
+        data: [{ id: "banner-1", image: "banner.jpg", voiceover: "banner" }],
+      },
+      {
+        type: "DISCOVERY_EPISODE_RECOMMEND",
+        data: {
+          title: "为你推荐",
+          target: [
+            {
+              episode: { eid: "ep-1", title: "Episode 1" },
+            },
+          ],
+        },
+      },
+      {
+        type: "EDITOR_PICK",
+        data: {
+          date: "2026-04-10",
+          picks: [
+            {
+              episode: { eid: "ep-2", title: "Episode 2" },
+            },
+          ],
+        },
+      },
+    ]);
+
+    assert.equal(blocks.length, 3);
+    assert.deepEqual(blocks[0], {
+      type: "BANNER",
+      items: [
+        {
+          id: "banner-1",
+          image: "banner.jpg",
+          url: undefined,
+          title: "banner",
+        },
+      ],
+    });
+    assert.equal(blocks[1].type, "EPISODES");
+    assert.equal(blocks[1].items[0].eid, "ep-1");
+    assert.equal(blocks[2].type, "EDITOR_PICK");
+    assert.equal(blocks[2].title, "编辑精选");
+    assert.equal(blocks[2].items[0].eid, "ep-2");
   });
 });

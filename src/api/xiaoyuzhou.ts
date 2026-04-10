@@ -2,6 +2,7 @@ import axios, { AxiosError } from "axios";
 import {
   buildXiaoyuzhouHeaders,
   extractXiaoyuzhouAuth,
+  getDeviceId,
 } from "./xiaoyuzhouShared";
 
 const CREATOR_BASE_URL = "https://podcaster-api.xiaoyuzhoufm.com";
@@ -72,6 +73,10 @@ async function doRefreshToken(
       refreshToken: credential.refreshToken.slice(0, 20) + "...",
     });
 
+    // 使用 refreshToken 生成 deviceId
+    const deviceId = getDeviceId(credential.refreshToken);
+    console.log("[xiaoyuzhou] Using deviceId:", deviceId.slice(0, 8) + "...");
+
     const response = await axios.post(
       `${APP_BASE_URL}/app_auth_tokens.refresh`,
       null, // 无请求体
@@ -81,6 +86,7 @@ async function doRefreshToken(
           refreshToken: credential.refreshToken,
           contentType: "application/x-www-form-urlencoded; charset=utf-8",
           localTime: getNowIsoString(),
+          deviceId,
         }),
         timeout: 15000,
       },
@@ -315,8 +321,11 @@ export async function loginWithSms(
       };
     }
 
+    // The login endpoint returns a short-lived access token in practice.
+    // Immediately exchange it for a stable app token via refresh.
+    const refreshedCredential = (await doRefreshToken(auth)) ?? auth;
     const result = {
-      credential: auth,
+      credential: refreshedCredential,
       userInfo: normalizeUserInfo(response.data?.data?.user),
     };
 
@@ -336,6 +345,7 @@ export async function getDiscoveryFeed(
   loadMoreKey?: string,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
     const response = await axios.post(
       `${APP_BASE_URL}/v1/discovery-feed/list`,
@@ -349,6 +359,7 @@ export async function getDiscoveryFeed(
           refreshToken: auth?.refreshToken,
           contentType: "application/json",
           localTime: getNowIsoString(),
+          deviceId,
         }),
         timeout: 15000,
       },
@@ -367,6 +378,7 @@ export async function getTopList(
     NEW: "NEW_STAR_EPISODES",
   };
 
+  const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
     const response = await axios.get(
       `${APP_BASE_URL}/v1/top-list/get?category=${categoryMap[category]}`,
@@ -375,6 +387,7 @@ export async function getTopList(
           accessToken: auth?.accessToken,
           refreshToken: auth?.refreshToken,
           localTime: getNowIsoString(),
+          deviceId,
         }),
         timeout: 15000,
       },
@@ -388,6 +401,7 @@ export async function searchPodcasts(
   loadMoreKey?: unknown,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
     const response = await axios.post(
       `${APP_BASE_URL}/v1/search/create`,
@@ -402,6 +416,7 @@ export async function searchPodcasts(
           refreshToken: auth?.refreshToken,
           contentType: "application/json",
           localTime: getNowIsoString(),
+deviceId,
         }),
         timeout: 15000,
       },
@@ -414,6 +429,7 @@ export async function getPodcastDetail(
   pid: string,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
     const response = await axios.get(
       `${APP_BASE_URL}/v1/podcast/get?pid=${pid}`,
@@ -422,6 +438,7 @@ export async function getPodcastDetail(
           accessToken: auth?.accessToken,
           refreshToken: auth?.refreshToken,
           localTime: getNowIsoString(),
+          deviceId,
         }),
         timeout: 15000,
       },
@@ -436,6 +453,7 @@ export async function getEpisodeList(
   loadMoreKey?: unknown,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
     const response = await axios.post(
       `${APP_BASE_URL}/v1/episode/list`,
@@ -450,6 +468,7 @@ export async function getEpisodeList(
           refreshToken: auth?.refreshToken,
           contentType: "application/json",
           localTime: getNowIsoString(),
+          deviceId,
         }),
         timeout: 15000,
       },
@@ -462,6 +481,7 @@ export async function getEpisodeDetail(
   eid: string,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
     const response = await axios.get(
       `${APP_BASE_URL}/v1/episode/get?eid=${eid}`,
@@ -470,6 +490,7 @@ export async function getEpisodeDetail(
           accessToken: auth?.accessToken,
           refreshToken: auth?.refreshToken,
           localTime: getNowIsoString(),
+          deviceId,
         }),
         timeout: 15000,
       },
@@ -482,6 +503,7 @@ export async function getSubscriptions(
   loadMoreKey?: { subscribedAt: string; id: string } | null,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
     const response = await axios.post(
       `${APP_BASE_URL}/v1/subscription/list`,
@@ -497,6 +519,7 @@ export async function getSubscriptions(
           refreshToken: auth?.refreshToken,
           contentType: "application/json",
           localTime: getNowIsoString(),
+          deviceId,
         }),
         timeout: 15000,
       },

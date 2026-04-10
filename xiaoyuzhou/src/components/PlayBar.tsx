@@ -1,26 +1,30 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   CaretRightOutlined,
-  FullscreenExitOutlined,
   HeartFilled,
   HeartOutlined,
   PauseOutlined,
   PlayCircleFilled,
   UnorderedListOutlined,
 } from "@ant-design/icons";
-import { App, Button, Space } from "antd";
-import { AnimatePresence, motion } from "framer-motion";
+import { App, Avatar, Button, Drawer, List, Space, Spin } from "antd";
 
 import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
-import { getImageUrl, getPlayableUrl } from "../hooks/useXiaoyuzhou";
+import {
+  getImageUrl,
+  getPlayableUrl,
+  useXiaoyuzhou,
+} from "../hooks/useXiaoyuzhou";
 
 import { ProgressBar } from "./playbar/ProgressBar";
 import { PlaylistDrawer } from "./playbar/PlaylistDrawer";
+import { ShownotesDrawer } from "./playbar/ShownotesDrawer";
 
 const PlayBar: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { message } = App.useApp();
+  const { getPodcastDetail } = useXiaoyuzhou();
 
   const currentEpisode = usePlayerStore((state) => state.currentEpisode);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
@@ -47,18 +51,55 @@ const PlayBar: React.FC = () => {
     ? likedSongMids.includes(currentEpisode.eid || currentEpisode.pid)
     : false;
 
+  const [podcastOpen, setPodcastOpen] = useState(false);
+  const [podcastLoading, setPodcastLoading] = useState(false);
+  const [podcastDetail, setPodcastDetail] = useState<any | null>(null);
+  const [podcastEpisodes, setPodcastEpisodes] = useState<any[]>([]);
+
   const getAlbumCover = (episode: any): string => {
     return getImageUrl(episode) || "https://assets.xiaoyuzhoufm.com/favicon.ico";
   };
 
-  const getSingerName = (episode: any): string => {
+  const getPodcastName = (episode: any): string => {
     return (
-      episode.podcast?.title ||
-      episode.podcast?.author ||
-      episode.author ||
+      episode?.podcast?.title ||
+      episode?.podcast?.author ||
+      episode?.author ||
       "未知播客"
     );
   };
+
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds) return "时长未知";
+    const mins = Math.floor(seconds / 60);
+    const hours = Math.floor(mins / 60);
+    const remainMins = mins % 60;
+
+    if (hours > 0) {
+      return `${hours}小时 ${remainMins}分钟`;
+    }
+
+    return `${mins} 分钟`;
+  };
+
+  const openPodcastDrawer = useCallback(async () => {
+    const pid = currentEpisode?.podcast?.pid || currentEpisode?.pid;
+    if (!pid) return;
+
+    if (isPlaylistOpen) {
+      togglePlaylistOpen();
+    }
+
+    setPodcastOpen(true);
+    setPodcastLoading(true);
+    try {
+      const detail = await getPodcastDetail(pid);
+      setPodcastDetail(detail?.podcast || null);
+      setPodcastEpisodes(detail?.episodes || []);
+    } finally {
+      setPodcastLoading(false);
+    }
+  }, [currentEpisode, getPodcastDetail, isPlaylistOpen, togglePlaylistOpen]);
 
   const handleToggleLike = async () => {
     if (!currentEpisode) return;
@@ -87,92 +128,32 @@ const PlayBar: React.FC = () => {
       />
 
       <div
-        className={`playbar ${isShownotesOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${isPlaying ? "" : "paused"}`}
+        className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${isPlaying ? "" : "paused"}`}
       >
-        <AnimatePresence initial={false}>
-          {isShownotesOpen && currentEpisode ? (
-            <motion.div
-              key="shownotes"
-              className="playbar-shownotes-container"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <motion.div
-                className="playbar-shownotes-content"
-                initial={{ y: -8, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -8, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <h2 className="playbar-shownotes-title">{currentEpisode.title}</h2>
-                <div
-                  className="xy-html playbar-shownotes-html"
-                  dangerouslySetInnerHTML={{
-                    __html: currentEpisode.shownotes || "<p>暂无 Shownotes</p>",
-                  }}
-                />
-                <div className="playbar-shownotes-spacer"></div>
-              </motion.div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        {!isShownotesOpen ? (
-          <PlaylistDrawer
-            isPlaylistOpen={isPlaylistOpen}
-            playlist={playlist}
-            currentSong={currentEpisode}
-            playSong={play}
-            removeFromPlaylist={removeFromPlaylist}
-            clearPlaylist={clearPlaylist}
-            getAlbumCover={getAlbumCover}
-            getSingerName={getSingerName}
-          />
-        ) : null}
+        <PlaylistDrawer
+          isPlaylistOpen={isPlaylistOpen}
+          playlist={playlist}
+          currentSong={currentEpisode}
+          playSong={play}
+          removeFromPlaylist={removeFromPlaylist}
+          clearPlaylist={clearPlaylist}
+          getAlbumCover={getAlbumCover}
+          getSingerName={getPodcastName}
+        />
 
         <div className="playbar-bottom">
           <ProgressBar audioRef={audioRef} />
 
-          <div
-            className={`playbar-video-wrapper ${isShownotesOpen ? "expanded-mode" : ""}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              if (currentEpisode) toggleShownotesOpen();
-            }}
-          >
+          <div className="playbar-video-wrapper">
             {currentEpisode ? (
-              isShownotesOpen ? (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Button
-                    shape="circle"
-                    color="default"
-                    variant="filled"
-                    icon={<FullscreenExitOutlined />}
-                    style={{
-                      border: "none",
-                      background: "rgba(120, 120, 120, 0.2)",
-                    }}
-                  />
-                </div>
-              ) : (
-                <img
-                  className={`playbar-video ${isPlaying ? "playing" : ""}`}
-                  src={getAlbumCover(currentEpisode)}
-                  alt={currentEpisode.title}
-                  referrerPolicy="no-referrer"
-                />
-              )
+              <img
+                className={`playbar-video ${isPlaying ? "playing" : ""}`}
+                src={getAlbumCover(currentEpisode)}
+                alt={currentEpisode.title}
+                referrerPolicy="no-referrer"
+                onClick={() => toggleShownotesOpen()}
+                style={{ cursor: "pointer" }}
+              />
             ) : (
               <div className="playbar-video-loading">
                 <PlayCircleFilled style={{ fontSize: 24, opacity: 0.5 }} />
@@ -182,35 +163,21 @@ const PlayBar: React.FC = () => {
 
           <div
             className="playbar-info"
-            style={{ cursor: "pointer" }}
+            style={{ cursor: currentEpisode ? "pointer" : "default" }}
             onClick={() => {
-              if (currentEpisode && !isShownotesOpen) {
-                if (isPlaylistOpen) togglePlaylistOpen();
-                toggleShownotesOpen();
-              }
+              void openPodcastDrawer();
             }}
           >
             {currentEpisode ? (
               <div className="playbar-text-info">
                 <div
                   className="playbar-title"
-                  title={`${currentEpisode.title} - ${getSingerName(currentEpisode)}`}
+                  title={`${currentEpisode.title} - ${getPodcastName(currentEpisode)}`}
                 >
                   <span className="song-name">{currentEpisode.title}</span>
-                  <span className="playbar-singer">
-                    {" - " + getSingerName(currentEpisode)}
-                  </span>
                 </div>
-                <div
-                  className="playbar-lyric"
-                  style={{
-                    opacity: isShownotesOpen ? 0 : 1,
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  {currentEpisode.duration
-                    ? `${Math.floor(currentEpisode.duration / 60)} 分钟`
-                    : "聆听播客探索"}
+                <div className="playbar-lyric">
+                  {`${getPodcastName(currentEpisode)} -- ${formatDuration(currentEpisode.duration)}`}
                 </div>
               </div>
             ) : (
@@ -253,7 +220,6 @@ const PlayBar: React.FC = () => {
               variant="filled"
               onClick={(event) => {
                 event.stopPropagation();
-                if (isShownotesOpen) toggleShownotesOpen();
                 togglePlaylistOpen();
               }}
               title="播放列表"
@@ -263,6 +229,96 @@ const PlayBar: React.FC = () => {
           </Space>
         </div>
       </div>
+
+      <Drawer
+        title={podcastDetail?.title || getPodcastName(currentEpisode) || "频道详情"}
+        placement="bottom"
+        height="82%"
+        open={podcastOpen}
+        onClose={() => setPodcastOpen(false)}
+      >
+        {podcastLoading ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "40px",
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        ) : (
+          <>
+            <div style={{ marginBottom: 20 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginBottom: 12,
+                }}
+              >
+                <Avatar
+                  src={getImageUrl(podcastDetail || currentEpisode)}
+                  size={56}
+                />
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>
+                    {podcastDetail?.title || getPodcastName(currentEpisode)}
+                  </div>
+                  <div style={{ opacity: 0.7, marginTop: 4 }}>
+                    {podcastDetail?.author || podcastDetail?.subtitle || ""}
+                  </div>
+                </div>
+              </div>
+              <div style={{ lineHeight: 1.7, opacity: 0.88 }}>
+                {podcastDetail?.brief ||
+                  podcastDetail?.description ||
+                  "暂无频道简介"}
+              </div>
+            </div>
+
+            <List
+              header={<div style={{ fontWeight: 700 }}>最近单集</div>}
+              dataSource={podcastEpisodes}
+              renderItem={(item) => (
+                <List.Item
+                  actions={[
+                    <Button
+                      key="play"
+                      type="link"
+                      onClick={() => {
+                        play(item);
+                        setPodcastOpen(false);
+                      }}
+                    >
+                      播放
+                    </Button>,
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar
+                        src={
+                          item?.podcast?.image?.smallPicUrl ||
+                          item?.image?.smallPicUrl
+                        }
+                      />
+                    }
+                    title={item?.title || "未命名单集"}
+                    description={`${getPodcastName(item)} -- ${formatDuration(item?.duration)}`}
+                  />
+                </List.Item>
+              )}
+            />
+          </>
+        )}
+      </Drawer>
+      <ShownotesDrawer
+        open={isShownotesOpen}
+        onClose={() => toggleShownotesOpen()}
+        episode={currentEpisode}
+      />
     </>
   );
 };
