@@ -25,9 +25,16 @@ export interface XiaoyuzhouApiResult<T> {
 }
 
 let globalCredential: XiaoyuzhouCredential | null = null;
+let isRefreshing = false;
+const refreshQueue: Array<(credential: XiaoyuzhouCredential | null) => void> =
+  [];
 
 export function setGlobalCredential(credential: XiaoyuzhouCredential | null) {
   globalCredential = credential;
+}
+
+export function getGlobalCredential(): XiaoyuzhouCredential | null {
+  return globalCredential;
 }
 
 function getCredential(credential?: XiaoyuzhouCredential | null) {
@@ -44,16 +51,120 @@ function getCreatorHeaders() {
     "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
     "content-type": "application/json;charset=UTF-8",
     "x-app-build-time": "2026-04-08 10:43:10 +0800",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
     Origin: "https://podcaster.xiaoyuzhoufm.com",
     Referer: "https://podcaster.xiaoyuzhoufm.com/login",
   };
 }
 
-function normalizeError(error: unknown) {
+/**
+ * Refresh access token using refresh token
+ * Following xyz implementation: POST /app_auth_tokens.refresh
+ * https://github.com/ultrazg/xyz/blob/main/handlers/token.go
+ */
+async function doRefreshToken(
+  credential: XiaoyuzhouCredential,
+): Promise<XiaoyuzhouCredential | null> {
+  try {
+    console.log("[xiaoyuzhou] Refreshing token...", {
+      accessToken: credential.accessToken.slice(0, 20) + "...",
+      refreshToken: credential.refreshToken.slice(0, 20) + "...",
+    });
+
+    const response = await axios.post(
+      `${APP_BASE_URL}/app_auth_tokens.refresh`,
+      null, // 无请求体
+      {
+        headers: buildXiaoyuzhouHeaders({
+          accessToken: credential.accessToken,
+          refreshToken: credential.refreshToken,
+          contentType: "application/x-www-form-urlencoded; charset=utf-8",
+          localTime: getNowIsoString(),
+        }),
+        timeout: 15000,
+      },
+    );
+
+    console.log("[xiaoyuzhou] Refresh response headers:", response.headers);
+
+    const newAuth = extractXiaoyuzhouAuth(
+      response.headers as Record<string, string | string[] | undefined>,
+    );
+
+    console.log("[xiaoyuzhou] Extracted auth:", {
+      hasAccessToken: !!newAuth.accessToken,
+      hasRefreshToken: !!newAuth.refreshToken,
+    });
+
+    if (newAuth.accessToken && newAuth.refreshToken) {
+      const newCredential = {
+        accessToken: newAuth.accessToken,
+        refreshToken: newAuth.refreshToken,
+      };
+      setGlobalCredential(newCredential);
+      console.log("[xiaoyuzhou] Token refreshed successfully");
+      return newCredential;
+    }
+
+    console.error("[xiaoyuzhou] Token refresh failed: missing tokens in response");
+    return null;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("[xiaoyuzhou] Token refresh failed:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+    } else {
+      console.error("[xiaoyuzhou] Token refresh failed:", error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Queue-based token refresh to handle concurrent requests
+ */
+async function refreshToken(): Promise<XiaoyuzhouCredential | null> {
+  const currentCredential = getGlobalCredential();
+  if (!currentCredential) {
+    return null;
+  }
+
+  // If already refreshing, queue this request
+  if (isRefreshing) {
+    return new Promise((resolve) => {
+      refreshQueue.push(resolve);
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    const newCredential = await doRefreshToken(currentCredential);
+
+    // Notify all queued requests
+    while (refreshQueue.length > 0) {
+      const resolve = refreshQueue.shift()!;
+      resolve(newCredential);
+    }
+
+    if (!newCredential) {
+      // Refresh failed, clear credential
+      setGlobalCredential(null);
+    }
+
+    return newCredential;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+function normalizeError(error: unknown, shouldClearCredential: boolean = true) {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<any>;
-    if (axiosError.response?.status === 401) {
+    if (axiosError.response?.status === 401 && shouldClearCredential) {
       setGlobalCredential(null);
     }
     const message =
@@ -82,6 +193,62 @@ function normalizeUserInfo(user: any): XiaoyuzhouUserInfo {
   };
 }
 
+/**
+ * Wrapper to handle API requests with automatic token refresh on 401
+ */
+async function withAutoRefresh<T>(
+  requestFn: (credential: XiaoyuzhouCredential | null) => Promise<T>,
+  credential?: XiaoyuzhouCredential | null,
+): Promise<XiaoyuzhouApiResult<T>> {
+  const auth = getCredential(credential);
+
+  try {
+    const data = await requestFn(auth);
+    return { code: 0, data };
+  } catch (error) {
+    const axiosError = error as AxiosError<any>;
+
+    console.log("[xiaoyuzhou] Request failed:", {
+      status: axiosError?.response?.status,
+      hasRefreshToken: !!auth?.refreshToken,
+    });
+
+    // If 401, try to refresh token and retry
+    if (axiosError?.response?.status === 401 && auth?.refreshToken) {
+      console.log("[xiaoyuzhou] Got 401, attempting token refresh...");
+      const newCredential = await refreshToken();
+
+      if (newCredential) {
+        console.log("[xiaoyuzhou] Token refreshed, retrying request...");
+        // Retry with new credential
+        try {
+          const data = await requestFn(newCredential);
+          console.log("[xiaoyuzhou] Retry request successful");
+          return { code: 0, data };
+        } catch (retryError) {
+          console.error("[xiaoyuzhou] Retry request failed:", retryError);
+          const normalized = normalizeError(retryError, false);
+          return {
+            code: normalized.code,
+            message: normalized.message,
+            data: null as T,
+          };
+        }
+      } else {
+        // Refresh failed, clear credential
+        console.error("[xiaoyuzhou] Token refresh failed, clearing credential");
+        setGlobalCredential(null);
+      }
+    }
+
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null as T,
+    };
+  }
+}
 
 export async function sendSmsCode(
   phoneNumber: string,
@@ -158,8 +325,7 @@ export async function getDiscoveryFeed(
   loadMoreKey?: string,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
-  try {
-    const auth = getCredential(credential);
+  return withAutoRefresh(async (auth) => {
     const response = await axios.post(
       `${APP_BASE_URL}/v1/discovery-feed/list`,
       {
@@ -176,12 +342,8 @@ export async function getDiscoveryFeed(
         timeout: 15000,
       },
     );
-
-    return { code: 0, data: response.data };
-  } catch (error) {
-    const normalized = normalizeError(error);
-    return { code: normalized.code, message: normalized.message, data: null };
-  }
+    return response.data;
+  }, credential);
 }
 
 export async function getTopList(
@@ -194,8 +356,7 @@ export async function getTopList(
     NEW: "NEW_STAR_EPISODES",
   };
 
-  try {
-    const auth = getCredential(credential);
+  return withAutoRefresh(async (auth) => {
     const response = await axios.get(
       `${APP_BASE_URL}/v1/top-list/get?category=${categoryMap[category]}`,
       {
@@ -207,12 +368,8 @@ export async function getTopList(
         timeout: 15000,
       },
     );
-
-    return { code: 0, data: response.data };
-  } catch (error) {
-    const normalized = normalizeError(error);
-    return { code: normalized.code, message: normalized.message, data: null };
-  }
+    return response.data;
+  }, credential);
 }
 
 export async function searchPodcasts(
@@ -220,8 +377,7 @@ export async function searchPodcasts(
   loadMoreKey?: unknown,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
-  try {
-    const auth = getCredential(credential);
+  return withAutoRefresh(async (auth) => {
     const response = await axios.post(
       `${APP_BASE_URL}/v1/search/create`,
       {
@@ -239,34 +395,28 @@ export async function searchPodcasts(
         timeout: 15000,
       },
     );
-
-    return { code: 0, data: response.data };
-  } catch (error) {
-    const normalized = normalizeError(error);
-    return { code: normalized.code, message: normalized.message, data: null };
-  }
+    return response.data;
+  }, credential);
 }
 
 export async function getPodcastDetail(
   pid: string,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
-  try {
-    const auth = getCredential(credential);
-    const response = await axios.get(`${APP_BASE_URL}/v1/podcast/get?pid=${pid}`, {
-      headers: buildXiaoyuzhouHeaders({
-        accessToken: auth?.accessToken,
-        refreshToken: auth?.refreshToken,
-        localTime: getNowIsoString(),
-      }),
-      timeout: 15000,
-    });
-
-    return { code: 0, data: response.data };
-  } catch (error) {
-    const normalized = normalizeError(error);
-    return { code: normalized.code, message: normalized.message, data: null };
-  }
+  return withAutoRefresh(async (auth) => {
+    const response = await axios.get(
+      `${APP_BASE_URL}/v1/podcast/get?pid=${pid}`,
+      {
+        headers: buildXiaoyuzhouHeaders({
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
+          localTime: getNowIsoString(),
+        }),
+        timeout: 15000,
+      },
+    );
+    return response.data;
+  }, credential);
 }
 
 export async function getEpisodeList(
@@ -275,8 +425,7 @@ export async function getEpisodeList(
   loadMoreKey?: unknown,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
-  try {
-    const auth = getCredential(credential);
+  return withAutoRefresh(async (auth) => {
     const response = await axios.post(
       `${APP_BASE_URL}/v1/episode/list`,
       {
@@ -294,32 +443,26 @@ export async function getEpisodeList(
         timeout: 15000,
       },
     );
-
-    return { code: 0, data: response.data };
-  } catch (error) {
-    const normalized = normalizeError(error);
-    return { code: normalized.code, message: normalized.message, data: null };
-  }
+    return response.data;
+  }, credential);
 }
 
 export async function getEpisodeDetail(
   eid: string,
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {
-  try {
-    const auth = getCredential(credential);
-    const response = await axios.get(`${APP_BASE_URL}/v1/episode/get?eid=${eid}`, {
-      headers: buildXiaoyuzhouHeaders({
-        accessToken: auth?.accessToken,
-        refreshToken: auth?.refreshToken,
-        localTime: getNowIsoString(),
-      }),
-      timeout: 15000,
-    });
-
-    return { code: 0, data: response.data };
-  } catch (error) {
-    const normalized = normalizeError(error);
-    return { code: normalized.code, message: normalized.message, data: null };
-  }
+  return withAutoRefresh(async (auth) => {
+    const response = await axios.get(
+      `${APP_BASE_URL}/v1/episode/get?eid=${eid}`,
+      {
+        headers: buildXiaoyuzhouHeaders({
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
+          localTime: getNowIsoString(),
+        }),
+        timeout: 15000,
+      },
+    );
+    return response.data;
+  }, credential);
 }

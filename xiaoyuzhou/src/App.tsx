@@ -33,6 +33,7 @@ import SongCard from "./components/SongCard";
 import PlaylistCard from "./components/PlaylistCard";
 
 import { useXiaoyuzhou } from "./hooks/useXiaoyuzhou";
+import { useRequest } from "./hooks/useRequest";
 import { useFontSizeStore } from "./store/fontSize";
 import { usePlayerStore } from "./store/player";
 import { useUserStore } from "./store/user";
@@ -57,6 +58,39 @@ function App() {
   const currentEpisode = usePlayerStore((state) => state.currentEpisode);
   const { getDiscovery, getTopList, getPodcastDetail, loading } =
     useXiaoyuzhou();
+  const { request } = useRequest();
+
+  // 同步登录状态
+  useEffect(() => {
+    const handleAuthSync = (event: MessageEvent) => {
+      const message = event.data;
+      if (message.command === "XIAOYUZHOU_AUTH_SYNC" && message.payload) {
+        if (message.payload.isLoggedIn && message.payload.userInfo) {
+          useUserStore.getState().login(message.payload.userInfo);
+        } else {
+          useUserStore.getState().logout();
+        }
+      }
+    };
+
+    window.addEventListener("message", handleAuthSync);
+
+    // 主动获取一次用户信息
+    const syncAuth = async () => {
+      try {
+        const result = await request<any>("XIAOYUZHOU_GET_USER_INFO" as any, {});
+        if (result.code === 0 && result.data?.isLoggedIn) {
+          useUserStore.getState().login(result.data.userInfo);
+        }
+      } catch (err) {
+        console.error("Failed to sync auth:", err);
+      }
+    };
+
+    void syncAuth();
+
+    return () => window.removeEventListener("message", handleAuthSync);
+  }, [request]);
 
   const handleLogout = useCallback(() => {
     Modal.confirm({
@@ -164,10 +198,7 @@ function App() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <div
-            className="rank-header"
-            style={{ padding: "0 20px", margin: "20px 0" }}
-          >
+          <div className="rank-header">
             <h2>小宇宙热榜</h2>
             {loading ? (
               <div
@@ -261,7 +292,7 @@ function App() {
   return (
     <div className="qqmusic-app" style={{ fontSize: `${fontSize}px` }}>
       <div className="qqmusic-header">
-        <h1 className="qqmusic-title">小宇宙（摸鱼版）</h1>
+        <h1 className="qqmusic-title">小宇宙</h1>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
             <Dropdown
