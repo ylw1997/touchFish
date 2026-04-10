@@ -237,82 +237,84 @@ const PlayBar: React.FC = () => {
         open={podcastOpen}
         onClose={() => setPodcastOpen(false)}
       >
-        {podcastLoading ? (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              padding: "40px",
-            }}
-          >
-            <Spin size="large" />
-          </div>
-        ) : (
-          <>
-            <div style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginBottom: 12,
-                }}
-              >
-                <Avatar
-                  src={getImageUrl(podcastDetail || currentEpisode)}
-                  size={56}
-                />
-                <div>
-                  <div style={{ fontSize: 20, fontWeight: 700 }}>
-                    {podcastDetail?.title || getPodcastName(currentEpisode)}
-                  </div>
-                  <div style={{ opacity: 0.7, marginTop: 4 }}>
-                    {podcastDetail?.author || podcastDetail?.subtitle || ""}
+        <div style={{ padding: "10px" }}>
+          {podcastLoading ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "40px",
+              }}
+            >
+              <Spin size="large" />
+            </div>
+          ) : (
+            <>
+              <div style={{ marginBottom: 20 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    marginBottom: 12,
+                  }}
+                >
+                  <Avatar
+                    src={getImageUrl(podcastDetail || currentEpisode)}
+                    size={56}
+                  />
+                  <div>
+                    <div style={{ fontSize: 20, fontWeight: 700 }}>
+                      {podcastDetail?.title || getPodcastName(currentEpisode)}
+                    </div>
+                    <div style={{ opacity: 0.7, marginTop: 4 }}>
+                      {podcastDetail?.author || podcastDetail?.subtitle || ""}
+                    </div>
                   </div>
                 </div>
+                <div style={{ lineHeight: 1.7, opacity: 0.88 }}>
+                  {podcastDetail?.brief ||
+                    podcastDetail?.description ||
+                    "暂无频道简介"}
+                </div>
               </div>
-              <div style={{ lineHeight: 1.7, opacity: 0.88 }}>
-                {podcastDetail?.brief ||
-                  podcastDetail?.description ||
-                  "暂无频道简介"}
-              </div>
-            </div>
 
-            <List
-              header={<div style={{ fontWeight: 700 }}>最近单集</div>}
-              dataSource={podcastEpisodes}
-              renderItem={(item) => (
-                <List.Item
-                  actions={[
-                    <Button
-                      key="play"
-                      type="link"
-                      onClick={() => {
-                        play(item);
-                        setPodcastOpen(false);
-                      }}
-                    >
-                      播放
-                    </Button>,
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar
-                        src={
-                          item?.podcast?.image?.smallPicUrl ||
-                          item?.image?.smallPicUrl
-                        }
-                      />
-                    }
-                    title={item?.title || "未命名单集"}
-                    description={`${getPodcastName(item)} -- ${formatDuration(item?.duration)}`}
-                  />
-                </List.Item>
-              )}
-            />
-          </>
-        )}
+              <List
+                header={<div style={{ fontWeight: 700 }}>最近单集</div>}
+                dataSource={podcastEpisodes}
+                renderItem={(item) => (
+                  <List.Item
+                    actions={[
+                      <Button
+                        key="play"
+                        type="link"
+                        style={{ color: "var(--vscode-textLink-foreground)" }}
+                        onClick={() => {
+                          play(item);
+                          setPodcastOpen(false);
+                        }}
+                      >
+                        播放
+                      </Button>,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={
+                        <Avatar
+                          src={
+                            item?.podcast?.image?.smallPicUrl ||
+                            item?.image?.smallPicUrl
+                          }
+                        />
+                      }
+                      title={item?.title || "未命名单集"}
+                    />
+                  </List.Item>
+                )}
+              />
+            </>
+          )}
+        </div>
       </Drawer>
       <ShownotesDrawer
         open={isShownotesOpen}

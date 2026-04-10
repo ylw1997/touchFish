@@ -14,6 +14,7 @@ interface SongCardProps {
   isCurrent?: boolean;
   onPlay?: (song: any) => void;
   onAddToPlaylist?: (song: any) => void;
+  onShowDetail?: (song: any) => void;
   showActions?: boolean;
 }
 
@@ -23,6 +24,7 @@ const SongCard: React.FC<SongCardProps> = ({
   isCurrent = false,
   onPlay,
   onAddToPlaylist,
+  onShowDetail,
   showActions = true,
 }) => {
   const { message } = App.useApp();
@@ -62,6 +64,13 @@ const SongCard: React.FC<SongCardProps> = ({
             src={getAlbumCover()}
             alt={song.title}
             className="song-cover-img"
+            onClick={(e) => {
+              if (onShowDetail) {
+                e.stopPropagation();
+                onShowDetail(song);
+              }
+            }}
+            style={{ cursor: onShowDetail ? "pointer" : "default" }}
           />
           {isPlaying && (
             <div className="song-playing-indicator">

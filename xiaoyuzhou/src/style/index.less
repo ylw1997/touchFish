@@ -754,21 +754,25 @@ a {
   .rank-tabs {
     display: flex;
     justify-content: center;
-    padding: 8px 0 16px;
+    padding: 16px 0 20px;
 
     .ant-segmented {
-      background: var(--vscode-button-secondaryBackground);
-      padding: 4px;
-      border-radius: 20px;
+      background: var(--vscode-editor-inactiveSelectionBackground);
+      padding: 6px;
+      border-radius: 24px;
 
       .ant-segmented-item {
-        min-width: 70px;
-        padding: 4px 16px;
-        border-radius: 16px;
-        transition: all 0.3s ease;
+        min-width: 80px;
+        padding: 8px 20px;
+        border-radius: 18px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: calc(var(--app-font-size) + 2px);
+        font-weight: 500;
+        color: var(--vscode-foreground);
+        opacity: 0.7;
 
         &:hover:not(.ant-segmented-item-selected) {
-          color: var(--vscode-foreground);
+          opacity: 1;
           background: var(--vscode-button-hoverBackground);
         }
       }
@@ -776,12 +780,28 @@ a {
       .ant-segmented-item-selected {
         background: var(--vscode-button-background);
         color: var(--vscode-button-foreground);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        opacity: 1;
+        box-shadow:
+          0 2px 8px rgba(0, 0, 0, 0.12),
+          0 1px 2px rgba(0, 0, 0, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        font-weight: 600;
       }
 
       .ant-segmented-thumb {
         background: var(--vscode-button-background);
-        border-radius: 16px;
+        border-radius: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      // 深色主题适配
+      .dark & {
+        .ant-segmented-item-selected {
+          box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            0 1px 2px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
       }
     }
   }

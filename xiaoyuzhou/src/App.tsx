@@ -382,6 +382,7 @@ function App() {
                                     key={episode.eid}
                                     song={episode}
                                     onPlay={handlePlayEpisode}
+                                    onShowDetail={openEpisode}
                                     showActions={false}
                                   />
                                 ))}
@@ -402,6 +403,7 @@ function App() {
                                     key={item.eid || item.id || item.pid}
                                     song={item}
                                     onPlay={handlePlayEpisode}
+                                    onShowDetail={openEpisode}
                                     showActions={false}
                                   />
                                 ))}
@@ -430,7 +432,6 @@ function App() {
                 >
                   <div className="rank-header">
                     <Segmented
-                      className="rank-tabs"
                       value={topCategory}
                       onChange={(value) =>
                         setTopCategory(value as "HOT" | "ROCK" | "NEW")
@@ -458,6 +459,7 @@ function App() {
                             key={episode?.eid || idx}
                             song={episode}
                             onPlay={handlePlayEpisode}
+                            onShowDetail={openEpisode}
                             onAddToPlaylist={addToPlaylist}
                           />
                         ))}
@@ -574,47 +576,52 @@ function App() {
         open={podcastOpen}
         onClose={() => setPodcastOpen(false)}
       >
-        {podcastLoading ? (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              padding: "40px",
-            }}
-          >
-            <Spin size="large" />
-          </div>
-        ) : (
-          <List
-            dataSource={podcastEpisodes}
-            renderItem={(item) => (
-              <List.Item
-                actions={[
-                  <Button
-                    key="open"
-                    type="link"
-                    onClick={() => void openEpisode(item)}
-                  >
-                    打开
-                  </Button>,
-                ]}
-              >
-                <List.Item.Meta
-                  avatar={
-                    <Avatar
-                      src={
-                        item?.podcast?.image?.smallPicUrl ||
-                        item?.image?.smallPicUrl
-                      }
-                    />
-                  }
-                  title={item?.title || "未命名单集"}
-                  description={item?.description || item?.brief || ""}
-                />
-              </List.Item>
-            )}
-          />
-        )}
+        <div style={{ padding: "10px" }}>
+          {podcastLoading ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "40px",
+              }}
+            >
+              <Spin size="large" />
+            </div>
+          ) : (
+            <List
+              dataSource={podcastEpisodes}
+              renderItem={(item) => (
+                <List.Item
+                  actions={[
+                    <Button
+                      key="play"
+                      type="link"
+                      style={{ color: "var(--vscode-textLink-foreground)" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayEpisode(item);
+                      }}
+                    >
+                      播放
+                    </Button>,
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar
+                        src={
+                          item?.podcast?.image?.smallPicUrl ||
+                          item?.image?.smallPicUrl
+                        }
+                      />
+                    }
+                    title={item?.title || "未命名单集"}
+                  />
+                </List.Item>
+              )}
+            />
+          )}
+        </div>
       </Drawer>
 
       <Drawer

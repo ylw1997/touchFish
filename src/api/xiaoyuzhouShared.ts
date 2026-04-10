@@ -7,26 +7,25 @@ function generateDeviceIdFromToken(token: string): string {
     return XIAOYUZHOU_DEVICE_ID;
   }
 
-  // 简单哈希：将 token 转换为数字
-  let hash = 0;
-  for (let i = 0; i < token.length; i++) {
-    const char = token.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
+  // 使用 token 的前 32 个字符来构造 UUID
+  // 如果 token 不够长，重复填充
+  let normalized = token.toLowerCase().replace(/[^a-f0-9]/g, '');
+  if (normalized.length < 32) {
+    normalized = normalized.padEnd(32, '0');
   }
-
-  // 转换为正数的 16 进制字符串并填充
-  const hashHex = Math.abs(hash).toString(16).padStart(32, "0");
+  normalized = normalized.slice(0, 32);
 
   // 生成 UUID 格式（8-4-4-4-12）
-  const part1 = hashHex.slice(0, 8);
-  const part2 = hashHex.slice(8, 12);
-  const part3 = "4" + hashHex.slice(13, 16);
-  const part4 = "8" + hashHex.slice(17, 20);
-  const part5 = hashHex.slice(20, 32);
+  const part1 = normalized.slice(0, 8);
+  const part2 = normalized.slice(8, 12);
+  // 第3段的第1个字符必须是 4 (UUID version)
+  const part3 = "4" + normalized.slice(13, 16);
+  // 第4段的第1个字符必须是 8, 9, a, 或 b (UUID variant)
+  const part4 = "a" + normalized.slice(17, 20);
+  const part5 = normalized.slice(20, 32);
 
   const uuid = `${part1}-${part2}-${part3}-${part4}-${part5}`.toUpperCase();
-  return uuid.length === 36 ? uuid : XIAOYUZHOU_DEVICE_ID;
+  return uuid;
 }
 
 // 获取 deviceId：优先使用基于 token 的，回退到默认值

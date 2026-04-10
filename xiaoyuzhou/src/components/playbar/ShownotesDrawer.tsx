@@ -1,6 +1,5 @@
 import React from "react";
-import { Drawer, Empty, Spin } from "antd";
-import { usePlayerStore } from "../../store/player";
+import { Drawer, Empty } from "antd";
 import { getImageUrl } from "../../hooks/useXiaoyuzhou";
 
 interface ShownotesDrawerProps {
@@ -46,7 +45,7 @@ export const ShownotesDrawer: React.FC<ShownotesDrawerProps> = ({
       open={open}
       onClose={onClose}
     >
-      <div style={{ padding: "0 0 60px" }}>
+      <div style={{ padding: "10px " }}>
         {/* 头部信息 */}
         <div
           style={{
@@ -58,7 +57,10 @@ export const ShownotesDrawer: React.FC<ShownotesDrawerProps> = ({
           }}
         >
           <img
-            src={getImageUrl(episode) || "https://assets.xiaoyuzhoufm.com/favicon.ico"}
+            src={
+              getImageUrl(episode) ||
+              "https://assets.xiaoyuzhoufm.com/favicon.ico"
+            }
             alt={episode.title}
             style={{
               width: 120,
