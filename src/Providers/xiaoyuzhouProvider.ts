@@ -14,6 +14,7 @@ import {
   type XiaoyuzhouCredential,
   type XiaoyuzhouUserInfo,
 } from "../api/xiaoyuzhou";
+import { getDeviceId } from "../api/xiaoyuzhouShared";
 import { setConfigByKey } from "../core/config";
 import { CommandsType } from "../../types/commands";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
@@ -21,10 +22,11 @@ import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 type SavedAuthState = {
   credential: XiaoyuzhouCredential | null;
   userInfo: XiaoyuzhouUserInfo | null;
+  deviceId: string | null;
 };
 
 export class XiaoyuzhouProvider extends BaseWebviewProvider {
-  private authState: SavedAuthState = { credential: null, userInfo: null };
+  private authState: SavedAuthState = { credential: null, userInfo: null, deviceId: null };
   private webviewView: WebviewView | null = null;
 
   constructor(context: ExtensionContext) {
@@ -43,7 +45,8 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
       if (
         e.affectsConfiguration("touchfish.xiaoyuzhouAccessToken") ||
         e.affectsConfiguration("touchfish.xiaoyuzhouRefreshToken") ||
-        e.affectsConfiguration("touchfish.xiaoyuzhouUserInfo")
+        e.affectsConfiguration("touchfish.xiaoyuzhouUserInfo") ||
+        e.affectsConfiguration("touchfish.xiaoyuzhouDeviceId")
       ) {
         this.syncAuthFromConfig();
         void this.notifyAuthState();
@@ -63,6 +66,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
     const accessToken = (config.get<string>("xiaoyuzhouAccessToken") || "").trim();
     const refreshToken = (config.get<string>("xiaoyuzhouRefreshToken") || "").trim();
     const rawUserInfo = (config.get<string>("xiaoyuzhouUserInfo") || "").trim();
+    const savedDeviceId = (config.get<string>("xiaoyuzhouDeviceId") || "").trim();
 
     let userInfo: XiaoyuzhouUserInfo | null = null;
     if (rawUserInfo) {
@@ -73,16 +77,25 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
       }
     }
 
+    // 确定 deviceId：优先使用保存的，其次基于 token 生成
+    let deviceId: string | null = null;
+    if (savedDeviceId) {
+      deviceId = savedDeviceId;
+    } else if (refreshToken || accessToken) {
+      deviceId = getDeviceId(refreshToken || accessToken);
+    }
+
     if (accessToken && refreshToken) {
       this.authState = {
         credential: { accessToken, refreshToken },
         userInfo,
+        deviceId,
       };
       setGlobalCredential(this.authState.credential);
       return;
     }
 
-    this.authState = { credential: null, userInfo: null };
+    this.authState = { credential: null, userInfo: null, deviceId: null };
     setGlobalCredential(null);
   }
 
@@ -90,7 +103,10 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
     credential: XiaoyuzhouCredential,
     userInfo: XiaoyuzhouUserInfo | null,
   ) {
-    this.authState = { credential, userInfo };
+    // 生成或复用 deviceId
+    const deviceId = this.authState.deviceId || getDeviceId(credential.refreshToken);
+
+    this.authState = { credential, userInfo, deviceId };
     setGlobalCredential(credential);
 
     await Promise.all([
@@ -100,6 +116,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
         "xiaoyuzhouUserInfo",
         userInfo ? JSON.stringify(userInfo) : "",
       ),
+      setConfigByKey("xiaoyuzhouDeviceId", deviceId),
     ]);
   }
 
@@ -107,7 +124,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
     console.log("[xiaoyuzhouProvider] Clearing auth state...");
 
     // 先清除内存状态
-    this.authState = { credential: null, userInfo: null };
+    this.authState = { credential: null, userInfo: null, deviceId: null };
     setGlobalCredential(null);
     console.log("[xiaoyuzhouProvider] Memory state cleared");
 
@@ -122,6 +139,7 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
         setConfigByKey("xiaoyuzhouAccessToken", ""),
         setConfigByKey("xiaoyuzhouRefreshToken", ""),
         setConfigByKey("xiaoyuzhouUserInfo", ""),
+        setConfigByKey("xiaoyuzhouDeviceId", ""),
       ]);
       console.log("[xiaoyuzhouProvider] setConfigByKey calls completed");
 
