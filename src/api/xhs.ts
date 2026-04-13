@@ -40,7 +40,7 @@ function buildRequestBody(body: any) {
 
 function buildGetPath(
   apiPath: string,
-  query: Record<string, string | number | boolean | undefined | null>
+  query: Record<string, string | number | boolean | undefined | null>,
 ) {
   const entries = Object.entries(query);
   if (!entries.length) return apiPath;
@@ -48,7 +48,10 @@ function buildGetPath(
     apiPath +
     "?" +
     entries
-      .map(([key, value]) => `${key}=${value === undefined || value === null ? "" : String(value)}`)
+      .map(
+        ([key, value]) =>
+          `${key}=${value === undefined || value === null ? "" : String(value)}`,
+      )
       .join("&")
   );
 }
@@ -643,20 +646,19 @@ export const getXhsUploadPermit = async (mediaType: string = "image") => {
   }
 
   const url = "https://creator.xiaohongshu.com" + pathWithQuery;
-  const headers = buildXhsHeaders({ cookie, signObj, host: "creator.xiaohongshu.com" });
+  const headers = buildXhsHeaders({
+    cookie,
+    signObj,
+    host: "creator.xiaohongshu.com",
+  });
 
   // 添加额外的必要 headers
   headers["Accept"] = "application/json, text/plain, */*";
   headers["Accept-Language"] = "zh-CN,zh;q=0.9";
   headers["Cache-Control"] = "no-cache";
 
-  console.log("[xhs upload permit] request:", url);
-  console.log("[xhs upload permit] headers:", JSON.stringify(headers, null, 2));
-
   const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
   const data = resp.data;
-
-  console.log("[xhs upload permit] response:", JSON.stringify(data, null, 2));
 
   if (!data || !data.success) {
     throw new Error(data?.msg || "获取上传许可失败");
@@ -678,7 +680,9 @@ export const getXhsUploadPermit = async (mediaType: string = "image") => {
   // 提取 fileId（去掉 spectrum/ 前缀）
   // Python: data['fileIds'][0].split('/')[-1]
   const fullFileId = permit.fileIds[0];
-  const fileId = fullFileId.includes("/") ? fullFileId.split("/").pop() : fullFileId;
+  const fileId = fullFileId.includes("/")
+    ? fullFileId.split("/").pop()
+    : fullFileId;
 
   return {
     fileId: fileId,
@@ -700,7 +704,7 @@ export const uploadXhsImageToOss = async (
   fileName: string,
   mimeType: string,
   token?: string, // 从上传许可获取的 token
-  uploadAddr?: string // 上传地址，如 ros-upload.xiaohongshu.com
+  uploadAddr?: string, // 上传地址，如 ros-upload.xiaohongshu.com
 ) => {
   // 使用指定的上传地址或默认地址
   const host = uploadAddr || "ros-upload.xiaohongshu.com";
@@ -710,10 +714,11 @@ export const uploadXhsImageToOss = async (
   const headers: Record<string, string> = {
     "Content-Type": mimeType || "image/jpeg",
     "Content-Length": imageBuffer.length.toString(),
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Referer": "https://creator.xiaohongshu.com/",
-    "Origin": "https://creator.xiaohongshu.com",
-    "Accept": "*/*",
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    Referer: "https://creator.xiaohongshu.com/",
+    Origin: "https://creator.xiaohongshu.com",
+    Accept: "*/*",
     "Accept-Encoding": "gzip, deflate, br",
     "Accept-Language": "zh-CN,zh;q=0.9",
     "Cache-Control": "no-cache",
@@ -724,18 +729,12 @@ export const uploadXhsImageToOss = async (
     headers["X-Cos-Security-Token"] = token;
   }
 
-  console.log("[xhs upload to OSS] url:", uploadUrl);
-  console.log("[xhs upload to OSS] file size:", imageBuffer.length);
-  console.log("[xhs upload to OSS] headers:", JSON.stringify(headers, null, 2));
-
   // 使用原生 axios 而不是 xhsHttp，因为 OSS 上传不需要签名拦截
   const resp = await axios.put(uploadUrl, imageBuffer, {
     headers,
     timeout: 30000, // 上传超时时间更长
     validateStatus: (status) => status === 200 || status === 204, // OSS 可能返回 204
   });
-
-  console.log("[xhs upload to OSS] response status:", resp.status);
 
   // OSS 上传成功返回 200 或 204，没有 response body
   if (resp.status !== 200 && resp.status !== 204) {
@@ -744,8 +743,6 @@ export const uploadXhsImageToOss = async (
 
   // 构造图片 URL（参考小红书图片 URL 格式）
   const imageUrl = `https://sns-img-qc.xhscdn.com/${fileId}`;
-
-  console.log("[xhs upload to OSS] success, image url:", imageUrl);
 
   return {
     fileId,
@@ -767,7 +764,10 @@ export const uploadXhsImage = async (params: {
   const { file, name, type } = params;
 
   // 解析 base64
-  const base64Data = file.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
+  const base64Data = file.replace(
+    /^data:image\/(png|jpeg|jpg|webp);base64,/,
+    "",
+  );
   const imageBuffer = Buffer.from(base64Data, "base64");
 
   if (imageBuffer.length === 0) {
@@ -787,11 +787,11 @@ export const uploadXhsImage = async (params: {
     name,
     type || "image/jpeg",
     permit.token,
-    permit.uploadAddr
+    permit.uploadAddr,
   );
 
   return {
-    fileId: permit.fileId,        // 去掉前缀的，用于预览
+    fileId: permit.fileId, // 去掉前缀的，用于预览
     fullFileId: permit.fullFileId, // 完整的 spectrum/xxx，用于发布
     url: ossResult.url,
   };
@@ -827,18 +827,18 @@ export const publishXhsNote = async (params: {
 
   // 构造图片数据（参考浏览器真实请求）
   const imageList = images.map((img) => {
-    // img 应该是完整的 file_id（包含 spectrum/ 前缀）
-    // 如: spectrum/REf_X31Qc4En6EIwcNiI-tyl9Vp-RXgxvuptUWBQ3SM2pKE
+    // 使用完整的 file_id（包含 spectrum/ 前缀）
+    const fileId = img.includes("/") ? img : `spectrum/${img}`;
     return {
-      file_id: img,
+      file_id: fileId,
       width: 1080,
       height: 1440,
       metadata: { source: -1 },
       stickers: { version: 2, floating: [] },
       extra_info_json: JSON.stringify({
         mimeType: "image/jpeg",
-        image_metadata: { bg_color: "", origin_size: 0 }
-      })
+        image_metadata: { bg_color: "", origin_size: 0 },
+      }),
     };
   });
 
@@ -846,7 +846,7 @@ export const publishXhsNote = async (params: {
   const sourceObj = {
     type: "web",
     ids: "",
-    extraInfo: JSON.stringify({ subType: "official", systemId: "web" })
+    extraInfo: JSON.stringify({ subType: "official", systemId: "web" }),
   };
 
   // 构造 business_binds JSON
@@ -861,7 +861,7 @@ export const publishXhsNote = async (params: {
     coProduceBind: { enable: true },
     noteCopyBind: { copyable: true },
     interactionPermissionBind: { commentPermission: 0 },
-    optionRelationList: []
+    optionRelationList: [],
   };
 
   // 构造 capa_trace_info
@@ -869,8 +869,8 @@ export const publishXhsNote = async (params: {
     contextJson: JSON.stringify({
       recommend_title: { recommend_title_id: "", is_use: 3, used_index: -1 },
       recommendTitle: [],
-      recommend_topics: { used: [] }
-    })
+      recommend_topics: { used: [] },
+    }),
   };
 
   // 构造请求体（完全参考浏览器请求格式）
@@ -887,16 +887,16 @@ export const publishXhsNote = async (params: {
       privacy_info: {
         op_type: 1,
         type: 0,
-        user_ids: []
+        user_ids: [],
       },
       goods_info: {},
       biz_relations: [],
-      capa_trace_info: capaTraceInfoObj
+      capa_trace_info: capaTraceInfoObj,
     },
     image_info: {
-      images: imageList
+      images: imageList,
     },
-    video_info: null
+    video_info: null,
   };
 
   const { bodyString, bodyObj } = buildRequestBody(body);
