@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import axios from "axios";
 
 import {
   buildXiaoyuzhouHeaders,
@@ -9,10 +8,12 @@ import {
 import { parseXiaoyuzhouDiscoveryBlocks } from "../api/xiaoyuzhouDiscovery";
 import {
   getDiscoveryFeed,
+  getTopList,
   getSubscriptions,
   loginWithSms,
   refreshXiaoyuzhouToken,
   setGlobalCredential,
+  xiaoyuzhouHttp,
 } from "../api/xiaoyuzhou";
 
 describe("xiaoyuzhou shared api helpers", () => {
@@ -43,7 +44,7 @@ describe("xiaoyuzhou shared api helpers", () => {
   });
 
   it("refreshes token after a 401 and retries the request once", async () => {
-    const originalPost = axios.post;
+    const originalPost = xiaoyuzhouHttp.post;
     let discoveryAttempts = 0;
 
     setGlobalCredential({
@@ -51,7 +52,7 @@ describe("xiaoyuzhou shared api helpers", () => {
       refreshToken: "refresh-token",
     });
 
-    axios.post = (async (url: string, data?: unknown, config?: any) => {
+    xiaoyuzhouHttp.post = (async (url: string, data?: unknown, config?: any) => {
       if (String(url).includes("/v1/discovery-feed/list")) {
         discoveryAttempts += 1;
         if (discoveryAttempts === 1) {
@@ -83,7 +84,7 @@ describe("xiaoyuzhou shared api helpers", () => {
       }
 
       throw new Error(`Unexpected URL: ${url}`);
-    }) as typeof axios.post;
+    }) as typeof xiaoyuzhouHttp.post;
 
     try {
       const result = await getDiscoveryFeed(undefined, {
@@ -95,20 +96,84 @@ describe("xiaoyuzhou shared api helpers", () => {
       assert.equal(discoveryAttempts, 2);
       assert.deepEqual(result.data, { data: [{ id: "ok" }] });
     } finally {
-      axios.post = originalPost;
+      xiaoyuzhouHttp.post = originalPost;
+      setGlobalCredential(null);
+    }
+  });
+
+  it("refreshes token after a 401 on top list GET and retries once", async () => {
+    const originalGet = xiaoyuzhouHttp.get;
+    const originalPost = xiaoyuzhouHttp.post;
+    let topListAttempts = 0;
+
+    setGlobalCredential({
+      accessToken: "expired-access",
+      refreshToken: "refresh-token",
+    });
+
+    xiaoyuzhouHttp.get = (async (url: string, config?: any) => {
+      if (String(url).includes("/v1/top-list/get")) {
+        topListAttempts += 1;
+        if (topListAttempts === 1) {
+          const error = new Error("Unauthorized") as Error & {
+            response?: { status: number; data: unknown };
+          };
+          error.response = { status: 401, data: { message: "expired" } };
+          throw error;
+        }
+
+        assert.equal(
+          config?.headers?.["x-jike-access-token"],
+          "new-access-token",
+        );
+        return { data: { data: [{ id: "top-1" }] } } as any;
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    }) as typeof xiaoyuzhouHttp.get;
+
+    xiaoyuzhouHttp.post = (async (url: string, _data?: unknown, config?: any) => {
+      if (String(url).includes("/app_auth_tokens.refresh")) {
+        assert.equal(
+          config?.headers?.["x-jike-refresh-token"],
+          "refresh-token",
+        );
+        return {
+          headers: {
+            "x-jike-access-token": "new-access-token",
+            "x-jike-refresh-token": "new-refresh-token",
+          },
+        } as any;
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    }) as typeof xiaoyuzhouHttp.post;
+
+    try {
+      const result = await getTopList("ROCK", {
+        accessToken: "expired-access",
+        refreshToken: "refresh-token",
+      });
+
+      assert.equal(result.code, 0);
+      assert.equal(topListAttempts, 2);
+      assert.deepEqual(result.data, { data: [{ id: "top-1" }] });
+    } finally {
+      xiaoyuzhouHttp.get = originalGet;
+      xiaoyuzhouHttp.post = originalPost;
       setGlobalCredential(null);
     }
   });
 
   it("requests subscription list with access token and returns data", async () => {
-    const originalPost = axios.post;
+    const originalPost = xiaoyuzhouHttp.post;
 
-    axios.post = (async (url: string, data?: unknown, config?: any) => {
+    xiaoyuzhouHttp.post = (async (url: string, data?: unknown, config?: any) => {
       assert.ok(String(url).includes("/v1/subscription/list"));
       assert.equal(config?.headers?.["x-jike-access-token"], "access-token");
       assert.equal((data as { limit?: string })?.limit, "20");
       return { data: { data: [{ podcast: { pid: "pid-1", title: "Podcast" } }] } };
-    }) as typeof axios.post;
+    }) as typeof xiaoyuzhouHttp.post;
 
     try {
       const result = await getSubscriptions(undefined, {
@@ -121,19 +186,19 @@ describe("xiaoyuzhou shared api helpers", () => {
         data: [{ podcast: { pid: "pid-1", title: "Podcast" } }],
       });
     } finally {
-      axios.post = originalPost;
+      xiaoyuzhouHttp.post = originalPost;
     }
   });
 
   it("extracts refreshed auth tokens from refresh endpoint response headers", async () => {
-    const originalPost = axios.post;
+    const originalPost = xiaoyuzhouHttp.post;
 
-    axios.post = (async () => ({
+    xiaoyuzhouHttp.post = (async () => ({
       headers: {
         "X-Jike-Access-Token": "new-access-token",
         "X-Jike-Refresh-Token": "new-refresh-token",
       },
-    })) as typeof axios.post;
+    })) as typeof xiaoyuzhouHttp.post;
 
     try {
       const credential = await refreshXiaoyuzhouToken({
@@ -146,16 +211,16 @@ describe("xiaoyuzhou shared api helpers", () => {
         refreshToken: "new-refresh-token",
       });
     } finally {
-      axios.post = originalPost;
+      xiaoyuzhouHttp.post = originalPost;
       setGlobalCredential(null);
     }
   });
 
   it("refreshes credential immediately after sms login and returns the refreshed tokens", async () => {
-    const originalPost = axios.post;
+    const originalPost = xiaoyuzhouHttp.post;
     let callCount = 0;
 
-    axios.post = (async (url: string) => {
+    xiaoyuzhouHttp.post = (async (url: string) => {
       callCount += 1;
 
       if (callCount === 1) {
@@ -184,7 +249,7 @@ describe("xiaoyuzhou shared api helpers", () => {
           "x-jike-refresh-token": "stable-refresh-token",
         },
       };
-    }) as typeof axios.post;
+    }) as typeof xiaoyuzhouHttp.post;
 
     try {
       const result = await loginWithSms("17600000000", "1234");
@@ -197,7 +262,7 @@ describe("xiaoyuzhou shared api helpers", () => {
       });
       assert.equal(result.data?.userInfo.nickname, "tester");
     } finally {
-      axios.post = originalPost;
+      xiaoyuzhouHttp.post = originalPost;
       setGlobalCredential(null);
     }
   });

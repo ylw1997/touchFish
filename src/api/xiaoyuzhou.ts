@@ -7,6 +7,9 @@ import {
 
 const CREATOR_BASE_URL = "https://podcaster-api.xiaoyuzhoufm.com";
 const APP_BASE_URL = "https://api.xiaoyuzhoufm.com";
+export const xiaoyuzhouHttp = axios.create({
+  timeout: 15000,
+});
 
 export interface XiaoyuzhouCredential {
   accessToken: string;
@@ -77,7 +80,7 @@ async function doRefreshToken(
     const deviceId = getDeviceId(credential.refreshToken);
     console.log("[xiaoyuzhou] Using deviceId:", deviceId.slice(0, 8) + "...");
 
-    const response = await axios.post(
+    const response = await xiaoyuzhouHttp.post(
       `${APP_BASE_URL}/app_auth_tokens.refresh`,
       null, // 无请求体
       {
@@ -272,7 +275,7 @@ export async function sendSmsCode(
   areaCode: string = "+86",
 ): Promise<XiaoyuzhouApiResult<boolean>> {
   try {
-    await axios.post(
+    await xiaoyuzhouHttp.post(
       `${CREATOR_BASE_URL}/v1/auth/send-code`,
       {
         areaCode,
@@ -299,7 +302,7 @@ export async function loginWithSms(
   } | null>
 > {
   try {
-    const response = await axios.post(
+    const response = await xiaoyuzhouHttp.post(
       `${CREATOR_BASE_URL}/v1/auth/login-with-sms`,
       {
         areaCode,
@@ -347,7 +350,7 @@ export async function getDiscoveryFeed(
 ): Promise<XiaoyuzhouApiResult<any>> {
   const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
-    const response = await axios.post(
+    const response = await xiaoyuzhouHttp.post(
       `${APP_BASE_URL}/v1/discovery-feed/list`,
       {
         returnAll: "false",
@@ -380,7 +383,7 @@ export async function getTopList(
 
   const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
-    const response = await axios.get(
+    const response = await xiaoyuzhouHttp.get(
       `${APP_BASE_URL}/v1/top-list/get?category=${categoryMap[category]}`,
       {
         headers: buildXiaoyuzhouHeaders({
@@ -403,7 +406,7 @@ export async function searchPodcasts(
 ): Promise<XiaoyuzhouApiResult<any>> {
   const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
-    const response = await axios.post(
+    const response = await xiaoyuzhouHttp.post(
       `${APP_BASE_URL}/v1/search/create`,
       {
         keyword,
@@ -431,7 +434,7 @@ export async function getPodcastDetail(
 ): Promise<XiaoyuzhouApiResult<any>> {
   const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
-    const response = await axios.get(
+    const response = await xiaoyuzhouHttp.get(
       `${APP_BASE_URL}/v1/podcast/get?pid=${pid}`,
       {
         headers: buildXiaoyuzhouHeaders({
@@ -455,7 +458,7 @@ export async function getEpisodeList(
 ): Promise<XiaoyuzhouApiResult<any>> {
   const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
-    const response = await axios.post(
+    const response = await xiaoyuzhouHttp.post(
       `${APP_BASE_URL}/v1/episode/list`,
       {
         pid,
@@ -483,7 +486,7 @@ export async function getEpisodeDetail(
 ): Promise<XiaoyuzhouApiResult<any>> {
   const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
-    const response = await axios.get(
+    const response = await xiaoyuzhouHttp.get(
       `${APP_BASE_URL}/v1/episode/get?eid=${eid}`,
       {
         headers: buildXiaoyuzhouHeaders({
@@ -505,7 +508,7 @@ export async function getSubscriptions(
 ): Promise<XiaoyuzhouApiResult<any>> {
   const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
   return withAutoRefresh(async (auth) => {
-    const response = await axios.post(
+    const response = await xiaoyuzhouHttp.post(
       `${APP_BASE_URL}/v1/subscription/list`,
       {
         limit: "20",
