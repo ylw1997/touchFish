@@ -70,6 +70,7 @@ function App() {
   const [podcastEpisodes, setPodcastEpisodes] = useState<any[]>([]);
   const [episodeOpen, setEpisodeOpen] = useState(false);
   const [episodeDetail, setEpisodeDetail] = useState<any | null>(null);
+  const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
   useEffect(() => {
     const handleAuthSync = (event: MessageEvent) => {
@@ -326,6 +327,7 @@ function App() {
           activeKey={activeTab}
           onChange={setActiveTab}
           className="qqmusic-tabs"
+          centered
           items={[
             {
               key: "recommend",
@@ -421,7 +423,7 @@ function App() {
             },
             {
               key: "rank",
-              label: "排行榜单",
+              label: "排行",
               icon: <TrophyOutlined />,
               children: (
                 <motion.div
@@ -471,34 +473,8 @@ function App() {
               ),
             },
             {
-              key: "search",
-              label: "搜索",
-              icon: <SearchOutlined />,
-              children: (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.25 }}
-                  className="tab-content"
-                >
-                  <Input.Search
-                    placeholder="搜索播客"
-                    enterButton="搜索"
-                    value={searchKeyword}
-                    onChange={(event) => setSearchKeyword(event.target.value)}
-                    onSearch={() => void handleSearch()}
-                    style={{ marginBottom: 16 }}
-                  />
-                  {renderPodcastList(
-                    searchResults,
-                    "输入关键词后搜索小宇宙播客",
-                  )}
-                </motion.div>
-              ),
-            },
-            {
               key: "my",
-              label: "我的宇宙",
+              label: "我的",
               icon: <UserOutlined />,
               children: (
                 <motion.div
@@ -658,6 +634,29 @@ function App() {
         )}
       </Drawer>
 
+      <Drawer
+        title="搜索播客"
+        placement="bottom"
+        height="90%"
+        open={searchDrawerOpen}
+        onClose={() => setSearchDrawerOpen(false)}
+      >
+        <div style={{ padding: "10px" }}>
+          <Input.Search
+            placeholder="搜索播客"
+            enterButton="搜索"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onSearch={() => void handleSearch()}
+            style={{ marginBottom: 16 }}
+          />
+          {renderPodcastList(
+            searchResults,
+            "输入关键词后搜索小宇宙播客",
+          )}
+        </div>
+      </Drawer>
+
       <FloatButton.Group
         shape="circle"
         style={{ insetInlineEnd: 24, bottom: currentEpisode ? 140 : 88 }}
@@ -670,7 +669,7 @@ function App() {
         <FloatButton
           icon={<SearchOutlined style={{ color: "#faad14" }} />}
           tooltip={{ title: "搜索" }}
-          onClick={() => setActiveTab("search")}
+          onClick={() => setSearchDrawerOpen(true)}
         />
         <FloatButton
           onClick={decrease}
