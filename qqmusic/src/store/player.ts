@@ -106,8 +106,18 @@ export const usePlayerStore = create<PlayerState>()(
         set((state) => ({ isPlaylistOpen: !state.isPlaylistOpen })),
       toggleLyricOpen: () =>
         set((state) => ({ isLyricOpen: !state.isLyricOpen })),
-      openSingerDrawer: (mid, name) => set({ isSingerOpen: true, currentSingerMid: mid, currentSingerName: name || null }),
-      closeSingerDrawer: () => set({ isSingerOpen: false, currentSingerMid: null, currentSingerName: null }),
+      openSingerDrawer: (mid, name) =>
+        set({
+          isSingerOpen: true,
+          currentSingerMid: mid,
+          currentSingerName: name || null,
+        }),
+      closeSingerDrawer: () =>
+        set({
+          isSingerOpen: false,
+          currentSingerMid: null,
+          currentSingerName: null,
+        }),
       setIsRadioMode: (isRadioMode) => set({ isRadioMode }),
       setPlaySource: (playSource) => set({ playSource }), // 新增
 
@@ -248,7 +258,9 @@ export const usePlayerStore = create<PlayerState>()(
         songQuality: state.songQuality,
         volume: state.volume,
         isPlaylistOpen: state.isPlaylistOpen,
+        isRadioMode: state.isRadioMode,
+        playSource: state.playSource,
       }),
-    }
-  )
+    },
+  ),
 );
