@@ -240,6 +240,66 @@
 					"type": "string",
 					"default": "",
 					"description": "Cached Xiaoyuzhou user info (JSON)"
+				},
+				"touchfish.enableWeibo": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用微博模块"
+				},
+				"touchfish.enableZhihu": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用知乎模块"
+				},
+				"touchfish.enableBilibili": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用B站模块"
+				},
+				"touchfish.enableXhs": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用小红书模块"
+				},
+				"touchfish.enableQqmusic": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用QQ音乐模块"
+				},
+				"touchfish.enableXiaoyuzhou": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用小宇宙模块"
+				},
+				"touchfish.enableIthome": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用IT之家模块"
+				},
+				"touchfish.enableChiphell": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用ChipHell模块"
+				},
+				"touchfish.enableV2ex": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用V2ex模块"
+				},
+				"touchfish.enableHupu": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用虎扑模块"
+				},
+				"touchfish.enableNga": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用NGA模块"
+				},
+				"touchfish.enableLinuxdo": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用LinuxDo模块"
 				}
 			}
 		},
@@ -253,32 +313,38 @@
 				{
 					"id": "weibo",
 					"title": "TouchFish-Weibo",
-					"icon": "assets/weibo.svg"
+					"icon": "assets/weibo.svg",
+					"when": "config.touchfish.enableWeibo"
 				},
 				{
 					"id": "zhihu",
 					"title": "TouchFish-Zhihu",
-					"icon": "assets/zhihu.svg"
+					"icon": "assets/zhihu.svg",
+					"when": "config.touchfish.enableZhihu"
 				},
 				{
 					"id": "bilibili",
 					"title": "TouchFish-Bilibili",
-					"icon": "assets/bilibili.svg"
+					"icon": "assets/bilibili.svg",
+					"when": "config.touchfish.enableBilibili"
 				},
 				{
 					"id": "xhs",
 					"title": "TouchFish-Xhs",
-					"icon": "assets/xhs.svg"
+					"icon": "assets/xhs.svg",
+					"when": "config.touchfish.enableXhs"
 				},
 				{
 					"id": "qqmusic",
 					"title": "TouchFish-QQMusic",
-					"icon": "assets/qqmusic.svg"
+					"icon": "assets/qqmusic.svg",
+					"when": "config.touchfish.enableQqmusic"
 				},
 				{
 					"id": "xiaoyuzhou",
 					"title": "TouchFish-Xiaoyuzhou",
-					"icon": "assets/xiaoyuzhou.svg"
+					"icon": "assets/xiaoyuzhou.svg",
+					"when": "config.touchfish.enableXiaoyuzhou"
 				}
 			]
 		},
@@ -288,7 +354,8 @@
 					"icon": "assets/weibo.svg",
 					"type": "webview",
 					"name": "微博",
-					"id": "weibo"
+					"id": "weibo",
+					"when": "config.touchfish.enableWeibo"
 				}
 			],
 			"zhihu": [
@@ -296,7 +363,8 @@
 					"icon": "assets/zhihu.svg",
 					"type": "webview",
 					"name": "知乎",
-					"id": "zhihu"
+					"id": "zhihu",
+					"when": "config.touchfish.enableZhihu"
 				}
 			],
 			"xhs": [
@@ -304,7 +372,8 @@
 					"icon": "assets/xhs.svg",
 					"type": "webview",
 					"name": "小红书",
-					"id": "xhs"
+					"id": "xhs",
+					"when": "config.touchfish.enableXhs"
 				}
 			],
 			"bilibili": [
@@ -312,7 +381,8 @@
 					"icon": "assets/bilibili.svg",
 					"type": "webview",
 					"name": "B站",
-					"id": "bilibili"
+					"id": "bilibili",
+					"when": "config.touchfish.enableBilibili"
 				}
 			],
 			"qqmusic": [
@@ -320,39 +390,46 @@
 					"icon": "assets/qqmusic.svg",
 					"type": "webview",
 					"name": "QQ音乐",
-					"id": "qqmusic"
+					"id": "qqmusic",
+					"when": "config.touchfish.enableQqmusic"
 				}
 			],
 			"touchfish": [
 				{
 					"name": "IT之家",
 					"id": "view.ithomeList",
-					"icon": "assets/training.svg"
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableIthome"
 				},
 				{
 					"name": "chipHell",
 					"id": "view.chiphellList",
-					"icon": "assets/training.svg"
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableChiphell"
 				},
 				{
 					"id": "view.v2exList",
 					"name": "v2ex",
-					"icon": "assets/training.svg"
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableV2ex"
 				},
 				{
 					"id": "view.hupuList",
 					"name": "虎扑步行街",
-					"icon": "assets/training.svg"
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableHupu"
 				},
 				{
 					"id": "view.ngaList",
 					"name": "nga精英玩家俱乐部",
-					"icon": "assets/training.svg"
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableNga"
 				},
 				{
 					"id": "view.linuxdoList",
 					"name": "Linux.do",
-					"icon": "assets/training.svg"
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableLinuxdo"
 				},
 				{
 					"id": "view.setting",
@@ -366,7 +443,8 @@
 					"icon": "assets/xiaoyuzhou.svg",
 					"type": "webview",
 					"name": "小宇宙",
-					"id": "xiaoyuzhou"
+					"id": "xiaoyuzhou",
+					"when": "config.touchfish.enableXiaoyuzhou"
 				}
 			]
 		},
