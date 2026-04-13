@@ -8,6 +8,7 @@ import {
 import { parseXiaoyuzhouDiscoveryBlocks } from "../api/xiaoyuzhouDiscovery";
 import {
   getDiscoveryFeed,
+  getInboxList,
   getPilotDiscoveryList,
   getTopList,
   getSubscriptions,
@@ -224,6 +225,49 @@ describe("xiaoyuzhou shared api helpers", () => {
             podcast: {
               pid: "pid-pilot-1",
               title: "Pilot Podcast",
+            },
+          },
+        ],
+      });
+    } finally {
+      xiaoyuzhouHttp.post = originalPost;
+    }
+  });
+
+  it("requests inbox list with access token and returns episodes", async () => {
+    const originalPost = xiaoyuzhouHttp.post;
+
+    xiaoyuzhouHttp.post = (async (url: string, data?: unknown, config?: any) => {
+      assert.ok(String(url).includes("/v1/inbox/list"));
+      assert.equal(config?.headers?.["x-jike-access-token"], "access-token");
+      assert.equal((data as { limit?: string })?.limit, "20");
+      return {
+        data: {
+          data: [
+            {
+              episode: {
+                eid: "eid-inbox-1",
+                title: "Inbox Episode",
+              },
+            },
+          ],
+        },
+      };
+    }) as typeof xiaoyuzhouHttp.post;
+
+    try {
+      const result = await getInboxList(undefined, {
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+      });
+
+      assert.equal(result.code, 0);
+      assert.deepEqual(result.data, {
+        data: [
+          {
+            episode: {
+              eid: "eid-inbox-1",
+              title: "Inbox Episode",
             },
           },
         ],

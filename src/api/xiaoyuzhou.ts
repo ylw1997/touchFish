@@ -371,6 +371,35 @@ export async function getDiscoveryFeed(
   }, credential);
 }
 
+export async function getInboxList(
+  loadMoreKey?: { pubDate: string; id: string } | null,
+  credential?: XiaoyuzhouCredential | null,
+): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(
+    credential?.refreshToken || credential?.accessToken,
+  );
+  return withAutoRefresh(async (auth) => {
+    const response = await xiaoyuzhouHttp.post(
+      `${APP_BASE_URL}/v1/inbox/list`,
+      {
+        limit: "20",
+        ...(loadMoreKey ? { loadMoreKey } : {}),
+      },
+      {
+        headers: buildXiaoyuzhouHeaders({
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
+          contentType: "application/json",
+          localTime: getNowIsoString(),
+          deviceId,
+        }),
+        timeout: 15000,
+      },
+    );
+    return response.data;
+  }, credential);
+}
+
 export async function getPilotDiscoveryList(
   credential?: XiaoyuzhouCredential | null,
 ): Promise<XiaoyuzhouApiResult<any>> {

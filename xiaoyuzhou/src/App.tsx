@@ -51,6 +51,7 @@ function App() {
   const {
     loading,
     getDiscovery,
+    getInboxList,
     getPilotDiscoveryList,
     getTopList,
     doSearch,
@@ -61,6 +62,7 @@ function App() {
 
   const [activeTab, setActiveTab] = useState("recommend");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [inboxEpisodes, setInboxEpisodes] = useState<any[]>([]);
   const [discoveryBlocks, setDiscoveryBlocks] = useState<any[]>([]);
   const [pilotDiscoveryList, setPilotDiscoveryList] = useState<any[]>([]);
   const [topList, setTopList] = useState<any[]>([]);
@@ -109,13 +111,15 @@ function App() {
   }, [login, logout, request]);
 
   const loadDiscovery = useCallback(async () => {
-    const [discoveryData, pilotData] = await Promise.all([
+    const [inboxData, discoveryData, pilotData] = await Promise.all([
+      getInboxList(),
       getDiscovery(),
       getPilotDiscoveryList(),
     ]);
+    setInboxEpisodes(inboxData || []);
     setDiscoveryBlocks(discoveryData || []);
     setPilotDiscoveryList(pilotData || []);
-  }, [getDiscovery, getPilotDiscoveryList]);
+  }, [getDiscovery, getInboxList, getPilotDiscoveryList]);
 
   const loadTopList = useCallback(
     async (category: "HOT" | "ROCK" | "NEW") => {
@@ -139,6 +143,7 @@ function App() {
 
   useEffect(() => {
     if (!isLoggedIn) {
+      setInboxEpisodes([]);
       setDiscoveryBlocks([]);
       setPilotDiscoveryList([]);
       return;
@@ -372,6 +377,24 @@ function App() {
                     <Empty description="暂无推荐内容" />
                   ) : (
                     <div className="discovery-blocks">
+                      {inboxEpisodes.length > 0 ? (
+                        <div className="section">
+                          <div className="section-title">
+                            <h2>订阅更新</h2>
+                          </div>
+                          <div className="song-list">
+                            {inboxEpisodes.map((episode: any) => (
+                              <SongCard
+                                key={episode.eid || episode.id}
+                                song={episode}
+                                onPlay={handlePlayEpisode}
+                                onShowDetail={openEpisode}
+                                showActions={false}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
                       {discoveryBlocks.map((block: any, idx: number) => {
                         if (block.type === "BANNER") {
                           return (

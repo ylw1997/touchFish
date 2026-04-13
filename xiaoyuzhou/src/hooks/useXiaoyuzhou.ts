@@ -120,6 +120,24 @@ export function useXiaoyuzhou() {
     }
   }, [request]);
 
+  const getInboxList = useCallback(async () => {
+    try {
+      const result = await request<any>("XIAOYUZHOU_GET_INBOX_LIST", {});
+
+      if (result.code === 0 && result.data) {
+        const items = Array.isArray(result.data.data) ? result.data.data : [];
+        return items
+          .map((item: any) => item?.episode || item)
+          .filter((item: any) => item?.eid || item?.id);
+      }
+
+      return [];
+    } catch (e: any) {
+      console.error(e);
+      return [];
+    }
+  }, [request]);
+
   const doSearch = useCallback(
     async (keyword: string) => {
       setLoading(true);
@@ -208,6 +226,7 @@ export function useXiaoyuzhou() {
   return {
     loading,
     getDiscovery,
+    getInboxList,
     getPilotDiscoveryList,
     getTopList,
     doSearch,
