@@ -87,6 +87,39 @@ export function useXiaoyuzhou() {
     [request],
   );
 
+  const getPilotDiscoveryList = useCallback(async () => {
+    try {
+      const result = await request<any>(
+        "XIAOYUZHOU_GET_PILOT_DISCOVERY_LIST",
+        {},
+      );
+
+      if (result.code === 0 && result.data) {
+        const items = Array.isArray(result.data.data) ? result.data.data : [];
+        const podcastMap = new Map<string, any>();
+
+        items.forEach((item: any) => {
+          const podcast =
+            item?.podcast ||
+            item?.episode?.podcast ||
+            item?.episode?.podcastBrief ||
+            null;
+          const podcastId = podcast?.pid || podcast?.id;
+          if (podcast && podcastId && !podcastMap.has(podcastId)) {
+            podcastMap.set(podcastId, podcast);
+          }
+        });
+
+        return Array.from(podcastMap.values());
+      }
+
+      return [];
+    } catch (e: any) {
+      console.error(e);
+      return [];
+    }
+  }, [request]);
+
   const doSearch = useCallback(
     async (keyword: string) => {
       setLoading(true);
@@ -175,6 +208,7 @@ export function useXiaoyuzhou() {
   return {
     loading,
     getDiscovery,
+    getPilotDiscoveryList,
     getTopList,
     doSearch,
     getEpisodeDetail,

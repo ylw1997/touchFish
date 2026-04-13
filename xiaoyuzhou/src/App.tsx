@@ -51,6 +51,7 @@ function App() {
   const {
     loading,
     getDiscovery,
+    getPilotDiscoveryList,
     getTopList,
     doSearch,
     getPodcastDetail,
@@ -61,6 +62,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("recommend");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [discoveryBlocks, setDiscoveryBlocks] = useState<any[]>([]);
+  const [pilotDiscoveryList, setPilotDiscoveryList] = useState<any[]>([]);
   const [topList, setTopList] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -107,9 +109,13 @@ function App() {
   }, [login, logout, request]);
 
   const loadDiscovery = useCallback(async () => {
-    const data = await getDiscovery();
-    setDiscoveryBlocks(data || []);
-  }, [getDiscovery]);
+    const [discoveryData, pilotData] = await Promise.all([
+      getDiscovery(),
+      getPilotDiscoveryList(),
+    ]);
+    setDiscoveryBlocks(discoveryData || []);
+    setPilotDiscoveryList(pilotData || []);
+  }, [getDiscovery, getPilotDiscoveryList]);
 
   const loadTopList = useCallback(
     async (category: "HOT" | "ROCK" | "NEW") => {
@@ -134,6 +140,7 @@ function App() {
   useEffect(() => {
     if (!isLoggedIn) {
       setDiscoveryBlocks([]);
+      setPilotDiscoveryList([]);
       return;
     }
     void loadDiscovery();
@@ -427,6 +434,22 @@ function App() {
 
                         return null;
                       })}
+                      {pilotDiscoveryList.length > 0 ? (
+                        <div className="section">
+                          <div className="section-title">
+                            <h2>新节目广场</h2>
+                          </div>
+                          <div className="playlist-grid">
+                            {pilotDiscoveryList.map((podcast: any, idx: number) => (
+                              <PlaylistCard
+                                key={podcast?.pid || podcast?.id || `pilot-${idx}`}
+                                playlist={podcast}
+                                onClick={openPodcast}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </motion.div>

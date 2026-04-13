@@ -4,6 +4,7 @@ import {
   getDiscoveryFeed,
   getEpisodeDetail,
   getEpisodeList,
+  getPilotDiscoveryList,
   getPodcastDetail,
   getSubscriptions,
   getTopList,
@@ -302,6 +303,17 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
           await this.persistRefreshedCredential();
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_GET_DISCOVERY_FEED_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "XIAOYUZHOU_GET_PILOT_DISCOVERY_LIST": {
+          const result = await getPilotDiscoveryList(this.authState.credential);
+          await this.persistRefreshedCredential();
+          webviewView.webview.postMessage({
+            command: "XIAOYUZHOU_GET_PILOT_DISCOVERY_LIST_RESULT",
             payload: result,
             uuid,
           } as CommandsType<any>);

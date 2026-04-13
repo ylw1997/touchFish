@@ -8,6 +8,7 @@ import {
 import { parseXiaoyuzhouDiscoveryBlocks } from "../api/xiaoyuzhouDiscovery";
 import {
   getDiscoveryFeed,
+  getPilotDiscoveryList,
   getTopList,
   getSubscriptions,
   loginWithSms,
@@ -184,6 +185,48 @@ describe("xiaoyuzhou shared api helpers", () => {
       assert.equal(result.code, 0);
       assert.deepEqual(result.data, {
         data: [{ podcast: { pid: "pid-1", title: "Podcast" } }],
+      });
+    } finally {
+      xiaoyuzhouHttp.post = originalPost;
+    }
+  });
+
+  it("requests pilot discovery list with access token and returns podcasts", async () => {
+    const originalPost = xiaoyuzhouHttp.post;
+
+    xiaoyuzhouHttp.post = (async (url: string, _data?: unknown, config?: any) => {
+      assert.ok(String(url).includes("/v1/pilot-discovery/list"));
+      assert.equal(config?.headers?.["x-jike-access-token"], "access-token");
+      return {
+        data: {
+          data: [
+            {
+              podcast: {
+                pid: "pid-pilot-1",
+                title: "Pilot Podcast",
+              },
+            },
+          ],
+        },
+      };
+    }) as typeof xiaoyuzhouHttp.post;
+
+    try {
+      const result = await getPilotDiscoveryList({
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+      });
+
+      assert.equal(result.code, 0);
+      assert.deepEqual(result.data, {
+        data: [
+          {
+            podcast: {
+              pid: "pid-pilot-1",
+              title: "Pilot Podcast",
+            },
+          },
+        ],
       });
     } finally {
       xiaoyuzhouHttp.post = originalPost;
