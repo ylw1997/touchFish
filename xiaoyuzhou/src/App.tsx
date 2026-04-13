@@ -17,7 +17,6 @@ import {
   PlayCircleOutlined,
   PlusCircleOutlined,
   PlusOutlined,
-  LoginOutlined,
   LogoutOutlined,
   MinusOutlined,
   ReloadOutlined,
@@ -26,6 +25,7 @@ import {
   UserOutlined,
   VerticalAlignTopOutlined,
   HomeOutlined,
+  LoginOutlined,
 } from "@ant-design/icons";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -33,6 +33,7 @@ import LoginModal from "./components/LoginModal";
 import PlayBar from "./components/PlayBar";
 import PlaylistCard from "./components/PlaylistCard";
 import SongCard from "./components/SongCard";
+import { ShownotesDrawer } from "./components/playbar/ShownotesDrawer";
 import { useXiaoyuzhou } from "./hooks/useXiaoyuzhou";
 import { useRequest } from "./hooks/useRequest";
 import { useFontSizeStore } from "./store/fontSize";
@@ -389,7 +390,7 @@ function App() {
                                 song={episode}
                                 onPlay={handlePlayEpisode}
                                 onShowDetail={openEpisode}
-                                showActions={false}
+                                onAddToPlaylist={handleAddToPlaylist}
                               />
                             ))}
                           </div>
@@ -426,7 +427,7 @@ function App() {
                                     song={episode}
                                     onPlay={handlePlayEpisode}
                                     onShowDetail={openEpisode}
-                                    showActions={false}
+                                    onAddToPlaylist={handleAddToPlaylist}
                                   />
                                 ))}
                               </div>
@@ -447,7 +448,7 @@ function App() {
                                     song={item}
                                     onPlay={handlePlayEpisode}
                                     onShowDetail={openEpisode}
-                                    showActions={false}
+                                    onAddToPlaylist={handleAddToPlaylist}
                                   />
                                 ))}
                               </div>
@@ -463,13 +464,19 @@ function App() {
                             <h2>新节目广场</h2>
                           </div>
                           <div className="playlist-grid">
-                            {pilotDiscoveryList.map((podcast: any, idx: number) => (
-                              <PlaylistCard
-                                key={podcast?.pid || podcast?.id || `pilot-${idx}`}
-                                playlist={podcast}
-                                onClick={openPodcast}
-                              />
-                            ))}
+                            {pilotDiscoveryList.map(
+                              (podcast: any, idx: number) => (
+                                <PlaylistCard
+                                  key={
+                                    podcast?.pid ||
+                                    podcast?.id ||
+                                    `pilot-${idx}`
+                                  }
+                                  playlist={podcast}
+                                  onClick={openPodcast}
+                                />
+                              ),
+                            )}
                           </div>
                         </div>
                       ) : null}
@@ -710,7 +717,9 @@ function App() {
                         onClick={(e) => {
                           e.stopPropagation();
                           handlePlayEpisode(item);
-                          messageApi.success(`开始播放: ${item.title || "未命名单集"}`);
+                          messageApi.success(
+                            `开始播放: ${item.title || "未命名单集"}`,
+                          );
                         }}
                       />,
                     ]}
@@ -734,38 +743,11 @@ function App() {
         </div>
       </Drawer>
 
-      <Drawer
-        title={episodeDetail?.title || "单集详情"}
-        placement="bottom"
-        height="90%"
+      <ShownotesDrawer
         open={episodeOpen}
         onClose={() => setEpisodeOpen(false)}
-      >
-        {episodeDetail ? (
-          <>
-            <p>{episodeDetail.description || "暂无简介"}</p>
-            {episodeDetail.enclosure?.url ||
-            episodeDetail.media?.source?.url ? (
-              <audio
-                controls
-                style={{ width: "100%", margin: "16px 0" }}
-                src={
-                  episodeDetail.enclosure?.url ||
-                  episodeDetail.media?.source?.url
-                }
-              />
-            ) : null}
-            {episodeDetail.shownotes ? (
-              <div
-                className="xy-html"
-                dangerouslySetInnerHTML={{ __html: episodeDetail.shownotes }}
-              />
-            ) : null}
-          </>
-        ) : (
-          <Empty description="暂无单集详情" />
-        )}
-      </Drawer>
+        episode={episodeDetail}
+      />
 
       <Drawer
         title="搜索播客"

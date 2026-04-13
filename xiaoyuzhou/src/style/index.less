@@ -832,7 +832,7 @@ a {
   .song-card-content {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
 
   .song-card-cover {
@@ -893,27 +893,28 @@ a {
       }
     }
 
-    .song-artist,
-    .song-album {
+    .song-artist-row {
+      display: flex;
+      align-items: center;
       font-size: calc(var(--app-font-size) - 2px);
       color: var(--vscode-descriptionForeground);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-  }
+      opacity: 0.8;
 
-  .song-duration {
-    font-size: calc(var(--app-font-size) - 2px);
-    color: var(--vscode-descriptionForeground);
-    display: flex;
-    align-items: center;
-    gap: 4px;
+      .song-artist {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
   }
 
   .song-actions {
     display: flex;
-    gap: 4px;
+    gap: 2px;
+    flex-shrink: 0;
   }
 }
 
