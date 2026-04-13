@@ -38,6 +38,8 @@ export interface Song {
     name: string;
   };
   lyric?: string;
+  eid?: string; // 小宇宙单集 ID
+  pid?: string; // 小宇宙节目 ID
 }
 
 // 歌手信息
