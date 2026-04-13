@@ -1,20 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   CaretRightOutlined,
-  HeartFilled,
-  HeartOutlined,
   PauseOutlined,
   PlayCircleFilled,
   UnorderedListOutlined,
 } from "@ant-design/icons";
-import { App, Button, Space } from "antd";
+import { Button, Space } from "antd";
 
 import { usePlayerStore } from "../store/player";
-import { useUserStore } from "../store/user";
-import {
-  getImageUrl,
-  getPlayableUrl,
-} from "../hooks/useXiaoyuzhou";
+import { getImageUrl, getPlayableUrl } from "../hooks/useXiaoyuzhou";
 
 import { ProgressBar } from "./playbar/ProgressBar";
 import { PlaylistDrawer } from "./playbar/PlaylistDrawer";
@@ -26,7 +20,6 @@ interface PlayBarProps {
 
 const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { message } = App.useApp();
 
   const currentEpisode = usePlayerStore((state) => state.currentEpisode);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
@@ -48,13 +41,10 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
   const clearPlaylist = usePlayerStore((state) => state.clearPlaylist);
   const play = usePlayerStore((state) => state.play);
 
-  const { likedSongMids, toggleLikeSong } = useUserStore();
-  const isLiked = currentEpisode
-    ? likedSongMids.includes(currentEpisode.eid || currentEpisode.pid)
-    : false;
-
   const getAlbumCover = (episode: any): string => {
-    return getImageUrl(episode) || "https://assets.xiaoyuzhoufm.com/favicon.ico";
+    return (
+      getImageUrl(episode) || "https://assets.xiaoyuzhoufm.com/favicon.ico"
+    );
   };
 
   const getPodcastName = (episode: any): string => {
@@ -92,12 +82,6 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
       onOpenPodcast({ pid });
     }
   }, [currentEpisode, isPlaylistOpen, togglePlaylistOpen, onOpenPodcast]);
-
-  const handleToggleLike = async () => {
-    if (!currentEpisode) return;
-    toggleLikeSong(currentEpisode.eid || currentEpisode.pid);
-    message.success(isLiked ? "已取消喜欢" : "已喜欢该播客");
-  };
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -178,21 +162,6 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
           </div>
 
           <Space size="small" style={{ marginLeft: "auto" }}>
-            <Button
-              color="default"
-              shape="circle"
-              variant="filled"
-              icon={
-                isLiked ? (
-                  <HeartFilled style={{ color: "#ff4d4f" }} />
-                ) : (
-                  <HeartOutlined />
-                )
-              }
-              onClick={handleToggleLike}
-              title={isLiked ? "取消喜欢" : "喜欢"}
-            />
-
             <Button
               color="default"
               variant="filled"

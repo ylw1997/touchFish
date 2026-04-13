@@ -42,7 +42,7 @@ import { useUserStore } from "./store/user";
 import "./style/index.less";
 
 function App() {
-  const { request } = useRequest();
+  const { request, messageApi } = useRequest();
   const { fontSize, increase, decrease } = useFontSizeStore();
   const { isLoggedIn, userInfo, logout, login } = useUserStore();
   const currentEpisode = usePlayerStore((state) => state.currentEpisode);
@@ -240,8 +240,17 @@ function App() {
   const handlePlayEpisode = useCallback(
     (episode: any) => {
       playEpisode(episode);
+      messageApi.success(`开始播放: ${episode.title || "未命名单集"}`);
     },
-    [playEpisode],
+    [playEpisode, messageApi],
+  );
+
+  const handleAddToPlaylist = useCallback(
+    (episode: any) => {
+      addToPlaylist(episode);
+      messageApi.success("已添加到播放列表");
+    },
+    [addToPlaylist, messageApi],
   );
 
   const renderPodcastList = (items: any[], emptyText: string) => {
@@ -465,7 +474,7 @@ function App() {
                             song={episode}
                             onPlay={handlePlayEpisode}
                             onShowDetail={openEpisode}
-                            onAddToPlaylist={addToPlaylist}
+                            onAddToPlaylist={handleAddToPlaylist}
                           />
                         ))}
                       </div>
@@ -644,6 +653,7 @@ function App() {
                         onClick={(e) => {
                           e.stopPropagation();
                           addToPlaylist(item);
+                          messageApi.success("已添加到播放列表");
                         }}
                       />,
                       <Button
@@ -654,6 +664,7 @@ function App() {
                         onClick={(e) => {
                           e.stopPropagation();
                           handlePlayEpisode(item);
+                          messageApi.success(`开始播放: ${item.title || "未命名单集"}`);
                         }}
                       />,
                     ]}
