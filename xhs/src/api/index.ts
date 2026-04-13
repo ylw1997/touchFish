@@ -34,6 +34,9 @@ import type {
   XhsUncollectNoteResponse,
   XhsPostCommentParams,
   XhsPostCommentResponse,
+  XhsUploadImageResponse,
+  XhsPublishNoteParams,
+  XhsPublishNoteResponse,
 } from "../../../types/xhs";
 
 type RequestFunc = <T = any>(
@@ -209,6 +212,28 @@ export class XhsApi {
       "XHS_GET_MY_USER_INFO" as CommandList,
       null,
       "获取我的信息..."
+    );
+  }
+
+  /**
+   * 上传图片（用于发布笔记）
+   */
+  uploadImage(params: { file: string; name: string; type: string }) {
+    return this.request<XhsUploadImageResponse>(
+      "XHS_UPLOAD_IMAGE" as CommandList,
+      params,
+      "上传图片中..."
+    );
+  }
+
+  /**
+   * 发布图片笔记
+   */
+  publishNote(params: XhsPublishNoteParams) {
+    return this.request<XhsPublishNoteResponse>(
+      "XHS_PUBLISH_NOTE" as CommandList,
+      params,
+      "发布笔记中..."
     );
   }
 }

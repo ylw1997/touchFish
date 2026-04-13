@@ -50,6 +50,9 @@ export type CommandList =
   | "XHS_USER_FOLLOW"
   | "XHS_USER_UNFOLLOW"
   | "XHS_GET_MY_USER_INFO"
+  // XHS 发布相关命令
+  | "XHS_UPLOAD_IMAGE"
+  | "XHS_PUBLISH_NOTE"
   // Bilibili commands
   | "BILIBILI_RECOMMEND"
   | "BILIBILI_RECOMMEND_RESULT"

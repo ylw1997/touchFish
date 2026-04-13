@@ -18,6 +18,7 @@ import {
   UserOutlined,
   PlusOutlined,
   MinusOutlined,
+  FormOutlined,
 } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
@@ -32,6 +33,7 @@ import {
 import FeedDetailDrawer from "./FeedDetailDrawer";
 import XhsSearchDrawer from "./XhsSearchDrawer";
 import UserPostedDrawer from "./UserPostedDrawer";
+import XhsSendDrawer from "./XhsSendDrawer";
 import { useRequest } from "../hooks/useRequest";
 import { createXhsApi } from "../api";
 import { useFontSizeStore } from "../store/fontSize";
@@ -46,6 +48,9 @@ export default function Feed() {
   const [searchOpen, setSearchOpen] = useState(false);
   // 用户主页弹窗状态
   const [userOpen, setUserOpen] = useState(false);
+  // 发布抽屉状态
+  const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
   const [userParams, setUserParams] = useState<{
     cursor: string;
     user_id: string;
@@ -135,6 +140,54 @@ export default function Feed() {
     setUserOpen(true);
   }, []);
 
+  // 处理图片上传
+  const handleUploadImage = useCallback(async (file: File) => {
+    try {
+      // 将文件转换为 base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+
+      const result = await apiRef.current.uploadImage({
+        file: base64,
+        name: file.name,
+        type: file.type,
+      });
+
+      messageApi.success("图片上传成功");
+      return { url: result.url };
+    } catch (error: any) {
+      messageApi.error(error.message || "图片上传失败");
+      throw error;
+    }
+  }, [messageApi]);
+
+  // 处理发布笔记
+  const handleSendNote = useCallback(async (params: { title: string; content: string; images: string[] }) => {
+    setSendLoading(true);
+    try {
+      const result = await apiRef.current.publishNote({
+        title: params.title,
+        desc: params.content,
+        images: params.images,
+      });
+
+      if (result.success) {
+        messageApi.success("笔记发布成功！");
+        setSendDrawerOpen(false);
+      } else {
+        throw new Error(result.msg || "发布失败");
+      }
+    } catch (error: any) {
+      messageApi.error(error.message || "笔记发布失败");
+    } finally {
+      setSendLoading(false);
+    }
+  }, [messageApi, refresh]);
+
   return (
     <div
       id="xhsScrollableDiv"
@@ -175,6 +228,11 @@ export default function Feed() {
           onClick={handleMyInfo}
           icon={<UserOutlined style={{ color: "#faad14" }} />}
           tooltip={{ title: "我的", placement: "left" }}
+        />
+        <FloatButton
+          onClick={() => setSendDrawerOpen(true)}
+          icon={<FormOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "发布笔记", placement: "left" }}
         />
         <FloatButton
           onClick={increase}
@@ -228,6 +286,13 @@ export default function Feed() {
         open={userOpen}
         onClose={() => setUserOpen(false)}
         initParams={userParams as any}
+      />
+      <XhsSendDrawer
+        open={sendDrawerOpen}
+        onClose={() => setSendDrawerOpen(false)}
+        onSend={handleSendNote}
+        onUploadImage={handleUploadImage}
+        loading={sendLoading}
       />
     </div>
   );

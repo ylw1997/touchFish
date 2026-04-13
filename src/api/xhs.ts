@@ -8,6 +8,7 @@
  * @Description:
  */
 /* XHS API 封装（优化：回退使用 axios，并拆分请求头生成函数） */
+import axios from "axios";
 import xhsHttp from "../core/xhsHttp";
 import { getOrSetCookie } from "../utils/apiUtils";
 import { getXhsSignature, XhsSignature } from "../utils/signature";
@@ -612,4 +613,315 @@ export const postXhsComment = async (params: {
     }
     throw new Error(error.message || "发布评论请求失败");
   }
+};
+
+// ==================== 图片上传相关 ====================
+
+/**
+ * 获取小红书图片上传许可
+ * GET /api/media/v1/upload/creator/permit?biz_name=spectrum&scene=image&file_count=1&version=1&source=web
+ * 参考 Spider_XHS 的 get_fileIds 方法
+ */
+export const getXhsUploadPermit = async (mediaType: string = "image") => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+
+  const apiPath = "/api/media/v1/upload/creator/permit";
+
+  // 参考 Spider_XHS 的 get_fileIds_params，按照原始顺序构造（不使用 buildGetPath 的遍历）
+  // biz_name=spectrum&scene=image&file_count=1&version=1&source=web
+  const scene = mediaType === "video" ? "video" : "image";
+  const pathWithQuery = `${apiPath}?biz_name=spectrum&scene=${scene}&file_count=1&version=1&source=web`;
+
+  // GET 请求签名
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(pathWithQuery, "", cookie, "GET");
+  } catch (e: any) {
+    console.error("[xhs signature error upload permit]", e?.message || e);
+    throw new Error("上传许可签名失败，请稍后重试");
+  }
+
+  const url = "https://creator.xiaohongshu.com" + pathWithQuery;
+  const headers = buildXhsHeaders({ cookie, signObj, host: "creator.xiaohongshu.com" });
+
+  // 添加额外的必要 headers
+  headers["Accept"] = "application/json, text/plain, */*";
+  headers["Accept-Language"] = "zh-CN,zh;q=0.9";
+  headers["Cache-Control"] = "no-cache";
+
+  console.log("[xhs upload permit] request:", url);
+  console.log("[xhs upload permit] headers:", JSON.stringify(headers, null, 2));
+
+  const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
+  const data = resp.data;
+
+  console.log("[xhs upload permit] response:", JSON.stringify(data, null, 2));
+
+  if (!data || !data.success) {
+    throw new Error(data?.msg || "获取上传许可失败");
+  }
+
+  // 解析返回数据
+  // 返回结构: { result: { success: true }, uploadTempPermits: [{ fileIds: [...], token: ..., uploadAddr: ... }] }
+  const uploadPermits = data.data?.uploadTempPermits;
+  if (!uploadPermits || uploadPermits.length === 0) {
+    throw new Error("获取上传许可失败: 没有可用的上传许可");
+  }
+
+  // 使用第一个上传许可（通常是 storageType=5 的那个）
+  const permit = uploadPermits[0];
+  if (!permit.fileIds || permit.fileIds.length === 0) {
+    throw new Error("获取上传许可失败: 没有 fileId");
+  }
+
+  // 提取 fileId（去掉 spectrum/ 前缀）
+  // Python: data['fileIds'][0].split('/')[-1]
+  const fullFileId = permit.fileIds[0];
+  const fileId = fullFileId.includes("/") ? fullFileId.split("/").pop() : fullFileId;
+
+  return {
+    fileId: fileId,
+    fullFileId: fullFileId, // 保留完整的用于发布笔记
+    token: permit.token,
+    uploadAddr: permit.uploadAddr,
+    expireTime: permit.expireTime,
+  };
+};
+
+/**
+ * 上传图片到小红书 OSS
+ * PUT https://ros-upload.xiaohongshu.com/spectrum/{fileId}
+ * 注意：OSS 上传不需要 Cookie 签名，但需要特殊的 headers
+ */
+export const uploadXhsImageToOss = async (
+  fileId: string,
+  imageBuffer: Buffer,
+  fileName: string,
+  mimeType: string,
+  token?: string, // 从上传许可获取的 token
+  uploadAddr?: string // 上传地址，如 ros-upload.xiaohongshu.com
+) => {
+  // 使用指定的上传地址或默认地址
+  const host = uploadAddr || "ros-upload.xiaohongshu.com";
+  const uploadUrl = `https://${host}/spectrum/${fileId}`;
+
+  // 构造上传 headers（参考 Spider_XHS 的 get_upload_media_headers）
+  const headers: Record<string, string> = {
+    "Content-Type": mimeType || "image/jpeg",
+    "Content-Length": imageBuffer.length.toString(),
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Referer": "https://creator.xiaohongshu.com/",
+    "Origin": "https://creator.xiaohongshu.com",
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "zh-CN,zh;q=0.9",
+    "Cache-Control": "no-cache",
+  };
+
+  // 如果有 token，添加到 header（参考 Spider_XHS）
+  if (token) {
+    headers["X-Cos-Security-Token"] = token;
+  }
+
+  console.log("[xhs upload to OSS] url:", uploadUrl);
+  console.log("[xhs upload to OSS] file size:", imageBuffer.length);
+  console.log("[xhs upload to OSS] headers:", JSON.stringify(headers, null, 2));
+
+  // 使用原生 axios 而不是 xhsHttp，因为 OSS 上传不需要签名拦截
+  const resp = await axios.put(uploadUrl, imageBuffer, {
+    headers,
+    timeout: 30000, // 上传超时时间更长
+    validateStatus: (status) => status === 200 || status === 204, // OSS 可能返回 204
+  });
+
+  console.log("[xhs upload to OSS] response status:", resp.status);
+
+  // OSS 上传成功返回 200 或 204，没有 response body
+  if (resp.status !== 200 && resp.status !== 204) {
+    throw new Error(`图片上传失败: ${resp.status}`);
+  }
+
+  // 构造图片 URL（参考小红书图片 URL 格式）
+  const imageUrl = `https://sns-img-qc.xhscdn.com/${fileId}`;
+
+  console.log("[xhs upload to OSS] success, image url:", imageUrl);
+
+  return {
+    fileId,
+    url: imageUrl,
+  };
+};
+
+/**
+ * 小红书图片上传完整流程
+ * 1. 获取上传许可
+ * 2. 上传到 OSS
+ * 3. 返回图片 URL
+ */
+export const uploadXhsImage = async (params: {
+  file: string; // base64 数据
+  name: string;
+  type: string;
+}) => {
+  const { file, name, type } = params;
+
+  // 解析 base64
+  const base64Data = file.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
+  const imageBuffer = Buffer.from(base64Data, "base64");
+
+  if (imageBuffer.length === 0) {
+    throw new Error("图片数据为空");
+  }
+
+  // 1. 获取上传许可
+  const permit = await getXhsUploadPermit("image");
+  if (!permit || !permit.fileId) {
+    throw new Error("获取上传许可失败: 返回数据为空");
+  }
+
+  // 2. 上传到 OSS（使用 uploadAddr 和 token）
+  const result = await uploadXhsImageToOss(
+    permit.fileId,
+    imageBuffer,
+    name,
+    type || "image/jpeg",
+    permit.token,
+    permit.uploadAddr
+  );
+
+  return result;
+};
+
+// ==================== 发布笔记相关 ====================
+
+/**
+ * 发布小红书图片笔记
+ * POST https://edith.xiaohongshu.com/web_api/sns/v2/note
+ */
+export const publishXhsNote = async (params: {
+  title: string;
+  desc: string;
+  images: string[]; // 图片 fileId 或 URL 列表
+}) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+
+  const { title, desc, images } = params;
+
+  if (!title || !title.trim()) {
+    throw new Error("标题不能为空");
+  }
+  if (!desc || !desc.trim()) {
+    throw new Error("正文不能为空");
+  }
+  if (!images || images.length === 0) {
+    throw new Error("至少需要上传一张图片");
+  }
+
+  const apiPath = "/web_api/sns/v2/note";
+
+  // 构造图片数据（参考浏览器真实请求）
+  const imageList = images.map((img) => {
+    // 使用完整的 file_id（包含 spectrum/ 前缀）
+    const fileId = img.includes("/") ? img : `spectrum/${img}`;
+    return {
+      file_id: fileId,
+      width: 1080,
+      height: 1440,
+      metadata: { source: -1 },
+      stickers: { version: 2, floating: [] },
+      extra_info_json: JSON.stringify({
+        mimeType: "image/jpeg",
+        image_metadata: { bg_color: "", origin_size: 0 }
+      })
+    };
+  });
+
+  // 构造 source JSON（浏览器格式）
+  const sourceObj = {
+    type: "web",
+    ids: "",
+    extraInfo: JSON.stringify({ subType: "official", systemId: "web" })
+  };
+
+  // 构造 business_binds JSON
+  const businessBindsObj = {
+    version: 1,
+    noteId: 0,
+    bizType: 0,
+    noteOrderBind: {},
+    notePostTiming: {},
+    noteCollectionBind: { id: "" },
+    noteSketchCollectionBind: { id: "" },
+    coProduceBind: { enable: true },
+    noteCopyBind: { copyable: true },
+    interactionPermissionBind: { commentPermission: 0 },
+    optionRelationList: []
+  };
+
+  // 构造 capa_trace_info
+  const capaTraceInfoObj = {
+    contextJson: JSON.stringify({
+      recommend_title: { recommend_title_id: "", is_use: 3, used_index: -1 },
+      recommendTitle: [],
+      recommend_topics: { used: [] }
+    })
+  };
+
+  // 构造请求体（完全参考浏览器请求格式）
+  const body: any = {
+    common: {
+      type: "normal",
+      note_id: "",
+      source: JSON.stringify(sourceObj),
+      title: title.trim(),
+      desc: desc.trim(),
+      ats: [],
+      hash_tag: [],
+      business_binds: JSON.stringify(businessBindsObj),
+      privacy_info: {
+        op_type: 1,
+        type: 0,
+        user_ids: []
+      },
+      goods_info: {},
+      biz_relations: [],
+      capa_trace_info: capaTraceInfoObj
+    },
+    image_info: {
+      images: imageList
+    },
+    video_info: null
+  };
+
+  const { bodyString, bodyObj } = buildRequestBody(body);
+
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+  } catch (e: any) {
+    console.error("[xhs signature error publish note]", e?.message || e);
+    throw new Error("发布签名失败，请稍后重试");
+  }
+
+  const url = "https://edith.xiaohongshu.com" + apiPath;
+  const headers = buildXhsHeaders({ cookie, signObj });
+
+  const resp = await xhsHttp.post(url, bodyString, {
+    headers,
+    timeout: 15000,
+  });
+
+  const data = resp.data;
+
+  if (!data || !data.success) {
+    throw new Error(data?.msg || "发布笔记失败");
+  }
+
+  return {
+    success: true,
+    note_id: data.data?.note_id,
+    msg: "发布成功",
+  };
 };

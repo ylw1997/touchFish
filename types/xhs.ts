@@ -395,3 +395,29 @@ export interface XhsSubCommentsResponseData {
   time?: number;
   [k: string]: any;
 }
+
+// 小红书发布笔记相关类型
+export interface XhsUploadImageParams {
+  file: string; // base64
+  name: string;
+  type: string;
+}
+
+export interface XhsUploadImageResponse {
+  url: string;
+  file_id?: string;
+  [k: string]: any;
+}
+
+export interface XhsPublishNoteParams {
+  title: string;
+  desc: string;
+  images: string[]; // 图片URL列表
+}
+
+export interface XhsPublishNoteResponse {
+  success: boolean;
+  note_id?: string;
+  msg?: string;
+  [k: string]: any;
+}

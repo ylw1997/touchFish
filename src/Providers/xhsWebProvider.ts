@@ -29,6 +29,8 @@ import {
   uncollectXhsNote,
   postXhsComment,
   getXhsUserMe,
+  uploadXhsImage,
+  publishXhsNote,
 } from "../api/xhs";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
@@ -185,6 +187,21 @@ export class XhsWebProvider extends BaseWebviewProvider {
         const commentPayload = payload as any;
         const data = await postXhsComment(commentPayload);
         webviewView.webview.postMessage({ payload: data, uuid });
+        break;
+      }
+      case "XHS_UPLOAD_IMAGE": {
+        const uploadPayload = payload as any;
+        const result = await uploadXhsImage(uploadPayload);
+        webviewView.webview.postMessage({
+          payload: { success: true, url: result.url, fileId: result.fileId },
+          uuid,
+        });
+        break;
+      }
+      case "XHS_PUBLISH_NOTE": {
+        const publishPayload = payload as any;
+        const result = await publishXhsNote(publishPayload);
+        webviewView.webview.postMessage({ payload: result, uuid });
         break;
       }
       case "XHS_DOWNLOAD_IMAGE": {
