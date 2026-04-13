@@ -11,6 +11,7 @@ import {
   Segmented,
   Space,
   Spin,
+  Tag,
   Tabs,
 } from "antd";
 import {
@@ -28,8 +29,14 @@ import {
   LoginOutlined,
 } from "@ant-design/icons";
 import { AnimatePresence, motion } from "framer-motion";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/zh-cn";
 
 import LoginModal from "./components/LoginModal";
+
+dayjs.extend(relativeTime);
+dayjs.locale("zh-cn");
 import PlayBar from "./components/PlayBar";
 import PlaylistCard from "./components/PlaylistCard";
 import SongCard from "./components/SongCard";
@@ -739,48 +746,160 @@ function App() {
                     单集列表 ({podcastEpisodes.length})
                   </div>
                 }
-                renderItem={(item) => (
-                  <List.Item
-                    actions={[
-                      <Button
-                        key="add"
-                        type="text"
-                        icon={<PlusCircleOutlined />}
-                        title="加入播放列表"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToPlaylist(item);
-                          messageApi.success("已添加到播放列表");
-                        }}
-                      />,
-                      <Button
-                        key="play"
-                        type="text"
-                        icon={<PlayCircleOutlined />}
-                        title="播放"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePlayEpisode(item);
-                          messageApi.success(
-                            `开始播放: ${item.title || "未命名单集"}`,
-                          );
-                        }}
-                      />,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={
-                        <Avatar
-                          src={
-                            item?.podcast?.image?.smallPicUrl ||
-                            item?.image?.smallPicUrl
+                renderItem={(item) => {
+                  const isCurrent = currentEpisode?.eid === item.eid;
+                  const { isPlayed, isFinished } = item;
+
+                  return (
+                    <List.Item
+                      className={`${isCurrent ? "episode-item-active" : ""} ${isFinished ? "episode-item-finished" : isPlayed ? "episode-item-played" : ""}`}
+                      actions={[
+                        <Button
+                          key="add"
+                          type="text"
+                          icon={<PlusCircleOutlined />}
+                          title="加入播放列表"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToPlaylist(item);
+                            messageApi.success("已添加到播放列表");
+                          }}
+                        />,
+                        <Button
+                          key="play"
+                          type="text"
+                          icon={
+                            isCurrent ? (
+                              <PlayCircleOutlined
+                                style={{ color: "var(--ant-primary-color)" }}
+                              />
+                            ) : (
+                              <PlayCircleOutlined />
+                            )
                           }
-                        />
-                      }
-                      title={item?.title || "未命名单集"}
-                    />
-                  </List.Item>
-                )}
+                          title="播放"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayEpisode(item);
+                          }}
+                        />,
+                      ]}
+                    >
+                      <List.Item.Meta
+                        avatar={
+                          <div style={{ position: "relative" }}>
+                            <Avatar
+                              src={
+                                item?.podcast?.image?.smallPicUrl ||
+                                item?.image?.smallPicUrl
+                              }
+                              className={isCurrent ? "playing-avatar" : ""}
+                              style={{
+                                opacity: isFinished ? 0.6 : 1,
+                              }}
+                            />
+                            {isFinished && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  bottom: -2,
+                                  right: -2,
+                                  background: "var(--ant-success-color)",
+                                  borderRadius: "50%",
+                                  width: 12,
+                                  height: 12,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  border: "1px solid #fff",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: 6,
+                                    height: 3,
+                                    borderLeft: "1.5px solid white",
+                                    borderBottom: "1.5px solid white",
+                                    transform: "rotate(-45deg)",
+                                    marginTop: -1,
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        }
+                        title={
+                          <span
+                            style={{
+                              color: isCurrent
+                                ? "var(--ant-primary-color)"
+                                : isFinished
+                                  ? "var(--vscode-descriptionForeground)"
+                                  : "inherit",
+                              fontWeight: isCurrent ? 600 : "normal",
+                              opacity: isFinished ? 0.7 : 1,
+                              display: "block",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            {item?.title || "未命名单集"}
+                          </span>
+                        }
+                        description={
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              opacity: 0.6,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <span>
+                              {item.pubDate
+                                ? dayjs(item.pubDate).fromNow()
+                                : ""}
+                            </span>
+                            <span>
+                              {item.duration
+                                ? `${Math.floor(item.duration / 60)}:${String(item.duration % 60).padStart(2, "0")}`
+                                : ""}
+                            </span>
+                            {isFinished ? (
+                              <Tag
+                                bordered={false}
+                                style={{
+                                  fontSize: "10px",
+                                  padding: "0 4px",
+                                  lineHeight: "14px",
+                                  margin: 0,
+                                }}
+                              >
+                                已听完
+                              </Tag>
+                            ) : isPlayed ? (
+                              <Tag
+                                bordered={false}
+                                color="processing"
+                                style={{
+                                  fontSize: "10px",
+                                  padding: "0 4px",
+                                  lineHeight: "14px",
+                                  margin: 0,
+                                }}
+                              >
+                                {item.readTrackInfo?.position
+                                  ? `已听 ${Math.floor(item.readTrackInfo.position / 60)}:${String(Math.floor(item.readTrackInfo.position % 60)).padStart(2, "0")}`
+                                  : "收听中"}
+                              </Tag>
+                            ) : null}
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  );
+                }}
               />
             </>
           )}
