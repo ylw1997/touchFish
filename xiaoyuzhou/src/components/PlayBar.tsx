@@ -7,24 +7,26 @@ import {
   PlayCircleFilled,
   UnorderedListOutlined,
 } from "@ant-design/icons";
-import { App, Avatar, Button, Drawer, List, Space, Spin } from "antd";
+import { App, Button, Space } from "antd";
 
 import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
 import {
   getImageUrl,
   getPlayableUrl,
-  useXiaoyuzhou,
 } from "../hooks/useXiaoyuzhou";
 
 import { ProgressBar } from "./playbar/ProgressBar";
 import { PlaylistDrawer } from "./playbar/PlaylistDrawer";
 import { ShownotesDrawer } from "./playbar/ShownotesDrawer";
 
-const PlayBar: React.FC = () => {
+interface PlayBarProps {
+  onOpenPodcast?: (podcast: any) => void;
+}
+
+const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { message } = App.useApp();
-  const { getPodcastDetail } = useXiaoyuzhou();
 
   const currentEpisode = usePlayerStore((state) => state.currentEpisode);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
@@ -50,11 +52,6 @@ const PlayBar: React.FC = () => {
   const isLiked = currentEpisode
     ? likedSongMids.includes(currentEpisode.eid || currentEpisode.pid)
     : false;
-
-  const [podcastOpen, setPodcastOpen] = useState(false);
-  const [podcastLoading, setPodcastLoading] = useState(false);
-  const [podcastDetail, setPodcastDetail] = useState<any | null>(null);
-  const [podcastEpisodes, setPodcastEpisodes] = useState<any[]>([]);
 
   const getAlbumCover = (episode: any): string => {
     return getImageUrl(episode) || "https://assets.xiaoyuzhoufm.com/favicon.ico";
@@ -82,7 +79,7 @@ const PlayBar: React.FC = () => {
     return `${mins} 分钟`;
   };
 
-  const openPodcastDrawer = useCallback(async () => {
+  const openPodcastDrawer = useCallback(() => {
     const pid = currentEpisode?.podcast?.pid || currentEpisode?.pid;
     if (!pid) return;
 
@@ -90,16 +87,11 @@ const PlayBar: React.FC = () => {
       togglePlaylistOpen();
     }
 
-    setPodcastOpen(true);
-    setPodcastLoading(true);
-    try {
-      const detail = await getPodcastDetail(pid);
-      setPodcastDetail(detail?.podcast || null);
-      setPodcastEpisodes(detail?.episodes || []);
-    } finally {
-      setPodcastLoading(false);
+    // 调用父组件传入的打开函数
+    if (onOpenPodcast) {
+      onOpenPodcast({ pid });
     }
-  }, [currentEpisode, getPodcastDetail, isPlaylistOpen, togglePlaylistOpen]);
+  }, [currentEpisode, isPlaylistOpen, togglePlaylistOpen, onOpenPodcast]);
 
   const handleToggleLike = async () => {
     if (!currentEpisode) return;
@@ -230,92 +222,6 @@ const PlayBar: React.FC = () => {
         </div>
       </div>
 
-      <Drawer
-        title={podcastDetail?.title || getPodcastName(currentEpisode) || "频道详情"}
-        placement="bottom"
-        height="82%"
-        open={podcastOpen}
-        onClose={() => setPodcastOpen(false)}
-      >
-        <div style={{ padding: "10px" }}>
-          {podcastLoading ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                padding: "40px",
-              }}
-            >
-              <Spin size="large" />
-            </div>
-          ) : (
-            <>
-              <div style={{ marginBottom: 20 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    marginBottom: 12,
-                  }}
-                >
-                  <Avatar
-                    src={getImageUrl(podcastDetail || currentEpisode)}
-                    size={56}
-                  />
-                  <div>
-                    <div style={{ fontSize: 20, fontWeight: 700 }}>
-                      {podcastDetail?.title || getPodcastName(currentEpisode)}
-                    </div>
-                    <div style={{ opacity: 0.7, marginTop: 4 }}>
-                      {podcastDetail?.author || podcastDetail?.subtitle || ""}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ lineHeight: 1.7, opacity: 0.88 }}>
-                  {podcastDetail?.brief ||
-                    podcastDetail?.description ||
-                    "暂无频道简介"}
-                </div>
-              </div>
-
-              <List
-                header={<div style={{ fontWeight: 700 }}>最近单集</div>}
-                dataSource={podcastEpisodes}
-                renderItem={(item) => (
-                  <List.Item
-                    actions={[
-                      <Button
-                        key="play"
-                        type="link"
-                        style={{ color: "var(--vscode-textLink-foreground)" }}
-                        onClick={() => {
-                          play(item);
-                          setPodcastOpen(false);
-                        }}
-                      >
-                        播放
-                      </Button>,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={
-                        <Avatar
-                          src={
-                            item?.podcast?.image?.smallPicUrl ||
-                            item?.image?.smallPicUrl
-                          }
-                        />
-                      }
-                      title={item?.title || "未命名单集"}
-                    />
-                  </List.Item>
-                )}
-              />
-            </>
-          )}
-        </div>
-      </Drawer>
       <ShownotesDrawer
         open={isShownotesOpen}
         onClose={() => toggleShownotesOpen()}

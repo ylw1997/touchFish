@@ -382,7 +382,6 @@ const loadHupuPage = async () => {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>${hupuState.title}</title>
     <style>${BASE_CSS}${extraCss}</style></head><body>
-    <h1 style="text-align:center">${hupuState.title}</h1>
     <a class="open-article-btn" href="${originalUrl}">打开原文章</a>
     <div class="news_detail">${safe}</div>
     <div class="pagination">

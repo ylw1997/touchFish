@@ -14,16 +14,18 @@ import {
   Tabs,
 } from "antd";
 import {
-  HomeOutlined,
+  PlayCircleOutlined,
+  PlusCircleOutlined,
+  PlusOutlined,
   LoginOutlined,
   LogoutOutlined,
   MinusOutlined,
-  PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
   TrophyOutlined,
   UserOutlined,
   VerticalAlignTopOutlined,
+  HomeOutlined,
 } from "@ant-design/icons";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -544,7 +546,9 @@ function App() {
         onClose={() => setLoginModalOpen(false)}
       />
 
-      <AnimatePresence>{currentEpisode ? <PlayBar /> : null}</AnimatePresence>
+      <AnimatePresence>
+        {currentEpisode ? <PlayBar onOpenPodcast={openPodcast} /> : null}
+      </AnimatePresence>
 
       <Drawer
         title={podcastDetail?.title || "播客详情"}
@@ -565,38 +569,110 @@ function App() {
               <Spin size="large" />
             </div>
           ) : (
-            <List
-              dataSource={podcastEpisodes}
-              renderItem={(item) => (
-                <List.Item
-                  actions={[
-                    <Button
-                      key="play"
-                      type="link"
-                      style={{ color: "var(--vscode-textLink-foreground)" }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePlayEpisode(item);
+            <>
+              {/* 频道简介 */}
+              {podcastDetail && (
+                <div style={{ marginBottom: 20, padding: "0 8px" }}>
+                  <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
+                    <Avatar
+                      src={
+                        podcastDetail.image?.smallPicUrl ||
+                        podcastDetail.image?.picUrl
+                      }
+                      size={80}
+                      shape="square"
+                      style={{ borderRadius: 8, flexShrink: 0 }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <h3
+                        style={{
+                          margin: "0 0 8px 0",
+                          fontSize: "18px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {podcastDetail.title}
+                      </h3>
+                      <p
+                        style={{
+                          margin: "0 0 4px 0",
+                          opacity: 0.7,
+                          fontSize: "14px",
+                        }}
+                      >
+                        {podcastDetail.author || podcastDetail.publisher}
+                      </p>
+                      {podcastDetail.subscriptionCount ? (
+                        <p
+                          style={{ margin: 0, opacity: 0.5, fontSize: "12px" }}
+                        >
+                          {podcastDetail.subscriptionCount.toLocaleString()}{" "}
+                          订阅
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  {podcastDetail.description ? (
+                    <p
+                      style={{
+                        margin: 0,
+                        opacity: 0.8,
+                        fontSize: "14px",
+                        lineHeight: 1.6,
                       }}
                     >
-                      播放
-                    </Button>,
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar
-                        src={
-                          item?.podcast?.image?.smallPicUrl ||
-                          item?.image?.smallPicUrl
-                        }
-                      />
-                    }
-                    title={item?.title || "未命名单集"}
-                  />
-                </List.Item>
+                      {podcastDetail.description}
+                    </p>
+                  ) : null}
+                </div>
               )}
-            />
+              <List
+                dataSource={podcastEpisodes}
+                header={
+                  <div style={{ fontWeight: 600 }}>
+                    单集列表 ({podcastEpisodes.length})
+                  </div>
+                }
+                renderItem={(item) => (
+                  <List.Item
+                    actions={[
+                      <Button
+                        key="add"
+                        type="text"
+                        icon={<PlusCircleOutlined />}
+                        title="加入播放列表"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToPlaylist(item);
+                        }}
+                      />,
+                      <Button
+                        key="play"
+                        type="text"
+                        icon={<PlayCircleOutlined />}
+                        title="播放"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayEpisode(item);
+                        }}
+                      />,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={
+                        <Avatar
+                          src={
+                            item?.podcast?.image?.smallPicUrl ||
+                            item?.image?.smallPicUrl
+                          }
+                        />
+                      }
+                      title={item?.title || "未命名单集"}
+                    />
+                  </List.Item>
+                )}
+              />
+            </>
           )}
         </div>
       </Drawer>
@@ -650,10 +726,7 @@ function App() {
             onSearch={() => void handleSearch()}
             style={{ marginBottom: 16 }}
           />
-          {renderPodcastList(
-            searchResults,
-            "输入关键词后搜索小宇宙播客",
-          )}
+          {renderPodcastList(searchResults, "输入关键词后搜索小宇宙播客")}
         </div>
       </Drawer>
 
