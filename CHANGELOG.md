@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [13.2.0](https://github.com/ylw1997/touchFish/compare/v13.1.1...v13.2.0) (2026-04-13)
+
+
+### ✨ Features | 新功能
+
+* 支持关闭模块 ([a6493e4](https://github.com/ylw1997/touchFish/commit/a6493e42ceec0c2ae290dc4a7d391df4ab6af4b5))
+
 ### [13.1.1](https://github.com/ylw1997/touchFish/compare/v13.1.0...v13.1.1) (2026-04-13)
 
 
