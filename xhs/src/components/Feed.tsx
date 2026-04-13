@@ -158,7 +158,8 @@ export default function Feed() {
       });
 
       messageApi.success("图片上传成功");
-      return { url: result.url };
+      // 返回完整的 fileId（包含 spectrum/ 前缀），用于发布笔记
+      return { url: result.fullFileId || result.url };
     } catch (error: any) {
       messageApi.error(error.message || "图片上传失败");
       throw error;

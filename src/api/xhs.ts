@@ -781,7 +781,7 @@ export const uploadXhsImage = async (params: {
   }
 
   // 2. 上传到 OSS（使用 uploadAddr 和 token）
-  const result = await uploadXhsImageToOss(
+  const ossResult = await uploadXhsImageToOss(
     permit.fileId,
     imageBuffer,
     name,
@@ -790,7 +790,11 @@ export const uploadXhsImage = async (params: {
     permit.uploadAddr
   );
 
-  return result;
+  return {
+    fileId: permit.fileId,        // 去掉前缀的，用于预览
+    fullFileId: permit.fullFileId, // 完整的 spectrum/xxx，用于发布
+    url: ossResult.url,
+  };
 };
 
 // ==================== 发布笔记相关 ====================
@@ -823,10 +827,10 @@ export const publishXhsNote = async (params: {
 
   // 构造图片数据（参考浏览器真实请求）
   const imageList = images.map((img) => {
-    // 使用完整的 file_id（包含 spectrum/ 前缀）
-    const fileId = img.includes("/") ? img : `spectrum/${img}`;
+    // img 应该是完整的 file_id（包含 spectrum/ 前缀）
+    // 如: spectrum/REf_X31Qc4En6EIwcNiI-tyl9Vp-RXgxvuptUWBQ3SM2pKE
     return {
-      file_id: fileId,
+      file_id: img,
       width: 1080,
       height: 1440,
       metadata: { source: -1 },

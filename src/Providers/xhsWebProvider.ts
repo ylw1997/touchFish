@@ -193,7 +193,7 @@ export class XhsWebProvider extends BaseWebviewProvider {
         const uploadPayload = payload as any;
         const result = await uploadXhsImage(uploadPayload);
         webviewView.webview.postMessage({
-          payload: { success: true, url: result.url, fileId: result.fileId },
+          payload: { success: true, url: result.url, fileId: result.fileId, fullFileId: result.fullFileId },
           uuid,
         });
         break;
