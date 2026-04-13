@@ -59,6 +59,7 @@ function App() {
     getPodcastDetail,
     getEpisodeDetail,
     getSubscriptions,
+    updateSubscription,
   } = useXiaoyuzhou();
 
   const [activeTab, setActiveTab] = useState("recommend");
@@ -129,6 +130,24 @@ function App() {
     },
     [getTopList],
   );
+
+  const handleUpdateSubscription = async () => {
+    if (!podcastDetail) return;
+    const isSubscribed = podcastDetail.subscriptionStatus === "ON";
+    const mode = isSubscribed ? "OFF" : "ON";
+
+    const result = await updateSubscription(podcastDetail.pid, mode);
+    if (result) {
+      setPodcastDetail(result);
+      messageApi.success(mode === "ON" ? "订阅成功" : "已取消订阅");
+
+      // 刷新列表
+      void getSubscriptions().then((data) => setSubscriptions(data));
+      void loadDiscovery();
+    } else {
+      messageApi.error("操作失败，请重试");
+    }
+  };
 
   const loadSubscriptions = useCallback(async () => {
     if (!isLoggedIn) {
@@ -646,15 +665,40 @@ function App() {
                       style={{ borderRadius: 8, flexShrink: 0 }}
                     />
                     <div style={{ flex: 1 }}>
-                      <h3
+                      <div
                         style={{
-                          margin: "0 0 8px 0",
-                          fontSize: "18px",
-                          fontWeight: 600,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          marginBottom: "8px",
                         }}
                       >
-                        {podcastDetail.title}
-                      </h3>
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: "18px",
+                            fontWeight: 600,
+                            flex: 1,
+                            marginRight: "12px",
+                          }}
+                        >
+                          {podcastDetail.title}
+                        </h3>
+                        <Button
+                          type={
+                            podcastDetail.subscriptionStatus === "ON"
+                              ? "default"
+                              : "primary"
+                          }
+                          size="small"
+                          onClick={handleUpdateSubscription}
+                          loading={loading}
+                        >
+                          {podcastDetail.subscriptionStatus === "ON"
+                            ? "已订阅"
+                            : "订阅"}
+                        </Button>
+                      </div>
                       <p
                         style={{
                           margin: "0 0 4px 0",

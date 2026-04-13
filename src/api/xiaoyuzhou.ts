@@ -8,7 +8,7 @@ import {
 const CREATOR_BASE_URL = "https://podcaster-api.xiaoyuzhoufm.com";
 const APP_BASE_URL = "https://api.xiaoyuzhoufm.com";
 export const xiaoyuzhouHttp = axios.create({
-  timeout: 15000,
+  timeout: 30000,
 });
 
 export interface XiaoyuzhouCredential {
@@ -46,7 +46,27 @@ function getCredential(credential?: XiaoyuzhouCredential | null) {
 }
 
 function getNowIsoString() {
-  return new Date().toISOString();
+  const d = new Date();
+  const tzo = -d.getTimezoneOffset();
+  const dif = tzo >= 0 ? "+" : "-";
+  const pad = (num: number) => String(num).padStart(2, "0");
+  return (
+    d.getFullYear() +
+    "-" +
+    pad(d.getMonth() + 1) +
+    "-" +
+    pad(d.getDate()) +
+    "T" +
+    pad(d.getHours()) +
+    ":" +
+    pad(d.getMinutes()) +
+    ":" +
+    pad(d.getSeconds()) +
+    dif +
+    pad(Math.floor(Math.abs(tzo) / 60)) +
+    ":" +
+    pad(Math.abs(tzo) % 60)
+  );
 }
 
 function getCreatorHeaders() {
@@ -473,7 +493,7 @@ export async function searchPodcasts(
           refreshToken: auth?.refreshToken,
           contentType: "application/json",
           localTime: getNowIsoString(),
-deviceId,
+          deviceId,
         }),
         timeout: 15000,
       },
@@ -569,6 +589,36 @@ export async function getSubscriptions(
         sortOrder: "desc",
         sortBy: "subscribedAt",
         ...(loadMoreKey ? { loadMoreKey } : {}),
+      },
+      {
+        headers: buildXiaoyuzhouHeaders({
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
+          contentType: "application/json",
+          localTime: getNowIsoString(),
+          deviceId,
+        }),
+        timeout: 15000,
+      },
+    );
+    return response.data;
+  }, credential);
+}
+
+export async function updateSubscription(
+  pid: string,
+  mode: "ON" | "OFF",
+  credential?: XiaoyuzhouCredential | null,
+): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(
+    credential?.refreshToken || credential?.accessToken,
+  );
+  return withAutoRefresh(async (auth) => {
+    const response = await xiaoyuzhouHttp.post(
+      `${APP_BASE_URL}/v1/subscription/update`,
+      {
+        pid,
+        mode,
       },
       {
         headers: buildXiaoyuzhouHeaders({

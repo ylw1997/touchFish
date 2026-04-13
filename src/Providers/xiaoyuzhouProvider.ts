@@ -13,6 +13,7 @@ import {
   searchPodcasts,
   sendSmsCode,
   setGlobalCredential,
+  updateSubscription,
   type XiaoyuzhouCredential,
   type XiaoyuzhouUserInfo,
 } from "../api/xiaoyuzhou";
@@ -416,6 +417,21 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
           await this.persistRefreshedCredential();
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_GET_SUBSCRIPTIONS_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "XIAOYUZHOU_UPDATE_SUBSCRIPTION": {
+          const result = await updateSubscription(
+            String(payload?.pid || ""),
+            payload?.mode || "ON",
+            this.authState.credential,
+          );
+          await this.persistRefreshedCredential();
+          webviewView.webview.postMessage({
+            command: "XIAOYUZHOU_UPDATE_SUBSCRIPTION_RESULT",
             payload: result,
             uuid,
           } as CommandsType<any>);

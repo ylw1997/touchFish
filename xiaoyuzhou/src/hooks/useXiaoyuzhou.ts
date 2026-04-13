@@ -223,6 +223,29 @@ export function useXiaoyuzhou() {
     }
   }, [request]);
 
+  const updateSubscription = useCallback(
+    async (pid: string, mode: "ON" | "OFF") => {
+      setLoading(true);
+      try {
+        const result = await request<any>("XIAOYUZHOU_UPDATE_SUBSCRIPTION", {
+          pid,
+          mode,
+        });
+
+        if (result.code === 0 && result.data?.data) {
+          return result.data.data;
+        }
+
+        return null;
+      } catch {
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [request],
+  );
+
   return {
     loading,
     getDiscovery,
@@ -233,5 +256,6 @@ export function useXiaoyuzhou() {
     getEpisodeDetail,
     getPodcastDetail,
     getSubscriptions,
+    updateSubscription,
   };
 }

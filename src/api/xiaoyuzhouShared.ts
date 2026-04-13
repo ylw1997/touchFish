@@ -62,7 +62,7 @@ export function buildXiaoyuzhouHeaders(
     localTime,
     timezone = "Asia/Shanghai",
     acceptLanguage = "zh-Hant-HK;q=1.0, zh-Hans-CN;q=0.9",
-    abtestInfo = '{"old_user_discovery_feed":"enable"}',
+    abtestInfo = "{}",
     deviceId = XIAOYUZHOU_DEVICE_ID,
                     } = options;
 
