@@ -137,23 +137,28 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
             )}
           </div>
 
-          <div
-            className="playbar-info"
-            style={{ cursor: currentEpisode ? "pointer" : "default" }}
-            onClick={() => {
-              void openPodcastDrawer();
-            }}
-          >
+          <div className="playbar-info" style={{ cursor: "default" }}>
             {currentEpisode ? (
               <div className="playbar-text-info">
                 <div
                   className="playbar-title"
                   title={`${currentEpisode.title} - ${getPodcastName(currentEpisode)}`}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => toggleShownotesOpen()}
                 >
                   <span className="song-name">{currentEpisode.title}</span>
                 </div>
                 <div className="playbar-lyric">
-                  {`${getPodcastName(currentEpisode)} -- ${formatDuration(currentEpisode.duration)}`}
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void openPodcastDrawer();
+                    }}
+                  >
+                    {getPodcastName(currentEpisode)}
+                  </span>
+                  {` - ${formatDuration(currentEpisode.duration)}`}
                 </div>
               </div>
             ) : (
