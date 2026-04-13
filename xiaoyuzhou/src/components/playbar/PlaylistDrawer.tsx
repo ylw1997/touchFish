@@ -59,14 +59,14 @@ export const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({
                 <div
                   key={song.mid + index}
                   className={`playbar-playlist-item ${
-                    currentSong?.mid === song.mid ? "active" : ""
+                    currentSong?.eid === song.eid || currentSong?.pid === song.pid ? "active" : ""
                   }`}
                   onClick={() => playSong(song)}
                 >
-                  <img src={getAlbumCover(song)} alt={song.name} />
+                  <img src={getAlbumCover(song)} alt={song.title || song.name} />
                   <div className="playbar-playlist-item-info">
                     <div className="playbar-playlist-item-title">
-                      {song.name}
+                      {song.title || song.name}
                     </div>
                     <div className="playbar-playlist-item-author">
                       {getSingerName(song)}

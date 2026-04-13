@@ -432,6 +432,7 @@ function App() {
                 >
                   <div className="rank-header">
                     <Segmented
+                      block
                       value={topCategory}
                       onChange={(value) =>
                         setTopCategory(value as "HOT" | "ROCK" | "NEW")
