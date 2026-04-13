@@ -1,6 +1,42 @@
 # 更新历史 
 
 
+## [13.1.0](https://github.com/ylw1997/touchFish/compare/v12.15.4...v13.1.0) (2026-04-13)
+
+
+### 🐛 Bug Fixes | Bug 修复
+
+* add missing headers to match xyz project ([d3a17a0](https://github.com/ylw1997/touchFish/commit/d3a17a0bf08c65e7d5825b6d5b3ffffa8baab9a5))
+* improve deviceId generation algorithm ([5320f6f](https://github.com/ylw1997/touchFish/commit/5320f6f02d2c378cd6aa5ba0012df6bf429b077b))
+
+
+### ✨ Features | 新功能
+
+* 播放模式记忆 ([0373bbf](https://github.com/ylw1997/touchFish/commit/0373bbfc603df94743f83c5d0c6403c5b1d955aa))
+* 订阅和取消订阅完成 ([826bc0b](https://github.com/ylw1997/touchFish/commit/826bc0bcd5b1587a1866777631f96b437d8b1d2c))
+* 更新图标,增加新节目展示 ([67d37e8](https://github.com/ylw1997/touchFish/commit/67d37e89ee81197ad36ad99a5f5059e7b9ee21a5))
+* 更新readme ([4a2ff0a](https://github.com/ylw1997/touchFish/commit/4a2ff0a4d19d283ee6e90793df69fe87622954d5))
+* 基本功能完成 ([d87c45c](https://github.com/ylw1997/touchFish/commit/d87c45cf39be3155215c3ee740a048d547b2b528))
+* 删除小宇宙playbar喜欢按钮 ([fd64eb4](https://github.com/ylw1997/touchFish/commit/fd64eb4a90708c6288a38639329e834607ff840c))
+* 删除log ([62b7dee](https://github.com/ylw1997/touchFish/commit/62b7dee48ba0c331032ae6275b8eb67633d2896a))
+* 首页展示订阅更新 ([294a752](https://github.com/ylw1997/touchFish/commit/294a752e48b6d77626aa0e59be9c8562c89fe124))
+* 退出修复 ([da2cf76](https://github.com/ylw1997/touchFish/commit/da2cf76c94f96d3bb86a70e11913e03f466be610))
+* 小红书发布笔记 ([c933621](https://github.com/ylw1997/touchFish/commit/c9336218def8d0530f3171fc02fc1af709b0c921))
+* 小红书完成 ([eb80fad](https://github.com/ylw1997/touchFish/commit/eb80fad2bc34c5024c48243f781eeaa6d6debccf))
+* 小宇宙初始化 ([4e9ec57](https://github.com/ylw1997/touchFish/commit/4e9ec5788f86fcae36c62fda8a920ecebb273c10))
+* 小宇宙上线 ([47d1ae4](https://github.com/ylw1997/touchFish/commit/47d1ae424b9c5b6421d992d9503d309fec8d7ab4))
+* 小宇宙刷新token完成 ([e27d759](https://github.com/ylw1997/touchFish/commit/e27d759df1b8bd2c9a4addacca89f469526c07fb))
+* 修复播放问题 ([400b30d](https://github.com/ylw1997/touchFish/commit/400b30ddbfbdcac08b225791a9b1e9103012c2fe))
+* 修复打包错误问题 ([6a027c5](https://github.com/ylw1997/touchFish/commit/6a027c534d4ae1a8de896f8dc1650aa2c612d565))
+* 修复登录问题 ([4a095f2](https://github.com/ylw1997/touchFish/commit/4a095f2c0529c7c7f97cc0673314c8c29849878c))
+* 修复小宇宙播放列表问题和部分样式问题 ([50a22ad](https://github.com/ylw1997/touchFish/commit/50a22adca61839103ad0bd3a1c9d082d6ef31303))
+* 修改小宇宙单集详情 ([e8f705c](https://github.com/ylw1997/touchFish/commit/e8f705c2b84c66a8717792f79647e4f0718a8fca))
+* 优化样式问题 ([c84b8a2](https://github.com/ylw1997/touchFish/commit/c84b8a26378485cb18f721433b6f43e1dbbf7b34))
+* 优化playbar功能 ([120ef7e](https://github.com/ylw1997/touchFish/commit/120ef7ec3daddd80da48febbbf0e5f5001f054eb))
+* persist deviceId in user configuration ([af663a0](https://github.com/ylw1997/touchFish/commit/af663a078414434bf8d0398304dbcafe3c8b6574))
+* tab修改 ([0be9f4d](https://github.com/ylw1997/touchFish/commit/0be9f4d998f3c8c10b3ce43a823313d0a03c1a07))
+* use dynamic deviceId in all xiaoyuzhou API calls ([1650b3c](https://github.com/ylw1997/touchFish/commit/1650b3cf38474da1acfd32a6b7ca456b74e348d8))
+
 ### [12.15.4](https://github.com/ylw1997/touchFish/compare/v12.15.3...v12.15.4) (2026-04-09)
 
 
