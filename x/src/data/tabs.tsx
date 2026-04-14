@@ -8,6 +8,6 @@
  * @Description:
  */
 export const defTab = [
-  { key: "hot", label: "为您推荐" },
-  { key: "latest", label: "正在关注" }
+  { key: "hot", label: "为你推荐" },
+  { key: "latest", label: "正在关注" },
 ];

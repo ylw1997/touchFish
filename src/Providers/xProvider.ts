@@ -15,20 +15,64 @@ import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
 // X 转换器
 function mapXTweetToXItem(tweet: any): xItem | null {
-  if (!tweet || !tweet.legacy) return null;
-  const legacy = tweet.legacy;
-  const core = tweet.core?.user_results?.result;
-  const userLegacy = core?.legacy;
+  if (!tweet) return null;
+
+  // 兼容不同的 Tweet 包装结构
+  let t = tweet;
+  if (t?.__typename === "TweetWithVisibilityResults" && t.tweet) {
+    t = t.tweet;
+  }
+  if (t?.tweet_results?.result) {
+    t = t.tweet_results.result;
+  }
+  if (t?.result) {
+    t = t.result;
+  }
+
+  console.log("[X DEBUG] processing tweet:", t?.__typename, t?.rest_id);
+
+  if (!t?.legacy) {
+    console.log("[X DEBUG] skip: no legacy");
+    return null;
+  }
+  const legacy = t.legacy;
+  
+  // 提取用户信息，处理可能的嵌套
+  let userResult = t.core?.user_results?.result || t.author?.user_results?.result;
+  // 有时 result 里面还嵌套一层 result
+  if (userResult?.result) {
+    userResult = userResult.result;
+  }
+  const userLegacy = userResult?.legacy;
+  const userCore = userResult?.core;
+
+  console.log("[X DEBUG] userResult keys:", userResult ? Object.keys(userResult) : "null");
+  console.log("[X DEBUG] userLegacy keys:", userLegacy ? Object.keys(userLegacy) : "null");
+  console.log("[X DEBUG] userCore keys:", userCore ? Object.keys(userCore) : "null");
 
   let user: xUser | undefined;
-  if (userLegacy) {
+  if (userResult) {
+    // 更加激进的名字抓取策略
+    const name = userLegacy?.name || userCore?.name || userResult.name;
+    const sName = userLegacy?.screen_name || userCore?.screen_name || userResult.screen_name;
+    const finalScreenName = name && sName && name !== sName ? `${name} (@${sName})` : (name || sName || "Unknown");
+    
+    const avatarUrl = userLegacy?.profile_image_url_https || userResult.avatar?.image_url || userResult.profile_image_url_https;
+    
     user = {
-      id: Number(core.rest_id) || 0,
-      screen_name: userLegacy.screen_name || userLegacy.name,
-      avatar_hd: userLegacy.profile_image_url_https?.replace("_normal", ""),
-      avatar_large: userLegacy.profile_image_url_https?.replace("_normal", ""),
-      followers_count: userLegacy.followers_count,
-      following: userLegacy.following,
+      id: Number(userResult.rest_id) || 0,
+      screen_name: finalScreenName,
+      avatar_hd: avatarUrl?.replace("_normal", ""),
+      avatar_large: avatarUrl?.replace("_normal", ""),
+      followers_count: userLegacy?.followers_count || 0,
+      following: userLegacy?.following || userResult.relationship_perspectives?.following || false,
+    };
+    console.log("[X DEBUG] mapped user success:", user.screen_name, "avatar:", !!user.avatar_hd);
+  } else {
+    console.log("[X DEBUG] fallback user from legacy user_id_str:", legacy.user_id_str);
+    user = {
+      id: Number(legacy.user_id_str) || 0,
+      screen_name: "User_" + legacy.user_id_str,
     };
   }
 
@@ -122,7 +166,17 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
         if (entry.entryId.startsWith("tweet-")) {
           const tweetContent =
             entry.content?.itemContent?.tweet_results?.result;
+          console.log("[X DEBUG] raw tweet keys:", tweetContent ? Object.keys(tweetContent) : "null");
+          console.log("[X DEBUG] __typename:", tweetContent?.__typename);
+          console.log("[X DEBUG] core:", tweetContent?.core ? Object.keys(tweetContent.core) : "no core");
+          console.log("[X DEBUG] tweet.core?.user_results?.result?.legacy?.screen_name:", tweetContent?.core?.user_results?.result?.legacy?.screen_name);
+          // 检查是否被 TweetWithVisibilityResults 包裹
+          if (tweetContent?.tweet) {
+            console.log("[X DEBUG] unwrapped tweet keys:", Object.keys(tweetContent.tweet));
+            console.log("[X DEBUG] unwrapped core:", tweetContent.tweet.core ? Object.keys(tweetContent.tweet.core) : "no core");
+          }
           const mapped = mapXTweetToXItem(tweetContent);
+          console.log("[X DEBUG] mapped user:", mapped?.user);
           if (mapped) statuses.push(mapped);
         } else if (entry.entryId.startsWith("cursor-bottom")) {
           cursor = entry.content?.value;
@@ -131,16 +185,17 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
     }
   }
 
+  console.log("[X DEBUG] parse finished, total statuses:", statuses.length, "cursor:", cursor);
   return {
     ok: 1,
     since_id: 0,
     max_id: 0,
+    total_number: statuses.length,
+    statuses: statuses,
     since_id_str: "",
     max_id_str: cursor,
-    total_number: statuses.length,
-    statuses,
-    data: {},
-    payload: null,
+    data: data,
+    payload: data,
   };
 }
 
@@ -241,6 +296,14 @@ export class XProvider extends BaseWebviewProvider {
           res.code === 0
             ? parseXTimelineToXAJAX(res.data)
             : { ok: 0, msg: res.message };
+
+        // "正在关注" tab 下所有帖子都来自已关注的用户
+        if (activeTab === "latest" && "statuses" in mappedData) {
+          mappedData.statuses.forEach((s: any) => {
+            if (s.user) s.user.following = true;
+          });
+        }
+
         webviewView.webview.postMessage({
           command: "SENDDATA",
           payload: mappedData,

@@ -104,9 +104,9 @@ const XCardMedia: React.FC<XCardMediaProps> = ({
         if (picInfo) {
           media.push({
             id: picId,
-            type: "image",
+            type: picInfo.type === "video" ? "video" : "image",
             thumbnailUrl: picInfo.bmiddle.url,
-            fullUrl: picInfo.large.url,
+            fullUrl: picInfo.video_url || picInfo.large.url,
           });
         }
       });

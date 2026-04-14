@@ -1,10 +1,8 @@
 import React from "react";
 import {
-  BarChartOutlined,
   NumberOutlined,
   PaperClipOutlined,
   UserOutlined,
-  VideoCameraOutlined,
 } from "@ant-design/icons";
 import { Tag } from "antd";
 import emojiData from "../data/emoji.json";
@@ -40,32 +38,25 @@ const renderTextWithLineBreaks = (text: string, baseKey: string | number) => {
 };
 
 /**
- * 渲染链接标签，根据页面信息（如视频、投票）显示不同的文本。
+ * 渲染链接标签，直接显示链接地址。
  */
-const renderLinkTag = (url: string, page_info: any, key: string) => {
-  let linkText = "网页链接";
-  let color = "green";
-  let icon = <PaperClipOutlined />;
-
-  const objectType = page_info?.object_type;
-  if (objectType === "video" || objectType === "live") {
-    linkText = "视频链接";
-    color = "green";
-    icon = <VideoCameraOutlined />;
-  } else if (objectType === "hudongvote") {
-    linkText = "投票链接";
-    color = "orange";
-    icon = <BarChartOutlined />;
+const renderLinkTag = (url: string, key: string) => {
+  // 尝试从 URL 中提取域名作为显示文本
+  let linkText = "链接";
+  try {
+    linkText = new URL(url).hostname;
+  } catch {
+    // ignore
   }
 
   return (
     <Tag
       key={key}
-      color={color}
+      color="blue"
       className="link-tag"
       onClick={() => openNewWindow(url)}
       bordered={false}
-      icon={icon}
+      icon={<PaperClipOutlined />}
     >
       {linkText}
     </Tag>
@@ -83,7 +74,6 @@ export const parseXText = (
   onTopicClick: (topic: string) => void
 ): React.ReactNode[] => {
   let { text_raw } = xItem;
-  const { page_info } = xItem;
   if (!text_raw) {
     return [];
   }
@@ -151,7 +141,7 @@ export const parseXText = (
         </Tag>
       );
     } else if (part.startsWith("http")) {
-      nodes.push(renderLinkTag(part, page_info, key));
+      nodes.push(renderLinkTag(part, key));
     }
 
     lastIndex = index + part.length;

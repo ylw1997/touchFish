@@ -34,10 +34,12 @@ const XCardHeader: React.FC<XCardHeaderProps> = ({
           size={40}
           style={{ border: "none" }}
           src={
-            item.user?.avatar_hd && <YImg useImg src={item.user.avatar_hd} />
+            item.user?.avatar_hd ? (
+              <YImg useImg src={item.user.avatar_hd} />
+            ) : undefined
           }
         >
-          {item.user?.screen_name}
+          {item.user?.screen_name?.[0]?.toUpperCase()}
         </Avatar>
         <div>
           <span
@@ -79,7 +81,7 @@ const XCardHeader: React.FC<XCardHeaderProps> = ({
                     icon: <ShareAltOutlined />,
                     onClick: () => {
                       onCopyLink?.(
-                        `https://x.com/${item.user?.id}/${item.mblogid}`
+                        `https://x.com/${item.user?.screen_name}/status/${item.mblogid}`
                       );
                     },
                   },
