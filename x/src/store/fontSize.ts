@@ -3,9 +3,9 @@
  * @Date: 2025-12-24 16:25:00
  * @LastEditTime: 2025-12-24 16:25:00
  * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\store\fontSize.ts
+ * @FilePath: \touchfish\x\src\store\fontSize.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
- * @Description: Global font size store for Weibo
+ * @Description: Global font size store for X
  */
 import { create } from "zustand";
 import { vscode } from "../utils/vscode";

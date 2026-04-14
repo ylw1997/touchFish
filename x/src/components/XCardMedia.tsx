@@ -2,11 +2,11 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Button, Image } from "antd";
 import { PlayCircleFilled } from "@ant-design/icons";
-import { weiboItem } from "../../../types/weibo";
+import { xItem } from "../../../types/x";
 import YImg from "./YImg";
 
-interface WeiboCardMediaProps {
-  item: weiboItem;
+interface XCardMediaProps {
+  item: xItem;
   isH5?: boolean;
   showImg?: boolean;
 }
@@ -50,7 +50,7 @@ const MediaItemDisplay: React.FC<{ media: NormalizedMediaItem; count: number }> 
   return <YImg {...imgProps} />;
 };
 
-const WeiboCardMedia: React.FC<WeiboCardMediaProps> = ({
+const XCardMedia: React.FC<XCardMediaProps> = ({
   item,
   isH5,
   showImg,
@@ -180,4 +180,4 @@ const WeiboCardMedia: React.FC<WeiboCardMediaProps> = ({
   );
 };
 
-export default WeiboCardMedia;
+export default XCardMedia;

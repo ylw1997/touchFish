@@ -60,6 +60,19 @@ type VscodeModule = typeof import("vscode");
 
 export const xHttp = axios.create({
   timeout: 30000,
+  paramsSerializer: (params) => {
+    const parts: string[] = [];
+    for (const key of Object.keys(params)) {
+      const val = params[key];
+      if (val === undefined || val === null) continue;
+      const encoded =
+        typeof val === "object"
+          ? encodeURIComponent(JSON.stringify(val))
+          : encodeURIComponent(String(val));
+      parts.push(`${encodeURIComponent(key)}=${encoded}`);
+    }
+    return parts.join("&");
+  },
 });
 
 const HOME_TIMELINE_FEATURES: XFeatureFlags = {
@@ -247,6 +260,69 @@ function buildNextTimelinePayload(params: XTimelineNextParams) {
     features: HOME_TIMELINE_FEATURES,
     queryId: X_HOME_TIMELINE_QUERY_ID,
   };
+}
+
+export const X_HOME_LATEST_TIMELINE_QUERY_ID = "2ee46L1AFXmnTa0EvUog-Q";
+
+export async function getHomeLatestTimeline(
+  credential?: XCredential | null,
+  count = 20
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const url = `${X_BASE_URL}/i/api/graphql/${X_HOME_LATEST_TIMELINE_QUERY_ID}/HomeLatestTimeline`;
+    const response = await xHttp.get(url, {
+      headers: buildXHeaders(auth),
+      params: {
+        variables: {
+          count,
+          seenTweetIds: [],
+          enableRanking: false,
+          includePromotedContent: true,
+        },
+        features: { ...HOME_TIMELINE_FEATURES, responsive_web_edit_tweet_api_enabled: true },
+      },
+    });
+
+    return {
+      code: 0,
+      data: response.data?.data ?? response.data,
+    };
+  } catch (error) {
+    return { ...normalizeError(error), data: null };
+  }
+}
+
+export async function getHomeLatestTimelineNext(
+  params: XTimelineNextParams,
+  credential?: XCredential | null
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const url = `${X_BASE_URL}/i/api/graphql/${X_HOME_LATEST_TIMELINE_QUERY_ID}/HomeLatestTimeline`;
+    const payload = {
+      variables: {
+        count: params.count ?? 20,
+        cursor: params.cursor,
+        seenTweetIds: params.seenTweetIds ?? [],
+        enableRanking: false,
+        includePromotedContent: true,
+      },
+      features: { ...HOME_TIMELINE_FEATURES, responsive_web_edit_tweet_api_enabled: true },
+      queryId: X_HOME_LATEST_TIMELINE_QUERY_ID,
+    };
+
+    const res = await xHttp.post(url, payload, {
+      headers: buildXHeaders(auth),
+    });
+
+    return {
+      code: 0,
+      data: res.data?.data ?? res.data,
+    };
+  } catch (error) {
+    return { ...normalizeError(error), data: null };
+  }
 }
 
 function buildTweetDetailVariables(params: XTweetDetailParams) {

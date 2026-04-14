@@ -1,8 +1,8 @@
-# TouchFish Weibo
+# TouchFish X
 
 > [!Important]
 >
->  记住这个应用：`TouchFish Weibo` - 摸鱼，也要摸得专业！
+>  记住这个应用：`TouchFish X` - 摸鱼，也要摸得专业！
 
 一个专为在 VS Code 中隐秘摸鱼刷微博设计的客户端，让你在编码的间隙，也能轻松掌握热点，关注动态，同时保持专业的工作姿态。
 
@@ -33,7 +33,7 @@
 
 ```bash
 git clone https://github.com/Done-0/touchfish-vscode.git
-cd touchfish-vscode/weibo
+cd touchfish-vscode/x
 ```
 
 ### 2. 安装依赖

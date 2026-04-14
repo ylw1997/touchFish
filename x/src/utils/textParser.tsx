@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { Tag } from "antd";
 import emojiData from "../data/emoji.json";
-import { baseWeiboField } from "../../../types/weibo";
+import { baseXField } from "../../../types/x";
 import { openNewWindow } from ".";
 
 // 使用 Map 进行高效的表情查找。它仅在模块加载时创建一次。
@@ -77,13 +77,13 @@ const renderLinkTag = (url: string, page_info: any, key: string) => {
  * 它可以处理表情、话题、@用户和链接。
  * 此版本使用 `matchAll` 以获得更好的性能和代码结构。
  */
-export const parseWeiboText = (
-  weiboItem: baseWeiboField,
+export const parseXText = (
+  xItem: baseXField,
   getUserByName: (username: string) => void,
   onTopicClick: (topic: string) => void
 ): React.ReactNode[] => {
-  let { text_raw } = weiboItem;
-  const { page_info } = weiboItem;
+  let { text_raw } = xItem;
+  const { page_info } = xItem;
   if (!text_raw) {
     return [];
   }
@@ -115,7 +115,7 @@ export const parseWeiboText = (
             key={key}
             src={emojiUrl}
             alt={part}
-            className="weibo-emoji"
+            className="x-emoji"
             referrerPolicy="no-referrer"
           />
         );
@@ -166,7 +166,7 @@ export const parseWeiboText = (
   return nodes.filter(Boolean);
 };
 
-export const parseH5WeiboText = (
+export const parseH5XText = (
   text: string,
   getUserByName: (username: string) => void,
   onTopicClick: (topic: string) => void

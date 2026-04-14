@@ -3,10 +3,10 @@ import React, { useEffect, useRef } from "react";
 import { Drawer, Avatar, Button, Divider, Card, Tag } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
 import YImg from "./YImg";
-import WeiboCard from "./WeiboCard";
+import XCard from "./XCard";
 import { loaderFunc } from "../utils/loader";
-import { weiboUser } from "../../../types/weibo";
-import useWeiboAction from "../hooks/useWeiboAction";
+import { xUser } from "../../../types/x";
+import useXAction from "../hooks/useXAction";
 import {
   UsergroupAddOutlined,
   TeamOutlined,
@@ -16,7 +16,7 @@ import {
 
 interface UserDetailDrawerProps {
   visible: boolean;
-  userDetail?: weiboUser;
+  userDetail?: xUser;
   setUserDetail: (userDetail: any) => void;
   onClose: () => void;
   showImg?: boolean;
@@ -34,20 +34,20 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   const userBlogRef = useRef<HTMLDivElement>(null);
 
   const {
-    list: userWeiboList,
-    total: userWeiboTotal,
+    list: userXList,
+    total: userXTotal,
     copyLink,
     handleToggleComments,
-    handleExpandLongWeibo,
+    handleExpandLongX,
     handleCommentOrRepost,
     handleLike,
     cancelFollow,
     followUser,
-    userWeiboPage,
+    userXPage,
     setCurItem,
     setList,
     setTotal,
-    setUserWeiboPage,
+    setUserXPage,
     userDetailVisible,
     setUserDetailVisible,
     userDetail: subUserDetail,
@@ -56,18 +56,18 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     getUserByName,
     isFetching,
     getUserBlogData,
-  } = useWeiboAction();
+  } = useXAction();
 
   useEffect(() => {
-    if (visible && userDetail && userWeiboList?.length === 0) {
+    if (visible && userDetail && userXList?.length === 0) {
       getUserBlogData(userDetail.id, 1);
     }
-  }, [getUserBlogData, userDetail, visible, userWeiboList?.length]);
+  }, [getUserBlogData, userDetail, visible, userXList?.length]);
 
   const getUserBlogFunc = () => {
     if (visible && userDetail && !isFetching) {
-      getUserBlogData(userDetail.id, userWeiboPage + 1);
-      setUserWeiboPage(userWeiboPage + 1);
+      getUserBlogData(userDetail.id, userXPage + 1);
+      setUserXPage(userXPage + 1);
     }
   };
 
@@ -75,7 +75,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     onClose();
     setList([]);
     setTotal(0);
-    setUserWeiboPage(1);
+    setUserXPage(1);
     setCurItem(undefined);
     setSubUserDetail(undefined);
     setUserDetailVisible(false);
@@ -107,7 +107,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         onClose={closeFunc}
         title={userDetail?.screen_name}
         placement="bottom"
-        height={userWeiboList.length === 0 ? "auto" : "calc(100vh - 200px)"}
+        height={userXList.length === 0 ? "auto" : "calc(100vh - 200px)"}
         styles={{
           body: {
             padding: 0,
@@ -209,7 +209,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 </Button>
               )}
             </div>
-            {userWeiboList.length === 0 ? (
+            {userXList.length === 0 ? (
               loaderFunc()
             ) : (
               <InfiniteScroll
@@ -217,14 +217,14 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                   userBlogRef.current ? (userBlogRef.current as any) : undefined
                 }
                 scrollThreshold={0.95}
-                dataLength={userWeiboList.length}
+                dataLength={userXList.length}
                 next={getUserBlogFunc}
                 loader={isFetching ? loaderFunc() : null}
                 endMessage={<Divider plain>没有了🤐</Divider>}
-                hasMore={userWeiboList.length < userWeiboTotal}
+                hasMore={userXList.length < userXTotal}
                 style={{ marginTop: 24 }}
               >
-                {userWeiboList.map((item) => (
+                {userXList.map((item) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -232,12 +232,12 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                     viewport={{ once: true }}
                     transition={{ duration: 0.4 }}
                   >
-                    <WeiboCard
+                    <XCard
                       item={item}
                       onFollow={followUser}
                       onUserClick={getUserBlog}
                       cancelFollow={cancelFollow}
-                      onExpandLongWeibo={handleExpandLongWeibo}
+                      onExpandLongX={handleExpandLongX}
                       onToggleComments={handleToggleComments}
                       showActions={false}
                       onCopyLink={copyLink}

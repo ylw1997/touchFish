@@ -6,19 +6,19 @@ import {
   HeartOutlined,
   MessageOutlined,
 } from "@ant-design/icons";
-import { weiboItem } from "../../../types/weibo";
+import { xItem } from "../../../types/x";
 import React from "react";
 
-interface WeiboCardActionsProps {
-  item: weiboItem;
+interface XCardActionsProps {
+  item: xItem;
   commentType?: "comment" | "repost";
   setCommentType: (type: "comment" | "repost" | undefined) => void;
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
-  onLikeOrCancelLike?: (item: weiboItem, type: "like" | "cancel") => void;
+  onLikeOrCancelLike?: (item: xItem, type: "like" | "cancel") => void;
   is_child: boolean;
 }
 
-const WeiboCardActions: React.FC<WeiboCardActionsProps> = ({
+const XCardActions: React.FC<XCardActionsProps> = ({
   item,
   commentType,
   setCommentType,
@@ -86,4 +86,4 @@ const WeiboCardActions: React.FC<WeiboCardActionsProps> = ({
   );
 };
 
-export default WeiboCardActions;
+export default XCardActions;

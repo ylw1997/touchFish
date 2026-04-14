@@ -3,7 +3,7 @@
  * @Date: 2025-07-23 13:59:10
  * @LastEditTime: 2025-09-24 15:31:58
  * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\components\SearchDrawer.tsx
+ * @FilePath: \touchfish\x\src\components\SearchDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
@@ -25,10 +25,10 @@ import {
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
-import { weiboUser, SearchType } from "../../../types/weibo";
-import { WeiboUserItem } from "./WeiboUserItem";
-import WeiboCard from "./WeiboCard";
-import useWeiboAction from "../hooks/useWeiboAction";
+import { xUser, SearchType } from "../../../types/x";
+import { XUserItem } from "./XUserItem";
+import XCard from "./XCard";
+import useXAction from "../hooks/useXAction";
 import { loaderFunc } from "../utils/loader";
 import { SearchInfo } from "../data/search";
 
@@ -37,7 +37,7 @@ interface SearchDrawerProps {
   open: boolean;
   onClose: () => void;
   showImg?: boolean;
-  getUserBlog: (user: weiboUser) => void;
+  getUserBlog: (user: xUser) => void;
   initialKeyword?: string;
   onTopicClick: (topic: string) => void;
   getUserByName: (username: string) => void;
@@ -48,10 +48,10 @@ const SearchList = memo(
   ({
     searchType,
     users,
-    weibos,
+    xs,
     loading,
     getUserBlog,
-    ...weiboCardProps
+    ...xCardProps
   }: any) => {
     if (loading) {
       return loaderFunc();
@@ -62,7 +62,7 @@ const SearchList = memo(
           itemLayout="horizontal"
           dataSource={users}
           loading={loading}
-          renderItem={(item: weiboUser) => (
+          renderItem={(item: xUser) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 20 }}
@@ -70,19 +70,19 @@ const SearchList = memo(
               viewport={{ once: true }}
               transition={{ duration: 0.4 }}
             >
-              {WeiboUserItem(item, getUserBlog)}
+              {XUserItem(item, getUserBlog)}
             </motion.div>
           )}
         />
       );
     }
 
-    if (weibos.length === 0) {
+    if (xs.length === 0) {
       return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
     }
 
-    // Render Weibo list
-    return weibos.map((item: any) => (
+    // Render X list
+    return xs.map((item: any) => (
       <motion.div
         key={item.id}
         initial={{ opacity: 0, y: 20 }}
@@ -90,10 +90,10 @@ const SearchList = memo(
         viewport={{ once: true }}
         transition={{ duration: 0.4 }}
       >
-        <WeiboCard
+        <XCard
           item={item}
           onUserClick={getUserBlog}
-          {...weiboCardProps}
+          {...xCardProps}
           isH5
         />
       </motion.div>
@@ -113,23 +113,23 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<weiboUser[]>([]);
+  const [users, setUsers] = useState<xUser[]>([]);
   const [hotSearch, setHotSearch] = useState<any[]>([]);
   const [searchType, setSearchType] = useState<SearchType>(SearchInfo[0]);
 
   const {
-    list: weibos,
+    list: xs,
     copyLink,
     handleToggleComments,
-    handleExpandLongWeibo,
+    handleExpandLongX,
     handleCommentOrRepost,
     handleLike,
     cancelFollow,
     followUser,
-    setList: setWeibos,
+    setList: setXs,
     getHotSearch,
-    getWeiboSearch,
-  } = useWeiboAction();
+    getXSearch,
+  } = useXAction();
 
   const handleRefreshHotSearch = useCallback(async () => {
     const result = await getHotSearch();
@@ -138,9 +138,9 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   const clear = useCallback(() => {
     setUsers([]);
-    setWeibos([]);
+    setXs([]);
     setLoading(false);
-  }, [setWeibos]);
+  }, [setXs]);
 
   const handleSearch = useCallback(
     async (currentSearchType: SearchType) => {
@@ -149,11 +149,11 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         if (!values.keyword) return;
         clear();
         setLoading(true);
-        const result = await getWeiboSearch(values.keyword, currentSearchType);
+        const result = await getXSearch(values.keyword, currentSearchType);
         if (currentSearchType.type === "3") {
           setUsers(result);
         } else if (currentSearchType.type === "60") {
-          setWeibos(result as any);
+          setXs(result as any);
         }
       } catch (error) {
         console.error(error);
@@ -161,7 +161,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         setLoading(false);
       }
     },
-    [form, clear, getWeiboSearch, setWeibos]
+    [form, clear, getXSearch, setXs]
   );
 
   useEffect(() => {
@@ -190,11 +190,11 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     [handleSearch]
   );
 
-  const weiboCardProps = useMemo(
+  const xCardProps = useMemo(
     () => ({
       onFollow: followUser,
       cancelFollow: cancelFollow,
-      onExpandLongWeibo: handleExpandLongWeibo,
+      onExpandLongX: handleExpandLongX,
       onToggleComments: handleToggleComments,
       showActions: false,
       onCopyLink: copyLink,
@@ -207,7 +207,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     [
       followUser,
       cancelFollow,
-      handleExpandLongWeibo,
+      handleExpandLongX,
       handleToggleComments,
       copyLink,
       handleCommentOrRepost,
@@ -224,7 +224,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         title="微博搜索"
         placement="bottom"
         height={
-          weibos.length > 0 || users.length > 0
+          xs.length > 0 || users.length > 0
             ? "calc(100vh - 150px)"
             : "auto"
         }
@@ -308,10 +308,10 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
               <SearchList
                 searchType={searchType}
                 users={users}
-                weibos={weibos}
+                xs={xs}
                 loading={loading}
                 getUserBlog={getUserBlog}
-                {...weiboCardProps}
+                {...xCardProps}
               />
             ),
           }))}

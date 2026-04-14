@@ -10,6 +10,8 @@ import {
   buildXHeaders,
   getHomeTimeline,
   getHomeTimelineNext,
+  getHomeLatestTimeline,
+  getHomeLatestTimelineNext,
   getTweetDetail,
   getXSearchTimeline,
   getXUserInfo,
@@ -111,6 +113,103 @@ describe("x api helpers", () => {
         {
           cursor: "cursor-1",
           seenTweetIds: ["1", "2"],
+        },
+        {
+          cookie: "auth_token=test; ct0=csrf-token",
+          authorization: "Bearer test-token",
+          csrfToken: "csrf-token",
+        },
+      );
+
+      assert.equal(result.code, 0);
+      assert.deepEqual(result.data, {
+        home: {
+          home_timeline_urt: {
+            instructions: [{ type: "TimelineAddEntries" }],
+          },
+        },
+      });
+    } finally {
+      xHttp.post = originalPost;
+    }
+  });
+
+  it("requests launch latest timeline with GET query parameters", async () => {
+    const originalGet = xHttp.get;
+
+    xHttp.get = (async (url: string, config?: any) => {
+      assert.ok(String(url).includes(`/i/api/graphql/2ee46L1AFXmnTa0EvUog-Q/HomeLatestTimeline`));
+      assert.equal(config?.headers?.authorization, "Bearer test-token");
+      assert.equal(config?.headers?.["x-csrf-token"], "csrf-token");
+      assert.equal(config?.params?.variables.count, 20);
+      assert.equal(config?.params?.variables.enableRanking, false);
+      assert.equal(config?.params?.variables.includePromotedContent, true);
+      assert.equal(config?.params?.features.responsive_web_graphql_timeline_navigation_enabled, true);
+      return {
+        data: {
+          data: {
+            home: {
+              home_timeline_urt: {
+                instructions: [],
+              },
+            },
+          },
+        },
+      } as any;
+    }) as typeof xHttp.get;
+
+    try {
+      const result = await getHomeLatestTimeline(
+        {
+          cookie: "auth_token=test; ct0=csrf-token",
+          authorization: "Bearer test-token",
+          csrfToken: "csrf-token",
+        },
+        20,
+      );
+
+      assert.equal(result.code, 0);
+      assert.deepEqual(result.data, {
+        home: {
+          home_timeline_urt: {
+            instructions: [],
+          },
+        },
+      });
+    } finally {
+      xHttp.get = originalGet;
+    }
+  });
+
+  it("requests next latest timeline page with POST body and cursor", async () => {
+    const originalPost = xHttp.post;
+
+    xHttp.post = (async (url: string, data?: unknown, config?: any) => {
+      assert.ok(String(url).includes(`/i/api/graphql/2ee46L1AFXmnTa0EvUog-Q/HomeLatestTimeline`));
+      assert.equal(config?.headers?.authorization, "Bearer test-token");
+      assert.equal(config?.headers?.["x-csrf-token"], "csrf-token");
+      assert.equal((data as any)?.variables.cursor, "cursor-latest-1");
+      assert.equal((data as any)?.variables.enableRanking, false);
+      assert.equal((data as any)?.variables.includePromotedContent, true);
+      assert.equal((data as any)?.queryId, "2ee46L1AFXmnTa0EvUog-Q");
+      return {
+        data: {
+          data: {
+            home: {
+              home_timeline_urt: {
+                instructions: [{ type: "TimelineAddEntries" }],
+              },
+            },
+          },
+        },
+      } as any;
+    }) as typeof xHttp.post;
+
+    try {
+      const result = await getHomeLatestTimelineNext(
+        {
+          cursor: "cursor-latest-1",
+          seenTweetIds: [],
         },
         {
           cookie: "auth_token=test; ct0=csrf-token",

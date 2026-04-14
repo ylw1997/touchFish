@@ -300,6 +300,23 @@
 					"type": "boolean",
 					"default": true,
 					"description": "启用LinuxDo模块"
+				},
+				"touchfish.enableX": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用X模块"
+				},
+				"touchfish.xCookie": {
+					"type": "string",
+					"description": "X Cookie"
+				},
+				"touchfish.xAuthorization": {
+					"type": "string",
+					"description": "X Authorization"
+				},
+				"touchfish.xCsrfToken": {
+					"type": "string",
+					"description": "X x-csrf-token"
 				}
 			}
 		},
@@ -345,6 +362,12 @@
 					"title": "TouchFish-Xiaoyuzhou",
 					"icon": "assets/xiaoyuzhou.svg",
 					"when": "config.touchfish.enableXiaoyuzhou"
+				},
+				{
+					"id": "x",
+					"title": "TouchFish-X",
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableX"
 				}
 			]
 		},
@@ -445,6 +468,15 @@
 					"name": "小宇宙",
 					"id": "xiaoyuzhou",
 					"when": "config.touchfish.enableXiaoyuzhou"
+				}
+			],
+			"x": [
+				{
+					"icon": "assets/training.svg",
+					"type": "webview",
+					"name": "X",
+					"id": "x",
+					"when": "config.touchfish.enableX"
 				}
 			]
 		},
@@ -564,6 +596,11 @@
 				"command": "touchfish.setXiaoyuzhouToken",
 				"title": "Set Xiaoyuzhou Token",
 				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "touchfish.setXToken",
+				"title": "设置X凭据",
+				"icon": "$(settings-gear)"
 			}
 		],
 		"keybindings": [
@@ -669,6 +706,11 @@
 					"command": "touchfish.setXiaoyuzhouToken",
 					"when": "view == xiaoyuzhou",
 					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setXToken",
+					"when": "view == x",
+					"group": "navigation"
 				}
 			]
 		}
@@ -687,11 +729,11 @@
 		"changelog": "standard-version",
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter xiaoyuzhou build",
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter xiaoyuzhou build && pnpm --filter x build",
 		"xhs:test": "node ./tools/xhs/test-xhs.js",
 		"xhs:test:live": "node ./tools/xhs/test-xhs.js",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
-		"dev": "concurrently -n ZHIHU,WEIBO,XHS,BILIBILI,QQMUSIC,XIAOYUZHOU -c magenta,cyan,yellow,blue,green,red \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter xiaoyuzhou dev\"",
+		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,XIAOYUZHOU -c magenta,cyan,yellow,blue,green,red,white \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\"",
 		"build-xhs": "pnpm --filter xhs build"
 	},
 	"devDependencies": {

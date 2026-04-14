@@ -3,16 +3,16 @@
  * @Date: 2024-11-22 17:02:23
  * @LastEditTime: 2025-09-25 10:18:28
  * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\components\Comment.tsx
+ * @FilePath: \touchfish\x\src\components\Comment.tsx
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
 import { List, Avatar, Flex, Image } from "antd";
 import { motion } from "framer-motion";
-import { commentsItem, weiboUser } from "../../../types/weibo";
+import { commentsItem, xUser } from "../../../types/x";
 import YImg from "./YImg";
 import dayjs from "dayjs";
-import { parseWeiboText } from "../utils/textParser";
+import { parseXText } from "../utils/textParser";
 import { HeartOutlined } from "@ant-design/icons";
 
 // 渲染评论
@@ -20,7 +20,7 @@ export const renderComments = (
   comments: commentsItem[],
   is_child = false,
   getUserByName: (username: string) => void,
-  onUserClick: (userInfo: weiboUser) => void,
+  onUserClick: (userInfo: xUser) => void,
   onTopicClick: (topic: string) => void
 ) => {
   return (
@@ -74,7 +74,7 @@ export const renderComments = (
                 description={
                   <>
                     <div className="content comment-content">
-                      {parseWeiboText(item, getUserByName, onTopicClick)}
+                      {parseXText(item, getUserByName, onTopicClick)}
                     </div>
                     {item.url_struct && item.url_struct.length > 0 && (
                       <div

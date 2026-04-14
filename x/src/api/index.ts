@@ -3,20 +3,20 @@
  * @Date: 2025-09-22 17:00:00
  * @LastEditTime: 2025-09-25 12:02:47
  * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\api\index.ts
+ * @FilePath: \touchfish\x\src\api\index.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
- * @Description: Weibo API requests
+ * @Description: X API requests
  */
 
 import type { CommandList } from "../../../types/commands";
 import type {
   payloadType,
-  weiboCommentParams,
-  weiboRepostParams,
+  xCommentParams,
+  xRepostParams,
   SearchType,
   uploadType,
   UploadImageResponsePayload,
-} from "../../../types/weibo";
+} from "../../../types/x";
 
 type RequestFunc = <T = any>(
   command: CommandList,
@@ -24,7 +24,7 @@ type RequestFunc = <T = any>(
   content?: string
 ) => Promise<T>;
 
-export class WeiboApi {
+export class XApi {
   private request: RequestFunc;
 
   constructor(request: RequestFunc) {
@@ -32,14 +32,14 @@ export class WeiboApi {
   }
 
   getListData(payload: string) {
-    return this.request<payloadType>("GETDATA", payload, "请求微博中...");
+    return this.request<payloadType>("GETDATA", payload, "请求 X 中...");
   }
 
   getUserBlogData(uid: string | number, page: number) {
     return this.request<payloadType>(
       "GETUSERBLOG",
       JSON.stringify({ uid, page }),
-      "请求用户微博中..."
+      "请求用户 X 中..."
     );
   }
 
@@ -68,7 +68,7 @@ export class WeiboApi {
   }
 
   getLongText(id: string | number) {
-    return this.request<payloadType>("GETLONGTEXT", id, "请求长微博中...");
+    return this.request<payloadType>("GETLONGTEXT", id, "请求长 X 中...");
   }
 
   getUserByName(username: string) {
@@ -99,7 +99,7 @@ export class WeiboApi {
     return this.request<payloadType>("GETHOTSEARCH", null, "正在刷新热搜...");
   }
 
-  getWeiboSearch(keyword: string, searchType: SearchType) {
+  getXSearch(keyword: string, searchType: SearchType) {
     const payload = `100103type=${searchType.type}&q=${keyword}&t=`;
     return this.request<payloadType>("GETSEARCH", payload, "正在搜索...");
   }
@@ -112,7 +112,7 @@ export class WeiboApi {
     );
   }
 
-  sendWeibo(content: any) {
+  sendX(content: any) {
     return this.request<payloadType>(
       "GETNEWBLOGRESULT",
       JSON.stringify(content),
@@ -120,12 +120,12 @@ export class WeiboApi {
     );
   }
 
-  createComment(params: weiboCommentParams) {
+  createComment(params: xCommentParams) {
     return this.request("GETCREATECOMMENTS", params, "发送评论中...");
   }
 
-  createRepost(params: weiboRepostParams) {
-    return this.request("GETCREATEREPOST", params, "转发微博中...");
+  createRepost(params: xRepostParams) {
+    return this.request("GETCREATEREPOST", params, "转发 X 中...");
   }
 
   setLike(id: number) {

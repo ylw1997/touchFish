@@ -1,51 +1,51 @@
 import { DownOutlined, LoadingOutlined, UpOutlined } from "@ant-design/icons";
 import { Card, Tag } from "antd";
-import { weiboItem, weiboUser } from "../../../types/weibo";
+import { xItem, xUser } from "../../../types/x";
 import { renderComments } from "./Comment";
 import { loaderFunc } from "../utils/loader";
-import WeiboCardActions from "./WeiboCardActions";
-import WeiboCardHeader from "./WeiboCardHeader";
+import XCardActions from "./XCardActions";
+import XCardHeader from "./XCardHeader";
 import CommentForm from "./CommentForm";
-import WeiboCardMedia from "./WeiboCardMedia";
+import XCardMedia from "./XCardMedia";
 import { useRequest } from "../hooks/useRequest";
-import { WeiboApi } from "../api";
+import { XApi } from "../api";
 import React, { useMemo, useState } from "react";
-import { parseH5WeiboText, parseWeiboText } from "../utils/textParser";
+import { parseH5XText, parseXText } from "../utils/textParser";
 
-export interface weiboBaseActions {
+export interface xBaseActions {
   className?: string;
   getUserByName: (username: string) => void;
   is_child?: boolean;
-  onUserClick: (userInfo: weiboUser) => void;
-  onFollow?: (userInfo?: weiboUser) => void;
-  cancelFollow?: (userInfo?: weiboUser) => void;
-  onExpandLongWeibo?: (id: string | number) => void;
+  onUserClick: (userInfo: xUser) => void;
+  onFollow?: (userInfo?: xUser) => void;
+  cancelFollow?: (userInfo?: xUser) => void;
+  onExpandLongX?: (id: string | number) => void;
   onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
   showActions?: boolean;
   onCopyLink?: (url: string) => void;
   onCommentOrRepost?: (
     content: string,
-    item: weiboItem,
+    item: xItem,
     type: "comment" | "repost"
   ) => void;
-  onLikeOrCancelLike?: (item: weiboItem, type: "like" | "cancel") => void;
+  onLikeOrCancelLike?: (item: xItem, type: "like" | "cancel") => void;
   showImg?: boolean;
   onDownloadVideo?: (url: string) => void;
   onTopicClick: (topic: string) => void;
 }
 
-export interface WeiboCardProps extends weiboBaseActions {
-  item: weiboItem;
+export interface XCardProps extends xBaseActions {
+  item: xItem;
   isH5?: boolean;
 }
 
-const WeiboCard: React.FC<WeiboCardProps> = ({
+const XCard: React.FC<XCardProps> = ({
   item,
   is_child = false,
   onUserClick,
   onFollow,
   cancelFollow,
-  onExpandLongWeibo,
+  onExpandLongX,
   onToggleComments,
   showActions,
   className,
@@ -63,7 +63,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   const [longText, setLongText] = useState("");
   const [isLoadingLongText, setIsLoadingLongText] = useState(false);
   const { request } = useRequest();
-  const apiClient = useMemo(() => new WeiboApi(request), [request]);
+  const apiClient = useMemo(() => new XApi(request), [request]);
 
   const handleToggleLongText = async () => {
     if (isExpanded) {
@@ -94,7 +94,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     <Card
       key={item.id}
       title={
-        <WeiboCardHeader
+        <XCardHeader
           item={item}
           onUserClick={onUserClick}
           showActions={showActions}
@@ -107,16 +107,16 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
     >
       <div className="content">
         {isExpanded
-          ? parseWeiboText(
+          ? parseXText(
               { ...item, text: longText, text_raw: longText },
               getUserByName,
               onTopicClick
             )
           : isH5
           ? item.text_raw
-            ? parseWeiboText(item, getUserByName, onTopicClick)
-            : parseH5WeiboText(item.text, getUserByName, onTopicClick)
-          : parseWeiboText(item, getUserByName, onTopicClick)}
+            ? parseXText(item, getUserByName, onTopicClick)
+            : parseH5XText(item.text, getUserByName, onTopicClick)
+          : parseXText(item, getUserByName, onTopicClick)}
         {item.isLongText &&
           ((item.text_raw && item.text_raw.length > 140) ||
             (isH5 && !item.text_raw && item.text && item.text.length > 140)) && (
@@ -140,9 +140,9 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           </Tag>
         )}
       </div>
-      <WeiboCardMedia item={item} isH5={isH5} showImg={showImg} />
+      <XCardMedia item={item} isH5={isH5} showImg={showImg} />
 
-      <WeiboCardActions
+      <XCardActions
         item={item}
         commentType={commentType}
         setCommentType={setCommentType}
@@ -173,7 +173,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
         </>
       )}
       {item.retweeted_status && (
-        <WeiboCard
+        <XCard
           className="retweeted-status"
           item={item.retweeted_status}
           is_child={true}
@@ -181,7 +181,7 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
           onFollow={onFollow}
           cancelFollow={cancelFollow}
           showActions={showActions}
-          onExpandLongWeibo={onExpandLongWeibo}
+          onExpandLongX={onExpandLongX}
           onToggleComments={onToggleComments}
           onCopyLink={onCopyLink}
           onCommentOrRepost={onCommentOrRepost}
@@ -195,4 +195,4 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
   );
 };
 
-export default React.memo(WeiboCard);
+export default React.memo(XCard);

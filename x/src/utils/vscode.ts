@@ -3,7 +3,7 @@
  * @Date: 2024-11-19 11:27:36
  * @LastEditTime: 2024-11-19 11:27:44
  * @LastEditors: yangliwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\utils\vscode.ts
+ * @FilePath: \touchfish\x\src\utils\vscode.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved. 
  * @Description: 
  */

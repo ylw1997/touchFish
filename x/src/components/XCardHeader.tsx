@@ -1,6 +1,6 @@
 
 import { Avatar, Button, Dropdown, Flex, Space } from "antd";
-import { weiboItem, weiboUser } from "../../../types/weibo";
+import { xItem, xUser } from "../../../types/x";
 import YImg from "./YImg";
 import dayjs from "dayjs";
 import {
@@ -10,16 +10,16 @@ import {
 } from "@ant-design/icons";
 import React from "react";
 
-interface WeiboCardHeaderProps {
-  item: weiboItem;
-  onUserClick: (userInfo: weiboUser) => void;
+interface XCardHeaderProps {
+  item: xItem;
+  onUserClick: (userInfo: xUser) => void;
   showActions?: boolean;
-  onFollow?: (userInfo?: weiboUser) => void;
-  cancelFollow?: (userInfo?: weiboUser) => void;
+  onFollow?: (userInfo?: xUser) => void;
+  cancelFollow?: (userInfo?: xUser) => void;
   onCopyLink?: (url: string) => void;
 }
 
-const WeiboCardHeader: React.FC<WeiboCardHeaderProps> = ({
+const XCardHeader: React.FC<XCardHeaderProps> = ({
   item,
   onUserClick,
   showActions,
@@ -79,7 +79,7 @@ const WeiboCardHeader: React.FC<WeiboCardHeaderProps> = ({
                     icon: <ShareAltOutlined />,
                     onClick: () => {
                       onCopyLink?.(
-                        `https://weibo.com/${item.user?.id}/${item.mblogid}`
+                        `https://x.com/${item.user?.id}/${item.mblogid}`
                       );
                     },
                   },
@@ -100,4 +100,4 @@ const WeiboCardHeader: React.FC<WeiboCardHeaderProps> = ({
   );
 };
 
-export default WeiboCardHeader;
+export default XCardHeader;

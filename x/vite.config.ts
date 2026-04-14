@@ -3,7 +3,7 @@
  * @Date: 2024-11-12 17:42:50
  * @LastEditTime: 2024-11-19 14:29:40
  * @LastEditors: yangliwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\vite.config.ts
+ * @FilePath: \touchfish\x\vite.config.ts
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */

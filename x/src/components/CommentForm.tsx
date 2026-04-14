@@ -1,16 +1,16 @@
 
 import { Button, Flex, Form, Input } from "antd";
-import { weiboItem } from "../../../types/weibo";
+import { xItem } from "../../../types/x";
 import React from "react";
 
 const { TextArea } = Input;
 
 interface CommentFormProps {
-  item: weiboItem;
+  item: xItem;
   commentType: "comment" | "repost";
   onCommentOrRepost?: (
     content: string,
-    item: weiboItem,
+    item: xItem,
     type: "comment" | "repost"
   ) => void;
 }

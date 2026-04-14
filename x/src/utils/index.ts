@@ -3,12 +3,12 @@
  * @Date: 2025-06-20 11:08:45
  * @LastEditTime: 2025-07-31 15:59:06
  * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\utils\index.ts
+ * @FilePath: \touchfish\x\src\utils\index.ts
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 
-import { SearchType } from "../../../types/weibo";
+import { SearchType } from "../../../types/x";
 
 // file转baase64
 export const fileToBase64 = (file: File): Promise<string> => {

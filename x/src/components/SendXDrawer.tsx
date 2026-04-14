@@ -3,22 +3,22 @@
  * @Date: 2025-06-18 15:57:18
  * @LastEditTime: 2025-09-22 13:00:00
  * @LastEditors: YangLiwei 1280426581@qq.com
- * @FilePath: \touchfish\weibo\src\components\SendWeiboDrawer.tsx
+ * @FilePath: \touchfish\x\src\components\SendXDrawer.tsx
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
 import { useState } from "react";
 import { Drawer, Button, Input, Form, Select, Upload } from "antd";
 import { SendOutlined, PlusOutlined } from "@ant-design/icons";
-import { weiboSendParams } from "../types";
+import { xSendParams } from "../types";
 import { fileToBase64 } from "../utils";
-import { uploadType } from "../../../types/weibo";
-import useWeiboAction from "../hooks/useWeiboAction";
+import { uploadType } from "../../../types/x";
+import useXAction from "../hooks/useXAction";
 
-interface SendWeiboDrawerProps {
+interface SendXDrawerProps {
   open: boolean;
   onClose: () => void;
-  onSend: (content: weiboSendParams) => void;
+  onSend: (content: xSendParams) => void;
   loading?: boolean;
 }
 
@@ -32,7 +32,7 @@ const visibleOptions = [
   { label: "粉丝", value: 10 },
 ];
 
-const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
+const SendXDrawer: React.FC<SendXDrawerProps> = ({
   open,
   onClose,
   onSend,
@@ -43,7 +43,7 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   const [pictureList, setPictureList] = useState<
     { type: string; pid: string; uid: string }[]
   >([]);
-  const { uploadImage, messageApi } = useWeiboAction();
+  const { uploadImage, messageApi } = useXAction();
 
   const handleSend = () => {
     form
@@ -191,4 +191,4 @@ const SendWeiboDrawer: React.FC<SendWeiboDrawerProps> = ({
   );
 };
 
-export default SendWeiboDrawer;
+export default SendXDrawer;

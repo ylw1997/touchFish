@@ -38,6 +38,7 @@ import {
   switchLinuxDoTab,
   setBilibiliTokenCommand,
   setXiaoyuzhouTokenCommand,
+  setXTokenCommand,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
@@ -50,6 +51,8 @@ import { WeiboProvider } from "./Providers/weiboProvider";
 import { BilibiliProvider } from "./Providers/bilibiliProvider";
 import { QQMusicProvider } from "./Providers/qqmusicProvider";
 import { XiaoyuzhouProvider } from "./Providers/xiaoyuzhouProvider";
+import { XProvider } from "./Providers/xProvider";
+
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
@@ -185,6 +188,9 @@ export function activate(context: vscode.ExtensionContext) {
   const xiaoyuzhouProvider = createLazyWebviewProvider(
     () => new XiaoyuzhouProvider(context),
   );
+  const xProvider = createLazyWebviewProvider(
+    () => new XProvider(context),
+  );
 
   registerLazyTreeView(
     context,
@@ -269,6 +275,15 @@ export function activate(context: vscode.ExtensionContext) {
       },
     },
   );
+  vscode.window.registerWebviewViewProvider(
+    "x",
+    xProvider.provider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    },
+  );
 
   context.subscriptions.push(refresh(itHomeProvider.getInstance));
   context.subscriptions.push(refreshChipHellNews(chiphellProvider.getInstance));
@@ -295,6 +310,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(switchLinuxDoTab());
   context.subscriptions.push(setBilibiliTokenCommand());
   context.subscriptions.push(setXiaoyuzhouTokenCommand());
+  context.subscriptions.push(setXTokenCommand());
 
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.openQQMusic", async () => {

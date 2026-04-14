@@ -460,3 +460,34 @@ export const setXiaoyuzhouTokenCommand = () => {
     },
   );
 };
+
+// 设置 X 凭据
+export const setXTokenCommand = () => {
+  return vscode.commands.registerCommand(
+    "touchfish.setXToken",
+    async () => {
+      const xCookie = await vscode.window.showInputBox({
+        prompt: "请输入 X 的 Cookie",
+        placeHolder: "请输入 X 的 Cookie",
+      });
+      if (xCookie === undefined) return;
+
+      const xAuthorization = await vscode.window.showInputBox({
+        prompt: "请输入 X 的 Authorization",
+        placeHolder: "请输入 X 的 Authorization",
+      });
+      if (xAuthorization === undefined) return;
+
+      const xCsrfToken = await vscode.window.showInputBox({
+        prompt: "请输入 X 的 x-csrf-token",
+        placeHolder: "请输入 X 的 x-csrf-token",
+      });
+      if (xCsrfToken === undefined) return;
+
+      await setConfigByKey("xCookie", xCookie.trim());
+      await setConfigByKey("xAuthorization", xAuthorization.trim());
+      await setConfigByKey("xCsrfToken", xCsrfToken.trim());
+      await showInfo("X 凭据设置成功,打开视图即可使用!");
+    }
+  );
+};
