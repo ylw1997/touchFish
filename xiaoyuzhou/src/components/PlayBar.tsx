@@ -24,6 +24,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
   const currentEpisode = usePlayerStore((state) => state.currentEpisode);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const playlist = usePlayerStore((state) => state.playlist);
+  const currentIndex = usePlayerStore((state) => state.currentIndex);
   const isPlaylistOpen = usePlayerStore((state) => state.isPlaylistOpen);
   const isShownotesOpen = usePlayerStore((state) => state.isShownotesOpen);
 
@@ -109,7 +110,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
         <PlaylistDrawer
           isPlaylistOpen={isPlaylistOpen}
           playlist={playlist}
-          currentSong={currentEpisode}
+          currentIndex={currentIndex}
           playSong={play}
           removeFromPlaylist={removeFromPlaylist}
           clearPlaylist={clearPlaylist}

@@ -7,7 +7,7 @@ import type { Song } from "../../types/qqmusic";
 interface PlaylistDrawerProps {
   isPlaylistOpen: boolean;
   playlist: Song[];
-  currentSong: Song | null;
+  currentIndex: number;
   getAlbumCover: (song: Song) => string;
   getSingerName: (song: Song) => string;
   playSong: (song: Song) => void;
@@ -18,7 +18,7 @@ interface PlaylistDrawerProps {
 export const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({
   isPlaylistOpen,
   playlist,
-  currentSong,
+  currentIndex,
   getAlbumCover,
   getSingerName,
   playSong,
@@ -58,9 +58,7 @@ export const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({
               playlist.map((song, index) => (
                 <div
                   key={song.mid + index}
-                  className={`playbar-playlist-item ${
-                    currentSong?.eid === song.eid || currentSong?.pid === song.pid ? "active" : ""
-                  }`}
+                  className={`playbar-playlist-item ${currentIndex === index ? "active" : ""}`}
                   onClick={() => playSong(song)}
                 >
                   <img src={getAlbumCover(song)} alt={song.title || song.name} />

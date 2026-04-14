@@ -43,6 +43,17 @@ interface PlayerState {
   setPlaySource: (source: string) => void;
 }
 
+function getEpisodeIdentityKey(episode: any): string {
+  return (
+    episode?.eid ||
+    episode?.id ||
+    episode?.enclosure?.url ||
+    episode?.media?.source?.url ||
+    episode?.title ||
+    ""
+  );
+}
+
 export const usePlayerStore = create<PlayerState>()(
   persist(
     (set, get) => ({
@@ -76,9 +87,10 @@ export const usePlayerStore = create<PlayerState>()(
 
       play: (episode) => {
         const { playlist } = get();
-        // 小宇宙id一般是 eid / pid
-        const idKey = episode.eid || episode.pid || episode.id;
-        const existingIndex = playlist.findIndex((s) => (s.eid || s.pid || s.id) === idKey);
+        const idKey = getEpisodeIdentityKey(episode);
+        const existingIndex = playlist.findIndex(
+          (s) => getEpisodeIdentityKey(s) === idKey,
+        );
 
         if (existingIndex >= 0) {
           set({
@@ -156,8 +168,8 @@ export const usePlayerStore = create<PlayerState>()(
 
       addToPlaylist: (episode) => {
         const { playlist } = get();
-        const idKey = episode.eid || episode.pid || episode.id;
-        const exists = playlist.some((s) => (s.eid || s.pid || s.id) === idKey);
+        const idKey = getEpisodeIdentityKey(episode);
+        const exists = playlist.some((s) => getEpisodeIdentityKey(s) === idKey);
         if (!exists) {
           set({ playlist: [...playlist, episode] });
         }
