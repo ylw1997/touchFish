@@ -13,7 +13,7 @@ interface XCardActionsProps {
   item: xItem;
   commentType?: "comment" | "repost";
   setCommentType: (type: "comment" | "repost" | undefined) => void;
-  onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
+  onToggleComments?: (id: number | string, uid: number | string, is_retweeted: boolean) => void;
   onLikeOrCancelLike?: (item: xItem, type: "like" | "cancel") => void;
   is_child: boolean;
 }

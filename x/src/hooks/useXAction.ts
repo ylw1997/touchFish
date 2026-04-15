@@ -4,12 +4,10 @@ import {
   xItem,
   xRepostParams,
   xUser,
-  SearchType,
   uploadType,
 } from "../../../types/x";
 import { updateXList } from "../utils/updateXList";
 import { xSendParams } from "../types";
-import { parseArray } from "../utils";
 import { useRequest } from "./useRequest";
 import { XApi } from "../api";
 
@@ -145,7 +143,7 @@ const useXAction = () => {
 
   // 合并评论展开/收起方法
   const handleToggleComments = useCallback(
-    async (id: number, uid: number, is_retweeted: boolean) => {
+    async (id: number | string, uid: number | string, is_retweeted: boolean) => {
       const citem = list.find(
         (item) => item.id === id || item.retweeted_status?.id === id
       );
@@ -304,9 +302,9 @@ const useXAction = () => {
   }, [apiClient]);
 
   const getXSearch = useCallback(
-    async (keyword: string, searchType: SearchType) => {
-      const result = await apiClient.getXSearch(keyword, searchType);
-      return parseArray(result.data.cards, searchType);
+    async (keyword: string) => {
+      const result = await apiClient.getXSearch(keyword);
+      return result.data || [];
     },
     [apiClient]
   );

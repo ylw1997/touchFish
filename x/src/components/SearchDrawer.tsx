@@ -87,13 +87,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       if (!values.keyword) return;
       clear();
       setLoading(true);
-      const result = await getXSearch(values.keyword, {
-        type: "60",
-        card_type: 9,
-        text: "热门",
-        field: "mblog",
-      });
-      setSearchResults(result.statuses || []);
+      const result = await getXSearch(values.keyword);
+      setSearchResults(result || []);
     } catch (error) {
       console.error(error);
     } finally {

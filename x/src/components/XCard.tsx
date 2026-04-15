@@ -19,7 +19,7 @@ export interface xBaseActions {
   onFollow?: (userInfo?: xUser) => void;
   cancelFollow?: (userInfo?: xUser) => void;
   onExpandLongX?: (id: string | number) => void;
-  onToggleComments?: (id: number, uid: number, is_retweeted: boolean) => void;
+  onToggleComments?: (id: number | string, uid: number | string, is_retweeted: boolean) => void;
   showActions?: boolean;
   onCopyLink?: (url: string) => void;
   onCommentOrRepost?: (
