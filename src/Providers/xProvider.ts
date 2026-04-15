@@ -9,6 +9,8 @@ import {
   getHomeLatestTimelineNext,
   getTweetDetail,
   getXUserInfo,
+  getXSearchTimeline,
+  refreshQueryIds,
 } from "../api/x";
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
@@ -42,9 +44,10 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     }
     return normalized.slice(0, maxLength).trimEnd() + "...";
   };
-  
+
   // 提取用户信息，处理可能的嵌套
-  let userResult = t.core?.user_results?.result || t.author?.user_results?.result;
+  let userResult =
+    t.core?.user_results?.result || t.author?.user_results?.result;
   // 有时 result 里面还嵌套一层 result
   if (userResult?.result) {
     userResult = userResult.result;
@@ -55,18 +58,30 @@ function mapXTweetToXItem(tweet: any): xItem | null {
   let user: xUser | undefined;
   if (userResult) {
     const name = userLegacy?.name || userCore?.name || userResult.name;
-    const sName = userLegacy?.screen_name || userCore?.screen_name || userResult.screen_name;
-    const avatarUrl = userLegacy?.profile_image_url_https || userResult.avatar?.image_url || userResult.profile_image_url_https;
-    
+    const sName =
+      userLegacy?.screen_name ||
+      userCore?.screen_name ||
+      userResult.screen_name;
+    const avatarUrl =
+      userLegacy?.profile_image_url_https ||
+      userResult.avatar?.image_url ||
+      userResult.profile_image_url_https;
+
     user = {
       id: Number(userResult.rest_id) || 0,
       name: name,
       screen_name_raw: sName,
-      screen_name: name && sName && name !== sName ? `${name} (@${sName})` : (name || sName || "Unknown"),
+      screen_name:
+        name && sName && name !== sName
+          ? `${name} (@${sName})`
+          : name || sName || "Unknown",
       avatar_hd: avatarUrl?.replace("_normal", ""),
       avatar_large: avatarUrl?.replace("_normal", ""),
       followers_count: userLegacy?.followers_count || 0,
-      following: userLegacy?.following || userResult.relationship_perspectives?.following || false,
+      following:
+        userLegacy?.following ||
+        userResult.relationship_perspectives?.following ||
+        false,
     };
   } else {
     user = {
@@ -126,7 +141,9 @@ function mapXTweetToXItem(tweet: any): xItem | null {
   const isLongText =
     !!t.note_tweet?.is_expandable ||
     (!!noteTweetText && noteTweetText !== summaryText);
-  const previewText = isLongText ? truncateText(longTextContent, 140) : summaryText;
+  const previewText = isLongText
+    ? truncateText(longTextContent, 140)
+    : summaryText;
 
   return {
     id: legacy.id_str || legacy.conversation_id_str,
@@ -173,10 +190,13 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
     if (instruction.type === "TimelineAddEntries") {
       for (const entry of instruction.entries || []) {
         const entryId = entry.entryId || "";
-        
+
         // 提取推文内容的辅助函数
         const processItem = (itemContent: any) => {
-          if (itemContent?.itemType === "TimelineTweet" || itemContent?.tweet_results?.result) {
+          if (
+            itemContent?.itemType === "TimelineTweet" ||
+            itemContent?.tweet_results?.result
+          ) {
             const tweetContent = itemContent.tweet_results?.result;
             if (tweetContent) {
               const mapped = mapXTweetToXItem(tweetContent);
@@ -185,7 +205,10 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
           }
         };
 
-        if (entryId.startsWith("tweet-") || entryId.startsWith("conversation-")) {
+        if (
+          entryId.startsWith("tweet-") ||
+          entryId.startsWith("conversation-")
+        ) {
           processItem(entry.content?.itemContent);
         } else if (entry.content?.entryType === "TimelineTimelineModule") {
           // 处理嵌套模块（如评论列表、会话线索）
@@ -225,6 +248,8 @@ export class XProvider extends BaseWebviewProvider {
       restoreCommand: "RESTORE_SCROLL_POSITION",
       saveCommand: "SAVE_SCROLL_POSITION",
     });
+    // 从配置加载自定义 Query ID（X 会定期轮换）
+    refreshQueryIds();
   }
 
   protected async handleCustomMessage(
@@ -253,7 +278,10 @@ export class XProvider extends BaseWebviewProvider {
         if (typeof payload === "object") {
           isNextPage = !!payload.max_id;
           if (isNextPage) {
-            this.currentCursor = typeof payload.max_id === "string" ? payload.max_id : payload.max_id.toString();
+            this.currentCursor =
+              typeof payload.max_id === "string"
+                ? payload.max_id
+                : payload.max_id.toString();
           }
           if (payload.group_id) activeTab = payload.group_id; // For compat maybe
         } else if (typeof payload === "string") {
@@ -392,7 +420,9 @@ export class XProvider extends BaseWebviewProvider {
         if (res.code === 0) {
           const xAJAX = parseXTimelineToXAJAX(res.data);
           // 在详情页返回的结果中寻找目标推文
-          const targetTweet = xAJAX.statuses.find(s => s.id === tweetId || s.mblogid === tweetId);
+          const targetTweet = xAJAX.statuses.find(
+            (s) => s.id === tweetId || s.mblogid === tweetId,
+          );
           if (targetTweet) {
             mappedData = {
               ok: 1,
@@ -423,8 +453,12 @@ export class XProvider extends BaseWebviewProvider {
           const userLegacy = userResult.legacy;
           const userCore = userResult.core;
           const name = userLegacy?.name || userCore?.name || userResult.name;
-          const sName = userLegacy?.screen_name || userCore?.screen_name || userResult.screen_name;
-          const avatarUrl = userLegacy?.profile_image_url_https || userResult.avatar?.image_url;
+          const sName =
+            userLegacy?.screen_name ||
+            userCore?.screen_name ||
+            userResult.screen_name;
+          const avatarUrl =
+            userLegacy?.profile_image_url_https || userResult.avatar?.image_url;
 
           mappedData = {
             ok: 1,
@@ -432,17 +466,39 @@ export class XProvider extends BaseWebviewProvider {
               id: Number(userResult.rest_id),
               name: name,
               screen_name_raw: sName,
-              screen_name: name && sName && name !== sName ? `${name} (@${sName})` : (name || sName || "Unknown"),
+              screen_name:
+                name && sName && name !== sName
+                  ? `${name} (@${sName})`
+                  : name || sName || "Unknown",
               avatar_hd: avatarUrl?.replace("_normal", ""),
               followers_count: userLegacy?.followers_count || 0,
               description: userLegacy?.description,
               location: userLegacy?.location,
               following: userLegacy?.following || false,
-            }
+            },
           };
         }
         webviewView.webview.postMessage({
           command: `SENDUSERBYNAME`,
+          payload: mappedData,
+          uuid,
+        });
+        break;
+      }
+
+      case "GETSEARCH": {
+        // 前端传来的是微博格式: "100103type=60&q=关键词&t="，需要提取 q 参数
+        const keyword = payload.toString();
+        const res = await getXSearchTimeline(
+          { query: keyword, count: 20 },
+          credential,
+        );
+        const mappedData =
+          res.code === 0
+            ? parseXTimelineToXAJAX(res.data)
+            : { ok: 0, msg: res.message };
+        webviewView.webview.postMessage({
+          command: `SENDSEARCH`,
           payload: mappedData,
           uuid,
         });

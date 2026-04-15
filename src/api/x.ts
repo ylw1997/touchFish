@@ -2,11 +2,35 @@ import axios, { AxiosError } from "axios";
 
 const X_BASE_URL = "https://x.com";
 
-export const X_HOME_TIMELINE_QUERY_ID = "y7EXm-q2D84r46khKFkSBA";
-export const X_TWEET_DETAIL_QUERY_ID = "rU08O-YiXdr0IZfE7qaUMg";
-export const X_SEARCH_TIMELINE_QUERY_ID = "5yhbMCF0-WQ6M8UOAs1mAg";
-export const X_USER_BY_SCREEN_NAME_QUERY_ID = "qW5u-DAuXpMEG0zA1F7UGQ";
-export const X_USER_TWEETS_QUERY_ID = "9zyyd1hebl7oNWIPdA8HRw";
+// 默认 Query ID，会被 X 定期轮换。如果 404，需要从浏览器 DevTools 抓取最新值。
+export let X_HOME_TIMELINE_QUERY_ID = "y7EXm-q2D84r46khKFkSBA";
+export let X_TWEET_DETAIL_QUERY_ID = "rU08O-YiXdr0IZfE7qaUMg";
+export let X_SEARCH_TIMELINE_QUERY_ID = "pCd62NDD9dlCDgEGgEVHMg";
+export let X_USER_BY_SCREEN_NAME_QUERY_ID = "qW5u-DAuXpMEG0zA1F7UGQ";
+export let X_USER_TWEETS_QUERY_ID = "9zyyd1hebl7oNWIPdA8HRw";
+
+/**
+ * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
+ * 在浏览器 Network 面板搜索 "SearchTimeline" 可抓取最新 ID。
+ */
+export function refreshQueryIds() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const vscode = require("vscode");
+    const config = vscode.workspace.getConfiguration("touchfish");
+    const ids: Record<string, string> | undefined = config.get("xQueryIds");
+    if (ids) {
+      if (ids.homeTimeline) X_HOME_TIMELINE_QUERY_ID = ids.homeTimeline;
+      if (ids.tweetDetail) X_TWEET_DETAIL_QUERY_ID = ids.tweetDetail;
+      if (ids.searchTimeline) X_SEARCH_TIMELINE_QUERY_ID = ids.searchTimeline;
+      if (ids.userByScreenName)
+        X_USER_BY_SCREEN_NAME_QUERY_ID = ids.userByScreenName;
+      if (ids.userTweets) X_USER_TWEETS_QUERY_ID = ids.userTweets;
+    }
+  } catch {
+    // 前端环境无 vscode 模块，忽略
+  }
+}
 
 export interface XCredential {
   cookie: string;
@@ -266,7 +290,7 @@ export const X_HOME_LATEST_TIMELINE_QUERY_ID = "2ee46L1AFXmnTa0EvUog-Q";
 
 export async function getHomeLatestTimeline(
   credential?: XCredential | null,
-  count = 20
+  count = 20,
 ): Promise<XApiResult<any>> {
   try {
     const auth = ensureCredential(credential);
@@ -280,7 +304,10 @@ export async function getHomeLatestTimeline(
           enableRanking: false,
           includePromotedContent: true,
         },
-        features: { ...HOME_TIMELINE_FEATURES, responsive_web_edit_tweet_api_enabled: true },
+        features: {
+          ...HOME_TIMELINE_FEATURES,
+          responsive_web_edit_tweet_api_enabled: true,
+        },
       },
     });
 
@@ -295,7 +322,7 @@ export async function getHomeLatestTimeline(
 
 export async function getHomeLatestTimelineNext(
   params: XTimelineNextParams,
-  credential?: XCredential | null
+  credential?: XCredential | null,
 ): Promise<XApiResult<any>> {
   try {
     const auth = ensureCredential(credential);
@@ -308,7 +335,10 @@ export async function getHomeLatestTimelineNext(
         enableRanking: false,
         includePromotedContent: true,
       },
-      features: { ...HOME_TIMELINE_FEATURES, responsive_web_edit_tweet_api_enabled: true },
+      features: {
+        ...HOME_TIMELINE_FEATURES,
+        responsive_web_edit_tweet_api_enabled: true,
+      },
       queryId: X_HOME_LATEST_TIMELINE_QUERY_ID,
     };
 
@@ -347,6 +377,7 @@ function buildSearchTimelineVariables(params: XSearchTimelineParams) {
     ...(params.cursor ? { cursor: params.cursor } : {}),
     querySource: "typed_query",
     product: params.product ?? "Top",
+    withGrokTranslatedBio: true,
   };
 }
 
@@ -528,24 +559,30 @@ export async function getXSearchTimeline(
 ): Promise<XApiResult<any>> {
   try {
     const auth = ensureCredential(credential);
-    const response = await xHttp.get(
-      `${X_BASE_URL}/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline`,
-      {
-        headers: buildXHeaders(auth, {
-          Referer: `https://x.com/search?q=${encodeURIComponent(params.query)}&src=typed_query`,
-        }),
-        params: {
-          variables: buildSearchTimelineVariables(params),
-          features: SEARCH_TIMELINE_FEATURES,
-        },
-      },
-    );
+    const variables = buildSearchTimelineVariables(params);
+    const variablesStr = encodeURIComponent(JSON.stringify(variables));
+    const featuresStr = encodeURIComponent(JSON.stringify(HOME_TIMELINE_FEATURES));
+    // 手动拼接 URL，绕过 axios paramsSerializer，和浏览器行为完全一致
+    const fullUrl = `${X_BASE_URL}/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline?variables=${variablesStr}&features=${featuresStr}`;
+    console.log("[X DEBUG] Search full URL:", fullUrl.substring(0, 200) + "...");
+    const response = await xHttp.get(fullUrl, {
+      headers: buildXHeaders(auth, {
+        Referer: `https://x.com/search?q=${encodeURIComponent(params.query)}&src=typed_query`,
+      }),
+    });
 
     return {
       code: 0,
       data: response.data?.data ?? response.data,
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.response) {
+      console.error("[X DEBUG] Search status:", error.response.status);
+      console.error("[X DEBUG] Search resp data:", JSON.stringify(error.response.data));
+      console.error("[X DEBUG] Search req URL:", error.request?.path?.substring(0, 200) || error.config?.url?.substring(0, 200));
+    } else {
+      console.error("[X DEBUG] Search error:", error?.message || error);
+    }
     const normalized = normalizeError(error);
     return {
       code: normalized.code,

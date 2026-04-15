@@ -13,7 +13,6 @@ import type {
   payloadType,
   xCommentParams,
   xRepostParams,
-  SearchType,
   uploadType,
   UploadImageResponsePayload,
 } from "../../../types/x";
@@ -21,7 +20,7 @@ import type {
 type RequestFunc = <T = any>(
   command: CommandList,
   payload: any,
-  content?: string
+  content?: string,
 ) => Promise<T>;
 
 export class XApi {
@@ -39,7 +38,7 @@ export class XApi {
     return this.request<payloadType>(
       "GETUSERBLOG",
       JSON.stringify({ uid, page }),
-      "请求用户 X 中..."
+      "请求用户 X 中...",
     );
   }
 
@@ -51,7 +50,7 @@ export class XApi {
         id,
         uid,
       },
-      "请求评论中..."
+      "请求评论中...",
     );
   }
 
@@ -63,7 +62,7 @@ export class XApi {
         id: id,
         uid: uid,
       },
-      "请求评论中..."
+      "请求评论中...",
     );
   }
 
@@ -75,7 +74,7 @@ export class XApi {
     return this.request<payloadType>(
       "GETUSERBYNAME",
       username,
-      "获取用户信息中..."
+      "获取用户信息中...",
     );
   }
 
@@ -91,7 +90,7 @@ export class XApi {
     return this.request<payloadType>(
       "GET_MY_USER_INFO",
       null,
-      "获取我的信息及..."
+      "获取我的信息及...",
     );
   }
 
@@ -99,16 +98,15 @@ export class XApi {
     return this.request<payloadType>("GETHOTSEARCH", null, "正在刷新热搜...");
   }
 
-  getXSearch(keyword: string, searchType: SearchType) {
-    const payload = `100103type=${searchType.type}&q=${keyword}&t=`;
-    return this.request<payloadType>("GETSEARCH", payload, "正在搜索...");
+  getXSearch(keyword: string) {
+    return this.request<payloadType>("GETSEARCH", keyword, "正在搜索...");
   }
 
   uploadImage(uploadData: uploadType) {
     return this.request<UploadImageResponsePayload>(
       "GETUPLOADIMGURL",
       JSON.stringify(uploadData),
-      "上传图片中..."
+      "上传图片中...",
     );
   }
 
@@ -116,7 +114,7 @@ export class XApi {
     return this.request<payloadType>(
       "GETNEWBLOGRESULT",
       JSON.stringify(content),
-      "发送中..."
+      "发送中...",
     );
   }
 

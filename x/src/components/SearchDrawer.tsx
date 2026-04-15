@@ -12,25 +12,16 @@ import {
   Button,
   Input,
   Form,
-  List,
   Divider,
-  Tag,
-  Tabs,
   Empty,
 } from "antd";
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  FireOutlined,
-} from "@ant-design/icons";
+import { SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
-import { xUser, SearchType } from "../../../types/x";
-import { XUserItem } from "./XUserItem";
+import { xItem, xUser } from "../../../types/x";
 import XCard from "./XCard";
 import useXAction from "../hooks/useXAction";
 import { loaderFunc } from "../utils/loader";
-import { SearchInfo } from "../data/search";
 
 // Component Props
 interface SearchDrawerProps {
@@ -46,8 +37,6 @@ interface SearchDrawerProps {
 // Extracted and Memoized SearchList Component
 const SearchList = memo(
   ({
-    searchType,
-    users,
     xs,
     loading,
     getUserBlog,
@@ -55,26 +44,6 @@ const SearchList = memo(
   }: any) => {
     if (loading) {
       return loaderFunc();
-    }
-    if (searchType.type === "3") {
-      return (
-        <List
-          itemLayout="horizontal"
-          dataSource={users}
-          loading={loading}
-          renderItem={(item: xUser) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
-            >
-              {XUserItem(item, getUserBlog)}
-            </motion.div>
-          )}
-        />
-      );
     }
 
     if (xs.length === 0) {
@@ -113,12 +82,9 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<xUser[]>([]);
-  const [hotSearch, setHotSearch] = useState<any[]>([]);
-  const [searchType, setSearchType] = useState<SearchType>(SearchInfo[0]);
+  const [searchResults, setSearchResults] = useState<xItem[]>([]);
 
   const {
-    list: xs,
     copyLink,
     handleToggleComments,
     handleExpandLongX,
@@ -126,69 +92,49 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     handleLike,
     cancelFollow,
     followUser,
-    setList: setXs,
-    getHotSearch,
     getXSearch,
   } = useXAction();
 
-  const handleRefreshHotSearch = useCallback(async () => {
-    const result = await getHotSearch();
-    setHotSearch(result);
-  }, [getHotSearch]);
-
   const clear = useCallback(() => {
-    setUsers([]);
-    setXs([]);
+    setSearchResults([]);
     setLoading(false);
-  }, [setXs]);
+  }, []);
 
   const handleSearch = useCallback(
-    async (currentSearchType: SearchType) => {
+    async () => {
       try {
         const values = await form.validateFields();
         if (!values.keyword) return;
         clear();
         setLoading(true);
-        const result = await getXSearch(values.keyword, currentSearchType);
-        if (currentSearchType.type === "3") {
-          setUsers(result);
-        } else if (currentSearchType.type === "60") {
-          setXs(result as any);
-        }
+        const result = await getXSearch(values.keyword, {
+          type: "60",
+          card_type: 9,
+          text: "热门",
+          field: "mblog",
+        });
+        setSearchResults(result.statuses || []);
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     },
-    [form, clear, getXSearch, setXs]
+    [form, clear, getXSearch]
   );
 
   useEffect(() => {
-    if (open) {
-      handleRefreshHotSearch();
-      if (initialKeyword) {
-        form.setFieldsValue({ keyword: initialKeyword });
-        handleSearch(SearchInfo[0]);
-      }
+    if (open && initialKeyword) {
+      form.setFieldsValue({ keyword: initialKeyword });
+      handleSearch();
     }
-  }, [form, handleRefreshHotSearch, handleSearch, initialKeyword, open]);
+  }, [form, handleSearch, initialKeyword, open]);
 
   const closeFunc = useCallback(() => {
     form.resetFields();
     clear();
-    setSearchType(SearchInfo[0]);
     onClose();
   }, [form, clear, onClose]);
-
-  const handlerTabChange = useCallback(
-    (key: string) => {
-      const selectedType = SearchInfo.find((item) => item.type === key)!;
-      setSearchType(selectedType);
-      handleSearch(selectedType);
-    },
-    [handleSearch]
-  );
 
   const xCardProps = useMemo(
     () => ({
@@ -221,10 +167,10 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   return (
     <>
       <Drawer
-        title="微博搜索"
+        title="X 搜索"
         placement="bottom"
         height={
-          xs.length > 0 || users.length > 0
+          searchResults.length > 0
             ? "calc(100vh - 150px)"
             : "auto"
         }
@@ -237,42 +183,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
           },
         }}
       >
-        <Divider>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span>微博热搜</span>
-            <Button
-              type="text"
-              icon={<ReloadOutlined />}
-              onClick={handleRefreshHotSearch}
-              style={{ margin: "0 8px" }}
-            />
-          </div>
-        </Divider>
-        <div className="hot-search-grid">
-          {hotSearch.map((item: any, index: number) => (
-            <Tag
-              key={item.word}
-              className="hot-search-tag "
-              color={index < 3 ? "red" : index < 10 ? "volcano" : "orange"}
-              onClick={() => {
-                form.setFieldsValue({ keyword: `#${item.word}#` });
-                handleSearch(searchType);
-              }}
-              title={item.word}
-              bordered={false}
-              icon={<FireOutlined />}
-            >
-              {`${index + 1}. ${item.word}`}
-            </Tag>
-          ))}
-        </div>
-        <Divider>搜索微博</Divider>
+        <Divider>搜索 X</Divider>
         <Form form={form} layout="vertical">
           <Form.Item
             label={false}
@@ -283,8 +194,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
               placeholder="请输入搜索关键词"
               disabled={loading}
               variant="filled"
-              onPressEnter={() => handleSearch(searchType)}
-              onSearch={() => handleSearch(searchType)}
+              onPressEnter={() => handleSearch()}
+              onSearch={() => handleSearch()}
               enterButton={
                 <Button
                   icon={<SearchOutlined />}
@@ -297,24 +208,11 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             />
           </Form.Item>
         </Form>
-        <Tabs
-          defaultActiveKey={searchType.type}
-          centered
-          onChange={handlerTabChange}
-          items={SearchInfo.map((item) => ({
-            label: item.text,
-            key: item.type,
-            children: (
-              <SearchList
-                searchType={searchType}
-                users={users}
-                xs={xs}
-                loading={loading}
-                getUserBlog={getUserBlog}
-                {...xCardProps}
-              />
-            ),
-          }))}
+        <SearchList
+          xs={searchResults}
+          loading={loading}
+          getUserBlog={getUserBlog}
+          {...xCardProps}
         />
       </Drawer>
     </>
