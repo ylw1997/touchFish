@@ -570,13 +570,12 @@ export async function getXSearchTimeline(
     const auth = ensureCredential(credential);
     const variables = buildSearchTimelineVariables(params);
     const variablesStr = encodeURIComponent(JSON.stringify(variables));
-    const featuresStr = encodeURIComponent(JSON.stringify(HOME_TIMELINE_FEATURES));
+    const featuresStr = encodeURIComponent(JSON.stringify(SEARCH_TIMELINE_FEATURES));
     // 手动拼接 URL，绕过 axios paramsSerializer，和浏览器行为完全一致
     const fullUrl = `${X_BASE_URL}/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline?variables=${variablesStr}&features=${featuresStr}`;
-    console.log("[X DEBUG] Search full URL:", fullUrl.substring(0, 200) + "...");
     const response = await xHttp.get(fullUrl, {
       headers: buildXHeaders(auth, {
-        Referer: `https://x.com/search?q=${encodeURIComponent(params.query)}&src=typed_query`,
+        Referer: `https://x.com/search?q=${encodeURIComponent(params.query)}&src=recent_search_click`,
       }),
     });
 
@@ -585,13 +584,6 @@ export async function getXSearchTimeline(
       data: response.data?.data ?? response.data,
     };
   } catch (error: any) {
-    if (error?.response) {
-      console.error("[X DEBUG] Search status:", error.response.status);
-      console.error("[X DEBUG] Search resp data:", JSON.stringify(error.response.data));
-      console.error("[X DEBUG] Search req URL:", error.request?.path?.substring(0, 200) || error.config?.url?.substring(0, 200));
-    } else {
-      console.error("[X DEBUG] Search error:", error?.message || error);
-    }
     const normalized = normalizeError(error);
     return {
       code: normalized.code,
