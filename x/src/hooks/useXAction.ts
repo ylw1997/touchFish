@@ -36,6 +36,7 @@ const useXAction = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [userXPage, setUserXPage] = useState(1); // 用户微博页码
+  const [userXCursor, setUserXCursor] = useState<string>("");
   const [maxId, setMaxId] = useState<number | string>(0);
 
   // 当前操作项相关状态
@@ -107,13 +108,15 @@ const useXAction = () => {
   );
 
   const getUserBlogData = useCallback(
-    async (uid: string | number, page: number) => {
+    async (uid: string | number, cursor?: string) => {
       setIsFetching(true);
       try {
-        const result = await apiClient.getUserBlogData(uid, page);
-        // X API 返回的是 xAJAX 格式，使用 statuses 而不是 data.list
+        const result = await apiClient.getUserBlogData(uid, cursor);
         const newList = result.statuses || [];
-        setList((currentList) => [...currentList, ...newList]);
+        setList((currentList) =>
+          cursor ? [...currentList, ...newList] : newList
+        );
+        setUserXCursor(result.max_id_str || "");
         const wtotal = result.total_number ?? 999;
         setTotal(wtotal);
       } finally {
@@ -437,6 +440,8 @@ const useXAction = () => {
     followUser,
     userXPage,
     setUserXPage,
+    userXCursor,
+    setUserXCursor,
     getUserByName,
     getMyUserInfo,
     getHotSearch,

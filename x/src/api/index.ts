@@ -34,15 +34,15 @@ export class XApi {
     return this.request<payloadType>("GETDATA", payload, "请求 X 中...");
   }
 
-  getUserBlogData(uid: string | number, page: number) {
+  getUserBlogData(uid: string | number, cursor?: string) {
     return this.request<payloadType>(
       "GETUSERBLOG",
-      JSON.stringify({ uid, page }),
+      JSON.stringify({ uid, cursor }),
       "请求用户 X 中...",
     );
   }
 
-  getComments(id: number, uid: number) {
+  getComments(id: number | string, uid: number | string) {
     return this.request<any>(
       "GETCOMMENT",
       {
@@ -54,7 +54,7 @@ export class XApi {
     );
   }
 
-  getMoreComments(id: number, uid: number | undefined) {
+  getMoreComments(id: number | string, uid: number | string | undefined) {
     return this.request<any>(
       "GETCOMMENT",
       {
@@ -78,11 +78,11 @@ export class XApi {
     );
   }
 
-  followUser(userId: number) {
+  followUser(userId: number | string) {
     return this.request("GETFOLLOW", userId, "关注中...");
   }
 
-  cancelFollow(userId: number) {
+  cancelFollow(userId: number | string) {
     return this.request("GETCANCELFOLLOW", userId, "取关中...");
   }
 
@@ -126,11 +126,11 @@ export class XApi {
     return this.request("GETCREATEREPOST", params, "转发 X 中...");
   }
 
-  setLike(id: number) {
+  setLike(id: number | string) {
     return this.request("GETSETLIKE", id, "正在点赞...");
   }
 
-  cancelLike(id: number) {
+  cancelLike(id: number | string) {
     return this.request("GETCANCELLIKE", id, "取消点赞中...");
   }
 }

@@ -35,7 +35,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
 
   const {
     list: userXList,
-    total: userXTotal,
     copyLink,
     handleToggleComments,
     handleExpandLongX,
@@ -43,11 +42,10 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     handleLike,
     cancelFollow,
     followUser,
-    userXPage,
     setCurItem,
     setList,
     setTotal,
-    setUserXPage,
+    setUserXCursor,
     userDetailVisible,
     setUserDetailVisible,
     userDetail: subUserDetail,
@@ -56,18 +54,18 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     getUserByName,
     isFetching,
     getUserBlogData,
+    userXCursor,
   } = useXAction();
 
   useEffect(() => {
     if (visible && userDetail && userXList?.length === 0) {
-      getUserBlogData(userDetail.id, 1);
+      getUserBlogData(userDetail.id);
     }
   }, [getUserBlogData, userDetail, visible, userXList?.length]);
 
   const getUserBlogFunc = () => {
-    if (visible && userDetail && !isFetching) {
-      getUserBlogData(userDetail.id, userXPage + 1);
-      setUserXPage(userXPage + 1);
+    if (visible && userDetail && !isFetching && userXCursor) {
+      getUserBlogData(userDetail.id, userXCursor);
     }
   };
 
@@ -75,7 +73,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     onClose();
     setList([]);
     setTotal(0);
-    setUserXPage(1);
+    setUserXCursor("");
     setCurItem(undefined);
     setSubUserDetail(undefined);
     setUserDetailVisible(false);
@@ -221,7 +219,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 next={getUserBlogFunc}
                 loader={isFetching ? loaderFunc() : null}
                 endMessage={<Divider plain>没有了🤐</Divider>}
-                hasMore={userXList.length < userXTotal}
+                hasMore={!!userXCursor}
                 style={{ marginTop: 24 }}
               >
                 {userXList.map((item) => (

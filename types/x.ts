@@ -146,7 +146,7 @@ export interface uploadType {
 }
 
 export interface xCommentParams {
-  id: number;
+  id: number | string;
   comment: string;
   pic_id?: string;
   is_repost?: number;
@@ -154,7 +154,7 @@ export interface xCommentParams {
   is_comment?: number;
 }
 export interface xRepostParams {
-  id: number;
+  id: number | string;
   comment: string;
   pic_id?: string;
   is_repost?: number;

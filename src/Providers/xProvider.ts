@@ -386,19 +386,22 @@ export class XProvider extends BaseWebviewProvider {
 
       case "GETUSERBLOG": {
         let uid = "";
+        let cursor = "";
         if (typeof payload === "object") {
           uid = payload.uid || payload.userId;
+          cursor = payload.cursor || "";
         } else if (typeof payload === "string") {
           try {
             const parsed = JSON.parse(payload);
             uid = parsed.uid || parsed.userId;
+            cursor = parsed.cursor || "";
           } catch {
             uid = payload;
           }
         }
 
         const res = await getXUserTweets(
-          { userId: uid.toString() },
+          { userId: uid.toString(), cursor: cursor || undefined },
           credential,
         );
         const mappedData =
