@@ -1,6 +1,16 @@
 # 更新历史 
 
 
+## [14.2.0](https://github.com/ylw1997/touchFish/compare/v14.1.0...v14.2.0) (2026-04-15)
+
+
+### ✨ Features | 新功能
+
+* 关注取关完成 ([c0c1f31](https://github.com/ylw1997/touchFish/commit/c0c1f318328fd2972d2b306158b499bef6f0c509))
+* 修复打包错误问题 ([244532b](https://github.com/ylw1997/touchFish/commit/244532b7099124299261ab2b6fc2a15e3b75e965))
+* 修复gif图没有展示问题 ([3f62cba](https://github.com/ylw1997/touchFish/commit/3f62cba32c4cd9775d436cd9895565036c57086e))
+* 修复x 返回顶部问题 ([4b338e3](https://github.com/ylw1997/touchFish/commit/4b338e38a6c3aa9e4861e5c604576ea5adf9c52b))
+
 ## [14.1.0](https://github.com/ylw1997/touchFish/compare/v13.2.0...v14.1.0) (2026-04-15)
 
 
