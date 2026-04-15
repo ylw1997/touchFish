@@ -1,6 +1,31 @@
 # 更新历史 
 
 
+## [14.1.0](https://github.com/ylw1997/touchFish/compare/v13.2.0...v14.1.0) (2026-04-15)
+
+
+### ✨ Features | 新功能
+
+* 评论完成 ([a4108cf](https://github.com/ylw1997/touchFish/commit/a4108cf7fd6b8bcb3d9e45134dbc4a18a73f2154))
+* 删除log ([2587d09](https://github.com/ylw1997/touchFish/commit/2587d09d5899a20de64bd951f7f3a86759410122))
+* 修复错误 ([93551f8](https://github.com/ylw1997/touchFish/commit/93551f84ec4e07423b23290d4dac48e945d272df))
+* 修复浮动按钮样式错误问题 ([45fd269](https://github.com/ylw1997/touchFish/commit/45fd269a260753702043b4160d3c28d089df0725))
+* 修复滚动加载问题 ([901e4dd](https://github.com/ylw1997/touchFish/commit/901e4dd4d1a01d26cb4db9a34471b67107d23c41))
+* 修复配置 ([66f8fea](https://github.com/ylw1997/touchFish/commit/66f8feaff90455ffbaebd1b7f2284a97554239e8))
+* 修复小宇宙播放列表高亮问题 ([17d70e6](https://github.com/ylw1997/touchFish/commit/17d70e63adf1445014cbe41e34470e5209258cc5))
+* 修复qq音乐播放问题 ([0aa835f](https://github.com/ylw1997/touchFish/commit/0aa835fa1028ef0b285ad2a19e2bc640a78fbce2))
+* 修复x显示错误问题 ([bae4b23](https://github.com/ylw1997/touchFish/commit/bae4b23636516d27856d734d8a45ba2ca8720fcd))
+* 隐藏搜索 ([11147d2](https://github.com/ylw1997/touchFish/commit/11147d203f65dee445b3cbb8ea75f0eea6190bc4))
+* 用户滚动加载完成 ([1b1e0f0](https://github.com/ylw1997/touchFish/commit/1b1e0f0015269518c060aa4dace773ef07bb0666))
+* 增加x配置 ([7a3a771](https://github.com/ylw1997/touchFish/commit/7a3a77183fcfa710e9729d24c13ca60652d7f63c))
+* 展开完成 ([969256a](https://github.com/ylw1997/touchFish/commit/969256ac98021269873695e520d6c3813a912295))
+* search还没好 ([94092da](https://github.com/ylw1997/touchFish/commit/94092dac251f9450aa5d8abe0fb4290b28cfd305))
+* x初始化 ([4e7c9f3](https://github.com/ylw1997/touchFish/commit/4e7c9f316a1c0242a7611606f1f315b22c63b036))
+* x基本api对接 ([e17759b](https://github.com/ylw1997/touchFish/commit/e17759b8dab19d132cc31e72c866be8b4d2e3bf5))
+* x帖子显示完成 ([36d45d5](https://github.com/ylw1997/touchFish/commit/36d45d52fd50c359d6ba61995d5eb8f2288a0907))
+* x用户详情展示完成 ([64a37f7](https://github.com/ylw1997/touchFish/commit/64a37f74d7307931dfb55ec87694b5faa4a13bb2))
+* xlogo ([e8927c6](https://github.com/ylw1997/touchFish/commit/e8927c6f67cc487c33e89115dcc3e57efbabb3c0))
+
 ## [13.2.0](https://github.com/ylw1997/touchFish/compare/v13.1.1...v13.2.0) (2026-04-13)
 
 
