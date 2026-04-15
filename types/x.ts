@@ -101,7 +101,7 @@ interface commentsPicItem {
 }
 
 export interface xUser {
-  id: number;
+  id: number | string;
   screen_name: string;
   avatar_hd?: string;
   avatar_large?: string;

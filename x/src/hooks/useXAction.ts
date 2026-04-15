@@ -111,9 +111,10 @@ const useXAction = () => {
       setIsFetching(true);
       try {
         const result = await apiClient.getUserBlogData(uid, page);
-        const newList = result.data.list;
+        // X API 返回的是 xAJAX 格式，使用 statuses 而不是 data.list
+        const newList = result.statuses || [];
         setList((currentList) => [...currentList, ...newList]);
-        const wtotal = result.data?.total ?? 999;
+        const wtotal = result.total_number ?? 999;
         setTotal(wtotal);
       } finally {
         setIsFetching(false);
@@ -224,11 +225,10 @@ const useXAction = () => {
   const getUserBlog = useCallback(
     async (userInfo: xUser) => {
       if (!userInfo) return;
-      const result = await apiClient.getUserByName(String(userInfo.id));
-      setUserDetail({
-        ...result.data,
-        avatar_hd: result.data.avatar,
-      });
+      // 使用 screen_name_raw 而不是 id
+      const screenName = userInfo.screen_name_raw || userInfo.screen_name;
+      const result = await apiClient.getUserByName(screenName);
+      setUserDetail(result.data);
       setUserDetailVisible(true);
     },
     [apiClient]
@@ -237,10 +237,7 @@ const useXAction = () => {
   const getUserByName = useCallback(
     async (username: string) => {
       const result = await apiClient.getUserByName(username);
-      setUserDetail({
-        ...result.data,
-        avatar_hd: result.data.avatar,
-      });
+      setUserDetail(result.data);
       setUserDetailVisible(true);
     },
     [apiClient]

@@ -25,8 +25,8 @@ import {
   MinusOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
-  SearchOutlined,
   RedoOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -226,7 +226,7 @@ function App() {
       {/* 刷新按钮 */}
       <FloatButton
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 24 }}
+        style={{ insetInlineEnd: 24, bottom: 204 }}
         onClick={() => {
           clearList();
           getListData(activeKey, true);
@@ -239,12 +239,12 @@ function App() {
         onClick={() => setSearchDrawerOpen(true)}
         icon={<SearchOutlined style={{ color: "#faad14" }} />}
         tooltip={{ title: "搜索", placement: "left" }}
-        style={{ insetInlineEnd: 24, bottom: 84 }}
+        style={{ insetInlineEnd: 24, bottom: 264 }}
       />
 
       {/* 显示图片 */}
       <FloatButton
-        style={{ insetInlineEnd: 24, bottom: 144 }}
+        style={{ insetInlineEnd: 24, bottom: 24 }}
         onClick={() => {
           const newState = !showImg;
           setShowImg(newState);
@@ -266,13 +266,13 @@ function App() {
         }}
       />
       <FloatButton
-        style={{ insetInlineEnd: 24, bottom: 204 }}
+        style={{ insetInlineEnd: 24, bottom: 84 }}
         onClick={increase}
         icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
         tooltip={{ title: "加大字体", placement: "left" }}
       />
       <FloatButton
-        style={{ insetInlineEnd: 24, bottom: 264 }}
+        style={{ insetInlineEnd: 24, bottom: 144 }}
         onClick={decrease}
         icon={<MinusOutlined style={{ color: "#52c41a" }} />}
         tooltip={{ title: "减小字体", placement: "left" }}

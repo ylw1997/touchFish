@@ -68,7 +68,7 @@ function mapXTweetToXItem(tweet: any): xItem | null {
       userResult.profile_image_url_https;
 
     user = {
-      id: Number(userResult.rest_id) || 0,
+      id: userResult.rest_id || "0",
       name: name,
       screen_name_raw: sName,
       screen_name:
@@ -85,7 +85,7 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     };
   } else {
     user = {
-      id: Number(legacy.user_id_str) || 0,
+      id: legacy.user_id_str || "0",
       screen_name: "User_" + legacy.user_id_str,
     };
   }
@@ -463,7 +463,7 @@ export class XProvider extends BaseWebviewProvider {
           mappedData = {
             ok: 1,
             data: {
-              id: Number(userResult.rest_id),
+              id: userResult.rest_id,
               name: name,
               screen_name_raw: sName,
               screen_name:

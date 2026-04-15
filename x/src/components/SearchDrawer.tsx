@@ -7,14 +7,7 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import {
-  Drawer,
-  Button,
-  Input,
-  Form,
-  Divider,
-  Empty,
-} from "antd";
+import { Drawer, Button, Input, Form, Empty } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
@@ -35,40 +28,28 @@ interface SearchDrawerProps {
 }
 
 // Extracted and Memoized SearchList Component
-const SearchList = memo(
-  ({
-    xs,
-    loading,
-    getUserBlog,
-    ...xCardProps
-  }: any) => {
-    if (loading) {
-      return loaderFunc();
-    }
-
-    if (xs.length === 0) {
-      return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
-    }
-
-    // Render X list
-    return xs.map((item: any) => (
-      <motion.div
-        key={item.id}
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.4 }}
-      >
-        <XCard
-          item={item}
-          onUserClick={getUserBlog}
-          {...xCardProps}
-          isH5
-        />
-      </motion.div>
-    ));
+const SearchList = memo(({ xs, loading, getUserBlog, ...xCardProps }: any) => {
+  if (loading) {
+    return loaderFunc();
   }
-);
+
+  if (xs.length === 0) {
+    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+  }
+
+  // Render X list
+  return xs.map((item: any) => (
+    <motion.div
+      key={item.id}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4 }}
+    >
+      <XCard item={item} onUserClick={getUserBlog} {...xCardProps} isH5 />
+    </motion.div>
+  ));
+});
 
 // Main Drawer Component
 const SearchDrawer: React.FC<SearchDrawerProps> = ({
@@ -100,28 +81,25 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     setLoading(false);
   }, []);
 
-  const handleSearch = useCallback(
-    async () => {
-      try {
-        const values = await form.validateFields();
-        if (!values.keyword) return;
-        clear();
-        setLoading(true);
-        const result = await getXSearch(values.keyword, {
-          type: "60",
-          card_type: 9,
-          text: "热门",
-          field: "mblog",
-        });
-        setSearchResults(result.statuses || []);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [form, clear, getXSearch]
-  );
+  const handleSearch = useCallback(async () => {
+    try {
+      const values = await form.validateFields();
+      if (!values.keyword) return;
+      clear();
+      setLoading(true);
+      const result = await getXSearch(values.keyword, {
+        type: "60",
+        card_type: 9,
+        text: "热门",
+        field: "mblog",
+      });
+      setSearchResults(result.statuses || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [form, clear, getXSearch]);
 
   useEffect(() => {
     if (open && initialKeyword) {
@@ -161,7 +139,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       showImg,
       getUserByName,
       onTopicClick,
-    ]
+    ],
   );
 
   return (
@@ -169,21 +147,16 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       <Drawer
         title="X 搜索"
         placement="bottom"
-        height={
-          searchResults.length > 0
-            ? "calc(100vh - 150px)"
-            : "auto"
-        }
+        height={searchResults.length > 0 ? "calc(100vh - 150px)" : "auto"}
         open={open}
         onClose={closeFunc}
         destroyOnHidden
         styles={{
           body: {
-            padding: "0 5px",
+            padding: "10px 5px",
           },
         }}
       >
-        <Divider>搜索 X</Divider>
         <Form form={form} layout="vertical">
           <Form.Item
             label={false}
