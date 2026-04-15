@@ -48,6 +48,7 @@ export interface xItem extends baseXField {
     [key: string]: {
       pic_id: string;
       type: "pic" | "video";
+      video_url?: string;
       largest: { url: string; height: number; width: number };
       large: { url: string; height: number; width: number };
       bmiddle: { url: string; height: number; width: number };

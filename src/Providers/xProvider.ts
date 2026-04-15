@@ -163,22 +163,28 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
   for (const instruction of instructions) {
     if (instruction.type === "TimelineAddEntries") {
       for (const entry of instruction.entries || []) {
-        if (entry.entryId.startsWith("tweet-")) {
-          const tweetContent =
-            entry.content?.itemContent?.tweet_results?.result;
-          console.log("[X DEBUG] raw tweet keys:", tweetContent ? Object.keys(tweetContent) : "null");
-          console.log("[X DEBUG] __typename:", tweetContent?.__typename);
-          console.log("[X DEBUG] core:", tweetContent?.core ? Object.keys(tweetContent.core) : "no core");
-          console.log("[X DEBUG] tweet.core?.user_results?.result?.legacy?.screen_name:", tweetContent?.core?.user_results?.result?.legacy?.screen_name);
-          // 检查是否被 TweetWithVisibilityResults 包裹
-          if (tweetContent?.tweet) {
-            console.log("[X DEBUG] unwrapped tweet keys:", Object.keys(tweetContent.tweet));
-            console.log("[X DEBUG] unwrapped core:", tweetContent.tweet.core ? Object.keys(tweetContent.tweet.core) : "no core");
+        const entryId = entry.entryId || "";
+        
+        // 提取推文内容的辅助函数
+        const processItem = (itemContent: any) => {
+          if (itemContent?.itemType === "TimelineTweet" || itemContent?.tweet_results?.result) {
+            const tweetContent = itemContent.tweet_results?.result;
+            if (tweetContent) {
+              const mapped = mapXTweetToXItem(tweetContent);
+              if (mapped) statuses.push(mapped);
+            }
           }
-          const mapped = mapXTweetToXItem(tweetContent);
-          console.log("[X DEBUG] mapped user:", mapped?.user);
-          if (mapped) statuses.push(mapped);
-        } else if (entry.entryId.startsWith("cursor-bottom")) {
+        };
+
+        if (entryId.startsWith("tweet-") || entryId.startsWith("conversation-")) {
+          processItem(entry.content?.itemContent);
+        } else if (entry.content?.entryType === "TimelineTimelineModule") {
+          // 处理嵌套模块（如评论列表、会话线索）
+          const items = entry.content?.items || [];
+          for (const mItem of items) {
+            processItem(mItem.item?.itemContent);
+          }
+        } else if (entryId.startsWith("cursor-bottom")) {
           cursor = entry.content?.value;
         }
       }
