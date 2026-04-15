@@ -50,7 +50,7 @@ function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const {
     list,
-    total,
+    hasMore,
     copyLink,
     clearList,
     handleToggleComments,
@@ -131,8 +131,7 @@ function App() {
   // 初始化，尝试从缓存恢复
   useEffect(() => {
     if (list.length === 0) fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchData, list.length]);
 
   // tab切换
   const onChange = useCallback(
@@ -183,7 +182,7 @@ function App() {
             next={fetchData}
             loader={isFetching ? loaderFunc() : null}
             endMessage={<Divider plain>没有了🤐</Divider>}
-            hasMore={list.length < total}
+            hasMore={hasMore}
             scrollThreshold={0.95}
             scrollableTarget="scrollableDiv"
           >

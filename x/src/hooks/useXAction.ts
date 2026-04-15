@@ -13,11 +13,28 @@ import { parseArray } from "../utils";
 import { useRequest } from "./useRequest";
 import { XApi } from "../api";
 
+function mergeUniqueXItems(currentList: xItem[], incomingList: xItem[]) {
+  const seen = new Set<string>();
+  const merged: xItem[] = [];
+
+  for (const item of [...currentList, ...incomingList]) {
+    const key = String(item.id || item.mblogid || item.bid || "");
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    merged.push(item);
+  }
+
+  return merged;
+}
+
 const useXAction = () => {
   // 微博列表相关状态
   const [list, setList] = useState<xItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [userXPage, setUserXPage] = useState(1); // 用户微博页码
   const [maxId, setMaxId] = useState<number | string>(0);
 
@@ -72,12 +89,12 @@ const useXAction = () => {
       }
       try {
         const result = await apiClient.getListData(newPayload);
-        if (result.max_id) {
-          setMaxId(result.max_id);
-        }
+        const nextCursor = result.max_id_str || String(result.max_id || "");
+        setMaxId(nextCursor || 0);
+        setHasMore(!!nextCursor);
         const newList = result.statuses.filter((item) => item.mblogtype !== 1);
         setList((currentList) =>
-          replace ? newList : [...currentList, ...newList]
+          replace ? newList : mergeUniqueXItems(currentList, newList)
         );
         const wtotal = result.total_number ?? 9999;
         setTotal(wtotal);
@@ -108,6 +125,8 @@ const useXAction = () => {
   // 清空列表
   const clearList = useCallback(() => {
     setList([]);
+    setHasMore(true);
+    setMaxId(0);
   }, []);
 
   // 复制
@@ -399,6 +418,7 @@ const useXAction = () => {
     setList,
     total,
     setTotal,
+    hasMore,
     updateList,
     copyLink,
     clearList,
