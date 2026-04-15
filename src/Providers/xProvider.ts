@@ -37,6 +37,14 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     return null;
   }
   const legacy = t.legacy;
+
+  const truncateText = (value: string, maxLength: number) => {
+    const normalized = value.replace(/\r\n/g, "\n").trim();
+    if (normalized.length <= maxLength) {
+      return normalized;
+    }
+    return normalized.slice(0, maxLength).trimEnd() + "...";
+  };
   
   // 提取用户信息，处理可能的嵌套
   let userResult = t.core?.user_results?.result || t.author?.user_results?.result;
@@ -118,19 +126,23 @@ function mapXTweetToXItem(tweet: any): xItem | null {
   }
 
   // 处理长推文 (NoteTweet)
-  let text = (legacy.full_text || "").replace(/\s*https:\/\/t\.co\/\S+$/g, "");
-  let isLongText = false;
-  
-  if (t.note_tweet?.note_tweet_results?.result?.text) {
-    text = t.note_tweet.note_tweet_results.result.text;
-    isLongText = true;
-  }
+  const summaryText = (legacy.full_text || "").replace(
+    /\s*https:\/\/t\.co\/\S+$/g,
+    "",
+  );
+  const noteTweetText = t.note_tweet?.note_tweet_results?.result?.text;
+  const longTextContent = noteTweetText || summaryText;
+  const isLongText =
+    !!t.note_tweet?.is_expandable ||
+    (!!noteTweetText && noteTweetText !== summaryText);
+  const previewText = isLongText ? truncateText(longTextContent, 140) : summaryText;
 
   return {
     id: legacy.id_str || legacy.conversation_id_str,
-    text: text,
-    text_raw: text,
-    isLongText: isLongText,
+    text: previewText,
+    text_raw: previewText,
+    isLongText,
+    longTextContent,
     source: legacy.source || "X",
     pic_ids,
     mblogid: legacy.id_str,
@@ -392,7 +404,16 @@ export class XProvider extends BaseWebviewProvider {
           // 在详情页返回的结果中寻找目标推文
           const targetTweet = xAJAX.statuses.find(s => s.id === tweetId || s.mblogid === tweetId);
           if (targetTweet) {
-            mappedData = { ok: 1, data: targetTweet };
+            mappedData = {
+              ok: 1,
+              data: {
+                ...targetTweet,
+                longTextContent:
+                  targetTweet.longTextContent ||
+                  targetTweet.text_raw ||
+                  targetTweet.text,
+              },
+            };
           }
         }
         webviewView.webview.postMessage({

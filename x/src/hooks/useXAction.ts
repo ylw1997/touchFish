@@ -189,19 +189,16 @@ const useXAction = () => {
   // 合并长微博展开方法
   const handleExpandLongX = useCallback(
     async (id: string | number) => {
-      const result = await apiClient.getLongText(id);
-      const mblogid = result.payload;
       updateList(
-        (item) => (item.mblogid ? item.mblogid : item.bid) === mblogid,
+        (item) => (item.mblogid ? item.mblogid : item.bid) === id.toString(),
         (item) => ({
           ...item,
-          text_raw: result.data.longTextContent,
-          isLongText: false,
-          text: result.data.longTextContent,
+          text_raw: item.longTextContent || item.text_raw,
+          text: item.longTextContent || item.text,
         })
       );
     },
-    [updateList, apiClient]
+    [updateList]
   );
 
   // 查看博主微博

@@ -1,15 +1,14 @@
-import { DownOutlined, LoadingOutlined, UpOutlined } from "@ant-design/icons";
+import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { Card, Tag } from "antd";
+import React, { useState } from "react";
+
 import { xItem, xUser } from "../../../types/x";
 import { renderComments } from "./Comment";
-import { loaderFunc } from "../utils/loader";
+import CommentForm from "./CommentForm";
 import XCardActions from "./XCardActions";
 import XCardHeader from "./XCardHeader";
-import CommentForm from "./CommentForm";
 import XCardMedia from "./XCardMedia";
-import { useRequest } from "../hooks/useRequest";
-import { XApi } from "../api";
-import React, { useMemo, useState } from "react";
+import { loaderFunc } from "../utils/loader";
 import { parseH5XText, parseXText } from "../utils/textParser";
 
 export interface xBaseActions {
@@ -55,39 +54,21 @@ const XCard: React.FC<XCardProps> = ({
   showImg,
   getUserByName,
   onTopicClick,
-  isH5 = false, // 是否是H5端
+  isH5 = false,
 }) => {
   const [commentType, setCommentType] = useState<"comment" | "repost">();
-
   const [isExpanded, setIsExpanded] = useState(false);
-  const [longText, setLongText] = useState("");
-  const [isLoadingLongText, setIsLoadingLongText] = useState(false);
-  const { request } = useRequest();
-  const apiClient = useMemo(() => new XApi(request), [request]);
 
-  const handleToggleLongText = async () => {
-    if (isExpanded) {
-      setIsExpanded(false);
-      return;
-    }
+  const longText = item.longTextContent || item.text_raw || item.text;
+  const hasExpandableLongText =
+    !!item.isLongText &&
+    !!item.longTextContent &&
+    item.longTextContent !== item.text_raw &&
+    ((item.text_raw && item.text_raw.length > 140) ||
+      (isH5 && !item.text_raw && item.text && item.text.length > 140));
 
-    if (longText) {
-      setIsExpanded(true);
-      return;
-    }
-
-    setIsLoadingLongText(true);
-    try {
-      const result = await apiClient.getLongText(
-        isH5 ? item.bid : item.mblogid
-      );
-      setLongText(result.data.longTextContent);
-      setIsExpanded(true);
-    } catch (error) {
-      console.error("Failed to fetch long text", error);
-    } finally {
-      setIsLoadingLongText(false);
-    }
+  const handleToggleLongText = () => {
+    setIsExpanded((prev) => !prev);
   };
 
   return (
@@ -113,33 +94,24 @@ const XCard: React.FC<XCardProps> = ({
               onTopicClick
             )
           : isH5
-          ? item.text_raw
-            ? parseXText(item, getUserByName, onTopicClick)
-            : parseH5XText(item.text, getUserByName, onTopicClick)
-          : parseXText(item, getUserByName, onTopicClick)}
-        {item.isLongText &&
-          ((item.text_raw && item.text_raw.length > 140) ||
-            (isH5 && !item.text_raw && item.text && item.text.length > 140)) && (
+            ? item.text_raw
+              ? parseXText(item, getUserByName, onTopicClick)
+              : parseH5XText(item.text, getUserByName, onTopicClick)
+            : parseXText(item, getUserByName, onTopicClick)}
+        {hasExpandableLongText ? (
           <Tag
             color="blue"
             style={{ marginLeft: "8px", cursor: "pointer" }}
             className="link-tag"
             onClick={handleToggleLongText}
             bordered={false}
-            icon={
-              isLoadingLongText ? (
-                <LoadingOutlined />
-              ) : isExpanded ? (
-                <UpOutlined />
-              ) : (
-                <DownOutlined />
-              )
-            }
+            icon={isExpanded ? <UpOutlined /> : <DownOutlined />}
           >
-            {isLoadingLongText ? "加载中..." : isExpanded ? "收起" : "展开全文"}
+            {isExpanded ? "收起" : "展开全文"}
           </Tag>
-        )}
+        ) : null}
       </div>
+
       <XCardMedia item={item} isH5={isH5} showImg={showImg} />
 
       <XCardActions
@@ -150,14 +122,16 @@ const XCard: React.FC<XCardProps> = ({
         onLikeOrCancelLike={onLikeOrCancelLike}
         is_child={is_child}
       />
-      {commentType && (
+
+      {commentType ? (
         <CommentForm
           item={item}
           commentType={commentType}
           onCommentOrRepost={onCommentOrRepost}
         />
-      )}
-      {item.comments && (
+      ) : null}
+
+      {item.comments ? (
         <>
           {item.comments === "loading" ? (
             <div style={{ margin: "5px" }}>{loaderFunc(2)}</div>
@@ -171,8 +145,9 @@ const XCard: React.FC<XCardProps> = ({
             )
           )}
         </>
-      )}
-      {item.retweeted_status && (
+      ) : null}
+
+      {item.retweeted_status ? (
         <XCard
           className="retweeted-status"
           item={item.retweeted_status}
@@ -190,7 +165,7 @@ const XCard: React.FC<XCardProps> = ({
           getUserByName={getUserByName}
           onTopicClick={onTopicClick}
         />
-      )}
+      ) : null}
     </Card>
   );
 };

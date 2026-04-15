@@ -30,6 +30,7 @@ export interface xItem extends baseXField {
   text: string;
   text_raw: string;
   isLongText: boolean;
+  longTextContent?: string;
   source: string;
   pic_ids: string[];
   mblogid: string;
