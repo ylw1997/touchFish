@@ -2,7 +2,7 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do摸鱼聚合插件,沉浸式主题,qq音乐,qqmusic,播客,xiaoyuzhou,小宇宙",
+	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do,X,Twitter摸鱼聚合插件,沉浸式主题,qq音乐,qqmusic,播客,xiaoyuzhou,小宇宙",
 	"version": "13.2.0",
 	"icon": "logo.png",
 	"engines": {
@@ -38,7 +38,9 @@
 		"qq音乐",
 		"xiaoyuzhou",
 		"小宇宙",
-		"播客"
+		"播客",
+		"x",
+		"twitter"
 	],
 	"categories": [
 		"Other"
@@ -313,10 +315,6 @@
 				"touchfish.xAuthorization": {
 					"type": "string",
 					"description": "X Authorization"
-				},
-				"touchfish.xCsrfToken": {
-					"type": "string",
-					"description": "X x-csrf-token"
 				}
 			}
 		},

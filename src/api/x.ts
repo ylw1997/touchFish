@@ -400,21 +400,35 @@ function buildUserTweetsVariables(params: XUserTweetsParams) {
   };
 }
 
+/**
+ * 从 cookie 字符串中提取 ct0 值作为 csrfToken
+ */
+function extractCt0FromCookie(cookie: string): string | undefined {
+  const match = cookie.match(/(?:^|;\s*)ct0=([^;]+)/);
+  return match?.[1];
+}
+
+/** 固定的公开 Bearer Token，所有 X Web 客户端都用这个 */
+const X_DEFAULT_BEARER_TOKEN =
+  "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
+
 export async function getStoredXCredential(): Promise<XCredential | null> {
   const { getConfigByKey } = (await import("../core/config")) as ConfigModule;
   const cookie = getConfigByKey("xCookie");
-  const authorization = getConfigByKey("xAuthorization");
-  const csrfToken = getConfigByKey("xCsrfToken");
+  if (!cookie) return null;
 
-  if (!cookie || !authorization || !csrfToken) {
-    return null;
-  }
+  // csrfToken 从 cookie 中的 ct0 自动提取
+  const csrfToken = extractCt0FromCookie(cookie);
+  if (!csrfToken) return null;
+
+  // authorization 优先读取配置，否则使用默认公开 token
+  const authorization = getConfigByKey("xAuthorization") || X_DEFAULT_BEARER_TOKEN;
 
   return { cookie, authorization, csrfToken };
 }
 
 async function askForCredentialField(
-  key: "xCookie" | "xAuthorization" | "xCsrfToken",
+  key: "xCookie" | "xAuthorization",
   prompt: string,
 ): Promise<string | undefined> {
   const { getConfigByKey, setConfigByKey } =
@@ -440,18 +454,13 @@ async function askForCredentialField(
 
 export async function getOrSetXCredential(): Promise<XCredential | null> {
   const cookie = await askForCredentialField("xCookie", "请输入 X 的 Cookie");
-  const authorization = await askForCredentialField(
-    "xAuthorization",
-    "请输入 X 的 authorization",
-  );
-  const csrfToken = await askForCredentialField(
-    "xCsrfToken",
-    "请输入 X 的 x-csrf-token",
-  );
+  if (!cookie) return null;
 
-  if (!cookie || !authorization || !csrfToken) {
-    return null;
-  }
+  const csrfToken = extractCt0FromCookie(cookie);
+  if (!csrfToken) return null;
+
+  // authorization 使用默认值，不再要求用户输入
+  const authorization = X_DEFAULT_BEARER_TOKEN;
 
   return { cookie, authorization, csrfToken };
 }

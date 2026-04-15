@@ -467,27 +467,20 @@ export const setXTokenCommand = () => {
     "touchfish.setXToken",
     async () => {
       const xCookie = await vscode.window.showInputBox({
-        prompt: "请输入 X 的 Cookie",
+        prompt: "请输入 X 的 Cookie（包含 ct0 字段即可，无需额外设置 csrf-token）",
         placeHolder: "请输入 X 的 Cookie",
       });
       if (xCookie === undefined) return;
 
-      const xAuthorization = await vscode.window.showInputBox({
-        prompt: "请输入 X 的 Authorization",
-        placeHolder: "请输入 X 的 Authorization",
-      });
-      if (xAuthorization === undefined) return;
-
-      const xCsrfToken = await vscode.window.showInputBox({
-        prompt: "请输入 X 的 x-csrf-token",
-        placeHolder: "请输入 X 的 x-csrf-token",
-      });
-      if (xCsrfToken === undefined) return;
+      // 验证 cookie 中包含 ct0
+      const ct0Match = xCookie.match(/(?:^|;\s*)ct0=([^;]+)/);
+      if (!ct0Match) {
+        await showInfo("Cookie 中未找到 ct0 字段，请确保 Cookie 完整！");
+        return;
+      }
 
       await setConfigByKey("xCookie", xCookie.trim());
-      await setConfigByKey("xAuthorization", xAuthorization.trim());
-      await setConfigByKey("xCsrfToken", xCsrfToken.trim());
-      await showInfo("X 凭据设置成功,打开视图即可使用!");
+      await showInfo("X 凭据设置成功，ct0 已自动提取为 csrf-token！");
     }
   );
 };

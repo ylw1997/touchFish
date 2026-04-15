@@ -259,11 +259,13 @@ export class XProvider extends BaseWebviewProvider {
     const { command, payload, uuid } = message;
     const config = workspace.getConfiguration("touchfish");
     const cookie = config.get<string>("xCookie");
-    const authorization = config.get<string>("xAuthorization");
-    const csrfToken = config.get<string>("xCsrfToken");
+    const authorization = config.get<string>("xAuthorization") ||
+      "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
+    // 从 cookie 中自动提取 ct0 作为 csrfToken
+    const csrfToken = cookie?.match(/(?:^|;\s*)ct0=([^;]+)/)?.[1];
 
     let credential = null;
-    if (cookie && authorization && csrfToken) {
+    if (cookie && csrfToken) {
       credential = { cookie, authorization, csrfToken };
     }
 
