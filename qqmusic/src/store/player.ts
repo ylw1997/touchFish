@@ -244,6 +244,8 @@ export const usePlayerStore = create<PlayerState>()(
           currentIndex: -1,
           currentSong: null,
           isPlaying: false,
+          isRadioMode: false,
+          playSource: "normal",
         });
       },
     }),

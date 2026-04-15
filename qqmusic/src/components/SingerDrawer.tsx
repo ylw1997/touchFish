@@ -10,7 +10,14 @@ import SongCard from "./SongCard";
 import type { Song } from "../types/qqmusic";
 
 export const SingerDrawer: React.FC = () => {
-  const { isSingerOpen, currentSingerMid, currentSingerName, closeSingerDrawer, currentSong } = usePlayerStore();
+  const {
+    isSingerOpen,
+    currentSingerMid,
+    currentSingerName,
+    closeSingerDrawer,
+    currentSong,
+    addToPlaylist,
+  } = usePlayerStore();
   const { getSingerInfo, getSingerSongs, isLoading, playSong } = useQQMusic();
 
   const [singerInfo, setSingerInfo] = useState<any>(null);
@@ -160,6 +167,7 @@ export const SingerDrawer: React.FC = () => {
                   isPlaying={currentSong?.mid === song.mid}
                   isCurrent={currentSong?.mid === song.mid}
                   onPlay={handlePlaySong}
+                  onAddToPlaylist={addToPlaylist}
                 />
               ))}
             </div>
