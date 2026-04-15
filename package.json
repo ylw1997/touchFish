@@ -366,7 +366,7 @@
 				{
 					"id": "x",
 					"title": "TouchFish-X",
-					"icon": "assets/training.svg",
+					"icon": "assets/x.svg",
 					"when": "config.touchfish.enableX"
 				}
 			]
@@ -472,7 +472,7 @@
 			],
 			"x": [
 				{
-					"icon": "assets/training.svg",
+					"icon": "assets/x.svg",
 					"type": "webview",
 					"name": "X",
 					"id": "x",

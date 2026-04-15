@@ -30,10 +30,7 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     t = t.result;
   }
 
-  console.log("[X DEBUG] processing tweet:", t?.__typename, t?.rest_id);
-
   if (!t?.legacy) {
-    console.log("[X DEBUG] skip: no legacy");
     return null;
   }
   const legacy = t.legacy;
@@ -55,10 +52,6 @@ function mapXTweetToXItem(tweet: any): xItem | null {
   const userLegacy = userResult?.legacy;
   const userCore = userResult?.core;
 
-  console.log("[X DEBUG] userResult keys:", userResult ? Object.keys(userResult) : "null");
-  console.log("[X DEBUG] userLegacy keys:", userLegacy ? Object.keys(userLegacy) : "null");
-  console.log("[X DEBUG] userCore keys:", userCore ? Object.keys(userCore) : "null");
-
   let user: xUser | undefined;
   if (userResult) {
     const name = userLegacy?.name || userCore?.name || userResult.name;
@@ -75,9 +68,7 @@ function mapXTweetToXItem(tweet: any): xItem | null {
       followers_count: userLegacy?.followers_count || 0,
       following: userLegacy?.following || userResult.relationship_perspectives?.following || false,
     };
-    console.log("[X DEBUG] mapped user success:", user.screen_name, "avatar:", !!user.avatar_hd);
   } else {
-    console.log("[X DEBUG] fallback user from legacy user_id_str:", legacy.user_id_str);
     user = {
       id: Number(legacy.user_id_str) || 0,
       screen_name: "User_" + legacy.user_id_str,
@@ -209,7 +200,6 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
     }
   }
 
-  console.log("[X DEBUG] parse finished, total statuses:", statuses.length, "cursor:", cursor);
   return {
     ok: 1,
     since_id: 0,
@@ -461,7 +451,6 @@ export class XProvider extends BaseWebviewProvider {
 
       // Fallback handlers to avoid errors
       default: {
-        console.warn(`[X DEBUG] Method not supported: ${command}`);
         webviewView.webview.postMessage({
           payload: { ok: 0, msg: `X 模块暂不支持 ${command} 操作` },
           uuid,
