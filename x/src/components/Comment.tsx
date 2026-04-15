@@ -21,7 +21,7 @@ export const renderComments = (
   is_child = false,
   getUserByName: (username: string) => void,
   onUserClick: (userInfo: xUser) => void,
-  onTopicClick: (topic: string) => void
+  onTopicClick: (topic: string) => void,
 ) => {
   return (
     <div className="border-top-divider">
@@ -41,7 +41,7 @@ export const renderComments = (
               padding: "0px",
             }}
           >
-            <List.Item
+            <div
               style={{
                 padding: is_child ? "8px 0px 0px" : "8px 8px 0px",
               }}
@@ -51,12 +51,12 @@ export const renderComments = (
                   <Avatar
                     size={32}
                     src={
-                      item.user?.avatar_hd && (
-                        <YImg useImg src={item.user?.avatar_hd} />
-                      )
+                      item.user?.avatar_hd ? (
+                        <YImg useImg src={item.user.avatar_hd} />
+                      ) : undefined
                     }
                   >
-                    {item.user?.screen_name}
+                    {item.user?.screen_name?.[0]?.toUpperCase()}
                   </Avatar>
                 }
                 title={
@@ -81,7 +81,12 @@ export const renderComments = (
                         className="imglist"
                         style={{ marginBottom: "8px", padding: "0px" }}
                       >
-                        <Image.PreviewGroup>
+                        <Image.PreviewGroup
+                          preview={{
+                            getContainer: () => document.body,
+                            movable: false,
+                          }}
+                        >
                           {item.url_struct[0]?.pic_ids?.map((pic) => {
                             const picInfo =
                               item.url_struct?.[0]?.pic_infos?.[pic];
@@ -110,10 +115,7 @@ export const renderComments = (
                       }}
                       align="center"
                     >
-                      <span>
-                        {dayjs(item.created_at).format("M-DD HH:mm")}{" "}
-                        {item.source}
-                      </span>
+                      <span>{dayjs(item.created_at).format("M-DD HH:mm")}</span>
                       <span>
                         <HeartOutlined /> {item.like_counts}{" "}
                       </span>
@@ -130,13 +132,13 @@ export const renderComments = (
                           true,
                           getUserByName,
                           onUserClick,
-                          onTopicClick
+                          onTopicClick,
                         )}
                     </div>
                   </>
                 }
               />
-            </List.Item>
+            </div>
           </motion.li>
         )}
       />

@@ -8,6 +8,7 @@ import {
   getHomeLatestTimeline,
   getHomeLatestTimelineNext,
   getTweetDetail,
+  getXUserInfo,
 } from "../api/x";
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
@@ -52,16 +53,15 @@ function mapXTweetToXItem(tweet: any): xItem | null {
 
   let user: xUser | undefined;
   if (userResult) {
-    // 更加激进的名字抓取策略
     const name = userLegacy?.name || userCore?.name || userResult.name;
     const sName = userLegacy?.screen_name || userCore?.screen_name || userResult.screen_name;
-    const finalScreenName = name && sName && name !== sName ? `${name} (@${sName})` : (name || sName || "Unknown");
-    
     const avatarUrl = userLegacy?.profile_image_url_https || userResult.avatar?.image_url || userResult.profile_image_url_https;
     
     user = {
       id: Number(userResult.rest_id) || 0,
-      screen_name: finalScreenName,
+      name: name,
+      screen_name_raw: sName,
+      screen_name: name && sName && name !== sName ? `${name} (@${sName})` : (name || sName || "Unknown"),
       avatar_hd: avatarUrl?.replace("_normal", ""),
       avatar_large: avatarUrl?.replace("_normal", ""),
       followers_count: userLegacy?.followers_count || 0,
@@ -117,14 +117,20 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     });
   }
 
-  // X 的 full_text 末尾通常带 https://t.co/xxx 短链接，指向媒体或推文本身，需要移除
-  const cleanText = (legacy.full_text || "").replace(/\s*https:\/\/t\.co\/\S+$/g, "");
+  // 处理长推文 (NoteTweet)
+  let text = (legacy.full_text || "").replace(/\s*https:\/\/t\.co\/\S+$/g, "");
+  let isLongText = false;
+  
+  if (t.note_tweet?.note_tweet_results?.result?.text) {
+    text = t.note_tweet.note_tweet_results.result.text;
+    isLongText = true;
+  }
 
   return {
     id: legacy.id_str || legacy.conversation_id_str,
-    text: cleanText,
-    text_raw: cleanText,
-    isLongText: false,
+    text: text,
+    text_raw: text,
+    isLongText: isLongText,
     source: legacy.source || "X",
     pic_ids,
     mblogid: legacy.id_str,
@@ -377,19 +383,56 @@ export class XProvider extends BaseWebviewProvider {
         break;
       }
 
-      case "GETHOTSEARCH": {
+      case "GETLONGTEXT": {
+        const tweetId = payload.toString();
+        const res = await getTweetDetail(tweetId, credential);
+        let mappedData: any = { ok: 0, msg: "加载详情失败" };
+        if (res.code === 0) {
+          const xAJAX = parseXTimelineToXAJAX(res.data);
+          // 在详情页返回的结果中寻找目标推文
+          const targetTweet = xAJAX.statuses.find(s => s.id === tweetId || s.mblogid === tweetId);
+          if (targetTweet) {
+            mappedData = { ok: 1, data: targetTweet };
+          }
+        }
         webviewView.webview.postMessage({
-          command: `SENDHOTSEARCH`,
-          payload: { ok: 1, data: { realtime: [] } }, // mocking empty hot search for X
+          command: `SENDLONGTEXT`,
+          payload: mappedData,
           uuid,
-        } as CommandsType<xAJAX>);
+        });
         break;
       }
 
-      case "GET_MY_USER_INFO": {
+      case "GETUSERBYNAME": {
+        const screenName = payload.toString().replace("@", "");
+        const res = await getXUserInfo(screenName, credential);
+        let mappedData: any = { ok: 0, msg: "获取用户信息失败" };
+        if (res.code === 0 && res.data?.user?.result) {
+          const userResult = res.data.user.result;
+          const userLegacy = userResult.legacy;
+          const userCore = userResult.core;
+          const name = userLegacy?.name || userCore?.name || userResult.name;
+          const sName = userLegacy?.screen_name || userCore?.screen_name || userResult.screen_name;
+          const avatarUrl = userLegacy?.profile_image_url_https || userResult.avatar?.image_url;
+
+          mappedData = {
+            ok: 1,
+            data: {
+              id: Number(userResult.rest_id),
+              name: name,
+              screen_name_raw: sName,
+              screen_name: name && sName && name !== sName ? `${name} (@${sName})` : (name || sName || "Unknown"),
+              avatar_hd: avatarUrl?.replace("_normal", ""),
+              followers_count: userLegacy?.followers_count || 0,
+              description: userLegacy?.description,
+              location: userLegacy?.location,
+              following: userLegacy?.following || false,
+            }
+          };
+        }
         webviewView.webview.postMessage({
           command: `SENDUSERBYNAME`,
-          payload: { ok: 0, msg: "X 目前不需要使用自定义用户 ID 搜索" },
+          payload: mappedData,
           uuid,
         });
         break;
@@ -397,8 +440,9 @@ export class XProvider extends BaseWebviewProvider {
 
       // Fallback handlers to avoid errors
       default: {
+        console.warn(`[X DEBUG] Method not supported: ${command}`);
         webviewView.webview.postMessage({
-          payload: { ok: 0, msg: "Method not supported for X yet." },
+          payload: { ok: 0, msg: `X 模块暂不支持 ${command} 操作` },
           uuid,
         });
         break;

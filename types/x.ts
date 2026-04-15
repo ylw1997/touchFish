@@ -112,6 +112,8 @@ export interface xUser {
   descText?: string;
   special_follow?: boolean;
   isOwner?: boolean;
+  name?: string;
+  screen_name_raw?: string;
 }
 
 export interface xAJAX {

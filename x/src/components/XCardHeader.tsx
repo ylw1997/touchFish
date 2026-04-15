@@ -1,4 +1,3 @@
-
 import { Avatar, Button, Dropdown, Flex, Space } from "antd";
 import { xItem, xUser } from "../../../types/x";
 import YImg from "./YImg";
@@ -54,8 +53,6 @@ const XCardHeader: React.FC<XCardHeaderProps> = ({
           </span>
           <div className="info">
             <span>{dayjs(item.created_at).fromNow()}</span>
-            <span>{item.region_name?.replace("发布于", "")}</span>{" "}
-            <span dangerouslySetInnerHTML={{ __html: item.source }}></span>
           </div>
         </div>
       </Space>
@@ -81,7 +78,7 @@ const XCardHeader: React.FC<XCardHeaderProps> = ({
                     icon: <ShareAltOutlined />,
                     onClick: () => {
                       onCopyLink?.(
-                        `https://x.com/${item.user?.screen_name}/status/${item.mblogid}`
+                        `https://x.com/${item.user?.screen_name_raw || item.user?.screen_name}/status/${item.mblogid}`,
                       );
                     },
                   },

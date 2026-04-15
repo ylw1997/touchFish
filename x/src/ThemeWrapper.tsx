@@ -68,7 +68,11 @@ const ThemeWrapper = () => {
   );
 
   return (
-    <ConfigProvider theme={antdTheme} locale={zhCN}>
+    <ConfigProvider
+      theme={antdTheme}
+      locale={zhCN}
+      getPopupContainer={(node) => node?.parentElement || document.body}
+    >
       <AntdApp>
         <main className={isLightTheme ? "" : "dark"}>
           <App />

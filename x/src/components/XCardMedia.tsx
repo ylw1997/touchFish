@@ -122,7 +122,12 @@ const XCardMedia: React.FC<XCardMediaProps> = ({
 
     return (
       <div className="imglist">
-        <Image.PreviewGroup>
+        <Image.PreviewGroup
+          preview={{
+            getContainer: () => document.body,
+            movable: false,
+          }}
+        >
           {normalizedMedia.map((media) => (
             <MediaItemDisplay
               key={media.id}

@@ -23,7 +23,14 @@ const YImg: React.FC<YImgProps> = ({
         <Image
           src={src}
           {...props}
-          preview={useImg ? false : true}
+          preview={
+            useImg
+              ? false
+              : {
+                  getContainer: () => document.body,
+                  movable: false,
+                }
+          }
           fallback={back}
         />
       )}
