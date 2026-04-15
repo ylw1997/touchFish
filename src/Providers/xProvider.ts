@@ -99,7 +99,8 @@ function mapXTweetToXItem(tweet: any): xItem | null {
       pic_ids.push(picId);
       pic_infos[picId] = {
         pic_id: picId,
-        type: m.type === "video" ? "video" : "pic",
+        // GIF动图(animated_gif)也当作视频处理，因为有video_info.variants
+        type: m.type === "video" || m.type === "animated_gif" ? "video" : "pic",
         large: {
           url: m.media_url_https,
           width: m.original_info?.width || 0,
