@@ -658,3 +658,84 @@ export async function getXUserTweets(
     };
   }
 }
+
+// 构建关注和取关的表单数据
+function buildFriendshipFormData(userId: string): string {
+  const params = new URLSearchParams();
+  params.append("include_profile_interstitial_type", "1");
+  params.append("include_blocking", "1");
+  params.append("include_blocked_by", "1");
+  params.append("include_followed_by", "1");
+  params.append("include_want_retweets", "1");
+  params.append("include_mute_edge", "1");
+  params.append("include_can_dm", "1");
+  params.append("include_can_media_tag", "1");
+  params.append("include_ext_is_blue_verified", "1");
+  params.append("include_ext_verified_type", "1");
+  params.append("include_ext_profile_image_shape", "1");
+  params.append("skip_status", "1");
+  params.append("user_id", userId);
+  return params.toString();
+}
+
+export async function followXUser(
+  userId: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const formData = buildFriendshipFormData(userId);
+    const response = await xHttp.post(
+      `${X_BASE_URL}/i/api/1.1/friendships/create.json`,
+      formData,
+      {
+        headers: buildXHeaders(auth, {
+          "content-type": "application/x-www-form-urlencoded",
+        }),
+      },
+    );
+
+    return {
+      code: 0,
+      data: response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null,
+    };
+  }
+}
+
+export async function unfollowXUser(
+  userId: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const formData = buildFriendshipFormData(userId);
+    const response = await xHttp.post(
+      `${X_BASE_URL}/i/api/1.1/friendships/destroy.json`,
+      formData,
+      {
+        headers: buildXHeaders(auth, {
+          "content-type": "application/x-www-form-urlencoded",
+        }),
+      },
+    );
+
+    return {
+      code: 0,
+      data: response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null,
+    };
+  }
+}

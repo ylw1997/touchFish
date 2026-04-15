@@ -11,6 +11,8 @@ import {
   getXUserInfo,
   getXSearchTimeline,
   refreshQueryIds,
+  followXUser,
+  unfollowXUser,
 } from "../api/x";
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
@@ -506,6 +508,28 @@ export class XProvider extends BaseWebviewProvider {
         webviewView.webview.postMessage({
           command: `SENDSEARCH`,
           payload: mappedData,
+          uuid,
+        });
+        break;
+      }
+
+      case "GETFOLLOW": {
+        const userId = payload.toString();
+        const res = await followXUser(userId, credential);
+        webviewView.webview.postMessage({
+          command: "SENDFOLLOW",
+          payload: res.code === 0 ? { ok: 1 } : { ok: 0, msg: res.message },
+          uuid,
+        });
+        break;
+      }
+
+      case "GETCANCELFOLLOW": {
+        const userId = payload.toString();
+        const res = await unfollowXUser(userId, credential);
+        webviewView.webview.postMessage({
+          command: "SENDCANCELFOLLOW",
+          payload: res.code === 0 ? { ok: 1 } : { ok: 0, msg: res.message },
           uuid,
         });
         break;

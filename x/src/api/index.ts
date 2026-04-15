@@ -86,6 +86,14 @@ export class XApi {
     return this.request("GETCANCELFOLLOW", userId, "取关中...");
   }
 
+  followUser(userId: number | string) {
+    return this.request("GETFOLLOW", userId, "关注中...");
+  }
+
+  cancelFollow(userId: number | string) {
+    return this.request("GETCANCELFOLLOW", userId, "取消关注中...");
+  }
+
   getMyUserInfo() {
     return this.request<payloadType>(
       "GET_MY_USER_INFO",
