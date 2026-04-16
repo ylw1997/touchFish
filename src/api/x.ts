@@ -1,4 +1,7 @@
 import axios, { AxiosError } from "axios";
+import { ClientTransaction } from "x-client-transaction-id";
+import { JSDOM } from "jsdom";
+
 
 const X_BASE_URL = "https://x.com";
 
@@ -212,6 +215,25 @@ export function getGlobalXCredential(): XCredential | null {
 
 function getCredential(credential?: XCredential | null) {
   return credential ?? globalCredential;
+}
+
+class XClientTransaction {
+  private static instance: ClientTransaction;
+
+  static async getTransactionId(path: string, method: string): Promise<string> {
+    if (!this.instance) {
+      // 获取 X 首页以提取必要的初始化数据
+      const response = await axios.get("https://x.com", {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+        },
+      });
+      const dom = new JSDOM(response.data);
+      this.instance = await ClientTransaction.create(dom.window.document as any);
+    }
+    return this.instance.generateTransactionId(method, path);
+  }
 }
 
 export function buildXHeaders(
@@ -729,6 +751,69 @@ export async function unfollowXUser(
     return {
       code: 0,
       data: response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null,
+    };
+  }
+}
+
+/**
+ * 翻译推文内容
+ * 使用 api.x.com 的 grok 翻译接口
+ */
+export async function translateXPost(
+  tweetId: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<string>> {
+  try {
+    const auth = ensureCredential(credential);
+    const apiPath = "/2/grok/translation.json";
+    const transactionId = await XClientTransaction.getTransactionId(
+      apiPath,
+      "POST",
+    );
+
+    const response = await axios.post(
+      `https://api.x.com${apiPath}`,
+      {
+        content_type: "POST",
+        id: tweetId,
+        dst_lang: "zh",
+      },
+      {
+        headers: {
+          authorization: auth.authorization,
+          "content-type": "text/plain;charset=UTF-8",
+          Cookie: auth.cookie,
+          "x-csrf-token": auth.csrfToken,
+          "x-client-transaction-id": transactionId,
+          "x-twitter-active-user": "yes",
+          "x-twitter-auth-type": "OAuth2Session",
+          "x-twitter-client-language": "zh-cn",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+        },
+      },
+    );
+
+    // X 的翻译接口返回的是 base64 字符串
+    if (typeof response.data === "string") {
+      const decoded = Buffer.from(response.data, "base64").toString("utf8");
+      const parsed = JSON.parse(decoded);
+      return {
+        code: 0,
+        data: parsed.result?.text || "",
+      };
+    }
+
+    return {
+      code: 0,
+      data: response.data?.result?.text || "",
     };
   } catch (error) {
     const normalized = normalizeError(error);

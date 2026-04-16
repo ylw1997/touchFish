@@ -38,6 +38,8 @@ export type CommandList =
   | "RESTORE_SCROLL_POSITION"
   | "TOGGLE_SHOW_IMG"
   | "GET_MY_USER_INFO"
+  | "GET_TRANSLATION"
+  | "SEND_TRANSLATION"
   // XHS commands
   | "XHS_GET_HOME_FEED"
   | "XHS_SEARCH"

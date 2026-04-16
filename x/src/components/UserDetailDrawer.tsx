@@ -5,7 +5,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import YImg from "./YImg";
 import XCard from "./XCard";
 import { loaderFunc } from "../utils/loader";
-import { xUser } from "../../../types/x";
+import { xItem, xUser } from "../../../types/x";
 import useXAction from "../hooks/useXAction";
 import {
   UsergroupAddOutlined,
@@ -21,6 +21,8 @@ interface UserDetailDrawerProps {
   onClose: () => void;
   showImg?: boolean;
   onTopicClick: (topic: string) => void;
+  onTranslate?: (item: xItem) => void;
+  onClearTranslation?: (item: xItem) => void;
 }
 
 const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
@@ -30,6 +32,8 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   onClose,
   showImg,
   onTopicClick,
+  onTranslate: parentOnTranslate,
+  onClearTranslation: parentOnClearTranslation,
 }) => {
   const userBlogRef = useRef<HTMLDivElement>(null);
 
@@ -55,6 +59,8 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     isFetching,
     getUserBlogData,
     userXCursor,
+    handleTranslate,
+    handleClearTranslation,
   } = useXAction();
 
   useEffect(() => {
@@ -244,6 +250,8 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                       showImg={showImg}
                       getUserByName={getUserByName}
                       onTopicClick={onTopicClick}
+                      onTranslate={handleTranslate || parentOnTranslate}
+                      onClearTranslation={handleClearTranslation || parentOnClearTranslation}
                     />
                   </motion.div>
                 ))}
@@ -264,6 +272,8 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               setUserDetail={setSubUserDetail}
               showImg={showImg}
               onTopicClick={onTopicClick}
+              onTranslate={handleTranslate || parentOnTranslate}
+              onClearTranslation={handleClearTranslation || parentOnClearTranslation}
             />
           )}
       </Drawer>

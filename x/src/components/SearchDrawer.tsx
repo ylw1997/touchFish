@@ -25,6 +25,8 @@ interface SearchDrawerProps {
   initialKeyword?: string;
   onTopicClick: (topic: string) => void;
   getUserByName: (username: string) => void;
+  onTranslate?: (item: xItem) => void;
+  onClearTranslation?: (item: xItem) => void;
 }
 
 // Extracted and Memoized SearchList Component
@@ -60,6 +62,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   initialKeyword,
   onTopicClick,
   getUserByName,
+  onTranslate: parentOnTranslate,
+  onClearTranslation: parentOnClearTranslation,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -74,6 +78,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     cancelFollow,
     followUser,
     getXSearch,
+    handleTranslate,
+    handleClearTranslation,
   } = useXAction();
 
   const clear = useCallback(() => {
@@ -122,6 +128,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       showImg,
       getUserByName,
       onTopicClick,
+      onTranslate: handleTranslate || parentOnTranslate,
+      onClearTranslation: handleClearTranslation || parentOnClearTranslation,
     }),
     [
       followUser,
@@ -134,6 +142,10 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
       showImg,
       getUserByName,
       onTopicClick,
+      handleTranslate,
+      handleClearTranslation,
+      parentOnTranslate,
+      parentOnClearTranslation,
     ],
   );
 

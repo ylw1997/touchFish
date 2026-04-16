@@ -408,6 +408,33 @@ const useXAction = () => {
     [updateList, apiClient, messageApi]
   );
 
+  // 翻译博客
+  const handleTranslate = useCallback(
+    async (item: xItem) => {
+      const res = await apiClient.translateTweet(item.id);
+      if (res.ok === 1 && res.data) {
+        updateList(
+          (i) => i.id === item.id,
+          (i) => ({ ...i, translatedText: res.data })
+        );
+      } else {
+        messageApi.error(res.msg || "翻译失败");
+      }
+    },
+    [apiClient, updateList, messageApi]
+  );
+
+  // 清除翻译
+  const handleClearTranslation = useCallback(
+    (item: xItem) => {
+      updateList(
+        (i) => i.id === item.id,
+        (i) => ({ ...i, translatedText: undefined })
+      );
+    },
+    [updateList]
+  );
+
   return {
     getListData,
     getUserBlogData,
@@ -436,6 +463,8 @@ const useXAction = () => {
     handleSendX,
     cancelFollow,
     followUser,
+    handleTranslate,
+    handleClearTranslation,
     userXPage,
     setUserXPage,
     userXCursor,

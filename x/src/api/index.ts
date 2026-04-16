@@ -133,4 +133,12 @@ export class XApi {
   cancelLike(id: number | string) {
     return this.request("GETCANCELLIKE", id, "取消点赞中...");
   }
+
+  translateTweet(id: number | string) {
+    return this.request<{ ok: number; data?: string; msg?: string }>(
+      "GET_TRANSLATION",
+      { id },
+      "正在翻译...",
+    );
+  }
 }

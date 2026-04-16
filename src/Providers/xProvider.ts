@@ -13,6 +13,7 @@ import {
   refreshQueryIds,
   followXUser,
   unfollowXUser,
+  translateXPost,
 } from "../api/x";
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
@@ -356,6 +357,17 @@ export class XProvider extends BaseWebviewProvider {
           payload: mappedData,
           uuid,
         } as CommandsType<xAJAX>);
+        break;
+      }
+
+      case "GET_TRANSLATION": {
+        const { id } = payload;
+        const res = await translateXPost(id.toString(), credential);
+        webviewView.webview.postMessage({
+          command: "SEND_TRANSLATION",
+          payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
+          uuid,
+        });
         break;
       }
 

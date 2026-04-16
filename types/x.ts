@@ -67,6 +67,7 @@ export interface xItem extends baseXField {
   comments?: commentsItem[] | "loading";
   followBtnCode?: { followcardid: string; uid: string };
   retweeted_status?: xItem;
+  translatedText?: string;
 }
 
 export interface commentsItem extends baseXField {

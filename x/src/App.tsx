@@ -67,6 +67,8 @@ function App() {
     followUser,
     getListData,
     getUserByName,
+    handleTranslate,
+    handleClearTranslation,
     isFetching,
   } = useXAction();
   // 状态管理
@@ -154,6 +156,8 @@ function App() {
           setUserDetail={setUserDetail}
           showImg={showImg}
           onTopicClick={handleTopicClick}
+          onTranslate={handleTranslate}
+          onClearTranslation={handleClearTranslation}
         />
       </Suspense>
       <Tabs
@@ -206,6 +210,8 @@ function App() {
                   onLikeOrCancelLike={handleLike}
                   showImg={showImg}
                   onTopicClick={handleTopicClick}
+                  onTranslate={handleTranslate}
+                  onClearTranslation={handleClearTranslation}
                 />
               </motion.div>
             ))}
@@ -288,6 +294,8 @@ function App() {
           initialKeyword={searchKeyword}
           onTopicClick={handleTopicClick}
           getUserByName={getUserByName}
+          onTranslate={handleTranslate}
+          onClearTranslation={handleClearTranslation}
         />
       </Suspense>
       <Suspense fallback={null}>

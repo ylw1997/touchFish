@@ -31,6 +31,8 @@ export interface xBaseActions {
   showImg?: boolean;
   onDownloadVideo?: (url: string) => void;
   onTopicClick: (topic: string) => void;
+  onTranslate?: (item: xItem) => void;
+  onClearTranslation?: (item: xItem) => void;
 }
 
 export interface XCardProps extends xBaseActions {
@@ -54,6 +56,8 @@ const XCard: React.FC<XCardProps> = ({
   showImg,
   getUserByName,
   onTopicClick,
+  onTranslate,
+  onClearTranslation,
   isH5 = false,
 }) => {
   const [commentType, setCommentType] = useState<"comment" | "repost">();
@@ -108,6 +112,41 @@ const XCard: React.FC<XCardProps> = ({
           >
             {isExpanded ? "收起" : "展开全文"}
           </Tag>
+        ) : null}
+
+        {/* 翻译按钮：非中文且未翻译时显示 */}
+        {!item.translatedText &&
+        !/[\u4e00-\u9fa5]/.test(item.text_raw || item.text || "") ? (
+          <div style={{ marginTop: "4px" }}>
+            <span
+              className="link"
+              style={{ fontSize: "12px", opacity: 0.8 }}
+              onClick={() => onTranslate?.(item)}
+            >
+              翻译
+            </span>
+          </div>
+        ) : null}
+
+        {item.translatedText ? (
+          <div
+            className="border-top-divider"
+            style={{ marginTop: "8px", paddingTop: "8px" }}
+          >
+            <div style={{ fontSize: "12px", opacity: 0.6, marginBottom: "4px" }}>
+              由 X 翻译
+              <span
+                className="link"
+                style={{ marginLeft: "8px" }}
+                onClick={() => onClearTranslation?.(item)}
+              >
+                还原
+              </span>
+            </div>
+            <div style={{ color: "var(--vscode-editor-foreground)" }}>
+              {item.translatedText}
+            </div>
+          </div>
         ) : null}
       </div>
 
@@ -164,6 +203,8 @@ const XCard: React.FC<XCardProps> = ({
           showImg={showImg}
           getUserByName={getUserByName}
           onTopicClick={onTopicClick}
+          onTranslate={onTranslate}
+          onClearTranslation={onClearTranslation}
         />
       ) : null}
     </Card>
