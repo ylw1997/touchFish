@@ -19,6 +19,7 @@ export interface baseXField {
     };
     short_url: string;
   };
+  isTranslating?: boolean;
 }
 
 // 原文件未定义 Page_pic
@@ -82,6 +83,7 @@ export interface commentsItem extends baseXField {
   url_struct?: commentsPicItem[];
   pic_ids?: string[];
   pic_infos?: any;
+  translatedText?: string;
 }
 
 interface commentsPicItemImg {

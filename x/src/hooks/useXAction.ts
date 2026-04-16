@@ -52,13 +52,10 @@ const useXAction = () => {
 
   // 更新微博列表
   const updateList = useCallback(
-    (
-      matcher: (item: xItem) => boolean,
-      updater: (item: xItem) => xItem
-    ) => {
+    (matcher: (item: xItem) => boolean, updater: (item: xItem) => xItem) => {
       setList((list) => updateXList(list, matcher, updater));
     },
-    []
+    [],
   );
 
   // 请求数据（主列表/用户微博）
@@ -80,7 +77,7 @@ const useXAction = () => {
         if (newPayload.includes("max_id=")) {
           newPayload = newPayload.replace(
             /max_id=[^&]+/,
-            `max_id=${currentMaxId}`
+            `max_id=${currentMaxId}`,
           );
         } else {
           newPayload = `${newPayload}&max_id=${currentMaxId}`;
@@ -93,7 +90,7 @@ const useXAction = () => {
         setHasMore(!!nextCursor);
         const newList = result.statuses.filter((item) => item.mblogtype !== 1);
         setList((currentList) =>
-          replace ? newList : mergeUniqueXItems(currentList, newList)
+          replace ? newList : mergeUniqueXItems(currentList, newList),
         );
         const wtotal = result.total_number ?? 9999;
         setTotal(wtotal);
@@ -102,7 +99,7 @@ const useXAction = () => {
         setIsFetching(false);
       }
     },
-    [apiClient, maxId]
+    [apiClient, maxId],
   );
 
   const getUserBlogData = useCallback(
@@ -112,7 +109,7 @@ const useXAction = () => {
         const result = await apiClient.getUserBlogData(uid, cursor);
         const newList = result.statuses || [];
         setList((currentList) =>
-          cursor ? [...currentList, ...newList] : newList
+          cursor ? [...currentList, ...newList] : newList,
         );
         setUserXCursor(result.max_id_str || "");
         const wtotal = result.total_number ?? 999;
@@ -121,7 +118,7 @@ const useXAction = () => {
         setIsFetching(false);
       }
     },
-    [apiClient]
+    [apiClient],
   );
 
   // 清空列表
@@ -139,19 +136,23 @@ const useXAction = () => {
         messageApi.success("链接已复制到剪贴板");
       });
     },
-    [messageApi]
+    [messageApi],
   );
 
   // 合并评论展开/收起方法
   const handleToggleComments = useCallback(
-    async (id: number | string, uid: number | string, is_retweeted: boolean) => {
+    async (
+      id: number | string,
+      uid: number | string,
+      is_retweeted: boolean,
+    ) => {
       const citem = list.find(
-        (item) => item.id === id || item.retweeted_status?.id === id
+        (item) => item.id === id || item.retweeted_status?.id === id,
       );
       if (citem?.comments && !is_retweeted) {
         updateList(
           (item) => item.id === id,
-          (item) => ({ ...item, comments: undefined })
+          (item) => ({ ...item, comments: undefined }),
         );
         return;
       }
@@ -164,7 +165,7 @@ const useXAction = () => {
               ...item.retweeted_status!,
               comments: undefined,
             },
-          })
+          }),
         );
         return;
       }
@@ -178,12 +179,12 @@ const useXAction = () => {
               ...item.retweeted_status!,
               comments: "loading", // Special value for loading
             },
-          })
+          }),
         );
       } else {
         updateList(
           (item) => item.id === id,
-          (item) => ({ ...item, comments: "loading" }) // Special value for loading
+          (item) => ({ ...item, comments: "loading" }), // Special value for loading
         );
       }
       const result = await apiClient.getComments(id, uid);
@@ -196,16 +197,16 @@ const useXAction = () => {
               ...item.retweeted_status!,
               comments: result.data,
             },
-          })
+          }),
         );
       } else {
         updateList(
           (item) => item.id === id,
-          (item) => ({ ...item, comments: result.data })
+          (item) => ({ ...item, comments: result.data }),
         );
       }
     },
-    [list, updateList, apiClient]
+    [list, updateList, apiClient],
   );
 
   // 合并长微博展开方法
@@ -217,10 +218,10 @@ const useXAction = () => {
           ...item,
           text_raw: item.longTextContent || item.text_raw,
           text: item.longTextContent || item.text,
-        })
+        }),
       );
     },
-    [updateList]
+    [updateList],
   );
 
   // 查看博主微博
@@ -233,7 +234,7 @@ const useXAction = () => {
       setUserDetail(result.data);
       setUserDetailVisible(true);
     },
-    [apiClient]
+    [apiClient],
   );
 
   const getUserByName = useCallback(
@@ -242,7 +243,7 @@ const useXAction = () => {
       setUserDetail(result.data);
       setUserDetailVisible(true);
     },
-    [apiClient]
+    [apiClient],
   );
 
   const getMyUserInfo = useCallback(async () => {
@@ -272,10 +273,10 @@ const useXAction = () => {
         (item) => ({
           ...item,
           user: { ...item.user, following: true } as xUser,
-        })
+        }),
       );
     },
-    [updateList, apiClient, messageApi]
+    [updateList, apiClient, messageApi],
   );
 
   // 取关博主
@@ -290,10 +291,10 @@ const useXAction = () => {
         (item) => ({
           ...item,
           user: { ...item.user, following: false } as xUser,
-        })
+        }),
       );
     },
-    [updateList, apiClient, messageApi]
+    [updateList, apiClient, messageApi],
   );
 
   // 搜索
@@ -312,7 +313,7 @@ const useXAction = () => {
         setIsFetching(false);
       }
     },
-    [apiClient]
+    [apiClient],
   );
 
   const uploadImage = useCallback(
@@ -320,7 +321,7 @@ const useXAction = () => {
       const result = await apiClient.uploadImage(uploadData);
       return result;
     },
-    [apiClient]
+    [apiClient],
   );
 
   // 发送微博功能
@@ -335,7 +336,7 @@ const useXAction = () => {
         setSendLoading(false);
       }
     },
-    [apiClient, messageApi]
+    [apiClient, messageApi],
   );
 
   // handleCommentOrRepost 评论或转发
@@ -354,13 +355,13 @@ const useXAction = () => {
         messageApi.success("评论成功!");
         updateList(
           (i) => i.id === item.id,
-          (i) => ({ ...i, comments_count: i.comments_count + 1 })
+          (i) => ({ ...i, comments_count: i.comments_count + 1 }),
         );
         // 刷新评论
         const result = await apiClient.getMoreComments(item.id, item.user?.id);
         updateList(
           (i) => i.id === item.id,
-          (i) => ({ ...i, comments: result.data })
+          (i) => ({ ...i, comments: result.data }),
         );
       }
 
@@ -379,7 +380,7 @@ const useXAction = () => {
         messageApi.success("转发成功!");
       }
     },
-    [updateList, apiClient, messageApi]
+    [updateList, apiClient, messageApi],
   );
 
   // 点赞,取消点赞
@@ -395,7 +396,7 @@ const useXAction = () => {
             ...i,
             attitudes_status: 1,
             attitudes_count: i.attitudes_count + 1,
-          })
+          }),
         );
       }
       if (type === "cancel") {
@@ -407,27 +408,43 @@ const useXAction = () => {
             ...i,
             attitudes_status: 0,
             attitudes_count: i.attitudes_count - 1,
-          })
+          }),
         );
       }
     },
-    [updateList, apiClient, messageApi]
+    [updateList, apiClient, messageApi],
   );
 
   // 翻译博客
   const handleTranslate = useCallback(
-    async (item: xItem) => {
-      const res = await apiClient.translateTweet(item.id);
-      if (res.ok === 1 && res.data) {
+    async (item: any) => {
+      updateList(
+        (i) => i.id === item.id,
+        (i) => ({ ...i, isTranslating: true }),
+      );
+      try {
+        const res = await apiClient.translateTweet(item.id);
+        if (res.ok === 1 && res.data) {
+          updateList(
+            (i) => i.id === item.id,
+            (i) => ({ ...i, translatedText: res.data, isTranslating: false }),
+          );
+        } else {
+          messageApi.error(res.msg || "翻译失败");
+          updateList(
+            (i) => i.id === item.id,
+            (i) => ({ ...i, isTranslating: false }),
+          );
+        }
+      } catch (err) {
+        console.error(err);
         updateList(
           (i) => i.id === item.id,
-          (i) => ({ ...i, translatedText: res.data })
+          (i) => ({ ...i, isTranslating: false }),
         );
-      } else {
-        messageApi.error(res.msg || "翻译失败");
       }
     },
-    [apiClient, updateList, messageApi]
+    [apiClient, updateList, messageApi],
   );
 
   // 清除翻译
@@ -435,10 +452,10 @@ const useXAction = () => {
     (item: xItem) => {
       updateList(
         (i) => i.id === item.id,
-        (i) => ({ ...i, translatedText: undefined })
+        (i) => ({ ...i, translatedText: undefined }),
       );
     },
-    [updateList]
+    [updateList],
   );
 
   return {

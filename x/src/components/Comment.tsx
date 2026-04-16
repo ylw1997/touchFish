@@ -22,6 +22,8 @@ export const renderComments = (
   getUserByName: (username: string) => void,
   onUserClick: (userInfo: xUser) => void,
   onTopicClick: (topic: string) => void,
+  onTranslate?: (item: any) => void,
+  onClearTranslation?: (item: any) => void
 ) => {
   return (
     <div className="border-top-divider">
@@ -76,6 +78,44 @@ export const renderComments = (
                     <div className="content comment-content">
                       {parseXText(item, getUserByName, onTopicClick)}
                     </div>
+                    {/* 翻译按钮：非中文且未翻译时显示 */}
+                    {!item.translatedText &&
+                    !/[\u4e00-\u9fa5]/.test(item.text_raw || item.text || "") ? (
+                      <div style={{ marginTop: "4px" }}>
+                        {item.isTranslating ? (
+                          <span style={{ fontSize: "12px", opacity: 0.8 }}>翻译中...</span>
+                        ) : (
+                          <span
+                            className="link"
+                            style={{ fontSize: "12px", opacity: 0.8 }}
+                            onClick={() => onTranslate?.(item)}
+                          >
+                            翻译
+                          </span>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {item.translatedText ? (
+                      <div
+                        style={{ marginTop: "4px", paddingTop: "4px" }}
+                      >
+                        <div style={{ fontSize: "10px", opacity: 0.6, marginBottom: "2px" }}>
+                          翻译结果
+                          <span
+                            className="link"
+                            style={{ marginLeft: "8px" }}
+                            onClick={() => onClearTranslation?.(item)}
+                          >
+                            还原
+                          </span>
+                        </div>
+                        <div style={{ color: "var(--vscode-editor-foreground)", marginTop: "4px" }}>
+                          {item.translatedText}
+                        </div>
+                      </div>
+                    ) : null}
+
                     {((item.pic_ids && item.pic_ids.length > 0) || (item.url_struct && item.url_struct.length > 0)) && (
                       <div
                         className="imglist"
@@ -135,6 +175,8 @@ export const renderComments = (
                           getUserByName,
                           onUserClick,
                           onTopicClick,
+                          onTranslate,
+                          onClearTranslation
                         )}
                     </div>
                   </>

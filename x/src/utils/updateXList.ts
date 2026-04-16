@@ -1,18 +1,39 @@
-import { xItem } from "../../../types/x";
 
 export function updateXList(
-  list: xItem[],
-  matcher: (item: xItem) => boolean,
-  updater: (item: xItem) => xItem
-): xItem[] {
+  list: any[],
+  matcher: (item: any) => boolean,
+  updater: (item: any) => any
+): any[] {
   return list.map((item) => {
     if (matcher(item)) return updater(item);
-    if (item.retweeted_status && matcher(item.retweeted_status as xItem)) {
-      return {
-        ...item,
-        retweeted_status: updater(item.retweeted_status as xItem),
-      };
+
+    let changed = false;
+    const newItem = { ...item };
+
+    // 检查转推
+    if (newItem.retweeted_status) {
+      if (matcher(newItem.retweeted_status)) {
+        newItem.retweeted_status = updater(newItem.retweeted_status);
+        changed = true;
+      } else if (newItem.retweeted_status.comments) {
+        // 转推里的评论（虽然少见，但支持一下）
+        const updatedSubComments = updateXList(newItem.retweeted_status.comments, matcher, updater);
+        if (updatedSubComments !== newItem.retweeted_status.comments) {
+          newItem.retweeted_status = { ...newItem.retweeted_status, comments: updatedSubComments };
+          changed = true;
+        }
+      }
     }
-    return item;
+
+    // 检查评论
+    if (newItem.comments && Array.isArray(newItem.comments)) {
+      const updatedComments = updateXList(newItem.comments, matcher, updater);
+      if (updatedComments !== newItem.comments) {
+        newItem.comments = updatedComments;
+        changed = true;
+      }
+    }
+
+    return changed ? newItem : item;
   });
 }

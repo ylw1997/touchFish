@@ -118,13 +118,17 @@ const XCard: React.FC<XCardProps> = ({
         {!item.translatedText &&
         !/[\u4e00-\u9fa5]/.test(item.text_raw || item.text || "") ? (
           <div style={{ marginTop: "4px" }}>
-            <span
-              className="link"
-              style={{ fontSize: "12px", opacity: 0.8 }}
-              onClick={() => onTranslate?.(item)}
-            >
-              翻译
-            </span>
+            {item.isTranslating ? (
+              <span style={{ fontSize: "12px", opacity: 0.8 }}>翻译中...</span>
+            ) : (
+              <span
+                className="link"
+                style={{ fontSize: "12px", opacity: 0.8 }}
+                onClick={() => onTranslate?.(item)}
+              >
+                翻译
+              </span>
+            )}
           </div>
         ) : null}
 
@@ -134,7 +138,7 @@ const XCard: React.FC<XCardProps> = ({
             style={{ marginTop: "8px", paddingTop: "8px" }}
           >
             <div style={{ fontSize: "12px", opacity: 0.6, marginBottom: "4px" }}>
-              由 X 翻译
+              翻译结果
               <span
                 className="link"
                 style={{ marginLeft: "8px" }}
@@ -180,7 +184,9 @@ const XCard: React.FC<XCardProps> = ({
               false,
               getUserByName,
               onUserClick,
-              onTopicClick
+              onTopicClick,
+              onTranslate,
+              onClearTranslation
             )
           )}
         </>
