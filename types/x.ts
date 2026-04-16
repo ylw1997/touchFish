@@ -80,6 +80,8 @@ export interface commentsItem extends baseXField {
   like_counts: number;
   comments: commentsItem[];
   url_struct?: commentsPicItem[];
+  pic_ids?: string[];
+  pic_infos?: any;
 }
 
 interface commentsPicItemImg {

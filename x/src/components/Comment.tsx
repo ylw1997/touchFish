@@ -76,7 +76,7 @@ export const renderComments = (
                     <div className="content comment-content">
                       {parseXText(item, getUserByName, onTopicClick)}
                     </div>
-                    {item.url_struct && item.url_struct.length > 0 && (
+                    {((item.pic_ids && item.pic_ids.length > 0) || (item.url_struct && item.url_struct.length > 0)) && (
                       <div
                         className="imglist"
                         style={{ marginBottom: "8px", padding: "0px" }}
@@ -87,18 +87,19 @@ export const renderComments = (
                             movable: false,
                           }}
                         >
-                          {item.url_struct[0]?.pic_ids?.map((pic) => {
-                            const picInfo =
-                              item.url_struct?.[0]?.pic_infos?.[pic];
+                          {(item.pic_ids || item.url_struct?.[0]?.pic_ids)?.map((picId: string) => {
+                            const picInfo = (item.pic_infos?.[picId] || item.url_struct?.[0]?.pic_infos?.[picId]);
                             if (!picInfo) return null;
-                            const imgProps = {
+                            
+                            const isVideo = picInfo.type === 'video';
+                            const imgProps: any = {
                               className: "img-item",
-                              src: picInfo.large
-                                ? picInfo.large.url
-                                : picInfo.bmiddle.url,
+                              src: isVideo ? (picInfo.video_url || picInfo.large?.url || picInfo.bmiddle?.url) : (picInfo.large?.url || picInfo.bmiddle?.url),
+                              mediaType: isVideo ? 'video' : 'image',
                             };
+                            
                             return (
-                              <div key={pic}>
+                              <div key={picId}>
                                 <YImg {...imgProps} />
                               </div>
                             );
