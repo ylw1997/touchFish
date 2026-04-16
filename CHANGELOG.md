@@ -1,6 +1,23 @@
 # 更新历史 
 
 
+## [14.3.0](https://github.com/ylw1997/touchFish/compare/v14.2.0...v14.3.0) (2026-04-16)
+
+
+### ✨ Features | 新功能
+
+* 评论图片视频展示 ([ec461ed](https://github.com/ylw1997/touchFish/commit/ec461ed509eda63dafac669ea54697f30efcdbf2))
+* 修复发布问题 ([8f8d3c7](https://github.com/ylw1997/touchFish/commit/8f8d3c75cc703961c2ab55a168af91b8e3d1b1a4))
+* 修复评论图片样式错误问题 ([4e30231](https://github.com/ylw1997/touchFish/commit/4e30231fb41e954f209d21c975a54c42864b2ca8))
+* 优化评论图片和翻译 ([9e897bc](https://github.com/ylw1997/touchFish/commit/9e897bcf6b0e8ea7acda2df9d0ea2e2a6215c164))
+* 转发评论完成 ([ef1cdfe](https://github.com/ylw1997/touchFish/commit/ef1cdfe18b4d907bfc2648f343e2446efca85b72))
+* 转贴优化 ([fdf1767](https://github.com/ylw1997/touchFish/commit/fdf17674582f323eac25a734c16292353acd8165))
+* x搜索滚动完成 ([142815c](https://github.com/ylw1997/touchFish/commit/142815c90a17e2e88665e58d4579018bb467b8ae))
+* x搜索完成 ([d6cd4f7](https://github.com/ylw1997/touchFish/commit/d6cd4f7621c3a9224a1a6c6a8ab35521cef51dc5))
+* x英文贴翻译功能完成 ([2f17592](https://github.com/ylw1997/touchFish/commit/2f175924fcea4db2822e2d22e00b153bb2e323b9))
+* x优化排版 ([bcc3b2f](https://github.com/ylw1997/touchFish/commit/bcc3b2f7b4d8f6652532396580b2decd526adca6))
+* x子贴显示完成 ([76f9159](https://github.com/ylw1997/touchFish/commit/76f9159a3e76f2e2a2a3ddcee25208e79a1bb23c))
+
 ## [14.2.0](https://github.com/ylw1997/touchFish/compare/v14.1.0...v14.2.0) (2026-04-15)
 
 
