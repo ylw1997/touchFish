@@ -11,12 +11,24 @@ importers:
       axios:
         specifier: 1.10.0
         version: 1.10.0
+      bufferutil:
+        specifier: ^4.0.9
+        version: 4.0.9
+      canvas:
+        specifier: ^3.2.0
+        version: 3.2.0
       cheerio:
         specifier: 1.1.0
         version: 1.1.0
       crypto-js:
         specifier: ^4.2.0
         version: 4.2.0
+      jsdom:
+        specifier: 27.0.1
+        version: 27.0.1(bufferutil@4.0.9)(canvas@3.2.0)(postcss@8.5.6)(utf-8-validate@6.0.5)
+      utf-8-validate:
+        specifier: ^6.0.5
+        version: 6.0.5
       x-client-transaction-id:
         specifier: ^0.2.0
         version: 0.2.0(canvas@3.2.0)
@@ -51,12 +63,6 @@ importers:
       '@vscode/test-electron':
         specifier: 2.5.2
         version: 2.5.2
-      bufferutil:
-        specifier: ^4.0.9
-        version: 4.0.9
-      canvas:
-        specifier: ^3.2.0
-        version: 3.2.0
       concurrently:
         specifier: ^9.0.1
         version: 9.0.1
@@ -69,9 +75,6 @@ importers:
       globals:
         specifier: 16.3.0
         version: 16.3.0
-      jsdom:
-        specifier: 27.0.1
-        version: 27.0.1(bufferutil@4.0.9)(canvas@3.2.0)(postcss@8.5.6)(utf-8-validate@6.0.5)
       mocha:
         specifier: 11.7.1
         version: 11.7.1
@@ -87,9 +90,6 @@ importers:
       typescript-eslint:
         specifier: ^8.15.0
         version: 8.38.0(eslint@9.30.1(jiti@2.6.1))(typescript@5.8.3)
-      utf-8-validate:
-        specifier: ^6.0.5
-        version: 6.0.5
       webpack:
         specifier: 5.100.0
         version: 5.100.0(webpack-cli@6.0.1)
