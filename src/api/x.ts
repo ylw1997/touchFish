@@ -1,6 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { ClientTransaction } from "x-client-transaction-id";
-import { JSDOM } from "jsdom";
+import { ClientTransaction, handleXMigration } from "x-client-transaction-id";
 import * as crypto from "crypto";
 
 
@@ -282,15 +281,12 @@ class XClientTransaction {
 
   static async getTransactionId(path: string, method: string): Promise<string> {
     if (!this.instance) {
-      // 获取 X 首页以提取必要的初始化数据
-      const response = await axios.get("https://x.com", {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-        },
-      });
-      const dom = new JSDOM(response.data);
-      this.instance = await ClientTransaction.create(dom.window.document as any);
+      try {
+        const document = await handleXMigration();
+        this.instance = await ClientTransaction.create(document as any);
+      } catch (err) {
+        throw new Error("初始化 XClientTransaction 失败: " + err);
+      }
     }
     return this.instance.generateTransactionId(method, path);
   }
