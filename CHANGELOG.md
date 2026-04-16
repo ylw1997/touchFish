@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [14.4.0](https://github.com/ylw1997/touchFish/compare/v14.3.0...v14.4.0) (2026-04-16)
+
+
+### ✨ Features | 新功能
+
+* 修复打包错误问题 ([cc470e8](https://github.com/ylw1997/touchFish/commit/cc470e8c13c2ccfe6c0c9deeb6a6dc0c469632fc))
+
 ## [14.3.0](https://github.com/ylw1997/touchFish/compare/v14.2.0...v14.3.0) (2026-04-16)
 
 
