@@ -375,6 +375,7 @@ const useXAction = () => {
           is_comment: 0,
           visible: 0,
           share_id: "",
+          screen_name: item.user?.screen_name_raw,
         } as xRepostParams;
         await apiClient.createRepost(obj);
         messageApi.success("转发成功!");

@@ -14,6 +14,8 @@ import {
   followXUser,
   unfollowXUser,
   translateXPost,
+  createXTweet,
+  repostXTweet,
 } from "../api/x";
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
@@ -590,6 +592,28 @@ export class XProvider extends BaseWebviewProvider {
         webviewView.webview.postMessage({
           command: "SENDCANCELFOLLOW",
           payload: res.code === 0 ? { ok: 1 } : { ok: 0, msg: res.message },
+          uuid,
+        });
+        break;
+      }
+
+      case "GETCREATECOMMENTS": {
+        const { id, comment } = payload;
+        const res = await createXTweet(comment, { replyToId: id.toString() }, credential);
+        webviewView.webview.postMessage({
+          command: "SENDCREATECOMMENTS",
+          payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
+          uuid,
+        });
+        break;
+      }
+
+      case "GETCREATEREPOST": {
+        const { id, comment, screen_name } = payload;
+        const res = await repostXTweet(comment, id.toString(), screen_name, credential);
+        webviewView.webview.postMessage({
+          command: "SENDCREATEREPOST",
+          payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
           uuid,
         });
         break;

@@ -167,6 +167,7 @@ export interface xRepostParams {
   is_comment?: number;
   visible?: number;
   share_id?: string;
+  screen_name?: string;
 }
 
 export interface hotItem {

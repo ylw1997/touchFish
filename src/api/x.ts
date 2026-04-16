@@ -11,6 +11,7 @@ export let X_TWEET_DETAIL_QUERY_ID = "rU08O-YiXdr0IZfE7qaUMg";
 export let X_SEARCH_TIMELINE_QUERY_ID = "R0u1RWRf748KzyGBXvOYRA";
 export let X_USER_BY_SCREEN_NAME_QUERY_ID = "qW5u-DAuXpMEG0zA1F7UGQ";
 export let X_USER_TWEETS_QUERY_ID = "9zyyd1hebl7oNWIPdA8HRw";
+export let X_CREATE_TWEET_QUERY_ID = "c50A_puUoQGK_4SXseYz3A";
 
 /**
  * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
@@ -29,6 +30,7 @@ export function refreshQueryIds() {
       if (ids.userByScreenName)
         X_USER_BY_SCREEN_NAME_QUERY_ID = ids.userByScreenName;
       if (ids.userTweets) X_USER_TWEETS_QUERY_ID = ids.userTweets;
+      if (ids.createTweet) X_CREATE_TWEET_QUERY_ID = ids.createTweet;
     }
   } catch {
     // 前端环境无 vscode 模块，忽略
@@ -194,6 +196,44 @@ const SEARCH_TIMELINE_FEATURES: XFeatureFlags = {
   responsive_web_grok_image_annotation_enabled: true,
   responsive_web_grok_imagine_annotation_enabled: true,
   responsive_web_grok_community_note_auto_translation_is_enabled: true,
+  responsive_web_enhance_cards_enabled: false,
+};
+
+const CREATE_TWEET_FEATURES: XFeatureFlags = {
+  premium_content_api_read_enabled: false,
+  communities_web_enable_tweet_community_results_fetch: true,
+  c9s_tweet_anatomy_moderator_badge_enabled: true,
+  responsive_web_grok_analyze_button_fetch_trends_enabled: false,
+  responsive_web_grok_analyze_post_followups_enabled: true,
+  responsive_web_jetfuel_frame: true,
+  responsive_web_grok_share_attachment_enabled: true,
+  responsive_web_grok_annotations_enabled: true,
+  responsive_web_edit_tweet_api_enabled: true,
+  graphql_is_translatable_rweb_tweet_is_translatable_enabled: true,
+  view_counts_everywhere_api_enabled: true,
+  longform_notetweets_consumption_enabled: true,
+  responsive_web_twitter_article_tweet_consumption_enabled: true,
+  content_disclosure_indicator_enabled: true,
+  content_disclosure_ai_generated_indicator_enabled: true,
+  responsive_web_grok_show_grok_translated_post: true,
+  responsive_web_grok_analysis_button_from_backend: true,
+  post_ctas_fetch_enabled: false,
+  longform_notetweets_rich_text_read_enabled: true,
+  longform_notetweets_inline_media_enabled: false,
+  profile_label_improvements_pcf_label_in_post_enabled: true,
+  responsive_web_profile_redirect_enabled: false,
+  rweb_tipjar_consumption_enabled: false,
+  verified_phone_label_enabled: false,
+  articles_preview_enabled: true,
+  rweb_cashtags_enabled: false,
+  responsive_web_grok_community_note_auto_translation_is_enabled: true,
+  responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
+  freedom_of_speech_not_reach_fetch_enabled: true,
+  standardized_nudges_misinfo: true,
+  tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled: true,
+  responsive_web_grok_image_annotation_enabled: true,
+  responsive_web_grok_imagine_annotation_enabled: true,
+  responsive_web_graphql_timeline_navigation_enabled: true,
   responsive_web_enhance_cards_enabled: false,
 };
 
@@ -849,4 +889,83 @@ export async function translateXPost(
       data: null,
     };
   }
+}
+
+/**
+ * 发送推文或回复 (GraphQL CreateTweet)
+ */
+export async function createXTweet(
+  text: string,
+  options: { replyToId?: string; attachmentUrl?: string } = {},
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const path = `/i/api/graphql/${X_CREATE_TWEET_QUERY_ID}/CreateTweet`;
+    const url = `${X_BASE_URL}${path}`;
+
+    const transactionId = await XClientTransaction.getTransactionId(path, "POST");
+
+    const payload = {
+      variables: {
+        tweet_text: text,
+        reply: options.replyToId
+          ? {
+              in_reply_to_tweet_id: options.replyToId,
+              exclude_reply_user_ids: [],
+            }
+          : undefined,
+        attachment_url: options.attachmentUrl,
+        media: {
+          media_entities: [],
+          possibly_sensitive: false,
+        },
+        semantic_annotation_ids: [],
+        disallowed_reply_options: null,
+        semantic_annotation_options: {
+          source: "Unknown",
+        },
+      },
+      features: CREATE_TWEET_FEATURES,
+      queryId: X_CREATE_TWEET_QUERY_ID,
+    };
+
+    const response = await xHttp.post(url, payload, {
+      headers: buildXHeaders(auth, {
+        "x-client-transaction-id": transactionId,
+        Referer: options.replyToId
+          ? `https://x.com/i/status/${options.replyToId}`
+          : options.attachmentUrl || "https://x.com/home",
+      }),
+    });
+
+    return {
+      code: 0,
+      data: response.data?.data?.create_tweet?.tweet_results?.result ?? response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null,
+    };
+  }
+}
+
+/**
+ * 转发推文 (支持引用转发/Quote Tweet)
+ */
+export async function repostXTweet(
+  comment: string,
+  tweetId: string,
+  screenName?: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  // 构建引用转发 URL: https://x.com/username/status/id
+  // 如果没有 username，X 有时也能识别 https://x.com/i/status/id，但最好带上
+  const username = screenName || "i";
+  const attachmentUrl = `https://x.com/${username}/status/${tweetId}`;
+
+  return createXTweet(comment, { attachmentUrl }, credential);
 }
