@@ -98,8 +98,8 @@ export class XApi {
     return this.request<payloadType>("GETHOTSEARCH", null, "正在刷新热搜...");
   }
 
-  getXSearch(keyword: string) {
-    return this.request<payloadType>("GETSEARCH", keyword, "正在搜索...");
+  getXSearch(payload: { query: string; cursor?: string; product?: string }) {
+    return this.request<payloadType>("GETSEARCH", payload, "正在搜索...");
   }
 
   uploadImage(uploadData: uploadType) {

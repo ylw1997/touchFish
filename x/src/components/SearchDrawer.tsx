@@ -7,13 +7,14 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, Button, Input, Form, Empty } from "antd";
+import { Drawer, Button, Input, Form, Empty, Divider } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import { useEffect, useState, useCallback, memo, useMemo } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { useEffect, useCallback, memo, useMemo } from "react";
 import { xItem, xUser } from "../../../types/x";
 import XCard from "./XCard";
-import useXAction from "../hooks/useXAction";
+import useXAction, { mergeUniqueXItems } from "../hooks/useXAction";
 import { loaderFunc } from "../utils/loader";
 
 // Component Props
@@ -30,28 +31,41 @@ interface SearchDrawerProps {
 }
 
 // Extracted and Memoized SearchList Component
-const SearchList = memo(({ xs, loading, getUserBlog, ...xCardProps }: any) => {
-  if (loading) {
-    return loaderFunc();
-  }
+const SearchList = memo(
+  ({ xs, loading, getUserBlog, hasMore, loadMore, ...xCardProps }: any) => {
+    if (loading && xs.length === 0) {
+      return loaderFunc();
+    }
 
-  if (!Array.isArray(xs) || xs.length === 0) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
-  }
+    if (!Array.isArray(xs) || xs.length === 0) {
+      return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+    }
 
-  // Render X list
-  return xs.map((item: any) => (
-    <motion.div
-      key={item.id}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-    >
-      <XCard item={item} onUserClick={getUserBlog} {...xCardProps} isH5 />
-    </motion.div>
-  ));
-});
+    // Render X list with InfiniteScroll
+    return (
+      <InfiniteScroll
+        dataLength={xs.length}
+        next={loadMore}
+        hasMore={hasMore}
+        loader={loaderFunc()}
+        endMessage={<Divider plain>没有了🤐</Divider>}
+        scrollableTarget="scrollableSearchDiv"
+      >
+        {xs.map((item: any) => (
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+          >
+            <XCard item={item} onUserClick={getUserBlog} {...xCardProps} isH5 />
+          </motion.div>
+        ))}
+      </InfiniteScroll>
+    );
+  },
+);
 
 // Main Drawer Component
 const SearchDrawer: React.FC<SearchDrawerProps> = ({
@@ -66,10 +80,16 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   onClearTranslation: parentOnClearTranslation,
 }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<xItem[]>([]);
 
   const {
+    list: searchResults,
+    setList: setSearchResults,
+    isFetching: loading,
+    userXCursor: cursor,
+    setUserXCursor: setCursor,
+    hasMore,
+    setHasMore,
+    clearList: clear,
     copyLink,
     handleToggleComments,
     handleExpandLongX,
@@ -82,32 +102,45 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
     handleClearTranslation,
   } = useXAction();
 
-  const clear = useCallback(() => {
-    setSearchResults([]);
-    setLoading(false);
-  }, []);
+  const handleSearch = useCallback(
+    async (isLoadMore = false) => {
+      try {
+        const values = await form.validateFields();
+        if (!values.keyword) return;
 
-  const handleSearch = useCallback(async () => {
-    try {
-      const values = await form.validateFields();
-      if (!values.keyword) return;
-      clear();
-      setLoading(true);
-      const result = await getXSearch(values.keyword);
-      setSearchResults(result || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [form, clear, getXSearch]);
+        if (!isLoadMore) {
+          clear();
+        }
+
+        const currentCursor = isLoadMore ? cursor : undefined;
+        const result = await getXSearch({
+          query: values.keyword,
+          cursor: currentCursor,
+        });
+
+        const newStatuses = result.statuses || [];
+        if (isLoadMore) {
+          setSearchResults((prev) => mergeUniqueXItems(prev, newStatuses));
+        } else {
+          setSearchResults(newStatuses);
+        }
+
+        const nextCursor = result.max_id_str;
+        setCursor(nextCursor || "");
+        setHasMore(!!nextCursor);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [form, clear, getXSearch, cursor, setCursor, setHasMore, setSearchResults],
+  );
 
   useEffect(() => {
     if (open && initialKeyword) {
       form.setFieldsValue({ keyword: initialKeyword });
       handleSearch();
     }
-  }, [form, handleSearch, initialKeyword, open]);
+  }, [form, initialKeyword, open, handleSearch]);
 
   const closeFunc = useCallback(() => {
     form.resetFields();
@@ -160,7 +193,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         destroyOnHidden
         styles={{
           body: {
-            padding: "10px 5px",
+            padding: "0 5px",
           },
         }}
       >
@@ -176,6 +209,9 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
               variant="filled"
               onPressEnter={() => handleSearch()}
               onSearch={() => handleSearch()}
+              style={{
+                marginTop: "10px",
+              }}
               enterButton={
                 <Button
                   icon={<SearchOutlined />}
@@ -188,12 +224,23 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
             />
           </Form.Item>
         </Form>
-        <SearchList
-          xs={searchResults}
-          loading={loading}
-          getUserBlog={getUserBlog}
-          {...xCardProps}
-        />
+        <div
+          id="scrollableSearchDiv"
+          style={{
+            height: searchResults.length > 0 ? "calc(100vh - 260px)" : "auto",
+            overflow: "auto",
+            padding: "0 5px",
+          }}
+        >
+          <SearchList
+            xs={searchResults}
+            loading={loading}
+            getUserBlog={getUserBlog}
+            hasMore={hasMore}
+            loadMore={() => handleSearch(true)}
+            {...xCardProps}
+          />
+        </div>
       </Drawer>
     </>
   );

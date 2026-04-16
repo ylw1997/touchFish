@@ -194,41 +194,56 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
   };
 
   const instructions = extractInstructions(data);
+
+  // 提取推文内容的辅助函数
+  const processItem = (itemContent: any) => {
+    if (
+      itemContent?.itemType === "TimelineTweet" ||
+      itemContent?.tweet_results?.result
+    ) {
+      const tweetContent = itemContent.tweet_results?.result;
+      if (tweetContent) {
+        const mapped = mapXTweetToXItem(tweetContent);
+        if (mapped) statuses.push(mapped);
+      }
+    }
+  };
+
+  const handleEntry = (entry: any) => {
+    if (!entry) return;
+    const entryId = entry.entryId || "";
+    const content = entry.content || {};
+
+    // 1. 处理推文项
+    if (
+      entryId.startsWith("tweet-") ||
+      entryId.startsWith("conversation-") ||
+      content.itemContent?.itemType === "TimelineTweet"
+    ) {
+      processItem(content.itemContent);
+    }
+    // 2. 处理嵌套模块
+    else if (content.entryType === "TimelineTimelineModule") {
+      const items = content.items || [];
+      for (const mItem of items) {
+        processItem(mItem.item?.itemContent);
+      }
+    }
+    // 3. 处理游标 (分页使用)
+    else if (entryId.startsWith("cursor-bottom") || content.cursorType === "Bottom") {
+      if (content.value) {
+        cursor = content.value;
+      }
+    }
+  };
+
   for (const instruction of instructions) {
     if (instruction.type === "TimelineAddEntries") {
       for (const entry of instruction.entries || []) {
-        const entryId = entry.entryId || "";
-
-        // 提取推文内容的辅助函数
-        const processItem = (itemContent: any) => {
-          if (
-            itemContent?.itemType === "TimelineTweet" ||
-            itemContent?.tweet_results?.result
-          ) {
-            const tweetContent = itemContent.tweet_results?.result;
-            if (tweetContent) {
-              const mapped = mapXTweetToXItem(tweetContent);
-              if (mapped) statuses.push(mapped);
-            }
-          }
-        };
-
-        if (
-          entryId.startsWith("tweet-") ||
-          entryId.startsWith("conversation-") ||
-          entry.content?.itemContent?.itemType === "TimelineTweet"
-        ) {
-          processItem(entry.content?.itemContent);
-        } else if (entry.content?.entryType === "TimelineTimelineModule") {
-          // 处理嵌套模块（如评论列表、会话线索）
-          const items = entry.content?.items || [];
-          for (const mItem of items) {
-            processItem(mItem.item?.itemContent);
-          }
-        } else if (entryId.startsWith("cursor-bottom")) {
-          cursor = entry.content?.value;
-        }
+        handleEntry(entry);
       }
+    } else if (instruction.type === "TimelineReplaceEntry") {
+      handleEntry(instruction.entry);
     }
   }
 
@@ -512,12 +527,40 @@ export class XProvider extends BaseWebviewProvider {
       }
 
       case "GETSEARCH": {
-        // 前端传来的是微博格式: "100103type=60&q=关键词&t="，需要提取 q 参数
-        const keyword = payload.toString();
-        const res = await getXSearchTimeline(
-          { query: keyword, count: 20 },
-          credential,
-        );
+        let params: any;
+        if (typeof payload === "string") {
+          // 兼容旧版单一字符串或可能的 JSON 字符串
+          try {
+            const parsed = JSON.parse(payload);
+            if (typeof parsed === "object" && parsed !== null) {
+              params = {
+                query: parsed.query,
+                cursor: parsed.cursor,
+                count: 20,
+                product: parsed.product || "Top", // 恢复为 Top
+              };
+            } else {
+              params = { query: payload, count: 20, product: "Top" };
+            }
+          } catch {
+            params = { query: payload, count: 20, product: "Top" };
+          }
+        } else if (payload && typeof payload === "object") {
+          params = {
+            query: payload.query,
+            cursor: payload.cursor,
+            count: 20,
+            product: payload.product || "Top",
+          };
+        }
+
+        if (!params || !params.query) {
+          console.error("X Search: Invalid payload", payload);
+          break;
+        }
+
+        console.log("X Search Request:", JSON.stringify(params));
+        const res = await getXSearchTimeline(params, credential);
         const mappedData =
           res.code === 0
             ? parseXTimelineToXAJAX(res.data)

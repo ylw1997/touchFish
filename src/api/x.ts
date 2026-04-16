@@ -150,6 +150,13 @@ const TWEET_DETAIL_FIELD_TOGGLES = {
   withDisallowedReplyControls: false,
 };
 
+const SEARCH_TIMELINE_FIELD_TOGGLES = {
+  withArticleRichContentState: true,
+  withArticlePlainText: false,
+  withGrokAnalyze: false,
+  withDisallowedReplyControls: false,
+};
+
 const SEARCH_TIMELINE_FEATURES: XFeatureFlags = {
   rweb_video_screen_enabled: false,
   rweb_cashtags_enabled: false,
@@ -409,7 +416,7 @@ function buildSearchTimelineVariables(params: XSearchTimelineParams) {
     rawQuery: params.query,
     count: params.count ?? 20,
     ...(params.cursor ? { cursor: params.cursor } : {}),
-    querySource: "recent_search_click",
+    querySource: "typed_query",
     product: params.product ?? "Top",
     withGrokTranslatedBio: true,
   };
@@ -605,14 +612,17 @@ export async function getXSearchTimeline(
     const variables = buildSearchTimelineVariables(params);
     const variablesStr = encodeURIComponent(JSON.stringify(variables));
     const featuresStr = encodeURIComponent(JSON.stringify(SEARCH_TIMELINE_FEATURES));
+    const fieldTogglesStr = encodeURIComponent(JSON.stringify(SEARCH_TIMELINE_FIELD_TOGGLES));
     // 手动拼接 URL，绕过 axios paramsSerializer，和浏览器行为完全一致
     const path = `/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline`;
-    const fullUrl = `${X_BASE_URL}${path}?variables=${variablesStr}&features=${featuresStr}`;
+    const fullUrl = `${X_BASE_URL}${path}?variables=${variablesStr}&features=${featuresStr}&fieldToggles=${fieldTogglesStr}`;
     const transactionId = await XClientTransaction.getTransactionId(path, "GET");
 
     const response = await xHttp.get(fullUrl, {
       headers: buildXHeaders(auth, {
-        Referer: `https://x.com/search?q=${encodeURIComponent(params.query)}&src=recent_search_click`,
+        Referer: `https://x.com/search?q=${encodeURIComponent(
+          params.query,
+        )}&src=typed_query${params.product === "Latest" ? "&f=live" : ""}`,
         "x-client-transaction-id": transactionId,
       }),
     });

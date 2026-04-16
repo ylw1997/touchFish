@@ -11,7 +11,7 @@ import { xSendParams } from "../types";
 import { useRequest } from "./useRequest";
 import { XApi } from "../api";
 
-function mergeUniqueXItems(currentList: xItem[], incomingList: xItem[]) {
+export function mergeUniqueXItems(currentList: xItem[], incomingList: xItem[]) {
   const seen = new Set<string>();
   const merged: xItem[] = [];
 
@@ -129,7 +129,8 @@ const useXAction = () => {
     setList([]);
     setHasMore(true);
     setMaxId(0);
-  }, []);
+    setUserXCursor("");
+  }, [setUserXCursor]);
 
   // 复制
   const copyLink = useCallback(
@@ -302,9 +303,14 @@ const useXAction = () => {
   }, [apiClient]);
 
   const getXSearch = useCallback(
-    async (keyword: string) => {
-      const result = await apiClient.getXSearch(keyword);
-      return result.statuses || [];
+    async (payload: { query: string; cursor?: string; product?: string }) => {
+      setIsFetching(true);
+      try {
+        const result = await apiClient.getXSearch(payload);
+        return result;
+      } finally {
+        setIsFetching(false);
+      }
     },
     [apiClient]
   );
@@ -444,6 +450,7 @@ const useXAction = () => {
     total,
     setTotal,
     hasMore,
+    setHasMore,
     updateList,
     copyLink,
     clearList,
