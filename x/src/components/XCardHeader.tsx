@@ -1,12 +1,7 @@
-import { Avatar, Button, Dropdown, Flex, Space } from "antd";
+import { Avatar, Button, Flex, Space } from "antd";
 import { xItem, xUser } from "../../../types/x";
 import YImg from "./YImg";
 import dayjs from "dayjs";
-import {
-  DeleteOutlined,
-  DownCircleOutlined,
-  ShareAltOutlined,
-} from "@ant-design/icons";
 import React from "react";
 
 interface XCardHeaderProps {
@@ -15,7 +10,6 @@ interface XCardHeaderProps {
   showActions?: boolean;
   onFollow?: (userInfo?: xUser) => void;
   cancelFollow?: (userInfo?: xUser) => void;
-  onCopyLink?: (url: string) => void;
 }
 
 const XCardHeader: React.FC<XCardHeaderProps> = ({
@@ -24,7 +18,6 @@ const XCardHeader: React.FC<XCardHeaderProps> = ({
   showActions,
   onFollow,
   cancelFollow,
-  onCopyLink,
 }) => {
   return (
     <Flex justify="space-between" align="center">
@@ -67,33 +60,13 @@ const XCardHeader: React.FC<XCardHeaderProps> = ({
             关注
           </Button>
         ) : (
-          <span className="more">
-            <Dropdown
-              trigger={["hover"]}
-              menu={{
-                items: [
-                  {
-                    key: "share",
-                    label: "分享",
-                    icon: <ShareAltOutlined />,
-                    onClick: () => {
-                      onCopyLink?.(
-                        `https://x.com/${item.user?.screen_name_raw || item.user?.screen_name}/status/${item.mblogid}`,
-                      );
-                    },
-                  },
-                  {
-                    key: "cancelFollow",
-                    label: "取消关注",
-                    icon: <DeleteOutlined />,
-                    onClick: () => cancelFollow?.(item.user),
-                  },
-                ],
-              }}
-            >
-              <DownCircleOutlined />
-            </Dropdown>
-          </span>
+          <Button
+            color="red"
+            onClick={() => cancelFollow?.(item.user)}
+            variant="filled"
+          >
+            取关
+          </Button>
         ))}
     </Flex>
   );

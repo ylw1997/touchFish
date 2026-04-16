@@ -5,6 +5,7 @@ import {
   HeartFilled,
   HeartOutlined,
   MessageOutlined,
+  ShareAltOutlined,
 } from "@ant-design/icons";
 import { xItem } from "../../../types/x";
 import React from "react";
@@ -15,6 +16,7 @@ interface XCardActionsProps {
   setCommentType: (type: "comment" | "repost" | undefined) => void;
   onToggleComments?: (id: number | string, uid: number | string, is_retweeted: boolean) => void;
   onLikeOrCancelLike?: (item: xItem, type: "like" | "cancel") => void;
+  onCopyLink?: (url: string) => void;
   is_child: boolean;
 }
 
@@ -24,6 +26,7 @@ const XCardActions: React.FC<XCardActionsProps> = ({
   setCommentType,
   onToggleComments,
   onLikeOrCancelLike,
+  onCopyLink,
   is_child,
 }) => {
   return (
@@ -81,6 +84,16 @@ const XCardActions: React.FC<XCardActionsProps> = ({
             <HeartOutlined /> {item.attitudes_count}
           </span>
         )}
+        <span
+          className="link"
+          onClick={() => {
+            onCopyLink?.(
+              `https://x.com/${item.user?.screen_name_raw || item.user?.screen_name}/status/${item.mblogid}`,
+            );
+          }}
+        >
+          <ShareAltOutlined />
+        </span>
       </Flex>
     </div>
   );

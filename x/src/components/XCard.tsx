@@ -81,7 +81,6 @@ const XCard: React.FC<XCardProps> = ({
           showActions={showActions}
           onFollow={onFollow}
           cancelFollow={cancelFollow}
-          onCopyLink={onCopyLink}
         />
       }
       className={className}
@@ -120,6 +119,7 @@ const XCard: React.FC<XCardProps> = ({
         setCommentType={setCommentType}
         onToggleComments={onToggleComments}
         onLikeOrCancelLike={onLikeOrCancelLike}
+        onCopyLink={onCopyLink}
         is_child={is_child}
       />
 
