@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [14.6.0](https://github.com/ylw1997/touchFish/compare/v14.5.0...v14.6.0) (2026-04-16)
+
+
+### ✨ Features | 新功能
+
+* 修复x依赖错误问题 ([4f5d46b](https://github.com/ylw1997/touchFish/commit/4f5d46b13bd74a22d71915ac798805d6bd031ae4))
+
 ## [14.5.0](https://github.com/ylw1997/touchFish/compare/v14.4.0...v14.5.0) (2026-04-16)
 
 
