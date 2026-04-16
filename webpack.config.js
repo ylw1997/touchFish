@@ -34,7 +34,6 @@ const extensionConfig = {
   externals: {
     vscode: "commonjs vscode", // the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed, 📖 -> https://webpack.js.org/configuration/externals/
     // modules added here also need to be added in the .vscodeignore file
-    jsdom: "commonjs jsdom", // 排除 jsdom，运行时动态加载
     bufferutil: "commonjs bufferutil", // 可选依赖
     "utf-8-validate": "commonjs utf-8-validate", // 可选依赖
     canvas: "commonjs canvas", // 可选依赖
