@@ -26,6 +26,13 @@ export interface baseXField {
  
 export type Page_pic = any;
 
+export interface xArticle {
+  id: string;
+  title: string;
+  preview_text: string;
+  cover_url?: string;
+}
+
 export interface xItem extends baseXField {
   id: number;
   text: string;
@@ -69,6 +76,9 @@ export interface xItem extends baseXField {
   followBtnCode?: { followcardid: string; uid: string };
   retweeted_status?: xItem;
   translatedText?: string;
+  article?: xArticle;
+  is_retweet?: boolean;
+  is_quote?: boolean;
 }
 
 export interface commentsItem extends baseXField {

@@ -152,8 +152,26 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     ? truncateText(longTextContent, 140)
     : summaryText;
   // 处理嵌套的转推或引用推文
-  const retweetedTweet = t.retweeted_status_result?.result || t.quoted_status_result?.result;
+  const retweetedTweetRaw = t.retweeted_status_result?.result || legacy.retweeted_status_result?.result;
+  const quotedTweetRaw = t.quoted_status_result?.result || legacy.quoted_status_result?.result;
+
+  const is_retweet = !!retweetedTweetRaw;
+  const is_quote = !!quotedTweetRaw && !is_retweet;
+
+  const retweetedTweet = retweetedTweetRaw || quotedTweetRaw;
   const retweeted_status = retweetedTweet ? mapXTweetToXItem(retweetedTweet) : undefined;
+
+  // 处理文章 (X Article)
+  const articleResult = t.article?.article_results?.result;
+  let article: xItem["article"];
+  if (articleResult) {
+    article = {
+      id: articleResult.rest_id,
+      title: articleResult.title,
+      preview_text: articleResult.preview_text,
+      cover_url: articleResult.cover_media?.media_info?.original_img_url,
+    };
+  }
 
   return {
     id: legacy.id_str || legacy.conversation_id_str,
@@ -176,6 +194,9 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     pic_num: pic_ids.length,
     comments: undefined,
     retweeted_status: retweeted_status || undefined,
+    article,
+    is_retweet,
+    is_quote,
   };
 }
 
