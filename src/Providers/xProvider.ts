@@ -148,6 +148,9 @@ function mapXTweetToXItem(tweet: any): xItem | null {
   const previewText = isLongText
     ? truncateText(longTextContent, 140)
     : summaryText;
+  // 处理嵌套的转推或引用推文
+  const retweetedTweet = t.retweeted_status_result?.result || t.quoted_status_result?.result;
+  const retweeted_status = retweetedTweet ? mapXTweetToXItem(retweetedTweet) : undefined;
 
   return {
     id: legacy.id_str || legacy.conversation_id_str,
@@ -169,6 +172,7 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     attitudes_status: legacy.favorited ? 1 : 0,
     pic_num: pic_ids.length,
     comments: undefined,
+    retweeted_status: retweeted_status || undefined,
   };
 }
 
