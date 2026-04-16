@@ -92,8 +92,9 @@ export const renderComments = (
                             if (!picInfo) return null;
                             
                             const isVideo = picInfo.type === 'video';
+                            const totalMedia = (item.pic_ids?.length || 0) + (item.url_struct?.[0]?.pic_ids?.length || 0);
                             const imgProps: any = {
-                              className: "img-item",
+                              className: isVideo ? "video-item" : (totalMedia > 1 ? "img-item" : "img-only-item"),
                               src: isVideo ? (picInfo.video_url || picInfo.large?.url || picInfo.bmiddle?.url) : (picInfo.large?.url || picInfo.bmiddle?.url),
                               mediaType: isVideo ? 'video' : 'image',
                             };

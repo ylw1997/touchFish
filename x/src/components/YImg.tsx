@@ -16,7 +16,7 @@ const YImg: React.FC<YImgProps> = ({
   ...props
 }) => {
   return (
-    <div style={{ height: "inherit", display: "inline-block" }}>
+    <div style={{ display: "inline-block", maxWidth: '100%' }}>
       {mediaType === "video" ? (
         <video src={src} controls {...props} />
       ) : (
