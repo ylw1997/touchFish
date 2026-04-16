@@ -2,16 +2,16 @@ import axios, { AxiosError } from "axios";
 import { ClientTransaction, handleXMigration } from "x-client-transaction-id";
 import * as crypto from "crypto";
 
-
 const X_BASE_URL = "https://x.com";
 
 // 默认 Query ID，会被 X 定期轮换。如果 404，需要从浏览器 DevTools 抓取最新值。
-export let X_HOME_TIMELINE_QUERY_ID = "y7EXm-q2D84r46khKFkSBA";
-export let X_TWEET_DETAIL_QUERY_ID = "rU08O-YiXdr0IZfE7qaUMg";
+export let X_HOME_TIMELINE_QUERY_ID = "Yf4WJo0fW46TnqrHUw_1Ow";
+export let X_TWEET_DETAIL_QUERY_ID = "tCivIG3o9ls-9cLxTsdxZQ";
 export let X_SEARCH_TIMELINE_QUERY_ID = "R0u1RWRf748KzyGBXvOYRA";
-export let X_USER_BY_SCREEN_NAME_QUERY_ID = "qW5u-DAuXpMEG0zA1F7UGQ";
-export let X_USER_TWEETS_QUERY_ID = "9zyyd1hebl7oNWIPdA8HRw";
+export let X_USER_BY_SCREEN_NAME_QUERY_ID = "IGgvgiOx4QZndDHuD3x9TQ";
+export let X_USER_TWEETS_QUERY_ID = "6fWQaBPK51aGyC_VC7t9GQ";
 export let X_CREATE_TWEET_QUERY_ID = "c50A_puUoQGK_4SXseYz3A";
+export const X_HOME_LATEST_TIMELINE_QUERY_ID = "hlno2aLQsxiQlOrK-a2V-w";
 
 /**
  * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
@@ -364,8 +364,6 @@ function buildNextTimelinePayload(params: XTimelineNextParams) {
   };
 }
 
-export const X_HOME_LATEST_TIMELINE_QUERY_ID = "2ee46L1AFXmnTa0EvUog-Q";
-
 export async function getHomeLatestTimeline(
   credential?: XCredential | null,
   count = 20,
@@ -500,7 +498,8 @@ export async function getStoredXCredential(): Promise<XCredential | null> {
   if (!csrfToken) return null;
 
   // authorization 优先读取配置，否则使用默认公开 token
-  const authorization = getConfigByKey("xAuthorization") || X_DEFAULT_BEARER_TOKEN;
+  const authorization =
+    getConfigByKey("xAuthorization") || X_DEFAULT_BEARER_TOKEN;
 
   return { cookie, authorization, csrfToken };
 }
@@ -648,12 +647,19 @@ export async function getXSearchTimeline(
     const auth = ensureCredential(credential);
     const variables = buildSearchTimelineVariables(params);
     const variablesStr = encodeURIComponent(JSON.stringify(variables));
-    const featuresStr = encodeURIComponent(JSON.stringify(SEARCH_TIMELINE_FEATURES));
-    const fieldTogglesStr = encodeURIComponent(JSON.stringify(SEARCH_TIMELINE_FIELD_TOGGLES));
+    const featuresStr = encodeURIComponent(
+      JSON.stringify(SEARCH_TIMELINE_FEATURES),
+    );
+    const fieldTogglesStr = encodeURIComponent(
+      JSON.stringify(SEARCH_TIMELINE_FIELD_TOGGLES),
+    );
     // 手动拼接 URL，绕过 axios paramsSerializer，和浏览器行为完全一致
     const path = `/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline`;
     const fullUrl = `${X_BASE_URL}${path}?variables=${variablesStr}&features=${featuresStr}&fieldToggles=${fieldTogglesStr}`;
-    const transactionId = await XClientTransaction.getTransactionId(path, "GET");
+    const transactionId = await XClientTransaction.getTransactionId(
+      path,
+      "GET",
+    );
 
     const response = await xHttp.get(fullUrl, {
       headers: buildXHeaders(auth, {
@@ -893,7 +899,11 @@ export async function translateXPost(
  */
 export async function createXTweet(
   text: string,
-  options: { replyToId?: string; attachmentUrl?: string; mediaIds?: string[] } = {},
+  options: {
+    replyToId?: string;
+    attachmentUrl?: string;
+    mediaIds?: string[];
+  } = {},
   credential?: XCredential | null,
 ): Promise<XApiResult<any>> {
   try {
@@ -901,7 +911,10 @@ export async function createXTweet(
     const path = `/i/api/graphql/${X_CREATE_TWEET_QUERY_ID}/CreateTweet`;
     const url = `${X_BASE_URL}${path}`;
 
-    const transactionId = await XClientTransaction.getTransactionId(path, "POST");
+    const transactionId = await XClientTransaction.getTransactionId(
+      path,
+      "POST",
+    );
 
     const payload = {
       variables: {
@@ -941,7 +954,9 @@ export async function createXTweet(
 
     return {
       code: 0,
-      data: response.data?.data?.create_tweet?.tweet_results?.result ?? response.data,
+      data:
+        response.data?.data?.create_tweet?.tweet_results?.result ??
+        response.data,
     };
   } catch (error) {
     const normalized = normalizeError(error);
@@ -988,7 +1003,9 @@ export async function uploadXMedia(
       )}&media_category=tweet_image`,
       null,
       {
-        headers: buildXHeaders(auth, { "content-type": "application/x-www-form-urlencoded" }),
+        headers: buildXHeaders(auth, {
+          "content-type": "application/x-www-form-urlencoded",
+        }),
       },
     );
 
@@ -999,13 +1016,21 @@ export async function uploadXMedia(
     const boundary = `----WebKitFormBoundary${Math.random().toString(36).substring(2)}`;
     const header = `--${boundary}\r\nContent-Disposition: form-data; name="media"; filename="blob"\r\nContent-Type: application/octet-stream\r\n\r\n`;
     const footer = `\r\n--${boundary}--\r\n`;
-    const body = Buffer.concat([Buffer.from(header), file.buffer, Buffer.from(footer)]);
+    const body = Buffer.concat([
+      Buffer.from(header),
+      file.buffer,
+      Buffer.from(footer),
+    ]);
 
-    await xHttp.post(`${uploadUrl}?command=APPEND&media_id=${mediaId}&segment_index=0`, body, {
-      headers: buildXHeaders(auth, {
-        "content-type": `multipart/form-data; boundary=${boundary}`,
-      }),
-    });
+    await xHttp.post(
+      `${uploadUrl}?command=APPEND&media_id=${mediaId}&segment_index=0`,
+      body,
+      {
+        headers: buildXHeaders(auth, {
+          "content-type": `multipart/form-data; boundary=${boundary}`,
+        }),
+      },
+    );
 
     // 3. FINALIZE
     const md5 = crypto.createHash("md5").update(file.buffer).digest("hex");
@@ -1013,7 +1038,9 @@ export async function uploadXMedia(
       `${uploadUrl}?command=FINALIZE&media_id=${mediaId}&original_md5=${md5}`,
       null,
       {
-        headers: buildXHeaders(auth, { "content-type": "application/x-www-form-urlencoded" }),
+        headers: buildXHeaders(auth, {
+          "content-type": "application/x-www-form-urlencoded",
+        }),
       },
     );
 
