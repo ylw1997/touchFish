@@ -11,7 +11,7 @@ import { openNewWindow } from ".";
 
 // 使用 Map 进行高效的表情查找。它仅在模块加载时创建一次。
 const emojiMap = new Map<string, string>(
-  emojiData.map((item) => [item.phrase, item.url])
+  emojiData.map((item) => [item.phrase, item.url]),
 );
 
 // 用于查找所有特殊实体（[表情]、#话题#、@用户 或 URL）的正则表达式。
@@ -64,14 +64,14 @@ const renderLinkTag = (url: string, key: string) => {
 };
 
 /**
- * 解析微博原始文本，并将其转换为 React 节点数组。
+ * 解析X原始文本，并将其转换为 React 节点数组。
  * 它可以处理表情、话题、@用户和链接。
  * 此版本使用 `matchAll` 以获得更好的性能和代码结构。
  */
 export const parseXText = (
   xItem: baseXField,
   getUserByName: (username: string) => void,
-  onTopicClick: (topic: string) => void
+  onTopicClick: (topic: string) => void,
 ): React.ReactNode[] => {
   let { text_raw } = xItem;
   if (!text_raw) {
@@ -107,7 +107,7 @@ export const parseXText = (
             alt={part}
             className="x-emoji"
             referrerPolicy="no-referrer"
-          />
+          />,
         );
       } else {
         // 如果表情不在我们的 Map 中，则将其渲染为纯文本。
@@ -124,7 +124,7 @@ export const parseXText = (
           icon={<NumberOutlined />}
         >
           {part.substring(1, part.length - 1)}
-        </Tag>
+        </Tag>,
       );
     } else if (part.startsWith("@")) {
       const username = part.substring(1);
@@ -138,7 +138,7 @@ export const parseXText = (
           icon={<UserOutlined />}
         >
           {username}
-        </Tag>
+        </Tag>,
       );
     } else if (part.startsWith("http")) {
       nodes.push(renderLinkTag(part, key));
@@ -159,7 +159,7 @@ export const parseXText = (
 export const parseH5XText = (
   text: string,
   getUserByName: (username: string) => void,
-  onTopicClick: (topic: string) => void
+  onTopicClick: (topic: string) => void,
 ): React.ReactNode[] => {
   if (!text) return [];
   text = text.replace(/&ZeroWidthSpace;/g, "");
@@ -193,7 +193,7 @@ export const parseH5XText = (
                 icon={<UserOutlined />}
               >
                 {username}
-              </Tag>
+              </Tag>,
             );
           }
         } else if (element.querySelector(".surl-text")) {
@@ -211,12 +211,12 @@ export const parseH5XText = (
                 {topic.startsWith("#") && topic.endsWith("#")
                   ? topic.substring(1, topic.length - 1)
                   : topic}
-              </Tag>
+              </Tag>,
             );
           }
         } else {
           nodes.push(
-            <React.Fragment key={key}>{element.textContent}</React.Fragment>
+            <React.Fragment key={key}>{element.textContent}</React.Fragment>,
           );
         }
       }

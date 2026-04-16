@@ -16,6 +16,7 @@ import {
   translateXPost,
   createXTweet,
   repostXTweet,
+  uploadXMedia,
 } from "../api/x";
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
@@ -613,6 +614,53 @@ export class XProvider extends BaseWebviewProvider {
         const res = await repostXTweet(comment, id.toString(), screen_name, credential);
         webviewView.webview.postMessage({
           command: "SENDCREATEREPOST",
+          payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
+          uuid,
+        });
+        break;
+      }
+
+      case "GETUPLOADIMGURL": {
+        const data = JSON.parse(payload);
+        const base64Data = data.base64.replace(/^data:image\/\w+;base64,/, "");
+        const res = await uploadXMedia(
+          {
+            buffer: Buffer.from(base64Data, "base64"),
+            type: data.type,
+            size: data.size,
+          },
+          credential,
+        );
+        webviewView.webview.postMessage({
+          command: "SENDUPLOADIMGURL",
+          payload: res.code === 0 ? { ok: 1, data: { pic_id: res.data?.media_id_string } } : { ok: 0, msg: res.message },
+          uuid,
+        });
+        break;
+      }
+
+      case "GETNEWBLOGRESULT": {
+        const data = JSON.parse(payload);
+        // 处理来自 SendXDrawer 的字段：content -> status, pic_id -> mediaIds
+        let mediaIds: string[] = [];
+        if (data.pic_id) {
+          try {
+            const pics = JSON.parse(data.pic_id);
+            if (Array.isArray(pics)) {
+              mediaIds = pics.map((p: any) => p.pid).filter(Boolean);
+            }
+          } catch (e) {
+            console.error("Failed to parse pic_id in GETNEWBLOGRESULT", e);
+          }
+        }
+
+        const res = await createXTweet(
+          data.content || data.status,
+          { mediaIds: mediaIds.length > 0 ? mediaIds : data.media_ids },
+          credential,
+        );
+        webviewView.webview.postMessage({
+          command: "SENDNEWBLOGRESULT",
           payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
           uuid,
         });

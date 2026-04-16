@@ -27,6 +27,7 @@ import {
   EyeOutlined,
   RedoOutlined,
   SearchOutlined,
+  FormOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -124,7 +125,7 @@ function App() {
     };
   }, []);
 
-  // 请求数据（主列表/用户微博）
+  // 请求数据（主列表/用户X）
   const fetchData = useCallback(() => {
     getListData(activeKey);
   }, [activeKey, getListData]);
@@ -222,7 +223,7 @@ function App() {
       {/* 回到顶部按钮 */}
       <FloatButton.BackTop
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 324 }}
+        style={{ insetInlineEnd: 24, bottom: 384 }}
         visibilityHeight={500}
         duration={1000}
         icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
@@ -246,6 +247,13 @@ function App() {
         icon={<SearchOutlined style={{ color: "#faad14" }} />}
         tooltip={{ title: "搜索", placement: "left" }}
         style={{ insetInlineEnd: 24, bottom: 264 }}
+      />
+      {/* 发帖按钮 */}
+      <FloatButton
+        onClick={() => setSendDrawerOpen(true)}
+        icon={<FormOutlined style={{ color: "#1d9bf0" }} />}
+        tooltip={{ title: "发帖", placement: "left" }}
+        style={{ insetInlineEnd: 24, bottom: 324 }}
       />
 
       {/* 显示图片 */}

@@ -8,7 +8,7 @@
  * @Description:
  */
 import { useState } from "react";
-import { Drawer, Button, Input, Form, Select, Upload } from "antd";
+import { Drawer, Button, Input, Form, Upload } from "antd";
 import { SendOutlined, PlusOutlined } from "@ant-design/icons";
 import { xSendParams } from "../types";
 import { fileToBase64 } from "../utils";
@@ -23,14 +23,8 @@ interface SendXDrawerProps {
 }
 
 const { TextArea } = Input;
-const { Option } = Select;
 
-const visibleOptions = [
-  { label: "公开", value: 0 },
-  { label: "自己", value: 1 },
-  { label: "好友圈", value: 6 },
-  { label: "粉丝", value: 10 },
-];
+// Remove visibility options as they are not used in X
 
 const SendXDrawer: React.FC<SendXDrawerProps> = ({
   open,
@@ -49,9 +43,9 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
     form
       .validateFields()
       .then((values) => {
-        const obj = {
+        const obj: xSendParams = {
           content: values.content,
-          visible: values.visible,
+          visible: 0 as any,
           vote: "",
           media: "",
           pic_id: JSON.stringify(
@@ -60,7 +54,7 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
                 type: item.type,
                 pid: item.pid,
               };
-            })
+            }),
           ),
         };
         onSend(obj);
@@ -88,9 +82,9 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
       const result = await uploadImage(obj);
       messageApi.success("上传图片成功!");
       const newPic = {
-        type: result.type,
-        uid: result.uid,
-        pid: result.data.pics.pic_1.pid,
+        type: file.type || "image/png",
+        uid: file.uid,
+        pid: result.data.pic_id || result.data.pics?.pic_1?.pid,
       };
       setPictureList((list) => [...list, newPic]);
       onSuccess(result, file);
@@ -110,7 +104,7 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
   return (
     <>
       <Drawer
-        title="发送微博"
+        title="发布推文 (X)"
         placement="top"
         height={"auto"}
         open={open}
@@ -133,9 +127,9 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
       >
         <Form form={form} layout="vertical" initialValues={{ visible: 0 }}>
           <Form.Item
-            label="微博正文"
+            label="推文正文"
             name="content"
-            rules={[{ required: true, message: "请输入微博内容" }]}
+            rules={[{ required: true, message: "请输入推文内容" }]}
           >
             <TextArea
               rows={4}
@@ -145,19 +139,6 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
               disabled={loading}
               autoSize={{ minRows: 4, maxRows: 4 }}
             />
-          </Form.Item>
-          <Form.Item
-            label="对谁可见"
-            name="visible"
-            rules={[{ required: true, message: "请选择可见范围" }]}
-          >
-            <Select disabled={loading}>
-              {visibleOptions.map((opt) => (
-                <Option value={opt.value} key={opt.value}>
-                  {opt.label}
-                </Option>
-              ))}
-            </Select>
           </Form.Item>
           <Form.Item label="上传图片">
             <Upload
@@ -170,7 +151,7 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
                 setPictureList((prevList) => {
                   const remainNames = newFileList.map((f) => f.uid);
                   return prevList.filter((item) =>
-                    remainNames.includes(item.uid)
+                    remainNames.includes(item.uid),
                   );
                 });
               }}

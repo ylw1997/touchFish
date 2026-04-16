@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { ClientTransaction } from "x-client-transaction-id";
 import { JSDOM } from "jsdom";
+import * as crypto from "crypto";
 
 
 const X_BASE_URL = "https://x.com";
@@ -896,7 +897,7 @@ export async function translateXPost(
  */
 export async function createXTweet(
   text: string,
-  options: { replyToId?: string; attachmentUrl?: string } = {},
+  options: { replyToId?: string; attachmentUrl?: string; mediaIds?: string[] } = {},
   credential?: XCredential | null,
 ): Promise<XApiResult<any>> {
   try {
@@ -917,7 +918,10 @@ export async function createXTweet(
           : undefined,
         attachment_url: options.attachmentUrl,
         media: {
-          media_entities: [],
+          media_entities: (options.mediaIds || []).map((id: string) => ({
+            media_id: id,
+            tagged_users: [],
+          })),
           possibly_sensitive: false,
         },
         semantic_annotation_ids: [],
@@ -968,4 +972,65 @@ export async function repostXTweet(
   const attachmentUrl = `https://x.com/${username}/status/${tweetId}`;
 
   return createXTweet(comment, { attachmentUrl }, credential);
+}
+
+/**
+ * 上传媒体文件到 X (3 阶段: INIT, APPEND, FINALIZE)
+ */
+export async function uploadXMedia(
+  file: { buffer: Buffer; type: string; size: number },
+  credential?: XCredential | null,
+): Promise<XApiResult<{ media_id_string: string }>> {
+  try {
+    const auth = ensureCredential(credential);
+    const uploadUrl = "https://upload.x.com/i/media/upload.json";
+
+    // 1. INIT
+    const initRes = await xHttp.post(
+      `${uploadUrl}?command=INIT&total_bytes=${file.size}&media_type=${encodeURIComponent(
+        file.type,
+      )}&media_category=tweet_image`,
+      null,
+      {
+        headers: buildXHeaders(auth, { "content-type": "application/x-www-form-urlencoded" }),
+      },
+    );
+
+    const mediaId = initRes.data.media_id_string;
+
+    // 2. APPEND
+    // 构建 multipart/form-data
+    const boundary = `----WebKitFormBoundary${Math.random().toString(36).substring(2)}`;
+    const header = `--${boundary}\r\nContent-Disposition: form-data; name="media"; filename="blob"\r\nContent-Type: application/octet-stream\r\n\r\n`;
+    const footer = `\r\n--${boundary}--\r\n`;
+    const body = Buffer.concat([Buffer.from(header), file.buffer, Buffer.from(footer)]);
+
+    await xHttp.post(`${uploadUrl}?command=APPEND&media_id=${mediaId}&segment_index=0`, body, {
+      headers: buildXHeaders(auth, {
+        "content-type": `multipart/form-data; boundary=${boundary}`,
+      }),
+    });
+
+    // 3. FINALIZE
+    const md5 = crypto.createHash("md5").update(file.buffer).digest("hex");
+    const finalizeRes = await xHttp.post(
+      `${uploadUrl}?command=FINALIZE&media_id=${mediaId}&original_md5=${md5}`,
+      null,
+      {
+        headers: buildXHeaders(auth, { "content-type": "application/x-www-form-urlencoded" }),
+      },
+    );
+
+    return {
+      code: 0,
+      data: { media_id_string: finalizeRes.data.media_id_string },
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: `媒体上传失败: ${normalized.message}`,
+      data: null,
+    };
+  }
 }

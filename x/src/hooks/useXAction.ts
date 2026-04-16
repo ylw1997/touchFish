@@ -28,12 +28,12 @@ export function mergeUniqueXItems(currentList: xItem[], incomingList: xItem[]) {
 }
 
 const useXAction = () => {
-  // 微博列表相关状态
+  // X列表相关状态
   const [list, setList] = useState<xItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [userXPage, setUserXPage] = useState(1); // 用户微博页码
+  const [userXPage, setUserXPage] = useState(1); // 用户X页码
   const [userXCursor, setUserXCursor] = useState<string>("");
   const [maxId, setMaxId] = useState<number | string>(0);
 
@@ -50,7 +50,7 @@ const useXAction = () => {
 
   const apiClient = useMemo(() => new XApi(request), [request]);
 
-  // 更新微博列表
+  // 更新X列表
   const updateList = useCallback(
     (matcher: (item: xItem) => boolean, updater: (item: xItem) => xItem) => {
       setList((list) => updateXList(list, matcher, updater));
@@ -58,7 +58,7 @@ const useXAction = () => {
     [],
   );
 
-  // 请求数据（主列表/用户微博）
+  // 请求数据（主列表/用户X）
   const getListData = useCallback(
     async (payload: string, replace = false) => {
       setIsFetching(true);
@@ -209,7 +209,7 @@ const useXAction = () => {
     [list, updateList, apiClient],
   );
 
-  // 合并长微博展开方法
+  // 合并长X展开方法
   const handleExpandLongX = useCallback(
     async (id: string | number) => {
       updateList(
@@ -224,7 +224,7 @@ const useXAction = () => {
     [updateList],
   );
 
-  // 查看博主微博
+  // 查看博主X
   const getUserBlog = useCallback(
     async (userInfo: xUser) => {
       if (!userInfo) return;
@@ -324,14 +324,14 @@ const useXAction = () => {
     [apiClient],
   );
 
-  // 发送微博功能
+  // 发送X功能
   const handleSendX = useCallback(
     async (content: xSendParams) => {
       setSendLoading(true);
       try {
-        const result = await apiClient.sendX(content);
-        messageApi.success("微博发送成功!");
-        setList((prev) => [result.data, ...prev]);
+        await apiClient.sendX(content);
+        messageApi.success("X发送成功!");
+        // setList((prev) => [result.data, ...prev]);
       } finally {
         setSendLoading(false);
       }
