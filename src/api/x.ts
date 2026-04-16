@@ -8,7 +8,7 @@ const X_BASE_URL = "https://x.com";
 // 默认 Query ID，会被 X 定期轮换。如果 404，需要从浏览器 DevTools 抓取最新值。
 export let X_HOME_TIMELINE_QUERY_ID = "y7EXm-q2D84r46khKFkSBA";
 export let X_TWEET_DETAIL_QUERY_ID = "rU08O-YiXdr0IZfE7qaUMg";
-export let X_SEARCH_TIMELINE_QUERY_ID = "pCd62NDD9dlCDgEGgEVHMg";
+export let X_SEARCH_TIMELINE_QUERY_ID = "R0u1RWRf748KzyGBXvOYRA";
 export let X_USER_BY_SCREEN_NAME_QUERY_ID = "qW5u-DAuXpMEG0zA1F7UGQ";
 export let X_USER_TWEETS_QUERY_ID = "9zyyd1hebl7oNWIPdA8HRw";
 
@@ -151,30 +151,42 @@ const TWEET_DETAIL_FIELD_TOGGLES = {
 };
 
 const SEARCH_TIMELINE_FEATURES: XFeatureFlags = {
-  rweb_tipjar_consumption_enabled: true,
-  responsive_web_graphql_exclude_directive_enabled: true,
+  rweb_video_screen_enabled: false,
+  rweb_cashtags_enabled: false,
+  profile_label_improvements_pcf_label_in_post_enabled: true,
+  responsive_web_profile_redirect_enabled: false,
+  rweb_tipjar_consumption_enabled: false,
   verified_phone_label_enabled: false,
   creator_subscriptions_tweet_preview_api_enabled: true,
   responsive_web_graphql_timeline_navigation_enabled: true,
   responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
+  premium_content_api_read_enabled: false,
   communities_web_enable_tweet_community_results_fetch: true,
   c9s_tweet_anatomy_moderator_badge_enabled: true,
+  responsive_web_grok_analyze_button_fetch_trends_enabled: false,
+  responsive_web_grok_analyze_post_followups_enabled: true,
+  responsive_web_jetfuel_frame: true,
+  responsive_web_grok_share_attachment_enabled: true,
+  responsive_web_grok_annotations_enabled: true,
   articles_preview_enabled: true,
-  tweetypie_unmention_optimization_enabled: true,
   responsive_web_edit_tweet_api_enabled: true,
   graphql_is_translatable_rweb_tweet_is_translatable_enabled: true,
   view_counts_everywhere_api_enabled: true,
   longform_notetweets_consumption_enabled: true,
   responsive_web_twitter_article_tweet_consumption_enabled: true,
-  tweet_awards_web_tipping_enabled: false,
-  creator_subscriptions_quote_tweet_preview_enabled: false,
+  content_disclosure_indicator_enabled: true,
+  content_disclosure_ai_generated_indicator_enabled: true,
+  responsive_web_grok_show_grok_translated_post: true,
+  responsive_web_grok_analysis_button_from_backend: true,
+  post_ctas_fetch_enabled: false,
   freedom_of_speech_not_reach_fetch_enabled: true,
   standardized_nudges_misinfo: true,
   tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled: true,
-  tweet_with_visibility_results_prefer_gql_media_interstitial_enabled: true,
-  rweb_video_timestamps_enabled: true,
   longform_notetweets_rich_text_read_enabled: true,
-  longform_notetweets_inline_media_enabled: true,
+  longform_notetweets_inline_media_enabled: false,
+  responsive_web_grok_image_annotation_enabled: true,
+  responsive_web_grok_imagine_annotation_enabled: true,
+  responsive_web_grok_community_note_auto_translation_is_enabled: true,
   responsive_web_enhance_cards_enabled: false,
 };
 
@@ -397,7 +409,7 @@ function buildSearchTimelineVariables(params: XSearchTimelineParams) {
     rawQuery: params.query,
     count: params.count ?? 20,
     ...(params.cursor ? { cursor: params.cursor } : {}),
-    querySource: "typed_query",
+    querySource: "recent_search_click",
     product: params.product ?? "Top",
     withGrokTranslatedBio: true,
   };
@@ -594,10 +606,14 @@ export async function getXSearchTimeline(
     const variablesStr = encodeURIComponent(JSON.stringify(variables));
     const featuresStr = encodeURIComponent(JSON.stringify(SEARCH_TIMELINE_FEATURES));
     // 手动拼接 URL，绕过 axios paramsSerializer，和浏览器行为完全一致
-    const fullUrl = `${X_BASE_URL}/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline?variables=${variablesStr}&features=${featuresStr}`;
+    const path = `/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline`;
+    const fullUrl = `${X_BASE_URL}${path}?variables=${variablesStr}&features=${featuresStr}`;
+    const transactionId = await XClientTransaction.getTransactionId(path, "GET");
+
     const response = await xHttp.get(fullUrl, {
       headers: buildXHeaders(auth, {
         Referer: `https://x.com/search?q=${encodeURIComponent(params.query)}&src=recent_search_click`,
+        "x-client-transaction-id": transactionId,
       }),
     });
 

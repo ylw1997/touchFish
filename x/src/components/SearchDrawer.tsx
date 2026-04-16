@@ -35,7 +35,7 @@ const SearchList = memo(({ xs, loading, getUserBlog, ...xCardProps }: any) => {
     return loaderFunc();
   }
 
-  if (xs.length === 0) {
+  if (!Array.isArray(xs) || xs.length === 0) {
     return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
   }
 

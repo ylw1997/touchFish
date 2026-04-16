@@ -26,6 +26,7 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   RedoOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -240,12 +241,12 @@ function App() {
         tooltip={{ title: "刷新", placement: "left" }}
       />
       {/* 搜索按钮 */}
-      {/* <FloatButton
+      <FloatButton
         onClick={() => setSearchDrawerOpen(true)}
         icon={<SearchOutlined style={{ color: "#faad14" }} />}
         tooltip={{ title: "搜索", placement: "left" }}
         style={{ insetInlineEnd: 24, bottom: 264 }}
-      /> */}
+      />
 
       {/* 显示图片 */}
       <FloatButton

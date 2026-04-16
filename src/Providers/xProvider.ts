@@ -215,7 +215,8 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
 
         if (
           entryId.startsWith("tweet-") ||
-          entryId.startsWith("conversation-")
+          entryId.startsWith("conversation-") ||
+          entry.content?.itemContent?.itemType === "TimelineTweet"
         ) {
           processItem(entry.content?.itemContent);
         } else if (entry.content?.entryType === "TimelineTimelineModule") {

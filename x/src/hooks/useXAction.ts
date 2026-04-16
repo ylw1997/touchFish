@@ -304,7 +304,7 @@ const useXAction = () => {
   const getXSearch = useCallback(
     async (keyword: string) => {
       const result = await apiClient.getXSearch(keyword);
-      return result.data || [];
+      return result.statuses || [];
     },
     [apiClient]
   );
