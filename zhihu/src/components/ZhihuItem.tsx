@@ -1,4 +1,4 @@
-import { Card, Flex, List, Button } from "antd";
+import { Avatar, Button, Card, Flex, List } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
@@ -10,11 +10,16 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, {
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import CommentItem from "./CommentItem";
 import { parseZhihuItemContent } from "../utils/textParser";
 import type { ZhihuCommentItem, ZhihuItemData } from "../../../types/zhihu";
-import { Avatar } from "@heroui/react";
 import useZhihuAction from "../hooks/useZhihuAction";
 import { loaderFunc } from "../utils/loader";
 import { useExpandedStore } from "../store/expanded";
@@ -66,12 +71,12 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   };
 
   // 折叠自身的回调供全局 collapseAll 使用
-  const collapseSelf = () => {
+  const collapseSelf = useCallback(() => {
     if (expanded) {
       backToView();
     }
     setExpanded(false);
-  };
+  }, [expanded]);
 
   // 监听 expanded 状态注册/注销到全局 store
   // 只有长内容且展开时才注册(避免短内容初始展开状态误注册)
@@ -83,7 +88,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       unregister(id);
     }
     return () => unregister(id);
-  }, [expanded, isLoneContent, item.id, register, unregister]);
+  }, [collapseSelf, expanded, isLoneContent, item.id, register, unregister]);
 
   const getComments = async () => {
     if (showComments) {
@@ -119,12 +124,12 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         </span>
       ) : imagesVisible ? (
         <Avatar
-          isBordered
-          radius="sm"
-          style={{ flexShrink: 0 }}
           src={item.author?.avatar_url}
+          shape="square"
+          size={45}
+          style={{ flexShrink: 0, borderRadius: 10 }}
         >
-          {item.author?.name}
+          {item.author?.name?.slice(0, 1)}
         </Avatar>
       ) : null}
       <div style={{ marginLeft: 10 }}>

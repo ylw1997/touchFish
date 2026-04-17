@@ -9,7 +9,6 @@
  */
 import { ConfigProvider, theme, App as AntdApp } from "antd";
 import zhCN from "antd/locale/zh_CN";
-import { HeroUIProvider } from "@heroui/react";
 import { useState, useEffect, useMemo } from "react";
 import App from "./App";
 
@@ -80,11 +79,9 @@ const ThemeWrapper = () => {
   return (
     <ConfigProvider theme={antdTheme} locale={zhCN}>
       <AntdApp>
-        <HeroUIProvider>
-          <main className={isLightTheme ? "" : "dark"}>
-            <App />
-          </main>
-        </HeroUIProvider>
+        <main className={isLightTheme ? "" : "dark"}>
+          <App />
+        </main>
       </AntdApp>
     </ConfigProvider>
   );
