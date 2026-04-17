@@ -40,6 +40,9 @@ jobs:
       - name: Validate release secret
         run: test -n "$GH_RELEASE_PAT" || (echo "Missing GH_RELEASE_PAT secret" && exit 1)
 
+      - name: Fetch release tags
+        run: git fetch --force --tags origin
+
       - name: Lint
         run: pnpm lint
 

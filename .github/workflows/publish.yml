@@ -6,7 +6,7 @@ on:
       - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: publish-${{ github.ref }}
@@ -56,11 +56,21 @@ jobs:
       - name: Build webviews
         run: pnpm build-webviews
 
-      - name: Package extension
+      - name: Bundle extension
         run: pnpm package
+
+      - name: Package VSIX
+        run: pnpm dlx @vscode/vsce package --no-dependencies
 
       - name: Publish to VS Code Marketplace
         run: pnpm dlx @vscode/vsce publish --no-dependencies --pat "$VSCE_PAT"
 
       - name: Publish to Open VSX
         run: pnpm dlx ovsx publish --no-dependencies -p "$OVSX_PAT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: "*.vsix"

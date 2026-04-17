@@ -1,4 +1,5 @@
 {
+  "tagPrefix": "v",
   "header": "# 更新历史 \n\n",
   "types": [
     {
@@ -7,7 +8,7 @@
     },
     {
       "type": "fix",
-      "section": "🐛 Bug Fixes | Bug 修复"
+      "section": "🐰 Bug Fixes | Bug 修复"
     },
     {
       "type": "perf",
@@ -19,20 +20,20 @@
     },
     {
       "type": "chore",
-      "section": "📦 Chores | 其他更新"
+      "section": "📝 Chores | 其他更新"
     },
     {
       "type": "docs",
-      "section": "📝 Documentation | 文档"
+      "section": "📑 Documentation | 文档"
     },
     {
       "type": "style",
-      "section": "💄 Styles | 风格",
+      "section": "🎕 Styles | 风格",
       "hidden": true
     },
     {
       "type": "refactor",
-      "section": "♻ Code Refactoring | 代码重构"
+      "section": "❤️ Code Refactoring | 代码重构"
     },
     {
       "type": "test",
@@ -40,11 +41,11 @@
     },
     {
       "type": "build",
-      "section": "👷‍ Build System | 构建"
+      "section": "👷 Build System | 构建"
     },
     {
       "type": "ci",
-      "section": "🔧 Continuous Integration | CI 配置"
+      "section": "🔡 Continuous Integration | CI 配置"
     }
   ],
   "skip": {
