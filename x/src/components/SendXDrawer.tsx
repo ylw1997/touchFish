@@ -133,7 +133,7 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
           >
             <TextArea
               rows={4}
-              maxLength={280}
+              maxLength={1000}
               showCount
               placeholder="此刻你想说点什么..."
               disabled={loading}
