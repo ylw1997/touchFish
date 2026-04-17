@@ -39,7 +39,7 @@ export function refreshQueryIds() {
 
 export interface XCredential {
   cookie: string;
-  authorization: string;
+  authorization: string | undefined;
   csrfToken: string;
 }
 
@@ -299,7 +299,7 @@ export function buildXHeaders(
   return {
     accept: "*/*",
     "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-    authorization: credential.authorization,
+    authorization: credential.authorization || "",
     Cookie: credential.cookie,
     "content-type": "application/json",
     Referer: "https://x.com/home",
@@ -399,7 +399,7 @@ export async function getHomeLatestTimeline(
 
 export async function getHomeLatestTimelineNext(
   params: XTimelineNextParams,
-  credential?: XCredential | null,
+  credential?: XCredential | undefined | null,
 ): Promise<XApiResult<any>> {
   try {
     const auth = ensureCredential(credential);

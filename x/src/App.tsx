@@ -130,10 +130,11 @@ function App() {
     getListData(activeKey);
   }, [activeKey, getListData]);
 
-  // 初始化，尝试从缓存恢复
+  // 初始化
   useEffect(() => {
     if (list.length === 0) fetchData();
-  }, [fetchData, list.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // tab切换
   const onChange = useCallback(

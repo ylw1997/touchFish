@@ -150,7 +150,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               >
                 {userDetail.screen_name}
               </Avatar>
-              <div style={{ fontSize: 20, fontWeight: "bolder" }}>
+              <div style={{ fontWeight: "bolder" }}>
                 {userDetail.screen_name}
               </div>
               {userDetail.followers_count_str &&
@@ -196,11 +196,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               {userDetail.isOwner ? (
                 <></>
               ) : !userDetail.following ? (
-                <Button
-                  color="primary"
-                  onClick={handleFollow}
-                  variant="filled"
-                >
+                <Button color="primary" onClick={handleFollow} variant="filled">
                   关注
                 </Button>
               ) : (
@@ -251,7 +247,9 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                       getUserByName={getUserByName}
                       onTopicClick={onTopicClick}
                       onTranslate={handleTranslate || parentOnTranslate}
-                      onClearTranslation={handleClearTranslation || parentOnClearTranslation}
+                      onClearTranslation={
+                        handleClearTranslation || parentOnClearTranslation
+                      }
                     />
                   </motion.div>
                 ))}
@@ -273,7 +271,9 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               showImg={showImg}
               onTopicClick={onTopicClick}
               onTranslate={handleTranslate || parentOnTranslate}
-              onClearTranslation={handleClearTranslation || parentOnClearTranslation}
+              onClearTranslation={
+                handleClearTranslation || parentOnClearTranslation
+              }
             />
           )}
       </Drawer>
