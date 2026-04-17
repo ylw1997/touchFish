@@ -67,7 +67,7 @@ a {
 .list {
   overflow-y: auto;
   height: 100vh;
-  padding: 50px 5px 0;
+  padding: 40px 5px 0;
 }
 
 /**
@@ -136,6 +136,59 @@ a {
 
 .dynamic-font-size {
   font-size: var(--app-font-size);
+}
+
+.tabs-shell {
+  position: fixed;
+  top: 5px;
+  left: 0;
+  z-index: 50;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.zhihu-tabs {
+  .ant-tabs-nav {
+    width: fit-content;
+    margin: 0 auto;
+    padding: 3px;
+    border: 1px solid var(--vscode-chat-requestBorder);
+    border-radius: 999px;
+    .backdrop-style();
+  }
+
+  .ant-tabs-nav::before,
+  .ant-tabs-content-holder {
+    display: none;
+  }
+
+  .ant-tabs-nav-list {
+    gap: 4px;
+  }
+
+  .ant-tabs-tab {
+    margin: 0 !important;
+    padding: 5px 14px;
+    color: var(--vscode-foreground);
+    border-radius: 999px;
+    transition: background-color 0.2s ease;
+  }
+
+  .ant-tabs-tab:hover {
+    color: var(--vscode-textLink-activeForeground);
+  }
+
+  .ant-tabs-tab-active {
+    .tab-active-style();
+  }
+
+  .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: var(--vscode-foreground) !important;
+  }
+
+  .ant-tabs-ink-bar {
+    display: none;
+  }
 }
 
 /* ==========================================================================
@@ -260,4 +313,13 @@ a {
 .rank-badge.top-3 {
   background: linear-gradient(135deg, #f2c199, #e08a3a);
   color: #3a2500;
+}
+
+.comment-content {
+  line-height: 1.5;
+  span {
+    p {
+      margin: 0;
+    }
+  }
 }

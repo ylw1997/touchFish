@@ -8,8 +8,8 @@
  * @Description:
  */
 
-import { useEffect, useState, useCallback, useRef, type Key } from "react";
-import { Divider, FloatButton } from "antd";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Divider, FloatButton, Tabs } from "antd";
 import { motion } from "framer-motion";
 import "./style/index.less";
 import {
@@ -35,14 +35,13 @@ dayjs.extend(_relativeTime);
 
 import { Suspense, lazy } from "react";
 const QuestionDetailDrawer = lazy(
-  () => import("./components/QuestionDetailDrawer")
+  () => import("./components/QuestionDetailDrawer"),
 );
 import type { ZhihuItemData } from "../../types/zhihu";
 import useZhihuAction from "./hooks/useZhihuAction";
 import { debounce } from "./utils";
 import { vscode } from "./utils/vscode";
 import { messageHandler } from "./utils/messageHandler";
-import { Tabs, Tab } from "@heroui/react";
 import { useHasExpanded, useExpandedStore } from "./store/expanded";
 import type { ExpandedState } from "./store/expanded";
 import { useFontSizeStore } from "./store/fontSize";
@@ -76,13 +75,13 @@ function App() {
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const [showImg, setShowImg] = useState(
-    window.showImg != undefined ? window.showImg : true
+    window.showImg != undefined ? window.showImg : true,
   );
 
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const hasExpanded = useHasExpanded();
   const collapseAll = useExpandedStore(
-    (state: ExpandedState) => state.collapseAll
+    (state: ExpandedState) => state.collapseAll,
   );
   const { increase, decrease } = useFontSizeStore();
 
@@ -106,7 +105,7 @@ function App() {
       }
     };
     const removeListener = messageHandler.addUnsolicitedListener(
-      unsolicitedMessageHandler
+      unsolicitedMessageHandler,
     );
 
     return () => {
@@ -126,31 +125,29 @@ function App() {
   }, []);
 
   const onChange = useCallback(
-    (key: Key) => {
+    (key: string) => {
       clearList();
-      setActiveKey(key as "hot" | "follow" | "recommend");
+      setActiveKey(key as "hot" | "follow" | "recommend" | "hot_question");
       getListData({ tab: key }, true);
     },
-    [clearList, getListData]
+    [clearList, getListData],
   );
 
   return (
     <>
-      <Tabs
-        radius="full"
-        className="fixed z-50 top-2.5 w-full justify-center "
-        onSelectionChange={onChange}
-        selectedKey={activeKey}
-        classNames={{
-          tabList: "backdrop-style",
-          cursor: "tab-active-style",
-          tabContent: "vscode-foreground dynamic-font-size",
-        }}
-      >
-        {tabs.map((tab) => (
-          <Tab key={tab.key} title={tab.label} className="pl-4 pr-4" />
-        ))}
-      </Tabs>
+      <div className="tabs-shell">
+        <Tabs
+          activeKey={activeKey}
+          centered
+          className="zhihu-tabs dynamic-font-size"
+          items={tabs.map((tab) => ({
+            key: tab.key,
+            label: tab.label,
+            children: null,
+          }))}
+          onChange={onChange}
+        />
+      </div>
       <div id="scrollableDiv" ref={scrollableNodeRef} className="list">
         {loading && list.length === 0 ? (
           loaderFunc()

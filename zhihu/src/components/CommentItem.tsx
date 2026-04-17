@@ -7,18 +7,17 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Flex, List, Space, Tag, Button } from "antd";
+import { Avatar, Button, Flex, List, Space, Tag } from "antd";
 import React, { useState } from "react";
 import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../types/zhihu";
 import { useRequest } from "../hooks/useRequest";
 import { processCommentContent } from "../utils/textParser";
 import { CaretRightOutlined, LikeOutlined } from "@ant-design/icons";
-import { Avatar } from "@heroui/react";
 
 const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
   const [childComments, setChildComments] = useState<ZhihuCommentItem[]>(
-    comment.child_comments || []
+    comment.child_comments || [],
   );
   const [paging, setPaging] = useState<
     { is_end: boolean; next?: string } | undefined
@@ -35,7 +34,7 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
       const payload = !replace && paging?.next ? paging.next : comment.id;
       const res = await request<{ data: ZhihuCommentItem[]; paging?: any }>(
         "getZhihuChildComment",
-        payload
+        payload,
       );
 
       const newChildren: ZhihuCommentItem[] = res?.data || [];
@@ -65,10 +64,10 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
     >
       <Flex gap={10} style={{ width: "100%" }}>
         <Avatar
+          shape="square"
+          size={38}
           src={comment.author.avatar_url}
-          size="sm"
-          isBordered
-          radius="sm"
+          style={{ borderRadius: 8, flexShrink: 0 }}
         />
         <div style={{ flex: 1 }}>
           <span style={{ fontWeight: "bold" }}>
@@ -79,7 +78,7 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
               </span>
             ) : null}
           </span>
-          <div style={{ lineHeight: "2" }}>
+          <div className="comment-content">
             {processCommentContent(comment.content)}
           </div>
           <Flex style={{ marginTop: "4px" }} justify="space-between">
