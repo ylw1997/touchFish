@@ -31,7 +31,7 @@ export const getV2exList = async (tab="all")=>{
       });
     });
     return uniqueNews(resArr);
-  } catch (error) {
+  } catch {
     showError("获取V2EX新闻列表失败");
     return [];
   }
@@ -49,7 +49,7 @@ export const getV2exDetail = async (url: string, page?: number) => {
     const $ = load(res.data);
     const content = $("#Main").html();
     return content ? content.replace(/&nbsp;/g, '') : content;
-  } catch (error) {
+  } catch {
     return "获取V2EX新闻内容失败!";
   }
 };
