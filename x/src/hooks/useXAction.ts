@@ -79,7 +79,7 @@ const useXAction = () => {
   const getListData = useCallback(
     async (payload: string, replace = false) => {
       if (isFetching) return;
-      console.log("XPLANgetListData", payload, replace);
+      // console.log("XPLANgetListData", payload, replace);
       setIsFetching(true);
       let newPayload = payload;
       let requestPayload:
@@ -125,7 +125,7 @@ const useXAction = () => {
         );
         const wtotal = result.total_number ?? 9999;
         setTotal(wtotal);
-        console.log("XPLANgetListData", result, newPayload);
+        // console.log("XPLANgetListData", result, newPayload);
       } finally {
         setIsFetching(false);
       }
