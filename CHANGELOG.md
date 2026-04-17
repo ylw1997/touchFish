@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [14.8.0](https://github.com/ylw1997/touchFish/compare/v14.7.2...v14.8.0) (2026-04-17)
+
+
+### ✨ Features | 新功能
+
+* 优化翻译功能 ([4c13dd7](https://github.com/ylw1997/touchFish/commit/4c13dd73833eac66c1edb11120c0c7f3e46b63e4))
+* 修复x用户主页关注状态错误问题 ([828be04](https://github.com/ylw1997/touchFish/commit/828be04f6796c08c8e30a27f708332fb7b1ba97e))
+* 修复x首页流刷新没更新问题,修复知乎样式问题 ([47d413f](https://github.com/ylw1997/touchFish/commit/47d413f14138d3c9d9f2f4cd82c467f810fd35b9))
+
 ### [14.7.2](https://github.com/ylw1997/touchFish/compare/v14.7.1...v14.7.2) (2026-04-17)
 
 
