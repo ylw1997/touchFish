@@ -3,7 +3,7 @@
 	"name": "touchfish",
 	"displayName": "TouchFish",
 	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do,X,Twitter摸鱼聚合插件,沉浸式主题,qq音乐,qqmusic,播客,xiaoyuzhou,小宇宙",
-	"version": "14.7.0",
+	"version": "14.7.1",
 	"icon": "logo.png",
 	"engines": {
 		"vscode": "^1.80.0"

@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [14.7.1](https://github.com/ylw1997/touchFish/compare/v14.7.0...v14.7.1) (2026-04-17)
+
+
+### 🔡 Continuous Integration | CI 配置
+
+* publish releases with vsix artifacts ([1ac3c45](https://github.com/ylw1997/touchFish/commit/1ac3c45e774bb5f0ab71d34cd03592f6b07402ce))
+
 ## 14.7.0 (2026-04-17)
 
 
