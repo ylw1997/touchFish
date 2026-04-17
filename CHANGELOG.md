@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [14.7.2](https://github.com/ylw1997/touchFish/compare/v14.7.1...v14.7.2) (2026-04-17)
+
+
+### 🔡 Continuous Integration | CI 配置
+
+* automate release and x id updates ([5e29ef4](https://github.com/ylw1997/touchFish/commit/5e29ef465306f4ac8a7835dc5e7475a00202dc5f))
+
 ### [14.7.1](https://github.com/ylw1997/touchFish/compare/v14.7.0...v14.7.1) (2026-04-17)
 
 
