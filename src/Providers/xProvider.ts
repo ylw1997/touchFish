@@ -539,6 +539,13 @@ export class XProvider extends BaseWebviewProvider {
             userResult.screen_name;
           const avatarUrl =
             userLegacy?.profile_image_url_https || userResult.avatar?.image_url;
+          const following =
+            userLegacy?.following ??
+            userResult.relationship_perspectives?.following ??
+            userCore?.relationship_perspectives?.following ??
+            false;
+          const followersCount = userLegacy?.followers_count;
+          const friendsCount = userLegacy?.friends_count;
 
           mappedData = {
             ok: 1,
@@ -551,10 +558,18 @@ export class XProvider extends BaseWebviewProvider {
                   ? `${name} (@${sName})`
                   : name || sName || "Unknown",
               avatar_hd: avatarUrl?.replace("_normal", ""),
-              followers_count: userLegacy?.followers_count || 0,
-              description: userLegacy?.description,
+              followers_count: followersCount || 0,
+              followers_count_str:
+                typeof followersCount === "number"
+                  ? String(followersCount)
+                  : undefined,
+              friends_count_str:
+                typeof friendsCount === "number"
+                  ? String(friendsCount)
+                  : undefined,
+              descText: userLegacy?.description,
               location: userLegacy?.location,
-              following: userLegacy?.following || false,
+              following,
             },
           };
         }
