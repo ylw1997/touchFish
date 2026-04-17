@@ -1,6 +1,16 @@
 # 更新历史 
 
 
+## [14.10.0](https://github.com/ylw1997/touchFish/compare/v14.9.0...v14.10.0) (2026-04-17)
+
+
+### ✨ Features | 新功能
+
+* 优化用户详情弹窗样式 ([50b7883](https://github.com/ylw1997/touchFish/commit/50b7883cb018d05b95df44bfdc20b648be728c13))
+* 优化知乎样式 ([30af803](https://github.com/ylw1997/touchFish/commit/30af8038ff0789462b1b3c63ada4943a782a38b2))
+* 修复x平台首页多次请求问题 ([6ec2b52](https://github.com/ylw1997/touchFish/commit/6ec2b528471b28be906b3c2b551ad57c13582dcd))
+* 删除x调试日志 ([d3b0bae](https://github.com/ylw1997/touchFish/commit/d3b0bae712d3ef8ae407243ecd34a446be12fb29))
+
 ## [14.9.0](https://github.com/ylw1997/touchFish/compare/v14.8.0...v14.9.0) (2026-04-17)
 
 
