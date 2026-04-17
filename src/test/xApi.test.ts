@@ -9,6 +9,7 @@ import {
   X_USER_TWEETS_QUERY_ID,
   buildXHeaders,
   getHomeTimeline,
+  getHomeTimelineRefresh,
   getHomeTimelineNext,
   getHomeLatestTimeline,
   getHomeLatestTimelineNext,
@@ -126,6 +127,55 @@ describe("x api helpers", () => {
         home: {
           home_timeline_urt: {
             instructions: [{ type: "TimelineAddEntries" }],
+          },
+        },
+      });
+    } finally {
+      xHttp.post = originalPost;
+    }
+  });
+
+  it("requests refreshed home timeline with POST body and seen tweet ids", async () => {
+    const originalPost = xHttp.post;
+
+    xHttp.post = (async (url: string, data?: unknown, config?: any) => {
+      assert.ok(String(url).includes(`/i/api/graphql/${X_HOME_TIMELINE_QUERY_ID}/HomeTimeline`));
+      assert.equal(config?.headers?.authorization, "Bearer test-token");
+      assert.equal(config?.headers?.["x-csrf-token"], "csrf-token");
+      assert.equal((data as any)?.variables.count, 20);
+      assert.equal((data as any)?.variables.requestContext, "launch");
+      assert.deepEqual((data as any)?.variables.seenTweetIds, ["11", "22", "33"]);
+      assert.equal((data as any)?.queryId, X_HOME_TIMELINE_QUERY_ID);
+      assert.equal((data as any)?.variables.cursor, undefined);
+      return {
+        data: {
+          data: {
+            home: {
+              home_timeline_urt: {
+                instructions: [{ type: "TimelineReplaceEntry" }],
+              },
+            },
+          },
+        },
+      } as any;
+    }) as typeof xHttp.post;
+
+    try {
+      const result = await getHomeTimelineRefresh(
+        {
+          cookie: "auth_token=test; ct0=csrf-token",
+          authorization: "Bearer test-token",
+          csrfToken: "csrf-token",
+        },
+        20,
+        ["11", "22", "33"],
+      );
+
+      assert.equal(result.code, 0);
+      assert.deepEqual(result.data, {
+        home: {
+          home_timeline_urt: {
+            instructions: [{ type: "TimelineReplaceEntry" }],
           },
         },
       });

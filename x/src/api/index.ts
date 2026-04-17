@@ -30,7 +30,7 @@ export class XApi {
     this.request = request;
   }
 
-  getListData(payload: string) {
+  getListData(payload: any) {
     return this.request<payloadType>("GETDATA", payload, "请求 X 中...");
   }
 

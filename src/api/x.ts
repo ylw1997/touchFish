@@ -50,7 +50,7 @@ export interface XApiResult<T> {
 }
 
 export interface XTimelineNextParams {
-  cursor: string;
+  cursor?: string;
   seenTweetIds?: string[];
   count?: number;
   withCommunity?: boolean;
@@ -354,7 +354,8 @@ function buildNextTimelinePayload(params: XTimelineNextParams) {
   return {
     variables: {
       count: params.count ?? 20,
-      cursor: params.cursor,
+      ...(params.cursor ? { cursor: params.cursor } : {}),
+      requestContext: "launch",
       includePromotedContent: params.includePromotedContent ?? true,
       withCommunity: params.withCommunity ?? true,
       seenTweetIds: params.seenTweetIds ?? [],
@@ -406,7 +407,7 @@ export async function getHomeLatestTimelineNext(
     const payload = {
       variables: {
         count: params.count ?? 20,
-        cursor: params.cursor,
+        ...(params.cursor ? { cursor: params.cursor } : {}),
         seenTweetIds: params.seenTweetIds ?? [],
         enableRanking: false,
         includePromotedContent: true,
@@ -599,6 +600,20 @@ export async function getHomeTimelineNext(
       data: null,
     };
   }
+}
+
+export async function getHomeTimelineRefresh(
+  credential?: XCredential | null,
+  count: number = 20,
+  seenTweetIds: string[] = [],
+): Promise<XApiResult<any>> {
+  return getHomeTimelineNext(
+    {
+      count,
+      seenTweetIds,
+    },
+    credential,
+  );
 }
 
 export async function getTweetDetail(

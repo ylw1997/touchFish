@@ -2,6 +2,7 @@ import { WebviewView, ExtensionContext, workspace } from "vscode";
 import { showInfo } from "../utils/errorMessage";
 import {
   getHomeTimeline,
+  getHomeTimelineRefresh,
   getXUserTweets,
   getOrSetXCredential,
   getHomeTimelineNext,
@@ -325,8 +326,16 @@ export class XProvider extends BaseWebviewProvider {
         // Let's assume pagination happens with another command or parsing payload.
         let activeTab = "hot";
         let isNextPage = false;
+        let isRefresh = false;
+        let seenTweetIds: string[] = [];
         if (typeof payload === "object") {
           isNextPage = !!payload.max_id;
+          isRefresh = !!payload.refresh;
+          seenTweetIds = Array.isArray(payload.seenTweetIds)
+            ? payload.seenTweetIds
+                .map((id: unknown) => String(id))
+                .filter(Boolean)
+            : [];
           if (isNextPage) {
             this.currentCursor =
               typeof payload.max_id === "string"
@@ -351,7 +360,12 @@ export class XProvider extends BaseWebviewProvider {
         if (activeTab === "latest") {
           if (isNextPage && this.currentCursor) {
             res = await getHomeLatestTimelineNext(
-              { cursor: this.currentCursor },
+              { cursor: this.currentCursor, seenTweetIds },
+              credential,
+            );
+          } else if (isRefresh) {
+            res = await getHomeLatestTimelineNext(
+              { count: 20, seenTweetIds },
               credential,
             );
           } else {
@@ -360,9 +374,11 @@ export class XProvider extends BaseWebviewProvider {
         } else {
           if (isNextPage && this.currentCursor) {
             res = await getHomeTimelineNext(
-              { cursor: this.currentCursor },
+              { cursor: this.currentCursor, seenTweetIds },
               credential,
             );
+          } else if (isRefresh) {
+            res = await getHomeTimelineRefresh(credential, 20, seenTweetIds);
           } else {
             res = await getHomeTimeline(credential, 20);
           }

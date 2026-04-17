@@ -27,6 +27,23 @@ export function mergeUniqueXItems(currentList: xItem[], incomingList: xItem[]) {
   return merged;
 }
 
+function getSeenTweetIds(items: xItem[], limit = 20) {
+  const seenIds: string[] = [];
+
+  for (const item of items) {
+    const id = item.id || item.mblogid || item.bid;
+    if (!id) {
+      continue;
+    }
+    seenIds.push(String(id));
+    if (seenIds.length >= limit) {
+      break;
+    }
+  }
+
+  return seenIds;
+}
+
 const useXAction = () => {
   // X列表相关状态
   const [list, setList] = useState<xItem[]>([]);
@@ -63,13 +80,22 @@ const useXAction = () => {
     async (payload: string, replace = false) => {
       setIsFetching(true);
       let newPayload = payload;
+      let requestPayload:
+        | string
+        | { group_id: string; refresh: boolean; seenTweetIds: string[] } =
+        payload;
       const currentMaxId = replace ? 0 : maxId;
 
       if (replace) {
         setMaxId(0);
+        requestPayload = {
+          group_id: payload,
+          refresh: true,
+          seenTweetIds: getSeenTweetIds(list),
+        };
       }
 
-      if (currentMaxId !== 0 && currentMaxId !== "") {
+      if (!replace && currentMaxId !== 0 && currentMaxId !== "") {
         // If we have a max_id, use it.
         // Remove since_id if it exists.
         newPayload = newPayload.replace(/&?since_id=\d+/, "");
@@ -84,7 +110,10 @@ const useXAction = () => {
         }
       }
       try {
-        const result = await apiClient.getListData(newPayload);
+        if (!replace) {
+          requestPayload = newPayload;
+        }
+        const result = await apiClient.getListData(requestPayload);
         const nextCursor = result.max_id_str || String(result.max_id || "");
         setMaxId(nextCursor || 0);
         setHasMore(!!nextCursor);
@@ -99,7 +128,7 @@ const useXAction = () => {
         setIsFetching(false);
       }
     },
-    [apiClient, maxId],
+    [apiClient, list, maxId],
   );
 
   const getUserBlogData = useCallback(
