@@ -732,7 +732,8 @@
 		"xhs:test:live": "node ./tools/xhs/test-xhs.js",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
 		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,XIAOYUZHOU -c magenta,cyan,yellow,blue,green,red,white \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\"",
-		"build-xhs": "pnpm --filter xhs build"
+		"build-xhs": "pnpm --filter xhs build",
+		"update-x-ids": "node tools/update_x_ids.js"
 	},
 	"devDependencies": {
 		"@eslint/js": "9.30.1",
@@ -749,6 +750,7 @@
 		"eslint": "9.30.1",
 		"globals": "16.3.0",
 		"mocha": "11.7.1",
+		"playwright": "^1.59.1",
 		"standard-version": "^9.5.0",
 		"ts-loader": "9.5.2",
 		"typescript": "5.8.3",
