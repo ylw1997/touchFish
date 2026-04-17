@@ -1,6 +1,9 @@
 name: Release Extension
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -13,7 +16,7 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || !startsWith(github.event.head_commit.message, 'chore(release):'))
     env:
       GH_RELEASE_PAT: ${{ secrets.GH_RELEASE_PAT }}
     steps:

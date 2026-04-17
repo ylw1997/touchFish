@@ -1,0 +1,80 @@
+name: Update X IDs
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-x-ids
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      GH_RELEASE_PAT: ${{ secrets.GH_RELEASE_PAT }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_RELEASE_PAT }}
+          ref: main
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Validate release secret
+        run: test -n "$GH_RELEASE_PAT" || (echo "Missing GH_RELEASE_PAT secret" && exit 1)
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Prepare test branch
+        run: |
+          git fetch origin
+          git checkout -B test
+
+      - name: Update X query IDs
+        run: pnpm update-x-ids
+
+      - name: Detect changes
+        id: detect_changes
+        run: |
+          if git diff --quiet -- src/api/x.ts; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure git user
+        if: steps.detect_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit changes
+        if: steps.detect_changes.outputs.changed == 'true'
+        run: |
+          git add src/api/x.ts
+          git commit -m "chore: update x ids"
+
+      - name: Push test branch
+        if: steps.detect_changes.outputs.changed == 'true'
+        run: |
+          git push --force-with-lease origin HEAD:test
