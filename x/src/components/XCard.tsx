@@ -69,6 +69,8 @@ const XCard: React.FC<XCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const longText = item.longTextContent || item.text_raw || item.text;
+  const displayText = item.text_raw || item.text || longText;
+  const canTranslate = !!displayText.trim();
   const hasExpandableLongText =
     !!item.isLongText &&
     !!item.longTextContent &&
@@ -121,25 +123,24 @@ const XCard: React.FC<XCardProps> = ({
               {isExpanded ? "收起" : "展开全文"}
             </Tag>
           ) : null}
-
-          {/* 翻译按钮：非中文且未翻译时显示 */}
-          {!item.translatedText &&
-          !/[\u4e00-\u9fa5]/.test(item.text_raw || item.text || "") ? (
-            <div style={{ marginTop: "4px" }}>
-              {item.isTranslating ? (
-                <span style={{ fontSize: "12px", opacity: 0.8 }}>
-                  翻译中...
-                </span>
-              ) : (
-                <span
-                  className="link"
-                  style={{ fontSize: "12px", opacity: 0.8 }}
-                  onClick={() => onTranslate?.(item)}
-                >
-                  翻译
-                </span>
-              )}
-            </div>
+          {canTranslate ? (
+            <Tag
+              color={item.translatedText ? "gold" : "cyan"}
+              bordered={false}
+              style={{ marginLeft: "8px", cursor: "pointer" }}
+              className="link-tag"
+              onClick={() =>
+                item.translatedText
+                  ? onClearTranslation?.(item)
+                  : !item.isTranslating && onTranslate?.(item)
+              }
+            >
+              {item.isTranslating
+                ? "翻译中..."
+                : item.translatedText
+                  ? "还原"
+                  : "翻译"}
+            </Tag>
           ) : null}
 
           {item.translatedText ? (
@@ -151,13 +152,6 @@ const XCard: React.FC<XCardProps> = ({
                 style={{ fontSize: "12px", opacity: 0.6, marginBottom: "4px" }}
               >
                 翻译结果
-                <span
-                  className="link"
-                  style={{ marginLeft: "8px" }}
-                  onClick={() => onClearTranslation?.(item)}
-                >
-                  还原
-                </span>
               </div>
               <div style={{ color: "var(--vscode-editor-foreground)" }}>
                 {item.translatedText}
@@ -165,7 +159,6 @@ const XCard: React.FC<XCardProps> = ({
             </div>
           ) : null}
 
-          {/* 文章预览 (X Article) */}
           {item.article && (
             <div
               className="article-preview"

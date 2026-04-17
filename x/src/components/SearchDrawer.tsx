@@ -103,10 +103,12 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   } = useXAction();
 
   const handleSearch = useCallback(
-    async (isLoadMore = false) => {
+    async (isLoadMore = false, keywordOverride?: string) => {
       try {
-        const values = await form.validateFields();
-        if (!values.keyword) return;
+        const keyword = keywordOverride?.trim();
+        const values = keyword ? null : await form.validateFields();
+        const finalKeyword = keyword || values?.keyword?.trim();
+        if (!finalKeyword) return;
 
         if (!isLoadMore) {
           clear();
@@ -114,7 +116,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
         const currentCursor = isLoadMore ? cursor : undefined;
         const result = await getXSearch({
-          query: values.keyword,
+          query: finalKeyword,
           cursor: currentCursor,
         });
 
@@ -138,7 +140,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   useEffect(() => {
     if (open && initialKeyword) {
       form.setFieldsValue({ keyword: initialKeyword });
-      handleSearch();
+      handleSearch(false, initialKeyword);
     }
   }, [form, initialKeyword, open, handleSearch]);
 

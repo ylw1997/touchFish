@@ -7,7 +7,7 @@
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import { List, Avatar, Flex, Image } from "antd";
+import { List, Avatar, Flex, Image, Tag } from "antd";
 import { motion } from "framer-motion";
 import { commentsItem, xUser } from "../../../types/x";
 import YImg from "./YImg";
@@ -15,7 +15,6 @@ import dayjs from "dayjs";
 import { parseXText } from "../utils/textParser";
 import { HeartOutlined } from "@ant-design/icons";
 
-// 渲染评论
 export const renderComments = (
   comments: commentsItem[],
   is_child = false,
@@ -23,7 +22,7 @@ export const renderComments = (
   onUserClick: (userInfo: xUser) => void,
   onTopicClick: (topic: string) => void,
   onTranslate?: (item: any) => void,
-  onClearTranslation?: (item: any) => void
+  onClearTranslation?: (item: any) => void,
 ) => {
   return (
     <div className="border-top-divider">
@@ -77,46 +76,51 @@ export const renderComments = (
                   <>
                     <div className="content comment-content">
                       {parseXText(item, getUserByName, onTopicClick)}
+                      {(item.text_raw || item.text)?.trim() ? (
+                        <Tag
+                          color={item.translatedText ? "gold" : "cyan"}
+                          bordered={false}
+                          style={{ marginLeft: "8px", cursor: "pointer" }}
+                          className="link-tag"
+                          onClick={() =>
+                            item.translatedText
+                              ? onClearTranslation?.(item)
+                              : !item.isTranslating && onTranslate?.(item)
+                          }
+                        >
+                          {item.isTranslating
+                            ? "翻译中..."
+                            : item.translatedText
+                              ? "还原"
+                              : "翻译"}
+                        </Tag>
+                      ) : null}
                     </div>
-                    {/* 翻译按钮：非中文且未翻译时显示 */}
-                    {!item.translatedText &&
-                    !/[\u4e00-\u9fa5]/.test(item.text_raw || item.text || "") ? (
-                      <div style={{ marginTop: "4px" }}>
-                        {item.isTranslating ? (
-                          <span style={{ fontSize: "12px", opacity: 0.8 }}>翻译中...</span>
-                        ) : (
-                          <span
-                            className="link"
-                            style={{ fontSize: "12px", opacity: 0.8 }}
-                            onClick={() => onTranslate?.(item)}
-                          >
-                            翻译
-                          </span>
-                        )}
-                      </div>
-                    ) : null}
 
                     {item.translatedText ? (
-                      <div
-                        style={{ marginTop: "4px", paddingTop: "4px" }}
-                      >
-                        <div style={{ fontSize: "10px", opacity: 0.6, marginBottom: "2px" }}>
+                      <div style={{ marginTop: "4px", paddingTop: "4px" }}>
+                        <div
+                          style={{
+                            fontSize: "10px",
+                            opacity: 0.6,
+                            marginBottom: "2px",
+                          }}
+                        >
                           翻译结果
-                          <span
-                            className="link"
-                            style={{ marginLeft: "8px" }}
-                            onClick={() => onClearTranslation?.(item)}
-                          >
-                            还原
-                          </span>
                         </div>
-                        <div style={{ color: "var(--vscode-editor-foreground)", marginTop: "4px" }}>
+                        <div
+                          style={{
+                            color: "var(--vscode-editor-foreground)",
+                            marginTop: "4px",
+                          }}
+                        >
                           {item.translatedText}
                         </div>
                       </div>
                     ) : null}
 
-                    {((item.pic_ids && item.pic_ids.length > 0) || (item.url_struct && item.url_struct.length > 0)) && (
+                    {((item.pic_ids && item.pic_ids.length > 0) ||
+                      (item.url_struct && item.url_struct.length > 0)) && (
                       <div
                         className="imglist"
                         style={{ marginBottom: "8px", padding: "0px" }}
@@ -127,24 +131,38 @@ export const renderComments = (
                             movable: false,
                           }}
                         >
-                          {(item.pic_ids || item.url_struct?.[0]?.pic_ids)?.map((picId: string) => {
-                            const picInfo = (item.pic_infos?.[picId] || item.url_struct?.[0]?.pic_infos?.[picId]);
-                            if (!picInfo) return null;
-                            
-                            const isVideo = picInfo.type === 'video';
-                            const totalMedia = (item.pic_ids?.length || 0) + (item.url_struct?.[0]?.pic_ids?.length || 0);
-                            const imgProps: any = {
-                              className: isVideo ? "video-item" : (totalMedia > 1 ? "img-item" : "img-only-item"),
-                              src: isVideo ? (picInfo.video_url || picInfo.large?.url || picInfo.bmiddle?.url) : (picInfo.large?.url || picInfo.bmiddle?.url),
-                              mediaType: isVideo ? 'video' : 'image',
-                            };
-                            
-                            return (
-                              <div key={picId}>
-                                <YImg {...imgProps} />
-                              </div>
-                            );
-                          })}
+                          {(item.pic_ids || item.url_struct?.[0]?.pic_ids)?.map(
+                            (picId: string) => {
+                              const picInfo =
+                                item.pic_infos?.[picId] ||
+                                item.url_struct?.[0]?.pic_infos?.[picId];
+                              if (!picInfo) return null;
+
+                              const isVideo = picInfo.type === "video";
+                              const totalMedia =
+                                (item.pic_ids?.length || 0) +
+                                (item.url_struct?.[0]?.pic_ids?.length || 0);
+                              const imgProps: any = {
+                                className: isVideo
+                                  ? "video-item"
+                                  : totalMedia > 1
+                                    ? "img-item"
+                                    : "img-only-item",
+                                src: isVideo
+                                  ? picInfo.video_url ||
+                                    picInfo.large?.url ||
+                                    picInfo.bmiddle?.url
+                                  : picInfo.large?.url || picInfo.bmiddle?.url,
+                                mediaType: isVideo ? "video" : "image",
+                              };
+
+                              return (
+                                <div key={picId}>
+                                  <YImg {...imgProps} />
+                                </div>
+                              );
+                            },
+                          )}
                         </Image.PreviewGroup>
                       </div>
                     )}
@@ -176,7 +194,7 @@ export const renderComments = (
                           onUserClick,
                           onTopicClick,
                           onTranslate,
-                          onClearTranslation
+                          onClearTranslation,
                         )}
                     </div>
                   </>
