@@ -64,10 +64,11 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   } = useXAction();
 
   useEffect(() => {
-    if (visible && userDetail && userXList?.length === 0) {
+    if (visible && userDetail && userXList?.length === 0 && !isFetching) {
       getUserBlogData(userDetail.id);
     }
-  }, [getUserBlogData, userDetail, visible, userXList?.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userDetail?.id, visible]);
 
   const getUserBlogFunc = () => {
     if (visible && userDetail && !isFetching && userXCursor) {
