@@ -78,6 +78,8 @@ const useXAction = () => {
   // 请求数据（主列表/用户X）
   const getListData = useCallback(
     async (payload: string, replace = false) => {
+      if (isFetching) return;
+      console.log("XPLANgetListData", payload, replace);
       setIsFetching(true);
       let newPayload = payload;
       let requestPayload:
@@ -123,12 +125,12 @@ const useXAction = () => {
         );
         const wtotal = result.total_number ?? 9999;
         setTotal(wtotal);
-        // console.log("getListData", result, newPayload);
+        console.log("XPLANgetListData", result, newPayload);
       } finally {
         setIsFetching(false);
       }
     },
-    [apiClient, list, maxId],
+    [apiClient, isFetching, list, maxId],
   );
 
   const getUserBlogData = useCallback(

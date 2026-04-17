@@ -153,14 +153,18 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     ? truncateText(longTextContent, 140)
     : summaryText;
   // 处理嵌套的转推或引用推文
-  const retweetedTweetRaw = t.retweeted_status_result?.result || legacy.retweeted_status_result?.result;
-  const quotedTweetRaw = t.quoted_status_result?.result || legacy.quoted_status_result?.result;
+  const retweetedTweetRaw =
+    t.retweeted_status_result?.result || legacy.retweeted_status_result?.result;
+  const quotedTweetRaw =
+    t.quoted_status_result?.result || legacy.quoted_status_result?.result;
 
   const is_retweet = !!retweetedTweetRaw;
   const is_quote = !!quotedTweetRaw && !is_retweet;
 
   const retweetedTweet = retweetedTweetRaw || quotedTweetRaw;
-  const retweeted_status = retweetedTweet ? mapXTweetToXItem(retweetedTweet) : undefined;
+  const retweeted_status = retweetedTweet
+    ? mapXTweetToXItem(retweetedTweet)
+    : undefined;
 
   // 处理文章 (X Article)
   const articleResult = t.article?.article_results?.result;
@@ -255,7 +259,10 @@ function parseXTimelineToXAJAX(data: any): xAJAX {
       }
     }
     // 3. 处理游标 (分页使用)
-    else if (entryId.startsWith("cursor-bottom") || content.cursorType === "Bottom") {
+    else if (
+      entryId.startsWith("cursor-bottom") ||
+      content.cursorType === "Bottom"
+    ) {
       if (content.value) {
         cursor = content.value;
       }
@@ -308,8 +315,7 @@ export class XProvider extends BaseWebviewProvider {
     const { command, payload, uuid } = message;
     const config = workspace.getConfiguration("touchfish");
     const cookie = config.get<string>("xCookie");
-    const authorization = config.get<string>("xAuthorization") ||
-      "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
+    const authorization = config.get<string>("xAuthorization");
     // 从 cookie 中自动提取 ct0 作为 csrfToken
     const csrfToken = cookie?.match(/(?:^|;\s*)ct0=([^;]+)/)?.[1];
 
@@ -425,7 +431,10 @@ export class XProvider extends BaseWebviewProvider {
         const res = await translateXPost(id.toString(), credential);
         webviewView.webview.postMessage({
           command: "SEND_TRANSLATION",
-          payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
+          payload:
+            res.code === 0
+              ? { ok: 1, data: res.data }
+              : { ok: 0, msg: res.message },
           uuid,
         });
         break;
@@ -652,10 +661,17 @@ export class XProvider extends BaseWebviewProvider {
 
       case "GETCREATECOMMENTS": {
         const { id, comment } = payload;
-        const res = await createXTweet(comment, { replyToId: id.toString() }, credential);
+        const res = await createXTweet(
+          comment,
+          { replyToId: id.toString() },
+          credential,
+        );
         webviewView.webview.postMessage({
           command: "SENDCREATECOMMENTS",
-          payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
+          payload:
+            res.code === 0
+              ? { ok: 1, data: res.data }
+              : { ok: 0, msg: res.message },
           uuid,
         });
         break;
@@ -663,10 +679,18 @@ export class XProvider extends BaseWebviewProvider {
 
       case "GETCREATEREPOST": {
         const { id, comment, screen_name } = payload;
-        const res = await repostXTweet(comment, id.toString(), screen_name, credential);
+        const res = await repostXTweet(
+          comment,
+          id.toString(),
+          screen_name,
+          credential,
+        );
         webviewView.webview.postMessage({
           command: "SENDCREATEREPOST",
-          payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
+          payload:
+            res.code === 0
+              ? { ok: 1, data: res.data }
+              : { ok: 0, msg: res.message },
           uuid,
         });
         break;
@@ -685,7 +709,10 @@ export class XProvider extends BaseWebviewProvider {
         );
         webviewView.webview.postMessage({
           command: "SENDUPLOADIMGURL",
-          payload: res.code === 0 ? { ok: 1, data: { pic_id: res.data?.media_id_string } } : { ok: 0, msg: res.message },
+          payload:
+            res.code === 0
+              ? { ok: 1, data: { pic_id: res.data?.media_id_string } }
+              : { ok: 0, msg: res.message },
           uuid,
         });
         break;
@@ -713,7 +740,10 @@ export class XProvider extends BaseWebviewProvider {
         );
         webviewView.webview.postMessage({
           command: "SENDNEWBLOGRESULT",
-          payload: res.code === 0 ? { ok: 1, data: res.data } : { ok: 0, msg: res.message },
+          payload:
+            res.code === 0
+              ? { ok: 1, data: res.data }
+              : { ok: 0, msg: res.message },
           uuid,
         });
         break;
