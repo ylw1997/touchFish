@@ -12,6 +12,9 @@ export let X_USER_BY_SCREEN_NAME_QUERY_ID = "IGgvgiOx4QZndDHuD3x9TQ";
 export let X_USER_TWEETS_QUERY_ID = "6fWQaBPK51aGyC_VC7t9GQ";
 export let X_CREATE_TWEET_QUERY_ID = "c50A_puUoQGK_4SXseYz3A";
 export const X_HOME_LATEST_TIMELINE_QUERY_ID = "hlno2aLQsxiQlOrK-a2V-w";
+// 点赞和取消点赞的 Query ID
+const X_FAVORITE_TWEET_QUERY_ID = "lI07N6Otwv1PhnEgXILM7A";
+const X_UNFAVORITE_TWEET_QUERY_ID = "ZYKSe-w7KEslx3JhSIk5LA";
 
 /**
  * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
@@ -1106,4 +1109,92 @@ export async function getAccountVerifyCredentials(
   }
 }
 
+/**
+ * 点赞推文 (FavoriteTweet)
+ */
+export async function favoriteXTweet(
+  tweetId: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const path = `/i/api/graphql/${X_FAVORITE_TWEET_QUERY_ID}/FavoriteTweet`;
+    const url = `${X_BASE_URL}${path}`;
 
+    const transactionId = await XClientTransaction.getTransactionId(
+      path,
+      "POST",
+    );
+
+    const response = await xHttp.post(
+      url,
+      {
+        variables: { tweet_id: tweetId },
+        queryId: X_FAVORITE_TWEET_QUERY_ID,
+      },
+      {
+        headers: buildXHeaders(auth, {
+          "x-client-transaction-id": transactionId,
+          Referer: `https://x.com/i/status/${tweetId}`,
+        }),
+      },
+    );
+
+    return {
+      code: 0,
+      data: response.data?.data ?? response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null,
+    };
+  }
+}
+
+/**
+ * 取消点赞推文 (UnfavoriteTweet)
+ */
+export async function unfavoriteXTweet(
+  tweetId: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const path = `/i/api/graphql/${X_UNFAVORITE_TWEET_QUERY_ID}/UnfavoriteTweet`;
+    const url = `${X_BASE_URL}${path}`;
+
+    const transactionId = await XClientTransaction.getTransactionId(
+      path,
+      "POST",
+    );
+
+    const response = await xHttp.post(
+      url,
+      {
+        variables: { tweet_id: tweetId },
+        queryId: X_UNFAVORITE_TWEET_QUERY_ID,
+      },
+      {
+        headers: buildXHeaders(auth, {
+          "x-client-transaction-id": transactionId,
+          Referer: `https://x.com/i/status/${tweetId}`,
+        }),
+      },
+    );
+
+    return {
+      code: 0,
+      data: response.data?.data ?? response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null,
+    };
+  }
+}

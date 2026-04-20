@@ -111,7 +111,6 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         onClose={closeFunc}
         title={userDetail?.screen_name}
         placement="bottom"
-        {...(console.log("XPLAN_DRAWER_DATA_DEBUG", userDetail), {})}
         height={userXList.length === 0 ? "auto" : "calc(100vh - 200px)"}
         styles={{
           body: {

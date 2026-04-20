@@ -18,6 +18,8 @@ import {
   createXTweet,
   repostXTweet,
   uploadXMedia,
+  favoriteXTweet,
+  unfavoriteXTweet,
 } from "../api/x";
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
@@ -747,6 +749,28 @@ export class XProvider extends BaseWebviewProvider {
         const res = await unfollowXUser(userId, credential);
         webviewView.webview.postMessage({
           command: "SENDCANCELFOLLOW",
+          payload: res.code === 0 ? { ok: 1 } : { ok: 0, msg: res.message },
+          uuid,
+        });
+        break;
+      }
+
+      case "GETSETLIKE": {
+        const tweetId = payload.toString();
+        const res = await favoriteXTweet(tweetId, credential);
+        webviewView.webview.postMessage({
+          command: "SENDSETLIKE",
+          payload: res.code === 0 ? { ok: 1 } : { ok: 0, msg: res.message },
+          uuid,
+        });
+        break;
+      }
+
+      case "GETCANCELLIKE": {
+        const tweetId = payload.toString();
+        const res = await unfavoriteXTweet(tweetId, credential);
+        webviewView.webview.postMessage({
+          command: "SENDCANCELLIKE",
           payload: res.code === 0 ? { ok: 1 } : { ok: 0, msg: res.message },
           uuid,
         });
