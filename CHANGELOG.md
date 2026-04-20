@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [14.13.0](https://github.com/ylw1997/touchFish/compare/v14.12.0...v14.13.0) (2026-04-20)
+
+
+### ✨ Features | 新功能
+
+* x支持查看用户关注的人 ([bef7b55](https://github.com/ylw1997/touchFish/commit/bef7b55cc34d77d89c56c61ea84c0296023191c5))
+* 优化小红书无图模式样式 ([2a7fcdf](https://github.com/ylw1997/touchFish/commit/2a7fcdf42e169dfb67d235928a7ead5258dfede3))
+
 ## [14.12.0](https://github.com/ylw1997/touchFish/compare/v14.11.0...v14.12.0) (2026-04-20)
 
 
