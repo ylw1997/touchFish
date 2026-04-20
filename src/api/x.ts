@@ -23,6 +23,8 @@ export const X_HOME_LATEST_TIMELINE_QUERY_ID = "hlno2aLQsxiQlOrK-a2V-w";
 export const X_FAVORITE_TWEET_QUERY_ID = "lI07N6Otwv1PhnEgXILM7A";
 // @operation: UnfavoriteTweet
 export const X_UNFAVORITE_TWEET_QUERY_ID = "ZYKSe-w7KEslx3JhSIk5LA";
+// @operation: Following
+export let X_FOLLOWING_QUERY_ID = "j4s0ZOO_DvhECpS-2U-SUA";
 
 /**
  * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
@@ -42,6 +44,7 @@ export function refreshQueryIds() {
         X_USER_BY_SCREEN_NAME_QUERY_ID = ids.userByScreenName;
       if (ids.userTweets) X_USER_TWEETS_QUERY_ID = ids.userTweets;
       if (ids.createTweet) X_CREATE_TWEET_QUERY_ID = ids.createTweet;
+      if (ids.following) X_FOLLOWING_QUERY_ID = ids.following;
     }
   } catch {
     // 前端环境无 vscode 模块，忽略
@@ -1214,4 +1217,144 @@ export async function unfavoriteXTweet(
       data: null,
     };
   }
+}
+
+/**
+ * 获取用户的关注列表 (Following)
+ */
+export async function getXFollowing(
+  userId: string,
+  count: number = 20,
+  cursor?: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const path = `/i/api/graphql/${X_FOLLOWING_QUERY_ID}/Following`;
+    const url = `${X_BASE_URL}${path}`;
+
+    const variables = {
+      userId,
+      count,
+      ...(cursor ? { cursor } : {}),
+      includePromotedContent: false,
+      withGrokTranslatedBio: true,
+    };
+
+    // 使用 SEARCH_TIMELINE_FEATURES 的子集，或者直接用 HOME_TIMELINE_FEATURES
+    const features = {
+      ...HOME_TIMELINE_FEATURES,
+      rweb_video_screen_enabled: false,
+      rweb_cashtags_enabled: true,
+    };
+
+    const response = await xHttp.get(url, {
+      headers: buildXHeaders(auth, {
+        Referer: `https://x.com/i/user/${userId}/following`,
+      }),
+      params: {
+        variables,
+        features,
+      },
+    });
+
+    const data = response.data?.data?.user?.result?.timeline?.timeline || {};
+    const instructions = data.instructions || [];
+    const entries =
+      instructions.find((ins: any) => ins.type === "TimelineAddEntries")
+        ?.entries || [];
+
+    const users: any[] = [];
+    let nextCursor = "";
+
+    entries.forEach((entry: any) => {
+      const content = entry.content;
+      if (
+        content?.entryType === "TimelineTimelineItem" ||
+        content?.__typename === "TimelineTimelineItem"
+      ) {
+        // 关键：根据示例数据，用户信息位于 content.itemContent.user_results.result
+        const userRes = content.itemContent?.user_results?.result;
+        if (userRes) {
+          users.push(parseXUserResult(userRes));
+        }
+      } else if (
+        content?.entryType === "TimelineTimelineCursor" &&
+        content?.cursorType === "Bottom"
+      ) {
+        nextCursor = content.value;
+      }
+    });
+
+    return {
+      code: 0,
+      data: {
+        users,
+        cursor: nextCursor,
+      },
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null,
+    };
+  }
+}
+
+/**
+ * 将 GraphQL 返回的 User 结果解析为 xUser 对象
+ */
+function parseXUserResult(obj: any): any {
+  if (!obj) return {};
+  let result = obj;
+  if (result.result) result = result.result;
+
+  const legacy = result.legacy || {};
+  const core = result.core || {};
+
+  // 关键：根据示例数据，关注列表接口中 name 和 screen_name 位于 core 对象下
+  const name = legacy.name || core.name || result.name || "";
+  const screenName = legacy.screen_name || core.screen_name || result.screen_name || "";
+
+  // 简介抓取
+  const description = legacy.description || result.description || "";
+
+  // 头像抓取
+  const avatar =
+    result.avatar?.image_url ||
+    legacy.profile_image_url_https ||
+    result.profile_image_url_https ||
+    "";
+
+  const displayName =
+    name && screenName
+      ? `${name} (@${screenName})`
+      : name || screenName || "Unknown";
+
+  return {
+    id: result.rest_id,
+    screen_name: displayName,
+    screen_name_raw: screenName,
+    name: name,
+    avatar_hd: avatar,
+    avatar_large: avatar.replace("_normal", "_400x400"),
+    following: result.relationship_perspectives?.following ?? legacy.following,
+    followers_count: legacy.followers_count,
+    followers_count_str: formatXCount(legacy.followers_count),
+    friends_count_str: formatXCount(legacy.friends_count),
+    descText: description,
+    verified_reason: result.verification?.reason?.description?.text || "",
+  };
+}
+
+/**
+ * 格式化 X 的数字显示
+ */
+function formatXCount(count: number): string {
+  if (!count) return "0";
+  if (count >= 1000000) return (count / 1000000).toFixed(1) + "M";
+  if (count >= 1000) return (count / 1000).toFixed(1) + "K";
+  return count.toString();
 }

@@ -57,6 +57,10 @@ const useXAction = () => {
   const [userXPage, setUserXPage] = useState(1); // 用户X页码
   const [userXCursor, setUserXCursor] = useState<string>("");
   const [maxId, setMaxId] = useState<number | string>(0);
+  const [followingList, setFollowingList] = useState<xUser[]>([]);
+  const [followingCursor, setFollowingCursor] = useState<string>("");
+  const [isFetchingFollowing, setIsFetchingFollowing] = useState(false);
+  const [followingHasLoaded, setFollowingHasLoaded] = useState(false);
 
   // 当前操作项相关状态
   const [curItem, setCurItem] = useState<xItem>();
@@ -168,6 +172,30 @@ const useXAction = () => {
     },
     [apiClient, isFetching],
   );
+  
+  const getFollowingListData = useCallback(
+    async (uid: string, cursor?: string) => {
+      if (isFetchingFollowing) return;
+      setIsFetchingFollowing(true);
+      try {
+        const result = await apiClient.getFollowing(uid, cursor);
+        if (result.ok === 1 && result.data) {
+          const newUsers = result.data.users || [];
+          setFollowingList((prev) => (cursor ? [...prev, ...newUsers] : newUsers));
+          setFollowingCursor(result.data.cursor || "");
+          setFollowingHasLoaded(true);
+        } else {
+          messageApi.error(result.msg || "获取关注列表失败");
+        }
+      } catch (e: any) {
+        console.error(e);
+        messageApi.error(e.message || "获取关注列表失败");
+      } finally {
+        setIsFetchingFollowing(false);
+      }
+    },
+    [apiClient, isFetchingFollowing, messageApi],
+  );
 
   // 清空列表
   const clearList = useCallback(() => {
@@ -175,6 +203,9 @@ const useXAction = () => {
     setHasMore(true);
     setMaxId(0);
     setUserXCursor("");
+    setFollowingList([]);
+    setFollowingCursor("");
+    setFollowingHasLoaded(false);
   }, [setUserXCursor]);
 
   // 复制
@@ -539,6 +570,14 @@ const useXAction = () => {
     setUserXPage,
     userXCursor,
     setUserXCursor,
+    followingList,
+    setFollowingList,
+    followingCursor,
+    setFollowingCursor,
+    isFetchingFollowing,
+    followingHasLoaded,
+    setFollowingHasLoaded,
+    getFollowingListData,
     getUserByName,
     getMyUserInfo,
     getHotSearch,

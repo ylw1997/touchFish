@@ -20,6 +20,7 @@ import {
   uploadXMedia,
   favoriteXTweet,
   unfavoriteXTweet,
+  getXFollowing,
 } from "../api/x";
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
@@ -805,6 +806,45 @@ export class XProvider extends BaseWebviewProvider {
         );
         webviewView.webview.postMessage({
           command: "SENDCREATEREPOST",
+          payload: res.code === 0 ? { ok: 1 } : { ok: 0, msg: res.message },
+          uuid,
+        });
+        break;
+      }
+
+      case "GETFOLLOWING": {
+        let userId = "";
+        let cursor = "";
+        if (typeof payload === "object") {
+          userId = payload.userId;
+          cursor = payload.cursor || "";
+        } else if (typeof payload === "string") {
+          try {
+            const parsed = JSON.parse(payload);
+            userId = parsed.userId;
+            cursor = parsed.cursor || "";
+          } catch {
+            userId = payload;
+          }
+        }
+
+        if (!userId) {
+          webviewView.webview.postMessage({
+            command: "SENDFOLLOWING",
+            payload: { ok: 0, msg: "未提供用户 ID" },
+            uuid,
+          });
+          break;
+        }
+
+        const res = await getXFollowing(
+          userId.toString(),
+          20,
+          cursor || undefined,
+          credential,
+        );
+        webviewView.webview.postMessage({
+          command: "SENDFOLLOWING",
           payload:
             res.code === 0
               ? { ok: 1, data: res.data }
