@@ -890,12 +890,21 @@ export async function translateXPost(
 
     // X 的翻译接口返回的是 base64 字符串
     if (typeof response.data === "string") {
-      const decoded = Buffer.from(response.data, "base64").toString("utf8");
-      const parsed = JSON.parse(decoded);
-      return {
-        code: 0,
-        data: parsed.result?.text || "",
-      };
+      try {
+        const decoded = Buffer.from(response.data, "base64").toString("utf8");
+        const parsed = JSON.parse(decoded);
+        return {
+          code: 0,
+          data: parsed.result?.text || "",
+        };
+      } catch (decodeError) {
+        console.error("翻译内容解析失败", decodeError);
+        return {
+          code: -1,
+          message: "翻译内容解析失败，请重试",
+          data: null,
+        };
+      }
     }
 
     return {
