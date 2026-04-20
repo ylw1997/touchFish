@@ -141,4 +141,12 @@ export class XApi {
       "正在翻译...",
     );
   }
+
+  getFollowing(userId: string, cursor?: string) {
+    return this.request<any>(
+      "GETFOLLOWING" as CommandList,
+      JSON.stringify({ userId, cursor }),
+      "获取关注列表中...",
+    );
+  }
 }
