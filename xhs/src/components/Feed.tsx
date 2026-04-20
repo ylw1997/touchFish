@@ -19,6 +19,8 @@ import {
   PlusOutlined,
   MinusOutlined,
   FormOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
 } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
@@ -37,6 +39,7 @@ import XhsSendDrawer from "./XhsSendDrawer";
 import { useRequest } from "../hooks/useRequest";
 import { createXhsApi } from "../api";
 import { useFontSizeStore } from "../store/fontSize";
+import { useConfigStore } from "../store/config";
 
 export default function Feed() {
   const { items, loadMore, hasMore, refresh } = useXhsFeed();
@@ -59,6 +62,7 @@ export default function Feed() {
     xsec_source?: any;
   }>({ cursor: "", user_id: "" });
   const { increase, decrease } = useFontSizeStore();
+  const { showImg, toggleShowImg, setShowImg } = useConfigStore();
 
   const { request, messageApi } = useRequest();
   const apiRef = useRef(createXhsApi(request));
@@ -110,6 +114,9 @@ export default function Feed() {
           scrollRef.current.scrollTop = ev.data.payload;
         }
       }
+      if (ev.data.command === "XHS_IMG_TOGGLED") {
+        setShowImg(!!ev.data.payload);
+      }
     };
 
     scrollableNode.addEventListener("scroll", handleScroll);
@@ -141,53 +148,59 @@ export default function Feed() {
   }, []);
 
   // 处理图片上传
-  const handleUploadImage = useCallback(async (file: File) => {
-    try {
-      // 将文件转换为 base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-      });
+  const handleUploadImage = useCallback(
+    async (file: File) => {
+      try {
+        // 将文件转换为 base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+        });
 
-      const result = await apiRef.current.uploadImage({
-        file: base64,
-        name: file.name,
-        type: file.type,
-      });
+        const result = await apiRef.current.uploadImage({
+          file: base64,
+          name: file.name,
+          type: file.type,
+        });
 
-      messageApi.success("图片上传成功");
-      // 返回完整的 fileId（包含 spectrum/ 前缀），用于发布笔记
-      return { url: result.fullFileId || result.url };
-    } catch (error: any) {
-      messageApi.error(error.message || "图片上传失败");
-      throw error;
-    }
-  }, [messageApi]);
+        messageApi.success("图片上传成功");
+        // 返回完整的 fileId（包含 spectrum/ 前缀），用于发布笔记
+        return { url: result.fullFileId || result.url };
+      } catch (error: any) {
+        messageApi.error(error.message || "图片上传失败");
+        throw error;
+      }
+    },
+    [messageApi],
+  );
 
   // 处理发布笔记
-  const handleSendNote = useCallback(async (params: { title: string; content: string; images: string[] }) => {
-    setSendLoading(true);
-    try {
-      const result = await apiRef.current.publishNote({
-        title: params.title,
-        desc: params.content,
-        images: params.images,
-      });
+  const handleSendNote = useCallback(
+    async (params: { title: string; content: string; images: string[] }) => {
+      setSendLoading(true);
+      try {
+        const result = await apiRef.current.publishNote({
+          title: params.title,
+          desc: params.content,
+          images: params.images,
+        });
 
-      if (result.success) {
-        messageApi.success("笔记发布成功！");
-        setSendDrawerOpen(false);
-      } else {
-        throw new Error(result.msg || "发布失败");
+        if (result.success) {
+          messageApi.success("笔记发布成功！");
+          setSendDrawerOpen(false);
+        } else {
+          throw new Error(result.msg || "发布失败");
+        }
+      } catch (error: any) {
+        messageApi.error(error.message || "笔记发布失败");
+      } finally {
+        setSendLoading(false);
       }
-    } catch (error: any) {
-      messageApi.error(error.message || "笔记发布失败");
-    } finally {
-      setSendLoading(false);
-    }
-  }, [messageApi, refresh]);
+    },
+    [messageApi],
+  );
 
   return (
     <div
@@ -234,6 +247,20 @@ export default function Feed() {
           onClick={() => setSendDrawerOpen(true)}
           icon={<FormOutlined style={{ color: "#52c41a" }} />}
           tooltip={{ title: "发布笔记", placement: "left" }}
+        />
+        <FloatButton
+          onClick={toggleShowImg}
+          icon={
+            showImg ? (
+              <EyeOutlined style={{ color: "#13c2c2" }} />
+            ) : (
+              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+            )
+          }
+          tooltip={{
+            title: showImg ? "隐藏图片" : "显示图片",
+            placement: "left",
+          }}
         />
         <FloatButton
           onClick={increase}

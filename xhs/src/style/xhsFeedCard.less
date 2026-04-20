@@ -16,7 +16,9 @@
     display: block;
     object-fit: cover;
     border-radius: 16px; /* 图片四角圆角 */
-    transition: filter 0.25s ease, transform 0.25s ease; /* 平滑过渡 */
+    transition:
+      filter 0.25s ease,
+      transform 0.25s ease; /* 平滑过渡 */
   }
 
   &:hover img {
@@ -77,4 +79,35 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.xhs-feed-card-placeholder {
+  width: 100%;
+  height: 120px;
+  background: var(--vscode-sideBar-background);
+  border: 1px dashed
+    color-mix(in srgb, var(--vscode-foreground) 20%, transparent);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 8px;
+  color: color-mix(in srgb, var(--vscode-foreground) 40%, transparent);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--vscode-foreground) 5%, transparent);
+    border-color: color-mix(in srgb, var(--vscode-foreground) 40%, transparent);
+    color: var(--vscode-foreground);
+  }
+
+  .anticon {
+    font-size: 24px;
+  }
+
+  span {
+    font-size: 12px;
+  }
 }

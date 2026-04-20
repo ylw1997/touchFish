@@ -17,9 +17,11 @@ import {
   ShareAltOutlined,
   EnvironmentOutlined,
   ClockCircleOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import { formatTimestamp, formatCount, parseTopicTags } from "../utils/utils";
 import ImagePreviewToolbar from "./ImagePreviewToolbar";
+import { useConfigStore } from "../store/config";
 
 const { Title, Paragraph } = Typography;
 
@@ -69,6 +71,8 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
   onToggleCollect,
   collectLoading = false,
 }) => {
+  const { showImg } = useConfigStore();
+  const [forceShow, setForceShow] = useState(false);
   const {
     title,
     desc,
@@ -117,7 +121,7 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
   return (
     <>
       {/* 视频展示 */}
-      {videoUrl && (
+      {(showImg || forceShow) && videoUrl && (
         <div
           style={{
             borderRadius: "12px",
@@ -135,7 +139,7 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
       )}
 
       {/* 图片展示 */}
-      {!videoUrl && images.length > 0 && (
+      {(showImg || forceShow) && !videoUrl && images.length > 0 && (
         <div
           ref={imageContainerRef}
           style={{
@@ -144,6 +148,7 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
             margin: "12px 0",
           }}
         >
+          {/* ... 原有渲染逻辑不变 ... */}
           {images.length === 1 ? (
             <Image
               src={images[0]}
@@ -252,6 +257,17 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {!showImg && !forceShow && (images.length > 0 || videoUrl) && (
+        <div 
+          className="xhs-feed-card-placeholder" 
+          style={{ margin: '12px 0' }}
+          onClick={() => setForceShow(true)}
+        >
+          <PictureOutlined />
+          <span>点击加载媒体内容</span>
         </div>
       )}
 
