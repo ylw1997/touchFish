@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import React, { useEffect, useRef } from "react";
 import { Drawer, Avatar, Button, Divider, Card, Tag } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
-import YImg from "./YImg";
 import XCard from "./XCard";
 import { loaderFunc } from "../utils/loader";
 import { xItem, xUser } from "../../../types/x";
@@ -112,6 +111,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         onClose={closeFunc}
         title={userDetail?.screen_name}
         placement="bottom"
+        {...(console.log("XPLAN_DRAWER_DATA_DEBUG", userDetail), {})}
         height={userXList.length === 0 ? "auto" : "calc(100vh - 200px)"}
         styles={{
           body: {
@@ -143,11 +143,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               <Avatar
                 size={80}
                 style={{ marginTop: 16 }}
-                src={
-                  userDetail.avatar_hd && (
-                    <YImg useImg src={userDetail.avatar_hd} />
-                  )
-                }
+                src={userDetail.avatar_hd}
               >
                 {userDetail.screen_name}
               </Avatar>

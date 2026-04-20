@@ -298,10 +298,7 @@ const useXAction = () => {
     try {
       const result = await apiClient.getMyUserInfo();
       if (result && result.data) {
-        setUserDetail({
-          ...result.data,
-          avatar_hd: result.data.avatar,
-        });
+        setUserDetail(result.data);
         setUserDetailVisible(true);
       }
     } catch (e) {

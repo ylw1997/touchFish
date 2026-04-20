@@ -69,9 +69,10 @@ function mapXTweetToXItem(tweet: any): xItem | null {
       userLegacy?.screen_name ||
       userCore?.screen_name ||
       userResult.screen_name;
+    // 优先使用 avatar.image_url (高质量)，其次 legacy.profile_image_url_https
     const avatarUrl =
-      userLegacy?.profile_image_url_https ||
       userResult.avatar?.image_url ||
+      userLegacy?.profile_image_url_https ||
       userResult.profile_image_url_https;
 
     user = {
@@ -426,6 +427,90 @@ export class XProvider extends BaseWebviewProvider {
         break;
       }
 
+      case "GET_MY_USER_INFO": {
+        // 直接从 cookie 中提取用户 ID (twid 字段)
+        const twidMatch = cookie?.match(/(?:^|;\s*)twid=u%3D(\d+)/);
+        const userId = twidMatch?.[1];
+
+        if (!userId) {
+          webviewView.webview.postMessage({
+            command: "SENDUSERBYNAME",
+            payload: {
+              ok: 0,
+              msg: "未在 Cookie 中找到有效的 UserID，请重新登录",
+            },
+            uuid,
+          });
+          break;
+        }
+
+        const { getXUserTweets } = await import("../api/x");
+        const res = await getXUserTweets({ userId }, credential);
+
+        let mappedData: any = { ok: 0, msg: "获取个人资料失败" };
+
+        if (res.code === 0 && res.data) {
+          const userResult = res.data.user?.result;
+          
+          let finalUser = userResult;
+          // 严格按照 JSON 路径：data.user.result.timeline.timeline.instructions
+          if (!finalUser?.legacy) {
+            const instructions = res.data.user?.result?.timeline?.timeline?.instructions || [];
+            // 1. 定位 TimelineAddEntries
+            const addEntriesInst = instructions.find((i: any) => i.type === 'TimelineAddEntries');
+            if (addEntriesInst?.entries) {
+              // 2. 找到第一个包含推文的 entry (entryId 包含 tweet-)
+              const tweetEntry = addEntriesInst.entries.find((e: any) => e.entryId?.startsWith('tweet-'));
+              if (tweetEntry) {
+                // 3. 提取核心路径：content.itemContent.tweet_results.result.core.user_results.result
+                const u = tweetEntry.content?.itemContent?.tweet_results?.result?.core?.user_results?.result;
+                if (u?.legacy) {
+                  finalUser = u;
+                }
+              }
+            }
+          }
+
+          const legacy = finalUser?.legacy;
+
+          if (finalUser && legacy) {
+
+            // 根据 JSON 示例和实际表现进行最高优先级的字段捕获
+            const avatarUrl = finalUser.avatar?.image_url
+              || (finalUser as any).avatar_url_https
+              || legacy.profile_image_url_https
+              || "";
+
+            mappedData = {
+              ok: 1,
+              data: {
+                id: finalUser.rest_id || userId,
+                name: legacy.name || (finalUser as any).core?.name || "",
+                screen_name_raw: legacy.screen_name || (finalUser as any).core?.screen_name || "",
+                screen_name: (legacy.name || (finalUser as any).core?.name) 
+                    ? `${legacy.name || (finalUser as any).core?.name} (@${legacy.screen_name || (finalUser as any).core?.screen_name})` 
+                    : (legacy.screen_name || (finalUser as any).core?.screen_name),
+                avatar_hd: avatarUrl?.replace(/_normal/, "_400x400"),
+                followers_count_str: String(legacy.followers_count || 0),
+                friends_count_str: String(legacy.friends_count || 0),
+                descText: legacy.description || (finalUser as any).profile_bio?.description || "",
+                location: legacy.location?.location || legacy.location || "",
+                isOwner: true,
+              },
+            };
+          } else {
+             mappedData = { ok: 1, data: { id: userId, name: "我的个人页面", isOwner: true } };
+          }
+        }
+
+        webviewView.webview.postMessage({
+          command: "SENDUSERBYNAME",
+          payload: mappedData,
+          uuid,
+        });
+        break;
+      }
+
       case "GET_TRANSLATION": {
         const { id } = payload;
         const res = await translateXPost(id.toString(), credential);
@@ -484,6 +569,15 @@ export class XProvider extends BaseWebviewProvider {
           } catch {
             uid = payload;
           }
+        }
+
+        if (!uid) {
+          webviewView.webview.postMessage({
+            command: `SENDUSERBLOG`,
+            payload: { ok: 0, msg: "未提供用户 ID" },
+            uuid,
+          });
+          break;
         }
 
         const res = await getXUserTweets(

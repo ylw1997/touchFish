@@ -28,6 +28,7 @@ import {
   RedoOutlined,
   SearchOutlined,
   FormOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -69,6 +70,7 @@ function App() {
     followUser,
     getListData,
     getUserByName,
+    getMyUserInfo,
     handleTranslate,
     handleClearTranslation,
     isFetching,
@@ -224,12 +226,19 @@ function App() {
       {/* 回到顶部按钮 */}
       <FloatButton.BackTop
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 384 }}
+        style={{ insetInlineEnd: 24, bottom: 444 }}
         visibilityHeight={500}
         duration={1000}
         icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
         tooltip={{ title: "回到顶部", placement: "left" }}
         target={() => scrollableNodeRef.current || window}
+      />
+      {/* 个人中心按钮 */}
+      <FloatButton
+        onClick={getMyUserInfo}
+        icon={<UserOutlined style={{ color: "#ff85c0" }} />}
+        tooltip={{ title: "个人主页", placement: "left" }}
+        style={{ insetInlineEnd: 24, bottom: 384 }}
       />
       {/* 刷新按钮 */}
       <FloatButton

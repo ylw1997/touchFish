@@ -1072,3 +1072,38 @@ export async function uploadXMedia(
     };
   }
 }
+
+/**
+ * 获取当前登录用户的基本信息
+ */
+export async function getAccountVerifyCredentials(
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const url = `${X_BASE_URL}/i/api/1.1/account/verify_credentials.json`;
+    const response = await xHttp.get(url, {
+      headers: buildXHeaders(auth),
+      params: {
+        include_entities: true,
+        skip_status: true,
+        include_email: false,
+      },
+    });
+
+    return {
+      code: 0,
+      data: response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    console.error("XPLAN_GET_MY_USER_INFO_ERROR", normalized);
+    return {
+      code: normalized.code,
+      message: `获取个人信息失败: ${normalized.message}`,
+      data: null,
+    };
+  }
+}
+
+
