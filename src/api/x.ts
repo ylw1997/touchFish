@@ -5,13 +5,24 @@ import * as crypto from "crypto";
 const X_BASE_URL = "https://x.com";
 
 // 默认 Query ID，会被 X 定期轮换。如果 404，需要从浏览器 DevTools 抓取最新值。
+// @operation: HomeTimeline
 export let X_HOME_TIMELINE_QUERY_ID = "Yf4WJo0fW46TnqrHUw_1Ow";
+// @operation: TweetDetail
 export let X_TWEET_DETAIL_QUERY_ID = "tCivIG3o9ls-9cLxTsdxZQ";
+// @operation: SearchTimeline
 export let X_SEARCH_TIMELINE_QUERY_ID = "R0u1RWRf748KzyGBXvOYRA";
+// @operation: UserByScreenName
 export let X_USER_BY_SCREEN_NAME_QUERY_ID = "IGgvgiOx4QZndDHuD3x9TQ";
+// @operation: UserTweets
 export let X_USER_TWEETS_QUERY_ID = "6fWQaBPK51aGyC_VC7t9GQ";
+// @operation: CreateTweet
 export let X_CREATE_TWEET_QUERY_ID = "c50A_puUoQGK_4SXseYz3A";
+// @operation: HomeLatestTimeline
 export const X_HOME_LATEST_TIMELINE_QUERY_ID = "hlno2aLQsxiQlOrK-a2V-w";
+// @operation: FavoriteTweet
+export const X_FAVORITE_TWEET_QUERY_ID = "lI07N6Otwv1PhnEgXILM7A";
+// @operation: UnfavoriteTweet
+export const X_UNFAVORITE_TWEET_QUERY_ID = "ZYKSe-w7KEslx3JhSIk5LA";
 
 /**
  * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
@@ -887,12 +898,21 @@ export async function translateXPost(
 
     // X 的翻译接口返回的是 base64 字符串
     if (typeof response.data === "string") {
-      const decoded = Buffer.from(response.data, "base64").toString("utf8");
-      const parsed = JSON.parse(decoded);
-      return {
-        code: 0,
-        data: parsed.result?.text || "",
-      };
+      try {
+        const decoded = Buffer.from(response.data, "base64").toString("utf8");
+        const parsed = JSON.parse(decoded);
+        return {
+          code: 0,
+          data: parsed.result?.text || "",
+        };
+      } catch (decodeError) {
+        console.error("翻译内容解析失败", decodeError);
+        return {
+          code: -1,
+          message: "翻译内容解析失败，请重试",
+          data: null,
+        };
+      }
     }
 
     return {
@@ -1068,6 +1088,129 @@ export async function uploadXMedia(
     return {
       code: normalized.code,
       message: `媒体上传失败: ${normalized.message}`,
+      data: null,
+    };
+  }
+}
+
+/**
+ * 获取当前登录用户的基本信息
+ */
+export async function getAccountVerifyCredentials(
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const url = `${X_BASE_URL}/i/api/1.1/account/verify_credentials.json`;
+    const response = await xHttp.get(url, {
+      headers: buildXHeaders(auth),
+      params: {
+        include_entities: true,
+        skip_status: true,
+        include_email: false,
+      },
+    });
+
+    return {
+      code: 0,
+      data: response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    console.error("XPLAN_GET_MY_USER_INFO_ERROR", normalized);
+    return {
+      code: normalized.code,
+      message: `获取个人信息失败: ${normalized.message}`,
+      data: null,
+    };
+  }
+}
+
+/**
+ * 点赞推文 (FavoriteTweet)
+ */
+export async function favoriteXTweet(
+  tweetId: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const path = `/i/api/graphql/${X_FAVORITE_TWEET_QUERY_ID}/FavoriteTweet`;
+    const url = `${X_BASE_URL}${path}`;
+
+    const transactionId = await XClientTransaction.getTransactionId(
+      path,
+      "POST",
+    );
+
+    const response = await xHttp.post(
+      url,
+      {
+        variables: { tweet_id: tweetId },
+        queryId: X_FAVORITE_TWEET_QUERY_ID,
+      },
+      {
+        headers: buildXHeaders(auth, {
+          "x-client-transaction-id": transactionId,
+          Referer: `https://x.com/i/status/${tweetId}`,
+        }),
+      },
+    );
+
+    return {
+      code: 0,
+      data: response.data?.data ?? response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: null,
+    };
+  }
+}
+
+/**
+ * 取消点赞推文 (UnfavoriteTweet)
+ */
+export async function unfavoriteXTweet(
+  tweetId: string,
+  credential?: XCredential | null,
+): Promise<XApiResult<any>> {
+  try {
+    const auth = ensureCredential(credential);
+    const path = `/i/api/graphql/${X_UNFAVORITE_TWEET_QUERY_ID}/UnfavoriteTweet`;
+    const url = `${X_BASE_URL}${path}`;
+
+    const transactionId = await XClientTransaction.getTransactionId(
+      path,
+      "POST",
+    );
+
+    const response = await xHttp.post(
+      url,
+      {
+        variables: { tweet_id: tweetId },
+        queryId: X_UNFAVORITE_TWEET_QUERY_ID,
+      },
+      {
+        headers: buildXHeaders(auth, {
+          "x-client-transaction-id": transactionId,
+          Referer: `https://x.com/i/status/${tweetId}`,
+        }),
+      },
+    );
+
+    return {
+      code: 0,
+      data: response.data?.data ?? response.data,
+    };
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return {
+      code: normalized.code,
+      message: normalized.message,
       data: null,
     };
   }

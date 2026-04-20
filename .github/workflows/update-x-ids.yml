@@ -52,10 +52,12 @@ jobs:
       - name: Detect changes
         id: detect_changes
         run: |
-          if git diff --quiet -- src/api/x.ts; then
+          if git diff --quiet; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📋 变更文件列表:"
+            git diff --name-only
           fi
 
       - name: Create or update PR from test to main

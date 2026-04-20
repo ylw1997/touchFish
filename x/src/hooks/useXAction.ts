@@ -15,9 +15,13 @@ export function mergeUniqueXItems(currentList: xItem[], incomingList: xItem[]) {
   const seen = new Set<string>();
   const merged: xItem[] = [];
 
+  const getUniqueId = (item: xItem) => {
+    return String(item.id || item.mblogid || item.bid || "").trim();
+  };
+
   for (const item of [...currentList, ...incomingList]) {
-    const key = String(item.id || item.mblogid || item.bid || "");
-    if (!key || seen.has(key)) {
+    const key = getUniqueId(item);
+    if (!key || key === "undefined" || key === "null" || seen.has(key)) {
       continue;
     }
     seen.add(key);
@@ -75,6 +79,8 @@ const useXAction = () => {
     [],
   );
 
+
+
   // 请求数据（主列表/用户X）
   const getListData = useCallback(
     async (payload: string, replace = false) => {
@@ -89,7 +95,9 @@ const useXAction = () => {
       const currentMaxId = replace ? 0 : maxId;
 
       if (replace) {
+        setList([]);
         setMaxId(0);
+        setUserXCursor("");
         requestPayload = {
           group_id: payload,
           refresh: true,
@@ -116,6 +124,14 @@ const useXAction = () => {
           requestPayload = newPayload;
         }
         const result = await apiClient.getListData(requestPayload);
+        if (result.ok === 0) {
+          if (result.msg?.includes("429")) {
+            messageApi.error("请求过快，已被 X 平台限流，请稍后再试 (429)");
+          } else {
+            messageApi.error(result.msg || "请求失败");
+          }
+          return;
+        }
         const nextCursor = result.max_id_str || String(result.max_id || "");
         setMaxId(nextCursor || 0);
         setHasMore(!!nextCursor);
@@ -130,11 +146,12 @@ const useXAction = () => {
         setIsFetching(false);
       }
     },
-    [apiClient, isFetching, list, maxId],
+    [apiClient, isFetching, list, maxId, messageApi],
   );
 
   const getUserBlogData = useCallback(
     async (uid: string | number, cursor?: string) => {
+      if (isFetching) return;
       setIsFetching(true);
       try {
         const result = await apiClient.getUserBlogData(uid, cursor);
@@ -149,7 +166,7 @@ const useXAction = () => {
         setIsFetching(false);
       }
     },
-    [apiClient],
+    [apiClient, isFetching],
   );
 
   // 清空列表
@@ -281,10 +298,7 @@ const useXAction = () => {
     try {
       const result = await apiClient.getMyUserInfo();
       if (result && result.data) {
-        setUserDetail({
-          ...result.data,
-          avatar_hd: result.data.avatar,
-        });
+        setUserDetail(result.data);
         setUserDetailVisible(true);
       }
     } catch (e) {

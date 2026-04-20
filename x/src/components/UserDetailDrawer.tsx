@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import React, { useEffect, useRef } from "react";
 import { Drawer, Avatar, Button, Divider, Card, Tag } from "antd";
 import InfiniteScroll from "react-infinite-scroll-component";
-import YImg from "./YImg";
 import XCard from "./XCard";
 import { loaderFunc } from "../utils/loader";
 import { xItem, xUser } from "../../../types/x";
@@ -64,10 +63,11 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   } = useXAction();
 
   useEffect(() => {
-    if (visible && userDetail && userXList?.length === 0) {
+    if (visible && userDetail && userXList?.length === 0 && !isFetching) {
       getUserBlogData(userDetail.id);
     }
-  }, [getUserBlogData, userDetail, visible, userXList?.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userDetail?.id, visible]);
 
   const getUserBlogFunc = () => {
     if (visible && userDetail && !isFetching && userXCursor) {
@@ -142,11 +142,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
               <Avatar
                 size={80}
                 style={{ marginTop: 16 }}
-                src={
-                  userDetail.avatar_hd && (
-                    <YImg useImg src={userDetail.avatar_hd} />
-                  )
-                }
+                src={userDetail.avatar_hd}
               >
                 {userDetail.screen_name}
               </Avatar>

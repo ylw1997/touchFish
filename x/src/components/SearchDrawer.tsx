@@ -104,6 +104,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
 
   const handleSearch = useCallback(
     async (isLoadMore = false, keywordOverride?: string) => {
+      if (loading) return; // 关键防重锁
       try {
         const keyword = keywordOverride?.trim();
         const values = keyword ? null : await form.validateFields();
@@ -115,34 +116,45 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
         }
 
         const currentCursor = isLoadMore ? cursor : undefined;
+        setHasMore(false); // 正在请求时先置为 false，防止重复触发下一步加载
+
         const result = await getXSearch({
           query: finalKeyword,
           cursor: currentCursor,
         });
 
-        const newStatuses = result.statuses || [];
-        if (isLoadMore) {
-          setSearchResults((prev) => mergeUniqueXItems(prev, newStatuses));
-        } else {
-          setSearchResults(newStatuses);
-        }
+        if (result && result.statuses) {
+          const newStatuses = result.statuses || [];
+          if (isLoadMore) {
+            setSearchResults((prev) => mergeUniqueXItems(prev, newStatuses));
+          } else {
+            setSearchResults(newStatuses);
+          }
 
-        const nextCursor = result.max_id_str;
-        setCursor(nextCursor || "");
-        setHasMore(!!nextCursor);
+          const nextCursor = result.max_id_str;
+          setCursor(nextCursor || "");
+          setHasMore(!!nextCursor && newStatuses.length > 0);
+        } else {
+          setHasMore(false);
+        }
       } catch (error) {
         console.error(error);
       }
     },
-    [form, clear, getXSearch, cursor, setCursor, setHasMore, setSearchResults],
+    [loading, form, cursor, getXSearch, setCursor, setHasMore, clear, setSearchResults],
   );
 
   useEffect(() => {
     if (open && initialKeyword) {
-      form.setFieldsValue({ keyword: initialKeyword });
-      handleSearch(false, initialKeyword);
+      // 检查当前表单的值，如果已经相等说明不用重复触发
+      const currentVal = form.getFieldValue("keyword");
+      if (currentVal !== initialKeyword) {
+        form.setFieldsValue({ keyword: initialKeyword });
+        handleSearch(false, initialKeyword);
+      }
     }
-  }, [form, initialKeyword, open, handleSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialKeyword, open, form]); // 明确说明规避 handleSearch，防止依赖循环导致 429
 
   const closeFunc = useCallback(() => {
     form.resetFields();
