@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [14.11.0](https://github.com/ylw1997/touchFish/compare/v14.10.0...v14.11.0) (2026-04-20)
+
+
+### ✨ Features | 新功能
+
+* 修复发推过短问题 ([940a7c6](https://github.com/ylw1997/touchFish/commit/940a7c6ff13eb6187162f38386289e0bdc7c9d82))
+* 修复无限搜索问题 ([43feb58](https://github.com/ylw1997/touchFish/commit/43feb580608a5f0f87879cb6f62f98bc150cf8e6))
+* 修复翻译错误问题 ([05ebb94](https://github.com/ylw1997/touchFish/commit/05ebb9414dc1569e3e905fee7a6bdc296f5074e8))
+* 增加个人中心功能 ([c998e0b](https://github.com/ylw1997/touchFish/commit/c998e0b9ef4c9533f6069116fa1d49516ee6ae38))
+* 更新queryId获取action脚本 ([aee23d5](https://github.com/ylw1997/touchFish/commit/aee23d592fc32abe2db808b2e7861e860abddea8))
+* 点赞取消点赞 ([8a47d86](https://github.com/ylw1997/touchFish/commit/8a47d86da5d0ae345fc0cc85e47a09abcbc7ee32))
+
 ## [14.10.0](https://github.com/ylw1997/touchFish/compare/v14.9.0...v14.10.0) (2026-04-17)
 
 
