@@ -5,16 +5,24 @@ import * as crypto from "crypto";
 const X_BASE_URL = "https://x.com";
 
 // 默认 Query ID，会被 X 定期轮换。如果 404，需要从浏览器 DevTools 抓取最新值。
+// @operation: HomeTimeline
 export let X_HOME_TIMELINE_QUERY_ID = "Yf4WJo0fW46TnqrHUw_1Ow";
+// @operation: TweetDetail
 export let X_TWEET_DETAIL_QUERY_ID = "tCivIG3o9ls-9cLxTsdxZQ";
+// @operation: SearchTimeline
 export let X_SEARCH_TIMELINE_QUERY_ID = "R0u1RWRf748KzyGBXvOYRA";
+// @operation: UserByScreenName
 export let X_USER_BY_SCREEN_NAME_QUERY_ID = "IGgvgiOx4QZndDHuD3x9TQ";
+// @operation: UserTweets
 export let X_USER_TWEETS_QUERY_ID = "6fWQaBPK51aGyC_VC7t9GQ";
+// @operation: CreateTweet
 export let X_CREATE_TWEET_QUERY_ID = "c50A_puUoQGK_4SXseYz3A";
+// @operation: HomeLatestTimeline
 export const X_HOME_LATEST_TIMELINE_QUERY_ID = "hlno2aLQsxiQlOrK-a2V-w";
-// 点赞和取消点赞的 Query ID
-const X_FAVORITE_TWEET_QUERY_ID = "lI07N6Otwv1PhnEgXILM7A";
-const X_UNFAVORITE_TWEET_QUERY_ID = "ZYKSe-w7KEslx3JhSIk5LA";
+// @operation: FavoriteTweet
+export const X_FAVORITE_TWEET_QUERY_ID = "lI07N6Otwv1PhnEgXILM7A";
+// @operation: UnfavoriteTweet
+export const X_UNFAVORITE_TWEET_QUERY_ID = "ZYKSe-w7KEslx3JhSIk5LA";
 
 /**
  * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
