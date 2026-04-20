@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [14.12.0](https://github.com/ylw1997/touchFish/compare/v14.11.0...v14.12.0) (2026-04-20)
+
+
+### ✨ Features | 新功能
+
+* 修复工作流 ([0758c32](https://github.com/ylw1997/touchFish/commit/0758c3273fed064a07a285b80178ca0ac0f1424a))
+* 小红书无图模式上线 ([fa1f7bb](https://github.com/ylw1997/touchFish/commit/fa1f7bba2240a4dd1be7760447413b7d8041d634))
+
 ## [14.11.0](https://github.com/ylw1997/touchFish/compare/v14.10.0...v14.11.0) (2026-04-20)
 
 
