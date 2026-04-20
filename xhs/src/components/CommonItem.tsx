@@ -14,10 +14,12 @@ import {
   EnvironmentOutlined,
   UserOutlined,
   CommentOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import { List, Avatar, Space, Tag, Image, Button } from "antd";
 import { extractXhsImageUrl, formatTimestamp } from "../utils/utils";
 import ImagePreviewToolbar from "./ImagePreviewToolbar";
+import { useConfigStore } from "../store/config";
 
 interface CommentUser {
   user_id?: string;
@@ -67,6 +69,9 @@ const CommonItem: React.FC<CommonItemProps> = ({
   onExpandSubComments,
   ...arg
 }) => {
+  const { showImg } = useConfigStore();
+  const [forceShow, setForceShow] = React.useState(false);
+
   return (
     <List.Item key={c.id} {...arg}>
       <div style={{ display: "flex", width: "100%", gap: 8 }}>
@@ -114,7 +119,9 @@ const CommonItem: React.FC<CommonItemProps> = ({
           <div style={{ marginTop: 4, whiteSpace: "pre-wrap" }}>
             {c.content}
           </div>
-          {Array.isArray(c.pictures) && c.pictures.length > 0 && (
+          {(showImg || forceShow) &&
+          Array.isArray(c.pictures) &&
+          c.pictures.length > 0 ? (
             <div
               style={{
                 marginTop: 8,
@@ -136,7 +143,7 @@ const CommonItem: React.FC<CommonItemProps> = ({
                         onRotateRight,
                       },
                       current,
-                    }
+                    },
                   ) => (
                     <ImagePreviewToolbar
                       imageUrl={extractXhsImageUrl(c.pictures![current])}
@@ -170,6 +177,19 @@ const CommonItem: React.FC<CommonItemProps> = ({
                 })}
               </Image.PreviewGroup>
             </div>
+          ) : (
+            !showImg &&
+            Array.isArray(c.pictures) &&
+            c.pictures.length > 0 && (
+              <div
+                className="xhs-feed-card-placeholder"
+                style={{ marginTop: 8, height: 80 }}
+                onClick={() => setForceShow(true)}
+              >
+                <PictureOutlined style={{ fontSize: 18 }} />
+                <span style={{ fontSize: 12 }}>点击显示评论图片</span>
+              </div>
+            )
           )}
 
           <Space size={4} style={{ marginTop: 4 }} wrap>
@@ -222,10 +242,10 @@ const CommonItem: React.FC<CommonItemProps> = ({
               {c.sub_error
                 ? c.sub_error
                 : c.sub_loading
-                ? "加载中..."
-                : `展开 ${
-                    Number(c.sub_comment_count) - c.sub_comments.length
-                  } 条评论`}
+                  ? "加载中..."
+                  : `展开 ${
+                      Number(c.sub_comment_count) - c.sub_comments.length
+                    } 条评论`}
             </Button>
           )}
         </div>

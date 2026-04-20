@@ -7,11 +7,16 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description: 小红书笔记卡片组件
  */
-import React from 'react';
-import { Avatar } from 'antd';
-import { HeartOutlined, PlayCircleFilled } from '@ant-design/icons';
-import '../style/xhsFeedCard.less';
-import type { XhsFeedRawItem, XhsUser } from '../../../types/xhs';
+import React from "react";
+import { Avatar } from "antd";
+import {
+  HeartOutlined,
+  PlayCircleFilled,
+  PictureOutlined,
+} from "@ant-design/icons";
+import "../style/xhsFeedCard.less";
+import type { XhsFeedRawItem, XhsUser } from "../../../types/xhs";
+import { useConfigStore } from "../store/config";
 
 interface XhsFeedCardProps {
   data: XhsFeedRawItem;
@@ -19,9 +24,15 @@ interface XhsFeedCardProps {
   onUserClick?: (data: XhsFeedRawItem, user: XhsUser) => void;
 }
 
-export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick, onUserClick }) => {
+export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({
+  data,
+  onClick,
+  onUserClick,
+}) => {
+  const { showImg } = useConfigStore();
+  const [forceShow, setForceShow] = React.useState(false);
   // 过滤非 note
-  if ((data as any).model_type && (data as any).model_type !== 'note') {
+  if ((data as any).model_type && (data as any).model_type !== "note") {
     return null;
   }
   const card: any = (data as any).note_card;
@@ -29,12 +40,14 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick, onUserC
     return null;
   }
   const user = card.user ?? {};
-  const title: string = card.display_title || card.title || '未命名笔记';
-  const userName: string = user.nick_name || user.nickname || '未知用户';
+  const title: string = card.display_title || card.title || "未命名笔记";
+  const userName: string = user.nick_name || user.nickname || "未知用户";
   const avatarUrl: string | undefined = user.avatar;
-  const likedCount: string = card.interact_info?.liked_count || '0';
-  const cover: string | undefined = card.cover?.url_default || card.cover?.url_pre;
-  const isVideo = card.type === 'video' || card.media_type === 'video' || card.video_info;
+  const likedCount: string = card.interact_info?.liked_count || "0";
+  const cover: string | undefined =
+    card.cover?.url_default || card.cover?.url_pre;
+  const isVideo =
+    card.type === "video" || card.media_type === "video" || card.video_info;
 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -43,13 +56,22 @@ export const XhsFeedCard: React.FC<XhsFeedCardProps> = ({ data, onClick, onUserC
 
   return (
     <div className="xhs-feed-card">
-      {cover && (
+      {(showImg || forceShow) && cover ? (
         <div className="xhs-feed-card-cover" onClick={() => onClick?.(data)}>
           <img src={cover} alt={title} />
-          {isVideo && (
-            <PlayCircleFilled className="xhs-feed-card-play" />
-          )}
+          {isVideo && <PlayCircleFilled className="xhs-feed-card-play" />}
         </div>
+      ) : (
+        !showImg &&
+        cover && (
+          <div
+            className="xhs-feed-card-placeholder"
+            onClick={() => setForceShow(true)}
+          >
+            <PictureOutlined />
+            <span>点击显示图片</span>
+          </div>
+        )
       )}
       <div className="xhs-feed-card-info">
         <div className="xhs-feed-card-desc" onClick={() => onClick?.(data)}>
