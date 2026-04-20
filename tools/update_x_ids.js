@@ -106,11 +106,17 @@ async function updateIds() {
             const varName = ID_MAPPING[opName];
             if (varName) {
                 // 支持 let 和 const，并确保匹配整行
-                const regex = new RegExp(`(export (?:let|const) ${varName} = ")[^"]+(";)`, 'g');
-                if (regex.test(content)) {
-                    content = content.replace(regex, `$1${queryId}$2`);
-                    console.log(`📝 更新 ${varName} (${opName}) -> ${queryId}`);
-                    updatedCount++;
+                const regex = new RegExp(`(export (?:let|const) ${varName} = ")([^"]+)(";)`, 'g');
+                const match = regex.exec(content);
+                if (match) {
+                    const currentValue = match[2];
+                    if (currentValue !== queryId) {
+                        content = content.replace(regex, `$1${queryId}$2`);
+                        console.log(`📝 更新 ${varName} (${opName}) -> ${queryId}`);
+                        updatedCount++;
+                    } else {
+                        console.log(`✓ ${varName} (${opName}) 已是最新 (${queryId})`);
+                    }
                 } else {
                     console.log(`⚠️ 变量 ${varName} 在文件中未找到或格式不匹配`);
                 }

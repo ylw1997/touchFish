@@ -19,12 +19,12 @@ jobs:
     env:
       GH_RELEASE_PAT: ${{ secrets.GH_RELEASE_PAT }}
     steps:
-      - name: Checkout main
+      - name: Checkout test
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_RELEASE_PAT }}
-          ref: main
+          ref: test
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
