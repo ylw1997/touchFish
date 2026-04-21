@@ -142,6 +142,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
   return (
     <>
       <Drawer
+        getContainer={false}
         destroyOnHidden
         closable
         open={visible}
