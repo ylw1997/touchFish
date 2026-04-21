@@ -65,7 +65,15 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
       children: (
         <div className="search-results">
           {isSearching || isLoading ? (
-            <div className="search-loading">
+            <div
+              className="search-loading"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "300px",
+              }}
+            >
               <Spin size="large" />
             </div>
           ) : songs.length > 0 ? (
@@ -94,7 +102,15 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
       children: (
         <div className="search-results">
           {isSearching || isLoading ? (
-            <div className="search-loading">
+            <div
+              className="search-loading"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "300px",
+              }}
+            >
               <Spin size="large" />
             </div>
           ) : singers.length > 0 ? (
