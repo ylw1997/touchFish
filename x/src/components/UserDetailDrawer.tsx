@@ -393,26 +393,26 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
             />
           </div>
         )}
-        {userDetailVisible &&
-          subUserDetail &&
-          subUserDetail?.id != userDetail?.id && (
-            <UserDetailDrawer
-              visible={userDetailVisible}
-              userDetail={subUserDetail}
-              onClose={() => {
-                setUserDetailVisible(false);
-                setSubUserDetail(undefined);
-              }}
-              setUserDetail={setSubUserDetail}
-              showImg={showImg}
-              onTopicClick={onTopicClick}
-              onTranslate={handleTranslate || parentOnTranslate}
-              onClearTranslation={
-                handleClearTranslation || parentOnClearTranslation
-              }
-            />
-          )}
       </Drawer>
+      {userDetailVisible &&
+        subUserDetail &&
+        subUserDetail?.id != userDetail?.id && (
+          <UserDetailDrawer
+            visible={userDetailVisible}
+            userDetail={subUserDetail}
+            onClose={() => {
+              setUserDetailVisible(false);
+              setSubUserDetail(undefined);
+            }}
+            setUserDetail={setSubUserDetail}
+            showImg={showImg}
+            onTopicClick={onTopicClick}
+            onTranslate={handleTranslate || parentOnTranslate}
+            onClearTranslation={
+              handleClearTranslation || parentOnClearTranslation
+            }
+          />
+        )}
     </>
   );
 };
