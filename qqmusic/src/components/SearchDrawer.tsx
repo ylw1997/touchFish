@@ -58,21 +58,6 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
     [playSong],
   );
 
-  const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedKeyword(keyword);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [keyword]);
-
-  React.useEffect(() => {
-    if (debouncedKeyword.trim()) {
-      handleSearch();
-    }
-  }, [activeTab, handleSearch, debouncedKeyword]);
-
   const tabItems = [
     {
       key: "song",
@@ -80,7 +65,15 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
       children: (
         <div className="search-results">
           {isSearching || isLoading ? (
-            <div className="search-loading">
+            <div
+              className="search-loading"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "300px",
+              }}
+            >
               <Spin size="large" />
             </div>
           ) : songs.length > 0 ? (
@@ -109,7 +102,15 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
       children: (
         <div className="search-results">
           {isSearching || isLoading ? (
-            <div className="search-loading">
+            <div
+              className="search-loading"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "300px",
+              }}
+            >
               <Spin size="large" />
             </div>
           ) : singers.length > 0 ? (
@@ -118,7 +119,12 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
                 <div
                   key={singer.mid || singer.singer_MID}
                   className="song-card"
-                  onClick={() => openSingerDrawer(singer.mid || singer.singer_MID, singer.name || singer.singer_name)}
+                  onClick={() =>
+                    openSingerDrawer(
+                      singer.mid || singer.singer_MID,
+                      singer.name || singer.singer_name,
+                    )
+                  }
                   style={{ cursor: "pointer" }}
                 >
                   <div className="song-card-content">

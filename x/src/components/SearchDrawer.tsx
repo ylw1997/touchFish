@@ -199,6 +199,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({
   return (
     <>
       <Drawer
+        getContainer={false}
         title="X 搜索"
         placement="bottom"
         height={searchResults.length > 0 ? "calc(100vh - 150px)" : "auto"}

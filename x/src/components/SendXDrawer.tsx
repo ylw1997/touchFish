@@ -104,6 +104,7 @@ const SendXDrawer: React.FC<SendXDrawerProps> = ({
   return (
     <>
       <Drawer
+        getContainer={false}
         title="发布推文 (X)"
         placement="top"
         height={"auto"}
