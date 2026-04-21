@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [14.14.1](https://github.com/ylw1997/touchFish/compare/v14.14.0...v14.14.1) (2026-04-21)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复x弹窗嵌套问题 ([90c45f4](https://github.com/ylw1997/touchFish/commit/90c45f47e4822ef33feba510b0ef2e374f1a8b71))
+
 ## [14.14.0](https://github.com/ylw1997/touchFish/compare/v14.13.0...v14.14.0) (2026-04-21)
 
 
