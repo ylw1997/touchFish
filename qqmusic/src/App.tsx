@@ -22,6 +22,7 @@ import {
   MinusOutlined,
   PlusOutlined,
   RadarChartOutlined,
+  ReloadOutlined,
   SearchOutlined,
   TrophyOutlined,
   UserOutlined,
@@ -286,6 +287,24 @@ function App() {
     },
     [playSong],
   );
+
+  const handleRefresh = useCallback(async () => {
+    const hide = message.loading("正在刷新数据...", 0);
+    try {
+      if (activeTab === "recommend") {
+        await loadRecommendData();
+      } else if (activeTab === "rank") {
+        await loadRankData();
+      } else if (activeTab === "my") {
+        await loadMyData();
+      }
+      message.success("刷新成功");
+    } catch (error: any) {
+      message.error(error.message || "刷新失败");
+    } finally {
+      hide();
+    }
+  }, [activeTab, loadMyData, loadRankData, loadRecommendData]);
 
   const tabsItems: TabsProps["items"] = [
     {
@@ -639,6 +658,11 @@ function App() {
           duration={1000}
           icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
           tooltip={{ title: "回到顶部", placement: "left" }}
+        />
+        <FloatButton
+          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+          tooltip={{ title: "刷新当前页", placement: "left" }}
+          onClick={handleRefresh}
         />
       </FloatButton.Group>
     </div>
