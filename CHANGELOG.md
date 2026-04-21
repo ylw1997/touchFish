@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [14.14.0](https://github.com/ylw1997/touchFish/compare/v14.13.0...v14.14.0) (2026-04-21)
+
+
+### ✨ Features | 新功能
+
+* 优化qqmusic搜索功能,增加qqmusic刷新功能 ([9e0c949](https://github.com/ylw1997/touchFish/commit/9e0c9497f27eae4c9fe4a336fb59dbb9a3afdae8))
+* 优化搜索loading ([7a58155](https://github.com/ylw1997/touchFish/commit/7a5815515af16c23cea172944f623c39aacb8f0a))
+* 修复问题 ([a8d4ed2](https://github.com/ylw1997/touchFish/commit/a8d4ed225b90edd9cc3c7bf7c2825a80d09a40d6))
+
 ## [14.13.0](https://github.com/ylw1997/touchFish/compare/v14.12.0...v14.13.0) (2026-04-20)
 
 
