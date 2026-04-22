@@ -1,6 +1,16 @@
 # 更新历史 
 
 
+## [14.16.0](https://github.com/ylw1997/touchFish/compare/v14.15.0...v14.16.0) (2026-04-22)
+
+
+### ✨ Features | 新功能
+
+* xiaoyuzhou增加toolbar控制 ([883bbc5](https://github.com/ylw1997/touchFish/commit/883bbc5652d6f586db4c21b021e713e3c5e1d0f4))
+* 优化qqmusic歌词显示,增加小宇宙字幕显示功能 ([51022d2](https://github.com/ylw1997/touchFish/commit/51022d2a23fd6b9a41295071bfb1b5a7b0caa9da))
+* 优化样式 ([8b5189e](https://github.com/ylw1997/touchFish/commit/8b5189ea59238f706af139b28d01df0ef8cbcb94))
+* 修改readme.md ([11384b8](https://github.com/ylw1997/touchFish/commit/11384b81ff7a37e84fc1d5f06bed4404a07a4ee5))
+
 ## [14.15.0](https://github.com/ylw1997/touchFish/compare/v14.14.1...v14.15.0) (2026-04-22)
 
 
