@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [14.15.0](https://github.com/ylw1997/touchFish/compare/v14.14.1...v14.15.0) (2026-04-22)
+
+
+### ✨ Features | 新功能
+
+* 优化文章显示图片 ([544bea2](https://github.com/ylw1997/touchFish/commit/544bea24910c4f6c049cfa6ecab26d6056f69d96))
+
 ### [14.14.1](https://github.com/ylw1997/touchFish/compare/v14.14.0...v14.14.1) (2026-04-21)
 
 
