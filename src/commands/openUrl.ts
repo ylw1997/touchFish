@@ -75,6 +75,11 @@ const BASE_CSS = `
   .toolbar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .toolbar-label { color: var(--vscode-editor-foreground); font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
   .hide-images img, .hide-images video { display: none !important; }
+  .hide-images img.force-show, .hide-images video.force-show { display: block !important; }
+  .img-load-btn { display: none; margin: 10px 0; padding: 4px 12px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-button-border); border-radius: 3px; cursor: pointer; font-size: 12px; }
+  .img-load-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
+  .hide-images .img-load-btn { display: block; width: fit-content; margin: 10px auto; }
+  .hide-images img.force-show + .img-load-btn, .hide-images video.force-show + .img-load-btn { display: none !important; }
 `;
 
 const createWebviewHtml = (
@@ -132,6 +137,21 @@ const createWebviewHtml = (
             vscode.postMessage({ command: 'toggleShowImg', value: checked });
           });
         }
+        function initImages() {
+          const imgs = document.querySelectorAll('.news_detail img, .news_detail video');
+          imgs.forEach(img => {
+            if (img.nextElementSibling && img.nextElementSibling.classList.contains('img-load-btn')) return;
+            const btn = document.createElement('button');
+            btn.className = 'img-load-btn';
+            btn.innerText = '加载图片';
+            btn.onclick = () => {
+              img.classList.add('force-show');
+              btn.style.display = 'none';
+            };
+            img.parentNode.insertBefore(btn, img.nextSibling);
+          });
+        }
+        initImages();
       </script>
     </body></html>`;
 };
@@ -306,6 +326,21 @@ const loadV2exPage = async () => {
           vscode.postMessage({ command: 'toggleShowImg', value: checked });
         });
       }
+      function initImages() {
+        const imgs = document.querySelectorAll('.news_detail img, .news_detail video');
+        imgs.forEach(img => {
+          if (img.nextElementSibling && img.nextElementSibling.classList.contains('img-load-btn')) return;
+          const btn = document.createElement('button');
+          btn.className = 'img-load-btn';
+          btn.innerText = '加载图片';
+          btn.onclick = () => {
+            img.classList.add('force-show');
+            btn.style.display = 'none';
+          };
+          img.parentNode.insertBefore(btn, img.nextSibling);
+        });
+      }
+      initImages();
     </script>
     </body></html>`;
 };
@@ -488,6 +523,21 @@ const loadHupuPage = async () => {
           vscode.postMessage({ command: 'toggleShowImg', value: checked });
         });
       }
+      function initImages() {
+        const imgs = document.querySelectorAll('.news_detail img, .news_detail video');
+        imgs.forEach(img => {
+          if (img.nextElementSibling && img.nextElementSibling.classList.contains('img-load-btn')) return;
+          const btn = document.createElement('button');
+          btn.className = 'img-load-btn';
+          btn.innerText = '加载图片';
+          btn.onclick = () => {
+            img.classList.add('force-show');
+            btn.style.display = 'none';
+          };
+          img.parentNode.insertBefore(btn, img.nextSibling);
+        });
+      }
+      initImages();
     </script>
     </body></html>`;
 };
@@ -689,6 +739,21 @@ const loadNgaPage = async () => {
           vscode.postMessage({ command: 'toggleShowImg', value: checked });
         });
       }
+      function initImages() {
+        const imgs = document.querySelectorAll('.news_detail img, .news_detail video');
+        imgs.forEach(img => {
+          if (img.nextElementSibling && img.nextElementSibling.classList.contains('img-load-btn')) return;
+          const btn = document.createElement('button');
+          btn.className = 'img-load-btn';
+          btn.innerText = '加载图片';
+          btn.onclick = () => {
+            img.classList.add('force-show');
+            btn.style.display = 'none';
+          };
+          img.parentNode.insertBefore(btn, img.nextSibling);
+        });
+      }
+      initImages();
     </script>
     </body></html>`;
 };
