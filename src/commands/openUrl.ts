@@ -48,20 +48,33 @@ const acquirePanel = (): vscode.WebviewPanel => {
     "touchfish.newsDetail",
     "新闻",
     vscode.ViewColumn.One,
-    { retainContextWhenHidden: false, enableScripts: false },
+    { retainContextWhenHidden: false, enableScripts: true },
   );
   panel.onDidDispose(() => (panel = null));
+  panel.webview.onDidReceiveMessage(handleCommonMessages);
   return panel;
 };
 
+const handleCommonMessages = (message: any) => {
+  if (message.command === "toggleShowImg") {
+    vscode.workspace
+      .getConfiguration("touchfish")
+      .update("showImg", message.value, true);
+  }
+};
+
 const BASE_CSS = `
-  .news_detail { width: 75%; margin-left: 12.5%; }
+  .news_detail { width: 75%; margin-left: 12.5%; padding-bottom: 60px; }
   * { color: var(--vscode-editor-foreground); font-family: 'Microsoft YaHei'; line-height: 1.8; }
   a { color: var(--vscode-textLink-foreground); }
   img,video { max-width: 100%; }
   pre,code { font-family: var(--vscode-editor-font-family, monospace); }
-  .open-article-btn { position: fixed; font-size: 14px; right: 20px; top: 20px; background-color: var(--vscode-button-background); max-width: 300px; box-sizing: border-box; display: flex; width: 160px; padding: 4px 8px; border-radius: 4px; text-align: center; cursor: pointer; justify-content: center; align-items: center; border: 1px solid var(--vscode-button-border,transparent); line-height: 16px; text-decoration: none; color: var(--vscode-button-foreground); z-index: 9999; }
-  .open-article-btn:hover { background-color: var(--vscode-button-hoverBackground); }
+  .bottom-toolbar { position: fixed; bottom: 15px; right: 15px; display: flex; gap: 8px; z-index: 9999; background: var(--vscode-editor-background); padding: 6px 10px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.3); align-items: center; border: 1px solid var(--vscode-panel-border); }
+  .toolbar-btn { background-color: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border,transparent); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; line-height: 1.2; }
+  .toolbar-btn:hover { background-color: var(--vscode-button-hoverBackground); }
+  .toolbar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .toolbar-label { color: var(--vscode-editor-foreground); font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
+  .hide-images img, .hide-images video { display: none !important; }
 `;
 
 const createWebviewHtml = (
@@ -72,20 +85,55 @@ const createWebviewHtml = (
   extraHead = "",
   showTitle = true,
 ) => {
-  const buttonHtml = originalUrl
-    ? `<a class="open-article-btn" href="${originalUrl}" >打开原文章</a>`
-    : "";
+  const showImg = vscode.workspace
+    .getConfiguration("touchfish")
+    .get<boolean>("showImg", true);
+
+  const toolbarHtml = `
+    <div class="bottom-toolbar">
+      <label class="toolbar-label">
+        <input type="checkbox" id="showImgCb" ${showImg ? "checked" : ""} />
+        显示图片
+      </label>
+      ${originalUrl ? `<a class="toolbar-btn" href="${originalUrl}">打开原文章</a>` : ""}
+    </div>
+  `;
+
   const titleHtml = showTitle
     ? `<h1 style="text-align:center" >${title}</h1>`
     : "";
   const safe = sanitizeHtml(content)
     .replace(/<img/g, '<img referrerpolicy="no-referrer"')
     .replace(/<video/g, '<video referrerpolicy="no-referrer"');
-  return `<!DOCTYPE html><html lang="zh-cn"><head><meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>${title}</title>
-    ${extraHead || ""}
-    <style>${BASE_CSS}${extraCss}</style></head><body>${titleHtml}${buttonHtml}<div class="news_detail">${safe}</div></body></html>`;
+
+  return `<!DOCTYPE html><html lang="zh-cn">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width,initial-scale=1" />
+      <title>${title}</title>
+      ${extraHead || ""}
+      <style>${BASE_CSS}${extraCss}</style>
+    </head>
+    <body class="${showImg ? "" : "hide-images"}">
+      ${titleHtml}
+      <div class="news_detail">${safe}</div>
+      ${toolbarHtml}
+      <script>
+        const vscode = acquireVsCodeApi();
+        const cb = document.getElementById('showImgCb');
+        if (cb) {
+          cb.addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            if (checked) {
+              document.body.classList.remove('hide-images');
+            } else {
+              document.body.classList.add('hide-images');
+            }
+            vscode.postMessage({ command: 'toggleShowImg', value: checked });
+          });
+        }
+      </script>
+    </body></html>`;
 };
 
 const openDetailView = async (
@@ -217,17 +265,26 @@ const loadV2exPage = async () => {
 
   const isLastPage = v2exState.page >= v2exState.totalPages;
 
+  const showImg = vscode.workspace
+    .getConfiguration("touchfish")
+    .get<boolean>("showImg", true);
+
   v2exPanel.webview.html = `<!DOCTYPE html><html lang="zh-cn"><head><meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>${v2exState.title}</title>
-    <style>${BASE_CSS}${extraCss}</style></head><body>
+    <style>${BASE_CSS}${extraCss}</style></head>
+    <body class="${showImg ? "" : "hide-images"}">
     <h1 style="text-align:center">${v2exState.title}</h1>
-    <a class="open-article-btn" href="${originalUrl}">打开原文章</a>
     <div class="news_detail">${safe}</div>
-    <div class="pagination">
-      <button class="page-btn" id="prevBtn" ${v2exState.page <= 1 ? "disabled" : ""}>上一页</button>
+    <div class="bottom-toolbar">
+      <label class="toolbar-label">
+        <input type="checkbox" id="showImgCb" ${showImg ? "checked" : ""} />
+        显示图片
+      </label>
+      <button class="toolbar-btn" id="prevBtn" ${v2exState.page <= 1 ? "disabled" : ""}>上一页</button>
       <span class="page-info">第 ${v2exState.page}${v2exState.totalPages > 1 ? "/" + v2exState.totalPages : ""} 页</span>
-      <button class="page-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+      <button class="toolbar-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+      <a class="toolbar-btn" href="${originalUrl}">打开原文章</a>
     </div>
     <script>
       const vscode = acquireVsCodeApi();
@@ -237,6 +294,18 @@ const loadV2exPage = async () => {
       document.getElementById('nextBtn').addEventListener('click', () => {
         vscode.postMessage({ command: 'nextPage' });
       });
+      const cb = document.getElementById('showImgCb');
+      if (cb) {
+        cb.addEventListener('change', (e) => {
+          const checked = e.target.checked;
+          if (checked) {
+            document.body.classList.remove('hide-images');
+          } else {
+            document.body.classList.add('hide-images');
+          }
+          vscode.postMessage({ command: 'toggleShowImg', value: checked });
+        });
+      }
     </script>
     </body></html>`;
 };
@@ -271,6 +340,7 @@ export const openV2exUrl = vscode.commands.registerCommand(
 
       // 只在创建时注册一次消息处理器
       v2exPanel.webview.onDidReceiveMessage(async (message) => {
+        handleCommonMessages(message);
         if (
           message.command === "nextPage" &&
           v2exState.page < v2exState.totalPages
@@ -378,16 +448,25 @@ const loadHupuPage = async () => {
 
   const isLastPage = hupuState.page >= hupuState.totalPages;
 
+  const showImg = vscode.workspace
+    .getConfiguration("touchfish")
+    .get<boolean>("showImg", true);
+
   hupuPanel.webview.html = `<!DOCTYPE html><html lang="zh-cn"><head><meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>${hupuState.title}</title>
-    <style>${BASE_CSS}${extraCss}</style></head><body>
-    <a class="open-article-btn" href="${originalUrl}">打开原文章</a>
+    <style>${BASE_CSS}${extraCss}</style></head>
+    <body class="${showImg ? "" : "hide-images"}">
     <div class="news_detail">${safe}</div>
-    <div class="pagination">
-      <button class="page-btn" id="prevBtn" ${hupuState.page <= 1 ? "disabled" : ""}>上一页</button>
+    <div class="bottom-toolbar">
+      <label class="toolbar-label">
+        <input type="checkbox" id="showImgCb" ${showImg ? "checked" : ""} />
+        显示图片
+      </label>
+      <button class="toolbar-btn" id="prevBtn" ${hupuState.page <= 1 ? "disabled" : ""}>上一页</button>
       <span class="page-info">第 ${hupuState.page}${hupuState.totalPages > 1 ? "/" + hupuState.totalPages : ""} 页</span>
-      <button class="page-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+      <button class="toolbar-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+      <a class="toolbar-btn" href="${originalUrl}">打开原文章</a>
     </div>
     <script>
       const vscode = acquireVsCodeApi();
@@ -397,6 +476,18 @@ const loadHupuPage = async () => {
       document.getElementById('nextBtn').addEventListener('click', () => {
         vscode.postMessage({ command: 'nextPage' });
       });
+      const cb = document.getElementById('showImgCb');
+      if (cb) {
+        cb.addEventListener('change', (e) => {
+          const checked = e.target.checked;
+          if (checked) {
+            document.body.classList.remove('hide-images');
+          } else {
+            document.body.classList.add('hide-images');
+          }
+          vscode.postMessage({ command: 'toggleShowImg', value: checked });
+        });
+      }
     </script>
     </body></html>`;
 };
@@ -439,6 +530,7 @@ export const openHupuUrl = vscode.commands.registerCommand(
 
       // 只在创建时注册一次消息处理器
       hupuPanel.webview.onDidReceiveMessage(async (message) => {
+        handleCommonMessages(message);
         if (
           message.command === "nextPage" &&
           hupuState.page < hupuState.totalPages
@@ -543,18 +635,27 @@ const loadNgaPage = async () => {
   const filterBtnText = isFiltering ? "查看全部" : "只看楼主";
   const filterBtnId = isFiltering ? "clearFilterBtn" : "filterAuthorBtn";
 
+  const showImg = vscode.workspace
+    .getConfiguration("touchfish")
+    .get<boolean>("showImg", true);
+
   ngaPanel.webview.html = `<!DOCTYPE html><html lang="zh-cn"><head><meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>${ngaState.title}</title>
-    <style>${BASE_CSS}${extraCss}</style></head><body>
+    <style>${BASE_CSS}${extraCss}</style></head>
+    <body class="${showImg ? "" : "hide-images"}">
     <h1 style="text-align:center">${ngaState.title}</h1>
-    <a class="open-article-btn" href="${originalUrl}">打开原文章</a>
     <div class="news_detail">${safe}</div>
-    <div class="pagination">
-      <button class="page-btn" id="${filterBtnId}">${filterBtnText}</button>
-      <button class="page-btn" id="prevBtn" ${ngaState.page <= 1 ? "disabled" : ""}>上一页</button>
+    <div class="bottom-toolbar">
+      <label class="toolbar-label">
+        <input type="checkbox" id="showImgCb" ${showImg ? "checked" : ""} />
+        显示图片
+      </label>
+      <button class="toolbar-btn" id="${filterBtnId}">${filterBtnText}</button>
+      <button class="toolbar-btn" id="prevBtn" ${ngaState.page <= 1 ? "disabled" : ""}>上一页</button>
       <span class="page-info">第 ${ngaState.page}/${totalPages} 页</span>
-      <button class="page-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+      <button class="toolbar-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
+      <a class="toolbar-btn" href="${originalUrl}">打开原文章</a>
     </div>
     <script>
       const vscode = acquireVsCodeApi();
@@ -574,6 +675,18 @@ const loadNgaPage = async () => {
       if (clearBtn) {
         clearBtn.addEventListener('click', () => {
           vscode.postMessage({ command: 'clearFilter' });
+        });
+      }
+      const cb = document.getElementById('showImgCb');
+      if (cb) {
+        cb.addEventListener('change', (e) => {
+          const checked = e.target.checked;
+          if (checked) {
+            document.body.classList.remove('hide-images');
+          } else {
+            document.body.classList.add('hide-images');
+          }
+          vscode.postMessage({ command: 'toggleShowImg', value: checked });
         });
       }
     </script>
@@ -618,6 +731,7 @@ export const openNgaUrl = vscode.commands.registerCommand(
 
       // 只在创建时注册一次消息处理器
       ngaPanel.webview.onDidReceiveMessage(async (message) => {
+        handleCommonMessages(message);
         if (
           message.command === "nextPage" &&
           ngaState.page < ngaState.totalPages
