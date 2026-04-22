@@ -15,9 +15,6 @@
 > [!Important]
 > 已经开源,欢迎Star 本项目: [https://github.com/ylw1997/touchFish](https://github.com/ylw1997/touchFish)
 
-> [!Important]
-> 记住这个插件：`TouchFish` - 让工作时间不再枯燥，摸鱼摸得理直气壮！
-
 ## 🔥open-vsx 地址
 
 **第三方市场可用**
