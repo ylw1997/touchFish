@@ -57,7 +57,7 @@ export const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({
             ) : (
               playlist.map((song, index) => (
                 <div
-                  key={song.mid + index}
+                  key={(song.eid || song.id || "ep") + "-" + index}
                   className={`playbar-playlist-item ${currentIndex === index ? "active" : ""}`}
                   onClick={() => playSong(song)}
                 >

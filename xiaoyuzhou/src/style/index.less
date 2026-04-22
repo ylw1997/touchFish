@@ -1078,16 +1078,17 @@ a {
   .backdrop-style();
   border-radius: 26px;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   z-index: 1100;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 
-  &.playbar-expanded, &.playbar-playlist-open {
+  &.playbar-expanded,
+  &.playbar-playlist-open {
     height: auto !important; // 由内容支撑高度
-    max-height: 500px;        // 封顶 500
+    max-height: 500px; // 封顶 500
     border-radius: 20px;
     backdrop-filter: saturate(180%) blur(25px);
   }
@@ -1514,8 +1515,8 @@ a {
   flex-direction: row; // 横向排版
   align-items: center;
   width: 100%;
-  padding: 16px;
-  gap: 16px;
+  padding: 12px;
+  gap: 12px;
   box-sizing: border-box;
   position: relative;
   -webkit-backdrop-filter: blur(24px); // 添加 webkit 前缀确保兼容性
@@ -1540,11 +1541,11 @@ a {
     gap: 16px;
 
     .lyric-cover-container {
-      flex: 0 0 140px;
+      flex: 0 0 90px;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 140px;
+      height: 90px;
 
       img {
         width: 100%;
@@ -1561,7 +1562,7 @@ a {
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       padding: 0;
       align-items: flex-start; // 左对齐
       scrollbar-width: none;
@@ -1605,9 +1606,7 @@ a {
         }
 
         &.active {
-          font-size: 16px;
           font-weight: 600;
-          text-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
           transform: scale(1.02);
           transform-origin: left center;
 

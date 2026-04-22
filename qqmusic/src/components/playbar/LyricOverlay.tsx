@@ -43,7 +43,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
             paddingBlock: 0,
           }}
           animate={{
-            height: 180,
+            height: 160,
             opacity: 1,
             marginBottom: 0,
             paddingBlock: 16,

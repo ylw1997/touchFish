@@ -5,6 +5,7 @@ import {
   getDiscoveryFeed,
   getEpisodeDetail,
   getEpisodeList,
+  getEpisodeTranscript,
   getInboxList,
   getPilotDiscoveryList,
   getPodcastDetail,
@@ -451,6 +452,21 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
           break;
         }
 
+        case "XIAOYUZHOU_GET_EPISODE_TRANSCRIPT": {
+          const { eid, mediaId } = payload || {};
+          const result = await getEpisodeTranscript(
+            eid,
+            mediaId,
+            this.authState.credential,
+          );
+          webviewView.webview.postMessage({
+            command: "XIAOYUZHOU_GET_EPISODE_TRANSCRIPT_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
         case "XIAOYUZHOU_UPDATE_SUBSCRIPTION": {
           const result = await updateSubscription(
             String(payload?.pid || ""),
@@ -467,12 +483,17 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
         }
 
         case "XIAOYUZHOU_UPDATE_PLAYING_STATUS": {
-          const { title, isPlaying } = payload || {};
+          const { title, lyric, isPlaying } = payload || {};
           this.isPlaying = Boolean(isPlaying);
+          
+          const config = workspace.getConfiguration("touchfish");
+          const showLyric = config.get<boolean>("xiaoyuzhouStatusBarShowLyric", true);
+          
           if (title) {
             MusicStatusBar.getInstance().update({
               module: "xiaoyuzhou",
-              title: title,
+              title: showLyric && lyric ? lyric : title,
+              artist: showLyric && lyric ? title : undefined,
               isPlaying: this.isPlaying,
             });
           } else {

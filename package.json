@@ -232,16 +232,26 @@
 				},
 				"touchfish.xiaoyuzhouAccessToken": {
 					"type": "string",
-					"description": "Xiaoyuzhou x-jike-access-token"
+					"description": "小宇宙 Access Token (x-jike-access-token)"
 				},
 				"touchfish.xiaoyuzhouRefreshToken": {
 					"type": "string",
-					"description": "Xiaoyuzhou x-jike-refresh-token"
+					"description": "小宇宙 Refresh Token (x-jike-refresh-token)"
 				},
 				"touchfish.xiaoyuzhouUserInfo": {
 					"type": "string",
 					"default": "",
-					"description": "Cached Xiaoyuzhou user info (JSON)"
+					"description": "缓存的小宇宙用户信息 (JSON)"
+				},
+				"touchfish.xiaoyuzhouDeviceId": {
+					"type": "string",
+					"default": "",
+					"description": "小宇宙设备 ID"
+				},
+				"touchfish.xiaoyuzhouStatusBarShowLyric": {
+					"type": "boolean",
+					"default": true,
+					"description": "是否在状态栏显示小宇宙播客字幕(关闭则显示标题名)"
 				},
 				"touchfish.enableWeibo": {
 					"type": "boolean",
@@ -587,12 +597,12 @@
 			},
 			{
 				"command": "touchfish.openXiaoyuzhou",
-				"title": "Open Xiaoyuzhou",
+				"title": "打开小宇宙",
 				"icon": "$(radio-tower)"
 			},
 			{
 				"command": "touchfish.setXiaoyuzhouToken",
-				"title": "Set Xiaoyuzhou Token",
+				"title": "设置小宇宙凭据",
 				"icon": "$(settings-gear)"
 			},
 			{

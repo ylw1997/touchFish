@@ -16,6 +16,7 @@ interface PlayerState {
 
   isPlaylistOpen: boolean;
   isShownotesOpen: boolean; // 原来的 isLyricOpen
+  isLyricOpen: boolean;
   playSource: string;
 
   setCurrentEpisode: (episode: any | null) => void;
@@ -30,6 +31,7 @@ interface PlayerState {
 
   togglePlaylistOpen: () => void;
   toggleShownotesOpen: () => void;
+  toggleLyricOpen: () => void;
 
   play: (episode: any) => void;
   pause: () => void;
@@ -69,6 +71,7 @@ export const usePlayerStore = create<PlayerState>()(
 
       isPlaylistOpen: false,
       isShownotesOpen: false,
+      isLyricOpen: false,
       playSource: "normal",
 
       setCurrentEpisode: (ep) => set({ currentEpisode: ep }),
@@ -83,6 +86,7 @@ export const usePlayerStore = create<PlayerState>()(
 
       togglePlaylistOpen: () => set((state) => ({ isPlaylistOpen: !state.isPlaylistOpen })),
       toggleShownotesOpen: () => set((state) => ({ isShownotesOpen: !state.isShownotesOpen })),
+      toggleLyricOpen: () => set((state) => ({ isLyricOpen: !state.isLyricOpen })),
       setPlaySource: (playSource) => set({ playSource }),
 
       play: (episode) => {

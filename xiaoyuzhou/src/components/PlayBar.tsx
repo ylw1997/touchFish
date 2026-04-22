@@ -4,6 +4,7 @@ import {
   PauseOutlined,
   PlayCircleFilled,
   UnorderedListOutlined,
+  FullscreenExitOutlined,
 } from "@ant-design/icons";
 import { Button, Space } from "antd";
 
@@ -13,6 +14,9 @@ import { getImageUrl, getPlayableUrl } from "../hooks/useXiaoyuzhou";
 import { ProgressBar } from "./playbar/ProgressBar";
 import { PlaylistDrawer } from "./playbar/PlaylistDrawer";
 import { ShownotesDrawer } from "./playbar/ShownotesDrawer";
+import { LyricOverlay } from "./playbar/LyricOverlay";
+import { useXiaoyuzhou } from "../hooks/useXiaoyuzhou";
+import { vscode } from "../utils/vscode";
 
 interface PlayBarProps {
   onOpenPodcast?: (podcast: any) => void;
@@ -41,6 +45,14 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
   );
   const clearPlaylist = usePlayerStore((state) => state.clearPlaylist);
   const play = usePlayerStore((state) => state.play);
+  const isLyricOpen = usePlayerStore((state) => state.isLyricOpen);
+  const toggleLyricOpen = usePlayerStore((state) => state.toggleLyricOpen);
+
+  const { getEpisodeTranscript } = useXiaoyuzhou();
+
+  const [lyrics, setLyrics] = React.useState<{ time: number; text: string }[]>([]);
+  const [currentLyric, setCurrentLyric] = React.useState<string>("");
+  const [activeIdx, setActiveIdx] = React.useState<number>(-1);
 
   const getAlbumCover = (episode: any): string => {
     return (
@@ -95,6 +107,113 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
     }
   }, [isPlaying, currentEpisode]);
 
+  // Fetch and parse transcript
+  useEffect(() => {
+    let active = true;
+    if (!currentEpisode) {
+      setLyrics([]);
+      setCurrentLyric("");
+      setActiveIdx(-1);
+      return;
+    }
+
+    const eid = currentEpisode.eid || currentEpisode.id;
+    const mediaId = currentEpisode.mediaKey;
+
+    if (eid && mediaId) {
+      getEpisodeTranscript(eid, mediaId).then((data) => {
+        if (!active) return;
+        try {
+          // Assume data is an array of transcript segments or has a transcripts property
+          const transcripts = Array.isArray(data) ? data : data?.data?.transcripts || data?.transcripts || data?.items || [];
+          if (Array.isArray(transcripts) && transcripts.length > 0) {
+            const parsed = transcripts.map((t: any) => {
+              let val = 0;
+              if (t.startTime !== undefined) val = parseFloat(t.startTime);
+              else if (t.start !== undefined) val = parseFloat(t.start);
+              else if (t.startMs !== undefined) val = Number(t.startMs) / 1000;
+              return {
+                time: isNaN(val) ? 0 : val,
+                text: String(t.text || t.content || ""),
+              };
+            });
+            setLyrics(parsed);
+          } else {
+            setLyrics([]);
+          }
+        } catch {
+          setLyrics([]);
+        }
+      });
+    } else {
+      setLyrics([]);
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [currentEpisode, getEpisodeTranscript]);
+
+  useEffect(() => {
+    const title = currentEpisode?.title || "";
+    vscode.postMessage({
+      command: "XIAOYUZHOU_UPDATE_PLAYING_STATUS",
+      payload: {
+        title: title,
+        lyric: currentLyric,
+        isPlaying: isPlaying,
+      },
+    });
+  }, [currentEpisode, currentLyric, isPlaying]);
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const audio = e.target as HTMLAudioElement;
+    if (lyrics.length === 0) return;
+    const currTime = audio.currentTime;
+    let idx = lyrics.length - 1;
+    while (idx >= 0 && lyrics[idx].time > currTime) {
+      idx--;
+    }
+    if (idx >= 0) {
+      const lineText = lyrics[idx].text;
+      setCurrentLyric((prev) => (prev !== lineText ? lineText : prev));
+      setActiveIdx((prev) => (prev !== idx ? idx : prev));
+    }
+  };
+
+  useEffect(() => {
+    let animationFrameId: number;
+    const findLyric = () => {
+      if (audioRef.current && lyrics.length > 0) {
+        const currTime = audioRef.current.currentTime;
+        let idx = lyrics.length - 1;
+        while (idx >= 0 && lyrics[idx].time > currTime) {
+          idx--;
+        }
+        if (idx >= 0) {
+          const currentLine = lyrics[idx];
+          const nextLine = lyrics[idx + 1];
+          const duration = nextLine ? nextLine.time - currentLine.time : 4;
+          let progress = ((currTime - currentLine.time) / duration) * 100;
+          if (progress > 100) progress = 100;
+
+          const lyricList = document.querySelector(".playbar-lyric-overlay");
+          if (lyricList) {
+            const targetEl = lyricList.querySelector(
+              `.lyric-line[data-index="${idx}"]`,
+            ) as HTMLElement;
+            if (targetEl) {
+              targetEl.style.setProperty("--lyric-progress-raw", `${progress}`);
+            }
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(findLyric);
+    };
+    animationFrameId = requestAnimationFrame(findLyric);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [lyrics]);
+
   return (
     <>
       <audio
@@ -102,10 +221,11 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
         src={getPlayableUrl(currentEpisode)}
         preload="metadata"
         onEnded={() => playNext()}
+        onTimeUpdate={handleTimeUpdate}
       />
 
       <div
-        className={`playbar ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${isPlaying ? "" : "paused"}`}
+        className={`playbar ${isLyricOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${isPlaying ? "" : "paused"}`}
       >
         <PlaylistDrawer
           isPlaylistOpen={isPlaylistOpen}
@@ -121,16 +241,43 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
         <div className="playbar-bottom">
           <ProgressBar audioRef={audioRef} />
 
-          <div className="playbar-video-wrapper">
+          <div
+            className={`playbar-video-wrapper ${isLyricOpen ? "expanded-mode" : ""}`}
+            style={{
+              cursor: "pointer",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onClick={() => {
+              if (!isLyricOpen && currentEpisode) toggleLyricOpen();
+            }}
+            title={!isLyricOpen ? "展开" : ""}
+          >
             {currentEpisode ? (
-              <img
-                className={`playbar-video ${isPlaying ? "playing" : ""}`}
-                src={getAlbumCover(currentEpisode)}
-                alt={currentEpisode.title}
-                referrerPolicy="no-referrer"
-                onClick={() => toggleShownotesOpen()}
-                style={{ cursor: "pointer" }}
-              />
+              isLyricOpen ? (
+                <Button
+                  color="default"
+                  shape="circle"
+                  variant="filled"
+                  icon={<FullscreenExitOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleLyricOpen();
+                  }}
+                  title="收起"
+                />
+              ) : (
+                <img
+                  className={`playbar-video ${isPlaying ? "playing" : ""}`}
+                  src={getAlbumCover(currentEpisode)}
+                  alt={currentEpisode.title}
+                  referrerPolicy="no-referrer"
+                  style={{ cursor: "pointer" }}
+                  title="展开字幕"
+                />
+              )
             ) : (
               <div className="playbar-video-loading">
                 <PlayCircleFilled style={{ fontSize: 24, opacity: 0.5 }} />
@@ -195,6 +342,15 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
             </Button>
           </Space>
         </div>
+
+        <LyricOverlay
+          isLyricOpen={isLyricOpen}
+          currentEpisode={currentEpisode}
+          lyrics={lyrics}
+          currentLyric={currentLyric}
+          activeIdx={activeIdx}
+          getAlbumCover={getAlbumCover}
+        />
       </div>
 
       <ShownotesDrawer

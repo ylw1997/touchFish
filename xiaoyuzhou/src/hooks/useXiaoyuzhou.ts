@@ -246,6 +246,26 @@ export function useXiaoyuzhou() {
     [request],
   );
 
+  const getEpisodeTranscript = useCallback(
+    async (eid: string, mediaId: string) => {
+      try {
+        const result = await request<any>("XIAOYUZHOU_GET_EPISODE_TRANSCRIPT", {
+          eid,
+          mediaId,
+        });
+
+        if (result.code === 0 && result.data) {
+          return result.data;
+        }
+
+        return null;
+      } catch {
+        return null;
+      }
+    },
+    [request],
+  );
+
   return {
     loading,
     getDiscovery,
@@ -257,5 +277,6 @@ export function useXiaoyuzhou() {
     getPodcastDetail,
     getSubscriptions,
     updateSubscription,
+    getEpisodeTranscript,
   };
 }

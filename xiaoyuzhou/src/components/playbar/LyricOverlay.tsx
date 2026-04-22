@@ -1,19 +1,18 @@
 import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Song } from "../../types/qqmusic";
 
 interface LyricOverlayProps {
   isLyricOpen: boolean;
-  currentSong: Song | null;
+  currentEpisode: any;
   lyrics: { time: number; text: string }[];
   currentLyric: string;
   activeIdx: number;
-  getAlbumCover: (song: Song) => string;
+  getAlbumCover: (episode: any) => string;
 }
 
 export const LyricOverlay: React.FC<LyricOverlayProps> = ({
   isLyricOpen,
-  currentSong,
+  currentEpisode,
   lyrics,
   activeIdx,
   getAlbumCover,
@@ -33,7 +32,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
 
   return (
     <AnimatePresence>
-      {isLyricOpen && currentSong && (
+      {isLyricOpen && currentEpisode && (
         <motion.div
           className="playbar-lyric-overlay"
           initial={{
@@ -43,7 +42,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
             paddingBlock: 0,
           }}
           animate={{
-            height: 180,
+            height: 150,
             opacity: 1,
             marginBottom: 0,
             paddingBlock: 16,
@@ -54,8 +53,8 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
           <div className="lyric-overlay-content">
             <div className="lyric-cover-container">
               <img
-                src={getAlbumCover(currentSong)}
-                alt={currentSong.name}
+                src={getAlbumCover(currentEpisode)}
+                alt={currentEpisode.title}
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -88,7 +87,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
                   </div>
                 ))
               ) : (
-                <div className="lyric-line active">暂无歌词 / 纯音乐</div>
+                <div className="lyric-line active">暂无字幕 / 加载中...</div>
               )}
             </div>
           </div>

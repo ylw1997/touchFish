@@ -586,6 +586,46 @@ export async function getEpisodeDetail(
   }, credential);
 }
 
+export async function getEpisodeTranscript(
+  eid: string,
+  mediaId: string,
+  credential?: XiaoyuzhouCredential | null,
+): Promise<XiaoyuzhouApiResult<any>> {
+  const deviceId = getDeviceId(credential?.refreshToken || credential?.accessToken);
+  return withAutoRefresh(async (auth) => {
+    const response = await xiaoyuzhouHttp.post(
+      `${APP_BASE_URL}/v1/episode-transcript/get`,
+      {
+        eid,
+        mediaId,
+      },
+      {
+        headers: buildXiaoyuzhouHeaders({
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
+          contentType: "application/json",
+          localTime: getNowIsoString(),
+          deviceId,
+        }),
+        timeout: 15000,
+      },
+    );
+
+    if (response.data?.data?.transcriptUrl) {
+      try {
+        const cdnRes = await axios.get(response.data.data.transcriptUrl, {
+          headers: { 'User-Agent': 'Xiaoyuzhou/2.99.1(android 28)' }
+        });
+        return { code: 0, data: { transcripts: cdnRes.data } };
+      } catch (e) {
+        console.error("Failed to fetch transcript from CDN", e);
+      }
+    }
+
+    return response.data;
+  }, credential);
+}
+
 export async function getSubscriptions(
   loadMoreKey?: { subscribedAt: string; id: string } | null,
   credential?: XiaoyuzhouCredential | null,

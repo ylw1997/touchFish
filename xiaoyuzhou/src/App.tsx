@@ -46,7 +46,7 @@ import { useRequest } from "./hooks/useRequest";
 import { useFontSizeStore } from "./store/fontSize";
 import { usePlayerStore } from "./store/player";
 import { useUserStore } from "./store/user";
-import { vscode } from "./utils/vscode";
+
 
 
 import "./style/index.less";
@@ -56,7 +56,7 @@ function App() {
   const { fontSize, increase, decrease } = useFontSizeStore();
   const { isLoggedIn, userInfo, logout, login } = useUserStore();
   const currentEpisode = usePlayerStore((state) => state.currentEpisode);
-  const isPlaying = usePlayerStore((state) => state.isPlaying);
+
   const playEpisode = usePlayerStore((state) => state.play);
   const addToPlaylist = usePlayerStore((state) => state.addToPlaylist);
   const {
@@ -139,16 +139,7 @@ function App() {
     return () => window.removeEventListener("message", handleCommand);
   }, []);
 
-  // 当播放状态改变时，通知扩展更新状态栏
-  useEffect(() => {
-    const title = currentEpisode?.title || "";
-    const isPlaying = usePlayerStore.getState().isPlaying;
-    
-    vscode.postMessage({
-      command: "XIAOYUZHOU_UPDATE_PLAYING_STATUS",
-      payload: { title, isPlaying },
-    });
-  }, [currentEpisode, isPlaying]);
+
 
   const loadDiscovery = useCallback(async () => {
     const [inboxData, discoveryData, pilotData] = await Promise.all([

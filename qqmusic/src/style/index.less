@@ -1404,8 +1404,8 @@ a {
   flex-direction: row; // 横向排版
   align-items: center;
   width: 100%;
-  padding: 16px;
-  gap: 16px;
+  padding: 12px;
+  gap: 12px;
   box-sizing: border-box;
   position: relative;
   -webkit-backdrop-filter: blur(24px); // 添加 webkit 前缀确保兼容性
@@ -1430,11 +1430,11 @@ a {
     gap: 16px;
 
     .lyric-cover-container {
-      flex: 0 0 140px;
+      flex: 0 0 90px;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 140px;
+      height: 90px;
 
       img {
         width: 100%;
@@ -1451,7 +1451,7 @@ a {
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       padding: 0;
       align-items: flex-start; // 左对齐
       scrollbar-width: none;
@@ -1477,10 +1477,11 @@ a {
       .lyric-line {
         color: rgba(255, 255, 255, 0.4);
         font-size: 13px;
-        transition: font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                    color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                    text-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition:
+          font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          text-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         text-align: left;
         line-height: 1.4;
         word-break: break-word;
@@ -1494,16 +1495,19 @@ a {
         }
 
         &.active {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 600;
           text-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
           transform: scale(1.02);
           transform-origin: left center;
-          
+
           .lyric-char {
             // 计算当前字符的相对进度，乘 1% 是给 calc 结果带上单位
-            --local-progress: calc((var(--lyric-progress-raw, 0) - var(--char-start)) / var(--char-width) * 100%);
-            
+            --local-progress: calc(
+              (var(--lyric-progress-raw, 0) - var(--char-start)) /
+                var(--char-width) * 100%
+            );
+
             // 卡拉OK 渐变填充效果
             background: linear-gradient(
               to right,
