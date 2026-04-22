@@ -289,6 +289,8 @@ const PlayBar: React.FC = () => {
         playNext();
       } else if (message?.command === "QQMUSIC_PLAY_PAUSE_COMMAND") {
         togglePlay();
+      } else if (message?.command === "QQMUSIC_PAUSE_COMMAND") {
+        usePlayerStore.getState().pause();
       }
     };
 

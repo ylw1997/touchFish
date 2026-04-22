@@ -1,14 +1,8 @@
 /**
  * QQ音乐 Webview Provider
  */
-import {
-  ExtensionContext,
-  StatusBarAlignment,
-  StatusBarItem,
-  WebviewView,
-  window,
-  workspace,
-} from "vscode";
+import { ExtensionContext, WebviewView, workspace } from "vscode";
+import { MusicStatusBar } from "../core/musicStatusBar";
 import {
   addSongsToPlaylist,
   checkLoginStatus,
@@ -42,9 +36,6 @@ type QQMusicCredential = { musicid: string; musickey: string };
 export class QQMusicProvider extends BaseWebviewProvider {
   private credential: QQMusicCredential | null = null;
   private webviewView: WebviewView | null = null;
-  private statusBarItem: StatusBarItem | undefined;
-  private nextSongButton: StatusBarItem | undefined;
-  private playPauseButton: StatusBarItem | undefined;
   private currentSongName = "";
   private currentLyric = "";
   private isPlaying = false;
@@ -61,7 +52,6 @@ export class QQMusicProvider extends BaseWebviewProvider {
       saveCommand: "QQMUSIC_SAVE_SCROLL_POSITION",
     });
 
-    this.initStatusBar();
     this.loadConfig();
 
     workspace.onDidChangeConfiguration((e) => {
@@ -173,44 +163,14 @@ export class QQMusicProvider extends BaseWebviewProvider {
     );
   }
 
-  private initStatusBar() {
-    this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, 100);
-    this.statusBarItem.text = "$(play-circle) QQ音乐";
-    this.statusBarItem.tooltip = "点击打开 QQ音乐";
-    this.statusBarItem.command = "touchfish.openQQMusic";
-    this.statusBarItem.show();
-
-    this.playPauseButton = window.createStatusBarItem(StatusBarAlignment.Left, 99);
-    this.playPauseButton.text = "$(debug-start)";
-    this.playPauseButton.tooltip = "播放/暂停";
-    this.playPauseButton.command = "touchfish.qqmusic.playPause";
-    this.playPauseButton.hide();
-
-    this.nextSongButton = window.createStatusBarItem(StatusBarAlignment.Left, 98);
-    this.nextSongButton.text = "$(chevron-right)";
-    this.nextSongButton.tooltip = "下一首";
-    this.nextSongButton.command = "touchfish.qqmusic.nextSong";
-    this.nextSongButton.hide();
-  }
-
   private updateStatusBar() {
-    if (!this.statusBarItem) return;
-
     if (!this.showStatusBarLyric) {
-      this.statusBarItem.hide();
-      this.playPauseButton?.hide();
-      this.nextSongButton?.hide();
+      MusicStatusBar.getInstance().hide();
       return;
     }
 
-    this.statusBarItem.show();
-
     if (!this.currentSongName) {
-      this.statusBarItem.text = "$(music) QQ音乐";
-      this.statusBarItem.tooltip = "点击打开 QQ音乐";
-      this.statusBarItem.command = "touchfish.openQQMusic";
-      this.playPauseButton?.hide();
-      this.nextSongButton?.hide();
+      MusicStatusBar.getInstance().hide();
       return;
     }
 
@@ -219,20 +179,12 @@ export class QQMusicProvider extends BaseWebviewProvider {
         ? this.currentLyric.trim()
         : this.currentSongName;
 
-    this.statusBarItem.text = `$(music) ${content}`;
-    this.statusBarItem.tooltip = `${this.currentSongName}${
-      this.currentLyric ? `\n歌词: ${this.currentLyric}` : ""
-    }\n\n点击: 打开QQ音乐面板`;
-    this.statusBarItem.command = "touchfish.openQQMusic";
-
-    if (this.playPauseButton) {
-      this.playPauseButton.text = this.isPlaying
-        ? "$(debug-pause)"
-        : "$(debug-start)";
-      this.playPauseButton.tooltip = this.isPlaying ? "暂停" : "播放";
-      this.playPauseButton.show();
-    }
-    this.nextSongButton?.show();
+    MusicStatusBar.getInstance().update({
+      module: "qqmusic",
+      title: content,
+      artist: this.statusBarShowLyric ? this.currentSongName : undefined,
+      isPlaying: this.isPlaying,
+    });
   }
 
   public sendNextSongCommand() {
@@ -245,6 +197,13 @@ export class QQMusicProvider extends BaseWebviewProvider {
   public sendPlayPauseCommand() {
     this.webviewView?.webview.postMessage({
       command: "QQMUSIC_PLAY_PAUSE_COMMAND",
+      payload: true,
+    });
+  }
+
+  public pause() {
+    this.webviewView?.webview.postMessage({
+      command: "QQMUSIC_PAUSE_COMMAND",
       payload: true,
     });
   }
@@ -379,7 +338,8 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
         case "QQMUSIC_GET_LOGIN_QR": {
           const { type } = payload || {};
-          const result = type === "qq" ? await getQQLoginQR() : await getWXLoginQR();
+          const result =
+            type === "qq" ? await getQQLoginQR() : await getWXLoginQR();
           webviewView.webview.postMessage({
             command: "QQMUSIC_GET_LOGIN_QR_RESULT",
             payload: result,

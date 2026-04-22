@@ -57,6 +57,7 @@ import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
 import { ReadState } from "./core/readState";
+import { MusicStatusBar } from "./core/musicStatusBar";
 
 type LazyTreeProviderInstance = vscode.TreeDataProvider<vscode.TreeItem> & {
   getData(tabOverride?: string): Promise<void>;
@@ -313,6 +314,16 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(setXTokenCommand());
 
   context.subscriptions.push(
+    MusicStatusBar.getInstance().onPlaybackInterrupt((newModule) => {
+      if (newModule === "qqmusic") {
+        xiaoyuzhouProvider.getInstance()["pause"]?.();
+      } else if (newModule === "xiaoyuzhou") {
+        qqmusicProvider.getInstance()["pause"]?.();
+      }
+    }),
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.openQQMusic", async () => {
       await vscode.commands.executeCommand("qqmusic.focus");
     }),
@@ -320,6 +331,39 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.openXiaoyuzhou", async () => {
       await vscode.commands.executeCommand("xiaoyuzhou.focus");
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.music.openActive", async () => {
+      const activeModule = MusicStatusBar.getInstance().getActiveModule();
+      if (activeModule === "qqmusic") {
+        await vscode.commands.executeCommand("qqmusic.focus");
+      } else if (activeModule === "xiaoyuzhou") {
+        await vscode.commands.executeCommand("xiaoyuzhou.focus");
+      }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.music.playPause", async () => {
+      const activeModule = MusicStatusBar.getInstance().getActiveModule();
+      if (activeModule === "qqmusic") {
+        qqmusicProvider.getInstance()["sendPlayPauseCommand"]?.();
+      } else if (activeModule === "xiaoyuzhou") {
+        xiaoyuzhouProvider.getInstance()["sendPlayPauseCommand"]?.();
+      }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.music.next", async () => {
+      const activeModule = MusicStatusBar.getInstance().getActiveModule();
+      if (activeModule === "qqmusic") {
+        qqmusicProvider.getInstance()["sendNextSongCommand"]?.();
+      } else if (activeModule === "xiaoyuzhou") {
+        xiaoyuzhouProvider.getInstance()["sendNextEpisodeCommand"]?.();
+      }
     }),
   );
 

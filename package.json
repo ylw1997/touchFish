@@ -596,6 +596,31 @@
 				"icon": "$(settings-gear)"
 			},
 			{
+				"command": "touchfish.music.openActive",
+				"title": "打开当前播放器",
+				"icon": "$(play-circle)"
+			},
+			{
+				"command": "touchfish.music.playPause",
+				"title": "播放/暂停",
+				"icon": "$(play)"
+			},
+			{
+				"command": "touchfish.music.next",
+				"title": "下一首/集",
+				"icon": "$(chevron-right)"
+			},
+			{
+				"command": "touchfish.xiaoyuzhou.playPause",
+				"title": "播放/暂停",
+				"icon": "$(play)"
+			},
+			{
+				"command": "touchfish.xiaoyuzhou.nextEpisode",
+				"title": "下一集",
+				"icon": "$(chevron-right)"
+			},
+			{
 				"command": "touchfish.setXToken",
 				"title": "设置X凭据",
 				"icon": "$(settings-gear)"
@@ -764,6 +789,8 @@
 		"canvas": "^3.2.0",
 		"cheerio": "1.1.0",
 		"crypto-js": "^4.2.0",
+		"iconv-lite": "^0.7.2",
+		"jsdom": "^29.0.2",
 		"utf-8-validate": "^6.0.5",
 		"x-client-transaction-id": "^0.2.0"
 	},

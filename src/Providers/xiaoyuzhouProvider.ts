@@ -1,4 +1,5 @@
 import { ExtensionContext, WebviewView, workspace } from "vscode";
+import { MusicStatusBar } from "../core/musicStatusBar";
 import {
   getGlobalCredential,
   getDiscoveryFeed,
@@ -13,6 +14,7 @@ import {
   searchPodcasts,
   sendSmsCode,
   setGlobalCredential,
+  onTokenRefreshed,
   updateSubscription,
   type XiaoyuzhouCredential,
   type XiaoyuzhouUserInfo,
@@ -31,6 +33,7 @@ type SavedAuthState = {
 export class XiaoyuzhouProvider extends BaseWebviewProvider {
   private authState: SavedAuthState = { credential: null, userInfo: null, deviceId: null };
   private webviewView: WebviewView | null = null;
+  private isPlaying = false;
 
   constructor(context: ExtensionContext) {
     super(context, {
@@ -54,6 +57,10 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
         this.syncAuthFromConfig();
         void this.notifyAuthState();
       }
+    });
+
+    onTokenRefreshed((cred) => {
+      void this.saveAuthState(cred, this.authState.userInfo);
     });
   }
 
@@ -193,6 +200,27 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
         userInfo: this.authState.userInfo,
       },
     } as CommandsType<any>);
+  }
+
+  public sendNextEpisodeCommand() {
+    this.webviewView?.webview.postMessage({
+      command: "XIAOYUZHOU_PLAY_NEXT_COMMAND",
+      payload: true,
+    });
+  }
+
+  public sendPlayPauseCommand() {
+    this.webviewView?.webview.postMessage({
+      command: "XIAOYUZHOU_PLAY_PAUSE_COMMAND",
+      payload: true,
+    });
+  }
+
+  public pause() {
+    this.webviewView?.webview.postMessage({
+      command: "XIAOYUZHOU_PAUSE_COMMAND",
+      payload: true,
+    });
   }
 
   protected async handleCustomMessage(
@@ -435,6 +463,21 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
             payload: result,
             uuid,
           } as CommandsType<any>);
+          break;
+        }
+
+        case "XIAOYUZHOU_UPDATE_PLAYING_STATUS": {
+          const { title, isPlaying } = payload || {};
+          this.isPlaying = Boolean(isPlaying);
+          if (title) {
+            MusicStatusBar.getInstance().update({
+              module: "xiaoyuzhou",
+              title: title,
+              isPlaying: this.isPlaying,
+            });
+          } else {
+            MusicStatusBar.getInstance().hide();
+          }
           break;
         }
 

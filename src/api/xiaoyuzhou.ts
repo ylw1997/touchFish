@@ -41,6 +41,13 @@ export function getGlobalCredential(): XiaoyuzhouCredential | null {
   return globalCredential;
 }
 
+export type TokenRefreshedHandler = (credential: XiaoyuzhouCredential) => void;
+let tokenRefreshedHandler: TokenRefreshedHandler | null = null;
+
+export function onTokenRefreshed(handler: TokenRefreshedHandler) {
+  tokenRefreshedHandler = handler;
+}
+
 function getCredential(credential?: XiaoyuzhouCredential | null) {
   return credential ?? globalCredential;
 }
@@ -132,6 +139,9 @@ async function doRefreshToken(
         refreshToken: newAuth.refreshToken,
       };
       setGlobalCredential(newCredential);
+      if (tokenRefreshedHandler) {
+        tokenRefreshedHandler(newCredential);
+      }
       console.log("[xiaoyuzhou] Token refreshed successfully");
       return newCredential;
     }

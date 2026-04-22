@@ -4,6 +4,7 @@ import {
   PlusOutlined,
   PlayCircleOutlined,
 } from "@ant-design/icons";
+import dayjs from "dayjs";
 import { getImageUrl } from "../hooks/useXiaoyuzhou";
 
 interface SongCardProps {
@@ -91,6 +92,12 @@ const SongCard: React.FC<SongCardProps> = ({
               {getSingerName()}
             </span>
             <span style={{ margin: "0 4px", opacity: 0.5 }}>-</span>
+            {song.pubDate && (
+              <>
+                <span className="song-pubdate">{dayjs(song.pubDate).fromNow()}</span>
+                <span style={{ margin: "0 4px", opacity: 0.5 }}>-</span>
+              </>
+            )}
             <span className="song-duration">{formatDuration(song.duration)}</span>
           </div>
         </div>
