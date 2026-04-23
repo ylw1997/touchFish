@@ -342,7 +342,7 @@ const PlayBar: React.FC = () => {
         />
 
         <div className="playbar-bottom">
-          <ProgressBar audioRef={audioRef} />
+          <ProgressBar audioRef={audioRef} variant="background" />
 
           <div
             className={`playbar-video-wrapper ${isLyricOpen ? "expanded-mode" : ""}`}
@@ -494,6 +494,7 @@ const PlayBar: React.FC = () => {
           currentLyric={currentLyric}
           activeIdx={activeIdx}
           getAlbumCover={getAlbumCover}
+          audioRef={audioRef}
         />
       </div>
     </>

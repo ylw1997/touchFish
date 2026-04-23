@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ProgressBar } from "./ProgressBar";
 
 interface LyricOverlayProps {
   isLyricOpen: boolean;
@@ -8,6 +9,7 @@ interface LyricOverlayProps {
   currentLyric: string;
   activeIdx: number;
   getAlbumCover: (episode: any) => string;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
 }
 
 export const LyricOverlay: React.FC<LyricOverlayProps> = ({
@@ -16,6 +18,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
   lyrics,
   activeIdx,
   getAlbumCover,
+  audioRef,
 }) => {
   const lyricContainerRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +45,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
             paddingBlock: 0,
           }}
           animate={{
-            height: 150,
+            height: 180,
             opacity: 1,
             marginBottom: 0,
             paddingBlock: 16,
@@ -91,6 +94,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
               )}
             </div>
           </div>
+          <ProgressBar audioRef={audioRef} variant="expanded" />
         </motion.div>
       )}
     </AnimatePresence>
