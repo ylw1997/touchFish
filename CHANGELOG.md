@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [14.17.0](https://github.com/ylw1997/touchFish/compare/v14.16.0...v14.17.0) (2026-04-23)
+
+
+### ✨ Features | 新功能
+
+* qqmusic和小宇宙增加进度条功能 ([e744886](https://github.com/ylw1997/touchFish/commit/e744886097f4c239a6b13f1962d94954b9ae5d51))
+
 ## [14.16.0](https://github.com/ylw1997/touchFish/compare/v14.15.0...v14.16.0) (2026-04-22)
 
 
