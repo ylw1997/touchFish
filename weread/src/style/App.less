@@ -1,54 +1,100 @@
-.weread-app {
-  padding: 12px;
-  background-color: var(--vscode-sideBar-background);
-  min-height: 100vh;
-  color: var(--vscode-foreground);
-  transition: background-color 0.3s;
+* {
+  font-family: var(--vscode-font-family), "Microsoft YaHei", sans-serif;
+}
 
-  &.reader {
-    padding: 0;
-    background-color: #f2e9d2; // 强制米黄护眼，也可以根据 data-theme 切换
-    color: #333;
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--vscode-editor-background);
+}
+
+.weread-app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-size: var(--app-font-size);
+  transition: all 0.3s ease;
+
+  // 自定义滚动条
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-background);
+    border-radius: 5px;
+    &:hover {
+      background: var(--vscode-scrollbarSlider-hoverBackground);
+    }
   }
 
   .header {
-    margin-bottom: 20px;
-    padding: 0 4px;
+    padding: 16px 20px;
+    background: color-mix(
+      in srgb,
+      var(--vscode-editor-background) 80%,
+      transparent
+    );
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--vscode-chat-requestBorder);
+    z-index: 10;
+
     h1 {
-      font-size: 20px;
+      font-size: calc(var(--app-font-size) + 6px);
       font-weight: 600;
-      color: var(--vscode-sideBarTitle-foreground);
       margin: 0;
+      color: var(--vscode-foreground);
     }
   }
 
   .loading-container {
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 200px;
+  }
+
+  .shelf-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
   }
 
   .shelf-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px 12px;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 24px 16px;
   }
 
   .book-item {
     display: flex;
     flex-direction: column;
     cursor: pointer;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      .book-cover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      }
+    }
 
     .book-cover {
-      position: relative;
       width: 100%;
       aspect-ratio: 3 / 4.2;
       background-color: var(--vscode-widget-border);
-      border-radius: 4px;
+      border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+
       img {
         width: 100%;
         height: 100%;
@@ -57,14 +103,14 @@
     }
 
     .book-info {
-      margin-top: 8px;
+      margin-top: 10px;
       padding: 0 2px;
-      
+
       .book-title {
-        font-size: 13px;
-        line-height: 1.4;
+        font-size: var(--app-font-size);
+        line-height: 1.5;
         color: var(--vscode-foreground);
-        font-weight: 400;
+        font-weight: 500;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -75,26 +121,35 @@
   }
 
   .reader-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    background-color: var(--vscode-editor-background);
+    z-index: 20;
 
     .reader-header {
-      position: sticky;
-      top: 0;
-      background: rgba(242, 233, 210, 0.9);
-      backdrop-filter: blur(10px);
-      padding: 8px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      z-index: 10;
-      color: #333;
+      background: color-mix(
+        in srgb,
+        var(--vscode-editor-background) 90%,
+        transparent
+      );
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--vscode-chat-requestBorder);
+      height: 50px;
+      flex-shrink: 0;
 
       .reader-title {
-        margin-left: 8px;
-        font-size: 14px;
-        font-weight: 500;
+        margin-left: 12px;
+        font-size: var(--app-font-size);
+        font-weight: 600;
+        color: var(--vscode-foreground);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -102,45 +157,69 @@
     }
 
     .reader-content {
-      padding: 20px;
       flex: 1;
       overflow-y: auto;
-      line-height: 1.8;
-      font-size: 17px;
-      color: #2c2c2c;
+      padding: 30px 24px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
 
       .xhtml-content {
+        line-height: 1.8;
+        font-size: calc(var(--app-font-size) + 2px);
+        color: var(--vscode-editor-foreground);
+
         p {
-          margin: 1.2em 0;
+          margin: 1.5em 0;
           text-align: justify;
+          font-size: calc(var(--app-font-size) + 1px);
         }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+          color: var(--vscode-foreground);
+          margin: 1.5em 0 1em;
+          line-height: 1.3;
+        }
+
         img {
           max-width: 100%;
           height: auto;
           display: block;
-          margin: 10px auto;
-          border-radius: 4px;
+          margin: 20px auto;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
       }
     }
 
     .reader-footer {
+      padding: 40px 0 80px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 40px 0 60px;
       gap: 16px;
+      justify-content: center;
 
       button {
-        flex: 1;
+        min-width: 120px;
         height: 40px;
         border-radius: 20px;
-        background: rgba(0, 0, 0, 0.05);
-        border: none;
-        color: #555;
-        
+        border: 1px solid var(--vscode-button-border);
+        background: var(--vscode-button-secondaryBackground);
+        color: var(--vscode-button-secondaryForeground);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          background: var(--vscode-button-secondaryHoverBackground);
+        }
+
         &:disabled {
           opacity: 0.3;
+          cursor: not-allowed;
         }
       }
     }

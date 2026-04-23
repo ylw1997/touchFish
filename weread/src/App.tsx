@@ -155,24 +155,26 @@ const App: React.FC = () => {
             <h1>书架</h1>
           </div>
           
-          {loading ? (
-            <div className="loading-container"><Spin size="large" /></div>
-          ) : books.length > 0 ? (
-            <div className="shelf-grid">
-              {books.map((book: Book) => (
-                <div key={book.bookId} className="book-item" onClick={() => openBook(book)}>
-                  <div className="book-cover">
-                    <img src={book.cover} alt={book.title} />
+          <div className="shelf-content">
+            {loading ? (
+              <div className="loading-container"><Spin size="large" /></div>
+            ) : books.length > 0 ? (
+              <div className="shelf-grid">
+                {books.map((book: Book) => (
+                  <div key={book.bookId} className="book-item" onClick={() => openBook(book)}>
+                    <div className="book-cover">
+                      <img src={book.cover} alt={book.title} />
+                    </div>
+                    <div className="book-info">
+                      <span className="book-title">{book.title}</span>
+                    </div>
                   </div>
-                  <div className="book-info">
-                    <span className="book-title">{book.title}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Empty description="书架空空如也" />
-          )}
+                ))}
+              </div>
+            ) : (
+              <Empty description="书架空空如也" />
+            )}
+          </div>
         </>
       ) : (
         <div className="reader-view">
