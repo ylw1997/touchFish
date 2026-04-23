@@ -54,7 +54,7 @@ const extensionConfig = {
         ],
       },
       {
-        test: /(zhihu|xhs)\.raw\.js$/,
+        test: /(zhihu|xhs|weread)\.raw\.js$/,
         type: "asset/source",
       },
     ],

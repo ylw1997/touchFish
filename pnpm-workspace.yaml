@@ -1,4 +1,4 @@
-packages:
+﻿packages:
   - "weibo"
   - "zhihu"
   - "xhs"
@@ -6,3 +6,4 @@ packages:
   - "qqmusic"
   - "xiaoyuzhou"
   - "x"
+  - "weread"

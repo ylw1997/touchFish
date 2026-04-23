@@ -325,6 +325,15 @@
 				"touchfish.xAuthorization": {
 					"type": "string",
 					"description": "X Authorization"
+				},
+				"touchfish.enableWeread": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用微信读书模块"
+				},
+				"touchfish.wereadCookie": {
+					"type": "string",
+					"description": "微信读书 Cookie"
 				}
 			}
 		},
@@ -376,6 +385,12 @@
 					"title": "TouchFish-X",
 					"icon": "assets/x.svg",
 					"when": "config.touchfish.enableX"
+				},
+				{
+					"id": "weread",
+					"title": "TouchFish-Weread",
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableWeread"
 				}
 			]
 		},
@@ -485,6 +500,15 @@
 					"name": "X",
 					"id": "x",
 					"when": "config.touchfish.enableX"
+				}
+			],
+			"weread": [
+				{
+					"icon": "assets/training.svg",
+					"type": "webview",
+					"name": "微信读书",
+					"id": "weread",
+					"when": "config.touchfish.enableWeread"
 				}
 			]
 		},
@@ -634,6 +658,11 @@
 				"command": "touchfish.setXToken",
 				"title": "设置X凭据",
 				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "touchfish.setWereadCookie",
+				"title": "设置微信读书Cookie",
+				"icon": "$(settings-gear)"
 			}
 		],
 		"keybindings": [
@@ -744,6 +773,11 @@
 					"command": "touchfish.setXToken",
 					"when": "view == x",
 					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setWereadCookie",
+					"when": "view == weread",
+					"group": "navigation"
 				}
 			]
 		}
@@ -762,11 +796,11 @@
 		"changelog": "standard-version",
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter xiaoyuzhou build && pnpm --filter x build",
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter xiaoyuzhou build && pnpm --filter x build && pnpm --filter weread build",
 		"xhs:test": "node ./tools/xhs/test-xhs.js",
 		"xhs:test:live": "node ./tools/xhs/test-xhs.js",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
-		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,XIAOYUZHOU -c magenta,cyan,yellow,blue,green,red,white \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\"",
+		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,XIAOYUZHOU,WEREAD -c magenta,cyan,yellow,blue,green,red,white,blue \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\" \"pnpm --filter weread dev\"",
 		"build-xhs": "pnpm --filter xhs build",
 		"update-x-ids": "node tools/update_x_ids.js"
 	},
@@ -800,7 +834,6 @@
 		"cheerio": "1.1.0",
 		"crypto-js": "^4.2.0",
 		"iconv-lite": "^0.7.2",
-		"jsdom": "^29.0.2",
 		"utf-8-validate": "^6.0.5",
 		"x-client-transaction-id": "^0.2.0"
 	},

@@ -125,6 +125,22 @@ x/vite.config.ts
 x/pnpm-lock.yaml
 x/temp/**
 
+# weread webview (exclude source & deps; only dist assets should be packed if needed)
+weread/src/**
+weread/node_modules/**
+weread/public/**
+weread/.gitignore
+weread/eslint.config.js
+weread/index.html
+weread/package.json
+weread/README.md
+weread/tsconfig.json
+weread/tsconfig.app.json
+weread/tsconfig.node.json
+weread/vite.config.ts
+weread/pnpm-lock.yaml
+weread/temp/**
+
 qqmusic-api-test/**
 .github/**
 .ruff_cache/**

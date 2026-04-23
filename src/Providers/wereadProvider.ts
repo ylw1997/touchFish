@@ -1,0 +1,86 @@
+import { ExtensionContext, WebviewView, workspace, window } from "vscode";
+import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
+import { WeReadClient } from "../api/weread/client";
+import { web_shelf_sync } from "../api/weread/api/shelf";
+import { web_book_chapter_e, web_book_chapterInfos } from "../api/weread/api/book";
+import { setConfigByKey } from "../core/config";
+
+export class WereadProvider extends BaseWebviewProvider {
+  private client: WeReadClient;
+  private webviewView: WebviewView | null = null;
+
+  constructor(context: ExtensionContext) {
+    super(context, {
+      distPath: "weread/dist",
+      devPort: 5183,
+      title: "微信读书",
+      scrollKey: "wereadScrollPosition",
+      restoreCommand: "WEREAD_RESTORE_SCROLL_POSITION",
+      saveCommand: "WEREAD_SAVE_SCROLL_POSITION",
+    });
+
+    const cookie = workspace.getConfiguration("touchfish").get<string>("wereadCookie") || "";
+    
+    this.client = new WeReadClient({ cookie }, (newCookie) => {
+      void setConfigByKey("wereadCookie", newCookie);
+    });
+  }
+
+  public override resolveWebviewView(webviewView: WebviewView) {
+    this.webviewView = webviewView;
+    return super.resolveWebviewView(webviewView);
+  }
+
+  protected async handleCustomMessage(message: IncomingMessage, webviewView: WebviewView) {
+    const { command, payload } = message;
+
+    try {
+      switch (command) {
+        case "WEREAD_GET_SHELF": {
+          const result = await this.client.execute(web_shelf_sync, {});
+          webviewView.webview.postMessage({
+            command: "WEREAD_SHELF_DATA",
+            payload: result,
+          });
+          break;
+        }
+
+        case "WEREAD_OPEN_BOOK": {
+          const { title } = payload;
+          window.showInformationMessage(`正在打开: ${title}`);
+          break;
+        }
+
+        case "WEREAD_GET_CHAPTER": {
+          const { bookId, chapterUid } = payload;
+          const result = await this.client.execute(web_book_chapter_e, bookId, chapterUid);
+          webviewView.webview.postMessage({
+            command: "WEREAD_CHAPTER_DATA",
+            payload: result,
+          });
+          break;
+        }
+
+        case "WEREAD_GET_CATALOG": {
+          const { bookId } = payload;
+          // 注意：chapterInfos 接收数组
+          const result = await this.client.execute(web_book_chapterInfos, [bookId]);
+          webviewView.webview.postMessage({
+            command: "WEREAD_CATALOG_DATA",
+            payload: result,
+          });
+          break;
+        }
+
+        default:
+          break;
+      }
+    } catch (error: any) {
+      console.error("[Weread] 处理消息失败:", error);
+      webviewView.webview.postMessage({
+        command: "WEREAD_ERROR",
+        payload: { message: error.message || "请求失败" },
+      });
+    }
+  }
+}

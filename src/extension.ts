@@ -52,11 +52,13 @@ import { BilibiliProvider } from "./Providers/bilibiliProvider";
 import { QQMusicProvider } from "./Providers/qqmusicProvider";
 import { XiaoyuzhouProvider } from "./Providers/xiaoyuzhouProvider";
 import { XProvider } from "./Providers/xProvider";
+import { WereadProvider } from "./Providers/wereadProvider";
 
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
 import * as fs from "fs";
 import { ReadState } from "./core/readState";
+import { setConfigByKey } from "./core/config";
 import { MusicStatusBar } from "./core/musicStatusBar";
 
 type LazyTreeProviderInstance = vscode.TreeDataProvider<vscode.TreeItem> & {
@@ -192,6 +194,9 @@ export function activate(context: vscode.ExtensionContext) {
   const xProvider = createLazyWebviewProvider(
     () => new XProvider(context),
   );
+  const wereadProvider = createLazyWebviewProvider(
+    () => new WereadProvider(context),
+  );
 
   registerLazyTreeView(
     context,
@@ -285,6 +290,15 @@ export function activate(context: vscode.ExtensionContext) {
       },
     },
   );
+  vscode.window.registerWebviewViewProvider(
+    "weread",
+    wereadProvider.provider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    },
+  );
 
   context.subscriptions.push(refresh(itHomeProvider.getInstance));
   context.subscriptions.push(refreshChipHellNews(chiphellProvider.getInstance));
@@ -312,6 +326,18 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(setBilibiliTokenCommand());
   context.subscriptions.push(setXiaoyuzhouTokenCommand());
   context.subscriptions.push(setXTokenCommand());
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.setWereadCookie", async () => {
+      const cookie = await vscode.window.showInputBox({
+        prompt: "请输入微信读书 Cookie",
+        placeHolder: "wr_skey=...; wr_vid=...;",
+      });
+      if (cookie) {
+        await setConfigByKey("wereadCookie", cookie);
+        vscode.window.showInformationMessage("微信读书 Cookie 设置成功");
+      }
+    }),
+  );
 
   context.subscriptions.push(
     MusicStatusBar.getInstance().onPlaybackInterrupt((newModule) => {
