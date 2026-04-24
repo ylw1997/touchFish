@@ -5,7 +5,6 @@ import {
   Button,
   FloatButton,
   Drawer,
-  Segmented,
   Popover,
   App as AntdApp,
 } from "antd";
@@ -73,7 +72,6 @@ const App: React.FC = () => {
   );
   const [view, setView] = useState<"shelf" | "reader">("shelf");
   const [catalogVisible, setCatalogVisible] = useState(false);
-  const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [underlines, setUnderlines] = useState<Underline[]>([]);
   const [bestThoughts, setBestThoughts] = useState<Thought[]>([]);
   const [bestThoughtsVisible, setBestThoughtsVisible] = useState(false);
@@ -82,7 +80,6 @@ const App: React.FC = () => {
     top: number;
     left: number;
   } | null>(null);
-  const [drawerTab, setDrawerTab] = useState<"catalog" | "thought">("catalog");
   const { increase, decrease } = useFontSizeStore();
   const { fontSize } = useFontSizeStore();
 
@@ -107,22 +104,6 @@ const App: React.FC = () => {
           setBooks(payload.books || []);
           setLoading(false);
           break;
-        case "WEREAD_THOUGHTS_DATA": {
-          const reviews = payload.reviews || [];
-          const formattedThoughts = reviews.map((r: any) => ({
-            reviewId: r.review.reviewId,
-            abstract: r.review.abstract,
-            content: r.review.content,
-            user: {
-              name: r.user.name,
-              avatar: r.user.avatar,
-            },
-            chapterUid: r.review.chapterUid,
-            range: r.review.range,
-          }));
-          setThoughts(formattedThoughts);
-          break;
-        }
         case "WEREAD_UNDERLINES_DATA": {
           console.log(
             "[Weread] Underlines received:",
@@ -275,12 +256,6 @@ const App: React.FC = () => {
 
     vscode.postMessage({
       command: "WEREAD_GET_CATALOG",
-      payload: { bookId: book.bookId },
-    });
-
-    // 加载全局热门想法
-    vscode.postMessage({
-      command: "WEREAD_GET_THOUGHTS",
       payload: { bookId: book.bookId },
     });
   };
@@ -494,17 +469,7 @@ const App: React.FC = () => {
       )}
 
       <Drawer
-        title={
-          <Segmented
-            block
-            options={[
-              { label: "目录", value: "catalog" },
-              { label: "热门想法", value: "thought" },
-            ]}
-            value={drawerTab}
-            onChange={(v) => setDrawerTab(v as any)}
-          />
-        }
+        title="目录"
         placement="left"
         onClose={() => setCatalogVisible(false)}
         open={catalogVisible}
@@ -512,84 +477,18 @@ const App: React.FC = () => {
         className="catalog-drawer"
         styles={{ body: { padding: 0 } }}
       >
-        {drawerTab === "catalog" ? (
-          <div className="catalog-list">
-            {catalog.map((chapter, index) => (
-              <div
-                key={chapter.chapterUid}
-                id={`chapter-${index}`}
-                className={`catalog-item ${currentChapterIdx === index ? "active" : ""} level-${chapter.level}`}
-                onClick={() => loadChapter(index)}
-              >
-                {chapter.title}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="thought-tab-list" style={{ padding: "12px" }}>
-            {thoughts.length > 0 ? (
-              thoughts.map((thought) => (
-                <div
-                  key={thought.reviewId}
-                  className="thought-card"
-                  style={{
-                    marginBottom: "16px",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    background: "var(--vscode-sideBar-background)",
-                    border: "1px solid var(--vscode-chat-requestBorder)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    <img
-                      src={thought.user.avatar}
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        borderRadius: "50%",
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: "calc(var(--app-font-size) - 1px)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {thought.user.name}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "calc(var(--app-font-size) - 1px)",
-                      color: "var(--vscode-editor-foreground)",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {thought.content}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "var(--vscode-descriptionForeground)",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    “{thought.abstract}”
-                  </div>
-                </div>
-              ))
-            ) : (
-              <Empty description="暂无全书热门想法" />
-            )}
-          </div>
-        )}
+        <div className="catalog-list">
+          {catalog.map((chapter, index) => (
+            <div
+              key={chapter.chapterUid}
+              id={`chapter-${index}`}
+              className={`catalog-item ${currentChapterIdx === index ? "active" : ""} level-${chapter.level}`}
+              onClick={() => loadChapter(index)}
+            >
+              {chapter.title}
+            </div>
+          ))}
+        </div>
       </Drawer>
 
       <Popover
