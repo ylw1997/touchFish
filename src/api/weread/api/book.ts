@@ -134,8 +134,8 @@ export async function web_book_read(
     ps: number,
     format = "epub",
     readerToken = "",
-    cookie = "",
     rt = 60,
+    cookie = "",
 ) {
   const ts = timestamp()
   const rnd = Math.floor(1000 * Math.random())
@@ -347,7 +347,7 @@ export async function web_book_chapter_e(
   bookId: string,
   chapterUid: number,
   cookie = "",
-): Promise<{ html: string; style: string }> {
+): Promise<{ html: string; style: string; format: string }> {
   const { format } = await web_book_info(bookId, cookie);
   if (format === "epub" || format === "pdf") {
     const results = await Promise.all([
@@ -360,7 +360,7 @@ export async function web_book_chapter_e(
     if (results[0] && results[1] && results[3]) {
         const style = dS(results[2]);
         const html = dH(results[0] + results[1] + results[3]);
-        return { html, style };
+        return { html, style, format };
     }
     throw Error(`解密失败(${bookId})`);
   } else if (format === "txt") {
@@ -370,7 +370,7 @@ export async function web_book_chapter_e(
     ]);
     if (results[0] && results[1]) {
         const html = dT(results[0] + results[1]);
-        return { html, style: "" };
+        return { html, style: "", format };
     }
     throw Error(`解密失败(${bookId})`);
   } else {

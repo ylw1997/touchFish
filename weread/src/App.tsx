@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Spin, Empty, message, Button, FloatButton, Drawer } from 'antd';
+import { Spin, Empty, Button, FloatButton, Drawer, App as AntdApp } from 'antd';
 import { LeftOutlined, ReloadOutlined, DoubleLeftOutlined, DoubleRightOutlined, PlusOutlined, MinusOutlined, VerticalAlignTopOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { vscode } from './utils/vscode';
 import { useFontSizeStore } from './store/fontSize';
@@ -23,6 +23,7 @@ interface ChapterContent {
 }
 
 const App: React.FC = () => {
+  const { message } = AntdApp.useApp();
   const [loading, setLoading] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
   const [currentBook, setCurrentBook] = useState<Book | null>(null);
@@ -65,7 +66,7 @@ const App: React.FC = () => {
               const idx = chapters.findIndex((c: any) => String(c.chapterUid) === String(pUid));
               console.log('[Weread] Matching pending progress from ref:', pUid, 'found idx:', idx);
               if (idx !== -1) {
-                loadChapterWithBookId(payload.data[0].bookId, idx, chapters);
+                loadChapterWithBookId(payload.data[0].bookId, idx, chapters, true); // 首次进入，静默
                 setPendingChapterUid(null);
                 return;
               } else {
@@ -76,7 +77,7 @@ const App: React.FC = () => {
             // 如果没进度或进度匹配失败，默认加载第一章
             if (chapters.length > 0) {
               console.log('[Weread] Loading first chapter (no progress or match failed)');
-              loadChapterWithBookId(payload.data[0].bookId, 0, chapters);
+              loadChapterWithBookId(payload.data[0].bookId, 0, chapters, true); // 首次进入，静默
               setPendingChapterUid(null);
             }
           }
@@ -91,12 +92,17 @@ const App: React.FC = () => {
             const idx = currentCatalog.findIndex(c => String(c.chapterUid) === String(chapterUid));
             console.log('[Weread] Catalog exists in ref, matching progress:', chapterUid, 'found idx:', idx);
             if (idx !== -1) {
-              loadChapterWithBookId(payload.bookId || payload.book?.bookId, idx, currentCatalog);
+              loadChapterWithBookId(payload.bookId || payload.book?.bookId, idx, currentCatalog, true); // 进度同步，静默
             }
           } else {
             console.log('[Weread] Catalog not ready, setting pendingProgress:', chapterUid);
             setPendingChapterUid(chapterUid);
           }
+          break;
+        }
+        case 'WEREAD_SAVE_PROGRESS_SUCCESS': {
+          console.log('[Weread] Received save progress success message');
+          message.success('进度已保存');
           break;
         }
         case 'WEREAD_CHAPTER_DATA': {
@@ -149,12 +155,12 @@ const App: React.FC = () => {
     loadChapterWithBookId(currentBook.bookId, idx, catalog);
   };
 
-  const loadChapterWithBookId = (bookId: string, idx: number, chapters: Chapter[]) => {
+  const loadChapterWithBookId = (bookId: string, idx: number, chapters: Chapter[], silent = false) => {
     setLoading(true);
     setCurrentChapterIdx(idx);
     vscode.postMessage({ 
       command: 'WEREAD_GET_CHAPTER', 
-      payload: { bookId, chapterUid: chapters[idx].chapterUid } 
+      payload: { bookId, chapterUid: chapters[idx].chapterUid, silent } 
     });
     setCatalogVisible(false);
   };
