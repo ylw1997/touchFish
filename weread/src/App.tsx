@@ -483,7 +483,6 @@ const App: React.FC = () => {
         onClose={() => setCatalogVisible(false)}
         open={catalogVisible}
         width={300}
-        className="catalog-drawer"
         styles={{ body: { padding: 0 } }}
       >
         <div className="catalog-list">
