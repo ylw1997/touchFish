@@ -16,14 +16,11 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    env:
-      GH_RELEASE_PAT: ${{ secrets.GH_RELEASE_PAT }}
     steps:
       - name: Checkout test
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_RELEASE_PAT }}
           ref: test
 
       - name: Setup pnpm
@@ -36,9 +33,6 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-
-      - name: Validate release secret
-        run: test -n "$GH_RELEASE_PAT" || (echo "Missing GH_RELEASE_PAT secret" && exit 1)
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -64,7 +58,7 @@ jobs:
         if: steps.detect_changes.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GH_RELEASE_PAT }}
+          token: ${{ github.token }}
           branch: test
           base: main
           commit-message: "chore: update x ids"
