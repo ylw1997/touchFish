@@ -398,6 +398,14 @@ const PlayBar: React.FC = () => {
                   title={`${currentSong.name} - ${getSingerName(currentSong)}`}
                   style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
+                  {/* 播放状态动态音波 */}
+                  <div
+                    className={`playing-animation ${isPlaying ? "active" : ""}`}
+                  >
+                    <span className="bar"></span>
+                    <span className="bar"></span>
+                    <span className="bar"></span>
+                  </div>
                   <span>{currentSong.name}</span>
                   <span
                     style={{

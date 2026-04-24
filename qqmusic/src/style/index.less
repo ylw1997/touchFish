@@ -1554,7 +1554,7 @@ a {
       mask-size: 100% 100%;
 
       .lyric-line {
-        color: var(--vscode-editor-background);
+        color: var(--vscode-editor-foldPlaceholderForeground);
         font-size: 13px;
         transition:
           font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1),
@@ -1591,7 +1591,8 @@ a {
             background: linear-gradient(
               to right,
               var(--vscode-foreground, #fff) var(--local-progress),
-              rgba(255, 255, 255, 0.3) var(--local-progress)
+              var(--vscode-editor-foldPlaceholderForeground)
+                var(--local-progress)
             );
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
