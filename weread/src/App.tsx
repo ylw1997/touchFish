@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Spin, Empty, message, Button, FloatButton } from 'antd';
-import { LeftOutlined, ReloadOutlined, DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
+import { LeftOutlined, ReloadOutlined, DoubleLeftOutlined, DoubleRightOutlined, PlusOutlined, MinusOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import { vscode } from './utils/vscode';
+import { useFontSizeStore } from './store/fontSize';
 import './style/App.less';
 
 interface Book {
@@ -29,6 +30,8 @@ const App: React.FC = () => {
   const [currentChapterIdx, setCurrentChapterIdx] = useState(0);
   const [chapterContent, setChapterContent] = useState<ChapterContent | null>(null);
   const [view, setView] = useState<'shelf' | 'reader'>('shelf');
+  
+  const { increase, decrease } = useFontSizeStore();
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -216,14 +219,34 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {view === 'shelf' && (
+      <FloatButton.Group
+        shape="circle"
+        style={{ right: 24, bottom: 24 }}
+      >
+        <FloatButton
+          icon={<MinusOutlined style={{ color: '#52c41a' }} />}
+          tooltip={<div>减小字体</div>}
+          onClick={decrease}
+        />
+        <FloatButton
+          icon={<PlusOutlined style={{ color: '#ff4d4f' }} />}
+          tooltip={<div>增大字体</div>}
+          onClick={increase}
+        />
+        {view === 'reader' && (
+          <FloatButton.BackTop
+            target={() => document.querySelector('.reader-content') as HTMLElement}
+            visibilityHeight={400}
+            icon={<VerticalAlignTopOutlined style={{ color: '#00a1d6' }} />}
+            tooltip={<div>回到顶部</div>}
+          />
+        )}
         <FloatButton
           icon={<ReloadOutlined style={{ color: '#1890ff' }} />}
-          tooltip={<div>刷新书架</div>}
+          tooltip={<div>{view === 'shelf' ? '刷新书架' : '刷新本章'}</div>}
           onClick={handleRefresh}
-          style={{ right: 24, bottom: 24 }}
         />
-      )}
+      </FloatButton.Group>
     </div>
   );
 };
