@@ -80,9 +80,10 @@ body {
     transition: transform 0.2s ease;
 
     &:hover {
-      transform: translateY(-4px);
+      // transform: translateY(-4px);
       .book-cover {
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--vscode-widget-border);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
       }
     }
 
@@ -92,7 +93,7 @@ body {
       background-color: var(--vscode-widget-border);
       border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--vscode-widget-border);
       transition: all 0.3s ease;
 
       img {
@@ -159,7 +160,7 @@ body {
     .reader-content {
       flex: 1;
       overflow-y: auto;
-      padding: 30px 24px;
+      padding: 12px;
       max-width: 800px;
       margin: 0 auto;
       width: 100%;
@@ -255,22 +256,6 @@ body {
   }
 }
 
-.catalog-drawer {
-  .ant-drawer-content {
-    background-color: var(--vscode-editor-background);
-  }
-  .ant-drawer-header {
-    background-color: var(--vscode-editor-background);
-    border-bottom: 1px solid var(--vscode-chat-requestBorder);
-    .ant-drawer-title {
-      color: var(--vscode-foreground);
-    }
-  }
-  .ant-drawer-close {
-    color: var(--vscode-foreground);
-  }
-}
-
 .catalog-list {
   background-color: var(--vscode-editor-background);
   height: 100%;
@@ -302,5 +287,27 @@ body {
       padding-left: 48px;
       font-size: calc(var(--app-font-size) - 2px);
     }
+  }
+}
+.backdrop-style {
+  background-color: color-mix(
+    in srgb,
+    var(--vscode-editor-background) 50%,
+    transparent
+  );
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
+.ant-popover .ant-popover-inner {
+  border-radius: 12px;
+}
+
+.ant-float-btn-group > .ant-float-btn {
+  .backdrop-style();
+  &:hover {
+    background: var(--vscode-button-border);
+  }
+  .ant-float-btn-body {
+    background: none;
   }
 }
