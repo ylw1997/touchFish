@@ -27,6 +27,7 @@ interface Book {
   bookId: string;
   title: string;
   cover: string;
+  readUpdateTime?: number;
 }
 
 interface Chapter {
@@ -82,6 +83,14 @@ const App: React.FC = () => {
   } | null>(null);
   const { increase, decrease } = useFontSizeStore();
   const { fontSize } = useFontSizeStore();
+
+  const sortedBooks = useMemo(() => {
+    return [...books].sort((a, b) => {
+      const timeA = a.readUpdateTime || 0;
+      const timeB = b.readUpdateTime || 0;
+      return timeB - timeA;
+    });
+  }, [books]);
 
   const catalogRef = useRef<Chapter[]>([]);
   const currentBookRef = useRef<Book | null>(null);
@@ -400,7 +409,7 @@ const App: React.FC = () => {
               </div>
             ) : books.length > 0 ? (
               <div className="shelf-grid">
-                {books.map((book: Book) => (
+                {sortedBooks.map((book: Book) => (
                   <div
                     key={book.bookId}
                     className="book-item"
