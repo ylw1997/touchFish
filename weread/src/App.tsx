@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Spin, Empty, message, Button, FloatButton } from 'antd';
-import { LeftOutlined, ReloadOutlined, DoubleLeftOutlined, DoubleRightOutlined, PlusOutlined, MinusOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Spin, Empty, message, Button, FloatButton, Drawer } from 'antd';
+import { LeftOutlined, ReloadOutlined, DoubleLeftOutlined, DoubleRightOutlined, PlusOutlined, MinusOutlined, VerticalAlignTopOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { vscode } from './utils/vscode';
 import { useFontSizeStore } from './store/fontSize';
 import './style/App.less';
@@ -30,8 +30,20 @@ const App: React.FC = () => {
   const [currentChapterIdx, setCurrentChapterIdx] = useState(0);
   const [chapterContent, setChapterContent] = useState<ChapterContent | null>(null);
   const [view, setView] = useState<'shelf' | 'reader'>('shelf');
-  
+  const [catalogVisible, setCatalogVisible] = useState(false);
+  const [pendingChapterUid, setPendingChapterUid] = useState<number | null>(null);
   const { increase, decrease } = useFontSizeStore();
+
+  const catalogRef = useRef<Chapter[]>([]);
+  const pendingUidRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    catalogRef.current = catalog;
+  }, [catalog]);
+
+  useEffect(() => {
+    pendingUidRef.current = pendingChapterUid;
+  }, [pendingChapterUid]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -44,19 +56,46 @@ const App: React.FC = () => {
         case 'WEREAD_CATALOG_DATA': {
           if (payload && payload.data && payload.data[0]) {
             const chapters = payload.data[0].updated || payload.data[0].chapters || [];
+            console.log('[Weread] Catalog received:', chapters.length, 'chapters');
             setCatalog(chapters);
             
-            // 如果是新打开的书（loading 状态），自动加载第一章
-            if (chapters.length > 0) {
-              const firstChapter = chapters[0];
-              // 这里的 currentBook 状态由于是异步的，可能还没更新，建议使用 payload 中的 bookId 或闭包处理
-              // 但由于 openBook 设置了 currentBook，且本 case 在其之后触发，通常没问题
-              // 稳妥起见，我们直接请求
-              vscode.postMessage({ 
-                command: 'WEREAD_GET_CHAPTER', 
-                payload: { bookId: payload.data[0].bookId, chapterUid: firstChapter.chapterUid } 
-              });
+            // 使用 ref 拿到最新的待跳转 UID
+            const pUid = pendingUidRef.current;
+            if (pUid !== null) {
+              const idx = chapters.findIndex((c: any) => String(c.chapterUid) === String(pUid));
+              console.log('[Weread] Matching pending progress from ref:', pUid, 'found idx:', idx);
+              if (idx !== -1) {
+                loadChapterWithBookId(payload.data[0].bookId, idx, chapters);
+                setPendingChapterUid(null);
+                return;
+              } else {
+                console.log('[Weread] Progress UID not found in catalog, fallback to first chapter');
+              }
             }
+
+            // 如果没进度或进度匹配失败，默认加载第一章
+            if (chapters.length > 0) {
+              console.log('[Weread] Loading first chapter (no progress or match failed)');
+              loadChapterWithBookId(payload.data[0].bookId, 0, chapters);
+              setPendingChapterUid(null);
+            }
+          }
+          break;
+        }
+        case 'WEREAD_PROGRESS_DATA': {
+          console.log('[Weread] Progress data received:', payload);
+          const chapterUid = payload?.book?.chapterUid;
+          const currentCatalog = catalogRef.current;
+
+          if (currentCatalog.length > 0) {
+            const idx = currentCatalog.findIndex(c => String(c.chapterUid) === String(chapterUid));
+            console.log('[Weread] Catalog exists in ref, matching progress:', chapterUid, 'found idx:', idx);
+            if (idx !== -1) {
+              loadChapterWithBookId(payload.bookId || payload.book?.bookId, idx, currentCatalog);
+            }
+          } else {
+            console.log('[Weread] Catalog not ready, setting pendingProgress:', chapterUid);
+            setPendingChapterUid(chapterUid);
           }
           break;
         }
@@ -90,25 +129,34 @@ const App: React.FC = () => {
     setLoading(true);
     setCatalog([]);
     setCurrentChapterIdx(0);
+    setPendingChapterUid(null);
     
-    // 1. 先获取目录
+    // 1. 获取目录
     vscode.postMessage({ 
       command: 'WEREAD_GET_CATALOG', 
       payload: { bookId: book.bookId } 
     });
-    
-    // 注意：不再这里直接获取第 1 章，因为第 1 章的 UID 不一定是 1。
-    // 逻辑移至 WEREAD_CATALOG_DATA 返回后执行。
+
+    // 2. 获取进度
+    vscode.postMessage({
+      command: 'WEREAD_GET_PROGRESS',
+      payload: { bookId: book.bookId }
+    });
   };
 
   const loadChapter = (idx: number) => {
     if (!currentBook || !catalog[idx]) return;
+    loadChapterWithBookId(currentBook.bookId, idx, catalog);
+  };
+
+  const loadChapterWithBookId = (bookId: string, idx: number, chapters: Chapter[]) => {
     setLoading(true);
     setCurrentChapterIdx(idx);
     vscode.postMessage({ 
       command: 'WEREAD_GET_CHAPTER', 
-      payload: { bookId: currentBook.bookId, chapterUid: catalog[idx].chapterUid } 
+      payload: { bookId, chapterUid: chapters[idx].chapterUid } 
     });
+    setCatalogVisible(false);
   };
 
   const backToShelf = () => {
@@ -191,6 +239,9 @@ const App: React.FC = () => {
             ) : (
               <>
                 <style dangerouslySetInnerHTML={{ __html: chapterContent?.style || '' }} />
+                <div className="chapter-header">
+                  {catalog[currentChapterIdx]?.title}
+                </div>
                 <div 
                   className="xhtml-content" 
                   dangerouslySetInnerHTML={{ __html: cleanedHtml }} 
@@ -219,6 +270,29 @@ const App: React.FC = () => {
         </div>
       )}
 
+      <Drawer
+        title="书籍目录"
+        placement="left"
+        onClose={() => setCatalogVisible(false)}
+        open={catalogVisible}
+        width={300}
+        className="catalog-drawer"
+        styles={{ body: { padding: 0 } }}
+      >
+        <div className="catalog-list">
+          {catalog.map((chapter, index) => (
+            <div 
+              key={chapter.chapterUid}
+              id={`chapter-${index}`}
+              className={`catalog-item ${currentChapterIdx === index ? 'active' : ''} level-${chapter.level}`}
+              onClick={() => loadChapter(index)}
+            >
+              {chapter.title}
+            </div>
+          ))}
+        </div>
+      </Drawer>
+
       <FloatButton.Group
         shape="circle"
         style={{ right: 24, bottom: 24 }}
@@ -246,6 +320,22 @@ const App: React.FC = () => {
           tooltip={<div>{view === 'shelf' ? '刷新书架' : '刷新本章'}</div>}
           onClick={handleRefresh}
         />
+        {view === 'reader' && (
+          <FloatButton
+            icon={<UnorderedListOutlined style={{ color: '#faad14' }} />}
+            tooltip={<div>查看目录</div>}
+            onClick={() => {
+              setCatalogVisible(true);
+              // 自动跳转到当前章节
+              setTimeout(() => {
+                const activeItem = document.getElementById(`chapter-${currentChapterIdx}`);
+                if (activeItem) {
+                  activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }, 100);
+            }}
+          />
+        )}
       </FloatButton.Group>
     </div>
   );

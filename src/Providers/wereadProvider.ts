@@ -2,7 +2,7 @@ import { ExtensionContext, WebviewView, workspace, window } from "vscode";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { WeReadClient } from "../api/weread/client";
 import { web_shelf_sync } from "../api/weread/api/shelf";
-import { web_book_chapter_e, web_book_chapterInfos } from "../api/weread/api/book";
+import { web_book_chapter_e, web_book_chapterInfos, web_book_getProgress } from "../api/weread/api/book";
 import { setConfigByKey } from "../core/config";
 
 export class WereadProvider extends BaseWebviewProvider {
@@ -67,6 +67,16 @@ export class WereadProvider extends BaseWebviewProvider {
           const result = await this.client.execute(web_book_chapterInfos, [bookId]);
           webviewView.webview.postMessage({
             command: "WEREAD_CATALOG_DATA",
+            payload: result,
+          });
+          break;
+        }
+
+        case "WEREAD_GET_PROGRESS": {
+          const { bookId } = payload;
+          const result = await this.client.execute(web_book_getProgress, bookId);
+          webviewView.webview.postMessage({
+            command: "WEREAD_PROGRESS_DATA",
             payload: result,
           });
           break;
