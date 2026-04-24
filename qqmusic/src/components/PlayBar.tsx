@@ -326,7 +326,7 @@ const PlayBar: React.FC = () => {
       />
 
       <div
-        className={`playbar ${isLyricOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${playSource === "radar" ? "playbar-radar" : playSource === "guess" ? "playbar-guess" : ""} ${isPlaying ? "" : "paused"}`}
+        className={`playbar ${isLyricOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${isPlaying ? "" : "paused"}`}
       >
         {/* DOM顺序调换：在 column-reverse 模式下，第一个元素在最下方渲染。
             我们要让播放列表在控制栏下方展开，所以必须把它放第一位 */}
@@ -398,14 +398,6 @@ const PlayBar: React.FC = () => {
                   title={`${currentSong.name} - ${getSingerName(currentSong)}`}
                   style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
-                  {/* 播放状态动态音波 */}
-                  <div
-                    className={`playing-animation ${isPlaying ? "active" : ""}`}
-                  >
-                    <span className="bar"></span>
-                    <span className="bar"></span>
-                    <span className="bar"></span>
-                  </div>
                   <span>{currentSong.name}</span>
                   <span
                     style={{
@@ -429,8 +421,21 @@ const PlayBar: React.FC = () => {
                     ))}
                   </span>
                 </div>
-                <div className="playbar-lyric" title={currentLyric}>
-                  {currentLyric || "聆听美好音乐"}
+                <div
+                  className={`playbar-lyric ${playSource === "radar" || playSource === "guess" ? "source-mode" : ""}`}
+                  title={
+                    playSource === "radar"
+                      ? "专属雷达"
+                      : playSource === "guess"
+                        ? "猜你喜欢"
+                        : currentLyric
+                  }
+                >
+                  {playSource === "radar"
+                    ? "专属雷达"
+                    : playSource === "guess"
+                      ? "猜你喜欢"
+                      : currentLyric || "聆听美好音乐"}
                 </div>
               </div>
             ) : (
