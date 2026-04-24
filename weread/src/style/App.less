@@ -304,3 +304,25 @@ body {
     }
   }
 }
+.backdrop-style {
+  background-color: color-mix(
+    in srgb,
+    var(--vscode-editor-background) 50%,
+    transparent
+  );
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
+.ant-popover .ant-popover-inner {
+  border-radius: 12px;
+}
+
+.ant-float-btn-group > .ant-float-btn {
+  .backdrop-style();
+  &:hover {
+    background: var(--vscode-button-border);
+  }
+  .ant-float-btn-body {
+    background: none;
+  }
+}
