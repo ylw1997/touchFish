@@ -74,6 +74,10 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 
 ![x](https://github.com/user-attachments/assets/11c009b6-b039-4eb6-8aff-a4b3dbf26491)
 
+### 📗 看书
+![weread](https://github.com/user-attachments/assets/9146d4e5-e1e1-4372-a7de-20c6952c3bff)
+
+
 ### 🎮 VSCODE 暗色主题
 
 ![主题](https://oss.qmsznj.com/prod/2025/08/13/800c066c-bce9-4041-a6d0-fbb1bf459855_20250813173043A282.png)

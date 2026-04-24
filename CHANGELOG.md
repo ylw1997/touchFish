@@ -1,6 +1,41 @@
 # 更新历史 
 
 
+## [15.2.0](https://github.com/ylw1997/touchFish/compare/v15.1.0...v15.2.0) (2026-04-24)
+
+
+### ✨ Features | 新功能
+
+* 优化qqmusic播放栏效果 ([ccf5f52](https://github.com/ylw1997/touchFish/commit/ccf5f5226435f2b28d571dab8aaa50fcc711664e))
+* 优化播放效果 ([0ec85c2](https://github.com/ylw1997/touchFish/commit/0ec85c20de5e84941d68635c8d190c86b56e1afc))
+* 优化播放进度条效果 ([838d4a6](https://github.com/ylw1997/touchFish/commit/838d4a65bb0cf1ec5592932fba66fb57aa65e1f0))
+* 优化样式 ([31d2fc3](https://github.com/ylw1997/touchFish/commit/31d2fc3de3a248b77ad117aed5ab798ffb2acfee))
+* 优化样式 ([ffaeaa3](https://github.com/ylw1997/touchFish/commit/ffaeaa3563d20c24abfe4cff1e1892d6c190f441))
+* 优化样式 ([8efc0ab](https://github.com/ylw1997/touchFish/commit/8efc0abc76c57a09d3c127332e984af8c0978370))
+* 优化样式 ([56cf57b](https://github.com/ylw1997/touchFish/commit/56cf57bf54bd5d7e563b61af8b57d19d16b95258))
+
+## [15.1.0](https://github.com/ylw1997/touchFish/compare/v14.17.0...v15.1.0) (2026-04-24)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([9138874](https://github.com/ylw1997/touchFish/commit/9138874ae81b8c64c6f2df6f3cd367709c74570e))
+
+
+### ✨ Features | 新功能
+
+* 优化txt书样式 ([1711a70](https://github.com/ylw1997/touchFish/commit/1711a708f7e68f57dd320eb9ac4467d8fb5f4457))
+* 优化样式 ([eea9a7e](https://github.com/ylw1997/touchFish/commit/eea9a7e0814d85f4087043f843d9f8f7dc871231))
+* 修复更新x queryid失败问题 ([a1234d9](https://github.com/ylw1997/touchFish/commit/a1234d95919b8871b9442e0637089c0f282b4870))
+* 增加字体大小 ([bfa2cbd](https://github.com/ylw1997/touchFish/commit/bfa2cbd82d786a94a2e374696273de4946525df3))
+* 微信读书初始化 ([b75f45c](https://github.com/ylw1997/touchFish/commit/b75f45c9fd29a12adfa32c02d49cbb21c5184b67))
+* 微信读书开始 ([80a651e](https://github.com/ylw1997/touchFish/commit/80a651e691d3f9fcd5a9bcd0b539f681d27a5198))
+* 排序方式优化 ([ad2ee9a](https://github.com/ylw1997/touchFish/commit/ad2ee9aab52d198e7c3015eb2d8540f1329976ff))
+* 显示热门想法 ([3215e0a](https://github.com/ylw1997/touchFish/commit/3215e0a3b9078e59c9e346e199863f2a192101a6))
+* 更新进度 ([9823c45](https://github.com/ylw1997/touchFish/commit/9823c4560f750c77cf894ba38666d163d4098b98))
+* 精简逻辑 ([155f795](https://github.com/ylw1997/touchFish/commit/155f795873ca3a1703e42e511ebc2d1378fe4552))
+* 自动跳转最新进度 ([37b33e0](https://github.com/ylw1997/touchFish/commit/37b33e0246ca227e9ed0fead844d12c9a1e8e018))
+
 ## [14.17.0](https://github.com/ylw1997/touchFish/compare/v14.16.0...v14.17.0) (2026-04-23)
 
 
