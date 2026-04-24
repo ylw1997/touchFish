@@ -377,3 +377,43 @@ export async function web_book_chapter_e(
     throw Error(`暂不支持${format}格式(${bookId})`);
   }
 }
+
+/**
+ * 获取热门想法
+ * @param bookId
+ * @param chapterUid
+ * @param range 范围，例如 "457-485"
+ * @param cookie
+ */
+export async function web_book_readReviews(
+  bookId: string,
+  chapterUid: number,
+  range: string,
+  cookie = ""
+) {
+  const payload = {
+    bookId,
+    chapterUid,
+    reviews: [{ range, maxIdx: 0, count: 30, synckey: 0 }]
+  };
+  const resp = await postJSON("https://weread.qq.com/web/book/readReviews", payload, { cookie });
+  return resp.json();
+}
+
+/**
+ * 获取章节划线
+ * @param bookId
+ * @param chapterUid
+ * @param cookie
+ */
+export async function web_book_underlines(
+  bookId: string,
+  chapterUid: number,
+  cookie = ""
+) {
+  const resp = await get("https://weread.qq.com/web/book/underlines", {
+    bookId,
+    chapterUid
+  }, { cookie });
+  return resp.json();
+}

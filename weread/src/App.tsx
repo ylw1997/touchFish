@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Spin, Empty, Button, FloatButton, Drawer, App as AntdApp } from "antd";
+import {
+  Spin,
+  Empty,
+  Button,
+  FloatButton,
+  Drawer,
+  Segmented,
+  Popover,
+  App as AntdApp,
+} from "antd";
 import {
   LeftOutlined,
   ReloadOutlined,
@@ -9,6 +18,7 @@ import {
   MinusOutlined,
   VerticalAlignTopOutlined,
   UnorderedListOutlined,
+  LikeOutlined,
 } from "@ant-design/icons";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
@@ -32,6 +42,25 @@ interface ChapterContent {
   format: string;
 }
 
+interface Thought {
+  reviewId: string;
+  abstract: string;
+  content: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  range?: string;
+  chapterUid?: number;
+  likeCount?: number;
+}
+
+interface Underline {
+  range: string;
+  count: number;
+  type: number;
+}
+
 const App: React.FC = () => {
   const { message } = AntdApp.useApp();
   const [loading, setLoading] = useState(false);
@@ -44,15 +73,31 @@ const App: React.FC = () => {
   );
   const [view, setView] = useState<"shelf" | "reader">("shelf");
   const [catalogVisible, setCatalogVisible] = useState(false);
+  const [thoughts, setThoughts] = useState<Thought[]>([]);
+  const [underlines, setUnderlines] = useState<Underline[]>([]);
+  const [bestThoughts, setBestThoughts] = useState<Thought[]>([]);
+  const [bestThoughtsVisible, setBestThoughtsVisible] = useState(false);
+  const [bestThoughtsLoading, setBestThoughtsLoading] = useState(false);
+  const [popoverPos, setPopoverPos] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const [drawerTab, setDrawerTab] = useState<"catalog" | "thought">("catalog");
   const { increase, decrease } = useFontSizeStore();
+  const { fontSize } = useFontSizeStore();
 
   const catalogRef = useRef<Chapter[]>([]);
+  const currentBookRef = useRef<Book | null>(null);
   const pendingUidRef = useRef<number | null>(null);
   const hasReceivedProgressRef = useRef<boolean>(false);
 
   useEffect(() => {
     catalogRef.current = catalog;
   }, [catalog]);
+
+  useEffect(() => {
+    currentBookRef.current = currentBook;
+  }, [currentBook]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -62,6 +107,50 @@ const App: React.FC = () => {
           setBooks(payload.books || []);
           setLoading(false);
           break;
+        case "WEREAD_THOUGHTS_DATA": {
+          const reviews = payload.reviews || [];
+          const formattedThoughts = reviews.map((r: any) => ({
+            reviewId: r.review.reviewId,
+            abstract: r.review.abstract,
+            content: r.review.content,
+            user: {
+              name: r.user.name,
+              avatar: r.user.avatar,
+            },
+            chapterUid: r.review.chapterUid,
+            range: r.review.range,
+          }));
+          setThoughts(formattedThoughts);
+          break;
+        }
+        case "WEREAD_UNDERLINES_DATA": {
+          console.log(
+            "[Weread] Underlines received:",
+            payload.underlines?.length,
+            payload.underlines,
+          );
+          setUnderlines(payload.underlines || []);
+          break;
+        }
+        case "WEREAD_BEST_THOUGHTS_DATA": {
+          const reviews = payload.reviews || [];
+          const formatted = reviews.flatMap((r: any) =>
+            (r.pageReviews || []).map((pr: any) => ({
+              reviewId: pr.review.reviewId,
+              abstract: pr.review.abstract,
+              content: pr.review.content,
+              user: {
+                name: pr.review.author.name,
+                avatar: pr.review.author.avatar,
+              },
+              likeCount: pr.likesCount || 0,
+            })),
+          );
+          setBestThoughts(formatted);
+          setBestThoughtsLoading(false);
+          setBestThoughtsVisible(true);
+          break;
+        }
         case "WEREAD_CATALOG_DATA": {
           if (payload && payload.data && payload.data[0]) {
             const chapters =
@@ -98,12 +187,10 @@ const App: React.FC = () => {
                 );
                 pendingUidRef.current = null;
               } else if (!hasReceivedProgressRef.current) {
-                // 如果进度包还没到，千万不要急着加载第一章，等进度包来触发
                 console.log(
                   "[Weread] Catalog arrived but progress pending, waiting for progress data...",
                 );
               } else {
-                // 进度包已经到了（且没匹配上）或者是真的没进度，此时才加载第一章
                 console.log(
                   "[Weread] Loading first chapter (no progress match or really no progress)",
                 );
@@ -128,39 +215,32 @@ const App: React.FC = () => {
             const idx = currentCatalog.findIndex(
               (c) => String(c.chapterUid) === String(chapterUid),
             );
-            console.log(
-              "[Weread] Catalog exists in ref, matching progress:",
-              chapterUid,
-              "found idx:",
-              idx,
-            );
             if (idx !== -1) {
               loadChapterWithBookId(
                 payload.bookId || payload.book?.bookId,
                 idx,
                 currentCatalog,
                 true,
-              ); // 进度同步，静默
+              );
             }
           } else {
-            console.log(
-              "[Weread] Catalog not ready, setting pendingProgress:",
-              chapterUid,
-            );
-            pendingUidRef.current = chapterUid; // 同步更新 Ref，解决竞态
+            pendingUidRef.current = chapterUid;
           }
           break;
         }
         case "WEREAD_SAVE_PROGRESS_SUCCESS": {
-          console.log("[Weread] Received save progress success message");
           message.success("进度已保存");
           break;
         }
         case "WEREAD_CHAPTER_DATA": {
+          console.log(
+            "[Weread] Chapter content received:",
+            payload.format,
+            payload,
+          );
           setChapterContent(payload);
           setLoading(false);
           setView("reader");
-          // 自动滚动到顶部
           const contentEl = document.querySelector(".reader-content");
           if (contentEl) contentEl.scrollTop = 0;
           break;
@@ -173,8 +253,6 @@ const App: React.FC = () => {
     };
 
     window.addEventListener("message", handleMessage);
-
-    // 初始化获取书架数据
     setLoading(true);
     vscode.postMessage({ command: "WEREAD_GET_SHELF" });
 
@@ -188,17 +266,21 @@ const App: React.FC = () => {
     setCatalog([]);
     setCurrentChapterIdx(0);
     pendingUidRef.current = null;
-
-    // 1. 获取进度 (优先)
     hasReceivedProgressRef.current = false;
+
     vscode.postMessage({
       command: "WEREAD_GET_PROGRESS",
       payload: { bookId: book.bookId },
     });
 
-    // 2. 获取目录
     vscode.postMessage({
       command: "WEREAD_GET_CATALOG",
+      payload: { bookId: book.bookId },
+    });
+
+    // 加载全局热门想法
+    vscode.postMessage({
+      command: "WEREAD_GET_THOUGHTS",
       payload: { bookId: book.bookId },
     });
   };
@@ -216,11 +298,46 @@ const App: React.FC = () => {
   ) => {
     setLoading(true);
     setCurrentChapterIdx(idx);
+    const chapter = chapters[idx];
+
     vscode.postMessage({
       command: "WEREAD_GET_CHAPTER",
-      payload: { bookId, chapterUid: chapters[idx].chapterUid, silent },
+      payload: { bookId, chapterUid: chapter.chapterUid, silent },
     });
+
+    vscode.postMessage({
+      command: "WEREAD_GET_UNDERLINES",
+      payload: { bookId, chapterUid: chapter.chapterUid },
+    });
+
     setCatalogVisible(false);
+  };
+
+  const handleContentClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const underlineEl = target.closest(".hot-underline") as HTMLElement;
+    if (underlineEl) {
+      const rect = underlineEl.getBoundingClientRect();
+      setPopoverPos({
+        top: rect.top + rect.height,
+        left: rect.left,
+      });
+      setBestThoughtsLoading(true);
+      setBestThoughtsVisible(true);
+      setBestThoughts([]);
+
+      const range = underlineEl.getAttribute("data-range");
+      if (range && currentBook && currentChapterIdx !== -1) {
+        vscode.postMessage({
+          command: "WEREAD_GET_BEST_THOUGHTS",
+          payload: {
+            bookId: currentBook.bookId,
+            chapterUid: catalog[currentChapterIdx].chapterUid,
+            range,
+          },
+        });
+      }
+    }
   };
 
   const backToShelf = () => {
@@ -229,47 +346,70 @@ const App: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    setLoading(true);
-    vscode.postMessage({ command: "WEREAD_GET_SHELF" });
+    if (view === "shelf") {
+      setLoading(true);
+      vscode.postMessage({ command: "WEREAD_GET_SHELF" });
+    } else if (currentBook && catalog[currentChapterIdx]) {
+      loadChapter(currentChapterIdx);
+    }
   };
 
-  // 清洗 HTML 的逻辑
   const cleanedHtml = useMemo(() => {
     if (!chapterContent?.html) return "";
     let html = chapterContent.html;
 
-    // 1. 如果被转义了，进行反转义
     if (html.includes("&lt;")) {
       const doc = new DOMParser().parseFromString(html, "text/html");
       html = doc.documentElement.textContent || html;
     }
 
-    // 2. 移除 XML 声明和 doctype
-    html = html.replace(/<\?xml.*\?>/gi, "");
-    html = html.replace(/<!DOCTYPE.*?>/gi, "");
+    const injectUnderlines = (rawHtml: string, underlines: Underline[]) => {
+      if (!underlines.length) return rawHtml;
 
-    // 3. 提取 body 内容
-    const bodyMatch = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html);
-    if (bodyMatch && bodyMatch[1]) {
-      html = bodyMatch[1];
-    }
+      const sorted = [...underlines].sort((a, b) => {
+        const startA = parseInt(a.range.split("-")[0]);
+        const startB = parseInt(b.range.split("-")[0]);
+        return startB - startA;
+      });
 
-    // 针对 TXT 格式进行智能分段处理
+      let result = rawHtml;
+      sorted.forEach((u) => {
+        const [start, end] = u.range.split("-").map(Number);
+        if (isNaN(start) || isNaN(end)) return;
+
+        const before = result.slice(0, start);
+        const middle = result.slice(start, end);
+        const after = result.slice(end);
+
+        result = `${before}<span class="hot-underline" data-range="${u.range}">${middle}</span>${after}`;
+      });
+
+      return result;
+    };
+
     if (chapterContent.format === "txt") {
       const paragraphs = html.split(/\r?\n/).filter((p) => p.trim() !== "");
-      return paragraphs.map((p) => `<p>${p}</p>`).join("");
+      return injectUnderlines(paragraphs.join("\n"), underlines)
+        .split("\n")
+        .map((p) => `<p>${p}</p>`)
+        .join("");
     }
 
-    // 针对 EPUB/PDF 的 HTML 清理
-    html = html.replace(/<html[^>]*>/gi, "");
-    html = html.replace(/<\/html>/gi, "");
-    html = html.replace(/<body[^>]*>/gi, "");
-    html = html.replace(/<\/body>/gi, "");
-    html = html.replace(/<head[^>]*>[\s\S]*<\/head>/gi, "");
-    html = html.replace(/<title[^>]*>[\s\S]*<\/title>/gi, "");
+    console.log("[Weread] Injecting to HTML source index mode...");
+    let injected = injectUnderlines(html, underlines);
 
-    return html;
-  }, [chapterContent]);
+    // 注入完成后，必须剥离所有外部包装标签，否则 dangerouslySetInnerHTML 会因为包含 html/body 而失效
+    injected = injected
+      .replace(/<\?xml.*\?>/gi, "")
+      .replace(/<!DOCTYPE.*?>/gi, "")
+      .replace(/<html[^>]*>/gi, "")
+      .replace(/<\/html>/gi, "")
+      .replace(/<head[^>]*>[\s\S]*<\/head>/gi, "")
+      .replace(/<body[^>]*>/gi, "")
+      .replace(/<\/body>/gi, "");
+
+    return injected;
+  }, [chapterContent, underlines]);
 
   return (
     <div className={`weread-app ${view}`}>
@@ -278,7 +418,6 @@ const App: React.FC = () => {
           <div className="header">
             <h1>书架</h1>
           </div>
-
           <div className="shelf-content">
             {loading ? (
               <div className="loading-container">
@@ -312,51 +451,60 @@ const App: React.FC = () => {
             <Button type="text" icon={<LeftOutlined />} onClick={backToShelf} />
             <span className="reader-title">{currentBook?.title}</span>
           </div>
-          <div className="reader-content">
+          <div className="reader-content" onClick={handleContentClick}>
             {loading ? (
               <div className="loading-container">
                 <Spin />
               </div>
             ) : (
-              <>
-                <style
-                  dangerouslySetInnerHTML={{
-                    __html: chapterContent?.style || "",
-                  }}
-                />
-                <div className="chapter-header">
-                  {catalog[currentChapterIdx]?.title}
-                </div>
+              chapterContent && (
                 <div
-                  className="xhtml-content"
-                  dangerouslySetInnerHTML={{ __html: cleanedHtml }}
-                />
-
-                {/* 翻页控制 */}
-                <div className="reader-footer">
-                  <Button
-                    disabled={currentChapterIdx <= 0}
-                    icon={<DoubleLeftOutlined />}
-                    onClick={() => loadChapter(currentChapterIdx - 1)}
-                  >
-                    上一章
-                  </Button>
-                  <Button
-                    disabled={currentChapterIdx >= catalog.length - 1}
-                    icon={<DoubleRightOutlined />}
-                    onClick={() => loadChapter(currentChapterIdx + 1)}
-                  >
-                    下一章
-                  </Button>
+                  className="content-body"
+                  style={{ fontSize: `${fontSize}px` }}
+                >
+                  <style>{chapterContent.style || ""}</style>
+                  <div className="chapter-header">
+                    {catalog[currentChapterIdx]?.title}
+                  </div>
+                  <div
+                    className="xhtml-content"
+                    dangerouslySetInnerHTML={{ __html: cleanedHtml }}
+                  />
+                  <div className="reader-footer">
+                    <Button
+                      disabled={currentChapterIdx <= 0}
+                      icon={<DoubleLeftOutlined />}
+                      onClick={() => loadChapter(currentChapterIdx - 1)}
+                    >
+                      上一章
+                    </Button>
+                    <Button
+                      disabled={currentChapterIdx >= catalog.length - 1}
+                      icon={<DoubleRightOutlined />}
+                      onClick={() => loadChapter(currentChapterIdx + 1)}
+                    >
+                      下一章
+                    </Button>
+                  </div>
                 </div>
-              </>
+              )
             )}
           </div>
         </div>
       )}
 
       <Drawer
-        title="书籍目录"
+        title={
+          <Segmented
+            block
+            options={[
+              { label: "目录", value: "catalog" },
+              { label: "热门想法", value: "thought" },
+            ]}
+            value={drawerTab}
+            onChange={(v) => setDrawerTab(v as any)}
+          />
+        }
         placement="left"
         onClose={() => setCatalogVisible(false)}
         open={catalogVisible}
@@ -364,17 +512,247 @@ const App: React.FC = () => {
         className="catalog-drawer"
         styles={{ body: { padding: 0 } }}
       >
-        <div className="catalog-list">
-          {catalog.map((chapter, index) => (
-            <div
-              key={chapter.chapterUid}
-              id={`chapter-${index}`}
-              className={`catalog-item ${currentChapterIdx === index ? "active" : ""} level-${chapter.level}`}
-              onClick={() => loadChapter(index)}
-            >
-              {chapter.title}
-            </div>
-          ))}
+        {drawerTab === "catalog" ? (
+          <div className="catalog-list">
+            {catalog.map((chapter, index) => (
+              <div
+                key={chapter.chapterUid}
+                id={`chapter-${index}`}
+                className={`catalog-item ${currentChapterIdx === index ? "active" : ""} level-${chapter.level}`}
+                onClick={() => loadChapter(index)}
+              >
+                {chapter.title}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="thought-tab-list" style={{ padding: "12px" }}>
+            {thoughts.length > 0 ? (
+              thoughts.map((thought) => (
+                <div
+                  key={thought.reviewId}
+                  className="thought-card"
+                  style={{
+                    marginBottom: "16px",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    background: "var(--vscode-sideBar-background)",
+                    border: "1px solid var(--vscode-chat-requestBorder)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <img
+                      src={thought.user.avatar}
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "calc(var(--app-font-size) - 1px)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {thought.user.name}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "calc(var(--app-font-size) - 1px)",
+                      color: "var(--vscode-editor-foreground)",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    {thought.content}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "var(--vscode-descriptionForeground)",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    “{thought.abstract}”
+                  </div>
+                </div>
+              ))
+            ) : (
+              <Empty description="暂无全书热门想法" />
+            )}
+          </div>
+        )}
+      </Drawer>
+
+      <Popover
+        open={bestThoughtsVisible}
+        onOpenChange={(visible) => {
+          if (!visible) {
+            setBestThoughtsVisible(false);
+            setPopoverPos(null);
+          }
+        }}
+        trigger="click"
+        placement="bottomLeft"
+        content={
+          <div
+            style={{
+              maxWidth: "300px",
+              minWidth: "150px",
+              maxHeight: "400px",
+              overflowY: "auto",
+            }}
+          >
+            {bestThoughtsLoading ? (
+              <div style={{ padding: "20px", textAlign: "center" }}>
+                <Spin size="small" />
+              </div>
+            ) : bestThoughts.length > 0 ? (
+              bestThoughts.map((thought) => (
+                <div
+                  key={thought.reviewId}
+                  style={{
+                    marginBottom: "12px",
+                    padding: "8px",
+                    borderBottom: "1px solid var(--vscode-chat-requestBorder)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <img
+                      src={thought.user.avatar}
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "calc(var(--app-font-size) - 1px)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {thought.user.name}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "calc(var(--app-font-size) - 1px)",
+                      color: "var(--vscode-editor-foreground)",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    {thought.content}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      color: "var(--vscode-descriptionForeground)",
+                      fontSize: "11px",
+                    }}
+                  >
+                    <LikeOutlined /> {thought.likeCount}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <Empty
+                description="暂无热门想法"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            )}
+          </div>
+        }
+      >
+        <div
+          style={{
+            position: "fixed",
+            top: popoverPos ? popoverPos.top : -999,
+            left: popoverPos ? popoverPos.left : -999,
+            width: "1px",
+            height: "1px",
+            pointerEvents: "none",
+            zIndex: 9999,
+          }}
+        />
+      </Popover>
+
+      <Drawer
+        title="热门想法"
+        placement="right"
+        onClose={() => setBestThoughtsVisible(false)}
+        open={false} // 改用 Popover 后这里不再显示
+        width={350}
+        styles={{ body: { padding: "16px" } }}
+      >
+        <div className="best-thoughts-list">
+          {bestThoughts.length > 0 ? (
+            bestThoughts.map((thought) => (
+              <div
+                key={thought.reviewId}
+                className="thought-item"
+                style={{
+                  marginBottom: "24px",
+                  borderBottom: "1px solid var(--vscode-chat-requestBorder)",
+                  paddingBottom: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <img
+                    src={thought.user.avatar}
+                    style={{
+                      width: "28px",
+                      height: "28px",
+                      borderRadius: "50%",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      fontSize: "calc(var(--app-font-size) - 1px)",
+                    }}
+                  >
+                    {thought.user.name}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    lineHeight: "1.6",
+                    color: "var(--vscode-editor-foreground)",
+                  }}
+                >
+                  {thought.content}
+                </div>
+              </div>
+            ))
+          ) : (
+            <Empty description="暂无更多想法" />
+          )}
         </div>
       </Drawer>
 
@@ -410,7 +788,6 @@ const App: React.FC = () => {
             tooltip={<div>查看目录</div>}
             onClick={() => {
               setCatalogVisible(true);
-              // 自动跳转到当前章节
               setTimeout(() => {
                 const activeItem = document.getElementById(
                   `chapter-${currentChapterIdx}`,

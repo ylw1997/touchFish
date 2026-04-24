@@ -210,6 +210,18 @@ body {
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
+
+        .hot-underline {
+          border-bottom: 1px dashed var(--vscode-editor-foreground) !important;
+          cursor: pointer !important;
+          transition: background-color 0.2s;
+          display: inline !important;
+          padding-bottom: 1px;
+
+          &:hover {
+            background-color: rgba(255, 215, 0, 0.15) !important;
+          }
+        }
       }
     }
 
