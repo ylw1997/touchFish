@@ -837,7 +837,7 @@
 		"crypto-js": "^4.2.0",
 		"iconv-lite": "^0.7.2",
 		"utf-8-validate": "^6.0.5",
-		"x-client-transaction-id": "^0.2.0"
+		"x-client-transaction-id": "^0.2.3"
 	},
 	"repository": {
 		"type": "git",

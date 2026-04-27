@@ -30,8 +30,8 @@ importers:
         specifier: ^6.0.5
         version: 6.0.5
       x-client-transaction-id:
-        specifier: ^0.2.0
-        version: 0.2.0(canvas@3.2.0)
+        specifier: ^0.2.3
+        version: 0.2.3(canvas@3.2.0)
     devDependencies:
       '@eslint/js':
         specifier: 9.30.1
@@ -3814,8 +3814,8 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  x-client-transaction-id@0.2.0:
-    resolution: {integrity: sha512-E2EgeyQpeOLOk4z7OS+IDpj7xwiKeUQHly6L1dTG2YYCEGtR6JLa6Ft5ra3pB7bY5esPb6Pqokt1DQeRm73i5g==}
+  x-client-transaction-id@0.2.3:
+    resolution: {integrity: sha512-SgCpLpswNoUAJpphrKrouCByvBCOBWvBiGynQ8+Ioncc67uG5FafTFBpAtpEiUMhjAK/MRIQF578fl9C6BUfKg==}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -7258,7 +7258,7 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  x-client-transaction-id@0.2.0(canvas@3.2.0):
+  x-client-transaction-id@0.2.3(canvas@3.2.0):
     dependencies:
       linkedom: 0.18.12(canvas@3.2.0)
     transitivePeerDependencies:
