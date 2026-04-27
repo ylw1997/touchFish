@@ -1,6 +1,16 @@
 # 更新历史 
 
 
+## [15.3.0](https://github.com/ylw1997/touchFish/compare/v15.2.0...v15.3.0) (2026-04-27)
+
+
+### ✨ Features | 新功能
+
+* 优化playbar问题 ([72362bd](https://github.com/ylw1997/touchFish/commit/72362bddd0a092cfb0fd65087e3cf875c6ba0b17))
+* 更新x-client-transaction-id依赖 ([92b49e3](https://github.com/ylw1997/touchFish/commit/92b49e35913c26f3227626bf2ee4af6e2552dca8))
+* 添加git忽略 ([ad3cd48](https://github.com/ylw1997/touchFish/commit/ad3cd48be7b443fea3f47b6b45a0eb857b6c180b))
+* 移除scratch ([0faefdf](https://github.com/ylw1997/touchFish/commit/0faefdf6674a145948fa2c0689f8127d5c884d1f))
+
 ## [15.2.0](https://github.com/ylw1997/touchFish/compare/v15.1.0...v15.2.0) (2026-04-24)
 
 
