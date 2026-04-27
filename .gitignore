@@ -4,6 +4,7 @@ node_modules
 .vscode-test/
 *.vsix
 temp
+scratch/
 
 # Build outputs
 weibo/dist
