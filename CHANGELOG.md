@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [15.5.0](https://github.com/ylw1997/touchFish/compare/v15.4.0...v15.5.0) (2026-04-29)
+
+
+### ✨ Features | 新功能
+
+* 修复知乎cookie必须重启生效问题 ([ac24ab8](https://github.com/ylw1997/touchFish/commit/ac24ab8b26cf79c3d0cfdded7a26ea88fc357d4f))
+
 ## [15.4.0](https://github.com/ylw1997/touchFish/compare/v15.3.0...v15.4.0) (2026-04-29)
 
 
