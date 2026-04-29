@@ -4,6 +4,7 @@ import { Button, Image } from "antd";
 import { PlayCircleFilled } from "@ant-design/icons";
 import { weiboItem } from "../../../types/weibo";
 import YImg from "./YImg";
+import ImagePreviewToolbar from "./ImagePreviewToolbar";
 
 interface WeiboCardMediaProps {
   item: weiboItem;
@@ -119,10 +120,44 @@ const WeiboCardMedia: React.FC<WeiboCardMediaProps> = ({
     if (normalizedMedia.length === 0) {
       return null;
     }
+    const previewImages = normalizedMedia.filter(
+      (media) => media.type === "image" && media.fullUrl,
+    );
 
     return (
       <div className="imglist">
-        <Image.PreviewGroup>
+        <Image.PreviewGroup
+          preview={{
+            toolbarRender: (
+              _,
+              {
+                transform: { scale },
+                actions: {
+                  onZoomOut,
+                  onZoomIn,
+                  onRotateLeft,
+                  onRotateRight,
+                },
+                current,
+              },
+            ) => {
+              const image = previewImages[current];
+              if (!image?.fullUrl) return null;
+              return (
+                <ImagePreviewToolbar
+                  imageUrl={image.fullUrl}
+                  imageIndex={current}
+                  fileNamePrefix={`weibo_${item.id}`}
+                  scale={scale}
+                  onRotateLeft={onRotateLeft}
+                  onRotateRight={onRotateRight}
+                  onZoomIn={onZoomIn}
+                  onZoomOut={onZoomOut}
+                />
+              );
+            },
+          }}
+        >
           {normalizedMedia.map((media) => (
             <MediaItemDisplay
               key={media.id}

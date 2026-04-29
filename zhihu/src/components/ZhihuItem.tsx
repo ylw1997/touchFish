@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, Flex, List } from "antd";
+import { Avatar, Button, Card, Flex, Image, List } from "antd";
 import {
   LikeOutlined,
   MessageOutlined,
@@ -23,6 +23,7 @@ import type { ZhihuCommentItem, ZhihuItemData } from "../../../types/zhihu";
 import useZhihuAction from "../hooks/useZhihuAction";
 import { loaderFunc } from "../utils/loader";
 import { useExpandedStore } from "../store/expanded";
+import ImagePreviewToolbar from "./ImagePreviewToolbar";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
@@ -249,7 +250,38 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
               }}
             ></div>
           )}
-          {item.image_area && !isDetail ? <img src={item.image_area} /> : <></>}
+          {item.image_area && !isDetail ? (
+            <Image
+              src={item.image_area}
+              preview={{
+                toolbarRender: (
+                  _,
+                  {
+                    transform: { scale },
+                    actions: {
+                      onZoomOut,
+                      onZoomIn,
+                      onRotateLeft,
+                      onRotateRight,
+                    },
+                  },
+                ) => (
+                  <ImagePreviewToolbar
+                    imageUrl={item.image_area!}
+                    imageIndex={0}
+                    fileNamePrefix="zhihu_cover"
+                    scale={scale}
+                    onRotateLeft={onRotateLeft}
+                    onRotateRight={onRotateRight}
+                    onZoomIn={onZoomIn}
+                    onZoomOut={onZoomOut}
+                  />
+                ),
+              }}
+            />
+          ) : (
+            <></>
+          )}
           {!globalShowImg &&
             hasImages &&
             (expanded || (item.excerpt && item.excerpt.includes("<img"))) && (

@@ -22,6 +22,7 @@ import {
 } from "../api/zhihu";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { ZhihuCommandsType } from "../../types/commands";
+import { downloadImageWithSaveDialog } from "../utils/imageDownload";
 export class ZhihuWebProvider extends BaseWebviewProvider {
   constructor(context: ExtensionContext) {
     super(context, {
@@ -125,6 +126,19 @@ export class ZhihuWebProvider extends BaseWebviewProvider {
       case "ZHIHU_SEARCH": {
         const results = await searchZhihu(payload);
         webviewView.webview.postMessage({ payload: results, uuid });
+        break;
+      }
+      case "ZHIHU_DOWNLOAD_IMAGE": {
+        const { url, fileName } = (payload || {}) as {
+          url: string;
+          fileName?: string;
+        };
+        await downloadImageWithSaveDialog({
+          url,
+          fileName,
+          referer: "https://www.zhihu.com/",
+          successLabel: "知乎图片",
+        });
         break;
       }
     }
