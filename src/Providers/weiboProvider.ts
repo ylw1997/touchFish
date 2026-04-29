@@ -32,6 +32,7 @@ import { CommandsType } from "../../types/commands";
 import { uploadType, weiboAJAX } from "../../types/weibo";
 import { setConfigByKey } from "../core/config";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
+import { downloadImageWithSaveDialog } from "../utils/imageDownload";
 
 export class WeiboProvider extends BaseWebviewProvider {
   constructor(context: ExtensionContext) {
@@ -251,6 +252,19 @@ export class WeiboProvider extends BaseWebviewProvider {
           payload: { payload: payload, ...res.data },
           uuid,
         } as CommandsType<weiboAJAX>);
+        break;
+      }
+      case "WEIBO_DOWNLOAD_IMAGE": {
+        const { url, fileName } = (payload || {}) as {
+          url: string;
+          fileName?: string;
+        };
+        await downloadImageWithSaveDialog({
+          url,
+          fileName,
+          referer: "https://weibo.com/",
+          successLabel: "微博图片",
+        });
         break;
       }
     }

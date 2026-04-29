@@ -4,6 +4,7 @@ import { Button, Image } from "antd";
 import { PlayCircleFilled } from "@ant-design/icons";
 import { xItem } from "../../../types/x";
 import YImg from "./YImg";
+import ImagePreviewToolbar from "./ImagePreviewToolbar";
 
 interface XCardMediaProps {
   item: xItem;
@@ -119,13 +120,43 @@ const XCardMedia: React.FC<XCardMediaProps> = ({
     if (normalizedMedia.length === 0) {
       return null;
     }
+    const previewImages = normalizedMedia.filter(
+      (media) => media.type === "image" && media.fullUrl,
+    );
 
     return (
       <div className="imglist">
         <Image.PreviewGroup
           preview={{
             getContainer: () => document.body,
-            movable: false,
+            toolbarRender: (
+              _,
+              {
+                transform: { scale },
+                actions: {
+                  onZoomOut,
+                  onZoomIn,
+                  onRotateLeft,
+                  onRotateRight,
+                },
+                current,
+              },
+            ) => {
+              const image = previewImages[current];
+              if (!image?.fullUrl) return null;
+              return (
+                <ImagePreviewToolbar
+                  imageUrl={image.fullUrl}
+                  imageIndex={current}
+                  fileNamePrefix={`x_${item.id}`}
+                  scale={scale}
+                  onRotateLeft={onRotateLeft}
+                  onRotateRight={onRotateRight}
+                  onZoomIn={onZoomIn}
+                  onZoomOut={onZoomOut}
+                />
+              );
+            },
           }}
         >
           {normalizedMedia.map((media) => (

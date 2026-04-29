@@ -284,6 +284,46 @@ a {
   }
 }
 
+.zhihu-image-preview-toolbar {
+  .backdrop-style();
+  padding: 10px 14px;
+  border-radius: 999px;
+
+  .anticon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    border-radius: 999px;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
+
+    &:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    &:active {
+      transform: scale(0.94);
+    }
+
+    &[disabled] {
+      color: rgba(255, 255, 255, 0.3);
+      cursor: not-allowed;
+
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
+}
+
 /* 排名徽章: 替代 Avatar 显示多位数字 */
 .rank-badge {
   display: inline-flex;

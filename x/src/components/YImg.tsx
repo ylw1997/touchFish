@@ -28,7 +28,6 @@ const YImg: React.FC<YImgProps> = ({
               ? false
               : {
                   getContainer: () => document.body,
-                  movable: false,
                 }
           }
           fallback={back}

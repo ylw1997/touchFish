@@ -25,6 +25,7 @@ import {
 import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
+import { downloadImageWithSaveDialog } from "../utils/imageDownload";
 
 // X 转换器
 function mapXTweetToXItem(tweet: any): xItem | null {
@@ -903,6 +904,20 @@ export class XProvider extends BaseWebviewProvider {
               ? { ok: 1, data: res.data }
               : { ok: 0, msg: res.message },
           uuid,
+        });
+        break;
+      }
+
+      case "X_DOWNLOAD_IMAGE": {
+        const { url, fileName } = (payload || {}) as {
+          url: string;
+          fileName?: string;
+        };
+        await downloadImageWithSaveDialog({
+          url,
+          fileName,
+          referer: "https://x.com/",
+          successLabel: "X 图片",
         });
         break;
       }

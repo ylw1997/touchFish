@@ -1,7 +1,34 @@
 import { Image } from "antd";
 import React from "react";
+import ImagePreviewToolbar from "../components/ImagePreviewToolbar";
 
 const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
+
+const getAttrValue = (html: string, attr: string) => {
+  const match = html.match(new RegExp(`${attr}="([^"]*)"`, "i"));
+  return match ? match[1] : "";
+};
+
+const getPreviewToolbar = (imageUrl: string, imageIndex: number, fileNamePrefix: string) => ({
+  toolbarRender: (
+    _: React.ReactNode,
+    {
+      transform: { scale },
+      actions: { onZoomOut, onZoomIn, onRotateLeft, onRotateRight },
+    }: any,
+  ) => (
+    <ImagePreviewToolbar
+      imageUrl={imageUrl}
+      imageIndex={imageIndex}
+      fileNamePrefix={fileNamePrefix}
+      scale={scale}
+      onRotateLeft={onRotateLeft}
+      onRotateRight={onRotateRight}
+      onZoomIn={onZoomIn}
+      onZoomOut={onZoomOut}
+    />
+  ),
+});
 
 /**
  * 一个通用的HTML字符串解析器，使用正则表达式查找匹配项，
@@ -78,7 +105,18 @@ export const processCommentContent = (htmlString: string | undefined) => {
     );
 
     if (hasCommentImgClass || isImageUrl) {
-      return <Image key={`image-${match.index}`} src={href} alt={text} />;
+      return (
+        <Image
+          key={`image-${match.index}`}
+          src={href}
+          alt={text}
+          preview={getPreviewToolbar(
+            href,
+            match.index ?? 0,
+            "zhihu_comment",
+          )}
+        />
+      );
     } else {
       // 如果链接不是图片，则保留为常规链接。
       return (
@@ -104,10 +142,23 @@ export const parseZhihuItemContent = (htmlString: string | undefined) => {
     const [fullMatch, src] = match;
 
     // 为了可访问性，尝试从完整的img标签中提取alt文本
-    const altRegex = /alt="([^"]*)"/;
-    const altMatch = fullMatch.match(altRegex);
-    const alt = altMatch ? altMatch[1] : "";
+    const alt = getAttrValue(fullMatch, "alt");
+    const imageUrl =
+      getAttrValue(fullMatch, "data-original") ||
+      getAttrValue(fullMatch, "data-actualsrc") ||
+      src;
 
-    return <Image key={`image-${match.index}`} src={src} alt={alt} />;
+    return (
+      <Image
+        key={`image-${match.index}`}
+        src={imageUrl}
+        alt={alt}
+        preview={getPreviewToolbar(
+          imageUrl,
+          match.index ?? 0,
+          "zhihu_content",
+        )}
+      />
+    );
   });
 };
