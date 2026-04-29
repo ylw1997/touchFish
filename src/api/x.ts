@@ -306,6 +306,16 @@ class XClientTransaction {
   }
 }
 
+let xTransactionIdProvider = (path: string, method: string) =>
+  XClientTransaction.getTransactionId(path, method);
+
+export function setXTransactionIdProviderForTest(
+  provider?: (path: string, method: string) => Promise<string>,
+) {
+  xTransactionIdProvider =
+    provider ?? ((path, method) => XClientTransaction.getTransactionId(path, method));
+}
+
 export function buildXHeaders(
   credential: XCredential,
   extraHeaders: Record<string, string> = {},
@@ -685,10 +695,7 @@ export async function getXSearchTimeline(
     // 手动拼接 URL，绕过 axios paramsSerializer，和浏览器行为完全一致
     const path = `/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline`;
     const fullUrl = `${X_BASE_URL}${path}?variables=${variablesStr}&features=${featuresStr}&fieldToggles=${fieldTogglesStr}`;
-    const transactionId = await XClientTransaction.getTransactionId(
-      path,
-      "GET",
-    );
+    const transactionId = await xTransactionIdProvider(path, "GET");
 
     const response = await xHttp.get(fullUrl, {
       headers: buildXHeaders(auth, {
