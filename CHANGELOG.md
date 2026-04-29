@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [15.6.0](https://github.com/ylw1997/touchFish/compare/v15.5.0...v15.6.0) (2026-04-29)
+
+
+### ✨ Features | 新功能
+
+* x增加下载图片功能 ([53ae05f](https://github.com/ylw1997/touchFish/commit/53ae05ff43f22381d2ed029af63831b2f75cb7ce))
+* 知乎和微博查看图片可以下载 ([3bc9f47](https://github.com/ylw1997/touchFish/commit/3bc9f47667d8be8d7f94e819e3130abf3d5247be))
+
 ## [15.5.0](https://github.com/ylw1997/touchFish/compare/v15.4.0...v15.5.0) (2026-04-29)
 
 
