@@ -43,6 +43,7 @@ export type CommandList =
   | "GET_MY_USER_INFO"
   | "GET_TRANSLATION"
   | "SEND_TRANSLATION"
+  | "X_DOWNLOAD_IMAGE"
   // XHS commands
   | "XHS_GET_HOME_FEED"
   | "XHS_SEARCH"

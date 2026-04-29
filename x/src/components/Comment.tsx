@@ -14,6 +14,7 @@ import YImg from "./YImg";
 import dayjs from "dayjs";
 import { parseXText } from "../utils/textParser";
 import { HeartOutlined } from "@ant-design/icons";
+import ImagePreviewToolbar from "./ImagePreviewToolbar";
 
 export const renderComments = (
   comments: commentsItem[],
@@ -128,7 +129,47 @@ export const renderComments = (
                         <Image.PreviewGroup
                           preview={{
                             getContainer: () => document.body,
-                            movable: false,
+                            toolbarRender: (
+                              _,
+                              {
+                                transform: { scale },
+                                actions: {
+                                  onZoomOut,
+                                  onZoomIn,
+                                  onRotateLeft,
+                                  onRotateRight,
+                                },
+                                current,
+                              },
+                            ) => {
+                              const imageUrls = (
+                                item.pic_ids || item.url_struct?.[0]?.pic_ids || []
+                              )
+                                .map((picId: string) => {
+                                  const picInfo =
+                                    item.pic_infos?.[picId] ||
+                                    item.url_struct?.[0]?.pic_infos?.[picId];
+                                  if (!picInfo || picInfo.type === "video") {
+                                    return "";
+                                  }
+                                  return picInfo.large?.url || picInfo.bmiddle?.url || "";
+                                })
+                                .filter(Boolean);
+                              const imageUrl = imageUrls[current];
+                              if (!imageUrl) return null;
+                              return (
+                                <ImagePreviewToolbar
+                                  imageUrl={imageUrl}
+                                  imageIndex={current}
+                                  fileNamePrefix={`x_comment_${item.id}`}
+                                  scale={scale}
+                                  onRotateLeft={onRotateLeft}
+                                  onRotateRight={onRotateRight}
+                                  onZoomIn={onZoomIn}
+                                  onZoomOut={onZoomOut}
+                                />
+                              );
+                            },
                           }}
                         >
                           {(item.pic_ids || item.url_struct?.[0]?.pic_ids)?.map(
