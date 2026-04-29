@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [15.4.0](https://github.com/ylw1997/touchFish/compare/v15.3.0...v15.4.0) (2026-04-29)
+
+
+### 📝 Chores | 其他更新
+
+* ignore api subrepos ([df53f0b](https://github.com/ylw1997/touchFish/commit/df53f0b67781e2bf369474d2b3aeb3274828d124))
+* ignore legacy xapi repo ([a7830d8](https://github.com/ylw1997/touchFish/commit/a7830d8a196103ae1b371837fc2e2c1b8bdc3d5e))
+
+
+### ✨ Features | 新功能
+
+* 优化vscode发现xapi仓库 ([2c3ffda](https://github.com/ylw1997/touchFish/commit/2c3ffda0c5d6163449601781aba7ad6f8f880109))
+* 修复视频背景问题 ([f53ef9a](https://github.com/ylw1997/touchFish/commit/f53ef9a4a71c8f7eb4b2b03ba40c4f1d5ca844c9))
+
 ## [15.3.0](https://github.com/ylw1997/touchFish/compare/v15.2.0...v15.3.0) (2026-04-27)
 
 
