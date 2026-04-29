@@ -793,7 +793,7 @@
 		"watch-tests": "tsc -p . -w --outDir out",
 		"pretest": "pnpm compile-tests && pnpm compile && pnpm lint",
 		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js",
+		"test": "mocha \"out/src/test/**/*.test.js\"",
 		"build": "vsce package --no-dependencies",
 		"changelog": "standard-version",
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",

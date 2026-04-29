@@ -4,6 +4,7 @@ import { describe, it } from "mocha";
 import {
   X_TWEET_DETAIL_QUERY_ID,
   X_HOME_TIMELINE_QUERY_ID,
+  X_HOME_LATEST_TIMELINE_QUERY_ID,
   X_SEARCH_TIMELINE_QUERY_ID,
   X_USER_BY_SCREEN_NAME_QUERY_ID,
   X_USER_TWEETS_QUERY_ID,
@@ -18,6 +19,7 @@ import {
   getXUserInfo,
   getXUserTweets,
   setGlobalXCredential,
+  setXTransactionIdProviderForTest,
   xHttp,
 } from "../api/x";
 
@@ -188,7 +190,7 @@ describe("x api helpers", () => {
     const originalGet = xHttp.get;
 
     xHttp.get = (async (url: string, config?: any) => {
-      assert.ok(String(url).includes(`/i/api/graphql/2ee46L1AFXmnTa0EvUog-Q/HomeLatestTimeline`));
+      assert.ok(String(url).includes(`/i/api/graphql/${X_HOME_LATEST_TIMELINE_QUERY_ID}/HomeLatestTimeline`));
       assert.equal(config?.headers?.authorization, "Bearer test-token");
       assert.equal(config?.headers?.["x-csrf-token"], "csrf-token");
       assert.equal(config?.params?.variables.count, 20);
@@ -235,13 +237,13 @@ describe("x api helpers", () => {
     const originalPost = xHttp.post;
 
     xHttp.post = (async (url: string, data?: unknown, config?: any) => {
-      assert.ok(String(url).includes(`/i/api/graphql/2ee46L1AFXmnTa0EvUog-Q/HomeLatestTimeline`));
+      assert.ok(String(url).includes(`/i/api/graphql/${X_HOME_LATEST_TIMELINE_QUERY_ID}/HomeLatestTimeline`));
       assert.equal(config?.headers?.authorization, "Bearer test-token");
       assert.equal(config?.headers?.["x-csrf-token"], "csrf-token");
       assert.equal((data as any)?.variables.cursor, "cursor-latest-1");
       assert.equal((data as any)?.variables.enableRanking, false);
       assert.equal((data as any)?.variables.includePromotedContent, true);
-      assert.equal((data as any)?.queryId, "2ee46L1AFXmnTa0EvUog-Q");
+      assert.equal((data as any)?.queryId, X_HOME_LATEST_TIMELINE_QUERY_ID);
       return {
         data: {
           data: {
@@ -363,15 +365,23 @@ describe("x api helpers", () => {
 
   it("requests search timeline with GET query parameters", async () => {
     const originalGet = xHttp.get;
+    setXTransactionIdProviderForTest(async (path, method) => {
+      assert.equal(path, `/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline`);
+      assert.equal(method, "GET");
+      return "test-transaction-id";
+    });
 
     xHttp.get = (async (url: string, config?: any) => {
       assert.ok(
         String(url).includes(`/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline`),
       );
-      assert.equal(config?.params?.variables.rawQuery, "openai");
-      assert.equal(config?.params?.variables.product, "Top");
-      assert.equal(config?.params?.variables.querySource, "typed_query");
-      assert.equal(config?.params?.variables.cursor, "cursor-search");
+      const parsedUrl = new URL(String(url));
+      const variables = JSON.parse(parsedUrl.searchParams.get("variables") || "{}");
+      assert.equal(variables.rawQuery, "openai");
+      assert.equal(variables.product, "Top");
+      assert.equal(variables.querySource, "typed_query");
+      assert.equal(variables.cursor, "cursor-search");
+      assert.equal(config?.headers?.["x-client-transaction-id"], "test-transaction-id");
       return {
         data: {
           data: {
@@ -413,6 +423,7 @@ describe("x api helpers", () => {
       });
     } finally {
       xHttp.get = originalGet;
+      setXTransactionIdProviderForTest();
     }
   });
 

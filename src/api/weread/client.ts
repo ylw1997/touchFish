@@ -8,6 +8,10 @@ export interface WeReadAuth {
 export class WeReadClient {
   constructor(private auth: WeReadAuth, private onCookieUpdate?: (newCookie: string) => void) {}
 
+  setCookie(cookie: string) {
+    this.auth.cookie = cookie;
+  }
+
   /**
    * 执行请求，并在登录超时时尝试刷新 Cookie
    * @param apiFunc API 函数，接受 cookie 作为最后一个参数
