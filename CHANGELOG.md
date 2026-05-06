@@ -1,6 +1,45 @@
 # 更新历史 
 
 
+## [15.6.0](https://github.com/ylw1997/touchFish/compare/v15.5.0...v15.6.0) (2026-04-29)
+
+
+### ✨ Features | 新功能
+
+* x增加下载图片功能 ([53ae05f](https://github.com/ylw1997/touchFish/commit/53ae05ff43f22381d2ed029af63831b2f75cb7ce))
+* 知乎和微博查看图片可以下载 ([3bc9f47](https://github.com/ylw1997/touchFish/commit/3bc9f47667d8be8d7f94e819e3130abf3d5247be))
+
+## [15.5.0](https://github.com/ylw1997/touchFish/compare/v15.4.0...v15.5.0) (2026-04-29)
+
+
+### ✨ Features | 新功能
+
+* 修复知乎cookie必须重启生效问题 ([ac24ab8](https://github.com/ylw1997/touchFish/commit/ac24ab8b26cf79c3d0cfdded7a26ea88fc357d4f))
+
+## [15.4.0](https://github.com/ylw1997/touchFish/compare/v15.3.0...v15.4.0) (2026-04-29)
+
+
+### 📝 Chores | 其他更新
+
+* ignore api subrepos ([df53f0b](https://github.com/ylw1997/touchFish/commit/df53f0b67781e2bf369474d2b3aeb3274828d124))
+* ignore legacy xapi repo ([a7830d8](https://github.com/ylw1997/touchFish/commit/a7830d8a196103ae1b371837fc2e2c1b8bdc3d5e))
+
+
+### ✨ Features | 新功能
+
+* 优化vscode发现xapi仓库 ([2c3ffda](https://github.com/ylw1997/touchFish/commit/2c3ffda0c5d6163449601781aba7ad6f8f880109))
+* 修复视频背景问题 ([f53ef9a](https://github.com/ylw1997/touchFish/commit/f53ef9a4a71c8f7eb4b2b03ba40c4f1d5ca844c9))
+
+## [15.3.0](https://github.com/ylw1997/touchFish/compare/v15.2.0...v15.3.0) (2026-04-27)
+
+
+### ✨ Features | 新功能
+
+* 优化playbar问题 ([72362bd](https://github.com/ylw1997/touchFish/commit/72362bddd0a092cfb0fd65087e3cf875c6ba0b17))
+* 更新x-client-transaction-id依赖 ([92b49e3](https://github.com/ylw1997/touchFish/commit/92b49e35913c26f3227626bf2ee4af6e2552dca8))
+* 添加git忽略 ([ad3cd48](https://github.com/ylw1997/touchFish/commit/ad3cd48be7b443fea3f47b6b45a0eb857b6c180b))
+* 移除scratch ([0faefdf](https://github.com/ylw1997/touchFish/commit/0faefdf6674a145948fa2c0689f8127d5c884d1f))
+
 ## [15.2.0](https://github.com/ylw1997/touchFish/compare/v15.1.0...v15.2.0) (2026-04-24)
 
 
