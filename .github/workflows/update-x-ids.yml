@@ -50,7 +50,7 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
-            echo "📋 变更文件列表:"
+            echo "变更文件列表:"
             git diff --name-only
           fi
 
@@ -58,7 +58,10 @@ jobs:
         if: steps.detect_changes.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ github.token }}
+          # 如果仓库设置未开启 "Allow GitHub Actions to create and approve pull requests"，
+          # 即使配置了 pull-requests: write，GITHUB_TOKEN 也不能创建 PR。
+          # 可添加 UPDATE_X_IDS_PR_TOKEN：fine-grained PAT，权限为 contents:write 和 pull_requests:write。
+          token: ${{ secrets.UPDATE_X_IDS_PR_TOKEN || github.token }}
           branch: test
           base: main
           commit-message: "chore: update x ids"
