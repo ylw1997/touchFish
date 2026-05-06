@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [15.7.0](https://github.com/ylw1997/touchFish/compare/v15.6.0...v15.7.0) (2026-05-06)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([37d8b62](https://github.com/ylw1997/touchFish/commit/37d8b620ce6e19c5bd5218bb00af3e5e067af3bb))
+
+
+### ✨ Features | 新功能
+
+* 修复小红书查看图片按钮尺寸问题 ([1cbc4c9](https://github.com/ylw1997/touchFish/commit/1cbc4c9d29a689fbbb5dfb2008ba449b98520e0f))
+* 修复提交失败问题 ([548d04a](https://github.com/ylw1997/touchFish/commit/548d04a850caf5d97bfe7797e3c93171b1f52e95))
+
 ## [15.6.0](https://github.com/ylw1997/touchFish/compare/v15.5.0...v15.6.0) (2026-04-29)
 
 
