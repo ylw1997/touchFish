@@ -5,10 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Avatar,
   Button,
-  Dropdown,
   FloatButton,
-  message,
-  Modal,
+  Popconfirm,
   Space,
   Spin,
   Tabs,
@@ -18,7 +16,6 @@ import {
   CustomerServiceOutlined,
   HomeOutlined,
   LoginOutlined,
-  LogoutOutlined,
   MinusOutlined,
   PlusOutlined,
   RadarChartOutlined,
@@ -42,7 +39,6 @@ import { useFontSizeStore } from "./store/fontSize";
 import { usePlayerStore } from "./store/player";
 import { useUserStore } from "./store/user";
 import type { Playlist, RankList, Song } from "./types/qqmusic";
-import { vscode } from "./utils/vscode";
 import "./style/index.less";
 
 function App() {
@@ -78,19 +74,19 @@ function App() {
     messageApi,
   } = useQQMusic();
 
-  const handleLogout = useCallback(() => {
-    Modal.confirm({
-      title: "确认退出",
-      content: "您确定要退出 QQ 音乐登录吗？",
-      okText: "确认",
-      cancelText: "取消",
-      onOk: () => {
-        vscode.postMessage({ command: "QQMUSIC_LOGOUT" });
-        logout();
-        message.success("已退出登录");
-      },
-    });
-  }, [logout]);
+  const handleLogout = useCallback(async () => {
+    console.log("[Logout] Starting logout...");
+    try {
+      await request<any>("QQMUSIC_LOGOUT", null);
+      console.log("[Logout] QQMUSIC_LOGOUT resolved successfully");
+    } catch (err: any) {
+      console.error("[Logout] QQMUSIC_LOGOUT error:", err.message);
+    }
+    logout();
+    setMyPlaylists([]);
+    console.log("[Logout] UI state cleared");
+    messageApi.success("已退出登录");
+  }, [logout, request, messageApi]);
 
   const loadMyData = useCallback(async () => {
     if (!userInfo?.musicid || !userInfo?.musickey) return;
@@ -192,10 +188,6 @@ function App() {
   }, [login, logout, request]);
 
   useEffect(() => {
-    vscode.postMessage({
-      command: "QQMUSIC_RESTORE_SCROLL_POSITION",
-    });
-
     void loadRecommendData();
     void loadRankData();
   }, [loadRankData, loadRecommendData]);
@@ -261,10 +253,10 @@ function App() {
             await playSong(songs[0]);
             messageApi.success("猜你喜欢电台已开启");
           } else {
-            message.warning("暂无猜你喜欢推荐歌曲");
+            messageApi.warning("暂无猜你喜欢推荐歌曲");
           }
         } catch {
-          message.error("加载猜你喜欢电台失败");
+          messageApi.error("加载猜你喜欢电台失败");
         }
         return;
       }
@@ -280,31 +272,37 @@ function App() {
     async (song: Song) => {
       try {
         await playSong(song);
-        message.success(`开始播放: ${song.name}`);
+        messageApi.success(`开始播放: ${song.name}`);
       } catch (error: any) {
-        message.error(error.message || "无法播放歌曲");
+        messageApi.error(error.message || "无法播放歌曲");
       }
     },
     [playSong],
   );
 
   const handleRefresh = useCallback(async () => {
-    const hide = message.loading("正在刷新数据...", 0);
+    const hide = messageApi.loading("正在刷新数据...", 0);
     try {
       if (activeTab === "recommend") {
         await loadRecommendData();
+        messageApi.success("刷新成功");
       } else if (activeTab === "rank") {
         await loadRankData();
+        messageApi.success("刷新成功");
       } else if (activeTab === "my") {
-        await loadMyData();
+        if (!userInfo?.musicid || !userInfo?.musickey) {
+          messageApi.warning("请先登录后再刷新");
+        } else {
+          await loadMyData();
+          messageApi.success("刷新成功");
+        }
       }
-      message.success("刷新成功");
     } catch (error: any) {
-      message.error(error.message || "刷新失败");
+      messageApi.error(error.message || "刷新失败");
     } finally {
       hide();
     }
-  }, [activeTab, loadMyData, loadRankData, loadRecommendData]);
+  }, [activeTab, loadMyData, loadRankData, loadRecommendData, userInfo, messageApi]);
 
   const tabsItems: TabsProps["items"] = [
     {
@@ -570,19 +568,12 @@ function App() {
         <h1 className="qqmusic-title">QQ音乐</h1>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: "logout",
-                    icon: <LogoutOutlined />,
-                    label: "退出登录",
-                    onClick: handleLogout,
-                  },
-                ],
-              }}
-              placement="bottomRight"
-              trigger={["hover"]}
+            <Popconfirm
+              title="确认退出"
+              description="您确定要退出 QQ 音乐登录吗？"
+              onConfirm={handleLogout}
+              okText="确认"
+              cancelText="取消"
             >
               <Space style={{ cursor: "pointer" }}>
                 {userInfo?.avatar && <Avatar src={userInfo.avatar} size="small" />}
@@ -592,7 +583,7 @@ function App() {
                   </span>
                 )}
               </Space>
-            </Dropdown>
+            </Popconfirm>
           ) : (
             <Button
               type="text"
