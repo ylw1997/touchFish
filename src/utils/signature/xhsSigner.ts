@@ -3,7 +3,8 @@ import * as path from "path";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { extractA1FromCookie } from "./shared";
 
-const xhsCode = require("../xhs.raw.js");
+const xhsCodeRaw = require("../xhs.raw.js");
+const xhsCode = typeof xhsCodeRaw === "string" ? xhsCodeRaw : (xhsCodeRaw.default || String(xhsCodeRaw));
 
 const XHS_RESULT_MARKER = "__XHS_RESULT__";
 const XHS_READY_TYPE = "ready";
@@ -271,15 +272,23 @@ class XhsSignerWorker {
     }
 
     if (message.type === XHS_ERROR_TYPE) {
-      if (message.id !== undefined && this.pending.has(message.id)) {
-        const pending = this.pending.get(message.id)!;
-        this.pending.delete(message.id);
-        clearTimeout(pending.timeout);
-        pending.reject(new Error(message.error || "unknown worker error"));
-        return;
+      if (message.id !== undefined) {
+        const request = this.pending.get(message.id);
+        if (request) {
+          clearTimeout(request.timeout);
+          request.reject(new Error(message.error));
+          this.pending.delete(message.id);
+        }
+      } else {
+        // Unassociated error (could be from init)
+        console.error(`[xhsSignerWorker] unassociated error: ${message.error}`);
+        if (this.readyReject) {
+          this.readyReject(new Error(message.error));
+          this.readyResolve = null;
+          this.readyReject = null;
+        }
       }
-
-      this.failWorker(new Error(message.error || "unknown worker error"));
+      return;
     }
   }
 

@@ -77,6 +77,8 @@ function getXhsOriginalImageUrl(imgUrl: string): string {
 }
 
 export class XhsWebProvider extends BaseWebviewProvider {
+  private _webviewView?: WebviewView;
+
   constructor(context: ExtensionContext) {
     super(context, {
       distPath: "xhs/dist",
@@ -90,7 +92,15 @@ export class XhsWebProvider extends BaseWebviewProvider {
   }
 
   public override resolveWebviewView(webviewView: WebviewView) {
+    this._webviewView = webviewView;
     return super.resolveWebviewView(webviewView);
+  }
+
+  /** 通知前端强制刷新 feed */
+  public refreshWebview() {
+    if (this._webviewView) {
+      this._webviewView.webview.postMessage({ command: "XHS_FORCE_REFRESH" });
+    }
   }
 
   protected async handleCustomMessage(

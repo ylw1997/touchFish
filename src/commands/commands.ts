@@ -11,6 +11,7 @@ import { commands } from "vscode";
 import { setConfigByKey } from "../core/config";
 import * as vscode from "vscode";
 import { showInfo } from "../utils/errorMessage";
+import { getXhsLoginQrCode, checkXhsQrCodeStatus, sendXhsPhoneCode, loginXhsByPhone } from "../api/xhs";
 
 type TabProvider = {
   getData(tabOverride?: string): Promise<void>;
@@ -484,3 +485,129 @@ export const setXTokenCommand = () => {
     }
   );
 };
+
+// 小红书扫码登录
+export const loginXhsQrCodeCommand = () => {
+  return vscode.commands.registerCommand("touchfish.loginXhsQrCode", async () => {
+    try {
+      const qrData = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: "正在获取小红书登录二维码..." },
+        () => getXhsLoginQrCode()
+      );
+      
+      const panel = vscode.window.createWebviewPanel(
+        "xhsQrLogin",
+        "小红书扫码登录",
+        vscode.ViewColumn.One,
+        { enableScripts: true }
+      );
+
+      const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData.url)}`;
+      
+      panel.webview.html = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>小红书扫码登录</title>
+          <style>
+            body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background-color: var(--vscode-editor-background); color: var(--vscode-editor-foreground); }
+            h2 { margin-bottom: 20px; }
+            .qr-container { padding: 20px; background-color: white; border-radius: 8px; }
+            p { margin-top: 20px; color: var(--vscode-descriptionForeground); }
+          </style>
+        </head>
+        <body>
+          <h2>请使用小红书 App 扫码登录</h2>
+          <div class="qr-container">
+            <img src="${qrImageUrl}" alt="QR Code" width="250" height="250" />
+          </div>
+          <p>请在手机上确认登录...</p>
+        </body>
+        </html>
+      `;
+
+      let isPanelClosed = false;
+      panel.onDidDispose(() => {
+        isPanelClosed = true;
+      });
+
+      // 轮询检查状态
+      let { cookies } = qrData;
+      while (!isPanelClosed) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        if (isPanelClosed) break;
+
+        try {
+          const statusRes = await checkXhsQrCodeStatus(qrData.qr_id, qrData.code, cookies);
+          cookies = statusRes.cookies;
+
+          if (statusRes.status === 2) {
+            // 登录成功
+            await setConfigByKey("xhsCookie", cookies);
+            panel.dispose();
+            vscode.window.showInformationMessage("小红书扫码登录成功！");
+            vscode.commands.executeCommand("touchfish.xhsRefresh");
+            break;
+          } else if (statusRes.status === 3) {
+            // 二维码过期
+            vscode.window.showErrorMessage("二维码已过期，请重试");
+            panel.dispose();
+            break;
+          }
+        } catch (pollErr: any) {
+          console.log("[xhs-login] poll error:", pollErr.message);
+          // 轮询失败不中断，继续等待
+        }
+      }
+    } catch (e: any) {
+      vscode.window.showErrorMessage("扫码登录失败：" + e.message);
+    }
+  });
+};
+
+// 小红书手机号登录
+export const loginXhsPhoneCommand = () => {
+  return vscode.commands.registerCommand("touchfish.loginXhsPhone", async () => {
+    try {
+      const phone = await vscode.window.showInputBox({
+        prompt: "请输入小红书手机号 (中国大陆 11 位)",
+        placeHolder: "13800138000",
+        validateInput: (text) => {
+          return /^\d{11}$/.test(text) ? null : "手机号必须为 11 位数字";
+        }
+      });
+      if (!phone) return;
+
+      // 发送验证码（用 withProgress 显示进度）
+      const sendResult = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: "正在发送验证码..." },
+        () => sendXhsPhoneCode(phone)
+      );
+
+      const code = await vscode.window.showInputBox({
+        prompt: `验证码已发送到 ${phone}，请输入 6 位验证码`,
+        placeHolder: "123456",
+        validateInput: (text) => {
+          return /^\d{6}$/.test(text) ? null : "验证码必须为 6 位数字";
+        }
+      });
+      if (!code) return;
+
+      // 验证登录（用 withProgress 显示进度）
+      const finalCookies = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: "正在验证登录..." },
+        () => loginXhsByPhone(phone, code, sendResult.cookies)
+      );
+
+      await setConfigByKey("xhsCookie", finalCookies.cookies);
+      vscode.window.showInformationMessage("小红书手机号登录成功！");
+      vscode.commands.executeCommand("touchfish.xhsRefresh");
+    } catch (e: any) {
+      vscode.window.showErrorMessage("手机号登录失败：" + e.message);
+    }
+  });
+};
+
+

@@ -45,6 +45,9 @@ const createSession = () => {
 // 微信登录专用 session（保持 cookies）
 let wxSession: any = null;
 
+// QQ 登录 cookies（ptqrlogin 返回的，用于后续 authorize 步骤）
+let qqLoginCookies: string[] = [];
+
 // 生成 GUID (32位十六进制，无连字符，与 Python SDK 保持一致)
 const generateGuid = () => {
   return "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".replace(/[x]/g, function () {
@@ -739,12 +742,205 @@ export const getQQLoginQR = async (): Promise<ApiResponse<QRCodeInfo>> => {
 /**
  * 计算 hash33（QQ登录用）
  */
-const hash33 = (str: string): number => {
-  let hash = 0;
+const hash33 = (str: string, seed: number = 0): number => {
+  let hash = seed;
   for (let i = 0; i < str.length; i++) {
     hash += (hash << 5) + str.charCodeAt(i);
   }
   return hash & 2147483647;
+};
+
+/**
+ * 从 Set-Cookie 数组中提取 name=value 对，并去重
+ * 规则：同名 cookie 后出现的覆盖先出现的，但空值不覆盖已有非空值
+ */
+const parseCookies = (setCookies: string[]): string => {
+  const cookieMap = new Map<string, string>();
+  for (const cookie of setCookies) {
+    const nameValue = cookie.split(";")[0];
+    const eqIdx = nameValue.indexOf("=");
+    if (eqIdx > 0) {
+      const name = nameValue.substring(0, eqIdx).trim();
+      const value = nameValue.substring(eqIdx + 1).trim();
+      if (!cookieMap.has(name)) {
+        cookieMap.set(name, value);
+      } else if (value) {
+        // 只有非空值才覆盖已有的值
+        cookieMap.set(name, value);
+      }
+    }
+  }
+  return Array.from(cookieMap.entries())
+    .map(([name, value]) => `${name}=${value}`)
+    .join("; ");
+};
+
+/**
+ * 通过 QQ 扫码完成登录并获取 musicid/musickey
+ */
+const authorizeQQQR = async (
+  uin: string,
+  sigx: string,
+): Promise<ApiResponse<UserInfo>> => {
+  try {
+    console.log("[QQMusic QQ] authorizeQQQR start, uin:", uin);
+
+    // 合并 ptqrlogin cookies + check_sig cookies，去重后生成 Cookie header
+    const buildCookieHeader = (checkSigCookies: string[]) => {
+      // 按顺序合并：ptqrlogin 在前，check_sig 在后（后出现的覆盖先出现的）
+      return parseCookies([...qqLoginCookies, ...checkSigCookies]);
+    };
+
+    // Step 1: 调用 check_sig 获取 p_skey
+    console.log("[QQMusic QQ] Step 1: check_sig...");
+    const checkSigResp = await axios.get(
+      "https://ssl.ptlogin2.graph.qq.com/check_sig",
+      {
+        params: {
+          uin,
+          pttype: "1",
+          service: "ptqrlogin",
+          nodirect: "0",
+          ptsigx: sigx,
+          s_url: "https://graph.qq.com/oauth2.0/login_jump",
+          ptlang: "2052",
+          ptredirect: "100",
+          aid: "716027609",
+          daid: "383",
+          j_later: "0",
+          low_login_hour: "0",
+          regmaster: "0",
+          pt_login_type: "3",
+          pt_aid: "0",
+          pt_aaid: "16",
+          pt_light: "0",
+          pt_3rd_aid: "100497308",
+        },
+        headers: {
+          Referer: "https://xui.ptlogin2.qq.com/",
+          // 携带 ptqrlogin 的 cookies（只取 name=value）
+          Cookie: qqLoginCookies.length > 0 ? parseCookies(qqLoginCookies) : undefined,
+        },
+        maxRedirects: 0,
+        validateStatus: (status: number) => status >= 200 && status < 400,
+      },
+    );
+
+    const cookies = checkSigResp.headers["set-cookie"] || [];
+    console.log("[QQMusic QQ] check_sig cookies:", cookies.map((c: string) => c.split(";")[0]).join("; "));
+
+    const cookiePairs = buildCookieHeader(cookies);
+    console.log("[QQMusic QQ] Cookie header for authorize:", cookiePairs);
+
+    const pSkeyCookie = cookies.find((c: string) => c.includes("p_skey=") && !c.includes("p_skey_forbid"));
+    const pSkey = pSkeyCookie?.match(/p_skey=([^;]+)/)?.[1] || "";
+    if (!pSkey) {
+      console.error("[QQMusic QQ] p_skey not found in cookies:", cookies);
+      return { code: -1, data: null as any, message: "获取 p_skey 失败" };
+    }
+
+    console.log("[QQMusic QQ] p_skey found, g_tk:", hash33(pSkey, 5381));
+
+    // Step 2: 调用 graph.qq.com/oauth2.0/authorize 获取 code
+    console.log("[QQMusic QQ] Step 2: authorize...");
+    const authResp = await axios.post(
+      "https://graph.qq.com/oauth2.0/authorize",
+      new URLSearchParams({
+        response_type: "code",
+        client_id: "100497308",
+        redirect_uri: "https://y.qq.com/portal/wx_redirect.html?login_type=1&surl=https://y.qq.com/",
+        scope: "get_user_info,get_app_friends",
+        state: "state",
+        switch: "",
+        from_ptlogin: "1",
+        src: "1",
+        update_auth: "1",
+        openapi: "1010_1030",
+        g_tk: hash33(pSkey, 5381).toString(),
+        auth_time: String(Date.now()),
+        ui: generateGuid(),
+      }).toString(),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Referer: "https://xui.ptlogin2.qq.com/",
+          Cookie: cookiePairs,
+        },
+        maxRedirects: 0,
+        validateStatus: (status: number) => status >= 200 && status < 400,
+      },
+    );
+
+    const location = authResp.headers["location"] || "";
+    console.log("[QQMusic QQ] authorize redirect:", location.substring(0, 200));
+    const codeMatch = location.match(/code=([^&]+)/);
+    if (!codeMatch) {
+      console.error("[QQMusic QQ] No code in location, full location:", location);
+      return { code: -1, data: null as any, message: "获取授权 code 失败: " + location.substring(0, 200) };
+    }
+    const code = codeMatch[1];
+    console.log("[QQMusic QQ] Step 3: QQLogin with code:", code);
+
+    // Step 3: 用 code 换取 musicid/musickey
+    const loginResp = await axios.post(
+      "https://u.y.qq.com/cgi-bin/musicu.fcg",
+      {
+        comm: {
+          cv: VERSION_CODE,
+          v: VERSION_CODE,
+          ct: "11",
+          tmeAppID: "qqmusic",
+          format: "json",
+          inCharset: "utf-8",
+          outCharset: "utf-8",
+          uid: "0",
+          tmeLoginType: "2",
+        },
+        "QQConnectLogin.LoginServer": {
+          module: "QQConnectLogin.LoginServer",
+          method: "QQLogin",
+          param: { code },
+        },
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Referer: "https://y.qq.com/",
+          Origin: "https://y.qq.com",
+          Cookie: cookiePairs,
+        },
+      },
+    );
+
+    console.log("[QQMusic QQ] QQLogin response:", JSON.stringify(loginResp.data).substring(0, 500));
+
+    const loginData = loginResp.data["QQConnectLogin.LoginServer"];
+    if (!loginData || loginData.code !== 0) {
+      console.error("[QQMusic QQ] QQLogin failed:", JSON.stringify(loginData));
+      return {
+        code: -1,
+        data: null as any,
+        message: loginData?.message || "QQLogin 登录失败 (code: " + loginData?.code + ")",
+      };
+    }
+
+    const loginInfo = loginData.data;
+    console.log("[QQMusic QQ] Login success! musicid:", loginInfo?.musicid || loginInfo?.openId, "musickey:", loginInfo?.musickey ? "found" : "missing");
+
+    const rawMusicid = loginInfo?.musicid || loginInfo?.openId || "";
+
+    return {
+      code: 0,
+      data: {
+        musicid: String(rawMusicid),
+        musickey: loginInfo?.musickey || "",
+        nickname: loginInfo?.nickname || loginInfo?.nick || "",
+        avatar: loginInfo?.logo || loginInfo?.avatar || "",
+      },
+    };
+  } catch (error: any) {
+    return { code: -1, data: null as any, message: error.message };
+  }
 };
 
 /**
@@ -764,7 +960,7 @@ export const checkLoginStatus = async (
         "https://ssl.ptlogin2.qq.com/ptqrlogin",
         {
           params: {
-            u1: "https://y.qq.com/",
+            u1: "https://graph.qq.com/oauth2.0/login_jump",
             ptqrtoken: ptqrtoken.toString(),
             ptredirect: "0",
             h: "1",
@@ -790,43 +986,83 @@ export const checkLoginStatus = async (
         },
       );
 
-      const data = response.data;
+      // 保存 ptqrlogin 的 cookies 供后续 authorize 使用
+      const ptqrCookies = response.headers["set-cookie"] || [];
+      qqLoginCookies = ptqrCookies;
 
-      // 解析登录结果 (例如: ptuiCB('0','0','https://...','0','登录成功!', 'Nickname');)
-      if (data.includes("登录成功")) {
-        // 尝试从回调中提取昵称
-        const ptuiMatch = data.match(
-          /ptuiCB\('0','0','[^']*','0','登录成功!',\s*'([^']*)'/,
-        );
-        const nickname = ptuiMatch ? ptuiMatch[1] : "QQ用户";
+      const data = response.data as string;
+      console.log("[QQMusic QQ] ptqrlogin raw:", data.substring(0, 400));
+      console.log("[QQMusic QQ] ptqrlogin cookies:", ptqrCookies.map((c: string) => c.split(";")[0]).join("; ") || "(none)");
 
-        // 提取用户信息
-        return {
-          code: 0,
-          data: {
-            status: "success",
-            userInfo: {
-              musicid: "",
-              musickey: "",
-              nickname: nickname,
-            },
-          },
-        };
-      } else if (data.includes("二维码已失效")) {
-        return {
-          code: 0,
-          data: { status: "timeout" },
-        };
-      } else if (data.includes("已扫码")) {
-        return {
-          code: 0,
-          data: { status: "scanning" },
-        };
-      } else {
-        return {
-          code: 0,
-          data: { status: "pending" },
-        };
+      // 参考 QQMusicApi (L-1124) 的解析方式
+      // ptuiCB('0','0','URL','0','登录成功！', 'YLW', '');
+      const cbMatch = data.match(/ptuiCB\((.*?)\)/);
+      if (!cbMatch) {
+        console.error("[QQMusic QQ] No ptuiCB found");
+        return { code: 0, data: { status: "pending" } };
+      }
+
+      // 提取单引号内的参数: 'val1','val2',...
+      const args: string[] = [];
+      const argRegex = /'((?:\\.|[^'\\])*)'/g;
+      let m: RegExpExecArray | null;
+      while ((m = argRegex.exec(cbMatch[1])) !== null) {
+        args.push(m[1]);
+      }
+
+      console.log("[QQMusic QQ] args count:", args.length, "args[0]:", args[0], "args[2] first 200:", args[2]?.substring(0, 200));
+
+      const code = parseInt(args[0], 10);
+      if (isNaN(code)) return { code: 0, data: { status: "pending" } };
+
+      switch (code) {
+        case 0: {
+          // 登录成功，从 URL 提取 uin 和 ptsigx
+          // 参考 Python: uin=(.+?)&service, ptsigx=(.+?)&s_url
+          const redirectUrl = args[2] || "";
+          const uinMatch = redirectUrl.match(/[?&]uin=([^&]+)&service/);
+          const sigxMatch = redirectUrl.match(/[?&]ptsigx=([^&]+)&s_url/);
+          const uin = uinMatch ? uinMatch[1] : "";
+          const sigx = sigxMatch ? sigxMatch[1] : "";
+
+          console.log("[QQMusic QQ] uin:", uin || "(missing)", "ptsigx:", sigx ? "(found)" : "(missing)");
+
+          if (!uin || !sigx) {
+            console.error("[QQMusic QQ] URL extract failed, full URL:", redirectUrl);
+            return {
+              code: -1,
+              data: { status: "failed" },
+              message: `提取登录参数失败`,
+            };
+          }
+
+          console.log("[QQMusic QQ] Calling authorizeQQQR...");
+          const credentialResult = await authorizeQQQR(uin, sigx);
+          console.log("[QQMusic QQ] authorizeQQQR result:", credentialResult.code, credentialResult.message);
+
+          if (credentialResult.code === 0 && credentialResult.data) {
+            return {
+              code: 0,
+              data: {
+                status: "success",
+                userInfo: credentialResult.data,
+              },
+            };
+          }
+          return {
+            code: -1,
+            data: { status: "failed" },
+            message: credentialResult.message || "获取 QQ 音乐凭证失败",
+          };
+        }
+        case 65:
+          return { code: 0, data: { status: "timeout" } };
+        case 66:
+          return { code: 0, data: { status: "confirming" } };
+        case 67:
+          return { code: 0, data: { status: "confirming" } };
+        default:
+          return { code: 0, data: { status: "pending" } };
       }
     } else if (type === "wx") {
       // 微信登录状态检查 - 使用长轮询，超时是正常的
@@ -1045,7 +1281,7 @@ export const getMyFavorite = async (
       },
     };
 
-    const result = await postRequest(data);
+    const result = await postRequest(data, false, credential);
     const resData = result["music.srfDissInfo.DissInfo"]?.data;
 
     const songs: Song[] = (resData?.songlist || []).map((item: any) => ({
@@ -1097,11 +1333,7 @@ export const getMyPlaylists = async (credential: {
       },
     };
 
-    const result = await postRequest(data);
-    console.log(
-      "[API getMyPlaylists] Raw result:",
-      JSON.stringify(result, null, 2),
-    );
+    const result = await postRequest(data, false, credential);
     const playlists =
       result["music.musicasset.PlaylistBaseRead"]?.data?.v_playlist || [];
 
@@ -1518,9 +1750,9 @@ export const getSingerSongs = async (
           title: song.title || song.songname || song.name || "未知歌曲",
           singer: Array.isArray(singerList)
             ? singerList.map((s: any) => ({
-                name: s.name,
-                mid: s.mid || s.singer_MID,
-              }))
+              name: s.name,
+              mid: s.mid || s.singer_MID,
+            }))
             : [],
           album: {
             name: song.album?.name || song.albumname || "未知专辑",

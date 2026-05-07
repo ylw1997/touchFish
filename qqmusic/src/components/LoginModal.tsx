@@ -2,12 +2,14 @@
  * QQ音乐登录组件
  */
 import React, { useCallback, useEffect, useState } from "react";
-import { Button, Modal, Spin, message } from "antd";
-import { WechatOutlined } from "@ant-design/icons";
+import { Button, Modal, Segmented, Spin, message } from "antd";
+import { WechatOutlined, QqOutlined } from "@ant-design/icons";
 import { useRequest } from "../hooks/useRequest";
 import { useUserStore } from "../store/user";
 import { LoginStatus } from "../types/qqmusic";
 import type { QRCodeInfo, UserInfo } from "../types/qqmusic";
+
+type LoginType = "qq" | "wx";
 
 interface LoginModalProps {
   open: boolean;
@@ -19,6 +21,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
   const [qrIdentifier, setQrIdentifier] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginStatus, setLoginStatus] = useState<LoginStatus>(LoginStatus.PENDING);
+  const [loginType, setLoginType] = useState<LoginType>("qq");
 
   const { request } = useRequest();
   const { login, setLoginStatus: setStoreLoginStatus } = useUserStore();
@@ -29,7 +32,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
     setQrIdentifier("");
 
     try {
-      const result = await request<any>("QQMUSIC_GET_LOGIN_QR", { type: "wx" });
+      const result = await request<any>("QQMUSIC_GET_LOGIN_QR", { type: loginType });
 
       if (result.code === 0 && result.data) {
         const qrData: QRCodeInfo = result.data;
@@ -46,7 +49,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [request, setStoreLoginStatus]);
+  }, [request, setStoreLoginStatus, loginType]);
 
   const checkLoginStatus = useCallback(async () => {
     if (!qrIdentifier) return;
@@ -54,7 +57,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
     try {
       const result = await request<any>("QQMUSIC_CHECK_LOGIN_STATUS", {
         identifier: qrIdentifier,
-        type: "wx",
+        type: loginType,
       });
 
       if (result.code === 0 && result.data) {
@@ -99,7 +102,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
     } catch (error) {
       console.error("[Login] 检查登录状态失败:", error);
     }
-  }, [login, onClose, qrIdentifier, request, setStoreLoginStatus]);
+  }, [login, onClose, qrIdentifier, request, setStoreLoginStatus, loginType]);
 
   useEffect(() => {
     if (open) {
@@ -120,11 +123,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
   }, [checkLoginStatus, loginStatus, open, qrIdentifier]);
 
   const getStatusText = () => {
+    const label = loginType === "qq" ? "QQ" : "微信";
     switch (loginStatus) {
       case LoginStatus.PENDING:
-        return "请使用微信扫码登录";
+        return `请使用${label}扫码登录`;
       case LoginStatus.SCANNING:
-        return "已扫码，请在微信中确认登录";
+        return `已扫码，请在${label}中确认登录`;
       case LoginStatus.CONFIRMING:
         return "正在确认登录...";
       case LoginStatus.TIMEOUT:
@@ -141,9 +145,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
   return (
     <Modal
       title={
-        <span>
-          <WechatOutlined /> 微信扫码登录 QQ 音乐
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {loginType === "qq" ? <QqOutlined style={{ color: "#12b7f5" }} /> : <WechatOutlined style={{ color: "#07c160" }} />}
+          {loginType === "qq" ? "QQ" : "微信"}扫码登录 QQ 音乐
+        </div>
       }
       open={open}
       onCancel={onClose}
@@ -152,6 +157,22 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
       centered
     >
       <div className="login-qr-container">
+        <Segmented
+          style={{ marginBottom: 16 }}
+          value={loginType}
+          onChange={(value) => {
+            setLoginType(value as LoginType);
+            setQrCode("");
+            setQrIdentifier("");
+            setLoginStatus(LoginStatus.PENDING);
+          }}
+          options={[
+            { label: "QQ登录", value: "qq" },
+            { label: "微信登录", value: "wx" },
+          ]}
+          block
+        />
+
         {isLoading ? (
           <div className="login-loading">
             <Spin size="large" />
@@ -161,7 +182,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
           <div className="login-qr-wrapper">
             <img
               src={qrCode}
-              alt="微信登录二维码"
+              alt={`${loginType === "qq" ? "QQ" : "微信"}登录二维码`}
               className="login-qr-image"
             />
             <p className="login-status-text">{getStatusText()}</p>
@@ -185,8 +206,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
       <div className="login-tips">
         <p>登录说明：</p>
         <ul>
-          <li>请使用微信扫描二维码。</li>
-          <li>扫码后需要在手机上确认授权。</li>
+          {loginType === "qq" ? (
+            <>
+              <li>请使用 QQ 手机 App 扫描二维码。</li>
+              <li>扫码后需要在手机上确认登录。</li>
+            </>
+          ) : (
+            <>
+              <li>请使用微信扫描二维码。</li>
+              <li>扫码后需要在手机上确认授权。</li>
+            </>
+          )}
           <li>二维码有效期约 5 分钟，过期后可重新获取。</li>
         </ul>
       </div>
