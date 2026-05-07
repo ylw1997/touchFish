@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [15.8.0](https://github.com/ylw1997/touchFish/compare/v15.7.0...v15.8.0) (2026-05-07)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([f725e5c](https://github.com/ylw1997/touchFish/commit/f725e5c735acd5b8e4c034edf714c62c1c2bd80c))
+* update x ids ([321daa2](https://github.com/ylw1997/touchFish/commit/321daa2b9b3c11308f34a6abe64e0413faf684f7))
+
+
+### ✨ Features | 新功能
+
+* 修复qq音乐问题,增加qq登录 ([3b824c8](https://github.com/ylw1997/touchFish/commit/3b824c835592c5256f635414e05224b0207ac432))
+* 小红书支持扫码和手机验证码登录 ([15a2c7b](https://github.com/ylw1997/touchFish/commit/15a2c7b8559c964b614aef8f51ec49c4581101e6))
+
 ## [15.7.0](https://github.com/ylw1997/touchFish/compare/v15.6.0...v15.7.0) (2026-05-06)
 
 
