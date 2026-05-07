@@ -9,27 +9,23 @@
  */
 /* XHS API 封装（优化：回退使用 axios，并拆分请求头生成函数） */
 import axios from "axios";
+import * as vscode from "vscode";
 import xhsHttp from "../core/xhsHttp";
-import { getOrSetCookie } from "../utils/apiUtils";
 import { getXhsSignature, XhsSignature } from "../utils/signature";
+import * as crypto from "crypto";
 
 // 稳定序列化，确保签名与发送体 key 顺序一致（避免后端校验差异）
 function stableStringify(value: any): string {
-  if (value === null || typeof value !== "object") return JSON.stringify(value);
-  if (Array.isArray(value))
-    return "[" + value.map((v) => stableStringify(v)).join(",") + "]";
-  const keys = Object.keys(value).sort();
-  return (
-    "{" +
-    keys
-      .map((k) => JSON.stringify(k) + ":" + stableStringify(value[k]))
-      .join(",") +
-    "}"
-  );
+  return JSON.stringify(value);
 }
 
 export const getOrSetXhsCookie = async (): Promise<string | undefined> => {
-  return await getOrSetCookie("xhsCookie", "请输入小红书 Cookie");
+  const config = vscode.workspace.getConfiguration("touchfish");
+  const cookie = config.get("xhsCookie") as string | undefined;
+  if (!cookie) {
+    throw new Error("请先登录小红书（使用扫码登录或手机号登录）");
+  }
+  return cookie;
 };
 
 // 构造请求体（稳定排序）
@@ -69,7 +65,7 @@ export function generateXB3TraceId(len = 16) {
   return x_b3_traceid;
 }
 
-// 生成请求头（与签名解耦，方便复用 / 单测）
+
 function buildXhsHeaders(params: {
   cookie: string;
   signObj: XhsSignature;
@@ -798,6 +794,352 @@ export const uploadXhsImage = async (params: {
 };
 
 // ==================== 发布笔记相关 ====================
+
+// ==================== 扫码登录相关 ====================
+
+function makeCRCTable() {
+  let c;
+  const crcTable = [];
+  for (let n = 0; n < 256; n++) {
+    c = n;
+    for (let k = 0; k < 8; k++) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    crcTable[n] = c;
+  }
+  return crcTable;
+}
+
+const crcTable = makeCRCTable();
+
+function crc32(str: string) {
+  let crc = 0 ^ -1;
+  for (let i = 0; i < str.length; i++) {
+    crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xff];
+  }
+  return (crc ^ -1) >>> 0;
+}
+
+const A1_CHARSET = "abcdefghijklmnopqrstuvwxyz1234567890";
+function generateA1() {
+  const tsHex = Date.now().toString(16);
+  let randomStr = "";
+  for (let i = 0; i < 30; i++) {
+    randomStr += A1_CHARSET.charAt(
+      Math.floor(Math.random() * A1_CHARSET.length)
+    );
+  }
+  const aPart = tsHex + randomStr + "50000";
+  const crc = crc32(aPart);
+  return (aPart + crc.toString()).substring(0, 52);
+}
+
+function generateWebId(a1: string) {
+  return crypto.createHash("md5").update(a1).digest("hex");
+}
+
+
+
+// sec 初始化用 —— 471 是预期内的，不抛异常（外层有 try-catch）
+const secHttp = axios.create({ timeout: 10000, maxRedirects: 0, validateStatus: () => true });
+// 登录用 —— 471 必须抛异常，让 UI 层感知错误
+const loginHttp = axios.create({ timeout: 10000, maxRedirects: 0 });
+
+// cookie 字符串 → dict（模拟 Python dict cookies）
+function cookieStrToDict(cookieStr: string): Record<string, string> {
+  const dict: Record<string, string> = {};
+  cookieStr.split(";").forEach(pair => {
+    const idx = pair.indexOf("=");
+    if (idx > 0) {
+      dict[pair.substring(0, idx).trim()] = pair.substring(idx + 1).trim();
+    }
+  });
+  return dict;
+}
+
+// dict → cookie 字符串
+function cookieDictToStr(dict: Record<string, string>): string {
+  return Object.entries(dict).map(([k, v]) => `${k}=${v}`).join("; ");
+}
+
+// 合并 set-cookie 到 dict
+function mergeSetCookieToDict(dict: Record<string, string>, setCookieHeaders?: string[]): Record<string, string> {
+  if (!setCookieHeaders) return dict;
+  for (const h of setCookieHeaders) {
+    const main = h.split(";")[0];
+    const idx = main.indexOf("=");
+    if (idx > 0) {
+      dict[main.substring(0, idx).trim()] = main.substring(idx + 1).trim();
+    }
+  }
+  return dict;
+}
+
+// Python _get_sec_headers 的精确复制（不含 cookie，不含 x-b3-traceid）
+function getSecHeaders(signObj: XhsSignature): Record<string, string> {
+  return {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "zh-CN,zh;q=0.9",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "origin": "https://www.xiaohongshu.com",
+    "referer": "https://www.xiaohongshu.com/",
+    "x-s": signObj.xs,
+    "x-t": signObj.xt,
+    "x-s-common": signObj.xs_common,
+  };
+}
+
+// Python get_request_headers_template + generate_headers 的精确复制
+function getLoginHeaders(signObj: XhsSignature): Record<string, string> {
+  return {
+    "authority": "edith.xiaohongshu.com",
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+    "cache-control": "no-cache",
+    "content-type": "application/json;charset=UTF-8",
+    "origin": "https://www.xiaohongshu.com",
+    "pragma": "no-cache",
+    "referer": "https://www.xiaohongshu.com/",
+    "sec-ch-ua": '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0",
+    "x-b3-traceid": generateXB3TraceId(),
+    "x-mns": "unload",
+    "x-s": signObj.xs,
+    "x-s-common": signObj.xs_common,
+    "x-t": signObj.xt,
+    "x-xray-traceid": generateXB3TraceId(32),
+  };
+}
+
+// sec POST 请求（471 不抛异常，外层 try-catch 处理）
+async function secPost(url: string, headers: Record<string, string>, cookieDict: Record<string, string>, bodyStr: string) {
+  return secHttp.post(url, Buffer.from(bodyStr, "utf-8"), {
+    headers: { ...headers, Cookie: cookieDictToStr(cookieDict) },
+  });
+}
+
+// login POST 请求（471 直接抛异常并带上详细信息）
+async function loginPost(url: string, headers: Record<string, string>, cookieDict: Record<string, string>, bodyStr: string) {
+  try {
+    return await loginHttp.post(url, Buffer.from(bodyStr, "utf-8"), {
+      headers: { ...headers, Cookie: cookieDictToStr(cookieDict) },
+    });
+  } catch (e: any) {
+    const status = e.response?.status;
+    const msg = e.response?.data?.msg || e.message;
+    throw new Error(`请求失败(${status || 'network'}): ${msg}`);
+  }
+}
+
+// login GET 请求
+async function loginGet(url: string, headers: Record<string, string>, cookieDict: Record<string, string>) {
+  try {
+    return await loginHttp.get(url, {
+      headers: { ...headers, Cookie: cookieDictToStr(cookieDict) },
+    });
+  } catch (e: any) {
+    const status = e.response?.status;
+    const msg = e.response?.data?.msg || e.message;
+    throw new Error(`请求失败(${status || 'network'}): ${msg}`);
+  }
+}
+
+async function generateInitCookies(): Promise<Record<string, string>> {
+  const a1 = generateA1();
+  const webId = generateWebId(a1);
+  const ts = Date.now();
+  const cookieDict: Record<string, string> = {
+    abRequestId: crypto.randomUUID(),
+    ets: String(ts),
+    webBuild: "6.7.4",
+    xsecappid: "xhs-pc-web",
+    loadts: String(ts + Math.floor(Math.random() * 150 + 50)),
+    a1: a1,
+    webId: webId,
+  };
+
+  const cookieStr = cookieDictToStr(cookieDict);
+
+  // 1. fetch sec_poison_id
+  try {
+    const secApi = "/api/sec/v1/scripting";
+    const secData = { callFrom: "web", callback: "", type: "ds", appId: "xhs-pc-web" };
+    const bodyStr = JSON.stringify(secData);
+    const secSign = await getXhsSignature(secApi, secData, cookieStr);
+    const headers = getSecHeaders(secSign);
+    const resp = await secPost("https://as.xiaohongshu.com" + secApi, headers, cookieDict, bodyStr);
+    const secPoisonId = resp?.data?.data?.secPoisonId;
+    if (secPoisonId) {
+      cookieDict["sec_poison_id"] = secPoisonId;
+    }
+  } catch (e) {
+    console.log("[xhs-login] Failed to fetch secPoisonId", e);
+  }
+
+  // 2. fetch gid
+  try {
+    const gidApi = "/api/sec/v1/shield/webprofile";
+    const gidData = { platform: "Windows", sdkVersion: "4.3.5", svn: "2", profileData: "" };
+    const bodyStr = JSON.stringify(gidData);
+    const gidSign = await getXhsSignature(gidApi, gidData, cookieDictToStr(cookieDict));
+    const headers = getSecHeaders(gidSign);
+    const resp = await secPost("https://as.xiaohongshu.com" + gidApi, headers, cookieDict, bodyStr);
+    mergeSetCookieToDict(cookieDict, resp?.headers?.["set-cookie"]);
+  } catch (e) {
+    console.log("[xhs-login] Failed to fetch gid", e);
+  }
+
+  return cookieDict;
+}
+
+export const getXhsLoginQrCode = async () => {
+  const cookieDict = await generateInitCookies();
+  const cookieStr = cookieDictToStr(cookieDict);
+
+  const apiPath = "/api/sns/web/v1/login/qrcode/create";
+  const body = { qr_type: 1 };
+  const bodyStr = JSON.stringify(body);
+
+  const signObj = await getXhsSignature(apiPath, body, cookieStr);
+  const headers = getLoginHeaders(signObj);
+
+  const resp = await loginPost("https://edith.xiaohongshu.com" + apiPath, headers, cookieDict, bodyStr);
+  mergeSetCookieToDict(cookieDict, resp?.headers?.["set-cookie"]);
+
+  const data = resp?.data;
+  if (!data || !data.success) {
+    throw new Error(data?.msg || "获取二维码失败");
+  }
+
+  return {
+    qr_id: data.data.qr_id,
+    code: data.data.code,
+    url: data.data.url,
+    cookies: cookieDictToStr(cookieDict),
+  };
+};
+
+export const checkXhsQrCodeStatus = async (qr_id: string, code: string, cookies: string) => {
+  const cookieDict = cookieStrToDict(cookies);
+
+  // Step 1: POST /api/qrcode/userinfo (与 Python check_qrcode_status 一致)
+  const apiPath = "/api/qrcode/userinfo";
+  const body = { qrId: qr_id, code: code };
+  const bodyStr = JSON.stringify(body);
+
+  const signObj = await getXhsSignature(apiPath, body, cookies);
+  const headers = getLoginHeaders(signObj);
+
+  const resp = await loginPost("https://edith.xiaohongshu.com" + apiPath, headers, cookieDict, bodyStr);
+  mergeSetCookieToDict(cookieDict, resp?.headers?.["set-cookie"]);
+
+  const codeStatus = resp?.data?.data?.codeStatus;
+
+  // Step 2: if status == 2, GET /api/sns/web/v1/login/qrcode/status (与 Python _login_by_qrcode_status 一致)
+  if (codeStatus === 2) {
+    const statusApi = "/api/sns/web/v1/login/qrcode/status";
+    const params = { qr_id, code };
+    const spliceApi = statusApi + "?" + Object.entries(params).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+
+    const statusSign = await getXhsSignature(spliceApi, "", cookieDictToStr(cookieDict), "GET");
+    const statusHeaders = getLoginHeaders(statusSign);
+
+    const statusResp = await loginGet("https://edith.xiaohongshu.com" + spliceApi, statusHeaders, cookieDict);
+    mergeSetCookieToDict(cookieDict, statusResp?.headers?.["set-cookie"]);
+
+    const loginInfo = statusResp?.data?.data?.login_info;
+    if (loginInfo?.session && !cookieDict["web_session"]) {
+      cookieDict["web_session"] = loginInfo.session;
+    }
+
+    return { status: 2, cookies: cookieDictToStr(cookieDict) };
+  }
+
+  return { status: codeStatus, cookies: cookieDictToStr(cookieDict) };
+};
+
+export const sendXhsPhoneCode = async (phone: string) => {
+  const cookieDict = await generateInitCookies();
+  const cookieStr = cookieDictToStr(cookieDict);
+
+  const apiPath = "/api/sns/web/v2/login/send_code";
+  const params = { phone, zone: "86", type: "login" };
+  const spliceApi = apiPath + "?" + Object.entries(params).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+
+  const signObj = await getXhsSignature(spliceApi, "", cookieStr, "GET");
+  const headers = getLoginHeaders(signObj);
+
+  const resp = await loginGet("https://edith.xiaohongshu.com" + spliceApi, headers, cookieDict);
+  const data = resp?.data;
+  console.log("[xhs-login] send_code response:", JSON.stringify(data));
+  // XHS API 可能返回 {success: true} 或 {code: 0}
+  const isOk = data?.success === true || data?.code === 0;
+  if (!data || !isOk) {
+    throw new Error(data?.msg || `发送验证码失败(${JSON.stringify(data)})`);
+  }
+
+  return { cookies: cookieDictToStr(cookieDict), success: true };
+};
+
+export const loginXhsByPhone = async (phone: string, code: string, cookies: string) => {
+  const cookieDict = cookieStrToDict(cookies);
+
+  // 1. check_code
+  const checkApi = "/api/sns/web/v1/login/check_code";
+  const checkParams = { phone, zone: "86", code };
+  const checkSplice = checkApi + "?" + Object.entries(checkParams).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+
+  const checkSign = await getXhsSignature(checkSplice, "", cookies, "GET");
+  const checkHeaders = getLoginHeaders(checkSign);
+
+  const checkResp = await loginGet("https://edith.xiaohongshu.com" + checkSplice, checkHeaders, cookieDict);
+  const checkData = checkResp?.data;
+  if (!checkData || !checkData.success) {
+    throw new Error(checkData?.msg || "验证码校验失败");
+  }
+
+  const mobileToken = checkData.data?.mobile_token;
+  if (!mobileToken) {
+    throw new Error("验证成功但未获取到 mobile_token");
+  }
+
+  // 2. login by code
+  const loginApi = "/api/sns/web/v2/login/code";
+  const loginBody = { mobile_token: mobileToken, zone: "86", phone };
+  const loginBodyStr = JSON.stringify(loginBody);
+
+  const loginSign = await getXhsSignature(loginApi, loginBody, cookieDictToStr(cookieDict));
+  const loginHeaders = getLoginHeaders(loginSign);
+
+  const loginResp = await loginPost("https://edith.xiaohongshu.com" + loginApi, loginHeaders, cookieDict, loginBodyStr);
+  mergeSetCookieToDict(cookieDict, loginResp?.headers?.["set-cookie"]);
+
+  const loginData = loginResp?.data;
+  if (!loginData || !loginData.success) {
+    throw new Error(loginData?.msg || "手机号登录失败");
+  }
+
+  const session = loginData.data?.session;
+  if (!session) {
+    throw new Error("登录成功但未获取到 session");
+  }
+
+  cookieDict["web_session"] = session;
+  return { cookies: cookieDictToStr(cookieDict) };
+};
+
 
 /**
  * 发布小红书图片笔记

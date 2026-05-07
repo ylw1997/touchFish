@@ -602,6 +602,16 @@
 				"icon": "$(settings-gear)"
 			},
 			{
+				"command": "touchfish.loginXhsQrCode",
+				"title": "小红书扫码登录",
+				"icon": "$(device-camera)"
+			},
+			{
+				"command": "touchfish.loginXhsPhone",
+				"title": "小红书手机号登录",
+				"icon": "$(device-mobile)"
+			},
+			{
 				"command": "touchfish.setBilibiliToken",
 				"title": "设置B站Cookie",
 				"icon": "$(settings-gear)"
@@ -758,6 +768,16 @@
 				},
 				{
 					"command": "touchfish.setXhsToken",
+					"when": "view == xhs",
+					"group": "navigation"
+				},
+				{
+					"command": "touchfish.loginXhsQrCode",
+					"when": "view == xhs",
+					"group": "navigation"
+				},
+				{
+					"command": "touchfish.loginXhsPhone",
 					"when": "view == xhs",
 					"group": "navigation"
 				},

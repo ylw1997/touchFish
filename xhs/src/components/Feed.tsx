@@ -117,6 +117,9 @@ export default function Feed() {
       if (ev.data.command === "XHS_IMG_TOGGLED") {
         setShowImg(!!ev.data.payload);
       }
+      if (ev.data.command === "XHS_FORCE_REFRESH") {
+        refresh();
+      }
     };
 
     scrollableNode.addEventListener("scroll", handleScroll);
