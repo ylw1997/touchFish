@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  touchfish-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: touchfish-server
+    ports:
+      - "${PORT:-3210}:3210"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3210
+      - HOST=0.0.0.0
+      - CONFIG_PATH=/app/data/config.json
+    volumes:
+      # 持久化配置数据
+      - touchfish-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3210/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  touchfish-data:

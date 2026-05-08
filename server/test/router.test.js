@@ -46,6 +46,19 @@ test("GET /api/catalog exposes platforms and endpoints for the web console", asy
   assert.ok(body.endpoints.some((endpoint) => endpoint.path === "/api/ithome/news"));
 });
 
+test("GET /api/catalog does not expose mojibake display names", async () => {
+  const app = createApp();
+  const mojibakePattern = /[�]|[绯荤粺鏈嶅姟鐘舵€佹帴鍙ｇ洰褰曟湰鍦伴厤缃鐭ヤ箮寰崥绔灏忓畤瀹堕棶闂傤噣顣閻閸鐠鐑鎺ㄨ崘鍏虫敞鍥炵瓟瀛愯瘎鎼滅储姒滃崟鍗曢泦璇︽儏]/;
+
+  const { body } = await request(app, "/api/catalog");
+  const displayValues = [
+    ...body.platforms.flatMap((platform) => [platform.name, platform.description]),
+    ...body.endpoints.map((endpoint) => endpoint.name),
+  ];
+
+  assert.deepEqual(displayValues.filter((value) => mojibakePattern.test(value)), []);
+});
+
 test("GET /api/ithome/news proxies upstream data", async () => {
   const app = createApp({
     fetch: async (url) => {
@@ -77,6 +90,75 @@ test("registered endpoints are routable instead of falling through to 404", asyn
   assert.equal(response.status, 200);
   assert.equal(body.status, 200);
   assert.deepEqual(body.data, { ok: true });
+});
+
+test("HTML news endpoints return structured JSON data", async () => {
+  const app = createApp({
+    fetch: async () =>
+      new Response(
+        '<table id="threadlisttableid"><a class="s xst" href="thread-123-1-1.html">Hello Chiphell</a></table>',
+        {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        },
+      ),
+  });
+
+  const { response, body } = await request(app, "/api/chiphell/list");
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.data.items, [
+    { title: "Hello Chiphell", url: "https://www.chiphell.com/thread-123-1-1.html" },
+  ]);
+});
+
+test("QQMusic rank list is backed by musicu.fcg instead of placeholder", async () => {
+  const app = createApp({
+    fetch: async (url, options) => {
+      assert.equal(url, "https://u.y.qq.com/cgi-bin/musicu.fcg");
+      assert.equal(options.method, "POST");
+      const body = JSON.parse(options.body);
+      assert.ok(body["music.musicToplist.Toplist.GetAll"]);
+      return new Response(
+        JSON.stringify({
+          code: 0,
+          "music.musicToplist.Toplist.GetAll": {
+            data: {
+              group: [
+                {
+                  toplist: [
+                    {
+                      topId: 62,
+                      title: "飙升榜",
+                      titleShare: "QQ音乐飙升榜",
+                      headPicUrl: "https://example.com/rank.jpg",
+                      update_key: "2026-05-08",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    },
+  });
+
+  const { response, body } = await request(app, "/api/qqmusic/rank-lists");
+
+  assert.equal(response.status, 200);
+  assert.equal(body.status, 200);
+  assert.deepEqual(body.data.items, [
+    {
+      id: 62,
+      topId: 62,
+      title: "飙升榜",
+      subtitle: "QQ音乐飙升榜",
+      picUrl: "https://example.com/rank.jpg",
+      update_key: "2026-05-08",
+    },
+  ]);
 });
 
 test("unknown routes return a JSON 404", async () => {

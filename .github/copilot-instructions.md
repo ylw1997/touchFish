@@ -1,4 +1,18 @@
 ## TouchFish 协作速记
+
+### Superpowers 技能引用
+
+本项目的开发遵循以下 superpowers 技能：
+
+- **brainstorming** - 在需要探索多个方案或进行技术选型时使用
+- **test-driven-development** - 编写新功能时优先写测试
+- **systematic-debugging** - 遇到复杂 bug 时系统性地排查
+- **executing-plans** - 执行多步骤任务时制定计划
+- **verification-before-completion** - 完成任务前进行验证
+
+---
+
+## TouchFish 协作速记
 - **扩展入口**：`src/extension.ts` 负责注册所有新闻树视图与微博/知乎 Webview，新增 Provider 后要同步更新 `package.json` 的 `views`/`commands` 声明。
 - **新闻管线**：树数据显示由 `src/core/baseNewsProvider.ts` 调度，统一调用 `fetchNewsList`、生成 md5 唯一 ID，并通过 `ReadState` 保持已读状态。
 - **详情命令**：`src/commands/openUrl.ts` 使用 `registerArticleCommand` 创建 Webview；调用方必须把第三个参数(id)传回，以便 `BaseNewsProvider.markReadGlobally` 局部刷新图标。

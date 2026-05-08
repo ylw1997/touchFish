@@ -6,7 +6,7 @@ const cachePath = process.env.TOUCHFISH_HEALTH_REPORT_PATH || path.join(__dirnam
 
 function readCachedReport() {
   if (!fs.existsSync(cachePath)) {
-    return { generatedAt: null, items: [] };
+    return { generatedAt: null, summary: null, items: [] };
   }
   return JSON.parse(fs.readFileSync(cachePath, "utf8").replace(/^\uFEFF/, ""));
 }
@@ -24,6 +24,25 @@ function buildProbeUrl(endpoint) {
     url.searchParams.set(param.name, param.example);
   }
   return url;
+}
+
+function summarize(items) {
+  return items.reduce(
+    (acc, item) => {
+      acc.total += 1;
+      acc[item.status] = (acc[item.status] || 0) + 1;
+      return acc;
+    },
+    { total: 0, passed: 0, failed: 0, skipped: 0, not_implemented: 0 },
+  );
+}
+
+function mergeReportItems(previousItems, selectedIds, nextItems) {
+  if (!selectedIds?.length) return nextItems;
+  const selected = new Set(selectedIds);
+  return (previousItems || [])
+    .filter((item) => !selected.has(item.id))
+    .concat(nextItems);
 }
 
 function classifyResult(result, elapsedMs) {
@@ -93,15 +112,9 @@ async function runHealthReport({ endpointIds, fetchImpl, configStore }) {
     }
   }
 
-  const summary = items.reduce(
-    (acc, item) => {
-      acc.total += 1;
-      acc[item.status] = (acc[item.status] || 0) + 1;
-      return acc;
-    },
-    { total: 0, passed: 0, failed: 0, skipped: 0, not_implemented: 0 },
-  );
-  const report = { generatedAt: new Date().toISOString(), summary, items };
+  const previous = readCachedReport();
+  const reportItems = mergeReportItems(previous.items, endpointIds, items);
+  const report = { generatedAt: new Date().toISOString(), summary: summarize(reportItems), items: reportItems };
   writeCachedReport(report);
   return report;
 }

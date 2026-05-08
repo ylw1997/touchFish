@@ -7,6 +7,7 @@ const {
   getZhihuSignature,
 } = require("../src/signers");
 const { buildXiaoyuzhouHeaders, extractXiaoyuzhouAuth } = require("../src/xiaoyuzhouCore");
+const { sign } = require("../src/qqmusicCore");
 
 test("zhihu signer returns an x-zse-96 value", async () => {
   const signature = await getZhihuSignature("101_3_3.0+/api/test+d_c0");
@@ -55,4 +56,12 @@ test("xiaoyuzhou headers and auth extraction work", () => {
     }),
     { accessToken: "new-access", refreshToken: "new-refresh" },
   );
+});
+
+test("qqmusic signer returns a stable musicu signature", () => {
+  const payload = { comm: { tmeAppID: "qqmusic" }, req: { module: "x", method: "y", param: {} } };
+  const value = sign(payload);
+
+  assert.match(value, /^zzc[a-z0-9]+$/);
+  assert.equal(value, sign(payload));
 });

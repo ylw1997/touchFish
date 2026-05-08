@@ -1,5 +1,17 @@
 const { commonHeaders, fetchJson } = require("./upstream");
 const {
+  parseChiphellDetail,
+  parseChiphellList,
+  parseHupuDetail,
+  parseHupuList,
+  parseLinuxDoDetail,
+  parseLinuxDoList,
+  parseNgaDetail,
+  parseNgaList,
+  parseV2exDetail,
+  parseV2exList,
+} = require("./newsParsers");
+const {
   buildXCredential,
   buildXHeaders,
   getXTransactionId,
@@ -12,6 +24,7 @@ const {
   getDeviceId,
   nowIsoWithTimezone,
 } = require("./xiaoyuzhouCore");
+const qqmusic = require("./qqmusicCore");
 
 const platforms = [
   { id: "system", name: "系统", description: "服务状态、接口目录、本地配置。" },
@@ -61,7 +74,7 @@ function userIdFromCookie(value) {
   return value.match(/DedeUserID=(\d+)/)?.[1] || "";
 }
 
-function csrfFromCookie(value) {
+function _csrfFromCookie(value) {
   return value.match(/bili_jct=([^;]+)/)?.[1] || "";
 }
 
@@ -211,29 +224,540 @@ function jsonHandler(build) {
   };
 }
 
+async function fetchTextResult(fetchImpl, target, options = {}, encoding = "utf-8") {
+  const response = await fetchImpl(target, options);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const text = new TextDecoder(encoding).decode(buffer);
+  return { response, text };
+}
+
+function parsedHtmlHandler(build, parse, options = {}) {
+  return async (ctx) => {
+    const request = await build(ctx);
+    const { response, text } = await fetchTextResult(
+      ctx.fetchImpl,
+      request.url,
+      {
+        method: request.method || "GET",
+        headers: request.headers,
+        body: request.body,
+      },
+      options.encoding || "utf-8",
+    );
+    return {
+      ok: response.ok,
+      status: response.status,
+      url: request.url,
+      data: parse(text, ctx),
+    };
+  };
+}
+
+function parsedJsonHandler(build, parse) {
+  return async (ctx) => {
+    const result = await jsonHandler(build)(ctx);
+    return {
+      ...result,
+      data: parse(result.data, ctx),
+    };
+  };
+}
+
 function notPorted(reason) {
   return async () => ({
     ok: false,
     status: 501,
     data: {
       message: reason,
-      next: "需要把原扩展里的签名/上传/浏览器态逻辑抽到 server core 后再启用。",
+      next: "需要把原扩展里的签名、上传或浏览器态逻辑抽到 server core 后再启用。",
     },
   });
 }
 
-function qqCommon(keywordParams = {}) {
-  return {
-    cv: 13020508,
-    v: 13020508,
-    ct: "11",
-    tmeAppID: "qqmusic",
-    format: "json",
-    inCharset: "utf-8",
-    outCharset: "utf-8",
-    uid: "0",
-    ...keywordParams,
-  };
+function qqmusicEndpoints() {
+  const musicuEndpoint = ({ id, name, path, params = [], build, parse, method = "GET" }) =>
+    endpoint({
+      id,
+      platformId: "qqmusic",
+      name,
+      method,
+      path,
+      params,
+      handler: async (ctx) => {
+        const result = await qqmusic.musicu(ctx, build(ctx));
+        return { ...result, data: parse ? parse(result.data, ctx) : result.data };
+      },
+    });
+
+  return [
+    ...[
+      ["qqmusic-search-songs", "search-songs", "/api/qqmusic/search", ({ url }) => `https://c.y.qq.com/soso/fcgi-bin/client_search_cp?p=${getQuery(url, "page", "1")}&n=${getQuery(url, "num", "20")}&w=${encodeURIComponent(requireQuery(url, "keyword"))}`, [p("keyword", true, "周杰伦"), p("page", false, "1"), p("num", false, "20")]],
+      ["qqmusic-search-singers", "search-singers", "/api/qqmusic/search-singers", ({ url }) => `https://c.y.qq.com/soso/fcgi-bin/client_search_cp?p=${getQuery(url, "page", "1")}&n=${getQuery(url, "num", "20")}&w=${encodeURIComponent(requireQuery(url, "keyword"))}&type=singer`, [p("keyword", true, "周杰伦")]],
+      ["qqmusic-lyric", "lyric", "/api/qqmusic/lyric", ({ url }) => `https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?songmid=${requireQuery(url, "mid")}&format=json&nobase64=1`, [p("mid", true, "0039MnYb0qxYhV")]],
+    ].map(([id, name, path, buildUrl, params]) =>
+      endpoint({
+        id,
+        platformId: "qqmusic",
+        name,
+        path,
+        params,
+        handler: jsonHandler(({ url }) => ({ url: buildUrl({ url }), headers: commonHeaders("", { referer: "https://y.qq.com/" }) })),
+      }),
+    ),
+    endpoint({
+      id: "qqmusic-rank-lists",
+      platformId: "qqmusic",
+      name: "rank-lists",
+      path: "/api/qqmusic/rank-lists",
+      handler: async (ctx) => {
+        const result = await qqmusic.musicu(ctx, {
+          "music.musicToplist.Toplist.GetAll": {
+            module: "music.musicToplist.Toplist",
+            method: "GetAll",
+            param: {},
+          },
+        });
+        const groups = result.data?.["music.musicToplist.Toplist.GetAll"]?.data?.group || [];
+        const topList = groups.flatMap((group) => group.toplist || []);
+        return {
+          ...result,
+          data: {
+            items: topList.map((item) => ({
+              id: item.topId,
+              topId: item.topId,
+              title: item.title,
+              subtitle: item.titleShare || item.titleDetail,
+              picUrl: item.headPicUrl || item.frontPicUrl,
+              update_key: item.update_key,
+            })),
+          },
+        };
+      },
+    }),
+    endpoint({
+      id: "qqmusic-rank-detail",
+      platformId: "qqmusic",
+      name: "rank-detail",
+      path: "/api/qqmusic/rank-detail",
+      params: [p("topId", true, "62"), p("page", false, "1"), p("num", false, "30")],
+      handler: async (ctx) => {
+        const page = Number(getQuery(ctx.url, "page", "1")) || 1;
+        const num = Number(getQuery(ctx.url, "num", "30")) || 30;
+        const topId = Number(requireQuery(ctx.url, "topId"));
+        const result = await qqmusic.musicu(ctx, {
+          "music.musicToplist.Toplist.GetDetail": {
+            module: "music.musicToplist.Toplist",
+            method: "GetDetail",
+            param: { topId, offset: num * (page - 1), num, withTags: false },
+          },
+        });
+        const rawData = result.data?.["music.musicToplist.Toplist.GetDetail"]?.data || {};
+        const resData = rawData.data || rawData;
+        return {
+          ...result,
+          data: {
+            rankInfo: {
+              id: resData.topId || topId,
+              topId: resData.topId || topId,
+              title: resData.title || "unknown",
+              subtitle: resData.titleShare || resData.titleDetail,
+              picUrl: resData.headPicUrl || resData.frontPicUrl,
+              update_key: resData.update_key,
+            },
+            songs: (rawData.songInfoList || resData.songInfoList || resData.song || []).map(qqmusic.song),
+          },
+        };
+      },
+    }),
+    endpoint({
+      id: "qqmusic-song-url",
+      platformId: "qqmusic",
+      name: "song-url",
+      path: "/api/qqmusic/song-url",
+      params: [p("mid", true, "0039MnYb0qxYhV"), p("quality", false, "128")],
+      handler: async (ctx) => {
+        const mid = requireQuery(ctx.url, "mid");
+        const quality = Number(getQuery(ctx.url, "quality", "128"));
+        const fileType = quality === 999 ? "F000" : quality === 320 ? "M800" : "M500";
+        const extension = quality === 999 ? ".flac" : ".mp3";
+        const filename = `${fileType}${mid}${mid}${extension}`;
+        const result = await qqmusic.musicu(
+          ctx,
+          {
+            "music.vkey.GetVkey.UrlGetVkey": {
+              method: "UrlGetVkey",
+              module: "music.vkey.GetVkey",
+              param: { filename: [filename], guid: qqmusic.guid(), songmid: [mid], songtype: [0] },
+            },
+          },
+          { comm: { ct: "19" } },
+        );
+        const urlInfo = result.data?.["music.vkey.GetVkey.UrlGetVkey"]?.data?.midurlinfo?.[0];
+        return { ...result, data: { url: urlInfo?.purl ? `https://isure.stream.qqmusic.qq.com/${urlInfo.purl}` : "", raw: urlInfo || null } };
+      },
+    }),
+    musicuEndpoint({
+      id: "qqmusic-song-detail",
+      name: "song-detail",
+      path: "/api/qqmusic/song-detail",
+      params: [p("mid", true, "0039MnYb0qxYhV")],
+      build: (ctx) => ({
+        "music.pf_song_detail_svr": {
+          method: "get_song_detail_yqq",
+          module: "music.pf_song_detail_svr",
+          param: { song_mid: requireQuery(ctx.url, "mid") },
+        },
+      }),
+      parse: (data) => qqmusic.song(data?.["music.pf_song_detail_svr"]?.data?.track_info || {}),
+    }),
+    musicuEndpoint({
+      id: "qqmusic-recommend-playlists",
+      name: "recommend-playlists",
+      path: "/api/qqmusic/recommend-playlists",
+      params: [p("num", false, "10")],
+      build: (ctx) => ({
+        "music.playlist.PlaylistSquare.GetRecommendFeed": {
+          module: "music.playlist.PlaylistSquare",
+          method: "GetRecommendFeed",
+          param: { From: 0, Size: Number(getQuery(ctx.url, "num", "10")) || 10 },
+        },
+      }),
+      parse: (data) => ({
+        items: (data?.["music.playlist.PlaylistSquare.GetRecommendFeed"]?.data?.List || []).map((item) =>
+          qqmusic.playlist(item.Playlist?.basic || {}),
+        ),
+      }),
+    }),
+    endpoint({
+      id: "qqmusic-playlist-detail",
+      platformId: "qqmusic",
+      name: "playlist-detail",
+      path: "/api/qqmusic/playlist-detail",
+      params: [p("dissid", true, "1"), p("page", false, "1"), p("num", false, "30")],
+      handler: async (ctx) => {
+        const page = Number(getQuery(ctx.url, "page", "1")) || 1;
+        const num = Number(getQuery(ctx.url, "num", "30")) || 30;
+        const dissid = Number(requireQuery(ctx.url, "dissid"));
+        const result = await qqmusic.musicu(ctx, {
+          "music.srfDissInfo.DissInfo": {
+            method: "CgiGetDiss",
+            module: "music.srfDissInfo.DissInfo",
+            param: { disstid: dissid, dirid: 0, tag: true, song_begin: (page - 1) * num, song_num: num, userinfo: true, orderlist: true, onlysonglist: false },
+          },
+        });
+        const data = result.data?.["music.srfDissInfo.DissInfo"]?.data || {};
+        return {
+          ...result,
+          data: {
+            playlist: qqmusic.playlist({ id: data.dirinfo?.id || dissid, title: data.dirinfo?.title, picurl: data.dirinfo?.picurl, nick: data.dirinfo?.creator?.nick, songnum: data.total_song_num }),
+            songs: (data.songlist || []).map(qqmusic.song),
+          },
+        };
+      },
+    }),
+    endpoint({
+      id: "qqmusic-user-info",
+      platformId: "qqmusic",
+      name: "user-info",
+      path: "/api/qqmusic/user-info",
+      handler: async (ctx) => {
+        const credential = qqmusic.requireCredential(ctx);
+        const result = await qqmusic.musicu(ctx, {
+          "music.UserInfo.userInfoServer": {
+            method: "GetLoginUserInfo",
+            module: "music.UserInfo.userInfoServer",
+            param: {},
+          },
+        });
+        const info = result.data?.["music.UserInfo.userInfoServer"]?.data?.info || {};
+        return { ...result, data: { musicid: credential.musicid, nickname: info.nick || "", avatar: info.logo || "" } };
+      },
+    }),
+    endpoint({
+      id: "qqmusic-my-favorite",
+      platformId: "qqmusic",
+      name: "my-favorite",
+      path: "/api/qqmusic/my-favorite",
+      params: [p("page", false, "1"), p("num", false, "30")],
+      handler: async (ctx) => {
+        const credential = qqmusic.requireCredential(ctx);
+        const page = Number(getQuery(ctx.url, "page", "1")) || 1;
+        const num = Number(getQuery(ctx.url, "num", "30")) || 30;
+        const euin = await qqmusic.getEuin(ctx, credential.musicid);
+        const result = await qqmusic.musicu(ctx, {
+          "music.srfDissInfo.DissInfo": {
+            method: "CgiGetDiss",
+            module: "music.srfDissInfo.DissInfo",
+            param: { disstid: 0, dirid: 201, tag: true, song_begin: (page - 1) * num, song_num: num, userinfo: true, orderlist: true, enc_host_uin: euin },
+          },
+        });
+        const data = result.data?.["music.srfDissInfo.DissInfo"]?.data || {};
+        return { ...result, data: { songs: (data.songlist || []).map(qqmusic.song), total: data.total_song_num || 0 } };
+      },
+    }),
+    endpoint({
+      id: "qqmusic-my-playlists",
+      platformId: "qqmusic",
+      name: "my-playlists",
+      path: "/api/qqmusic/my-playlists",
+      handler: async (ctx) => {
+        const credential = qqmusic.requireCredential(ctx);
+        const result = await qqmusic.musicu(ctx, {
+          "music.musicasset.PlaylistBaseRead": {
+            method: "GetPlaylistByUin",
+            module: "music.musicasset.PlaylistBaseRead",
+            param: { uin: credential.musicid },
+          },
+        });
+        return { ...result, data: { items: (result.data?.["music.musicasset.PlaylistBaseRead"]?.data?.v_playlist || []).map(qqmusic.playlist) } };
+      },
+    }),
+    musicuEndpoint({
+      id: "qqmusic-radar-recommend",
+      name: "radar-recommend",
+      path: "/api/qqmusic/radar-recommend",
+      build: () => ({
+        "music.recommend.TrackRelationServer": {
+          method: "GetRadarSong",
+          module: "music.recommend.TrackRelationServer",
+          param: { Page: 1, ReqType: 0, FavSongs: [], EntranceSongs: [] },
+        },
+      }),
+      parse: (data) => data?.["music.recommend.TrackRelationServer"]?.data || null,
+    }),
+    musicuEndpoint({
+      id: "qqmusic-guess-recommend",
+      name: "guess-recommend",
+      path: "/api/qqmusic/guess-recommend",
+      build: () => ({
+        "music.radioProxy.MbTrackRadioSvr": {
+          method: "get_radio_track",
+          module: "music.radioProxy.MbTrackRadioSvr",
+          param: { id: 99, num: 5, from: 0, scene: 0, song_ids: [], ext: { bluetooth: "" }, should_count_down: 1 },
+        },
+      }),
+      parse: (data) => data?.["music.radioProxy.MbTrackRadioSvr"]?.data || null,
+    }),
+    musicuEndpoint({
+      id: "qqmusic-singer-info",
+      name: "singer-info",
+      path: "/api/qqmusic/singer-info",
+      params: [p("mid", true, "0025NhlN2yWrP4")],
+      build: (ctx) => ({
+        "music.UnifiedHomepage.UnifiedHomepageSrv": {
+          method: "GetHomepageHeader",
+          module: "music.UnifiedHomepage.UnifiedHomepageSrv",
+          param: { SingerMid: requireQuery(ctx.url, "mid") },
+        },
+      }),
+      parse: (data) => data?.["music.UnifiedHomepage.UnifiedHomepageSrv"]?.data || {},
+    }),
+    musicuEndpoint({
+      id: "qqmusic-singer-songs",
+      name: "singer-songs",
+      path: "/api/qqmusic/singer-songs",
+      params: [p("mid", true, "0025NhlN2yWrP4"), p("page", false, "1"), p("num", false, "20")],
+      build: (ctx) => {
+        const page = Number(getQuery(ctx.url, "page", "1")) || 1;
+        const num = Number(getQuery(ctx.url, "num", "20")) || 20;
+        return {
+          "musichall.song_list_server": {
+            method: "GetSingerSongList",
+            module: "musichall.song_list_server",
+            param: { singerMid: requireQuery(ctx.url, "mid"), order: 1, number: num, begin: (page - 1) * num },
+          },
+        };
+      },
+      parse: (data) => ({ items: (data?.["musichall.song_list_server"]?.data?.songList || []).map((item) => qqmusic.song(item.songInfo || item)) }),
+    }),
+    ...[
+      ["add-songs", "AddSonglist"],
+      ["remove-songs", "DelSonglist"],
+    ].map(([route, method]) =>
+      endpoint({
+        id: `qqmusic-${route}`,
+        platformId: "qqmusic",
+        name: route,
+        method: "POST",
+        path: `/api/qqmusic/${route}`,
+        params: [p("payload", false, "{\"dirid\":201,\"songIds\":[1]}")],
+        handler: async (ctx) => {
+          qqmusic.requireCredential(ctx);
+          const payload = parseJson(ctx.body || "{}");
+          const result = await qqmusic.musicu(ctx, {
+            "music.musicasset.PlaylistDetailWrite": {
+              method,
+              module: "music.musicasset.PlaylistDetailWrite",
+              param: {
+                dirId: Number(payload.dirid || payload.dirId || 201),
+                v_songInfo: (payload.songIds || []).map((id) => ({ songType: 0, songId: Number(id) })),
+              },
+            },
+          });
+          const data = result.data?.["music.musicasset.PlaylistDetailWrite"]?.data || {};
+          return { ...result, data: { ok: !!data.result?.updateTime, raw: data } };
+        },
+      }),
+    ),
+    ...[
+      ["qq-login-qr", "QQ login QR needs browser session storage."],
+      ["wx-login-qr", "WX login QR needs browser session storage."],
+      ["check-login", "Login polling needs browser session storage."],
+    ].map(([route, reason]) =>
+      endpoint({ id: `qqmusic-${route}`, platformId: "qqmusic", name: route, path: `/api/qqmusic/${route}`, handler: notPorted(reason) }),
+    ),
+  ];
+}
+
+const endpointNameOverrides = {
+  "chiphell-list": "列表",
+  "chiphell-detail": "详情",
+  "v2ex-list": "列表",
+  "v2ex-detail": "详情",
+  "hupu-list": "列表",
+  "hupu-detail": "详情",
+  "nga-list": "列表",
+  "nga-detail": "详情",
+  "linuxdo-list": "列表",
+  "linuxdo-detail": "详情",
+  "zhihu-hot": "热榜",
+  "zhihu-question-page": "问题页面",
+  "zhihu-recommend-live": "推荐流",
+  "zhihu-follow-live": "关注流",
+  "zhihu-comments-live": "回答评论",
+  "zhihu-child-comments-live": "子评论",
+  "zhihu-question-feeds-live": "问题回答",
+  "zhihu-search-live": "搜索",
+  "zhihu-hot-questions-live": "热门问题",
+  "zhihu-recommend": "推荐流",
+  "zhihu-follow": "关注流",
+  "zhihu-question-feeds": "问题回答",
+  "zhihu-comments": "回答评论",
+  "zhihu-child-comments": "子评论",
+  "zhihu-search": "搜索",
+  "zhihu-vote": "回答投票",
+  "zhihu-follow-question": "关注问题",
+  "zhihu-unfollow-question": "取消关注问题",
+  "zhihu-hot-questions": "热门问题",
+  "zhihu-read-items": "上报已读",
+  "weibo-feed": "feed",
+  "weibo-comment": "评论",
+  "weibo-longtext": "长微博",
+  "weibo-user": "用户微博",
+  "weibo-user-by-name": "用户搜索",
+  "weibo-hot-search": "热搜",
+  "weibo-search": "微博搜索",
+  "weibo-follow": "关注用户",
+  "weibo-unfollow": "取消关注",
+  "weibo-like": "点赞",
+  "weibo-unlike": "取消点赞",
+  "weibo-send": "发微博",
+  "weibo-repost": "转发",
+  "weibo-create-comment": "发表评论",
+  "weibo-upload-image": "上传图片",
+  "weibo-download-video": "下载视频",
+  "bilibili-qrcode": "登录二维码",
+  "bilibili-qrcode-poll": "轮询登录",
+  "bilibili-nav": "登录用户",
+  "bilibili-popular": "热门视频",
+  "bilibili-live-list": "直播列表",
+  "bilibili-followed-live": "关注直播",
+  "bilibili-live-playurl": "直播流",
+  "bilibili-recommend": "推荐视频",
+  "bilibili-dynamic": "动态",
+  "bilibili-watch-later": "稍后再看",
+  "bilibili-favorites": "收藏夹",
+  "bilibili-favorite-detail": "收藏详情",
+  "bilibili-playurl": "播放地址",
+  "bilibili-video-info": "视频详情",
+  "bilibili-danmaku": "弹幕 XML",
+  "bilibili-search": "搜索",
+  "bilibili-user-videos": "用户视频",
+  "bilibili-user-card": "用户卡片",
+  "bilibili-add-watch-later": "加入稍后再看",
+  "bilibili-del-watch-later": "移除稍后再看",
+  "bilibili-modify-relation": "关注/取关",
+};
+
+Object.assign(endpointNameOverrides, {
+  "xiaoyuzhou-refresh-token": "\u5237\u65b0 token",
+  "xiaoyuzhou-discovery-feed": "\u53d1\u73b0\u6d41",
+  "xiaoyuzhou-inbox": "\u6536\u4ef6\u7bb1",
+  "xiaoyuzhou-pilot-discovery": "\u7f16\u8f91\u7cbe\u9009",
+  "xiaoyuzhou-top-list": "\u699c\u5355",
+  "xiaoyuzhou-search": "\u641c\u7d22\u64ad\u5ba2",
+  "xiaoyuzhou-podcast-detail": "\u64ad\u5ba2\u8be6\u60c5",
+  "xiaoyuzhou-episode-list": "\u5355\u96c6\u5217\u8868",
+  "xiaoyuzhou-episode-detail": "\u5355\u96c6\u8be6\u60c5",
+  "xiaoyuzhou-episode-transcript": "\u5355\u96c6\u8f6c\u5f55",
+  "xiaoyuzhou-subscriptions": "\u8ba2\u9605\u5217\u8868",
+  "xiaoyuzhou-update-subscription": "\u66f4\u65b0\u8ba2\u9605",
+  "xiaoyuzhou-send-sms": "\u53d1\u9001\u9a8c\u8bc1\u7801",
+  "xiaoyuzhou-login-sms": "\u77ed\u4fe1\u767b\u5f55",
+  // QQ音乐
+  "qqmusic-search-songs": "搜索歌曲",
+  "qqmusic-search-singers": "搜索歌手",
+  "qqmusic-lyric": "歌词",
+  "qqmusic-rank-lists": "榜单列表",
+  "qqmusic-rank-detail": "榜单详情",
+  "qqmusic-song-url": "歌曲链接",
+  "qqmusic-song-detail": "歌曲详情",
+  "qqmusic-recommend-playlists": "推荐歌单",
+  "qqmusic-playlist-detail": "歌单详情",
+  "qqmusic-user-info": "用户信息",
+  "qqmusic-my-favorite": "我的收藏",
+  "qqmusic-my-playlists": "我的歌单",
+  "qqmusic-radar-recommend": "雷达推荐",
+  "qqmusic-playlist-create": "创建歌单",
+  "qqmusic-playlist-delete": "删除歌单",
+  "qqmusic-playlist-add-songs": "添加歌曲",
+  "qqmusic-playlist-del-songs": "删除歌曲",
+  "qqmusic-qq-login-qr": "QQ登录二维码",
+  "qqmusic-wx-login-qr": "微信登录二维码",
+  "qqmusic-check-login": "检查登录状态",
+  // 小红书
+  "xhs-feed": "推荐流",
+  "xhs-detail": "笔记详情",
+  "xhs-comments": "评论列表",
+  "xhs-sub-comments": "子评论",
+  "xhs-search": "搜索",
+  "xhs-me": "我的信息",
+  "xhs-user-posted": "用户发布",
+  "xhs-hover-card": "用户卡片",
+  "xhs-follow": "关注用户",
+  "xhs-unfollow": "取消关注",
+  "xhs-like": "点赞",
+  "xhs-dislike": "取消点赞",
+  "xhs-collect": "收藏",
+  "xhs-uncollect": "取消收藏",
+  "xhs-post-comment": "发表评论",
+  "xhs-upload-permit": "上传许可",
+  "xhs-upload-image": "上传图片",
+  "xhs-publish-note": "发布笔记",
+  // X平台
+  "x-home-latest": "最新时间线",
+  "x-search": "搜索",
+  "x-user-info": "用户信息",
+  "x-tweet-detail": "推文详情",
+  "x-user-tweets": "用户推文",
+  "x-following": "关注列表",
+  "x-home-latest-next": "最新时间线(下一页)",
+  "x-home": "主页时间线",
+  "x-home-next": "主页时间线(下一页)",
+  "x-home-refresh": "刷新主页",
+  "x-follow": "关注用户",
+  "x-unfollow": "取消关注",
+  "x-translate": "翻译推文",
+  "x-create-tweet": "发推文",
+  "x-repost": "转发推文",
+  "x-upload-media": "上传媒体",
+  "x-verify-credentials": "验证凭证",
+  "x-favorite": "收藏推文",
+  "x-unfavorite": "取消收藏",
+});
+
+function normalizeEndpointName(item) {
+  return endpointNameOverrides[item.id] ? { ...item, name: endpointNameOverrides[item.id] } : item;
 }
 
 const endpoints = [
@@ -256,13 +780,15 @@ const endpoints = [
     params: [p("id", true, "123456")],
     handler: jsonHandler(({ url }) => ({ url: `https://api.ithome.com/json/newscontent/${requireQuery(url, "id")}` })),
   }),
-
   endpoint({
     id: "chiphell-list",
     platformId: "chiphell",
     name: "列表",
     path: "/api/chiphell/list",
-    handler: jsonHandler(() => ({ url: "https://www.chiphell.com/forum.php?mod=guide&view=newthread" })),
+    handler: parsedHtmlHandler(
+      () => ({ url: "https://www.chiphell.com/forum.php?mod=guide&view=newthread" }),
+      (html) => ({ items: parseChiphellList(html) }),
+    ),
   }),
   endpoint({
     id: "chiphell-detail",
@@ -270,16 +796,18 @@ const endpoints = [
     name: "详情",
     path: "/api/chiphell/detail",
     params: [p("url", true, "https://www.chiphell.com/thread-1-1-1.html")],
-    handler: jsonHandler(({ url }) => ({ url: requireQuery(url, "url") })),
+    handler: parsedHtmlHandler(({ url }) => ({ url: requireQuery(url, "url") }), parseChiphellDetail),
   }),
-
   endpoint({
     id: "v2ex-list",
     platformId: "v2ex",
     name: "列表",
     path: "/api/v2ex/list",
     params: [p("tab", false, "all")],
-    handler: jsonHandler(({ url }) => ({ url: `https://www.v2ex.com/?tab=${getQuery(url, "tab", "all")}` })),
+    handler: parsedHtmlHandler(
+      ({ url }) => ({ url: `https://www.v2ex.com/?tab=${getQuery(url, "tab", "all")}` }),
+      (html) => ({ items: parseV2exList(html) }),
+    ),
   }),
   endpoint({
     id: "v2ex-detail",
@@ -287,20 +815,25 @@ const endpoints = [
     name: "详情",
     path: "/api/v2ex/detail",
     params: [p("url", true, "https://www.v2ex.com/t/1"), p("page", false, "1")],
-    handler: jsonHandler(({ url }) => {
+    handler: parsedHtmlHandler(({ url }) => {
       const target = new URL(requireQuery(url, "url"));
       if (url.searchParams.get("page")) target.searchParams.set("p", url.searchParams.get("page"));
       return { url: target.toString() };
-    }),
+    }, parseV2exDetail),
   }),
-
   endpoint({
     id: "hupu-list",
     platformId: "hupu",
     name: "列表",
     path: "/api/hupu/list",
     params: [p("tab", false, "all-gambia")],
-    handler: jsonHandler(({ url }) => ({ url: `https://bbs.hupu.com/${getQuery(url, "tab", "all-gambia")}` })),
+    handler: parsedHtmlHandler(
+      ({ url }) => ({
+        url: `https://bbs.hupu.com/${getQuery(url, "tab", "all-gambia")}`,
+        headers: commonHeaders("", { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }),
+      }),
+      (html, ctx) => ({ items: parseHupuList(html, getQuery(ctx.url, "tab", "all-gambia")) }),
+    ),
   }),
   endpoint({
     id: "hupu-detail",
@@ -308,19 +841,18 @@ const endpoints = [
     name: "详情",
     path: "/api/hupu/detail",
     params: [p("url", true, "https://bbs.hupu.com/1.html"), p("page", false, "1")],
-    handler: jsonHandler(({ url }) => ({ url: requireQuery(url, "url") })),
+    handler: parsedHtmlHandler(({ url }) => ({ url: requireQuery(url, "url"), headers: commonHeaders("") }), parseHupuDetail),
   }),
-
   endpoint({
     id: "nga-list",
     platformId: "nga",
     name: "列表",
     path: "/api/nga/list",
     params: [p("fid", false, "-7")],
-    handler: jsonHandler(({ url, configStore }) => ({
+    handler: parsedHtmlHandler(({ url, configStore }) => ({
       url: `https://bbs.nga.cn/thread.php?fid=${getQuery(url, "fid", "-7")}&page=1`,
       headers: commonHeaders(cookie(configStore, "ngaCookie"), { referer: "https://bbs.nga.cn/" }),
-    })),
+    }), (html) => ({ items: parseNgaList(html) }), { encoding: "gbk" }),
   }),
   endpoint({
     id: "nga-detail",
@@ -328,10 +860,10 @@ const endpoints = [
     name: "详情",
     path: "/api/nga/detail",
     params: [p("tid", true, "1"), p("page", false, "1")],
-    handler: jsonHandler(({ url, configStore }) => ({
+    handler: parsedHtmlHandler(({ url, configStore }) => ({
       url: `https://bbs.nga.cn/read.php?tid=${requireQuery(url, "tid")}&page=${getQuery(url, "page", "1")}`,
       headers: commonHeaders(cookie(configStore, "ngaCookie"), { referer: "https://bbs.nga.cn/" }),
-    })),
+    }), parseNgaDetail, { encoding: "gbk" }),
   }),
 
   endpoint({
@@ -340,10 +872,10 @@ const endpoints = [
     name: "列表",
     path: "/api/linuxdo/list",
     params: [p("tab", false, "latest")],
-    handler: jsonHandler(({ url, configStore }) => ({
+    handler: parsedJsonHandler(({ url, configStore }) => ({
       url: `https://linux.do/${getQuery(url, "tab", "latest")}.json`,
       headers: commonHeaders(cookie(configStore, "linuxDoCookie"), { referer: "https://linux.do/" }),
-    })),
+    }), (data) => ({ items: parseLinuxDoList(data) })),
   }),
   endpoint({
     id: "linuxdo-detail",
@@ -351,10 +883,10 @@ const endpoints = [
     name: "详情",
     path: "/api/linuxdo/detail",
     params: [p("topicId", true, "1")],
-    handler: jsonHandler(({ url, configStore }) => ({
+    handler: parsedJsonHandler(({ url, configStore }) => ({
       url: `https://linux.do/t/${requireQuery(url, "topicId")}.json`,
       headers: commonHeaders(cookie(configStore, "linuxDoCookie"), { referer: "https://linux.do/" }),
-    })),
+    }), parseLinuxDoDetail),
   }),
 
   endpoint({
@@ -449,7 +981,7 @@ const endpoints = [
     ["zhihu-search", "搜索", "/api/zhihu/search"],
     ["zhihu-vote", "回答投票", "/api/zhihu/vote"],
     ["zhihu-follow-question", "关注问题", "/api/zhihu/follow-question"],
-    ["zhihu-unfollow-question", "取消关注问题", "/api/zhihu/unfollow-question"],
+    ["zhihu-unfollow-question", "鍙栨秷关注问题", "/api/zhihu/unfollow-question"],
     ["zhihu-hot-questions", "热门问题", "/api/zhihu/hot-questions"],
     ["zhihu-read-items", "上报已读", "/api/zhihu/read-items"],
   ].map(([id, name, path]) =>
@@ -472,11 +1004,11 @@ const endpoints = [
   }),
   ...[
     ["weibo-comment", "评论", "/api/weibo/comment", ({ url }) => `https://weibo.com/ajax${requireQuery(url, "path")}`, [p("path", true, "/comments/hotflow?id=1")]],
-    ["weibo-longtext", "长微博", "/api/weibo/longtext", ({ url }) => `https://weibo.com/ajax/statuses/longtext?id=${requireQuery(url, "id")}`, [p("id", true, "1")]],
+    ["weibo-longtext", "longtext", "/api/weibo/longtext", ({ url }) => `https://weibo.com/ajax/statuses/longtext?id=${requireQuery(url, "id")}`, [p("id", true, "1")]],
     ["weibo-user", "用户微博", "/api/weibo/user", ({ url }) => `https://weibo.com/ajax/statuses/mymblog?uid=${requireQuery(url, "uid")}&page=${getQuery(url, "page", "1")}&feature=0`, [p("uid", true, "1"), p("page", false, "1")]],
     ["weibo-user-by-name", "用户搜索", "/api/weibo/user-by-name", ({ url }) => `https://weibo.com/ajax/profile/info?screen_name=${encodeURIComponent(requireQuery(url, "name"))}`, [p("name", true, "人民日报")]],
     ["weibo-hot-search", "热搜", "/api/weibo/hot-search", () => "https://weibo.com/ajax/side/hotSearch", []],
-    ["weibo-search", "微博搜索", "/api/weibo/search", ({ url }) => `https://s.weibo.com/weibo?q=${encodeURIComponent(requireQuery(url, "keyword"))}`, [p("keyword", true, "TouchFish")]],
+    ["weibo-search", "寰崥搜索", "/api/weibo/search", ({ url }) => `https://s.weibo.com/weibo?q=${encodeURIComponent(requireQuery(url, "keyword"))}`, [p("keyword", true, "TouchFish")]],
   ].map(([id, name, path, buildUrl, params]) =>
     endpoint({
       id,
@@ -494,26 +1026,26 @@ const endpoints = [
     ["weibo-follow", "关注用户"],
     ["weibo-unfollow", "取消关注"],
     ["weibo-like", "点赞"],
-    ["weibo-unlike", "取消点赞"],
-    ["weibo-send", "发微博"],
+    ["weibo-unlike", "鍙栨秷点赞"],
+    ["weibo-send", "send"],
     ["weibo-repost", "转发"],
-    ["weibo-create-comment", "发表评论"],
+    ["weibo-create-comment", "鍙戣〃评论"],
     ["weibo-upload-image", "上传图片"],
     ["weibo-download-video", "下载视频"],
-  ].map(([id, name]) => endpoint({ id, platformId: "weibo", name, method: "POST", path: `/api/weibo/${id.replace("weibo-", "")}`, handler: notPorted("微博写操作/下载需要更完整的本地文件与 CSRF 适配。") })),
+  ].map(([id, name]) => endpoint({ id, platformId: "weibo", name, method: "POST", path: `/api/weibo/${id.replace("weibo-", "")}`, handler: notPorted("微博写操作/下载需要本地文件和 CSRF 适配。") })),
 
   ...[
-    ["bilibili-qrcode", "登录二维码", "/api/bilibili/qrcode", () => "https://passport.bilibili.com/x/passport-login/web/qrcode/generate", []],
+    ["bilibili-qrcode", "qrcode", "/api/bilibili/qrcode", () => "https://passport.bilibili.com/x/passport-login/web/qrcode/generate", []],
     ["bilibili-qrcode-poll", "轮询登录", "/api/bilibili/qrcode/poll", ({ url }) => `https://passport.bilibili.com/x/passport-login/web/qrcode/poll?qrcode_key=${requireQuery(url, "qrcode_key")}`, [p("qrcode_key", true, "")]],
     ["bilibili-nav", "登录用户", "/api/bilibili/nav", () => "https://api.bilibili.com/x/web-interface/nav", []],
     ["bilibili-popular", "热门视频", "/api/bilibili/popular", ({ url }) => `https://api.bilibili.com/x/web-interface/popular?pn=${getQuery(url, "pn", "1")}&ps=${getQuery(url, "ps", "20")}`, [p("pn", false, "1"), p("ps", false, "20")]],
     ["bilibili-live-list", "直播列表", "/api/bilibili/live-list", ({ url }) => `https://api.live.bilibili.com/room/v3/area/getRoomList?page=${getQuery(url, "page", "1")}&page_size=20&sort_type=online`, [p("page", false, "1")]],
     ["bilibili-followed-live", "关注直播", "/api/bilibili/followed-live", ({ url }) => `https://api.live.bilibili.com/xlive/web-ucenter/v1/xfetter/FeedList?page=${getQuery(url, "page", "1")}&page_size=${getQuery(url, "pageSize", "50")}&platform=web`, [p("page", false, "1"), p("pageSize", false, "50")]],
-    ["bilibili-live-playurl", "直播流", "/api/bilibili/live-playurl", ({ url }) => `https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo?room_id=${requireQuery(url, "roomId")}&protocol=0,1&format=0,1,2&codec=0&qn=${getQuery(url, "qn", "10000")}&platform=android`, [p("roomId", true, "1"), p("qn", false, "10000")]],
+    ["bilibili-live-playurl", "live-playurl", "/api/bilibili/live-playurl", ({ url }) => `https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo?room_id=${requireQuery(url, "roomId")}&protocol=0,1&format=0,1,2&codec=0&qn=${getQuery(url, "qn", "10000")}&platform=android`, [p("roomId", true, "1"), p("qn", false, "10000")]],
     ["bilibili-recommend", "推荐视频", "/api/bilibili/recommend", () => "https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd?web_location=1430650&y_num=5&fresh_type=3&feed_version=V8&homepage_ver=1&ps=10&last_y_num=5&screen=2010-595", []],
-    ["bilibili-dynamic", "动态", "/api/bilibili/dynamic", ({ url }) => `https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all?type=video&platform=web&page=${getQuery(url, "page", "1")}${url.searchParams.get("offset") ? `&timezone_offset=-480&offset=${url.searchParams.get("offset")}` : ""}`, [p("page", false, "1"), p("offset", false, "")]],
+    ["bilibili-dynamic", "dynamic", "/api/bilibili/dynamic", ({ url }) => `https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all?type=video&platform=web&page=${getQuery(url, "page", "1")}${url.searchParams.get("offset") ? `&timezone_offset=-480&offset=${url.searchParams.get("offset")}` : ""}`, [p("page", false, "1"), p("offset", false, "")]],
     ["bilibili-watch-later", "稍后再看", "/api/bilibili/watch-later", ({ url }) => `https://api.bilibili.com/x/v2/history/toview/web?pn=${getQuery(url, "page", "1")}&ps=${getQuery(url, "pageSize", "20")}`, [p("page", false, "1"), p("pageSize", false, "20")]],
-    ["bilibili-favorites", "收藏夹", "/api/bilibili/favorites", ({ configStore }) => `https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${userIdFromCookie(cookie(configStore, "bilibiliCookie"))}`, []],
+    ["bilibili-favorites", "favorites", "/api/bilibili/favorites", ({ configStore }) => `https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${userIdFromCookie(cookie(configStore, "bilibiliCookie"))}`, []],
     ["bilibili-favorite-detail", "收藏详情", "/api/bilibili/favorite-detail", ({ url }) => `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${requireQuery(url, "mediaId")}&pn=${getQuery(url, "page", "1")}&ps=${getQuery(url, "pageSize", "20")}`, [p("mediaId", true, "1"), p("page", false, "1"), p("pageSize", false, "20")]],
     ["bilibili-playurl", "播放地址", "/api/bilibili/playurl", ({ url }) => `https://api.bilibili.com/x/player/wbi/playurl?bvid=${requireQuery(url, "bvid")}&cid=${requireQuery(url, "cid")}&qn=112&platform=html5&high_quality=1`, [p("bvid", true, "BV1xx411c7mD"), p("cid", true, "1")]],
     ["bilibili-video-info", "视频详情", "/api/bilibili/video-info", ({ url }) => `https://api.bilibili.com/x/web-interface/view?bvid=${requireQuery(url, "bvid")}`, [p("bvid", true, "BV1xx411c7mD")]],
@@ -538,35 +1070,9 @@ const endpoints = [
     ["bilibili-add-watch-later", "加入稍后再看", "add-watch-later"],
     ["bilibili-del-watch-later", "移除稍后再看", "del-watch-later"],
     ["bilibili-modify-relation", "关注/取关", "modify-relation"],
-  ].map(([id, name, route]) => endpoint({ id, platformId: "bilibili", name, method: "POST", path: `/api/bilibili/${route}`, handler: notPorted("B站写操作需要从 Cookie 提取 CSRF 并提交表单，后续接入。") })),
+  ].map(([id, name, route]) => endpoint({ id, platformId: "bilibili", name, method: "POST", path: `/api/bilibili/${route}`, handler: notPorted("B站写操作需要从 Cookie 提取 CSRF 并提交表单。") })),
 
-  ...[
-    ["qqmusic-search-songs", "搜索歌曲", "/api/qqmusic/search", ({ url }) => `https://c.y.qq.com/soso/fcgi-bin/client_search_cp?p=${getQuery(url, "page", "1")}&n=${getQuery(url, "num", "20")}&w=${encodeURIComponent(requireQuery(url, "keyword"))}`, [p("keyword", true, "周杰伦"), p("page", false, "1"), p("num", false, "20")]],
-    ["qqmusic-search-singers", "搜索歌手", "/api/qqmusic/search-singers", ({ url }) => `https://c.y.qq.com/soso/fcgi-bin/client_search_cp?p=${getQuery(url, "page", "1")}&n=${getQuery(url, "num", "20")}&w=${encodeURIComponent(requireQuery(url, "keyword"))}&type=singer`, [p("keyword", true, "周杰伦")]],
-    ["qqmusic-lyric", "歌词", "/api/qqmusic/lyric", ({ url }) => `https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?songmid=${requireQuery(url, "mid")}&format=json&nobase64=1`, [p("mid", true, "0039MnYb0qxYhV")]],
-  ].map(([id, name, path, buildUrl, params]) =>
-    endpoint({ id, platformId: "qqmusic", name, path, params, handler: jsonHandler(({ url }) => ({ url: buildUrl({ url }), headers: commonHeaders("", { referer: "https://y.qq.com/" }) })) }),
-  ),
-  ...[
-    ["song-url", "歌曲播放 URL"],
-    ["song-detail", "歌曲详情"],
-    ["recommend-playlists", "推荐歌单"],
-    ["playlist-detail", "歌单详情"],
-    ["rank-lists", "排行榜"],
-    ["rank-detail", "榜单详情"],
-    ["qq-login-qr", "QQ 登录二维码"],
-    ["wx-login-qr", "微信登录二维码"],
-    ["check-login", "检查登录"],
-    ["user-info", "用户信息"],
-    ["my-favorite", "我喜欢"],
-    ["my-playlists", "我的歌单"],
-    ["radar-recommend", "雷达推荐"],
-    ["guess-recommend", "猜你喜欢"],
-    ["singer-info", "歌手信息"],
-    ["singer-songs", "歌手歌曲"],
-    ["add-songs", "添加歌曲到歌单"],
-    ["remove-songs", "从歌单移除歌曲"],
-  ].map(([route, name]) => endpoint({ id: `qqmusic-${route}`, platformId: "qqmusic", name, path: `/api/qqmusic/${route}`, params: [p("payload", false, "{}")], handler: notPorted("该 QQ音乐接口使用 musicu.fcg 组合请求/签名，后续抽成 server core。") })),
+  ...qqmusicEndpoints(),
 
   endpoint({
     id: "xiaoyuzhou-refresh-token",
@@ -594,16 +1100,16 @@ const endpoints = [
     },
   }),
   ...[
-    ["discovery-feed", "发现流", "POST", "https://api.xiaoyuzhoufm.com/v1/discovery-feed/list", () => ({ returnAll: "false" })],
-    ["inbox", "收件箱", "POST", "https://api.xiaoyuzhoufm.com/v1/inbox/list", () => ({ limit: "20" })],
-    ["pilot-discovery", "编辑精选", "POST", "https://api.xiaoyuzhoufm.com/v1/pilot-discovery/list", () => ({})],
+    ["discovery-feed", "discovery-feed", "POST", "https://api.xiaoyuzhoufm.com/v1/discovery-feed/list", () => ({ returnAll: "false" })],
+    ["inbox", "inbox", "POST", "https://api.xiaoyuzhoufm.com/v1/inbox/list", () => ({ limit: "20" })],
+    ["pilot-discovery", "pilot-discovery", "POST", "https://api.xiaoyuzhoufm.com/v1/pilot-discovery/list", () => ({})],
     ["top-list", "榜单", "GET", "https://api.xiaoyuzhoufm.com/v1/top-list/get?category=HOT_EPISODES_IN_24_HOURS"],
     ["search", "搜索播客", "POST", "https://api.xiaoyuzhoufm.com/v1/search/create", (ctx) => ({ keyword: requireQuery(ctx.url, "keyword"), type: "PODCAST" }), [p("keyword", true, "科技")]],
     ["podcast-detail", "播客详情", "GET", (ctx) => `https://api.xiaoyuzhoufm.com/v1/podcast/get?pid=${requireQuery(ctx.url, "pid")}`, null, [p("pid", true, "")]],
     ["episode-list", "单集列表", "POST", "https://api.xiaoyuzhoufm.com/v1/episode/list", (ctx) => ({ pid: requireQuery(ctx.url, "pid"), order: getQuery(ctx.url, "order", "desc") }), [p("pid", true, ""), p("order", false, "desc")]],
     ["episode-detail", "单集详情", "GET", (ctx) => `https://api.xiaoyuzhoufm.com/v1/episode/get?eid=${requireQuery(ctx.url, "eid")}`, null, [p("eid", true, "")]],
     ["episode-transcript", "单集转录", "POST", "https://api.xiaoyuzhoufm.com/v1/episode-transcript/get", (ctx) => ({ eid: requireQuery(ctx.url, "eid"), mediaId: requireQuery(ctx.url, "mediaId") }), [p("eid", true, ""), p("mediaId", true, "")]],
-    ["subscriptions", "订阅列表", "POST", "https://api.xiaoyuzhoufm.com/v1/subscription/list", () => ({ limit: "20", sortOrder: "desc", sortBy: "subscribedAt" })],
+    ["subscriptions", "璁㈤槄列表", "POST", "https://api.xiaoyuzhoufm.com/v1/subscription/list", () => ({ limit: "20", sortOrder: "desc", sortBy: "subscribedAt" })],
     ["update-subscription", "更新订阅", "POST", "https://api.xiaoyuzhoufm.com/v1/subscription/update", (ctx) => ({ pid: requireQuery(ctx.url, "pid"), mode: getQuery(ctx.url, "mode", "ON") }), [p("pid", true, ""), p("mode", false, "ON")]],
   ].map(([route, name, method, target, buildBody, params = []]) =>
     endpoint({
@@ -623,11 +1129,11 @@ const endpoints = [
   ...[
     ["send-sms", "发送验证码"],
     ["login-sms", "短信登录"],
-  ].map(([route, name]) => endpoint({ id: `xiaoyuzhou-${route}`, platformId: "xiaoyuzhou", name, method: "POST", path: `/api/xiaoyuzhou/${route}`, params: [p("payload", false, "{}")], handler: notPorted("短信登录走 podcaster-api，建议单独做登录页确认风控。") })),
+  ].map(([route, name]) => endpoint({ id: `xiaoyuzhou-${route}`, platformId: "xiaoyuzhou", name, method: "POST", path: `/api/xiaoyuzhou/${route}`, params: [p("payload", false, "{}")], handler: notPorted("小宇宙短信登录需要单独做登录页确认风控。") })),
 
   ...[
     ["login-getuid", "POST", "https://weread.qq.com/web/login/getuid"],
-    ["login-getinfo", "POST", (ctx) => "https://weread.qq.com/web/login/getinfo", (ctx) => ({ uid: requireQuery(ctx.url, "uid") }), [p("uid", true, "")]],
+    ["login-getinfo", "POST", (_ctx) => "https://weread.qq.com/web/login/getinfo", (ctx) => ({ uid: requireQuery(ctx.url, "uid") }), [p("uid", true, "")]],
     ["login-notify", "GET", "https://weread.qq.com/web/login/notify"],
     ["shelf-sync", "GET", "https://weread.qq.com/web/shelf/sync"],
     ["shelf-sync-book", "POST", "https://weread.qq.com/web/shelf/syncBook", (ctx) => ({ bookIds: getQuery(ctx.url, "bookIds", "").split(",").filter(Boolean) }), [p("bookIds", false, "")]],
@@ -666,7 +1172,7 @@ const endpoints = [
     "login-confirm", "login-weblogin", "login-session-init", "login-renewal",
     "book-read-init", "book-read", "book-chapter-e0", "book-chapter-e1", "book-chapter-e2", "book-chapter-e3", "book-chapter-t0", "book-chapter-t1", "book-chapter-e",
     "category-info", "category-list", "pdf-url", "pdf2epub", "review-myself", "review-synckey", "review-list", "review-single", "review-add", "upload-shelf-full",
-  ].map((route) => endpoint({ id: `weread-${route}`, platformId: "weread", name: route, path: `/api/weread/${route}`, params: [p("payload", false, "{}")], handler: notPorted("该微信读书接口涉及阅读签名、章节解密或登录续期，已保留入口。") })),
+  ].map((route) => endpoint({ id: `weread-${route}`, platformId: "weread", name: route, path: `/api/weread/${route}`, params: [p("payload", false, "{}")], handler: notPorted("微信读书接口涉及阅读签名、章节解密或登录续期。") })),
 
   endpoint({
     id: "xhs-feed",
@@ -806,7 +1312,7 @@ const endpoints = [
     ["upload-permit", "/api/media/v1/upload/creator/permit"],
     ["upload-image", ""],
     ["publish-note", "/web_api/sns/v2/note"],
-  ].map(([route, apiPath]) => endpoint({ id: `xhs-${route}`, platformId: "xhs", name: route, method: route === "upload-image" ? "POST" : "POST", path: `/api/xhs/${route}`, params: [p("payload", false, "{}")], handler: apiPath ? ((ctx) => xhsRequest(ctx, apiPath, { body: parseJson(ctx.body) })) : notPorted("图片上传需要 multipart/base64 文件管线，已保留入口。") })),
+  ].map(([route, apiPath]) => endpoint({ id: `xhs-${route}`, platformId: "xhs", name: route, method: route === "upload-image" ? "POST" : "POST", path: `/api/xhs/${route}`, params: [p("payload", false, "{}")], handler: apiPath ? ((ctx) => xhsRequest(ctx, apiPath, { body: parseJson(ctx.body) })) : notPorted("图片上传需要 multipart/base64 文件管线。") })),
 
   ...[
     ["home-latest", "HomeLatestTimeline", "eObmT5Nuapp04u8bYWf49Q", () => ({ count: 20, includePromotedContent: true, latestControlAvailable: true })],
@@ -847,11 +1353,11 @@ const endpoints = [
   ),
   ...[
     "home-latest-next", "home", "home-next", "home-refresh", "follow", "unfollow", "translate", "create-tweet", "repost", "upload-media", "verify-credentials", "favorite", "unfavorite",
-  ].map((route) => endpoint({ id: `x-${route}`, platformId: "x", name: route, method: ["follow", "unfollow", "create-tweet", "repost", "upload-media", "favorite", "unfavorite"].includes(route) ? "POST" : "GET", path: `/api/x/${route}`, params: [p("payload", false, "{}")], handler: notPorted("该 X 接口需要更完整的 variables/features 或媒体上传流程，已先实现核心查询类接口。") })),
-];
+  ].map((route) => endpoint({ id: `x-${route}`, platformId: "x", name: route, method: ["follow", "unfollow", "create-tweet", "repost", "upload-media", "favorite", "unfavorite"].includes(route) ? "POST" : "GET", path: `/api/x/${route}`, params: [p("payload", false, "{}")], handler: notPorted("X 该接口需要更完整的 variables/features 或媒体上传流程。") })),
+].map(normalizeEndpointName);
 
 function listEndpoints() {
-  return endpoints.map(({ handler, ...rest }) => rest);
+  return endpoints.map(({ handler: _handler, ...rest }) => rest);
 }
 
 async function executeApiEndpoint({ method, pathname, url, fetchImpl, configStore, body }) {

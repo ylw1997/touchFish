@@ -8,9 +8,15 @@
   "scripts": {
     "start": "node src/main.js",
     "test": "node --test test/*.test.js",
-    "validate": "node scripts/validate-apis.js"
+    "validate": "node scripts/validate-apis.js",
+    "lint": "eslint src/**/*.js"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0"
   }
 }
