@@ -230,19 +230,8 @@ const useWeiboAction = () => {
     [apiClient]
   );
 
-  const getMyUserInfo = useCallback(async () => {
-    try {
-      const result = await apiClient.getMyUserInfo();
-      if (result && result.data) {
-        setUserDetail({
-          ...result.data,
-          avatar_hd: result.data.avatar,
-        });
-        setUserDetailVisible(true);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+  const getWeiboGroups = useCallback(async () => {
+    return apiClient.getGroups();
   }, [apiClient]);
 
   // 关注博主
@@ -424,7 +413,7 @@ const useWeiboAction = () => {
     userWeiboPage,
     setUserWeiboPage,
     getUserByName,
-    getMyUserInfo,
+    getWeiboGroups,
     getHotSearch,
     getWeiboSearch,
     uploadImage,

@@ -55,6 +55,15 @@ export const getWeiboData = async (url: string) => {
   });
 };
 
+export const getWeiboGroups = async () => {
+  return await axios.get("https://weibo.com/ajax/feed/allGroups", {
+    headers: await getWeiboHeaders({
+      "client-version": "3.0.0",
+      "x-requested-with": "XMLHttpRequest",
+    }),
+  });
+};
+
 export const getWeiboImg = async (url: string) => {
   const res = await fetch(url, {
     headers: {

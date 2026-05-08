@@ -21,3 +21,4 @@ touchfish-*.vsix
 xapi/
 APIS/
 .claude/
+server/

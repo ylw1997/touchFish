@@ -31,7 +31,6 @@ import {
   openSetting,
   setZhihuTokenCommand,
   setWeiboTokenCommand,
-  setWeiboUserIdCommand,
   setNgaTokenCommand,
   setXhsTokenCommand,
   setLinuxDoTokenCommand,
@@ -319,8 +318,9 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(openNgaUrl);
   context.subscriptions.push(openLinuxDoUrl);
   context.subscriptions.push(setZhihuTokenCommand());
-  context.subscriptions.push(setWeiboTokenCommand());
-  context.subscriptions.push(setWeiboUserIdCommand());
+  context.subscriptions.push(
+    setWeiboTokenCommand(() => weiboProvider.getInstance().reloadGroups()),
+  );
   context.subscriptions.push(setNgaTokenCommand());
   context.subscriptions.push(setXhsTokenCommand());
   context.subscriptions.push(setLinuxDoTokenCommand());
