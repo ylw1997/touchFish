@@ -81,7 +81,7 @@ export const renderComments = (
                         className="imglist"
                         style={{ marginBottom: "8px", padding: "0px" }}
                       >
-                        <Image.PreviewGroup>
+                        <Image.PreviewGroup preview={{ movable: false }}>
                           {item.url_struct[0]?.pic_ids?.map((pic) => {
                             const picInfo =
                               item.url_struct?.[0]?.pic_infos?.[pic];
