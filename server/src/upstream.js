@@ -31,4 +31,4 @@ function commonHeaders(cookie, extra = {}) {
   };
 }
 
-module.exports = { fetchJson, commonHeaders };
+module.exports = { fetchJson, commonHeaders, readUpstreamJson };

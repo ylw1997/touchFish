@@ -90,7 +90,11 @@ async function runHealthReport({ endpointIds, fetchImpl, configStore }) {
     }
 
     try {
-      const result = await executeApiEndpoint({
+      // 添加 100 秒超时，防止卡住
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("验证超时 (100s)")), 100000)
+      );
+      const resultPromise = executeApiEndpoint({
         method: endpoint.method,
         pathname: endpoint.path,
         url,
@@ -98,6 +102,7 @@ async function runHealthReport({ endpointIds, fetchImpl, configStore }) {
         configStore,
         body: "",
       });
+      const result = await Promise.race([resultPromise, timeoutPromise]);
       items.push({
         ...publicEndpoint,
         ...classifyResult(result, Date.now() - startedAt),

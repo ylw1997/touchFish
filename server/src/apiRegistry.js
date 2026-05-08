@@ -1,4 +1,4 @@
-const { commonHeaders, fetchJson } = require("./upstream");
+const { commonHeaders, fetchJson, readUpstreamJson } = require("./upstream");
 const {
   parseChiphellDetail,
   parseChiphellList,
@@ -263,7 +263,7 @@ function parsedJsonHandler(build, parse) {
   };
 }
 
-function notPorted(reason) {
+function _notPorted(reason) {
   return async () => ({
     ok: false,
     status: 501,
@@ -599,13 +599,64 @@ function qqmusicEndpoints() {
         },
       }),
     ),
-    ...[
-      ["qq-login-qr", "QQ login QR needs browser session storage."],
-      ["wx-login-qr", "WX login QR needs browser session storage."],
-      ["check-login", "Login polling needs browser session storage."],
-    ].map(([route, reason]) =>
-      endpoint({ id: `qqmusic-${route}`, platformId: "qqmusic", name: route, path: `/api/qqmusic/${route}`, handler: notPorted(reason) }),
-    ),
+  endpoint({
+    id: "qqmusic-qq-login-qr",
+    platformId: "qqmusic",
+    name: "QQ 登录二维码",
+    path: "/api/qqmusic/qq-login-qr",
+    handler: async (ctx) => {
+      const result = await qqmusic.musicu(ctx, {
+        "music.musichallAccount.UnifiedGetQRcode": {
+          method: "GetQQMusicQRcode",
+          module: "music.musichallAccount.UnifiedGetQRcode",
+          param: { appid: "qqmusic", from: "qqmusic", fromAppid: "1007193", fromAppid2: "1007193" },
+        },
+      });
+      const data = result.data?.["music.musichallAccount.UnifiedGetQRcode"]?.data || {};
+      return { ...result, data: { qrurl: data.qrurl, qrsig: data.qrsig, expire: data.expire } };
+    },
+  }),
+  endpoint({
+    id: "qqmusic-wx-login-qr",
+    platformId: "qqmusic",
+    name: "微信登录二维码",
+    path: "/api/qqmusic/wx-login-qr",
+    handler: async (ctx) => {
+      const result = await qqmusic.musicu(ctx, {
+        "music.musichallAccount.UnifiedGetQRcode": {
+          method: "GetQQMusicQRcode",
+          module: "music.musichallAccount.UnifiedGetQRcode",
+          param: { appid: "wx48db31d50e334801", from: "qqmusic", fromAppid: "1007193", fromAppid2: "1007193" },
+        },
+      });
+      const data = result.data?.["music.musichallAccount.UnifiedGetQRcode"]?.data || {};
+      return { ...result, data: { qrurl: data.qrurl, qrsig: data.qrsig, expire: data.expire } };
+    },
+  }),
+  endpoint({
+    id: "qqmusic-check-login",
+    platformId: "qqmusic",
+    name: "检查登录状态",
+    path: "/api/qqmusic/check-login",
+    params: [p("qrsig", true, ""), p("type", false, "qq")],
+    handler: async (ctx) => {
+      const qrsig = requireQuery(ctx.url, "qrsig");
+      const type = getQuery(ctx.url, "type", "qq");
+      const result = await qqmusic.musicu(ctx, {
+        "music.musichallAccount.UnifiedGetQRcode": {
+          method: "QQMusicCheckIsScanQRcode",
+          module: "music.musichallAccount.UnifiedGetQRcode",
+          param: { qrsig, type: type === "wx" ? "wx" : "qq" },
+        },
+      });
+      const data = result.data?.["music.musichallAccount.UnifiedGetQRcode"]?.data || {};
+      if (data.musickey && data.musicid) {
+        ctx.configStore.set("qqmusicMusicid", String(data.musicid));
+        ctx.configStore.set("qqmusicMusickey", String(data.musickey));
+      }
+      return { ...result, data: { status: data.status, message: data.message, musicid: data.musicid, musickey: data.musickey } };
+    },
+  }),
   ];
 }
 
@@ -1018,21 +1069,183 @@ const endpoints = [
     handler: (ctx) =>
       zhihuSignedGet(ctx, getQuery(ctx.url, "nextUrl", "/api/v4/creators/question_route/pc_member_related/hot?page_source=pc_panel&limit=20&offset=0&recom_domain_score_ab=1")),
   }),
-  ...[
-    ["zhihu-recommend", "推荐流", "/api/zhihu/recommend"],
-    ["zhihu-follow", "关注流", "/api/zhihu/follow"],
-    ["zhihu-question-feeds", "问题回答", "/api/zhihu/question-feeds"],
-    ["zhihu-comments", "回答评论", "/api/zhihu/comments"],
-    ["zhihu-child-comments", "子评论", "/api/zhihu/child-comments"],
-    ["zhihu-search", "搜索", "/api/zhihu/search"],
-    ["zhihu-vote", "回答投票", "/api/zhihu/vote"],
-    ["zhihu-follow-question", "关注问题", "/api/zhihu/follow-question"],
-    ["zhihu-unfollow-question", "鍙栨秷关注问题", "/api/zhihu/unfollow-question"],
-    ["zhihu-hot-questions", "热门问题", "/api/zhihu/hot-questions"],
-    ["zhihu-read-items", "上报已读", "/api/zhihu/read-items"],
-  ].map(([id, name, path]) =>
-    endpoint({ id, platformId: "zhihu", name, path, params: [p("payload", false, "{}")], handler: notPorted("知乎该接口需要 x-zse-96 签名。") }),
-  ),
+  endpoint({
+    id: "zhihu-recommend",
+    platformId: "zhihu",
+    name: "推荐流",
+    path: "/api/zhihu/recommend",
+    params: [p("nextUrl", false, "")],
+    handler: (ctx) => zhihuSignedGet(ctx, getQuery(ctx.url, "nextUrl", "/api/v3/feed/topstory/recommend?limit=10&desktop=true")),
+  }),
+  endpoint({
+    id: "zhihu-follow",
+    platformId: "zhihu",
+    name: "关注流",
+    path: "/api/zhihu/follow",
+    params: [p("nextUrl", false, "")],
+    handler: (ctx) => zhihuSignedGet(ctx, getQuery(ctx.url, "nextUrl", "/api/v3/moments?limit=10&desktop=true")),
+  }),
+  endpoint({
+    id: "zhihu-question-feeds",
+    platformId: "zhihu",
+    name: "问题回答",
+    path: "/api/zhihu/question-feeds",
+    params: [p("questionId", true, "1932357580283437907"), p("order", false, "default")],
+    handler: (ctx) =>
+      zhihuSignedGet(ctx, `/api/v4/questions/${requireQuery(ctx.url, "questionId")}/feeds?include=data[*].content&limit=30&offset=0&order=${getQuery(ctx.url, "order", "default")}&platform=desktop&ws_qiangzhisafe=0`),
+  }),
+  endpoint({
+    id: "zhihu-comments",
+    platformId: "zhihu",
+    name: "回答评论",
+    path: "/api/zhihu/comments",
+    params: [p("answerId", true, "1")],
+    handler: (ctx) =>
+      zhihuSignedGet(ctx, `/api/v4/comment_v5/answers/${requireQuery(ctx.url, "answerId")}/root_comment?order_by=score&limit=100&offset=`),
+  }),
+  endpoint({
+    id: "zhihu-child-comments",
+    platformId: "zhihu",
+    name: "子评论",
+    path: "/api/zhihu/child-comments",
+    params: [p("commentId", true, "1")],
+    handler: (ctx) =>
+      zhihuSignedGet(ctx, `/api/v4/comment_v5/comment/${requireQuery(ctx.url, "commentId")}/child_comment?order_by=ts&limit=20&offset=`),
+  }),
+  endpoint({
+    id: "zhihu-search",
+    platformId: "zhihu",
+    name: "搜索",
+    path: "/api/zhihu/search",
+    params: [p("query", true, "OpenAI")],
+    handler: (ctx) =>
+      zhihuSignedGet(ctx, `/api/v4/search_v3?t=general&q=${encodeURIComponent(requireQuery(ctx.url, "query"))}&gk_version=gz-gaokao&correction=1&offset=0&limit=20&filter_fields=&lc_idx=0&show_all_topics=0&search_source=Normal`),
+  }),
+  endpoint({
+    id: "zhihu-vote",
+    platformId: "zhihu",
+    name: "回答投票",
+    method: "POST",
+    path: "/api/zhihu/vote",
+    params: [p("answerId", true, "1"), p("voteType", true, "up")],
+    handler: async (ctx) => {
+      const answerId = requireQuery(ctx.url, "answerId");
+      const voteType = requireQuery(ctx.url, "voteType");
+      const cookieValue = cookie(ctx.configStore, "zhihuCookie");
+      const d_c0 = cookieValue.match(/(?:^|;)\s*d_c0=([^;]+)/)?.[1] || "";
+      const url = `https://www.zhihu.com/api/v4/zvideos/${answerId}/voters`;
+      const signPath = `/api/v4/zvideos/${answerId}/voters`;
+      const headers = commonHeaders(cookieValue, {
+        "x-zse-93": "101_3_3.0",
+        "x-api-version": "3.0.91",
+        "content-type": "application/json",
+        origin: "https://www.zhihu.com",
+        referer: `https://www.zhihu.com/question/`,
+      });
+      headers["x-zse-96"] = await getZhihuSignature(`101_3_3.0+${signPath}+${d_c0}`);
+      const response = await ctx.fetchImpl(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ type: voteType === "up" ? "up" : "down" }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "zhihu-follow-question",
+    platformId: "zhihu",
+    name: "关注问题",
+    method: "POST",
+    path: "/api/zhihu/follow-question",
+    params: [p("questionId", true, "1")],
+    handler: async (ctx) => {
+      const questionId = requireQuery(ctx.url, "questionId");
+      const cookieValue = cookie(ctx.configStore, "zhihuCookie");
+      const d_c0 = cookieValue.match(/(?:^|;)\s*d_c0=([^;]+)/)?.[1] || "";
+      const url = `https://www.zhihu.com/api/v4/questions/${questionId}/followers`;
+      const signPath = `/api/v4/questions/${questionId}/followers`;
+      const headers = commonHeaders(cookieValue, {
+        "x-zse-93": "101_3_3.0",
+        "x-api-version": "3.0.91",
+        "content-type": "application/json",
+        origin: "https://www.zhihu.com",
+        referer: `https://www.zhihu.com/question/${questionId}`,
+      });
+      headers["x-zse-96"] = await getZhihuSignature(`101_3_3.0+${signPath}+${d_c0}`);
+      const response = await ctx.fetchImpl(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({}), // 关注问题不需要额外参数
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "zhihu-unfollow-question",
+    platformId: "zhihu",
+    name: "取消关注问题",
+    method: "DELETE",
+    path: "/api/zhihu/unfollow-question",
+    params: [p("questionId", true, "1")],
+    handler: async (ctx) => {
+      const questionId = requireQuery(ctx.url, "questionId");
+      const cookieValue = cookie(ctx.configStore, "zhihuCookie");
+      const d_c0 = cookieValue.match(/(?:^|;)\s*d_c0=([^;]+)/)?.[1] || "";
+      const url = `https://www.zhihu.com/api/v4/questions/${questionId}/followers`;
+      const signPath = `/api/v4/questions/${questionId}/followers`;
+      const headers = commonHeaders(cookieValue, {
+        "x-zse-93": "101_3_3.0",
+        "x-api-version": "3.0.91",
+        origin: "https://www.zhihu.com",
+        referer: `https://www.zhihu.com/question/${questionId}`,
+      });
+      headers["x-zse-96"] = await getZhihuSignature(`101_3_3.0+${signPath}+${d_c0}`);
+      const response = await ctx.fetchImpl(url, { method: "DELETE", headers });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "zhihu-hot-questions",
+    platformId: "zhihu",
+    name: "热门问题",
+    path: "/api/zhihu/hot-questions",
+    params: [p("nextUrl", false, "")],
+    handler: (ctx) =>
+      zhihuSignedGet(ctx, getQuery(ctx.url, "nextUrl", "/api/v4/creators/question_route/pc_member_related/hot?page_source=pc_panel&limit=20&offset=0&recom_domain_score_ab=1")),
+  }),
+  endpoint({
+    id: "zhihu-read-items",
+    platformId: "zhihu",
+    name: "上报已读",
+    method: "POST",
+    path: "/api/zhihu/read-items",
+    params: [p("itemIds", true, "1,2,3")],
+    handler: async (ctx) => {
+      const itemIds = requireQuery(ctx.url, "itemIds").split(",").filter(Boolean);
+      const cookieValue = cookie(ctx.configStore, "zhihuCookie");
+      const d_c0 = cookieValue.match(/(?:^|;)\s*d_c0=([^;]+)/)?.[1] || "";
+      const url = "https://www.zhihu.com/api/v3/feed/read-items";
+      const signPath = "/api/v3/feed/read-items";
+      const headers = commonHeaders(cookieValue, {
+        "x-zse-93": "101_3_3.0",
+        "x-api-version": "3.0.91",
+        "content-type": "application/json",
+        origin: "https://www.zhihu.com",
+        referer: "https://www.zhihu.com/",
+      });
+      headers["x-zse-96"] = await getZhihuSignature(`101_3_3.0+${signPath}+${d_c0}`);
+      const response = await ctx.fetchImpl(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ item_ids: itemIds }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
 
   endpoint({
     id: "weibo-feed",
@@ -1068,17 +1281,229 @@ const endpoints = [
       }),
     }),
   ),
-  ...[
-    ["weibo-follow", "关注用户"],
-    ["weibo-unfollow", "取消关注"],
-    ["weibo-like", "点赞"],
-    ["weibo-unlike", "鍙栨秷点赞"],
-    ["weibo-send", "send"],
-    ["weibo-repost", "转发"],
-    ["weibo-create-comment", "鍙戣〃评论"],
-    ["weibo-upload-image", "上传图片"],
-    ["weibo-download-video", "下载视频"],
-  ].map(([id, name]) => endpoint({ id, platformId: "weibo", name, method: "POST", path: `/api/weibo/${id.replace("weibo-", "")}`, handler: notPorted("微博写操作/下载需要本地文件和 CSRF 适配。") })),
+  endpoint({
+    id: "weibo-follow",
+    platformId: "weibo",
+    name: "关注用户",
+    method: "POST",
+    path: "/api/weibo/follow",
+    params: [p("uid", true, "1")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "weiboCookie");
+      const csrf = ck.match(/XSRF-TOKEN=(.*?);/)?.[1] || "";
+      if (!csrf) throw new Error("Cookie 中缺少 XSRF-TOKEN (CSRF token)");
+      const uid = requireQuery(ctx.url, "uid");
+      const response = await ctx.fetchImpl("https://weibo.com/ajax/friendships/create", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/x-www-form-urlencoded",
+          referer: "https://weibo.com/",
+          "x-xsrf-token": csrf,
+        }),
+        body: new URLSearchParams({ uid, csrf_token: csrf }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weibo-unfollow",
+    platformId: "weibo",
+    name: "取消关注",
+    method: "POST",
+    path: "/api/weibo/unfollow",
+    params: [p("uid", true, "1")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "weiboCookie");
+      const csrf = ck.match(/XSRF-TOKEN=(.*?);/)?.[1] || "";
+      if (!csrf) throw new Error("Cookie 中缺少 XSRF-TOKEN (CSRF token)");
+      const uid = requireQuery(ctx.url, "uid");
+      const response = await ctx.fetchImpl("https://weibo.com/ajax/friendships/destroy", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/x-www-form-urlencoded",
+          referer: "https://weibo.com/",
+          "x-xsrf-token": csrf,
+        }),
+        body: new URLSearchParams({ uid, csrf_token: csrf }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weibo-like",
+    platformId: "weibo",
+    name: "点赞",
+    method: "POST",
+    path: "/api/weibo/like",
+    params: [p("id", true, "1")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "weiboCookie");
+      const csrf = ck.match(/XSRF-TOKEN=(.*?);/)?.[1] || "";
+      if (!csrf) throw new Error("Cookie 中缺少 XSRF-TOKEN (CSRF token)");
+      const id = requireQuery(ctx.url, "id");
+      const response = await ctx.fetchImpl("https://weibo.com/ajax/statuses/updateLike", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/json",
+          referer: "https://weibo.com/",
+          "x-xsrf-token": csrf,
+        }),
+        body: JSON.stringify({ id, attitude: "heart", csrf_token: csrf }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weibo-unlike",
+    platformId: "weibo",
+    name: "取消点赞",
+    method: "POST",
+    path: "/api/weibo/unlike",
+    params: [p("id", true, "1")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "weiboCookie");
+      const csrf = ck.match(/XSRF-TOKEN=(.*?);/)?.[1] || "";
+      if (!csrf) throw new Error("Cookie 中缺少 XSRF-TOKEN (CSRF token)");
+      const id = requireQuery(ctx.url, "id");
+      const response = await ctx.fetchImpl("https://weibo.com/ajax/statuses/updateLike", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/json",
+          referer: "https://weibo.com/",
+          "x-xsrf-token": csrf,
+        }),
+        body: JSON.stringify({ id, attitude: "unlike", csrf_token: csrf }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weibo-send",
+    platformId: "weibo",
+    name: "发微博",
+    method: "POST",
+    path: "/api/weibo/send",
+    params: [p("content", true, "Hello World"), p("picIds", false, "")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "weiboCookie");
+      const csrf = ck.match(/XSRF-TOKEN=(.*?);/)?.[1] || "";
+      if (!csrf) throw new Error("Cookie 中缺少 XSRF-TOKEN (CSRF token)");
+      const content = requireQuery(ctx.url, "content");
+      const picIds = getQuery(ctx.url, "picIds", "");
+      const body = { content, csrf_token: csrf };
+      if (picIds) body.pic_ids = picIds.split(",").filter(Boolean);
+      const response = await ctx.fetchImpl("https://weibo.com/ajax/statuses/update", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/json",
+          referer: "https://weibo.com/",
+          "x-xsrf-token": csrf,
+        }),
+        body: JSON.stringify(body),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weibo-repost",
+    platformId: "weibo",
+    name: "转发",
+    method: "POST",
+    path: "/api/weibo/repost",
+    params: [p("id", true, "1"), p("content", false, "")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "weiboCookie");
+      const csrf = ck.match(/XSRF-TOKEN=(.*?);/)?.[1] || "";
+      if (!csrf) throw new Error("Cookie 中缺少 XSRF-TOKEN (CSRF token)");
+      const id = requireQuery(ctx.url, "id");
+      const content = getQuery(ctx.url, "content", "");
+      const response = await ctx.fetchImpl("https://weibo.com/ajax/statuses/repost", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/json",
+          referer: "https://weibo.com/",
+          "x-xsrf-token": csrf,
+        }),
+        body: JSON.stringify({ id, content, csrf_token: csrf }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weibo-create-comment",
+    platformId: "weibo",
+    name: "发表评论",
+    method: "POST",
+    path: "/api/weibo/create-comment",
+    params: [p("id", true, "1"), p("content", true, "评论内容")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "weiboCookie");
+      const csrf = ck.match(/XSRF-TOKEN=(.*?);/)?.[1] || "";
+      if (!csrf) throw new Error("Cookie 中缺少 XSRF-TOKEN (CSRF token)");
+      const id = requireQuery(ctx.url, "id");
+      const content = requireQuery(ctx.url, "content");
+      const response = await ctx.fetchImpl("https://weibo.com/ajax/comments/create", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/json",
+          referer: "https://weibo.com/",
+          "x-xsrf-token": csrf,
+        }),
+        body: JSON.stringify({ id, content, csrf_token: csrf }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weibo-upload-image",
+    platformId: "weibo",
+    name: "上传图片",
+    method: "POST",
+    path: "/api/weibo/upload-image",
+    params: [p("imageData", true, "base64...")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "weiboCookie");
+      const csrf = ck.match(/XSRF-TOKEN=(.*?);/)?.[1] || "";
+      if (!csrf) throw new Error("Cookie 中缺少 XSRF-TOKEN (CSRF token)");
+      const imageData = requireQuery(ctx.url, "imageData");
+      const buffer = Buffer.from(imageData.replace(/^data:image\/\w+;base64,/, ""), "base64");
+      const form = new FormData();
+      form.append("file", new Blob([buffer]), "image.jpg");
+      const response = await ctx.fetchImpl("https://weibo.com/ajax/photo/upload", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          referer: "https://weibo.com/",
+          "x-xsrf-token": csrf,
+        }),
+        body: form,
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weibo-download-video",
+    platformId: "weibo",
+    name: "下载视频",
+    method: "POST",
+    path: "/api/weibo/download-video",
+    params: [p("url", true, "")],
+    handler: async (ctx) => {
+      const videoUrl = requireQuery(ctx.url, "url");
+      const response = await ctx.fetchImpl(videoUrl, { headers: commonHeaders("", { referer: "https://weibo.com/" }) });
+      if (!response.ok) throw new Error(`下载失败: ${response.status}`);
+      const buffer = await response.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+      return { ok: true, status: 200, data: { base64, size: buffer.byteLength } };
+    },
+  }),
 
   ...[
     ["bilibili-qrcode", "qrcode", "/api/bilibili/qrcode", () => "https://passport.bilibili.com/x/passport-login/web/qrcode/generate", []],
@@ -1112,11 +1537,83 @@ const endpoints = [
       })),
     }),
   ),
-  ...[
-    ["bilibili-add-watch-later", "加入稍后再看", "add-watch-later"],
-    ["bilibili-del-watch-later", "移除稍后再看", "del-watch-later"],
-    ["bilibili-modify-relation", "关注/取关", "modify-relation"],
-  ].map(([id, name, route]) => endpoint({ id, platformId: "bilibili", name, method: "POST", path: `/api/bilibili/${route}`, handler: notPorted("B站写操作需要从 Cookie 提取 CSRF 并提交表单。") })),
+  endpoint({
+    id: "bilibili-add-watch-later",
+    platformId: "bilibili",
+    name: "加入稍后再看",
+    method: "POST",
+    path: "/api/bilibili/add-watch-later",
+    params: [p("bvid", true, "BV1xx411c7mD")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "bilibiliCookie");
+      const csrf = _csrfFromCookie(ck);
+      if (!csrf) throw new Error("Cookie 中缺少 bili_jct (CSRF token)");
+      const bvid = requireQuery(ctx.url, "bvid");
+      const response = await ctx.fetchImpl("https://api.bilibili.com/x/v2/history/toview/add", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/x-www-form-urlencoded",
+          referer: "https://www.bilibili.com/",
+          origin: "https://www.bilibili.com",
+        }),
+        body: new URLSearchParams({ bvid, csrf }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "bilibili-del-watch-later",
+    platformId: "bilibili",
+    name: "移除稍后再看",
+    method: "POST",
+    path: "/api/bilibili/del-watch-later",
+    params: [p("bvid", true, "BV1xx411c7mD")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "bilibiliCookie");
+      const csrf = _csrfFromCookie(ck);
+      if (!csrf) throw new Error("Cookie 中缺少 bili_jct (CSRF token)");
+      const bvid = requireQuery(ctx.url, "bvid");
+      const response = await ctx.fetchImpl("https://api.bilibili.com/x/v2/history/toview/del", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/x-www-form-urlencoded",
+          referer: "https://www.bilibili.com/",
+          origin: "https://www.bilibili.com",
+        }),
+        body: new URLSearchParams({ bvid, csrf }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "bilibili-modify-relation",
+    platformId: "bilibili",
+    name: "关注/取关",
+    method: "POST",
+    path: "/api/bilibili/modify-relation",
+    params: [p("fid", true, "2"), p("act", true, "1")],
+    handler: async (ctx) => {
+      const ck = cookie(ctx.configStore, "bilibiliCookie");
+      const csrf = _csrfFromCookie(ck);
+      if (!csrf) throw new Error("Cookie 中缺少 bili_jct (CSRF token)");
+      const fid = requireQuery(ctx.url, "fid");
+      const act = requireQuery(ctx.url, "act");
+      const reSrc = "11";
+      const response = await ctx.fetchImpl("https://api.bilibili.com/x/relation/modify", {
+        method: "POST",
+        headers: commonHeaders(ck, {
+          "content-type": "application/x-www-form-urlencoded",
+          referer: "https://space.bilibili.com/",
+          origin: "https://space.bilibili.com",
+        }),
+        body: new URLSearchParams({ fid, act, re_src: reSrc, csrf }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
 
   ...qqmusicEndpoints(),
 
@@ -1172,10 +1669,51 @@ const endpoints = [
         }),
     }),
   ),
-  ...[
-    ["send-sms", "发送验证码"],
-    ["login-sms", "短信登录"],
-  ].map(([route, name]) => endpoint({ id: `xiaoyuzhou-${route}`, platformId: "xiaoyuzhou", name, method: "POST", path: `/api/xiaoyuzhou/${route}`, params: [p("payload", false, "{}")], handler: notPorted("小宇宙短信登录需要单独做登录页确认风控。") })),
+  endpoint({
+    id: "xiaoyuzhou-send-sms",
+    platformId: "xiaoyuzhou",
+    name: "发送验证码",
+    method: "POST",
+    path: "/api/xiaoyuzhou/send-sms",
+    params: [p("phone", true, "13800138000"), p("countryCode", false, "86")],
+    handler: async (ctx) => {
+      const phone = requireQuery(ctx.url, "phone");
+      const countryCode = getQuery(ctx.url, "countryCode", "86");
+      const deviceId = cookie(ctx.configStore, "xiaoyuzhouDeviceId") || getDeviceId("");
+      ctx.configStore.set("xiaoyuzhouDeviceId", deviceId);
+      const response = await ctx.fetchImpl("https://api.xiaoyuzhoufm.com/v1/auth/send-sms", {
+        method: "POST",
+        headers: buildXiaoyuzhouHeaders({ deviceId, contentType: "application/json", localTime: nowIsoWithTimezone() }),
+        body: JSON.stringify({ phone, countryCode }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "xiaoyuzhou-login-sms",
+    platformId: "xiaoyuzhou",
+    name: "短信登录",
+    method: "POST",
+    path: "/api/xiaoyuzhou/login-sms",
+    params: [p("phone", true, "13800138000"), p("code", true, "123456"), p("countryCode", false, "86")],
+    handler: async (ctx) => {
+      const phone = requireQuery(ctx.url, "phone");
+      const code = requireQuery(ctx.url, "code");
+      const countryCode = getQuery(ctx.url, "countryCode", "86");
+      const deviceId = cookie(ctx.configStore, "xiaoyuzhouDeviceId") || getDeviceId("");
+      const response = await ctx.fetchImpl("https://api.xiaoyuzhoufm.com/v1/auth/login-by-sms", {
+        method: "POST",
+        headers: buildXiaoyuzhouHeaders({ deviceId, contentType: "application/json", localTime: nowIsoWithTimezone() }),
+        body: JSON.stringify({ phone, code, countryCode }),
+      });
+      const auth = extractXiaoyuzhouAuth(Object.fromEntries(response.headers.entries()));
+      if (auth.accessToken) ctx.configStore.set("xiaoyuzhouAccessToken", auth.accessToken);
+      if (auth.refreshToken) ctx.configStore.set("xiaoyuzhouRefreshToken", auth.refreshToken);
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data: { ...data, auth: { accessToken: !!auth.accessToken, refreshToken: !!auth.refreshToken } } };
+    },
+  }),
 
   ...[
     ["login-getuid", "POST", "https://weread.qq.com/web/login/getuid"],
@@ -1214,11 +1752,427 @@ const endpoints = [
         }),
     }),
   ),
-  ...[
-    "login-confirm", "login-weblogin", "login-session-init", "login-renewal",
-    "book-read-init", "book-read", "book-chapter-e0", "book-chapter-e1", "book-chapter-e2", "book-chapter-e3", "book-chapter-t0", "book-chapter-t1", "book-chapter-e",
-    "category-info", "category-list", "pdf-url", "pdf2epub", "review-myself", "review-synckey", "review-list", "review-single", "review-add", "upload-shelf-full",
-  ].map((route) => endpoint({ id: `weread-${route}`, platformId: "weread", name: route, path: `/api/weread/${route}`, params: [p("payload", false, "{}")], handler: notPorted("微信读书接口涉及阅读签名、章节解密或登录续期。") })),
+  endpoint({
+    id: "weread-login-confirm",
+    platformId: "weread",
+    name: "login-confirm",
+    method: "POST",
+    path: "/api/weread/login-confirm",
+    params: [p("uid", true, ""), p("code", true, "")],
+    handler: async (ctx) => {
+      const uid = requireQuery(ctx.url, "uid");
+      const code = requireQuery(ctx.url, "code");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/login/confirm", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ uid, code }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-login-weblogin",
+    platformId: "weread",
+    name: "login-weblogin",
+    method: "POST",
+    path: "/api/weread/login-weblogin",
+    params: [p("uid", true, ""), p("code", true, "")],
+    handler: async (ctx) => {
+      const uid = requireQuery(ctx.url, "uid");
+      const code = requireQuery(ctx.url, "code");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/login/weblogin", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ uid, code }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-login-session-init",
+    platformId: "weread",
+    name: "login-session-init",
+    method: "POST",
+    path: "/api/weread/login-session-init",
+    handler: async (ctx) => {
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/login/session/init", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({}),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-login-renewal",
+    platformId: "weread",
+    name: "login-renewal",
+    method: "POST",
+    path: "/api/weread/login-renewal",
+    handler: async (ctx) => {
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/login/renewal", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({}),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-read-init",
+    platformId: "weread",
+    name: "book-read-init",
+    method: "POST",
+    path: "/api/weread/book-read-init",
+    params: [p("bookId", true, ""), p("chapterId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/read", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-read",
+    platformId: "weread",
+    name: "book-read",
+    method: "POST",
+    path: "/api/weread/book-read",
+    params: [p("bookId", true, ""), p("chapterId", true, ""), p("progress", false, "0")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const progress = Number(getQuery(ctx.url, "progress", "0"));
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/read", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId, progress }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-chapter-e0",
+    platformId: "weread",
+    name: "book-chapter-e0",
+    method: "POST",
+    path: "/api/weread/book-chapter-e0",
+    params: [p("bookId", true, ""), p("chapterId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/chapter/e_0", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-chapter-e1",
+    platformId: "weread",
+    name: "book-chapter-e1",
+    method: "POST",
+    path: "/api/weread/book-chapter-e1",
+    params: [p("bookId", true, ""), p("chapterId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/chapter/e_1", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-chapter-e2",
+    platformId: "weread",
+    name: "book-chapter-e2",
+    method: "POST",
+    path: "/api/weread/book-chapter-e2",
+    params: [p("bookId", true, ""), p("chapterId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/chapter/e_2", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-chapter-e3",
+    platformId: "weread",
+    name: "book-chapter-e3",
+    method: "POST",
+    path: "/api/weread/book-chapter-e3",
+    params: [p("bookId", true, ""), p("chapterId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/chapter/e_3", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-chapter-t0",
+    platformId: "weread",
+    name: "book-chapter-t0",
+    method: "POST",
+    path: "/api/weread/book-chapter-t0",
+    params: [p("bookId", true, ""), p("chapterId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/chapter/t_0", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-chapter-t1",
+    platformId: "weread",
+    name: "book-chapter-t1",
+    method: "POST",
+    path: "/api/weread/book-chapter-t1",
+    params: [p("bookId", true, ""), p("chapterId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/chapter/t_1", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-book-chapter-e",
+    platformId: "weread",
+    name: "book-chapter-e",
+    method: "POST",
+    path: "/api/weread/book-chapter-e",
+    params: [p("bookId", true, ""), p("chapterId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const chapterId = requireQuery(ctx.url, "chapterId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/chapter/e", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, chapterId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-category-info",
+    platformId: "weread",
+    name: "category-info",
+    method: "POST",
+    path: "/api/weread/category-info",
+    params: [p("categoryId", true, "")],
+    handler: async (ctx) => {
+      const categoryId = requireQuery(ctx.url, "categoryId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/category/info", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ categoryId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-category-list",
+    platformId: "weread",
+    name: "category-list",
+    method: "POST",
+    path: "/api/weread/category-list",
+    handler: async (ctx) => {
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/category/list", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({}),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-pdf-url",
+    platformId: "weread",
+    name: "pdf-url",
+    method: "POST",
+    path: "/api/weread/pdf-url",
+    params: [p("bookId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/pdf", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-pdf2epub",
+    platformId: "weread",
+    name: "pdf2epub",
+    method: "POST",
+    path: "/api/weread/pdf2epub",
+    params: [p("bookId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/book/pdf2epub", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-review-myself",
+    platformId: "weread",
+    name: "review-myself",
+    method: "POST",
+    path: "/api/weread/review-myself",
+    params: [p("bookId", true, "")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/review/myself", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-review-synckey",
+    platformId: "weread",
+    name: "review-synckey",
+    method: "POST",
+    path: "/api/weread/review-synckey",
+    handler: async (ctx) => {
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/review/synckey", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({}),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-review-list",
+    platformId: "weread",
+    name: "review-list",
+    method: "POST",
+    path: "/api/weread/review-list",
+    params: [p("bookId", true, ""), p("maxId", false, "0")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const maxId = getQuery(ctx.url, "maxId", "0");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/review/list", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, maxId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-review-single",
+    platformId: "weread",
+    name: "review-single",
+    method: "POST",
+    path: "/api/weread/review-single",
+    params: [p("reviewId", true, "")],
+    handler: async (ctx) => {
+      const reviewId = requireQuery(ctx.url, "reviewId");
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/review/single", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ reviewId }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-review-add",
+    platformId: "weread",
+    name: "review-add",
+    method: "POST",
+    path: "/api/weread/review-add",
+    params: [p("bookId", true, ""), p("content", true, ""), p("rating", false, "0")],
+    handler: async (ctx) => {
+      const bookId = requireQuery(ctx.url, "bookId");
+      const content = requireQuery(ctx.url, "content");
+      const rating = Number(getQuery(ctx.url, "rating", "0"));
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/review/add", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ bookId, content, rating }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "weread-upload-shelf-full",
+    platformId: "weread",
+    name: "upload-shelf-full",
+    method: "POST",
+    path: "/api/weread/upload-shelf-full",
+    params: [p("books", true, "[]")],
+    handler: async (ctx) => {
+      const books = JSON.parse(getQuery(ctx.url, "books", "[]"));
+      const response = await ctx.fetchImpl("https://weread.qq.com/web/shelf/uploadFull", {
+        method: "POST",
+        headers: wereadHeaders(ctx),
+        body: JSON.stringify({ books }),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
 
   endpoint({
     id: "xhs-feed",
@@ -1346,19 +2300,138 @@ const endpoints = [
         },
       }),
   }),
-  ...[
-    ["hover-card", "/api/sns/web/v1/user/hover_card"],
-    ["follow", "/api/sns/web/v1/user/follow"],
-    ["unfollow", "/api/sns/web/v1/user/unfollow"],
-    ["like", "/api/sns/web/v1/note/like"],
-    ["dislike", "/api/sns/web/v1/note/dislike"],
-    ["collect", "/api/sns/web/v1/note/collect"],
-    ["uncollect", "/api/sns/web/v1/note/uncollect"],
-    ["post-comment", "/api/sns/web/v1/comment/post"],
-    ["upload-permit", "/api/media/v1/upload/creator/permit"],
-    ["upload-image", ""],
-    ["publish-note", "/web_api/sns/v2/note"],
-  ].map(([route, apiPath]) => endpoint({ id: `xhs-${route}`, platformId: "xhs", name: route, method: route === "upload-image" ? "POST" : "POST", path: `/api/xhs/${route}`, params: [p("payload", false, "{}")], handler: apiPath ? ((ctx) => xhsRequest(ctx, apiPath, { body: parseJson(ctx.body) })) : notPorted("图片上传需要 multipart/base64 文件管线。") })),
+  endpoint({
+    id: "xhs-hover-card",
+    platformId: "xhs",
+    name: "hover-card",
+    method: "POST",
+    path: "/api/xhs/hover-card",
+    params: [p("user_id", true, "")],
+    handler: (ctx) => xhsRequest(ctx, "/api/sns/web/v1/user/hover_card", { body: { user_id: requireQuery(ctx.url, "user_id") } }),
+  }),
+  endpoint({
+    id: "xhs-follow",
+    platformId: "xhs",
+    name: "follow",
+    method: "POST",
+    path: "/api/xhs/follow",
+    params: [p("user_id", true, "")],
+    handler: (ctx) => xhsRequest(ctx, "/api/sns/web/v1/user/follow", { body: { user_id: requireQuery(ctx.url, "user_id") } }),
+  }),
+  endpoint({
+    id: "xhs-unfollow",
+    platformId: "xhs",
+    name: "unfollow",
+    method: "POST",
+    path: "/api/xhs/unfollow",
+    params: [p("user_id", true, "")],
+    handler: (ctx) => xhsRequest(ctx, "/api/sns/web/v1/user/unfollow", { body: { user_id: requireQuery(ctx.url, "user_id") } }),
+  }),
+  endpoint({
+    id: "xhs-like",
+    platformId: "xhs",
+    name: "like",
+    method: "POST",
+    path: "/api/xhs/like",
+    params: [p("note_id", true, "")],
+    handler: (ctx) => xhsRequest(ctx, "/api/sns/web/v1/note/like", { body: { note_id: requireQuery(ctx.url, "note_id") } }),
+  }),
+  endpoint({
+    id: "xhs-dislike",
+    platformId: "xhs",
+    name: "dislike",
+    method: "POST",
+    path: "/api/xhs/dislike",
+    params: [p("note_id", true, "")],
+    handler: (ctx) => xhsRequest(ctx, "/api/sns/web/v1/note/dislike", { body: { note_id: requireQuery(ctx.url, "note_id") } }),
+  }),
+  endpoint({
+    id: "xhs-collect",
+    platformId: "xhs",
+    name: "collect",
+    method: "POST",
+    path: "/api/xhs/collect",
+    params: [p("note_id", true, "")],
+    handler: (ctx) => xhsRequest(ctx, "/api/sns/web/v1/note/collect", { body: { note_id: requireQuery(ctx.url, "note_id") } }),
+  }),
+  endpoint({
+    id: "xhs-uncollect",
+    platformId: "xhs",
+    name: "uncollect",
+    method: "POST",
+    path: "/api/xhs/uncollect",
+    params: [p("note_id", true, "")],
+    handler: (ctx) => xhsRequest(ctx, "/api/sns/web/v1/note/uncollect", { body: { note_id: requireQuery(ctx.url, "note_id") } }),
+  }),
+  endpoint({
+    id: "xhs-post-comment",
+    platformId: "xhs",
+    name: "post-comment",
+    method: "POST",
+    path: "/api/xhs/post-comment",
+    params: [p("note_id", true, ""), p("content", true, ""), p("target_comment_id", false, "")],
+    handler: (ctx) =>
+      xhsRequest(ctx, "/api/sns/web/v1/comment/post", {
+        body: {
+          note_id: requireQuery(ctx.url, "note_id"),
+          content: requireQuery(ctx.url, "content"),
+          target_comment_id: getQuery(ctx.url, "target_comment_id", ""),
+        },
+      }),
+  }),
+  endpoint({
+    id: "xhs-upload-permit",
+    platformId: "xhs",
+    name: "upload-permit",
+    method: "POST",
+    path: "/api/xhs/upload-permit",
+    params: [p("file_type", false, "image")],
+    handler: (ctx) => xhsRequest(ctx, "/api/media/v1/upload/creator/permit", { body: { file_type: getQuery(ctx.url, "file_type", "image") } }),
+  }),
+  endpoint({
+    id: "xhs-upload-image",
+    platformId: "xhs",
+    name: "upload-image",
+    method: "POST",
+    path: "/api/xhs/upload-image",
+    params: [p("imageData", true, "base64..."), p("fileName", false, "image.jpg")],
+    handler: async (ctx) => {
+      const imageData = requireQuery(ctx.url, "imageData");
+      const fileName = getQuery(ctx.url, "fileName", "image.jpg");
+      const buffer = Buffer.from(imageData.replace(/^data:image\/\w+;base64,/, ""), "base64");
+      const cookieValue = cookie(ctx.configStore, "xhsCookie");
+      const signObj = await getXhsSignature("/api/media/v1/upload/web-image", buffer, "POST", cookieValue);
+      const host = "https://edith.xiaohongshu.com";
+      const form = new FormData();
+      form.append("file", new Blob([buffer], { type: "image/jpeg" }), fileName);
+      const response = await ctx.fetchImpl(`${host}/api/media/v1/upload/web-image`, {
+        method: "POST",
+        headers: {
+          ...xhsHeaders(cookieValue, signObj, host),
+          "content-type": undefined, // Let fetch set it with boundary
+        },
+        body: form,
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "xhs-publish-note",
+    platformId: "xhs",
+    name: "publish-note",
+    method: "POST",
+    path: "/api/xhs/publish-note",
+    params: [p("title", true, ""), p("desc", true, ""), p("images", true, "[]")],
+    handler: (ctx) =>
+      xhsRequest(ctx, "/web_api/sns/v2/note", {
+        body: {
+          title: requireQuery(ctx.url, "title"),
+          desc: requireQuery(ctx.url, "desc"),
+          images: JSON.parse(getQuery(ctx.url, "images", "[]")),
+        },
+      }),
+  }),
 
   ...[
     ["home-latest", "HomeLatestTimeline", "eObmT5Nuapp04u8bYWf49Q", () => ({ count: 20, includePromotedContent: true, latestControlAvailable: true })],
@@ -1397,9 +2470,368 @@ const endpoints = [
       },
     }),
   ),
-  ...[
-    "home-latest-next", "home", "home-next", "home-refresh", "follow", "unfollow", "translate", "create-tweet", "repost", "upload-media", "verify-credentials", "favorite", "unfavorite",
-  ].map((route) => endpoint({ id: `x-${route}`, platformId: "x", name: route, method: ["follow", "unfollow", "create-tweet", "repost", "upload-media", "favorite", "unfavorite"].includes(route) ? "POST" : "GET", path: `/api/x/${route}`, params: [p("payload", false, "{}")], handler: notPorted("X 该接口需要更完整的 variables/features 或媒体上传流程。") })),
+  endpoint({
+    id: "x-home-latest-next",
+    platformId: "x",
+    name: "home-latest-next",
+    path: "/api/x/home-latest-next",
+    params: [p("cursor", false, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const cursor = getQuery(ctx.url, "cursor", "");
+      const pathname = "/i/api/graphql/eObmT5Nuapp04u8bYWf49Q/HomeLatestTimeline";
+      const tx = await getXTransactionId(pathname, "GET");
+      const target = new URL(`https://x.com${pathname}`);
+      const variables = { count: 20, includePromotedContent: true, latestControlAvailable: true };
+      if (cursor) variables.cursor = cursor;
+      target.searchParams.set("variables", JSON.stringify(variables));
+      target.searchParams.set("features", JSON.stringify({
+        responsive_web_graphql_timeline_navigation_enabled: true,
+        responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
+      }));
+      return fetchJson(ctx.fetchImpl, target.toString(), {
+        headers: buildXHeaders(credential, { "x-client-transaction-id": tx }),
+      });
+    },
+  }),
+  endpoint({
+    id: "x-home",
+    platformId: "x",
+    name: "home",
+    path: "/api/x/home",
+    params: [p("cursor", false, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const cursor = getQuery(ctx.url, "cursor", "");
+      const pathname = "/i/api/graphql/1YVVV-B36P1Z3mE5gmj3w/HomeTimeline";
+      const tx = await getXTransactionId(pathname, "GET");
+      const target = new URL(`https://x.com${pathname}`);
+      const variables = { count: 20, includePromotedContent: true };
+      if (cursor) variables.cursor = cursor;
+      target.searchParams.set("variables", JSON.stringify(variables));
+      target.searchParams.set("features", JSON.stringify({
+        responsive_web_graphql_timeline_navigation_enabled: true,
+      }));
+      return fetchJson(ctx.fetchImpl, target.toString(), {
+        headers: buildXHeaders(credential, { "x-client-transaction-id": tx }),
+      });
+    },
+  }),
+  endpoint({
+    id: "x-home-next",
+    platformId: "x",
+    name: "home-next",
+    path: "/api/x/home-next",
+    params: [p("cursor", true, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const cursor = requireQuery(ctx.url, "cursor");
+      const pathname = "/i/api/graphql/1YVVV-B36P1Z3mE5gmj3w/HomeTimeline";
+      const tx = await getXTransactionId(pathname, "GET");
+      const target = new URL(`https://x.com${pathname}`);
+      target.searchParams.set("variables", JSON.stringify({ count: 20, cursor, includePromotedContent: true }));
+      target.searchParams.set("features", JSON.stringify({
+        responsive_web_graphql_timeline_navigation_enabled: true,
+      }));
+      return fetchJson(ctx.fetchImpl, target.toString(), {
+        headers: buildXHeaders(credential, { "x-client-transaction-id": tx }),
+      });
+    },
+  }),
+  endpoint({
+    id: "x-home-refresh",
+    platformId: "x",
+    name: "home-refresh",
+    path: "/api/x/home-refresh",
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const pathname = "/i/api/graphql/1YVVV-B36P1Z3mE5gmj3w/HomeTimeline";
+      const tx = await getXTransactionId(pathname, "GET");
+      const target = new URL(`https://x.com${pathname}`);
+      target.searchParams.set("variables", JSON.stringify({ count: 20, includePromotedContent: true }));
+      target.searchParams.set("features", JSON.stringify({
+        responsive_web_graphql_timeline_navigation_enabled: true,
+      }));
+      return fetchJson(ctx.fetchImpl, target.toString(), {
+        headers: buildXHeaders(credential, { "x-client-transaction-id": tx }),
+      });
+    },
+  }),
+  endpoint({
+    id: "x-follow",
+    platformId: "x",
+    name: "follow",
+    method: "POST",
+    path: "/api/x/follow",
+    params: [p("userId", true, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const userId = requireQuery(ctx.url, "userId");
+      const pathname = "/i/api/1.1/friendships/create.json";
+      const tx = await getXTransactionId(pathname, "POST");
+      const target = new URL(`https://x.com${pathname}`);
+      const response = await ctx.fetchImpl(target.toString(), {
+        method: "POST",
+        headers: buildXHeaders(credential, {
+          "content-type": "application/x-www-form-urlencoded",
+          "x-client-transaction-id": tx,
+        }),
+        body: new URLSearchParams({ user_id: userId }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "x-unfollow",
+    platformId: "x",
+    name: "unfollow",
+    method: "POST",
+    path: "/api/x/unfollow",
+    params: [p("userId", true, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const userId = requireQuery(ctx.url, "userId");
+      const pathname = "/i/api/1.1/friendships/destroy.json";
+      const tx = await getXTransactionId(pathname, "POST");
+      const target = new URL(`https://x.com${pathname}`);
+      const response = await ctx.fetchImpl(target.toString(), {
+        method: "POST",
+        headers: buildXHeaders(credential, {
+          "content-type": "application/x-www-form-urlencoded",
+          "x-client-transaction-id": tx,
+        }),
+        body: new URLSearchParams({ user_id: userId }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "x-translate",
+    platformId: "x",
+    name: "translate",
+    path: "/api/x/translate",
+    params: [p("tweetId", true, ""), p("text", true, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const tweetId = requireQuery(ctx.url, "tweetId");
+      const text = requireQuery(ctx.url, "text");
+      const pathname = "/i/api/1.1/strato/column/Translation/translation";
+      const tx = await getXTransactionId(pathname, "GET");
+      const target = new URL(`https://x.com${pathname}`);
+      target.searchParams.set("variables", JSON.stringify({
+        tweetId,
+        text,
+        destinationLanguage: "zh",
+      }));
+      return fetchJson(ctx.fetchImpl, target.toString(), {
+        headers: buildXHeaders(credential, { "x-client-transaction-id": tx }),
+      });
+    },
+  }),
+  endpoint({
+    id: "x-create-tweet",
+    platformId: "x",
+    name: "create-tweet",
+    method: "POST",
+    path: "/api/x/create-tweet",
+    params: [p("text", true, ""), p("replyTo", false, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const text = requireQuery(ctx.url, "text");
+      const replyTo = getQuery(ctx.url, "replyTo", "");
+      const pathname = "/i/api/2/tweets";
+      const tx = await getXTransactionId(pathname, "POST");
+      const body = {
+        variables: {
+          tweet_text: text,
+          dark_request: false,
+          semantic_annotation: [],
+          ...(replyTo ? { reply: { in_reply_to_tweet_id: replyTo, exclude_reply_user_ids: [] } } : {}),
+        },
+        features: {
+          responsive_web_edit_tweet_api_enabled: true,
+          tweetypie_unmention_optimization_enabled: true,
+          responsive_web_uc_gql_enabled: true,
+        },
+      };
+      const response = await ctx.fetchImpl(`https://x.com${pathname}`, {
+        method: "POST",
+        headers: buildXHeaders(credential, {
+          "content-type": "application/json",
+          "x-client-transaction-id": tx,
+        }),
+        body: JSON.stringify(body),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "x-repost",
+    platformId: "x",
+    name: "repost",
+    method: "POST",
+    path: "/api/x/repost",
+    params: [p("tweetId", true, ""), p("text", false, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const tweetId = requireQuery(ctx.url, "tweetId");
+      const text = getQuery(ctx.url, "text", "");
+      const pathname = "/i/api/2/tweets";
+      const tx = await getXTransactionId(pathname, "POST");
+      const body = {
+        variables: {
+          tweet_text: text,
+          attachment_url: `https://x.com/i/web/status/${tweetId}`,
+          dark_request: false,
+        },
+        features: {
+          responsive_web_edit_tweet_api_enabled: true,
+        },
+      };
+      const response = await ctx.fetchImpl(`https://x.com${pathname}`, {
+        method: "POST",
+        headers: buildXHeaders(credential, {
+          "content-type": "application/json",
+          "x-client-transaction-id": tx,
+        }),
+        body: JSON.stringify(body),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "x-upload-media",
+    platformId: "x",
+    name: "upload-media",
+    method: "POST",
+    path: "/api/x/upload-media",
+    params: [p("mediaData", true, "base64..."), p("mediaType", false, "image")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const mediaData = requireQuery(ctx.url, "mediaData");
+      const mediaType = getQuery(ctx.url, "mediaType", "image");
+      const buffer = Buffer.from(mediaData.replace(/^data:[^;]+;base64,/, ""), "base64");
+      const form = new FormData();
+      form.append("media", new Blob([buffer]), mediaType === "image" ? "image.jpg" : "video.mp4");
+      const pathname = "/i/api/2/media/upload.json";
+      const tx = await getXTransactionId(pathname, "POST");
+      const response = await ctx.fetchImpl(`https://x.com${pathname}`, {
+        method: "POST",
+        headers: buildXHeaders(credential, { "x-client-transaction-id": tx }),
+        body: form,
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "x-verify-credentials",
+    platformId: "x",
+    name: "verify-credentials",
+    path: "/api/x/verify-credentials",
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const pathname = "/i/api/1.1/account/verify_credentials.json";
+      const tx = await getXTransactionId(pathname, "GET");
+      const target = new URL(`https://x.com${pathname}`);
+      return fetchJson(ctx.fetchImpl, target.toString(), {
+        headers: buildXHeaders(credential, { "x-client-transaction-id": tx }),
+      });
+    },
+  }),
+  endpoint({
+    id: "x-favorite",
+    platformId: "x",
+    name: "favorite",
+    method: "POST",
+    path: "/api/x/favorite",
+    params: [p("tweetId", true, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const tweetId = requireQuery(ctx.url, "tweetId");
+      const pathname = "/i/api/2/favorites/create.json";
+      const tx = await getXTransactionId(pathname, "POST");
+      const target = new URL(`https://x.com${pathname}`);
+      const response = await ctx.fetchImpl(target.toString(), {
+        method: "POST",
+        headers: buildXHeaders(credential, {
+          "content-type": "application/x-www-form-urlencoded",
+          "x-client-transaction-id": tx,
+        }),
+        body: new URLSearchParams({ tweet_id: tweetId }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
+  endpoint({
+    id: "x-unfavorite",
+    platformId: "x",
+    name: "unfavorite",
+    method: "POST",
+    path: "/api/x/unfavorite",
+    params: [p("tweetId", true, "")],
+    handler: async (ctx) => {
+      const credential = buildXCredential({
+        cookie: cookie(ctx.configStore, "xCookie"),
+        authorization: cookie(ctx.configStore, "xAuthorization"),
+      });
+      const tweetId = requireQuery(ctx.url, "tweetId");
+      const pathname = "/i/api/2/favorites/destroy.json";
+      const tx = await getXTransactionId(pathname, "POST");
+      const target = new URL(`https://x.com${pathname}`);
+      const response = await ctx.fetchImpl(target.toString(), {
+        method: "POST",
+        headers: buildXHeaders(credential, {
+          "content-type": "application/x-www-form-urlencoded",
+          "x-client-transaction-id": tx,
+        }),
+        body: new URLSearchParams({ tweet_id: tweetId }).toString(),
+      });
+      const data = await readUpstreamJson(response);
+      return { ok: response.ok, status: response.status, data };
+    },
+  }),
 ].map(normalizeEndpointName);
 
 function listEndpoints() {
