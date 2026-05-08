@@ -101,4 +101,27 @@ suite("weibo tabs", () => {
     assert.strictEqual(tabs[0].label, "全部");
     assert.strictEqual(defaultWeiboActiveKey(tabs), tabs[0].key);
   });
+
+  test("maps focus tabs by default group title when group order changes", () => {
+    const tabs = buildWeiboTabsFromGroups({
+      groups: [
+        {
+          title: "默认分组",
+          group: [
+            { gid: "10009", title: "互相关注" },
+            { gid: "10001", title: "全部关注" },
+            { gid: "45634", title: "特别关注" },
+            { gid: "11000", title: "最新微博" },
+          ],
+        },
+      ],
+    });
+
+    const friendTab = tabs.find((tab) => tab.label === "好友");
+
+    assert.strictEqual(
+      friendTab?.key,
+      "/groupstimeline?list_id=10009&refresh=4&since_id=0&count=25"
+    );
+  });
 });

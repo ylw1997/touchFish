@@ -60,6 +60,17 @@ export class WeiboProvider extends BaseWebviewProvider {
     });
   }
 
+  private async promptWeiboCookieAndRetry<T>(retry: () => Promise<T>) {
+    const cookie = await window.showInputBox({
+      placeHolder: "请输入微博的cookie",
+      prompt: "请输入微博的cookie",
+    });
+    if (!cookie) return undefined;
+
+    await setConfigByKey("weiboCookie", cookie);
+    return retry();
+  }
+
   protected async handleCustomMessage(
     message: IncomingMessage,
     webviewView: WebviewView,
@@ -131,7 +142,13 @@ export class WeiboProvider extends BaseWebviewProvider {
         break;
       }
       case "GETUSERBLOG": {
-        const res = await getUserWeibo(payload);
+        let res = await getUserWeibo(payload);
+        if (res.data?.ok == -100) {
+          res =
+            (await this.promptWeiboCookieAndRetry(() =>
+              getUserWeibo(payload),
+            )) ?? res;
+        }
         webviewView.webview.postMessage({
           command: `SENDUSERBLOG`,
           payload: { payload: payload, ...res.data },
@@ -227,7 +244,13 @@ export class WeiboProvider extends BaseWebviewProvider {
         break;
       }
       case "GETUSERBYNAME": {
-        const res = await getUserByName(payload);
+        let res = await getUserByName(payload);
+        if (res.data?.ok == -100) {
+          res =
+            (await this.promptWeiboCookieAndRetry(() =>
+              getUserByName(payload),
+            )) ?? res;
+        }
         webviewView.webview.postMessage({
           command: `SENDUSERBYNAME`,
           payload: { payload: payload, ...res.data },
