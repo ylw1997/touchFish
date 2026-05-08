@@ -6,6 +6,7 @@ export type WeiboTab = {
 
 export type WeiboGroupItem = {
   gid?: string;
+  uid?: string;
   title?: string;
   containerid?: string;
   fid?: string;
@@ -77,6 +78,13 @@ export const buildWeiboTabsFromGroups = (
   }
 
   return tabs;
+};
+
+export const getWeiboUidFromGroups = (response?: WeiboGroupsResponse) => {
+  const defaultGroups = findSection(response?.groups ?? [], "默认分组").group ?? [];
+  const allGroup = defaultGroups.find((group) => group.title === "全部关注");
+
+  return allGroup?.uid ?? defaultGroups[0]?.uid ?? "";
 };
 
 const firstRequestKey = (tabs: WeiboTab[]) => {

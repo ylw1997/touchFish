@@ -322,7 +322,7 @@ export const setZhihuTokenCommand = () => {
 };
 
 // 设置微博token
-export const setWeiboTokenCommand = () => {
+export const setWeiboTokenCommand = (reloadGroups?: () => void) => {
   return vscode.commands.registerCommand(
     "touchfish.setWeiboToken",
     async () => {
@@ -332,24 +332,8 @@ export const setWeiboTokenCommand = () => {
       });
       if (weiboCookie !== undefined) {
         await setConfigByKey("weiboCookie", weiboCookie);
-        await showInfo("微博Cookie设置成功,点击刷新按钮查看!");
-      }
-    }
-  );
-};
-
-// 设置微博用户ID
-export const setWeiboUserIdCommand = () => {
-  return vscode.commands.registerCommand(
-    "touchfish.setWeiboUserId",
-    async () => {
-      const weiboUserId = await vscode.window.showInputBox({
-        prompt: "请输入微博用户ID (例如 1669879400 或个性域名)",
-        placeHolder: "请输入微博用户ID",
-      });
-      if (weiboUserId !== undefined) {
-        await setConfigByKey("weiboUserId", weiboUserId);
-        await showInfo("微博用户ID设置成功!");
+        reloadGroups?.();
+        await showInfo("微博Cookie设置成功,正在加载微博分组!");
       }
     }
   );

@@ -91,14 +91,6 @@ export class WeiboApi {
     return this.request("GETCANCELFOLLOW", userId, "取关中...");
   }
 
-  getMyUserInfo() {
-    return this.request<payloadType>(
-      "GET_MY_USER_INFO",
-      null,
-      "获取我的信息及..."
-    );
-  }
-
   getHotSearch() {
     return this.request<payloadType>("GETHOTSEARCH", null, "正在刷新热搜...");
   }

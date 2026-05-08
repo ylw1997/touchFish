@@ -7,7 +7,7 @@
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import { WebviewView, ExtensionContext, Uri, window, workspace } from "vscode";
+import { WebviewView, ExtensionContext, Uri, window } from "vscode";
 import { showInfo } from "../utils/errorMessage";
 import {
   cancelfollowUser,
@@ -36,6 +36,8 @@ import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { downloadImageWithSaveDialog } from "../utils/imageDownload";
 
 export class WeiboProvider extends BaseWebviewProvider {
+  private webviewView?: WebviewView;
+
   constructor(context: ExtensionContext) {
     super(context, {
       distPath: "weibo/dist",
@@ -48,7 +50,14 @@ export class WeiboProvider extends BaseWebviewProvider {
   }
 
   public override resolveWebviewView(webviewView: WebviewView) {
+    this.webviewView = webviewView;
     return super.resolveWebviewView(webviewView);
+  }
+
+  public reloadGroups() {
+    this.webviewView?.webview.postMessage({
+      command: "WEIBO_RELOAD_GROUPS",
+    });
   }
 
   protected async handleCustomMessage(
@@ -226,26 +235,6 @@ export class WeiboProvider extends BaseWebviewProvider {
         } as CommandsType<weiboAJAX>);
         break;
       }
-      case "GET_MY_USER_INFO": {
-        const config = workspace.getConfiguration("touchfish");
-        const userId = config.get<string>("weiboUserId");
-        if (userId) {
-          const res = await getUserByName(userId);
-          webviewView.webview.postMessage({
-            command: `SENDUSERBYNAME`,
-            payload: { payload: userId, ...res.data },
-            uuid,
-          } as CommandsType<weiboAJAX>);
-        } else {
-          showInfo("请先点击标题栏右侧按钮,设置微博用户ID!");
-          webviewView.webview.postMessage({
-            command: `SENDUSERBYNAME`,
-            payload: { ok: 0, msg: "未设置用户ID" },
-            uuid,
-          });
-        }
-        break;
-      }
       case "GETHOTSEARCH": {
         const res = await getHotSearch();
         webviewView.webview.postMessage({
@@ -256,7 +245,17 @@ export class WeiboProvider extends BaseWebviewProvider {
         break;
       }
       case "GET_WEIBO_GROUPS": {
-        const res = await getWeiboGroups();
+        let res = await getWeiboGroups();
+        if (res.data?.ok == -100) {
+          const cookie = await window.showInputBox({
+            placeHolder: "请输入微博的cookie",
+            prompt: "请输入微博的cookie",
+          });
+          if (cookie) {
+            await setConfigByKey("weiboCookie", cookie);
+            res = await getWeiboGroups();
+          }
+        }
         webviewView.webview.postMessage({
           command: "SEND_WEIBO_GROUPS",
           payload: { payload, ...res.data },

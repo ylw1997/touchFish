@@ -41,6 +41,7 @@ import { loaderFunc } from "./utils/loader";
 import {
   buildWeiboTabsFromGroups,
   defaultWeiboActiveKey,
+  getWeiboUidFromGroups,
   type WeiboGroupsResponse,
   type WeiboTab,
 } from "./data/tabs";
@@ -77,13 +78,13 @@ function App() {
     followUser,
     getListData,
     getUserByName,
-    getMyUserInfo,
     getWeiboGroups,
     isFetching,
   } = useWeiboAction();
   // 状态管理
   const [tabs, setTabs] = useState<WeiboTab[]>([]);
   const [activeKey, setActiveKey] = useState("");
+  const [myWeiboUid, setMyWeiboUid] = useState("");
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState<string | undefined>();
@@ -139,35 +140,28 @@ function App() {
     getListData(currentKey);
   }, [subAcitiveKey, activeKey, getListData]);
 
+  const initTabs = useCallback(async () => {
+    try {
+      const result = (await getWeiboGroups()) as WeiboGroupsResponse;
+      const nextTabs = buildWeiboTabsFromGroups(result);
+      const nextActiveKey = defaultWeiboActiveKey(nextTabs);
+
+      setTabs(nextTabs);
+      setActiveKey(nextActiveKey);
+      setSubActiveKey("");
+      setMyWeiboUid(getWeiboUidFromGroups(result));
+
+      if (nextActiveKey) {
+        getListData(nextActiveKey, true);
+      }
+    } catch (error) {
+      console.error("GET_WEIBO_GROUPS_ERROR", error);
+    }
+  }, [getListData, getWeiboGroups]);
+
   // 初始化，先拉取当前用户的微博分组
   useEffect(() => {
-    let ignore = false;
-
-    const initTabs = async () => {
-      try {
-        const result = (await getWeiboGroups()) as WeiboGroupsResponse;
-        if (ignore) return;
-
-        const nextTabs = buildWeiboTabsFromGroups(result);
-        const nextActiveKey = defaultWeiboActiveKey(nextTabs);
-
-        setTabs(nextTabs);
-        setActiveKey(nextActiveKey);
-        setSubActiveKey("");
-
-        if (nextActiveKey) {
-          getListData(nextActiveKey, true);
-        }
-      } catch (error) {
-        console.error("GET_WEIBO_GROUPS_ERROR", error);
-      }
-    };
-
     initTabs();
-
-    return () => {
-      ignore = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -202,6 +196,21 @@ function App() {
     },
     [clearList, getListData, tabs],
   );
+
+  useEffect(() => {
+    const messageHandler = (ev: MessageEvent<any>) => {
+      if (ev.type !== "message" || ev.data?.command !== "WEIBO_RELOAD_GROUPS") {
+        return;
+      }
+      initTabs();
+    };
+
+    window.addEventListener("message", messageHandler);
+
+    return () => {
+      window.removeEventListener("message", messageHandler);
+    };
+  }, [initTabs]);
 
   return (
     <>
@@ -321,9 +330,11 @@ function App() {
       >
         {/* 用户按钮 */}
         <FloatButton
-          onClick={getMyUserInfo}
+          onClick={() => {
+            if (myWeiboUid) getUserByName(myWeiboUid);
+          }}
           icon={<UserOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "我的", placement: "left" }}
+          tooltip={{ title: "用户", placement: "left" }}
         />
         {/* 搜索按钮 */}
         <FloatButton

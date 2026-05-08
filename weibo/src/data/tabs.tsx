@@ -1,6 +1,7 @@
 export {
   buildWeiboTabsFromGroups,
   defaultWeiboActiveKey,
+  getWeiboUidFromGroups,
 } from "./weiboTabs";
 export type {
   WeiboGroupsResponse,

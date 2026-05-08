@@ -2,6 +2,7 @@ import * as assert from "assert";
 import {
   buildWeiboTabsFromGroups,
   defaultWeiboActiveKey,
+  getWeiboUidFromGroups,
 } from "../../weibo/src/data/weiboTabs";
 
 suite("weibo tabs", () => {
@@ -63,6 +64,17 @@ suite("weibo tabs", () => {
       tabs[0].childrenList?.[1].key,
       "/hottimeline?group_id=1028034188&containerid=102803_ctg1_4188_-_ctg1_4188&extparam=discover%7Cnew_feed&max_id=0&count=25"
     );
+    assert.strictEqual(
+      getWeiboUidFromGroups({
+        groups: [
+          {
+            title: "默认分组",
+            group: [{ gid: "10001", uid: "7515513422", title: "全部关注" }],
+          },
+        ],
+      }),
+      "7515513422"
+    );
   });
 
   test("does not fall back to hard-coded tabs when groups are missing", () => {
@@ -70,6 +82,7 @@ suite("weibo tabs", () => {
 
     assert.deepStrictEqual(tabs, []);
     assert.strictEqual(defaultWeiboActiveKey(tabs), "");
+    assert.strictEqual(getWeiboUidFromGroups({ groups: [] }), "");
   });
 
   test("selects all tab first even when channel groups are unavailable", () => {
