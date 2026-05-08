@@ -209,7 +209,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                 </Button>
               )}
             </div>
-            {userWeiboList.length === 0 ? (
+            {isFetching && userWeiboList.length === 0 ? (
               loaderFunc()
             ) : (
               <InfiniteScroll

@@ -21,17 +21,31 @@ export type WeiboGroupsResponse = {
   groups?: WeiboGroupSection[];
 };
 
-const DEFAULT_FOCUS_LABELS = ["全部", "最新", "特别", "好友"] as const;
-
-const focusPathBuilders = [
-  (gid: string) =>
-    `/unreadfriendstimeline?list_id=${gid}&refresh=4&since_id=0&count=15`,
-  (gid: string) =>
-    `/friendstimeline?list_id=${gid}&refresh=4&since_id=0&count=25`,
-  (gid: string) =>
-    `/groupstimeline?list_id=${gid}&refresh=4&since_id=0&count=25`,
-  (gid: string) =>
-    `/groupstimeline?list_id=${gid}&refresh=4&since_id=0&count=25`,
+const FOCUS_TAB_CONFIG = [
+  {
+    label: "全部",
+    titleKeywords: ["全部关注", "全部"],
+    buildPath: (gid: string) =>
+      `/unreadfriendstimeline?list_id=${gid}&refresh=4&since_id=0&count=15`,
+  },
+  {
+    label: "最新",
+    titleKeywords: ["最新微博", "最新"],
+    buildPath: (gid: string) =>
+      `/friendstimeline?list_id=${gid}&refresh=4&since_id=0&count=25`,
+  },
+  {
+    label: "特别",
+    titleKeywords: ["特别关注", "特别"],
+    buildPath: (gid: string) =>
+      `/groupstimeline?list_id=${gid}&refresh=4&since_id=0&count=25`,
+  },
+  {
+    label: "好友",
+    titleKeywords: ["互相关注", "好友", "朋友"],
+    buildPath: (gid: string) =>
+      `/groupstimeline?list_id=${gid}&refresh=4&since_id=0&count=25`,
+  },
 ] as const;
 
 export const defaultWeiboActiveKey = (tabs: WeiboTab[]) =>
@@ -45,13 +59,14 @@ export const buildWeiboTabsFromGroups = (
   const mineGroups = findSection(sections, "我的分组").group ?? [];
   const channelGroups = findSection(sections, "我的频道").group ?? [];
 
-  const focusTabs = DEFAULT_FOCUS_LABELS.map((label, index) => {
-    const gid = defaultGroups[index]?.gid;
+  const focusTabs = FOCUS_TAB_CONFIG.map((config, index) => {
+    const group = findFocusGroup(defaultGroups, config.titleKeywords) ?? defaultGroups[index];
+    const gid = group?.gid;
     if (!gid) return undefined;
 
     return {
-      key: focusPathBuilders[index](gid),
-      label,
+      key: config.buildPath(gid),
+      label: config.label,
     };
   }).filter(Boolean) as WeiboTab[];
 
@@ -97,6 +112,14 @@ const firstRequestKey = (tabs: WeiboTab[]) => {
 
 const findSection = (sections: WeiboGroupSection[], title: string) =>
   sections.find((section) => section.title === title) ?? {};
+
+const findFocusGroup = (
+  groups: WeiboGroupItem[],
+  titleKeywords: readonly string[]
+) =>
+  groups.find((group) =>
+    titleKeywords.some((keyword) => group.title?.includes(keyword))
+  );
 
 const buildGroupTab = (group: WeiboGroupItem): WeiboTab | undefined => {
   if (!group.gid || !group.title) return undefined;
