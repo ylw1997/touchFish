@@ -276,9 +276,28 @@ async function runHealthReport(scope) {
           .map((endpoint) => endpoint.id)
       : undefined;
 
+  const totalCount = endpointIds?.length || state.endpoints.length;
+  let completedCount = 0;
+
   validatePlatformButton.disabled = true;
   validateAllButton.disabled = true;
-  statusText.textContent = scope === "platform" ? "Validating current platform" : "Validating all endpoints";
+
+  // 显示初始进度
+  const updateProgress = () => {
+    const percent = Math.round((completedCount / totalCount) * 100);
+    statusText.textContent = `Validating... ${completedCount}/${totalCount} (${percent}%)`;
+  };
+
+  // 启动进度更新定时器
+  const progressInterval = setInterval(() => {
+    // 模拟进度增长（实际验证由后端完成，这里只是给用户视觉反馈）
+    if (completedCount < totalCount - 1) {
+      completedCount = Math.min(completedCount + Math.ceil(totalCount / 20), totalCount - 1);
+      updateProgress();
+    }
+  }, 200);
+
+  updateProgress();
 
   try {
     const response = await fetch("/api/health-report/run", {
@@ -287,10 +306,24 @@ async function runHealthReport(scope) {
       body: JSON.stringify({ endpointIds }),
     });
     const body = await response.json();
+
+    // 清除进度定时器
+    clearInterval(progressInterval);
+    completedCount = totalCount;
+    updateProgress();
+
     applyHealthReport(body.data);
     responseBody.textContent = pretty(body.data);
-    statusText.textContent = "Validation complete";
+
+    // 显示完成摘要
+    const summary = body.data?.summary;
+    if (summary) {
+      statusText.textContent = `Complete: ${summary.passed || 0} passed, ${summary.failed || 0} failed, ${summary.skipped || 0} skipped`;
+    } else {
+      statusText.textContent = "Validation complete";
+    }
   } catch (error) {
+    clearInterval(progressInterval);
     statusText.textContent = "Validation failed";
     responseBody.textContent = error.stack || error.message;
   } finally {

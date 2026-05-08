@@ -65,6 +65,7 @@ function createApp(options = {}) {
       if (request.method === "GET" && url.pathname === "/health") {
         sendJson(response, 200, {
           ok: true,
+          status: 200,
           service: "touchfish-server",
           mode: "local",
         });
@@ -72,12 +73,12 @@ function createApp(options = {}) {
       }
 
       if (request.method === "GET" && url.pathname === "/api/catalog") {
-        sendJson(response, 200, { platforms, endpoints });
+        sendJson(response, 200, { ok: true, status: 200, platforms, endpoints });
         return;
       }
 
       if (request.method === "GET" && url.pathname === "/api/config") {
-        sendJson(response, 200, { ok: true, data: configStore.all() });
+        sendJson(response, 200, { ok: true, status: 200, data: configStore.all() });
         return;
       }
 
