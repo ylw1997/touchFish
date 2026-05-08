@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [15.9.0](https://github.com/ylw1997/touchFish/compare/v15.8.0...v15.9.0) (2026-05-08)
+
+
+### ✨ Features | 新功能
+
+* 优化问题 ([20a0b2e](https://github.com/ylw1997/touchFish/commit/20a0b2e64154be73bfafe3609ab7a60807d401bf))
+* 修复微博图片报错问题 ([f9917fb](https://github.com/ylw1997/touchFish/commit/f9917fbdfa3e0b42f3c918fa3e32241fa2a5a785))
+* 微博nav从接口拿 ([e061139](https://github.com/ylw1997/touchFish/commit/e061139f1766ab135c332da0b9ab8700990408c3))
+
 ## [15.8.0](https://github.com/ylw1997/touchFish/compare/v15.7.0...v15.8.0) (2026-05-07)
 
 
