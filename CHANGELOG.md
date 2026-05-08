@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [15.9.1](https://github.com/ylw1997/touchFish/compare/v15.9.0...v15.9.1) (2026-05-08)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复微博tab请求错误问题 ([652f194](https://github.com/ylw1997/touchFish/commit/652f1946371940e146a182f9a1bfe22ca3dc1d5d))
+
 ## [15.9.0](https://github.com/ylw1997/touchFish/compare/v15.8.0...v15.9.0) (2026-05-08)
 
 
