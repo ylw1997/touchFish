@@ -245,6 +245,10 @@ const useWeiboAction = () => {
     }
   }, [apiClient]);
 
+  const getWeiboGroups = useCallback(async () => {
+    return apiClient.getGroups();
+  }, [apiClient]);
+
   // 关注博主
   const followUser = useCallback(
     async (userInfo?: weiboUser) => {
@@ -425,6 +429,7 @@ const useWeiboAction = () => {
     setUserWeiboPage,
     getUserByName,
     getMyUserInfo,
+    getWeiboGroups,
     getHotSearch,
     getWeiboSearch,
     uploadImage,

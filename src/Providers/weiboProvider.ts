@@ -27,6 +27,7 @@ import {
   uploadImage,
   getUserByName,
   getHotSearch,
+  getWeiboGroups,
 } from "../api/weibo";
 import { CommandsType } from "../../types/commands";
 import { uploadType, weiboAJAX } from "../../types/weibo";
@@ -250,6 +251,15 @@ export class WeiboProvider extends BaseWebviewProvider {
         webviewView.webview.postMessage({
           command: `SENDHOTSEARCH`,
           payload: { payload: payload, ...res.data },
+          uuid,
+        } as CommandsType<weiboAJAX>);
+        break;
+      }
+      case "GET_WEIBO_GROUPS": {
+        const res = await getWeiboGroups();
+        webviewView.webview.postMessage({
+          command: "SEND_WEIBO_GROUPS",
+          payload: { payload, ...res.data },
           uuid,
         } as CommandsType<weiboAJAX>);
         break;

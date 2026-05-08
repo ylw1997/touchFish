@@ -38,7 +38,12 @@ import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
 import WeiboCard from "./components/WeiboCard";
 import { loaderFunc } from "./utils/loader";
-import { defTab } from "./data/tabs";
+import {
+  buildWeiboTabsFromGroups,
+  defaultWeiboActiveKey,
+  type WeiboGroupsResponse,
+  type WeiboTab,
+} from "./data/tabs";
 import useWeiboAction from "./hooks/useWeiboAction";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
@@ -73,11 +78,12 @@ function App() {
     getListData,
     getUserByName,
     getMyUserInfo,
+    getWeiboGroups,
     isFetching,
   } = useWeiboAction();
   // 状态管理
-  const [tabs] = useState(defTab);
-  const [activeKey, setActiveKey] = useState(defTab[1].key);
+  const [tabs, setTabs] = useState<WeiboTab[]>([]);
+  const [activeKey, setActiveKey] = useState("");
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState<string | undefined>();
@@ -129,12 +135,39 @@ function App() {
   // 请求数据（主列表/用户微博）
   const fetchData = useCallback(() => {
     const currentKey = subAcitiveKey || activeKey;
+    if (!currentKey) return;
     getListData(currentKey);
   }, [subAcitiveKey, activeKey, getListData]);
 
-  // 初始化，尝试从缓存恢复
+  // 初始化，先拉取当前用户的微博分组
   useEffect(() => {
-    if (list.length === 0) fetchData();
+    let ignore = false;
+
+    const initTabs = async () => {
+      try {
+        const result = (await getWeiboGroups()) as WeiboGroupsResponse;
+        if (ignore) return;
+
+        const nextTabs = buildWeiboTabsFromGroups(result);
+        const nextActiveKey = defaultWeiboActiveKey(nextTabs);
+
+        setTabs(nextTabs);
+        setActiveKey(nextActiveKey);
+        setSubActiveKey("");
+
+        if (nextActiveKey) {
+          getListData(nextActiveKey, true);
+        }
+      } catch (error) {
+        console.error("GET_WEIBO_GROUPS_ERROR", error);
+      }
+    };
+
+    initTabs();
+
+    return () => {
+      ignore = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

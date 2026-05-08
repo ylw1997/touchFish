@@ -35,6 +35,10 @@ export class WeiboApi {
     return this.request<payloadType>("GETDATA", payload, "请求微博中...");
   }
 
+  getGroups() {
+    return this.request("GET_WEIBO_GROUPS", null, "获取微博分组中...");
+  }
+
   getUserBlogData(uid: string | number, page: number) {
     return this.request<payloadType>(
       "GETUSERBLOG",
