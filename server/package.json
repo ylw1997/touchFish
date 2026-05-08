@@ -1,0 +1,16 @@
+{
+  "name": "touchfish-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TouchFish local API server prototype",
+  "main": "src/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test test/*.test.js",
+    "validate": "node scripts/validate-apis.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

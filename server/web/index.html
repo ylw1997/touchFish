@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TouchFish API Console</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="platforms">
+        <div class="brand">
+          <span class="brand-mark">TF</span>
+          <div>
+            <h1>TouchFish</h1>
+            <p>Local API Console</p>
+          </div>
+        </div>
+        <div class="health-actions">
+          <button id="validatePlatformButton" type="button">Validate current</button>
+          <button id="validateAllButton" type="button">Validate all</button>
+        </div>
+        <input id="searchInput" class="search" placeholder="Search platforms / APIs" />
+        <nav id="platformList" class="platform-list" aria-label="Platforms"></nav>
+      </aside>
+
+      <section class="endpoints">
+        <div class="section-heading">
+          <p id="platformKicker">system</p>
+          <h2 id="platformName">APIs</h2>
+          <span id="endpointCount" class="count">0 APIs</span>
+        </div>
+        <div id="statusFilters" class="status-filters" aria-label="Status filters"></div>
+        <div id="endpointList" class="endpoint-list"></div>
+      </section>
+
+      <section class="response-panel">
+        <div class="request-bar">
+          <div>
+            <span id="methodBadge" class="method">GET</span>
+            <strong id="endpointPath">/health</strong>
+            <p id="endpointDescription" class="endpoint-description"></p>
+          </div>
+          <div class="actions">
+            <button id="copyButton" type="button">Copy</button>
+            <button id="sendButton" type="button">Send</button>
+          </div>
+        </div>
+
+        <form id="paramForm" class="params" autocomplete="off"></form>
+        <label class="body-editor">
+          <span>Payload</span>
+          <textarea id="payloadInput" spellcheck="false">{}</textarea>
+        </label>
+
+        <details class="config-editor">
+          <summary>Local config</summary>
+          <div class="config-grid">
+            <select id="configKey">
+              <option value="weiboCookie">weiboCookie</option>
+              <option value="bilibiliCookie">bilibiliCookie</option>
+              <option value="qqmusicMusicid">qqmusicMusicid</option>
+              <option value="qqmusicMusickey">qqmusicMusickey</option>
+              <option value="zhihuCookie">zhihuCookie</option>
+              <option value="xhsCookie">xhsCookie</option>
+              <option value="ngaCookie">ngaCookie</option>
+              <option value="linuxDoCookie">linuxDoCookie</option>
+              <option value="wereadCookie">wereadCookie</option>
+              <option value="xCookie">xCookie</option>
+              <option value="xAuthorization">xAuthorization</option>
+              <option value="xiaoyuzhouAccessToken">xiaoyuzhouAccessToken</option>
+              <option value="xiaoyuzhouRefreshToken">xiaoyuzhouRefreshToken</option>
+            </select>
+            <input id="configValue" placeholder="Paste Cookie / Token" />
+            <button id="saveConfigButton" type="button">Save</button>
+          </div>
+        </details>
+
+        <div class="response-meta">
+          <span id="statusText">Ready</span>
+          <span id="durationText"></span>
+        </div>
+        <div id="healthSummary" class="health-summary"></div>
+        <pre id="responseBody" class="response-body">Choose an endpoint, then send a request.</pre>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

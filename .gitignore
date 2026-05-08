@@ -5,6 +5,8 @@ node_modules
 *.vsix
 temp
 scratch/
+server/data/
+server/*.log
 
 # Build outputs
 weibo/dist
