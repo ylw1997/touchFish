@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { endpoints, executeApiEndpoint } = require("./apiRegistry");
+const { endpoints, executeApiEndpoint } = require("./api");
 
 const cachePath = process.env.TOUCHFISH_HEALTH_REPORT_PATH || path.join(__dirname, "..", "data", "health-report.json");
 

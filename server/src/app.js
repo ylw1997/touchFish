@@ -4,7 +4,7 @@ const path = require("node:path");
 const { endpoints, platforms } = require("./catalog");
 const { createConfigStore } = require("./configStore");
 const { commonHeaders, fetchJson } = require("./upstream");
-const { executeApiEndpoint } = require("./apiRegistry");
+const { executeApiEndpoint } = require("./api");
 const { readCachedReport, runHealthReport } = require("./healthReport");
 
 const jsonHeaders = { "content-type": "application/json; charset=utf-8" };

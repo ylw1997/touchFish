@@ -1,6 +1,10 @@
-const { platforms, listEndpoints } = require("./apiRegistry");
+const api = require("./api");
 
 module.exports = {
-  platforms,
-  endpoints: listEndpoints(),
+  get platforms() {
+    return api.platforms;
+  },
+  get endpoints() {
+    return api.endpoints.map(({ handler: _handler, ...rest }) => rest);
+  },
 };
