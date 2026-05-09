@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [15.10.0](https://github.com/ylw1997/touchFish/compare/v15.9.1...v15.10.0) (2026-05-09)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([f71aa0a](https://github.com/ylw1997/touchFish/commit/f71aa0ab96d557556f5b62998b87b69dd3830747))
+
+
+### ✨ Features | 新功能
+
+* nga使用xml重新编写 ([2e1af4b](https://github.com/ylw1997/touchFish/commit/2e1af4b9f0d84bdfe809aabe61020f319e4eec8f))
+* 微博浮动按钮修改 ([fbef969](https://github.com/ylw1997/touchFish/commit/fbef96983f0a3dee8f74fdad285d8387a587eafc))
+
 ### [15.9.1](https://github.com/ylw1997/touchFish/compare/v15.9.0...v15.9.1) (2026-05-08)
 
 
