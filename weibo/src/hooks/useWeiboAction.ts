@@ -98,6 +98,11 @@ const useWeiboAction = () => {
         setList((currentList) => [...currentList, ...newList]);
         const wtotal = result.data?.total ?? 999;
         setTotal(wtotal);
+      } catch (error) {
+        setTotal(0);
+        messageApi.error(
+          error instanceof Error ? error.message : "获取用户微博失败"
+        );
       } finally {
         setIsFetching(false);
       }
@@ -208,41 +213,42 @@ const useWeiboAction = () => {
   const getUserBlog = useCallback(
     async (userInfo: weiboUser) => {
       if (!userInfo) return;
-      const result = await apiClient.getUserByName(String(userInfo.id));
-      setUserDetail({
-        ...result.data,
-        avatar_hd: result.data.avatar,
-      });
-      setUserDetailVisible(true);
-    },
-    [apiClient]
-  );
-
-  const getUserByName = useCallback(
-    async (username: string) => {
-      const result = await apiClient.getUserByName(username);
-      setUserDetail({
-        ...result.data,
-        avatar_hd: result.data.avatar,
-      });
-      setUserDetailVisible(true);
-    },
-    [apiClient]
-  );
-
-  const getMyUserInfo = useCallback(async () => {
-    try {
-      const result = await apiClient.getMyUserInfo();
-      if (result && result.data) {
+      try {
+        const result = await apiClient.getUserByName(String(userInfo.id));
         setUserDetail({
           ...result.data,
           avatar_hd: result.data.avatar,
         });
         setUserDetailVisible(true);
+      } catch (error) {
+        messageApi.error(
+          error instanceof Error ? error.message : "获取用户信息失败"
+        );
       }
-    } catch (e) {
-      console.error(e);
-    }
+    },
+    [apiClient, messageApi]
+  );
+
+  const getUserByName = useCallback(
+    async (username: string) => {
+      try {
+        const result = await apiClient.getUserByName(username);
+        setUserDetail({
+          ...result.data,
+          avatar_hd: result.data.avatar,
+        });
+        setUserDetailVisible(true);
+      } catch (error) {
+        messageApi.error(
+          error instanceof Error ? error.message : "获取用户信息失败"
+        );
+      }
+    },
+    [apiClient, messageApi]
+  );
+
+  const getWeiboGroups = useCallback(async () => {
+    return apiClient.getGroups();
   }, [apiClient]);
 
   // 关注博主
@@ -424,7 +430,7 @@ const useWeiboAction = () => {
     userWeiboPage,
     setUserWeiboPage,
     getUserByName,
-    getMyUserInfo,
+    getWeiboGroups,
     getHotSearch,
     getWeiboSearch,
     uploadImage,

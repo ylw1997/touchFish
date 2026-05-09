@@ -35,6 +35,10 @@ export class WeiboApi {
     return this.request<payloadType>("GETDATA", payload, "请求微博中...");
   }
 
+  getGroups() {
+    return this.request("GET_WEIBO_GROUPS", null, "获取微博分组中...");
+  }
+
   getUserBlogData(uid: string | number, page: number) {
     return this.request<payloadType>(
       "GETUSERBLOG",
@@ -85,14 +89,6 @@ export class WeiboApi {
 
   cancelFollow(userId: number) {
     return this.request("GETCANCELFOLLOW", userId, "取关中...");
-  }
-
-  getMyUserInfo() {
-    return this.request<payloadType>(
-      "GET_MY_USER_INFO",
-      null,
-      "获取我的信息及..."
-    );
   }
 
   getHotSearch() {

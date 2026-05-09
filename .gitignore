@@ -25,3 +25,4 @@ APIS/
 .claude/
 ios/build
 ios/TouchFishApp.xcodeproj
+server/

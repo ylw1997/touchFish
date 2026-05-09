@@ -128,6 +128,7 @@ const WeiboCardMedia: React.FC<WeiboCardMediaProps> = ({
       <div className="imglist">
         <Image.PreviewGroup
           preview={{
+            movable: false,
             toolbarRender: (
               _,
               {

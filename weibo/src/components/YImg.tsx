@@ -107,7 +107,7 @@ const YImg: React.FC<YImgProps> = ({
         <Image
           src={imgSrc}
           {...props}
-          preview={useImg ? false : true}
+          preview={useImg ? false : { movable: false }}
           fallback={back}
         />
       )}
