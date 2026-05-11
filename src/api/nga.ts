@@ -310,10 +310,23 @@ const extractXmlSection = (xml: string, tag: string): string | null => {
 const parseXmlManually = (xml: string): any => {
   const result: any = { root: {} };
   
-  // 提取 __T 帖子列表
+  // 提取 __T 帖子列表 - 需要区分列表页和详情页格式
   const tSection = extractXmlSection(xml, '__T');
+  console.log("[NGA] __T section found:", tSection ? "yes" : "no", "length:", tSection?.length || 0);
   if (tSection) {
-    result.root.__T = { item: parseXmlItemsFast(tSection) };
+    // 检查是否以 <item> 开头（列表页格式：多个帖子）
+    // 注意：详情页的 __T 可能内部包含 <item>（如 attachs），但不会以 <item> 开头
+    const trimmedSection = tSection.trim();
+    if (trimmedSection.startsWith('<item>')) {
+      console.log("[NGA] __T starts with <item> - list format");
+      result.root.__T = { item: parseXmlItemsFast(tSection) };
+    } else {
+      // 详情页格式：__T 直接包含帖子字段，解析为单个对象
+      console.log("[NGA] __T does not start with <item> - detail format, parsing directly");
+      const parsedItem = parseXmlItemFast(tSection);
+      console.log("[NGA] parsed __T item:", parsedItem);
+      result.root.__T = { item: [parsedItem] };
+    }
   }
   
   // 提取 __R 回复列表
@@ -611,10 +624,12 @@ export const getNgaNewsDetail = async (
       }
     }
 
-    // 解析帖子元信息 __T
-    const topicInfo = root.__T?.item || root.__T || {};
+    // 解析帖子元信息 __T - __T.item 是数组，取第一个元素
+    const topicInfoArray = root.__T?.item || [];
+    const topicInfo = Array.isArray(topicInfoArray) ? topicInfoArray[0] || {} : topicInfoArray;
     const authorUid = parseInt(topicInfo.authorid?.toString() || "0", 10);
-    const topicSubject = topicInfo.subject || "";
+    console.log("[NGA] topicInfoArray:", topicInfoArray, "isArray:", Array.isArray(topicInfoArray));
+    console.log("[NGA] topicInfo:", topicInfo, "authorUid:", authorUid);
 
     // 解析回复列表 __R
     const replies = root.__R?.item || [];
@@ -646,11 +661,6 @@ export const getNgaNewsDetail = async (
   }
 </style>
 `;
-
-    // 添加帖子标题
-    if (topicSubject) {
-      htmlContent += `<h1 style="text-align:center">${topicSubject}</h1>`;
-    }
 
     // 添加回复
     for (const reply of replies) {
