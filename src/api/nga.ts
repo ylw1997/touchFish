@@ -629,7 +629,23 @@ export const getNgaNewsDetail = async (
     console.log("[NGA] totalPages:", totalPages, "currentPage:", currentPage, "replies:", replies.length);
 
     // 构建 HTML 内容
-    let htmlContent = "";
+    // 添加 CSS 样式 - 根据主题自动调整表情颜色
+    let htmlContent = `
+<style>
+  .nga-smiley {
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
+    display: inline-block;
+    margin: 0 5px;
+  }
+  /* 深色主题下反转颜色 */
+  body[data-vscode-theme-kind="vscode-dark"] .nga-smiley,
+  body[data-vscode-theme-kind="vscode-high-contrast"] .nga-smiley {
+    filter: brightness(0) invert(1);
+  }
+</style>
+`;
 
     // 添加帖子标题
     if (topicSubject) {
@@ -757,7 +773,7 @@ const processNgaContent = (content: string): string => {
     (match, type, name) => {
       const smileyMap = NGA_SMILEY_MAP[type.toLowerCase()];
       if (smileyMap && smileyMap[name]) {
-        return `<img src="https://img4.nga.178.com/ngabbs/post/smile/${smileyMap[name]}" class="nga-smiley" style="width:40px;height:40px;vertical-align:middle;filter:brightness(0) invert(1);display:inline-block;" referrerpolicy="no-referrer" />`;
+        return `<img src="https://img4.nga.178.com/ngabbs/post/smile/${smileyMap[name]}" class="nga-smiley" referrerpolicy="no-referrer" />`;
       }
       // 如果找不到映射，返回原始文本
       return match;
@@ -767,7 +783,7 @@ const processNgaContent = (content: string): string => {
   // 处理数字表情 [s:数字]
   processed = processed.replace(
     /\[s:(\d+)\]/gi,
-    '<img src="https://img4.nga.178.com/ngabbs/post/smile/$1.gif" class="nga-smiley" style="width:40px;height:40px;vertical-align:middle;filter:brightness(0) invert(1);display:inline-block;" referrerpolicy="no-referrer" />'
+    '<img src="https://img4.nga.178.com/ngabbs/post/smile/$1.gif" class="nga-smiley" referrerpolicy="no-referrer" />'
   );
 
   // 处理 [pid] 引用
