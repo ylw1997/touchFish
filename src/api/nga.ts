@@ -412,49 +412,57 @@ const parseXmlItemsFast = (xml: string): any[] => {
   return items;
 };
 
-// 快速解析单个 XML item
+// 快速解析单个 XML item - 只解析当前层级，忽略嵌套结构
 const parseXmlItemFast = (xml: string): any => {
   const item: any = {};
+  
+  // 需要忽略的嵌套标签，这些标签内的内容不应被解析
+  const nestedTags = ['comment', 'hotreply', 'attachs', 'comment_id', 'hotreply_id', 'post_misc_var'];
+  
+  // 找出所有嵌套标签的范围，解析时跳过这些区域
+  const nestedRanges: { start: number; end: number }[] = [];
+  for (const nestedTag of nestedTags) {
+    const nestedStart = xml.indexOf(`<${nestedTag}>`);
+    if (nestedStart !== -1) {
+      const nestedEnd = xml.indexOf(`</${nestedTag}>`, nestedStart);
+      if (nestedEnd !== -1) {
+        nestedRanges.push({ start: nestedStart, end: nestedEnd + nestedTag.length + 3 });
+      }
+    }
+  }
+  
+  // 检查位置是否在嵌套范围内
+  const isInNestedRange = (pos: number): boolean => {
+    for (const range of nestedRanges) {
+      if (pos >= range.start && pos <= range.end) return true;
+    }
+    return false;
+  };
   
   // 使用简单的字符串查找，避免正则
   const tags = ['tid', 'fid', 'authorid', 'author', 'subject', 'postdate', 'postdatestr', 'lastpost', 
                 'replies', 'floor', 'lou', 'pid', 'content', 'uid', 'username', 'avatar', 
                 'rvrc', 'credit', 'medal', 'groupid', 'memberid', 'regdate', 'postnum',
                 'money', 'signature', 'nickname', 'tpcurl', 'quote_from', 'type',
-                'topic_misc', 'icon', 'lastposter', 'lastmodify', 'recommend', 'jdata'];
+                'topic_misc', 'icon', 'lastposter', 'lastmodify', 'recommend', 'jdata',
+                'score', 'score_2', 'from_client', 'postdatetimestamp'];
   
   for (const tag of tags) {
     const startTag = `<${tag}>`;
     const endTag = `</${tag}>`;
-    const startIdx = xml.indexOf(startTag);
+    let startIdx = xml.indexOf(startTag);
+    
+    // 跳过嵌套范围内的标签
+    while (startIdx !== -1 && isInNestedRange(startIdx)) {
+      startIdx = xml.indexOf(startTag, startIdx + startTag.length);
+    }
+    
     if (startIdx !== -1) {
-      // 找到对应的结束标签 - 需要处理嵌套标签的情况
-      let endIdx = startIdx + startTag.length;
-      let depth = 1;
-      while (endIdx < xml.length && depth > 0) {
-        const nextStart = xml.indexOf(`<${tag}>`, endIdx);
-        const nextEnd = xml.indexOf(`</${tag}>`, endIdx);
-        
-        if (nextEnd === -1) break; // 没有找到结束标签
-        
-        if (nextStart !== -1 && nextStart < nextEnd) {
-          // 找到了嵌套的开始标签
-          depth++;
-          endIdx = nextStart + startTag.length;
-        } else {
-          // 找到了结束标签
-          depth--;
-          if (depth === 0) {
-            endIdx = nextEnd;
-          } else {
-            endIdx = nextEnd + endTag.length;
-          }
-        }
-      }
-      
-      if (endIdx > startIdx + startTag.length) {
+      // 找到对应的结束标签
+      const endIdx = xml.indexOf(endTag, startIdx + startTag.length);
+      if (endIdx !== -1 && endIdx > startIdx + startTag.length) {
         let value = xml.substring(startIdx + startTag.length, endIdx);
-        // 处理 CDATA - 更灵活的方式
+        // 处理 CDATA
         if (value.includes('<![CDATA[') && value.includes(']]>')) {
           const cdataStart = value.indexOf('<![CDATA[');
           const cdataEnd = value.indexOf(']]>', cdataStart);
@@ -670,6 +678,7 @@ export const getNgaNewsDetail = async (
       const pid = reply.pid?.toString() || "";
       const content = reply.content?.toString() || "";
       const postUid = reply.authorid?.toString() || "0";
+      const score = parseInt(reply.score?.toString() || "0", 10);
       
       // 处理匿名用户 - authorid 为 -1 或负数表示匿名
       let user;
@@ -688,13 +697,18 @@ export const getNgaNewsDetail = async (
       
       // 处理时间 - postdate 已经是格式化好的字符串如 "2026-05-09 12:45"
       const timeStr = reply.postdate?.toString() || "";
+      
+      // 点赞数显示 - 只有大于0才显示，放在最右边
+      const scoreHtml = score > 0 
+        ? `<span class="score" style="color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: auto;">👍 ${score}</span>` 
+        : "";
 
       htmlContent += `
         <div class="postbox" id="post_${pid}" style="margin: 16px 0; padding: 16px; background: var(--vscode-editor-background); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <div class="postHeader" style="display: flex; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--vscode-panel-border);">
             <span class="floor" style="background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 12px;">${floorLabel}</span>
             <span class="author" style="font-weight: 600; color: var(--vscode-textLink-foreground); margin-right: 12px; font-size: 15px;">${user.username}</span>
-            <span class="time" style="color: var(--vscode-descriptionForeground); font-size: 12px;">${timeStr}</span>
+            <span class="time" style="color: var(--vscode-descriptionForeground); font-size: 12px;">${timeStr}</span>${scoreHtml}
           </div>
           <div class="postContent" style="line-height: 1.8; color: var(--vscode-editor-foreground); font-size: 15px;">
             ${processedContent}
