@@ -806,13 +806,14 @@ export const openNgaUrl = vscode.commands.registerCommand(
         } else if (message.command === "prevPage" && ngaState.page > 1) {
           ngaState.page--;
           await loadNgaPage();
-        } else if (
-          message.command === "filterAuthor" &&
-          ngaState.opAuthorId !== 0
-        ) {
-          ngaState.filtering = true;
-          ngaState.page = 1;
-          await loadNgaPage();
+        } else if (message.command === "filterAuthor") {
+          if (ngaState.opAuthorId === 0) {
+            vscode.window.showWarningMessage("无法获取楼主ID，请刷新页面重试");
+          } else {
+            ngaState.filtering = true;
+            ngaState.page = 1;
+            await loadNgaPage();
+          }
         } else if (message.command === "clearFilter") {
           ngaState.filtering = false;
           ngaState.page = 1;

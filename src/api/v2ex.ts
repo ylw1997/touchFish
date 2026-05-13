@@ -47,6 +47,8 @@ export const getV2exDetail = async (url: string, page?: number) => {
     }
     const res = await axios.get(fullUrl);
     const $ = load(res.data);
+    // 移除标题元素，避免重复显示
+    $("#Main .header h1").remove();
     const content = $("#Main").html();
     return content ? content.replace(/&nbsp;/g, '') : content;
   } catch {

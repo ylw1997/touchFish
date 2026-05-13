@@ -1,6 +1,58 @@
 # 更新历史 
 
 
+## [15.11.0](https://github.com/ylw1997/touchFish/compare/v15.10.0...v15.11.0) (2026-05-12)
+
+
+### ✨ Features | 新功能
+
+* 优化nga体验 ([0425a4d](https://github.com/ylw1997/touchFish/commit/0425a4d75cfc8d6149f4ac0b36dedf15b40ebb4f))
+* 优化v2ex ([c93e216](https://github.com/ylw1997/touchFish/commit/c93e216c7b9754e52cd087047fd1d3ca7db7edf5))
+* 修复问题 ([82084c7](https://github.com/ylw1997/touchFish/commit/82084c749d4ef1c206f090188a9ce857f8cd442c))
+
+## [15.10.0](https://github.com/ylw1997/touchFish/compare/v15.9.1...v15.10.0) (2026-05-09)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([f71aa0a](https://github.com/ylw1997/touchFish/commit/f71aa0ab96d557556f5b62998b87b69dd3830747))
+
+
+### ✨ Features | 新功能
+
+* nga使用xml重新编写 ([2e1af4b](https://github.com/ylw1997/touchFish/commit/2e1af4b9f0d84bdfe809aabe61020f319e4eec8f))
+* 微博浮动按钮修改 ([fbef969](https://github.com/ylw1997/touchFish/commit/fbef96983f0a3dee8f74fdad285d8387a587eafc))
+
+### [15.9.1](https://github.com/ylw1997/touchFish/compare/v15.9.0...v15.9.1) (2026-05-08)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复微博tab请求错误问题 ([652f194](https://github.com/ylw1997/touchFish/commit/652f1946371940e146a182f9a1bfe22ca3dc1d5d))
+
+## [15.9.0](https://github.com/ylw1997/touchFish/compare/v15.8.0...v15.9.0) (2026-05-08)
+
+
+### ✨ Features | 新功能
+
+* 优化问题 ([20a0b2e](https://github.com/ylw1997/touchFish/commit/20a0b2e64154be73bfafe3609ab7a60807d401bf))
+* 修复微博图片报错问题 ([f9917fb](https://github.com/ylw1997/touchFish/commit/f9917fbdfa3e0b42f3c918fa3e32241fa2a5a785))
+* 微博nav从接口拿 ([e061139](https://github.com/ylw1997/touchFish/commit/e061139f1766ab135c332da0b9ab8700990408c3))
+
+## [15.8.0](https://github.com/ylw1997/touchFish/compare/v15.7.0...v15.8.0) (2026-05-07)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([f725e5c](https://github.com/ylw1997/touchFish/commit/f725e5c735acd5b8e4c034edf714c62c1c2bd80c))
+* update x ids ([321daa2](https://github.com/ylw1997/touchFish/commit/321daa2b9b3c11308f34a6abe64e0413faf684f7))
+
+
+### ✨ Features | 新功能
+
+* 修复qq音乐问题,增加qq登录 ([3b824c8](https://github.com/ylw1997/touchFish/commit/3b824c835592c5256f635414e05224b0207ac432))
+* 小红书支持扫码和手机验证码登录 ([15a2c7b](https://github.com/ylw1997/touchFish/commit/15a2c7b8559c964b614aef8f51ec49c4581101e6))
+
 ## [15.7.0](https://github.com/ylw1997/touchFish/compare/v15.6.0...v15.7.0) (2026-05-06)
 
 
