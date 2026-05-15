@@ -111,4 +111,75 @@ enum Platform: String, CaseIterable, Identifiable, Codable {
             return []
         }
     }
+    
+    // MARK: - API Configuration
+    
+    /// 列表 API 端点路径
+    var listEndpoint: String {
+        switch self {
+        case .ithome: return "/api/ithome/news"
+        case .chiphell: return "/api/chiphell/list"
+        case .v2ex: return "/api/v2ex/list"
+        case .hupu: return "/api/hupu/list"
+        case .nga: return "/api/nga/list"
+        case .linuxdo: return "/api/linuxdo/list"
+        }
+    }
+    
+    /// 详情 API 端点路径
+    var detailEndpoint: String {
+        switch self {
+        case .ithome: return "/api/ithome/detail"
+        case .chiphell: return "/api/chiphell/detail"
+        case .v2ex: return "/api/v2ex/detail"
+        case .hupu: return "/api/hupu/detail"
+        case .nga: return "/api/nga/detail"
+        case .linuxdo: return "/api/linuxdo/detail"
+        }
+    }
+    
+    /// Tab 参数名称
+    var tabParamName: String {
+        switch self {
+        case .ithome: return ""  // IT之家不需要 tab 参数
+        case .chiphell: return ""  // ChipHell 不需要 tab 参数
+        case .v2ex: return "tab"
+        case .hupu: return "tab"
+        case .nga: return "fid"
+        case .linuxdo: return "tab"
+        }
+    }
+    
+    /// Cookie 存储键名（UserDefaults）
+    var cookieKey: String {
+        switch self {
+        case .ithome: return "ithome_cookie"
+        case .chiphell: return "chiphell_cookie"
+        case .v2ex: return "v2ex_cookie"
+        case .hupu: return "hupu_cookie"
+        case .nga: return "nga_cookie"
+        case .linuxdo: return "linuxdo_cookie"
+        }
+    }
+
+    /// 服务端配置键名
+    var serverCookieKey: String {
+        switch self {
+        case .nga: return "ngaCookie"
+        case .linuxdo: return "linuxDoCookie"
+        case .ithome: return "ithomeCookie"
+        case .chiphell: return "chiphellCookie"
+        case .v2ex: return "v2exCookie"
+        case .hupu: return "hupuCookie"
+        }
+    }
+    
+    /// 详情 URL 参数名称
+    var detailUrlParamName: String {
+        switch self {
+        case .ithome: return "id"  // IT之家使用 id 参数
+        case .linuxdo: return "topicId"  // Linux.do 使用 topicId
+        default: return "url"
+        }
+    }
 }

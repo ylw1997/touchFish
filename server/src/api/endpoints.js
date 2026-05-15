@@ -14,11 +14,11 @@ function listEndpoints() {
 }
 
 // 执行指定端点
-async function executeApiEndpoint({ method, pathname, url, fetchImpl, configStore, body }) {
+async function executeApiEndpoint({ method, pathname, url, headers, fetchImpl, configStore, body }) {
   const endpoints = getEndpoints();
   const item = endpoints.find((candidate) => candidate.method === method && candidate.path === pathname);
   if (!item?.handler) return null;
-  return item.handler({ url, fetchImpl, configStore, body });
+  return item.handler({ url, headers, fetchImpl, configStore, body });
 }
 
 module.exports = {

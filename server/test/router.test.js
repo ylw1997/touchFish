@@ -94,14 +94,18 @@ test("registered endpoints are routable instead of falling through to 404", asyn
 
 test("HTML news endpoints return structured JSON data", async () => {
   const app = createApp({
-    fetch: async () =>
-      new Response(
+    fetch: async (url, options) => {
+      assert.equal(url, "https://www.chiphell.com/forum.php?mod=forumdisplay&fid=319&filter=author&orderby=dateline");
+      assert.equal(options.headers.referer, "https://www.chiphell.com/forum.php");
+      assert.equal(options.headers["accept-language"], "zh-CN,zh;q=0.9,en;q=0.8");
+      return new Response(
         '<table id="threadlisttableid"><a class="s xst" href="thread-123-1-1.html">Hello Chiphell</a></table>',
         {
           status: 200,
           headers: { "content-type": "text/html" },
         },
-      ),
+      );
+    },
   });
 
   const { response, body } = await request(app, "/api/chiphell/list");
@@ -109,6 +113,37 @@ test("HTML news endpoints return structured JSON data", async () => {
   assert.equal(response.status, 200);
   assert.deepEqual(body.data.items, [
     { title: "Hello Chiphell", url: "https://www.chiphell.com/thread-123-1-1.html" },
+  ]);
+});
+
+test("NGA list endpoint uses lite xml and forwarded cookie", async () => {
+  const app = createApp({
+    configStore: {
+      get: () => "stale-config-cookie",
+      set: () => "",
+      all: () => ({}),
+    },
+    fetch: async (url, options) => {
+      assert.equal(url, "https://bbs.nga.cn/thread.php?fid=-7&page=1&lite=xml");
+      assert.equal(options.headers.cookie, "nga-session=abc");
+      return new Response(
+        "<root><__T><item><tid>1</tid><subject>Hello NGA</subject><replies>3</replies><tpcurl>/read.php?tid=1</tpcurl></item></__T></root>",
+        { status: 200, headers: { "content-type": "application/xml" } },
+      );
+    },
+  });
+
+  const { response, body } = await request(app, "/api/nga/list?fid=-7", {
+    headers: { "X-TouchFish-Cookie": "nga-session=abc" },
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.data.items, [
+    {
+      id: "1",
+      title: "[3] Hello NGA",
+      url: "/read.php?tid=1",
+    },
   ]);
 });
 

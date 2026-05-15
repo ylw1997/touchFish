@@ -16,15 +16,14 @@ class AppViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var showSettings = false
 
-    // MARK: - Services
-    private let services: [Platform: any PlatformServiceProtocol] = [
-        .ithome: ITHomeService(),
-        .chiphell: ChipHellService(),
-        .v2ex: V2EXService(),
-        .hupu: HupuService(),
-        .nga: NGAService(),
-        .linuxdo: LinuxDoService(),
-    ]
+    // MARK: - Services (使用 API 服务)
+    private let services: [Platform: any PlatformServiceProtocol] = {
+        var dict: [Platform: any PlatformServiceProtocol] = [:]
+        for platform in Platform.allCases {
+            dict[platform] = APIService(platform: platform)
+        }
+        return dict
+    }()
 
     // MARK: - Computed Properties
 

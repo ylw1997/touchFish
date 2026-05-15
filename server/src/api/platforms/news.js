@@ -1,5 +1,6 @@
 // 新闻类平台端点 (ithome, chiphell, v2ex, hupu, nga, linuxdo)
-const { commonHeaders, fetchJson, readUpstreamJson } = require("../../upstream");
+const axios = require("axios");
+const { commonHeaders, fetchJson } = require("../../upstream");
 const { endpoint, p, getQuery, requireQuery, cookie } = require("../utils");
 const { parseChiphellList, parseChiphellDetail, parseV2exList, parseV2exDetail, parseHupuList, parseHupuDetail, parseNgaList, parseNgaDetail, parseLinuxDoList, parseLinuxDoDetail } = require("../../newsParsers");
 
@@ -19,13 +20,29 @@ function jsonHandler(build) {
 function parsedHtmlHandler(build, parse, { encoding = "utf-8" } = {}) {
   return async (ctx) => {
     const request = await build(ctx);
-    const response = await ctx.fetchImpl(request.url, {
-      method: request.method || "GET",
-      headers: request.headers,
-      body: request.body,
-    });
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const html = encoding === "gbk" ? buffer.toString("binary") : buffer.toString("utf-8");
+    let response;
+    let buffer;
+    if (request.useAxios && ctx.fetchImpl === globalThis.fetch) {
+      const axiosResponse = await axios.request({
+        url: request.url,
+        method: request.method || "GET",
+        headers: request.headers,
+        data: request.body,
+        responseType: "arraybuffer",
+        timeout: 30000,
+        validateStatus: () => true,
+      });
+      response = { ok: axiosResponse.status >= 200 && axiosResponse.status < 300, status: axiosResponse.status };
+      buffer = Buffer.from(axiosResponse.data);
+    } else {
+      response = await ctx.fetchImpl(request.url, {
+        method: request.method || "GET",
+        headers: request.headers,
+        body: request.body,
+      });
+      buffer = Buffer.from(await response.arrayBuffer());
+    }
+    const html = new TextDecoder(encoding).decode(buffer);
     const parsed = parse(html, ctx);
     return { ok: response.ok, status: response.status, data: parsed };
   };
@@ -43,6 +60,15 @@ function parsedJsonHandler(build, parse) {
     const parsed = parse(result.data, ctx);
     return { ...result, data: parsed };
   };
+}
+
+function platformCookie(ctx, key) {
+  return (
+    ctx.headers?.["x-touchfish-cookie"] ||
+    cookie(ctx.configStore, key) ||
+    ctx.headers?.cookie ||
+    ""
+  );
 }
 
 const newsEndpoints = [
@@ -70,7 +96,15 @@ const newsEndpoints = [
     name: "列表",
     path: "/api/chiphell/list",
     handler: parsedHtmlHandler(
-      () => ({ url: "https://www.chiphell.com/forum.php?mod=guide&view=newthread" }),
+      () => ({
+        url: "https://www.chiphell.com/forum.php?mod=forumdisplay&fid=319&filter=author&orderby=dateline",
+        headers: commonHeaders("", {
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+          referer: "https://www.chiphell.com/forum.php",
+        }),
+        useAxios: true,
+      }),
       (html) => ({ items: parseChiphellList(html) }),
     ),
   }),
@@ -80,7 +114,15 @@ const newsEndpoints = [
     name: "详情",
     path: "/api/chiphell/detail",
     params: [p("url", true, "https://www.chiphell.com/thread-1-1-1.html")],
-    handler: parsedHtmlHandler(({ url }) => ({ url: requireQuery(url, "url") }), parseChiphellDetail),
+    handler: parsedHtmlHandler(({ url }) => ({
+      url: requireQuery(url, "url"),
+      headers: commonHeaders("", {
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+        referer: "https://www.chiphell.com/forum.php",
+      }),
+      useAxios: true,
+    }), parseChiphellDetail),
   }),
 
   // V2EX
@@ -139,9 +181,12 @@ const newsEndpoints = [
     name: "列表",
     path: "/api/nga/list",
     params: [p("fid", false, "-7")],
-    handler: parsedHtmlHandler(({ url, configStore }) => ({
-      url: `https://bbs.nga.cn/thread.php?fid=${getQuery(url, "fid", "-7")}&page=1`,
-      headers: commonHeaders(cookie(configStore, "ngaCookie"), { referer: "https://bbs.nga.cn/" }),
+    handler: parsedHtmlHandler((ctx) => ({
+      url: `https://bbs.nga.cn/thread.php?fid=${getQuery(ctx.url, "fid", "-7")}&page=1&lite=xml`,
+      headers: commonHeaders(platformCookie(ctx, "ngaCookie"), {
+        referer: "https://bbs.nga.cn/",
+        accept: "application/xml,text/xml,*/*",
+      }),
     }), (html) => ({ items: parseNgaList(html) }), { encoding: "gbk" }),
   }),
   endpoint({
@@ -150,9 +195,12 @@ const newsEndpoints = [
     name: "详情",
     path: "/api/nga/detail",
     params: [p("tid", true, "1"), p("page", false, "1")],
-    handler: parsedHtmlHandler(({ url, configStore }) => ({
-      url: `https://bbs.nga.cn/read.php?tid=${requireQuery(url, "tid")}&page=${getQuery(url, "page", "1")}`,
-      headers: commonHeaders(cookie(configStore, "ngaCookie"), { referer: "https://bbs.nga.cn/" }),
+    handler: parsedHtmlHandler((ctx) => ({
+      url: `https://bbs.nga.cn/read.php?tid=${requireQuery(ctx.url, "tid")}&page=${getQuery(ctx.url, "page", "1")}&lite=xml`,
+      headers: commonHeaders(platformCookie(ctx, "ngaCookie"), {
+        referer: "https://bbs.nga.cn/",
+        accept: "application/xml,text/xml,*/*",
+      }),
     }), parseNgaDetail, { encoding: "gbk" }),
   }),
 
@@ -163,9 +211,9 @@ const newsEndpoints = [
     name: "列表",
     path: "/api/linuxdo/list",
     params: [p("tab", false, "latest")],
-    handler: parsedJsonHandler(({ url, configStore }) => ({
-      url: `https://linux.do/${getQuery(url, "tab", "latest")}.json`,
-      headers: commonHeaders(cookie(configStore, "linuxDoCookie"), { referer: "https://linux.do/" }),
+    handler: parsedJsonHandler((ctx) => ({
+      url: `https://linux.do/${getQuery(ctx.url, "tab", "latest")}.json`,
+      headers: commonHeaders(platformCookie(ctx, "linuxDoCookie"), { referer: "https://linux.do/" }),
     }), (data) => ({ items: parseLinuxDoList(data) })),
   }),
   endpoint({
@@ -174,9 +222,9 @@ const newsEndpoints = [
     name: "详情",
     path: "/api/linuxdo/detail",
     params: [p("topicId", true, "1")],
-    handler: parsedJsonHandler(({ url, configStore }) => ({
-      url: `https://linux.do/t/${requireQuery(url, "topicId")}.json`,
-      headers: commonHeaders(cookie(configStore, "linuxDoCookie"), { referer: "https://linux.do/" }),
+    handler: parsedJsonHandler((ctx) => ({
+      url: `https://linux.do/t/${requireQuery(ctx.url, "topicId")}.json`,
+      headers: commonHeaders(platformCookie(ctx, "linuxDoCookie"), { referer: "https://linux.do/" }),
     }), parseLinuxDoDetail),
   }),
 ];

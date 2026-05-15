@@ -19,6 +19,8 @@ targets:
       - path: TouchFishApp
         excludes:
           - "**/.DS_Store"
+          - ".build/**"
+          - "**/Info.plist"
     settings:
       base:
         INFOPLIST_FILE: TouchFishApp/Resources/Info.plist
@@ -29,8 +31,12 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2,6"
         SUPPORTS_MACCATALYST: "YES"
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "YES"
-        DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER: "YES"
         GENERATE_INFOPLIST_FILE: false
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SWIFT_EMIT_LOC_STRINGS: "YES"
+        # 本地开发使用 ad-hoc 签名
+        CODE_SIGN_STYLE: "Automatic"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_IDENTITY[sdk=macosx*]: "-"
+        AD_HOC_CODE_SIGNING_ALLOWED: "YES"

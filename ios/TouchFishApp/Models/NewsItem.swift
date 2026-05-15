@@ -10,6 +10,7 @@ struct NewsItem: Identifiable, Hashable {
     var author: String?
     var category: String?
     var isRead: Bool = false
+    var rawId: String?  // 原始 ID（用于 IT之家等平台）
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)

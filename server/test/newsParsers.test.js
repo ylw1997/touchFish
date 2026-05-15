@@ -3,6 +3,7 @@ const test = require("node:test");
 const {
   parseChiphellList,
   parseHupuList,
+  parseNgaDetail,
   parseNgaList,
   parseV2exList,
   parseLinuxDoList,
@@ -61,6 +62,46 @@ test("parseNgaList extracts topics", () => {
   `);
 
   assert.deepEqual(items, [{ title: "Hello NGA", url: "/read.php?tid=1" }]);
+});
+
+test("parseNgaList extracts lite xml topics", () => {
+  const items = parseNgaList(`
+    <root>
+      <__T>
+        <item><tid>1</tid><subject><![CDATA[Hello NGA]]></subject><replies>7</replies><tpcurl>/read.php?tid=1</tpcurl><author>alice</author></item>
+      </__T>
+    </root>
+  `);
+
+  assert.deepEqual(items, [
+    {
+      id: "1",
+      title: "[7] Hello NGA",
+      url: "/read.php?tid=1",
+      time: undefined,
+      author: "alice",
+      category: undefined,
+    },
+  ]);
+});
+
+test("parseNgaDetail renders lite xml replies", () => {
+  const detail = parseNgaDetail(`
+    <root>
+      <__T><authorid>10</authorid></__T>
+      <__U><item><uid>10</uid><username>Alice</username></item></__U>
+      <__R><item><authorid>10</authorid><lou>0</lou><pid>20</pid><postdate>2026-05-13</postdate><content><![CDATA[hello [b]world[/b]]]></content></item></__R>
+      <__ROWS>20</__ROWS>
+      <__R__ROWS_PAGE>10</__R__ROWS_PAGE>
+      <__PAGE>1</__PAGE>
+    </root>
+  `);
+
+  assert.equal(detail.totalPages, 2);
+  assert.equal(detail.currentPage, 1);
+  assert.equal(detail.authorUid, 10);
+  assert.match(detail.html, /Alice/);
+  assert.match(detail.html, /hello <strong>world<\/strong>/);
 });
 
 test("parseLinuxDoList normalizes discourse json", () => {

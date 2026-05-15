@@ -114,6 +114,7 @@ function createApp(options = {}) {
         method: request.method,
         pathname: url.pathname,
         url,
+        headers: request.headers,
         fetchImpl,
         configStore,
         body: requestBody,
