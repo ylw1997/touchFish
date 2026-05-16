@@ -204,6 +204,26 @@ export default function Feed() {
     },
     [messageApi],
   );
+  // ===== 新增：向宿主环境发送点赞/取消点赞命令 =====
+  const handleLikeToggle = useCallback(async (raw: any, targetStatus: boolean) => {
+    if (!raw?.id) return false;
+    try {
+      // 【关键修正】这里依据 api/xhs.ts 要求，参数必须名为 note_oid
+      const payload = {
+        note_oid: raw.id
+      };
+
+      if (targetStatus) {
+        await request("XHS_NOTE_LIKE", payload);
+      } else {
+        await request("XHS_NOTE_DISLIKE", payload);
+      }
+      return true;
+    } catch (e: any) {
+      messageApi.error(e.message || "点赞操作失败");
+      return false;
+    }
+  }, [request, messageApi]);
 
   return (
     <div
@@ -307,6 +327,7 @@ export default function Feed() {
                   data={raw}
                   onClick={handleOpenDetail}
                   onUserClick={handleOpenUser}
+                  onLikeToggle={handleLikeToggle}
                 />
               </div>
             ))}
