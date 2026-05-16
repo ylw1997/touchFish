@@ -46,7 +46,7 @@ type RequestFunc = <T = any>(
 ) => Promise<T>;
 
 export class XhsApi {
-  constructor(private request: RequestFunc) {}
+  constructor(private request: RequestFunc) { }
 
   /**
    * 获取首页推荐Feed
@@ -212,6 +212,16 @@ export class XhsApi {
       "XHS_GET_MY_USER_INFO" as CommandList,
       null,
       "获取我的信息..."
+    );
+  }
+
+  // touchFish/xhs/src/api/index.ts
+  /** 获取历史点赞记录 */
+  getLikedNotes(payload: { user_id: string; cursor?: string; num?: number }) {
+    return this.request<any>(
+      "XHS_GET_LIKED_NOTES" as CommandList,
+      payload,
+      payload.cursor ? "加载更多点赞记录..." : "加载点赞记录中..."
     );
   }
 

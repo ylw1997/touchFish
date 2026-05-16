@@ -13,6 +13,7 @@ import * as vscode from "vscode";
 import xhsHttp from "../core/xhsHttp";
 import { getXhsSignature, XhsSignature } from "../utils/signature";
 import * as crypto from "crypto";
+import type { XhsGetLikedNotesParams } from "../../types/xhs";
 
 // 稳定序列化，确保签名与发送体 key 顺序一致（避免后端校验差异）
 function stableStringify(value: any): string {
@@ -1269,5 +1270,54 @@ export const publishXhsNote = async (params: {
     success: true,
     note_id: data.data?.note_id,
     msg: "发布成功",
+  };
+};
+
+export const getXhsLikedNotes = async (params: XhsGetLikedNotesParams) => {
+  const cookie = await getOrSetXhsCookie();
+  if (!cookie) throw new Error("请先设置小红书 Cookie");
+  const apiPath = "/api/sns/web/v1/note/like/page";
+  const queryObj = {
+    num: params.num || 30,
+    cursor: params.cursor || '',
+    user_id: params.user_id,
+    image_formats: "jpg,webp,avif",
+    xsec_token: '',
+    xsec_source: '',
+  };
+  const pathWithQuery = buildGetPath(apiPath, queryObj);
+  let signObj: XhsSignature;
+  try {
+    signObj = await getXhsSignature(pathWithQuery, "", cookie, "GET");
+  } catch (e: any) {
+    throw new Error(`小红书签名生成失败: ${e?.message || "请检查 Cookie"}`);
+  }
+  const url = buildGetUrl(pathWithQuery);
+  const headers = buildXhsHeaders({ cookie, signObj });
+  const resp = await xhsHttp.get(url, { headers, timeout: 10000 });
+  const raw = resp.data?.data;
+  const notes: any[] = raw?.notes || [];
+  const items = notes.map((note: any) => ({
+    ignore: false,
+    xsec_token: note.xsec_token,
+    id: note.note_id || note.id,
+    model_type: "note",
+    track_id: "",
+    note_card: {
+      user: note.user,
+      interact_info: note.interact_info,
+      cover: note.cover,
+      display_title: note.display_title || note.title,
+      title: note.display_title || note.title,
+      type: note.type,
+      note_id: note.note_id || note.id,
+      xsec_token: note.xsec_token,
+    },
+  }));
+  return {
+    items,
+    cursor: raw?.cursor || "",
+    has_more: raw?.has_more,
+    _raw: raw,
   };
 };
