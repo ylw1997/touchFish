@@ -23,16 +23,41 @@ const VERSION_CODE = 13020508;
 
 import { sign } from "./sign";
 
+export interface QQMusicCredential {
+  musicid: string;
+  musickey: string;
+  refresh_key?: string;
+  refresh_token?: string;
+  openid?: string;
+  unionid?: string;
+  access_token?: string;
+  expired_at?: number;
+  str_musicid?: string;
+  login_type?: number;
+  musickeyCreateTime?: number;
+  keyExpiresIn?: number;
+}
+
 // 全局 credential 存储
-let globalCredential: { musicid: string; musickey: string } | null = null;
+let globalCredential: QQMusicCredential | null = null;
+let isRefreshing = false;
+const refreshQueue: Array<(credential: QQMusicCredential | null) => void> = [];
+let credentialRefreshedHandler: ((credential: QQMusicCredential) => void) | null =
+  null;
 
 export const setGlobalCredential = (
-  credential: { musicid: string; musickey: string } | null,
+  credential: QQMusicCredential | null,
 ) => {
   globalCredential = credential;
 };
 
 export const getGlobalCredential = () => globalCredential;
+
+export const onQQMusicCredentialRefreshed = (
+  handler: (credential: QQMusicCredential) => void,
+) => {
+  credentialRefreshedHandler = handler;
+};
 
 // 创建支持 cookies 的 axios 实例
 const createSession = () => {
@@ -100,13 +125,210 @@ const buildAnonymousCommonParams = () => ({
   uid: "0",
 });
 
+const LOGIN_EXPIRED_CODES = new Set([1000, 104400, 104401]);
+
+const getCredential = (credential?: QQMusicCredential | null) =>
+  credential ?? globalCredential;
+
+const getLoginType = (credential: QQMusicCredential) =>
+  credential.login_type ?? (credential.musickey.startsWith("W_X") ? 1 : 2);
+
+const normalizeCredential = (
+  raw: any,
+  fallback?: QQMusicCredential | null,
+): QQMusicCredential | null => {
+  if (!raw) return null;
+  const musicid =
+    raw.str_musicid ||
+    raw.musicid ||
+    raw.openId ||
+    raw.openid ||
+    fallback?.musicid ||
+    "";
+  const musickey = raw.musickey || fallback?.musickey || "";
+  if (!musicid || !musickey) return null;
+
+  return {
+    musicid: String(musicid),
+    musickey: String(musickey),
+    refresh_key: raw.refresh_key || fallback?.refresh_key || "",
+    refresh_token: raw.refresh_token || fallback?.refresh_token || "",
+    openid: raw.openid || fallback?.openid || "",
+    unionid: raw.unionid || fallback?.unionid || "",
+    access_token: raw.access_token || fallback?.access_token || "",
+    expired_at: Number(raw.expired_at || fallback?.expired_at || 0),
+    str_musicid: raw.str_musicid || fallback?.str_musicid || String(musicid),
+    login_type: Number(raw.loginType || raw.login_type || fallback?.login_type || (String(musickey).startsWith("W_X") ? 1 : 2)),
+    musickeyCreateTime: Number(
+      raw.musickeyCreateTime || fallback?.musickeyCreateTime || 0,
+    ),
+    keyExpiresIn: Number(raw.keyExpiresIn || fallback?.keyExpiresIn || 0),
+  };
+};
+
+const hasRefreshMaterial = (credential?: QQMusicCredential | null) =>
+  Boolean(
+    credential?.musicid &&
+      credential?.musickey &&
+      credential?.refresh_key &&
+      credential?.refresh_token,
+  );
+
+const isCredentialExpiredByTime = (credential?: QQMusicCredential | null) => {
+  if (!credential?.musickeyCreateTime || !credential?.keyExpiresIn) return false;
+  const expiresAt = credential.musickeyCreateTime + credential.keyExpiresIn;
+  return Math.floor(Date.now() / 1000) >= expiresAt - 60;
+};
+
+const isLoginExpiredPayload = (payload: any): boolean => {
+  if (!payload || typeof payload !== "object") return false;
+  if (LOGIN_EXPIRED_CODES.has(Number(payload.code))) return true;
+
+  return Object.values(payload).some((value) => {
+    if (!value || typeof value !== "object") return false;
+    return LOGIN_EXPIRED_CODES.has(Number((value as any).code));
+  });
+};
+
+const extractModuleErrorMessage = (payload: any) => {
+  if (!payload || typeof payload !== "object") return "";
+  for (const value of Object.values(payload)) {
+    if (value && typeof value === "object") {
+      const item = value as any;
+      if (item.code && item.code !== 0) {
+        return item.message || item.msg || "";
+      }
+    }
+  }
+  return "";
+};
+
+const refreshCredentialInternal = async (
+  credential: QQMusicCredential,
+): Promise<QQMusicCredential | null> => {
+  if (!hasRefreshMaterial(credential)) return null;
+
+  const loginType = getLoginType(credential);
+  const param: any =
+    loginType === 2
+      ? {
+          openid: credential.openid || "",
+          access_token: credential.access_token || "",
+          refresh_token: credential.refresh_token || "",
+          expired_in: credential.expired_at || 0,
+          musicid: credential.musicid,
+          musickey: credential.musickey,
+          refresh_key: credential.refresh_key || "",
+          loginMode: 2,
+        }
+      : {
+          openid: credential.openid || "",
+          refresh_token: credential.refresh_token || "",
+          str_musicid: credential.str_musicid || credential.musicid,
+          musicid: credential.musicid,
+          musickey: credential.musickey,
+          unionid: credential.unionid || "",
+          refresh_key: credential.refresh_key || "",
+          loginMode: 2,
+        };
+
+  const response = await axios.post(
+    BASE_URL,
+    {
+      comm: {
+        ...buildAnonymousCommonParams(),
+        tmeLoginType: loginType,
+      },
+      "music.login.LoginServer.Login": {
+        method: "Login",
+        module: "music.login.LoginServer",
+        param,
+      },
+    },
+    {
+      headers: getBaseHeaders(),
+      timeout: 30000,
+    },
+  );
+
+  if (response.data?.code !== 0) return null;
+  const loginResult =
+    response.data["music.login.LoginServer.Login"] ||
+    response.data["music.login.LoginServer"];
+  if (!loginResult || loginResult.code !== 0) return null;
+
+  return normalizeCredential(loginResult.data, credential);
+};
+
+export const refreshQQMusicCredential = async (
+  credential?: QQMusicCredential | null,
+): Promise<QQMusicCredential | null> => {
+  const currentCredential = getCredential(credential);
+  if (!currentCredential) return null;
+  return refreshCredentialInternal(currentCredential);
+};
+
+const refreshGlobalCredential = async (): Promise<QQMusicCredential | null> => {
+  const currentCredential = getGlobalCredential();
+  if (!currentCredential || !hasRefreshMaterial(currentCredential)) return null;
+
+  if (isRefreshing) {
+    return new Promise((resolve) => refreshQueue.push(resolve));
+  }
+
+  isRefreshing = true;
+  try {
+    const newCredential = await refreshCredentialInternal(currentCredential);
+    if (newCredential) {
+      setGlobalCredential(newCredential);
+      if (credentialRefreshedHandler) {
+        credentialRefreshedHandler(newCredential);
+      }
+    } else {
+      setGlobalCredential(null);
+    }
+
+    while (refreshQueue.length > 0) {
+      refreshQueue.shift()!(newCredential);
+    }
+
+    return newCredential;
+  } finally {
+    isRefreshing = false;
+  }
+};
+
+const refreshCredentialForRequest = async (
+  credential: QQMusicCredential,
+  isExplicitCredential: boolean,
+) => {
+  if (isExplicitCredential) {
+    const newCredential = await refreshCredentialInternal(credential);
+    if (newCredential && globalCredential?.musicid === credential.musicid) {
+      setGlobalCredential(newCredential);
+      if (credentialRefreshedHandler) {
+        credentialRefreshedHandler(newCredential);
+      }
+    }
+    return newCredential;
+  }
+
+  return refreshGlobalCredential();
+};
+
 // 基础 POST 请求
 const postRequest = async (
   data: any,
   enableSign: boolean = false,
-  credential?: { musicid?: string; musickey?: string },
+  credential?: QQMusicCredential | null,
+  hasRetried: boolean = false,
 ) => {
   try {
+    let creds = getCredential(credential);
+    if (!hasRetried && creds && isCredentialExpiredByTime(creds)) {
+      creds = await refreshCredentialForRequest(creds, Boolean(credential));
+    }
+
     const requestData = { ...data };
     if (!requestData.comm) {
       requestData.comm = buildCommonParams();
@@ -121,10 +343,9 @@ const postRequest = async (
     }
 
     const headers: any = getBaseHeaders();
-    const creds = credential || globalCredential;
     if (creds?.musicid && creds?.musickey) {
-      const isWx = creds.musickey.startsWith("W_X");
-      const loginType = isWx ? "1" : "2";
+      const loginType = getLoginType(creds);
+      const isWx = loginType === 1;
 
       headers["Cookie"] =
         `uin=${creds.musicid}; qqmusic_key=${creds.musickey}; qm_keyst=${creds.musickey}; tmeLoginType=${loginType};`;
@@ -133,14 +354,11 @@ const postRequest = async (
       }
 
       requestData.comm.uid = creds.musicid; // Setup uid unconditionally
-
-      if (!requestData.comm.qq) {
-        requestData.comm.qq = creds.musicid;
-        requestData.comm.authst = creds.musickey;
-        requestData.comm.tmeLoginType = loginType;
-        requestData.comm.loginUin = creds.musicid;
-        requestData.comm.tmeAppID = "qqmusic";
-      }
+      requestData.comm.qq = creds.musicid;
+      requestData.comm.authst = creds.musickey;
+      requestData.comm.tmeLoginType = loginType;
+      requestData.comm.loginUin = creds.musicid;
+      requestData.comm.tmeAppID = "qqmusic";
     }
 
     const response = await axios.post(url, requestData, {
@@ -149,8 +367,27 @@ const postRequest = async (
       timeout: 30000,
     });
 
+    if (
+      !hasRetried &&
+      isLoginExpiredPayload(response.data) &&
+      hasRefreshMaterial(creds)
+    ) {
+      const newCredential = await refreshCredentialForRequest(
+        creds as QQMusicCredential,
+        Boolean(credential),
+      );
+      if (newCredential) {
+        return postRequest(data, enableSign, newCredential, true);
+      }
+    }
+
     if (response.data?.code !== 0) {
       throw new Error(response.data?.msg || "请求失败");
+    }
+
+    const moduleError = extractModuleErrorMessage(response.data);
+    if (moduleError && isLoginExpiredPayload(response.data)) {
+      throw new Error(moduleError);
     }
 
     return response.data;
@@ -282,7 +519,7 @@ export const searchSingers = async (
 export const getSongUrl = async (
   mid: string,
   quality: SongQuality = 128,
-  credential?: { musicid?: string; musickey?: string },
+  credential?: QQMusicCredential,
 ): Promise<ApiResponse<string>> => {
   try {
     // 根据音质选择文件类型
@@ -1197,10 +1434,7 @@ export const getEuin = async (musicid: string): Promise<string> => {
  * 获取用户信息
  */
 export const getUserInfo = async (
-  credential: {
-    musicid: string;
-    musickey: string;
-  } | null = null,
+  credential: QQMusicCredential | null = null,
 ): Promise<ApiResponse<UserInfo>> => {
   try {
     const currentCredential = credential || globalCredential;
@@ -1234,11 +1468,21 @@ export const getUserInfo = async (
 
     const info = userData.info || {};
 
+    const latestGlobalCredential = getGlobalCredential();
+    const responseCredential =
+      latestGlobalCredential?.musicid === currentCredential.musicid
+        ? latestGlobalCredential
+        : currentCredential;
+
     return {
       code: 0,
       data: {
-        musicid: currentCredential.musicid,
-        musickey: currentCredential.musickey,
+        musicid: responseCredential.musicid,
+        musickey: responseCredential.musickey,
+        refresh_key: responseCredential.refresh_key,
+        refresh_token: responseCredential.refresh_token,
+        openid: responseCredential.openid,
+        unionid: responseCredential.unionid,
         nickname: info.nick || "",
         avatar: info.logo || "",
       },
@@ -1256,7 +1500,7 @@ export const getUserInfo = async (
  * 获取我喜欢的歌单
  */
 export const getMyFavorite = async (
-  credential: { musicid: string; musickey: string },
+  credential: QQMusicCredential,
   page: number = 1,
   num: number = 30,
 ): Promise<ApiResponse<{ songs: Song[]; total: number }>> => {
@@ -1317,10 +1561,9 @@ export const getMyFavorite = async (
 /**
  * 获取我的歌单列表
  */
-export const getMyPlaylists = async (credential: {
-  musicid: string;
-  musickey: string;
-}): Promise<ApiResponse<Playlist[]>> => {
+export const getMyPlaylists = async (
+  credential: QQMusicCredential,
+): Promise<ApiResponse<Playlist[]>> => {
   try {
     const data = {
       comm: buildCommonParams(),

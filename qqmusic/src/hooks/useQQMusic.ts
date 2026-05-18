@@ -6,6 +6,7 @@ import { useRequest } from "./useRequest";
 import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
 import { SongQuality } from "../types/qqmusic";
+import type { PlaySource } from "../store/player";
 import type { Song } from "../types/qqmusic";
 
 export const useQQMusic = () => {
@@ -75,7 +76,11 @@ export const useQQMusic = () => {
       const userInfo = useUserStore.getState().userInfo;
       const credential = userInfo?.musicid ? {
         musicid: userInfo.musicid,
-        musickey: userInfo.musickey
+        musickey: userInfo.musickey,
+        refresh_key: userInfo.refresh_key,
+        refresh_token: userInfo.refresh_token,
+        openid: userInfo.openid,
+        unionid: userInfo.unionid,
       } : undefined;
 
       const result = await request("QQMUSIC_GET_SONG_URL", { mid, quality, credential });
@@ -102,12 +107,16 @@ export const useQQMusic = () => {
 
   // 播放歌曲
   const playSong = useCallback(
-    async (song: Song, quality: SongQuality = SongQuality.STANDARD) => {
+    async (
+      song: Song,
+      quality: SongQuality = SongQuality.STANDARD,
+      source: PlaySource = "normal",
+    ) => {
       const urlResult = await getSongUrl(song.mid, quality);
       if (urlResult.code === 0 && urlResult.data) {
         // 先设置 URL，再播放
         setCurrentSongUrl(urlResult.data);
-        play(song);
+        play(song, source);
       } else {
         throw new Error(urlResult.message || "无法获取播放链接");
       }

@@ -60,6 +60,14 @@ const PlayBar: React.FC = () => {
 
   const { likedSongMids, toggleLikeSong } = useUserStore();
   const isLiked = currentSong ? likedSongMids.includes(currentSong.mid) : false;
+  const effectivePlaySource =
+    playSource === "normal" && isRadioMode ? "guess" : playSource;
+  const sourceLabel =
+    effectivePlaySource === "radar"
+      ? "专属雷达"
+      : effectivePlaySource === "guess"
+        ? "猜你喜欢"
+        : "";
 
   const getAlbumCover = (song: Song): string => {
     if (song.album?.pmid) {
@@ -75,7 +83,11 @@ const PlayBar: React.FC = () => {
 
   // 猜你喜欢 (电台) 自动续播预加载
   useEffect(() => {
-    if (isRadioMode && currentSong && playlist.length > 0) {
+    if (
+      effectivePlaySource === "guess" &&
+      currentSong &&
+      playlist.length > 0
+    ) {
       const currIdx = playlist.findIndex((s) => s.mid === currentSong.mid);
       const remaining = playlist.length - (currIdx + 1);
 
@@ -103,7 +115,7 @@ const PlayBar: React.FC = () => {
           .catch((err) => console.error("[PlayBar] 续播加载失败:", err));
       }
     }
-  }, [currentSong, playlist, isRadioMode, getGuessRecommend]);
+  }, [currentSong, playlist, effectivePlaySource, getGuessRecommend]);
 
   const handleToggleLike = async () => {
     if (!currentSong) return;
@@ -233,11 +245,11 @@ const PlayBar: React.FC = () => {
       command: "QQMUSIC_UPDATE_PLAYING_STATUS",
       payload: {
         songName: fullTitle,
-        lyric: currentLyric,
+        lyric: sourceLabel || currentLyric,
         isPlaying,
       },
     });
-  }, [currentSong, currentLyric, isPlaying]);
+  }, [currentSong, currentLyric, isPlaying, sourceLabel]);
 
   // 监听独立时钟来更新歌词的高亮进度 (只负责纯视觉 UI，因为后台标签页时 requestAnimationFrame 会被浏览器暂停)
   useEffect(() => {
@@ -334,7 +346,7 @@ const PlayBar: React.FC = () => {
           isPlaylistOpen={isPlaylistOpen}
           playlist={playlist}
           currentSong={currentSong}
-          playSong={playSong}
+          playSong={(song) => playSong(song, undefined, effectivePlaySource)}
           removeFromPlaylist={removeFromPlaylist}
           clearPlaylist={clearPlaylist}
           getAlbumCover={getAlbumCover}
@@ -422,20 +434,12 @@ const PlayBar: React.FC = () => {
                   </span>
                 </div>
                 <div
-                  className={`playbar-lyric ${playSource === "radar" || playSource === "guess" ? "source-mode" : ""}`}
-                  title={
-                    playSource === "radar"
-                      ? "专属雷达"
-                      : playSource === "guess"
-                        ? "猜你喜欢"
-                        : currentLyric
-                  }
+                  className={`playbar-lyric ${
+                    sourceLabel ? "source-mode" : ""
+                  }`}
+                  title={sourceLabel || currentLyric}
                 >
-                  {playSource === "radar"
-                    ? "专属雷达"
-                    : playSource === "guess"
-                      ? "猜你喜欢"
-                      : currentLyric || "聆听美好音乐"}
+                  {sourceLabel || currentLyric || "聆听美好音乐"}
                 </div>
               </div>
             ) : (
