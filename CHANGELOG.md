@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [15.13.0](https://github.com/ylw1997/touchFish/compare/v15.12.0...v15.13.0) (2026-05-18)
+
+
+### ✨ Features | 新功能
+
+* qqmusic支持登录续期功能,修复qqmusic playbar状态错误问题 ([2e54631](https://github.com/ylw1997/touchFish/commit/2e5463132db65c246fb886db2cf3060eccb4294d))
+* qqmusic支持登录续期功能,修复qqmusic playbar状态错误问题 ([af9c13a](https://github.com/ylw1997/touchFish/commit/af9c13ad13e2c8b7ca7367a172cef88fbc7e91d2))
+
 ## [15.12.0](https://github.com/ylw1997/touchFish/compare/v15.11.0...v15.12.0) (2026-05-18)
 
 
