@@ -241,15 +241,16 @@ const PlayBar: React.FC = () => {
     const singerName = currentSong ? getSingerName(currentSong) : "";
     const fullTitle = songName ? `${songName} - ${singerName}` : "";
 
+    // 歌词优先显示，没有歌词时显示歌曲名称
     vscode.postMessage({
       command: "QQMUSIC_UPDATE_PLAYING_STATUS",
       payload: {
         songName: fullTitle,
-        lyric: sourceLabel || currentLyric,
+        lyric: currentLyric || fullTitle,
         isPlaying,
       },
     });
-  }, [currentSong, currentLyric, isPlaying, sourceLabel]);
+  }, [currentSong, currentLyric, isPlaying]);
 
   // 监听独立时钟来更新歌词的高亮进度 (只负责纯视觉 UI，因为后台标签页时 requestAnimationFrame 会被浏览器暂停)
   useEffect(() => {

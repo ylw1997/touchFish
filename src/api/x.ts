@@ -166,16 +166,9 @@ const TWEET_DETAIL_FIELD_TOGGLES = {
   withDisallowedReplyControls: false,
 };
 
-const SEARCH_TIMELINE_FIELD_TOGGLES = {
-  withArticleRichContentState: true,
-  withArticlePlainText: false,
-  withGrokAnalyze: false,
-  withDisallowedReplyControls: false,
-};
-
 const SEARCH_TIMELINE_FEATURES: XFeatureFlags = {
   rweb_video_screen_enabled: false,
-  rweb_cashtags_enabled: false,
+  rweb_cashtags_enabled: true,
   profile_label_improvements_pcf_label_in_post_enabled: true,
   responsive_web_profile_redirect_enabled: false,
   rweb_tipjar_consumption_enabled: false,
@@ -188,11 +181,13 @@ const SEARCH_TIMELINE_FEATURES: XFeatureFlags = {
   c9s_tweet_anatomy_moderator_badge_enabled: true,
   responsive_web_grok_analyze_button_fetch_trends_enabled: false,
   responsive_web_grok_analyze_post_followups_enabled: true,
+  rweb_cashtags_composer_attachment_enabled: true,
   responsive_web_jetfuel_frame: true,
   responsive_web_grok_share_attachment_enabled: true,
   responsive_web_grok_annotations_enabled: true,
   articles_preview_enabled: true,
   responsive_web_edit_tweet_api_enabled: true,
+  rweb_conversational_replies_downvote_enabled: false,
   graphql_is_translatable_rweb_tweet_is_translatable_enabled: true,
   view_counts_everywhere_api_enabled: true,
   longform_notetweets_consumption_enabled: true,
@@ -689,12 +684,10 @@ export async function getXSearchTimeline(
     const featuresStr = encodeURIComponent(
       JSON.stringify(SEARCH_TIMELINE_FEATURES),
     );
-    const fieldTogglesStr = encodeURIComponent(
-      JSON.stringify(SEARCH_TIMELINE_FIELD_TOGGLES),
-    );
     // 手动拼接 URL，绕过 axios paramsSerializer，和浏览器行为完全一致
+    // 注意：浏览器请求中没有 fieldToggles 参数，移除它
     const path = `/i/api/graphql/${X_SEARCH_TIMELINE_QUERY_ID}/SearchTimeline`;
-    const fullUrl = `${X_BASE_URL}${path}?variables=${variablesStr}&features=${featuresStr}&fieldToggles=${fieldTogglesStr}`;
+    const fullUrl = `${X_BASE_URL}${path}?variables=${variablesStr}&features=${featuresStr}`;
     const transactionId = await xTransactionIdProvider(path, "GET");
 
     const response = await xHttp.get(fullUrl, {
