@@ -26,7 +26,6 @@ import { CommandsType } from "../../types/commands";
 import { xAJAX, xItem, xUser } from "../../types/x";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { downloadImageWithSaveDialog } from "../utils/imageDownload";
-import { getXhsLikedNotes } from "../api/xhs";
 
 // X 转换器
 function mapXTweetToXItem(tweet: any): xItem | null {
@@ -922,13 +921,6 @@ export class XProvider extends BaseWebviewProvider {
         });
         break;
       }
-      case "XHS_GET_LIKED_NOTES": {
-        const likedPayload = payload as any;
-        const data = await getXhsLikedNotes(likedPayload);
-        webviewView.webview.postMessage({ payload: data, uuid });
-        break;
-      }
-
       // Fallback handlers to avoid errors
       default: {
         webviewView.webview.postMessage({
