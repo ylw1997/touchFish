@@ -31,6 +31,7 @@ import {
   getXhsUserMe,
   uploadXhsImage,
   publishXhsNote,
+  getXhsLikedNotes,
 } from "../api/xhs";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
@@ -212,6 +213,12 @@ export class XhsWebProvider extends BaseWebviewProvider {
         const publishPayload = payload as any;
         const result = await publishXhsNote(publishPayload);
         webviewView.webview.postMessage({ payload: result, uuid });
+        break;
+      }
+      case "XHS_GET_LIKED_NOTES": {
+        const likedPayload = payload as any;
+        const data = await getXhsLikedNotes(likedPayload);
+        webviewView.webview.postMessage({ payload: data, uuid });
         break;
       }
       case "XHS_DOWNLOAD_IMAGE": {

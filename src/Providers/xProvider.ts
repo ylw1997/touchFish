@@ -344,8 +344,8 @@ export class XProvider extends BaseWebviewProvider {
           isRefresh = !!payload.refresh;
           seenTweetIds = Array.isArray(payload.seenTweetIds)
             ? payload.seenTweetIds
-                .map((id: unknown) => String(id))
-                .filter(Boolean)
+              .map((id: unknown) => String(id))
+              .filter(Boolean)
             : [];
           if (isNextPage) {
             this.currentCursor =
@@ -455,7 +455,7 @@ export class XProvider extends BaseWebviewProvider {
 
         if (res.code === 0 && res.data) {
           const userResult = res.data.user?.result;
-          
+
           let finalUser = userResult;
           // 严格按照 JSON 路径：data.user.result.timeline.timeline.instructions
           if (!finalUser?.legacy) {
@@ -491,9 +491,9 @@ export class XProvider extends BaseWebviewProvider {
                 id: finalUser.rest_id || userId,
                 name: legacy.name || (finalUser as any).core?.name || "",
                 screen_name_raw: legacy.screen_name || (finalUser as any).core?.screen_name || "",
-                screen_name: (legacy.name || (finalUser as any).core?.name) 
-                    ? `${legacy.name || (finalUser as any).core?.name} (@${legacy.screen_name || (finalUser as any).core?.screen_name})` 
-                    : (legacy.screen_name || (finalUser as any).core?.screen_name),
+                screen_name: (legacy.name || (finalUser as any).core?.name)
+                  ? `${legacy.name || (finalUser as any).core?.name} (@${legacy.screen_name || (finalUser as any).core?.screen_name})`
+                  : (legacy.screen_name || (finalUser as any).core?.screen_name),
                 avatar_hd: avatarUrl?.replace(/_normal/, "_400x400"),
                 followers_count_str: String(legacy.followers_count || 0),
                 friends_count_str: String(legacy.friends_count || 0),
@@ -503,7 +503,7 @@ export class XProvider extends BaseWebviewProvider {
               },
             };
           } else {
-             mappedData = { ok: 1, data: { id: userId, name: "我的个人页面", isOwner: true } };
+            mappedData = { ok: 1, data: { id: userId, name: "我的个人页面", isOwner: true } };
           }
         }
 
@@ -921,7 +921,6 @@ export class XProvider extends BaseWebviewProvider {
         });
         break;
       }
-
       // Fallback handlers to avoid errors
       default: {
         webviewView.webview.postMessage({

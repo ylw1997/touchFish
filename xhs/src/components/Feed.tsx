@@ -21,6 +21,7 @@ import {
   FormOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  HeartOutlined,
 } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
@@ -35,6 +36,7 @@ import {
 import FeedDetailDrawer from "./FeedDetailDrawer";
 import XhsSearchDrawer from "./XhsSearchDrawer";
 import UserPostedDrawer from "./UserPostedDrawer";
+import UserLikedDrawer from "./UserLikedDrawer";
 import XhsSendDrawer from "./XhsSendDrawer";
 import { useRequest } from "../hooks/useRequest";
 import { createXhsApi } from "../api";
@@ -53,6 +55,9 @@ export default function Feed() {
   const [userOpen, setUserOpen] = useState(false);
   // 发布抽屉状态
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
+  // 点赞抽屉状态
+  const [likedDrawerOpen, setLikedDrawerOpen] = useState(false);
+  const [likedUserId, setLikedUserId] = useState<string>("");
   const [sendLoading, setSendLoading] = useState(false);
   const [userParams, setUserParams] = useState<{
     cursor: string;
@@ -150,6 +155,20 @@ export default function Feed() {
     setUserOpen(true);
   }, []);
 
+  const handleOpenLiked = useCallback(async () => {
+    try {
+      const data: any = await apiRef.current.getMyUserInfo();
+      if (data && data.user_id) {
+        setLikedUserId(data.user_id);
+        setLikedDrawerOpen(true);
+      } else {
+        messageApi.error("获取用户信息失败");
+      }
+    } catch (e: any) {
+      messageApi.error(e.message || "获取用户信息失败");
+    }
+  }, [messageApi]);
+
   // 处理图片上传
   const handleUploadImage = useCallback(
     async (file: File) => {
@@ -204,6 +223,26 @@ export default function Feed() {
     },
     [messageApi],
   );
+  // ===== 新增：向宿主环境发送点赞/取消点赞命令 =====
+  const handleLikeToggle = useCallback(async (raw: any, targetStatus: boolean) => {
+    if (!raw?.id) return false;
+    try {
+      // 【关键修正】这里依据 api/xhs.ts 要求，参数必须名为 note_oid
+      const payload = {
+        note_oid: raw.id
+      };
+
+      if (targetStatus) {
+        await request("XHS_NOTE_LIKE", payload);
+      } else {
+        await request("XHS_NOTE_DISLIKE", payload);
+      }
+      return true;
+    } catch (e: any) {
+      messageApi.error(e.message || "点赞操作失败");
+      return false;
+    }
+  }, [request, messageApi]);
 
   return (
     <div
@@ -245,6 +284,11 @@ export default function Feed() {
           onClick={handleMyInfo}
           icon={<UserOutlined style={{ color: "#faad14" }} />}
           tooltip={{ title: "我的", placement: "left" }}
+        />
+        <FloatButton
+          onClick={handleOpenLiked}
+          icon={<HeartOutlined style={{ color: "#ff2442" }} />}
+          tooltip={{ title: "我的点赞", placement: "left" }}
         />
         <FloatButton
           onClick={() => setSendDrawerOpen(true)}
@@ -307,6 +351,7 @@ export default function Feed() {
                   data={raw}
                   onClick={handleOpenDetail}
                   onUserClick={handleOpenUser}
+                  onLikeToggle={handleLikeToggle}
                 />
               </div>
             ))}
@@ -317,6 +362,11 @@ export default function Feed() {
         open={userOpen}
         onClose={() => setUserOpen(false)}
         initParams={userParams as any}
+      />
+      <UserLikedDrawer
+        userId={likedUserId}
+        visible={likedDrawerOpen}
+        onClose={() => setLikedDrawerOpen(false)}
       />
       <XhsSendDrawer
         open={sendDrawerOpen}

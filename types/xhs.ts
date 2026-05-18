@@ -4,8 +4,8 @@
  * @LastEditTime: 2025-11-20 09:22:50
  * @LastEditors: YangLiwei 1280426581@qq.com
  * @FilePath: \touchfish\types\xhs.ts
- * Copyright (c) 2025 by YangLiwei, All Rights Reserved. 
- * @Description: 
+ * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
+ * @Description:
  */
 // 小红书 XHS 相关类型
 export interface XhsCoverInfo {
@@ -96,7 +96,7 @@ export interface XhsNoteVideo {
     thumbnail_fileid: string;
     [key: string]: any;
   };
-  consumer: { origin_video_key: string; [key: string]: any };
+  consumer: { origin_video_key: string;[key: string]: any };
   [key: string]: any;
 }
 export interface XhsImageListItem {
@@ -266,13 +266,13 @@ export interface XhsUnfollowResponse {
   [key: string]: any;
 }
 export interface XhsLikeNoteParams { note_oid: string }
-export interface XhsLikeNoteResponse { new_like: boolean; [k: string]: any }
+export interface XhsLikeNoteResponse { new_like: boolean;[k: string]: any }
 export interface XhsDislikeNoteParams { note_oid: string }
-export interface XhsDislikeNoteResponse { like_count: number; [k: string]: any }
+export interface XhsDislikeNoteResponse { like_count: number;[k: string]: any }
 export interface XhsCollectNoteParams { note_id: string }
-export interface XhsCollectNoteResponse { code: number; success: boolean; msg: string; [k: string]: any }
+export interface XhsCollectNoteResponse { code: number; success: boolean; msg: string;[k: string]: any }
 export interface XhsUncollectNoteParams { note_ids: string }
-export interface XhsUncollectNoteResponse { code: number; success: boolean; msg: string; [k: string]: any }
+export interface XhsUncollectNoteResponse { code: number; success: boolean; msg: string;[k: string]: any }
 export interface XhsPostCommentParams { note_id: string; content: string; at_users?: any[] }
 export interface XhsPostCommentResponse {
   code: number;
@@ -420,4 +420,17 @@ export interface XhsPublishNoteResponse {
   note_id?: string;
   msg?: string;
   [k: string]: any;
+}
+
+// touchFish/types/xhs.ts (在文件末尾追加)
+export interface XhsGetLikedNotesParams {
+  user_id: string;
+  cursor?: string;
+  num?: number;
+}
+export interface XhsGetLikedNotesResponse {
+  cursor: string;
+  has_more: boolean;
+  notes: any[];
+  [key: string]: any;
 }
