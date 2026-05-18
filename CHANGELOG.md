@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [15.14.0](https://github.com/ylw1997/touchFish/compare/v15.13.0...v15.14.0) (2026-05-18)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复qqmusic 任务栏歌词不显示问题 ([3ccd983](https://github.com/ylw1997/touchFish/commit/3ccd9837461dcf7b42278dc7d524d03a8648ef15))
+
+
+### ✨ Features | 新功能
+
+* 修复x搜索失效问题 ([8b86e8f](https://github.com/ylw1997/touchFish/commit/8b86e8f7d47d3c7623dccb59dbe80acc01f96054))
+
 ## [15.13.0](https://github.com/ylw1997/touchFish/compare/v15.12.0...v15.13.0) (2026-05-18)
 
 
