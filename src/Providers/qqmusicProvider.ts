@@ -22,16 +22,16 @@ import {
   getSongDetail,
   getSongUrl,
   getUserInfo,
+  onQQMusicCredentialRefreshed,
   removeSongsFromPlaylist,
   searchSingers,
   searchSongs,
   setGlobalCredential,
+  type QQMusicCredential,
 } from "../api/qqmusic";
 import { setConfigByKey } from "../core/config";
 import { CommandsType } from "../../types/commands";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
-
-type QQMusicCredential = { musicid: string; musickey: string };
 
 export class QQMusicProvider extends BaseWebviewProvider {
   private credential: QQMusicCredential | null = null;
@@ -63,12 +63,13 @@ export class QQMusicProvider extends BaseWebviewProvider {
         this.updateStatusBar();
       }
 
-      if (
-        e.affectsConfiguration("touchfish.qqmusicMusicid") ||
-        e.affectsConfiguration("touchfish.qqmusicMusickey")
-      ) {
+      if (e.affectsConfiguration("touchfish.qqmusicCredential")) {
         void this.syncCredentialFromConfig(true);
       }
+    });
+
+    onQQMusicCredentialRefreshed((cred) => {
+      void this.saveCredential(cred);
     });
 
     void this.syncCredentialFromConfig(false);
@@ -83,12 +84,35 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
   private getCredentialFromConfig(): QQMusicCredential | null {
     const config = workspace.getConfiguration("touchfish");
-    const musicidRaw = config.get<string | number>("qqmusicMusicid");
-    const musickey = config.get<string>("qqmusicMusickey");
-    const musicid = musicidRaw ? String(musicidRaw).trim() : "";
-    const musickeyStr = (musickey || "").trim();
-    if (!musicid || !musickeyStr) return null;
-    return { musicid, musickey: musickeyStr };
+    const rawCredential = (config.get<string>("qqmusicCredential") || "").trim();
+    if (!rawCredential) return null;
+
+    try {
+      return this.toCredential(JSON.parse(rawCredential));
+    } catch {
+      return null;
+    }
+  }
+
+  private toCredential(raw: any): QQMusicCredential | null {
+    if (!raw?.musicid || !raw?.musickey) return null;
+    const musickey = String(raw.musickey);
+    return {
+      musicid: String(raw.musicid),
+      musickey,
+      refresh_key: raw.refresh_key || "",
+      refresh_token: raw.refresh_token || "",
+      openid: raw.openid || "",
+      unionid: raw.unionid || "",
+      access_token: raw.access_token || "",
+      expired_at: Number(raw.expired_at || 0),
+      str_musicid: raw.str_musicid || String(raw.musicid),
+      login_type:
+        Number(raw.login_type || raw.loginType || 0) ||
+        (musickey.startsWith("W_X") ? 1 : 2),
+      musickeyCreateTime: Number(raw.musickeyCreateTime || 0),
+      keyExpiresIn: Number(raw.keyExpiresIn || 0),
+    };
   }
 
   private async syncCredentialFromConfig(notifyWebview: boolean) {
@@ -133,8 +157,7 @@ export class QQMusicProvider extends BaseWebviewProvider {
     setGlobalCredential(cred);
 
     try {
-      await setConfigByKey("qqmusicMusicid", String(cred.musicid));
-      await setConfigByKey("qqmusicMusickey", cred.musickey);
+      await setConfigByKey("qqmusicCredential", JSON.stringify(cred));
     } catch (err) {
       console.error("[QQMusic] 写入配置文件失败:", err);
     }
@@ -150,10 +173,8 @@ export class QQMusicProvider extends BaseWebviewProvider {
     await this.notifyAuthState();
 
     // Clear config in the background (don't block the logout response)
-    void setConfigByKey("qqmusicMusicid", "")
-      .catch((err) => console.error("[QQMusic] 清除 musicid 失败:", err));
-    void setConfigByKey("qqmusicMusickey", "")
-      .catch((err) => console.error("[QQMusic] 清除 musickey 失败:", err));
+    void setConfigByKey("qqmusicCredential", "")
+      .catch((err) => console.error("[QQMusic] clear credential failed:", err));
   }
 
   private loadConfig() {
@@ -356,24 +377,19 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
           if (result.code === 0 && result.data?.userInfo) {
             const userInfo = result.data.userInfo;
-            const musicid = String(userInfo.musicid);
-            const musickey = String(userInfo.musickey);
-            await this.saveCredential({
-              musicid,
-              musickey,
-            });
+            const credential = this.toCredential(userInfo);
+            if (credential) {
+              await this.saveCredential(credential);
 
-            try {
-              const detailedUserInfo = await getUserInfo({
-                musicid,
-                musickey,
-              });
-              if (detailedUserInfo.code === 0 && detailedUserInfo.data) {
-                userInfo.nickname = detailedUserInfo.data.nickname;
-                userInfo.avatar = detailedUserInfo.data.avatar;
+              try {
+                const detailedUserInfo = await getUserInfo(credential);
+                if (detailedUserInfo.code === 0 && detailedUserInfo.data) {
+                  userInfo.nickname = detailedUserInfo.data.nickname;
+                  userInfo.avatar = detailedUserInfo.data.avatar;
+                }
+              } catch (err) {
+                console.error("[QQMusic] 获取用户信息失败:", err);
               }
-            } catch (err) {
-              console.error("[QQMusic] 获取用户信息失败:", err);
             }
           }
 
@@ -388,11 +404,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
         case "QQMUSIC_LOGIN_WITH_CREDENTIAL": {
           const { credential: cred } = payload || {};
           const loginCred = cred || payload;
-          if (loginCred?.musicid && loginCred?.musickey) {
-            await this.saveCredential({
-              musicid: String(loginCred.musicid),
-              musickey: String(loginCred.musickey),
-            });
+          const credential = this.toCredential(loginCred);
+          if (credential) {
+            await this.saveCredential(credential);
           }
           const result = await getUserInfo(loginCred);
           webviewView.webview.postMessage({
@@ -405,11 +419,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
         case "QQMUSIC_SET_CREDENTIAL": {
           const setCred = payload?.credential || payload;
-          if (setCred?.musicid && setCred?.musickey) {
-            await this.saveCredential({
-              musicid: String(setCred.musicid),
-              musickey: String(setCred.musickey),
-            });
+          const credential = this.toCredential(setCred);
+          if (credential) {
+            await this.saveCredential(credential);
           }
           webviewView.webview.postMessage({
             command: "QQMUSIC_SET_CREDENTIAL_RESULT",
@@ -435,10 +447,8 @@ export class QQMusicProvider extends BaseWebviewProvider {
           void this.notifyAuthState();
 
           // Clear config in background
-          void setConfigByKey("qqmusicMusicid", "")
-            .catch((err) => console.error("[QQMusic] 清除 musicid 失败:", err));
-          void setConfigByKey("qqmusicMusickey", "")
-            .catch((err) => console.error("[QQMusic] 清除 musickey 失败:", err));
+          void setConfigByKey("qqmusicCredential", "")
+            .catch((err) => console.error("[QQMusic] clear credential failed:", err));
           break;
         }
 

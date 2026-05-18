@@ -5,6 +5,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Song, PlayMode, SongQuality } from "../types/qqmusic";
 
+export type PlaySource = "radar" | "guess" | "normal";
+
 interface PlayerState {
   // 当前播放歌曲
   currentSong: Song | null;
@@ -26,7 +28,7 @@ interface PlayerState {
   isPlaylistOpen: boolean;
   isLyricOpen: boolean;
   isRadioMode: boolean;
-  playSource: "radar" | "guess" | "normal"; // 新增：播放来源
+  playSource: PlaySource;
   isSingerOpen: boolean;
   currentSingerMid: string | null;
   currentSingerName: string | null;
@@ -50,7 +52,7 @@ interface PlayerState {
   closeSingerDrawer: () => void;
 
   // 播放控制
-  play: (song: Song) => void;
+  play: (song: Song, source?: PlaySource) => void;
   pause: () => void;
   togglePlay: () => void;
   playNext: () => void;
@@ -61,7 +63,7 @@ interface PlayerState {
   removeFromPlaylist: (index: number) => void;
   clearPlaylist: () => void;
   setIsRadioMode: (isRadioMode: boolean) => void;
-  setPlaySource: (source: "radar" | "guess" | "normal") => void; // 新增
+  setPlaySource: (source: PlaySource) => void;
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -118,13 +120,24 @@ export const usePlayerStore = create<PlayerState>()(
           currentSingerMid: null,
           currentSingerName: null,
         }),
-      setIsRadioMode: (isRadioMode) => set({ isRadioMode }),
-      setPlaySource: (playSource) => set({ playSource }), // 新增
+      setIsRadioMode: (isRadioMode) =>
+        set((state) => ({
+          isRadioMode,
+          playSource: isRadioMode
+            ? "guess"
+            : state.playSource === "guess"
+              ? "normal"
+              : state.playSource,
+        })),
+      setPlaySource: (playSource) =>
+        set({ playSource, isRadioMode: playSource === "guess" }),
 
       // 播放控制
-      play: (song) => {
-        const { playlist } = get();
+      play: (song, source) => {
+        const { playlist, playSource } = get();
         const existingIndex = playlist.findIndex((s) => s.mid === song.mid);
+        const nextPlaySource = source ?? playSource;
+        const nextRadioMode = nextPlaySource === "guess";
 
         if (existingIndex >= 0) {
           // 歌曲已在播放列表中
@@ -133,6 +146,8 @@ export const usePlayerStore = create<PlayerState>()(
             currentIndex: existingIndex,
             isPlaying: true,
             currentTime: 0,
+            playSource: nextPlaySource,
+            isRadioMode: nextRadioMode,
           });
         } else {
           // 添加新歌曲到播放列表
@@ -143,6 +158,8 @@ export const usePlayerStore = create<PlayerState>()(
             currentIndex: newPlaylist.length - 1,
             isPlaying: true,
             currentTime: 0,
+            playSource: nextPlaySource,
+            isRadioMode: nextRadioMode,
           });
         }
       },

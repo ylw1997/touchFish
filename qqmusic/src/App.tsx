@@ -38,7 +38,12 @@ import { useRequest } from "./hooks/useRequest";
 import { useFontSizeStore } from "./store/fontSize";
 import { usePlayerStore } from "./store/player";
 import { useUserStore } from "./store/user";
-import type { Playlist, RankList, Song } from "./types/qqmusic";
+import {
+  SongQuality,
+  type Playlist,
+  type RankList,
+  type Song,
+} from "./types/qqmusic";
 import "./style/index.less";
 
 function App() {
@@ -220,9 +225,8 @@ function App() {
             player.clearPlaylist();
             player.setPlaylist(songs);
             player.setCurrentIndex(0);
-            player.setIsRadioMode(false);
             player.setPlaySource("radar");
-            await playSong(songs[0]);
+            await playSong(songs[0], SongQuality.STANDARD, "radar");
             messageApi.success("专属雷达已开启");
           } else {
             messageApi.warning("暂无雷达推荐歌曲");
@@ -248,9 +252,8 @@ function App() {
             player.clearPlaylist();
             player.setPlaylist(songs);
             player.setCurrentIndex(0);
-            player.setIsRadioMode(true);
             player.setPlaySource("guess");
-            await playSong(songs[0]);
+            await playSong(songs[0], SongQuality.STANDARD, "guess");
             messageApi.success("猜你喜欢电台已开启");
           } else {
             messageApi.warning("暂无猜你喜欢推荐歌曲");
@@ -261,7 +264,6 @@ function App() {
         return;
       }
 
-      usePlayerStore.getState().setPlaySource("normal");
       setSelectedPlaylist(playlist);
       setPlaylistDrawerOpen(true);
     },
