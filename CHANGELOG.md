@@ -1,6 +1,24 @@
 # 更新历史 
 
 
+## [15.12.0](https://github.com/ylw1997/touchFish/compare/v15.11.0...v15.12.0) (2026-05-18)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([19149cd](https://github.com/ylw1997/touchFish/commit/19149cd0d1fc3c42f7549fc514ea2057d481cfdd))
+
+
+### ✨ Features | 新功能
+
+* nga增加点赞数量显示 ([a87a92d](https://github.com/ylw1997/touchFish/commit/a87a92d1f68aff176e06e0378f23c88cc88d371c))
+* 增加历史赞过 模块 ([b8230e5](https://github.com/ylw1997/touchFish/commit/b8230e547bba037884e61262d94ddd781b96648b))
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 删除上一个commit中xhs api 写错 provider 位置的问题 ([5fec6bb](https://github.com/ylw1997/touchFish/commit/5fec6bb1ba434b991052417410069327bc80d45a))
+
 ## [15.11.0](https://github.com/ylw1997/touchFish/compare/v15.10.0...v15.11.0) (2026-05-12)
 
 
