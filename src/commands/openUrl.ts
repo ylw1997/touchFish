@@ -252,27 +252,33 @@ const loadV2exPage = async () => {
 
   const res = await getV2exDetail(v2exState.url, v2exState.page);
 
-  // V2EX 每页100条回复，通过内容判断总页数（估算）
-  // 这里简化处理，假设最多10页，实际应该从页面解析
+  // V2EX 每页100条回复，通过内容判断总页数，也可直接匹配分页输入框的 max 属性
+  let maxPage = 1;
   const replyCountMatch = res?.match(/(\d+)\s*条回复/);
   if (replyCountMatch) {
     const replyCount = parseInt(replyCountMatch[1], 10);
-    v2exState.totalPages = Math.ceil(replyCount / 100) || 1;
-  } else {
-    // 如果没有回复数，检查是否有分页控件
-    v2exState.totalPages = 1;
+    maxPage = Math.ceil(replyCount / 100) || 1;
   }
+  // 备用：从页面原生分页组件里提取最大页码
+  const pageInputMatch = res?.match(/max="(\d+)"/);
+  if (pageInputMatch) {
+    const inputMax = parseInt(pageInputMatch[1], 10);
+    if (inputMax > maxPage) maxPage = inputMax;
+  }
+  v2exState.totalPages = maxPage;
 
   const extraCss = `
     .topic_content,.reply_content { font-size: 16px; }
     .cell { padding:10px 0; font-size:14px; line-height:150%; text-align:left; border-bottom:1px solid var(--vscode-textBlockQuote-border); }
-    .tag,.votes { display:none; }
+    .tag,.votes,.ps_container,.adsbygoogle { display:none !important; }
     .fr { float:right; text-align:right; }
     .pagination { position:fixed; bottom:15px; right:15px; display:flex; gap:6px; z-index:9999; background: var(--vscode-editor-background); padding: 5px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.3); }
     .page-btn { background-color: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border,transparent); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; }
     .page-btn:hover { background-color: var(--vscode-button-hoverBackground); }
     .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .page-info { color: var(--vscode-editor-foreground); padding: 4px 8px; font-size: 12px; display: flex; align-items: center; }
+    .page-input { width: 36px; margin: 0 4px; padding: 2px; text-align: center; border: 1px solid var(--vscode-input-border); background: var(--vscode-input-background); color: var(--vscode-input-foreground); border-radius: 2px; outline: none; }
+    .page-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   `;
   const content = res || "内容加载失败";
   const safe = sanitizeHtml(content)
@@ -302,7 +308,7 @@ const loadV2exPage = async () => {
         显示图片
       </label>
       <button class="toolbar-btn" id="prevBtn" ${v2exState.page <= 1 ? "disabled" : ""}>上一页</button>
-      <span class="page-info">第 ${v2exState.page}${v2exState.totalPages > 1 ? "/" + v2exState.totalPages : ""} 页</span>
+      <span class="page-info">第 <input type="number" id="pageJumpInput" class="page-input" value="${v2exState.page}" min="1" max="${v2exState.totalPages}" />${v2exState.totalPages > 1 ? "/" + v2exState.totalPages : ""} 页</span>
       <button class="toolbar-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
       <a class="toolbar-btn" href="${originalUrl}">打开原文章</a>
     </div>
@@ -314,6 +320,15 @@ const loadV2exPage = async () => {
       document.getElementById('nextBtn').addEventListener('click', () => {
         vscode.postMessage({ command: 'nextPage' });
       });
+      const pageInput = document.getElementById('pageJumpInput');
+      if (pageInput) {
+        pageInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const p = parseInt(e.target.value);
+            if (p && p > 0) vscode.postMessage({ command: 'gotoPage', value: p });
+          }
+        });
+      }
       const cb = document.getElementById('showImgCb');
       if (cb) {
         cb.addEventListener('change', (e) => {
@@ -385,6 +400,12 @@ export const openV2exUrl = vscode.commands.registerCommand(
         } else if (message.command === "prevPage" && v2exState.page > 1) {
           v2exState.page--;
           await loadV2exPage();
+        } else if (message.command === "gotoPage") {
+          const p = message.value;
+          if (p >= 1 && p <= v2exState.totalPages) {
+            v2exState.page = p;
+            await loadV2exPage();
+          }
         }
       });
     } else {
@@ -468,6 +489,8 @@ const loadHupuPage = async () => {
     .page-btn:hover { background-color: var(--vscode-button-hoverBackground); }
     .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .page-info { color: var(--vscode-editor-foreground); padding: 4px 8px; font-size: 12px; display: flex; align-items: center; }
+    .page-input { width: 36px; margin: 0 4px; padding: 2px; text-align: center; border: 1px solid var(--vscode-input-border); background: var(--vscode-input-background); color: var(--vscode-input-foreground); border-radius: 2px; outline: none; }
+    .page-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   `;
   const content = res || "内容加载失败";
   const safe = sanitizeHtml(content)
@@ -499,7 +522,7 @@ const loadHupuPage = async () => {
         显示图片
       </label>
       <button class="toolbar-btn" id="prevBtn" ${hupuState.page <= 1 ? "disabled" : ""}>上一页</button>
-      <span class="page-info">第 ${hupuState.page}${hupuState.totalPages > 1 ? "/" + hupuState.totalPages : ""} 页</span>
+      <span class="page-info">第 <input type="number" id="pageJumpInput" class="page-input" value="${hupuState.page}" min="1" max="${hupuState.totalPages}" />${hupuState.totalPages > 1 ? "/" + hupuState.totalPages : ""} 页</span>
       <button class="toolbar-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
       <a class="toolbar-btn" href="${originalUrl}">打开原文章</a>
     </div>
@@ -511,6 +534,15 @@ const loadHupuPage = async () => {
       document.getElementById('nextBtn').addEventListener('click', () => {
         vscode.postMessage({ command: 'nextPage' });
       });
+      const pageInput = document.getElementById('pageJumpInput');
+      if (pageInput) {
+        pageInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const p = parseInt(e.target.value);
+            if (p && p > 0) vscode.postMessage({ command: 'gotoPage', value: p });
+          }
+        });
+      }
       const cb = document.getElementById('showImgCb');
       if (cb) {
         cb.addEventListener('change', (e) => {
@@ -590,6 +622,12 @@ export const openHupuUrl = vscode.commands.registerCommand(
         } else if (message.command === "prevPage" && hupuState.page > 1) {
           hupuState.page--;
           await loadHupuPage();
+        } else if (message.command === "gotoPage") {
+          const p = message.value;
+          if (p >= 1 && p <= hupuState.totalPages) {
+            hupuState.page = p;
+            await loadHupuPage();
+          }
         }
       });
     } else {
@@ -667,6 +705,8 @@ const loadNgaPage = async () => {
     .page-btn:hover { background-color: var(--vscode-button-hoverBackground); }
     .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .page-info { color: var(--vscode-editor-foreground); padding: 4px 8px; font-size: 12px; display: flex; align-items: center; }
+    .page-input { width: 36px; margin: 0 4px; padding: 2px; text-align: center; border: 1px solid var(--vscode-input-border); background: var(--vscode-input-background); color: var(--vscode-input-foreground); border-radius: 2px; outline: none; }
+    .page-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   `;
   const content = html || "内容加载失败";
   const safe = sanitizeHtml(content)
@@ -703,7 +743,7 @@ const loadNgaPage = async () => {
       </label>
       <button class="toolbar-btn" id="${filterBtnId}">${filterBtnText}</button>
       <button class="toolbar-btn" id="prevBtn" ${ngaState.page <= 1 ? "disabled" : ""}>上一页</button>
-      <span class="page-info">第 ${ngaState.page}/${totalPages} 页</span>
+      <span class="page-info">第 <input type="number" id="pageJumpInput" class="page-input" value="${ngaState.page}" min="1" max="${totalPages}" />/${totalPages} 页</span>
       <button class="toolbar-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
       <a class="toolbar-btn" href="${originalUrl}">打开原文章</a>
     </div>
@@ -715,6 +755,15 @@ const loadNgaPage = async () => {
       document.getElementById('nextBtn').addEventListener('click', () => {
         vscode.postMessage({ command: 'nextPage' });
       });
+      const pageInput = document.getElementById('pageJumpInput');
+      if (pageInput) {
+        pageInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const p = parseInt(e.target.value);
+            if (p && p > 0) vscode.postMessage({ command: 'gotoPage', value: p });
+          }
+        });
+      }
       const filterBtn = document.getElementById('filterAuthorBtn');
       const clearBtn = document.getElementById('clearFilterBtn');
       if (filterBtn) {
@@ -806,6 +855,12 @@ export const openNgaUrl = vscode.commands.registerCommand(
         } else if (message.command === "prevPage" && ngaState.page > 1) {
           ngaState.page--;
           await loadNgaPage();
+        } else if (message.command === "gotoPage") {
+          const p = message.value;
+          if (p >= 1 && p <= ngaState.totalPages) {
+            ngaState.page = p;
+            await loadNgaPage();
+          }
         } else if (message.command === "filterAuthor") {
           if (ngaState.opAuthorId === 0) {
             vscode.window.showWarningMessage("无法获取楼主ID，请刷新页面重试");
