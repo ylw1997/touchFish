@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [15.15.0](https://github.com/ylw1997/touchFish/compare/v15.14.0...v15.15.0) (2026-05-20)
+
+
+### ✨ Features | 新功能
+
+* 修复微信读书注释样式错误问题 ([d52683f](https://github.com/ylw1997/touchFish/commit/d52683f2d06905f54ce1d8364698fa0db2f367d6))
+* 新闻支持跳转页码 ([9d37620](https://github.com/ylw1997/touchFish/commit/9d37620d400630b5c976b9f8a7288e65e19ad4c9))
+
 ## [15.14.0](https://github.com/ylw1997/touchFish/compare/v15.13.0...v15.14.0) (2026-05-18)
 
 
