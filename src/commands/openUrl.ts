@@ -667,6 +667,9 @@ const loadNgaPage = async () => {
     .page-btn:hover { background-color: var(--vscode-button-hoverBackground); }
     .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .page-info { color: var(--vscode-editor-foreground); padding: 4px 8px; font-size: 12px; display: flex; align-items: center; }
+    .page-jump { display: flex; align-items: center; gap: 4px; }
+    .page-jump-input { width: 42px; padding: 2px 4px; font-size: 12px; text-align: center; border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 3px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); outline: none; }
+    .page-jump-input:focus { border-color: var(--vscode-focusBorder); }
   `;
   const content = html || "内容加载失败";
   const safe = sanitizeHtml(content)
@@ -704,6 +707,10 @@ const loadNgaPage = async () => {
       <button class="toolbar-btn" id="${filterBtnId}">${filterBtnText}</button>
       <button class="toolbar-btn" id="prevBtn" ${ngaState.page <= 1 ? "disabled" : ""}>上一页</button>
       <span class="page-info">第 ${ngaState.page}/${totalPages} 页</span>
+      <div class="page-jump">
+        <input type="number" class="page-jump-input" id="jumpPageInput" min="1" max="${totalPages}" value="${ngaState.page}" />
+        <button class="toolbar-btn" id="jumpBtn">跳转</button>
+      </div>
       <button class="toolbar-btn" id="nextBtn" ${isLastPage ? "disabled" : ""}>下一页</button>
       <a class="toolbar-btn" href="${originalUrl}">打开原文章</a>
     </div>
@@ -714,6 +721,22 @@ const loadNgaPage = async () => {
       });
       document.getElementById('nextBtn').addEventListener('click', () => {
         vscode.postMessage({ command: 'nextPage' });
+      });
+      document.getElementById('jumpBtn').addEventListener('click', () => {
+        const input = document.getElementById('jumpPageInput');
+        const page = parseInt(input.value, 10);
+        if (!isNaN(page) && page >= 1) {
+          vscode.postMessage({ command: 'jumpToPage', page });
+        }
+      });
+      document.getElementById('jumpPageInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const input = document.getElementById('jumpPageInput');
+          const page = parseInt(input.value, 10);
+          if (!isNaN(page) && page >= 1) {
+            vscode.postMessage({ command: 'jumpToPage', page });
+          }
+        }
       });
       const filterBtn = document.getElementById('filterAuthorBtn');
       const clearBtn = document.getElementById('clearFilterBtn');
@@ -806,6 +829,14 @@ export const openNgaUrl = vscode.commands.registerCommand(
         } else if (message.command === "prevPage" && ngaState.page > 1) {
           ngaState.page--;
           await loadNgaPage();
+        } else if (message.command === "jumpToPage") {
+          const targetPage = message.page;
+          if (typeof targetPage === 'number' && targetPage >= 1 && targetPage <= ngaState.totalPages) {
+            ngaState.page = targetPage;
+            await loadNgaPage();
+          } else if (typeof targetPage === 'number' && targetPage > ngaState.totalPages) {
+            vscode.window.showWarningMessage(`页码超出范围，当前共 ${ngaState.totalPages} 页`);
+          }
         } else if (message.command === "filterAuthor") {
           if (ngaState.opAuthorId === 0) {
             vscode.window.showWarningMessage("无法获取楼主ID，请刷新页面重试");
