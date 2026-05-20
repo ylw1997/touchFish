@@ -81,6 +81,12 @@ const App: React.FC = () => {
     top: number;
     left: number;
   } | null>(null);
+  const [footnoteVisible, setFootnoteVisible] = useState(false);
+  const [footnoteText, setFootnoteText] = useState("");
+  const [footnotePos, setFootnotePos] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
   const { increase, decrease } = useFontSizeStore();
   const { fontSize } = useFontSizeStore();
 
@@ -299,6 +305,24 @@ const App: React.FC = () => {
 
   const handleContentClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
+    
+    // 优先：检查注释图标点击，防止被外层划线拦截
+    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    if (footnoteEl) {
+      const note = footnoteEl.getAttribute("data-note");
+      if (note) {
+        const rect = footnoteEl.getBoundingClientRect();
+        setFootnotePos({
+          top: rect.top + rect.height,
+          left: rect.left,
+        });
+        setFootnoteText(note);
+        setFootnoteVisible(true);
+      }
+      return;
+    }
+
+    // 其次：检查划线点击
     const underlineEl = target.closest(".hot-underline") as HTMLElement;
     if (underlineEl) {
       const rect = underlineEl.getBoundingClientRect();
@@ -320,6 +344,29 @@ const App: React.FC = () => {
             range,
           },
         });
+      }
+      return;
+    }
+  };
+
+  const handleContentMouseOver = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    if (footnoteEl) {
+      const parentUnderline = footnoteEl.closest(".hot-underline") as HTMLElement;
+      if (parentUnderline) {
+        parentUnderline.classList.add("weread-underline-active-footnote");
+      }
+    }
+  };
+
+  const handleContentMouseOut = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    if (footnoteEl) {
+      const parentUnderline = footnoteEl.closest(".hot-underline") as HTMLElement;
+      if (parentUnderline) {
+        parentUnderline.classList.remove("weread-underline-active-footnote");
       }
     }
   };
@@ -392,6 +439,27 @@ const App: React.FC = () => {
       .replace(/<body[^>]*>/gi, "")
       .replace(/<\/body>/gi, "");
 
+    // 用 DOMParser 统一解析，并将 img.qqreader-footnote 转换为行内小图标形式
+    try {
+      const doc = new DOMParser().parseFromString(injected, "text/html");
+      const imgFootnotes = doc.querySelectorAll("img.qqreader-footnote");
+      imgFootnotes.forEach((img) => {
+        const noteText = img.getAttribute("alt") || img.getAttribute("title") || "";
+        const span = doc.createElement("span");
+        span.className = "weread-footnote-wrapper";
+        span.setAttribute("data-note", noteText);
+        
+        const iconSpan = doc.createElement("span");
+        iconSpan.className = "weread-footnote-icon";
+        span.appendChild(iconSpan);
+        
+        img.parentNode?.replaceChild(span, img);
+      });
+      injected = doc.body.innerHTML;
+    } catch (e) {
+      console.error("[Weread] Failed to parse and replace footnotes:", e);
+    }
+
     return injected;
   }, [chapterContent, underlines]);
 
@@ -435,7 +503,12 @@ const App: React.FC = () => {
             <Button type="text" icon={<LeftOutlined />} onClick={backToShelf} />
             <span className="reader-title">{currentBook?.title}</span>
           </div>
-          <div className="reader-content" onClick={handleContentClick}>
+          <div
+            className="reader-content"
+            onClick={handleContentClick}
+            onMouseOver={handleContentMouseOver}
+            onMouseOut={handleContentMouseOut}
+          >
             {loading ? (
               <div className="loading-container">
                 <Spin />
@@ -593,6 +666,44 @@ const App: React.FC = () => {
             position: "fixed",
             top: popoverPos ? popoverPos.top : -999,
             left: popoverPos ? popoverPos.left : -999,
+            width: "1px",
+            height: "1px",
+            pointerEvents: "none",
+            zIndex: 9999,
+          }}
+        />
+      </Popover>
+
+      <Popover
+        open={footnoteVisible}
+        onOpenChange={(visible) => {
+          if (!visible) {
+            setFootnoteVisible(false);
+            setFootnotePos(null);
+          }
+        }}
+        trigger="click"
+        placement="bottomLeft"
+        content={
+          <div
+            style={{
+              maxWidth: "320px",
+              padding: "10px 14px",
+              fontSize: "calc(var(--app-font-size) - 1px)",
+              color: "var(--vscode-editor-foreground)",
+              lineHeight: "1.6",
+              borderRadius: "8px",
+            }}
+          >
+            {footnoteText}
+          </div>
+        }
+      >
+        <div
+          style={{
+            position: "fixed",
+            top: footnotePos ? footnotePos.top : -999,
+            left: footnotePos ? footnotePos.left : -999,
             width: "1px",
             height: "1px",
             pointerEvents: "none",
