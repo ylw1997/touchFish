@@ -192,6 +192,45 @@ body {
           background: var(--vscode-list-hoverBackground);
           padding: 10px;
           border-radius: 4px;
+          
+          // 兜底隐藏可能存在的原生加载失败图片小图标
+          display: inline-block;
+          overflow: hidden;
+          text-indent: 0;
+          
+          &::before {
+            content: attr(alt);
+            display: block;
+          }
+        }
+        
+        .weread-footnote-wrapper {
+          display: inline; // 恢复 inline-block 方便控制
+          vertical-align: middle; // 在一行显示，与文字居中对齐
+          cursor: pointer;
+          margin-left: 2px;
+          margin-right: 2px;
+          line-height: 1;
+          
+          border-bottom: none !important;
+          text-decoration: none !important;
+          padding: 0;
+
+          .weread-footnote-icon {
+            display: inline-block;
+            width: 17px; // 适合一行显示的尺寸
+            height: 17px;
+            background: url(https://cdn.weread.qq.com/web/wrwebnjlogic/image/zhu_black.4728ef05.png) no-repeat;
+            background-size: contain;
+            vertical-align: middle;
+            position: relative;
+            top: -2px; // 稍微向上偏移，与中文字符视觉中心平齐，避免靠下
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            &:hover {
+              transform: scale(1.15);
+            }
+          }
         }
 
         h1,
@@ -213,14 +252,19 @@ body {
         }
 
         .hot-underline {
-          border-bottom: 1px dashed var(--vscode-editor-foreground) !important;
+          border-bottom: 1px dashed color-mix(in srgb, var(--vscode-editor-foreground) 40%, transparent) !important;
           cursor: pointer !important;
-          transition: background-color 0.2s;
+          transition: border-color 0.2s, border-style 0.2s;
           display: inline !important;
           padding-bottom: 1px;
 
           &:hover {
-            background-color: rgba(255, 215, 0, 0.15) !important;
+            border-bottom: 1px solid var(--vscode-textLink-activeForeground, #1890ff) !important;
+          }
+
+          // 当鼠标悬浮在划线内的注释图标上时，强制压制下划线的高亮
+          &.weread-underline-active-footnote {
+            border-bottom: 1px dashed color-mix(in srgb, var(--vscode-editor-foreground) 40%, transparent) !important;
           }
         }
       }
