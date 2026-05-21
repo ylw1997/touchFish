@@ -40,6 +40,7 @@ dayjs.locale("zh-cn");
 import PlayBar from "./components/PlayBar";
 import PlaylistCard from "./components/PlaylistCard";
 import SongCard from "./components/SongCard";
+import { XiaoyuzhouLogo } from "./components/XiaoyuzhouLogo";
 import { ShownotesDrawer } from "./components/playbar/ShownotesDrawer";
 import { useXiaoyuzhou } from "./hooks/useXiaoyuzhou";
 import { useRequest } from "./hooks/useRequest";
@@ -345,7 +346,9 @@ function App() {
   return (
     <div className="qqmusic-app" style={{ fontSize: `${fontSize}px` }}>
       <div className="qqmusic-header">
-        <h1 className="qqmusic-title">小宇宙</h1>
+        <div className="qqmusic-header-left">
+          <XiaoyuzhouLogo className="xiaoyuzhou-logo" />
+        </div>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
             <Dropdown

@@ -33,6 +33,7 @@ import PlaylistDrawer from "./components/PlaylistDrawer";
 import SearchDrawer from "./components/SearchDrawer";
 import { SingerDrawer } from "./components/SingerDrawer";
 import SongCard from "./components/SongCard";
+import { NeteaseLogo } from "./components/NeteaseLogo";
 import { useQQMusic } from "./hooks/useQQMusic";
 import { useRequest } from "./hooks/useRequest";
 import { useFontSizeStore } from "./store/fontSize";
@@ -565,7 +566,9 @@ function App() {
   return (
     <div className="qqmusic-app" style={{ fontSize: `${fontSize}px` }}>
       <div className="qqmusic-header">
-        <h1 className="qqmusic-title">网易云音乐</h1>
+        <div className="qqmusic-header-left">
+          <NeteaseLogo className="netease-logo" />
+        </div>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
             <Popconfirm
