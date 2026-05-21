@@ -21,6 +21,8 @@ import {
   CompressOutlined,
   PlusOutlined,
   MinusOutlined,
+  CloseOutlined,
+  EllipsisOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -74,6 +76,7 @@ function App() {
   } = useZhihuAction();
   const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
+  const [floatButtonsVisible, setFloatButtonsVisible] = useState(true);
   const [showImg, setShowImg] = useState(
     window.showImg != undefined ? window.showImg : true,
   );
@@ -180,66 +183,80 @@ function App() {
           </InfiniteScroll>
         )}
       </div>
-      <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
-        <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
-          icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
-          tooltip={{ title: "回到顶部", placement: "left" }}
-          target={() => scrollableNodeRef.current || window}
-        />
-        <FloatButton
-          icon={<SearchOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "搜索", placement: "left" }}
-          onClick={() => setSearchDrawerOpen(true)}
-        />
-        <FloatButton
-          onClick={() => {
-            clearList();
-            getListData(activeKey, true);
-          }}
-          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-          tooltip={{ title: "刷新", placement: "left" }}
-        />
-        {hasExpanded && (
-          <FloatButton
-            onClick={() => collapseAll()}
-            icon={<CompressOutlined style={{ color: "#a0d911" }} />}
-            tooltip={{ title: "折叠已展开", placement: "left" }}
+      {floatButtonsVisible ? (
+        <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
+          <FloatButton.BackTop
+            visibilityHeight={500}
+            duration={1000}
+            icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
+            tooltip={{ title: "回到顶部", placement: "left" }}
+            target={() => scrollableNodeRef.current || window}
           />
-        )}
+          <FloatButton
+            icon={<SearchOutlined style={{ color: "#faad14" }} />}
+            tooltip={{ title: "搜索", placement: "left" }}
+            onClick={() => setSearchDrawerOpen(true)}
+          />
+          <FloatButton
+            onClick={() => {
+              clearList();
+              getListData(activeKey, true);
+            }}
+            icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+            tooltip={{ title: "刷新", placement: "left" }}
+          />
+          {hasExpanded && (
+            <FloatButton
+              onClick={() => collapseAll()}
+              icon={<CompressOutlined style={{ color: "#a0d911" }} />}
+              tooltip={{ title: "折叠已展开", placement: "left" }}
+            />
+          )}
+          <FloatButton
+            onClick={() => {
+              const newState = !showImg;
+              setShowImg(newState);
+              vscode.postMessage({
+                command: "TOGGLE_SHOW_IMG",
+                payload: newState,
+              });
+            }}
+            icon={
+              showImg ? (
+                <EyeOutlined style={{ color: "#13c2c2" }} />
+              ) : (
+                <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+              )
+            }
+            tooltip={{
+              title: `${showImg ? "隐藏" : "显示"}图片`,
+              placement: "left",
+            }}
+          />
+          <FloatButton
+            onClick={increase}
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={{ title: "加大字体", placement: "left" }}
+          />
+          <FloatButton
+            onClick={decrease}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={{ title: "减小字体", placement: "left" }}
+          />
+          <FloatButton
+            onClick={() => setFloatButtonsVisible(false)}
+            icon={<CloseOutlined />}
+            tooltip={{ title: "隐藏按钮", placement: "left" }}
+          />
+        </FloatButton.Group>
+      ) : (
         <FloatButton
-          onClick={() => {
-            const newState = !showImg;
-            setShowImg(newState);
-            vscode.postMessage({
-              command: "TOGGLE_SHOW_IMG",
-              payload: newState,
-            });
-          }}
-          icon={
-            showImg ? (
-              <EyeOutlined style={{ color: "#13c2c2" }} />
-            ) : (
-              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
-            )
-          }
-          tooltip={{
-            title: `${showImg ? "隐藏" : "显示"}图片`,
-            placement: "left",
-          }}
+          style={{ insetInlineEnd: 24, bottom: 24, opacity: 0.4 }}
+          onClick={() => setFloatButtonsVisible(true)}
+          icon={<EllipsisOutlined />}
+          tooltip={{ title: "显示按钮", placement: "left" }}
         />
-        <FloatButton
-          onClick={increase}
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={{ title: "加大字体", placement: "left" }}
-        />
-        <FloatButton
-          onClick={decrease}
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={{ title: "减小字体", placement: "left" }}
-        />
-      </FloatButton.Group>
+      )}
       <Suspense fallback={<div>Loading...</div>}>
         <QuestionDetailDrawer
           open={questionDetailDrawerOpen}
