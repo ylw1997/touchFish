@@ -51,6 +51,7 @@ import { XhsWebProvider } from "./Providers/xhsWebProvider";
 import { WeiboProvider } from "./Providers/weiboProvider";
 import { BilibiliProvider } from "./Providers/bilibiliProvider";
 import { QQMusicProvider } from "./Providers/qqmusicProvider";
+import { NeteaseProvider } from "./Providers/neteaseProvider";
 import { XiaoyuzhouProvider } from "./Providers/xiaoyuzhouProvider";
 import { XProvider } from "./Providers/xProvider";
 import { WereadProvider } from "./Providers/wereadProvider";
@@ -189,6 +190,9 @@ export function activate(context: vscode.ExtensionContext) {
   const qqmusicProvider = createLazyWebviewProvider(
     () => new QQMusicProvider(context),
   );
+  const neteaseProvider = createLazyWebviewProvider(
+    () => new NeteaseProvider(context),
+  );
   const xiaoyuzhouProvider = createLazyWebviewProvider(
     () => new XiaoyuzhouProvider(context),
   );
@@ -274,6 +278,15 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
   vscode.window.registerWebviewViewProvider(
+    "netease",
+    neteaseProvider.provider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    },
+  );
+  vscode.window.registerWebviewViewProvider(
     "xiaoyuzhou",
     xiaoyuzhouProvider.provider,
     {
@@ -349,13 +362,30 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
   );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.setNeteaseCookie", async () => {
+      const cookie = await vscode.window.showInputBox({
+        prompt: "请输入网易云音乐 Cookie (MUSIC_U 等)",
+        placeHolder: "MUSIC_U=...; NeteaseMusic...;",
+      });
+      if (cookie !== undefined) {
+        await setConfigByKey("neteaseCredential", cookie);
+        vscode.window.showInformationMessage("网易云音乐 Cookie 设置成功");
+      }
+    }),
+  );
 
   context.subscriptions.push(
     MusicStatusBar.getInstance().onPlaybackInterrupt((newModule) => {
       if (newModule === "qqmusic") {
         xiaoyuzhouProvider.getInstance()["pause"]?.();
+        neteaseProvider.getInstance()["pause"]?.();
       } else if (newModule === "xiaoyuzhou") {
         qqmusicProvider.getInstance()["pause"]?.();
+        neteaseProvider.getInstance()["pause"]?.();
+      } else if (newModule === "netease") {
+        qqmusicProvider.getInstance()["pause"]?.();
+        xiaoyuzhouProvider.getInstance()["pause"]?.();
       }
     }),
   );
@@ -363,6 +393,11 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.openQQMusic", async () => {
       await vscode.commands.executeCommand("qqmusic.focus");
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.openNetease", async () => {
+      await vscode.commands.executeCommand("netease.focus");
     }),
   );
   context.subscriptions.push(
@@ -378,6 +413,8 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.commands.executeCommand("qqmusic.focus");
       } else if (activeModule === "xiaoyuzhou") {
         await vscode.commands.executeCommand("xiaoyuzhou.focus");
+      } else if (activeModule === "netease") {
+        await vscode.commands.executeCommand("netease.focus");
       }
     }),
   );
@@ -389,6 +426,8 @@ export function activate(context: vscode.ExtensionContext) {
         qqmusicProvider.getInstance()["sendPlayPauseCommand"]?.();
       } else if (activeModule === "xiaoyuzhou") {
         xiaoyuzhouProvider.getInstance()["sendPlayPauseCommand"]?.();
+      } else if (activeModule === "netease") {
+        neteaseProvider.getInstance()["sendPlayPauseCommand"]?.();
       }
     }),
   );
@@ -400,6 +439,8 @@ export function activate(context: vscode.ExtensionContext) {
         qqmusicProvider.getInstance()["sendNextSongCommand"]?.();
       } else if (activeModule === "xiaoyuzhou") {
         xiaoyuzhouProvider.getInstance()["sendNextEpisodeCommand"]?.();
+      } else if (activeModule === "netease") {
+        neteaseProvider.getInstance()["sendNextSongCommand"]?.();
       }
     }),
   );
@@ -413,6 +454,18 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.qqmusic.nextSong", async () => {
       qqmusicProvider.getInstance()["sendNextSongCommand"]?.();
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.netease.playPause", async () => {
+      neteaseProvider.getInstance()["sendPlayPauseCommand"]?.();
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.netease.nextSong", async () => {
+      neteaseProvider.getInstance()["sendNextSongCommand"]?.();
     }),
   );
 

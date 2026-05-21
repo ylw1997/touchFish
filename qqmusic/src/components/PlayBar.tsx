@@ -152,7 +152,11 @@ const PlayBar: React.FC = () => {
     if (!audio || !currentSongUrl) return;
 
     if (isPlaying) {
-      audio.play().catch((err) => console.error("播放失败:", err));
+      audio.play().catch((err) => {
+        if (err && err.name !== "AbortError") {
+          console.error("播放失败:", err);
+        }
+      });
     } else {
       audio.pause();
     }

@@ -150,21 +150,7 @@ function App() {
 
   return (
     <>
-      <Suspense fallback={null}>
-        <UserDetailDrawer
-          visible={userDetailVisible}
-          userDetail={userDetail}
-          onClose={() => {
-            setUserDetailVisible(false);
-            setUserDetail(undefined);
-          }}
-          setUserDetail={setUserDetail}
-          showImg={showImg}
-          onTopicClick={handleTopicClick}
-          onTranslate={handleTranslate}
-          onClearTranslation={handleClearTranslation}
-        />
-      </Suspense>
+      
       <Tabs
         className="tabs"
         items={tabs as TabsProps["items"]}
@@ -326,6 +312,21 @@ function App() {
             setSendLoading(false);
           }}
           onSend={handleSendX}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <UserDetailDrawer
+          visible={userDetailVisible}
+          userDetail={userDetail}
+          onClose={() => {
+            setUserDetailVisible(false);
+            setUserDetail(undefined);
+          }}
+          setUserDetail={setUserDetail}
+          showImg={showImg}
+          onTopicClick={handleTopicClick}
+          onTranslate={handleTranslate}
+          onClearTranslation={handleClearTranslation}
         />
       </Suspense>
     </>

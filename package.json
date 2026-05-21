@@ -2,8 +2,8 @@
 	"publisher": "ylw",
 	"name": "touchfish",
 	"displayName": "TouchFish",
-	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do,X,Twitter,微信读书,weread,摸鱼聚合插件,沉浸式主题,qq音乐,qqmusic,播客,xiaoyuzhou,小宇宙",
-	"version": "15.15.0",
+	"description": "b站,bilibili,it之家,小红书,chiphell,v2ex,虎扑步行街,nga,知乎,微博,Linux.do,X,Twitter,微信读书,weread,摸鱼聚合插件,沉浸式主题,qq音乐,qqmusic,网易云音乐,网易云,netease,播客,xiaoyuzhou,小宇宙",
+	"version": "16.0.0",
 	"icon": "logo.png",
 	"engines": {
 		"vscode": "^1.80.0"
@@ -42,7 +42,10 @@
 		"x",
 		"twitter",
 		"weread",
-		"微信读书"
+		"微信读书",
+		"netease",
+		"网易云",
+		"网易云音乐"
 	],
 	"categories": [
 		"Other"
@@ -328,6 +331,25 @@
 				"touchfish.wereadCookie": {
 					"type": "string",
 					"description": "微信读书 Cookie"
+				},
+				"touchfish.neteaseCredential": {
+					"type": "string",
+					"description": "网易云音乐登录 Cookie 凭据 (直接连接官方 API，可在侧边栏点击齿轮直接设置)"
+				},
+				"touchfish.neteaseShowStatusBar": {
+					"type": "boolean",
+					"default": true,
+					"description": "是否在状态栏显示网易云音乐播放信息"
+				},
+				"touchfish.neteaseStatusBarShowLyric": {
+					"type": "boolean",
+					"default": true,
+					"description": "网易云音乐状态栏显示歌词（关闭则显示歌名）"
+				},
+				"touchfish.enableNetease": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用网易云音乐模块"
 				}
 			}
 		},
@@ -385,6 +407,12 @@
 					"title": "TouchFish-Weread",
 					"icon": "assets/weread.svg",
 					"when": "config.touchfish.enableWeread"
+				},
+				{
+					"id": "netease",
+					"title": "TouchFish-Netease",
+					"icon": "assets/netease.svg",
+					"when": "config.touchfish.enableNetease"
 				}
 			]
 		},
@@ -503,6 +531,15 @@
 					"name": "微信读书",
 					"id": "weread",
 					"when": "config.touchfish.enableWeread"
+				}
+			],
+			"netease": [
+				{
+					"icon": "assets/netease.svg",
+					"type": "webview",
+					"name": "网易云音乐",
+					"id": "netease",
+					"when": "config.touchfish.enableNetease"
 				}
 			]
 		},
@@ -662,6 +699,26 @@
 				"command": "touchfish.setWereadCookie",
 				"title": "设置微信读书Cookie",
 				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "touchfish.openNetease",
+				"title": "打开 网易云音乐",
+				"icon": "$(play-circle)"
+			},
+			{
+				"command": "touchfish.netease.playPause",
+				"title": "播放/暂停",
+				"icon": "$(play)"
+			},
+			{
+				"command": "touchfish.netease.nextSong",
+				"title": "下一首",
+				"icon": "$(chevron-right)"
+			},
+			{
+				"command": "touchfish.setNeteaseCookie",
+				"title": "设置网易云 Cookie",
+				"icon": "$(settings-gear)"
 			}
 		],
 		"keybindings": [
@@ -674,6 +731,16 @@
 				"command": "touchfish.qqmusic.nextSong",
 				"key": "alt+n",
 				"mac": "alt+n"
+			},
+			{
+				"command": "touchfish.netease.playPause",
+				"key": "alt+shift+p",
+				"mac": "alt+shift+p"
+			},
+			{
+				"command": "touchfish.netease.nextSong",
+				"key": "alt+shift+n",
+				"mac": "alt+shift+n"
 			}
 		],
 		"menus": {
@@ -782,6 +849,11 @@
 					"command": "touchfish.setWereadCookie",
 					"when": "view == weread",
 					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setNeteaseCookie",
+					"when": "view == netease",
+					"group": "navigation"
 				}
 			]
 		}
@@ -800,11 +872,11 @@
 		"changelog": "standard-version",
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter xiaoyuzhou build && pnpm --filter x build && pnpm --filter weread build",
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter netease build && pnpm --filter xiaoyuzhou build && pnpm --filter x build && pnpm --filter weread build",
 		"xhs:test": "node ./tools/xhs/test-xhs.js",
 		"xhs:test:live": "node ./tools/xhs/test-xhs.js",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
-		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,XIAOYUZHOU,WEREAD -c magenta,cyan,yellow,blue,green,red,white,blue \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\" \"pnpm --filter weread dev\"",
+		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,NETEASE,XIAOYUZHOU,WEREAD -c magenta,cyan,yellow,blue,green,red,red,white,blue \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter netease dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\" \"pnpm --filter weread dev\"",
 		"build-xhs": "pnpm --filter xhs build",
 		"update-x-ids": "node tools/update_x_ids.js"
 	},

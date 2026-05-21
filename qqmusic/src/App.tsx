@@ -195,17 +195,14 @@ function App() {
   useEffect(() => {
     void loadRecommendData();
     void loadRankData();
-  }, [loadRankData, loadRecommendData]);
 
-  useEffect(() => {
     if (isLoggedIn) {
-      void loadRecommendData();
-      void loadRankData();
       void loadMyData();
     } else {
       setMyPlaylists([]);
     }
-  }, [isLoggedIn, loadMyData, loadRankData, loadRecommendData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn]);
 
   const handlePlaylistClick = useCallback(
     async (playlist: Playlist) => {
@@ -279,7 +276,7 @@ function App() {
         messageApi.error(error.message || "无法播放歌曲");
       }
     },
-    [playSong],
+    [playSong, messageApi],
   );
 
   const handleRefresh = useCallback(async () => {

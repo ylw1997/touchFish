@@ -141,6 +141,23 @@ weread/vite.config.ts
 weread/pnpm-lock.yaml
 weread/temp/**
 
+# netease webview (exclude source & deps; only dist assets should be packed if needed)
+netease/src/**
+netease/node_modules/**
+netease/public/**
+netease/.gitignore
+netease/eslint.config.js
+netease/index.html
+netease/package.json
+netease/README.md
+netease/tsconfig.json
+netease/tsconfig.app.json
+netease/tsconfig.node.json
+netease/vite.config.ts
+netease/pnpm-lock.yaml
+netease/temp/**
+netease/package-lock.json
+
 qqmusic-api-test/**
 .github/**
 .ruff_cache/**

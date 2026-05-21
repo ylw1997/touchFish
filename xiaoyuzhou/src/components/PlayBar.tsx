@@ -101,7 +101,11 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
     if (!audio || !currentEpisode) return;
 
     if (isPlaying) {
-      audio.play().catch(() => {});
+      audio.play().catch((err) => {
+        if (err && err.name !== "AbortError") {
+          console.error("播放失败:", err);
+        }
+      });
     } else {
       audio.pause();
     }
