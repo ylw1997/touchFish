@@ -30,6 +30,7 @@ import {
   PlusOutlined,
   MinusOutlined,
   UserOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -299,93 +300,94 @@ function App() {
       </div>
       {/* 回到顶部按钮 */}
       <FloatButton.BackTop
+        className="touchfish-float-backtop"
         shape="circle"
         style={{ insetInlineEnd: 24, bottom: 24 }}
         visibilityHeight={500}
         duration={1000}
-        icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
+        icon={<VerticalAlignTopOutlined />}
         tooltip={{ title: "回到顶部", placement: "left" }}
         target={() => scrollableNodeRef.current || window}
       />
-      {/* 刷新按钮 */}
-      <FloatButton
+      <FloatButton.Group
+        trigger="hover"
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 84 }}
-        onClick={() => {
-          const key = subAcitiveKey || activeKey;
-          clearList();
-          getListData(key, true);
-        }}
-        icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-        tooltip={{ title: "刷新", placement: "left" }}
-      />
-      {/* 用户按钮 */}
-      <FloatButton
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 144 }}
-        onClick={() => {
-          if (myWeiboUid) getUserByName(myWeiboUid);
-        }}
-        icon={<UserOutlined style={{ color: "#faad14" }} />}
-        tooltip={{ title: "用户", placement: "left" }}
-      />
-      {/* 搜索按钮 */}
-      <FloatButton
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 204 }}
-        onClick={() => setSearchDrawerOpen(true)}
-        icon={<SearchOutlined style={{ color: "#faad14" }} />}
-        tooltip={{ title: "搜索", placement: "left" }}
-      />
-      {/* 发布微博按钮 */}
-      <FloatButton
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 264 }}
-        type="primary"
-        icon={<EditOutlined style={{ color: "#69b1ff" }} />}
-        onClick={() => setSendDrawerOpen((open) => !open)}
-        tooltip={{ title: "发布微博", placement: "left" }}
-      />
-      {/* 显示图片按钮 */}
-      <FloatButton
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 324 }}
-        onClick={() => {
-          const newState = !showImg;
-          setShowImg(newState);
-          vscode.postMessage({
-            command: "TOGGLE_SHOW_IMG",
-            payload: newState,
-          });
-        }}
-        icon={
-          showImg ? (
-            <EyeOutlined style={{ color: "#13c2c2" }} />
-          ) : (
-            <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
-          )
-        }
-        tooltip={{
-          title: `${showImg ? "隐藏" : "显示"}图片`,
-          placement: "left",
-        }}
-      />
-      {/* 加大字体按钮 */}
-      <FloatButton
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 384 }}
-        onClick={increase}
-        icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-        tooltip={{ title: "加大字体", placement: "left" }}
-      />
-      {/* 减小字体按钮 */}
-      <FloatButton
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 444 }}
-        onClick={decrease}
-        icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-        tooltip={{ title: "减小字体", placement: "left" }}
-      />
+        style={{ insetInlineEnd: 24, bottom: 88 }}
+        icon={<AppstoreOutlined />}
+      >
+        {/* 刷新按钮 */}
+        <FloatButton
+          shape="circle"
+          onClick={() => {
+            const key = subAcitiveKey || activeKey;
+            clearList();
+            getListData(key, true);
+          }}
+          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+          tooltip={{ title: "刷新", placement: "left" }}
+        />
+        {/* 用户按钮 */}
+        <FloatButton
+          shape="circle"
+          onClick={() => {
+            if (myWeiboUid) getUserByName(myWeiboUid);
+          }}
+          icon={<UserOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "用户", placement: "left" }}
+        />
+        {/* 搜索按钮 */}
+        <FloatButton
+          shape="circle"
+          onClick={() => setSearchDrawerOpen(true)}
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
+        />
+        {/* 发布微博按钮 */}
+        <FloatButton
+          shape="circle"
+          type="primary"
+          icon={<EditOutlined style={{ color: "#69b1ff" }} />}
+          onClick={() => setSendDrawerOpen((open) => !open)}
+          tooltip={{ title: "发布微博", placement: "left" }}
+        />
+        {/* 显示图片按钮 */}
+        <FloatButton
+          shape="circle"
+          onClick={() => {
+            const newState = !showImg;
+            setShowImg(newState);
+            vscode.postMessage({
+              command: "TOGGLE_SHOW_IMG",
+              payload: newState,
+            });
+          }}
+          icon={
+            showImg ? (
+              <EyeOutlined style={{ color: "#13c2c2" }} />
+            ) : (
+              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+            )
+          }
+          tooltip={{
+            title: `${showImg ? "隐藏" : "显示"}图片`,
+            placement: "left",
+          }}
+        />
+        {/* 加大字体按钮 */}
+        <FloatButton
+          shape="circle"
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        {/* 减小字体按钮 */}
+        <FloatButton
+          shape="circle"
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
+        />
+      </FloatButton.Group>
       <Suspense fallback={null}>
         <SearchDrawer
           open={searchDrawerOpen}

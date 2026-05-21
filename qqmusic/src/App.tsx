@@ -24,6 +24,7 @@ import {
   TrophyOutlined,
   UserOutlined,
   VerticalAlignTopOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import { AnimatePresence, motion } from "framer-motion";
 import LoginModal from "./components/LoginModal";
@@ -33,6 +34,7 @@ import PlaylistDrawer from "./components/PlaylistDrawer";
 import SearchDrawer from "./components/SearchDrawer";
 import { SingerDrawer } from "./components/SingerDrawer";
 import SongCard from "./components/SongCard";
+import { QQMusicLogo } from "./components/QQMusicLogo";
 import { useQQMusic } from "./hooks/useQQMusic";
 import { useRequest } from "./hooks/useRequest";
 import { useFontSizeStore } from "./store/fontSize";
@@ -564,7 +566,9 @@ function App() {
   return (
     <div className="qqmusic-app" style={{ fontSize: `${fontSize}px` }}>
       <div className="qqmusic-header">
-        <h1 className="qqmusic-title">QQ音乐</h1>
+        <div className="qqmusic-header-left">
+          <QQMusicLogo className="qqmusic-logo-img" />
+        </div>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
             <Popconfirm
@@ -624,9 +628,19 @@ function App() {
 
       <SingerDrawer />
 
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: currentSong ? 32 : 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+      />
       <FloatButton.Group
+        trigger="hover"
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: currentSong ? 140 : 88 }}
+        style={{ insetInlineEnd: 24, bottom: currentSong ? 96 : 88 }}
+        icon={<AppstoreOutlined />}
       >
         <FloatButton
           icon={<SearchOutlined style={{ color: "#faad14" }} />}
@@ -642,12 +656,6 @@ function App() {
           onClick={increase}
           icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
           tooltip={{ title: "增大字体", placement: "left" }}
-        />
-        <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
-          icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
-          tooltip={{ title: "回到顶部", placement: "left" }}
         />
         <FloatButton
           icon={<ReloadOutlined style={{ color: "#1890ff" }} />}

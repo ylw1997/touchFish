@@ -63,7 +63,7 @@ a {
     background: var(--vscode-button-border);
   }
   .ant-float-btn-body {
-    background: none;
+    background: none !important;
   }
 }
 
@@ -495,11 +495,21 @@ a {
   .backdrop-style(); // 毛玻璃
 }
 
-.qqmusic-title {
-  margin: 0;
-  font-size: calc(var(--app-font-size) + 4px);
-  font-weight: 600;
-  color: var(--vscode-foreground);
+.qqmusic-header-left {
+  display: flex;
+  align-items: center;
+
+  .qqmusic-logo-img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 2px rgba(2, 176, 83, 0.3));
+    transition: all 0.2s ease;
+
+    &:hover {
+      filter: drop-shadow(0 0 6px rgba(2, 176, 83, 0.6)) scale(1.05);
+    }
+  }
 }
 
 .qqmusic-header-actions {

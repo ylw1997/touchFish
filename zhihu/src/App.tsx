@@ -21,6 +21,7 @@ import {
   CompressOutlined,
   PlusOutlined,
   MinusOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -180,14 +181,21 @@ function App() {
           </InfiniteScroll>
         )}
       </div>
-      <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
-        <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
-          icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
-          tooltip={{ title: "回到顶部", placement: "left" }}
-          target={() => scrollableNodeRef.current || window}
-        />
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+        target={() => scrollableNodeRef.current || window}
+      />
+      <FloatButton.Group
+        trigger="hover"
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: 88 }}
+        icon={<AppstoreOutlined />}
+      >
         <FloatButton
           icon={<SearchOutlined style={{ color: "#faad14" }} />}
           tooltip={{ title: "搜索", placement: "left" }}

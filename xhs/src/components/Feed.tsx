@@ -22,6 +22,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
   HeartOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
@@ -262,14 +263,21 @@ export default function Feed() {
       />
       <XhsSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
       {/* 使用 Antd 浮动按钮组（参考 weibo） */}
-      <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
-        <FloatButton.BackTop
-          visibilityHeight={INFINITE_SCROLL_CONFIG.BACK_TOP_VISIBILITY_HEIGHT}
-          duration={INFINITE_SCROLL_CONFIG.BACK_TOP_DURATION}
-          icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
-          tooltip={{ title: "回到顶部", placement: "left" }}
-          target={() => scrollRef.current || window}
-        />
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: 24 }}
+        visibilityHeight={INFINITE_SCROLL_CONFIG.BACK_TOP_VISIBILITY_HEIGHT}
+        duration={INFINITE_SCROLL_CONFIG.BACK_TOP_DURATION}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+        target={() => scrollRef.current || window}
+      />
+      <FloatButton.Group
+        trigger="hover"
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: 88 }}
+        icon={<AppstoreOutlined />}
+      >
         <FloatButton
           onClick={refresh}
           icon={<RedoOutlined style={{ color: "#b37feb" }} />}

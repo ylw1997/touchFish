@@ -27,6 +27,7 @@ import {
   LoginOutlined,
   LogoutOutlined,
   UserOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -299,9 +300,21 @@ function App() {
       </div>
 
       {/* 浮动按钮组 */}
+      {/* 回到顶部 */}
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+        target={() => scrollableNodeRef.current || window}
+      />
       <FloatButton.Group
+        trigger="hover"
         shape="circle"
         style={{ insetInlineEnd: 24, bottom: 88 }}
+        icon={<AppstoreOutlined />}
       >
         {/* 搜索按钮 */}
         <FloatButton
@@ -338,14 +351,6 @@ function App() {
           onClick={refreshData}
           icon={<RedoOutlined style={{ color: "#fb7299" }} />}
           tooltip={{ title: "刷新", placement: "left" }}
-        />
-        {/* 回到顶部 */}
-        <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
-          icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
-          tooltip={{ title: "回到顶部", placement: "left" }}
-          target={() => scrollableNodeRef.current || window}
         />
       </FloatButton.Group>
 

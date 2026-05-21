@@ -27,6 +27,7 @@ import {
   VerticalAlignTopOutlined,
   HomeOutlined,
   LoginOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import { AnimatePresence, motion } from "framer-motion";
 import dayjs from "dayjs";
@@ -40,6 +41,7 @@ dayjs.locale("zh-cn");
 import PlayBar from "./components/PlayBar";
 import PlaylistCard from "./components/PlaylistCard";
 import SongCard from "./components/SongCard";
+import { XiaoyuzhouLogo } from "./components/XiaoyuzhouLogo";
 import { ShownotesDrawer } from "./components/playbar/ShownotesDrawer";
 import { useXiaoyuzhou } from "./hooks/useXiaoyuzhou";
 import { useRequest } from "./hooks/useRequest";
@@ -345,7 +347,9 @@ function App() {
   return (
     <div className="qqmusic-app" style={{ fontSize: `${fontSize}px` }}>
       <div className="qqmusic-header">
-        <h1 className="qqmusic-title">小宇宙</h1>
+        <div className="qqmusic-header-left">
+          <XiaoyuzhouLogo className="xiaoyuzhou-logo" />
+        </div>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
             <Dropdown
@@ -954,9 +958,18 @@ function App() {
         </div>
       </Drawer>
 
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: currentEpisode ? 32 : 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined />}
+      />
       <FloatButton.Group
+        trigger="hover"
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: currentEpisode ? 140 : 88 }}
+        style={{ insetInlineEnd: 24, bottom: currentEpisode ? 96 : 88 }}
+        icon={<AppstoreOutlined />}
       >
         <FloatButton
           icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
@@ -977,11 +990,6 @@ function App() {
           onClick={increase}
           icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
           tooltip={{ title: "增大字体" }}
-        />
-        <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
-          icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
         />
       </FloatButton.Group>
     </div>
