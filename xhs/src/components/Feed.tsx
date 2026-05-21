@@ -22,8 +22,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
   HeartOutlined,
-  CloseOutlined,
-  EllipsisOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import useXhsFeed from "../hooks/useXhsFeed";
 import { loaderFunc } from "../utils/loader";
@@ -57,7 +56,6 @@ export default function Feed() {
   const [userOpen, setUserOpen] = useState(false);
   // 发布抽屉状态
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
-  const [floatButtonsVisible, setFloatButtonsVisible] = useState(true);
   // 点赞抽屉状态
   const [likedDrawerOpen, setLikedDrawerOpen] = useState(false);
   const [likedUserId, setLikedUserId] = useState<string>("");
@@ -265,78 +263,71 @@ export default function Feed() {
       />
       <XhsSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
       {/* 使用 Antd 浮动按钮组（参考 weibo） */}
-      {floatButtonsVisible ? (
-        <FloatButton.Group shape="circle" style={{ insetInlineEnd: 24 }}>
-          <FloatButton.BackTop
-            visibilityHeight={INFINITE_SCROLL_CONFIG.BACK_TOP_VISIBILITY_HEIGHT}
-            duration={INFINITE_SCROLL_CONFIG.BACK_TOP_DURATION}
-            icon={<VerticalAlignTopOutlined style={{ color: "#f37fb7" }} />}
-            tooltip={{ title: "回到顶部", placement: "left" }}
-            target={() => scrollRef.current || window}
-          />
-          <FloatButton
-            onClick={refresh}
-            icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-            tooltip={{ title: "刷新", placement: "left" }}
-          />
-          <FloatButton
-            onClick={() => setSearchOpen(true)}
-            icon={<SearchOutlined style={{ color: "#faad14" }} />}
-            tooltip={{ title: "搜索", placement: "left" }}
-          />
-          <FloatButton
-            onClick={handleMyInfo}
-            icon={<UserOutlined style={{ color: "#faad14" }} />}
-            tooltip={{ title: "我的", placement: "left" }}
-          />
-          <FloatButton
-            onClick={handleOpenLiked}
-            icon={<HeartOutlined style={{ color: "#ff2442" }} />}
-            tooltip={{ title: "我的点赞", placement: "left" }}
-          />
-          <FloatButton
-            onClick={() => setSendDrawerOpen(true)}
-            icon={<FormOutlined style={{ color: "#52c41a" }} />}
-            tooltip={{ title: "发布笔记", placement: "left" }}
-          />
-          <FloatButton
-            onClick={toggleShowImg}
-            icon={
-              showImg ? (
-                <EyeOutlined style={{ color: "#13c2c2" }} />
-              ) : (
-                <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
-              )
-            }
-            tooltip={{
-              title: showImg ? "隐藏图片" : "显示图片",
-              placement: "left",
-            }}
-          />
-          <FloatButton
-            onClick={increase}
-            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-            tooltip={{ title: "加大字体", placement: "left" }}
-          />
-          <FloatButton
-            onClick={decrease}
-            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-            tooltip={{ title: "减小字体", placement: "left" }}
-          />
-          <FloatButton
-            onClick={() => setFloatButtonsVisible(false)}
-            icon={<CloseOutlined />}
-            tooltip={{ title: "隐藏按钮", placement: "left" }}
-          />
-        </FloatButton.Group>
-      ) : (
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: 24 }}
+        visibilityHeight={INFINITE_SCROLL_CONFIG.BACK_TOP_VISIBILITY_HEIGHT}
+        duration={INFINITE_SCROLL_CONFIG.BACK_TOP_DURATION}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+        target={() => scrollRef.current || window}
+      />
+      <FloatButton.Group
+        trigger="hover"
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: 88 }}
+        icon={<AppstoreOutlined />}
+      >
         <FloatButton
-          style={{ insetInlineEnd: 24, bottom: 24, opacity: 0.4 }}
-          onClick={() => setFloatButtonsVisible(true)}
-          icon={<EllipsisOutlined />}
-          tooltip={{ title: "显示按钮", placement: "left" }}
+          onClick={refresh}
+          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+          tooltip={{ title: "刷新", placement: "left" }}
         />
-      )}
+        <FloatButton
+          onClick={() => setSearchOpen(true)}
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
+        />
+        <FloatButton
+          onClick={handleMyInfo}
+          icon={<UserOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "我的", placement: "left" }}
+        />
+        <FloatButton
+          onClick={handleOpenLiked}
+          icon={<HeartOutlined style={{ color: "#ff2442" }} />}
+          tooltip={{ title: "我的点赞", placement: "left" }}
+        />
+        <FloatButton
+          onClick={() => setSendDrawerOpen(true)}
+          icon={<FormOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "发布笔记", placement: "left" }}
+        />
+        <FloatButton
+          onClick={toggleShowImg}
+          icon={
+            showImg ? (
+              <EyeOutlined style={{ color: "#13c2c2" }} />
+            ) : (
+              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+            )
+          }
+          tooltip={{
+            title: showImg ? "隐藏图片" : "显示图片",
+            placement: "left",
+          }}
+        />
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
+        />
+      </FloatButton.Group>
       {items.length === 0 ? (
         loaderFunc()
       ) : (

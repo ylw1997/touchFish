@@ -24,8 +24,7 @@ import {
   TrophyOutlined,
   UserOutlined,
   VerticalAlignTopOutlined,
-  CloseOutlined,
-  EllipsisOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import { AnimatePresence, motion } from "framer-motion";
 import LoginModal from "./components/LoginModal";
@@ -53,7 +52,6 @@ function App() {
   const [activeTab, setActiveTab] = useState("recommend");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
-  const [floatButtonsVisible, setFloatButtonsVisible] = useState(true);
   const [playlistDrawerOpen, setPlaylistDrawerOpen] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
     null,
@@ -630,51 +628,41 @@ function App() {
 
       <SingerDrawer />
 
-      {floatButtonsVisible ? (
-        <FloatButton.Group
-          shape="circle"
-          style={{ insetInlineEnd: 24, bottom: currentSong ? 140 : 88 }}
-        >
-          <FloatButton
-            icon={<SearchOutlined style={{ color: "#faad14" }} />}
-            tooltip={{ title: "搜索", placement: "left" }}
-            onClick={() => setSearchDrawerOpen(true)}
-          />
-          <FloatButton
-            onClick={decrease}
-            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-            tooltip={{ title: "减小字体", placement: "left" }}
-          />
-          <FloatButton
-            onClick={increase}
-            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-            tooltip={{ title: "增大字体", placement: "left" }}
-          />
-          <FloatButton.BackTop
-            visibilityHeight={500}
-            duration={1000}
-            icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
-            tooltip={{ title: "回到顶部", placement: "left" }}
-          />
-          <FloatButton
-            icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
-            tooltip={{ title: "刷新当前页", placement: "left" }}
-            onClick={handleRefresh}
-          />
-          <FloatButton
-            onClick={() => setFloatButtonsVisible(false)}
-            icon={<CloseOutlined />}
-            tooltip={{ title: "隐藏按钮", placement: "left" }}
-          />
-        </FloatButton.Group>
-      ) : (
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: currentSong ? 32 : 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+      />
+      <FloatButton.Group
+        trigger="hover"
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: currentSong ? 96 : 88 }}
+        icon={<AppstoreOutlined />}
+      >
         <FloatButton
-          style={{ insetInlineEnd: 24, bottom: 24, opacity: 0.4 }}
-          onClick={() => setFloatButtonsVisible(true)}
-          icon={<EllipsisOutlined />}
-          tooltip={{ title: "显示按钮", placement: "left" }}
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
+          onClick={() => setSearchDrawerOpen(true)}
         />
-      )}
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
+        />
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "增大字体", placement: "left" }}
+        />
+        <FloatButton
+          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+          tooltip={{ title: "刷新当前页", placement: "left" }}
+          onClick={handleRefresh}
+        />
+      </FloatButton.Group>
     </div>
   );
 }

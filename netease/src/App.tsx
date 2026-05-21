@@ -14,6 +14,7 @@ import {
 } from "antd";
 import {
   CustomerServiceOutlined,
+  AppstoreOutlined,
   HomeOutlined,
   LoginOutlined,
   MinusOutlined,
@@ -628,9 +629,19 @@ function App() {
 
       <SingerDrawer />
 
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: currentSong ? 32 : 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+      />
       <FloatButton.Group
+        trigger="hover"
         shape="circle"
-        style={{ insetInlineEnd: 24, bottom: currentSong ? 140 : 88 }}
+        style={{ insetInlineEnd: 24, bottom: currentSong ? 96 : 88 }}
+        icon={<AppstoreOutlined />}
       >
         <FloatButton
           icon={<SearchOutlined style={{ color: "#faad14" }} />}
@@ -646,12 +657,6 @@ function App() {
           onClick={increase}
           icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
           tooltip={{ title: "增大字体", placement: "left" }}
-        />
-        <FloatButton.BackTop
-          visibilityHeight={500}
-          duration={1000}
-          icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
-          tooltip={{ title: "回到顶部", placement: "left" }}
         />
         <FloatButton
           icon={<ReloadOutlined style={{ color: "#1890ff" }} />}

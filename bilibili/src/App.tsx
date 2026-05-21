@@ -27,8 +27,7 @@ import {
   LoginOutlined,
   LogoutOutlined,
   UserOutlined,
-  CloseOutlined,
-  EllipsisOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import dayjs from "dayjs";
@@ -60,7 +59,6 @@ function App() {
 
   // 搜索抽屉状态
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
-  const [floatButtonsVisible, setFloatButtonsVisible] = useState(true);
 
   // 登录弹窗状态
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -302,69 +300,59 @@ function App() {
       </div>
 
       {/* 浮动按钮组 */}
-      {floatButtonsVisible ? (
-        <FloatButton.Group
-          shape="circle"
-          style={{ insetInlineEnd: 24, bottom: 88 }}
-        >
-          {/* 搜索按钮 */}
-          <FloatButton
-            onClick={() => setSearchDrawerOpen(true)}
-            icon={<SearchOutlined style={{ color: "#faad14" }} />}
-            tooltip={{ title: "搜索", placement: "left" }}
-          />
-          {/* 播放待看列表前10条 */}
-          {activeKey === "watchlater" && list.length > 0 && (
-            <FloatButton
-              onClick={() => {
-                const top10 = list.slice(0, 10);
-                usePlayerStore.getState().replacePlaylistAndPlay(top10);
-                message.success(`已开始播放前${top10.length}条视频`);
-              }}
-              icon={<PlaySquareOutlined style={{ color: "#fb7299" }} />}
-              tooltip={{ title: "播放前10条", placement: "left" }}
-            />
-          )}
-          {/* 减小字体 */}
-          <FloatButton
-            onClick={decrease}
-            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-            tooltip={{ title: "减小字体", placement: "left" }}
-          />
-          {/* 加大字体 */}
-          <FloatButton
-            onClick={increase}
-            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-            tooltip={{ title: "加大字体", placement: "left" }}
-          />
-          {/* 刷新 */}
-          <FloatButton
-            onClick={refreshData}
-            icon={<RedoOutlined style={{ color: "#fb7299" }} />}
-            tooltip={{ title: "刷新", placement: "left" }}
-          />
-          {/* 回到顶部 */}
-          <FloatButton.BackTop
-            visibilityHeight={500}
-            duration={1000}
-            icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
-            tooltip={{ title: "回到顶部", placement: "left" }}
-            target={() => scrollableNodeRef.current || window}
-          />
-          <FloatButton
-            onClick={() => setFloatButtonsVisible(false)}
-            icon={<CloseOutlined />}
-            tooltip={{ title: "隐藏按钮", placement: "left" }}
-          />
-        </FloatButton.Group>
-      ) : (
+      {/* 回到顶部 */}
+      <FloatButton.BackTop
+        className="touchfish-float-backtop"
+        style={{ insetInlineEnd: 24, bottom: 24 }}
+        visibilityHeight={500}
+        duration={1000}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip={{ title: "回到顶部", placement: "left" }}
+        target={() => scrollableNodeRef.current || window}
+      />
+      <FloatButton.Group
+        trigger="hover"
+        shape="circle"
+        style={{ insetInlineEnd: 24, bottom: 88 }}
+        icon={<AppstoreOutlined />}
+      >
+        {/* 搜索按钮 */}
         <FloatButton
-          style={{ insetInlineEnd: 24, bottom: 24, opacity: 0.4 }}
-          onClick={() => setFloatButtonsVisible(true)}
-          icon={<EllipsisOutlined />}
-          tooltip={{ title: "显示按钮", placement: "left" }}
+          onClick={() => setSearchDrawerOpen(true)}
+          icon={<SearchOutlined style={{ color: "#faad14" }} />}
+          tooltip={{ title: "搜索", placement: "left" }}
         />
-      )}
+        {/* 播放待看列表前10条 */}
+        {activeKey === "watchlater" && list.length > 0 && (
+          <FloatButton
+            onClick={() => {
+              const top10 = list.slice(0, 10);
+              usePlayerStore.getState().replacePlaylistAndPlay(top10);
+              message.success(`已开始播放前${top10.length}条视频`);
+            }}
+            icon={<PlaySquareOutlined style={{ color: "#fb7299" }} />}
+            tooltip={{ title: "播放前10条", placement: "left" }}
+          />
+        )}
+        {/* 减小字体 */}
+        <FloatButton
+          onClick={decrease}
+          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+          tooltip={{ title: "减小字体", placement: "left" }}
+        />
+        {/* 加大字体 */}
+        <FloatButton
+          onClick={increase}
+          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+          tooltip={{ title: "加大字体", placement: "left" }}
+        />
+        {/* 刷新 */}
+        <FloatButton
+          onClick={refreshData}
+          icon={<RedoOutlined style={{ color: "#fb7299" }} />}
+          tooltip={{ title: "刷新", placement: "left" }}
+        />
+      </FloatButton.Group>
 
       {/* 搜索抽屉 */}
       <SearchDrawer
