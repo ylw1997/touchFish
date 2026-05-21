@@ -18,6 +18,8 @@ import {
   VerticalAlignTopOutlined,
   UnorderedListOutlined,
   LikeOutlined,
+  CloseOutlined,
+  EllipsisOutlined,
 } from "@ant-design/icons";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
@@ -77,6 +79,7 @@ const App: React.FC = () => {
   const [bestThoughts, setBestThoughts] = useState<Thought[]>([]);
   const [bestThoughtsVisible, setBestThoughtsVisible] = useState(false);
   const [bestThoughtsLoading, setBestThoughtsLoading] = useState(false);
+  const [floatButtonsVisible, setFloatButtonsVisible] = useState(true);
   const [popoverPos, setPopoverPos] = useState<{
     top: number;
     left: number;
@@ -774,53 +777,67 @@ const App: React.FC = () => {
         </div>
       </Drawer>
 
-      <FloatButton.Group shape="circle" style={{ right: 24, bottom: 24 }}>
-        <FloatButton
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={<div>减小字体</div>}
-          onClick={decrease}
-        />
-        <FloatButton
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={<div>增大字体</div>}
-          onClick={increase}
-        />
-        {view === "reader" && (
-          <FloatButton.BackTop
-            target={() =>
-              document.querySelector(".reader-content") as HTMLElement
-            }
-            visibilityHeight={400}
-            icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
-            tooltip={<div>回到顶部</div>}
-          />
-        )}
-        <FloatButton
-          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
-          tooltip={<div>{view === "shelf" ? "刷新书架" : "刷新本章"}</div>}
-          onClick={handleRefresh}
-        />
-        {view === "reader" && (
+      {floatButtonsVisible ? (
+        <FloatButton.Group shape="circle" style={{ right: 24, bottom: 24 }}>
           <FloatButton
-            icon={<UnorderedListOutlined style={{ color: "#faad14" }} />}
-            tooltip={<div>查看目录</div>}
-            onClick={() => {
-              setCatalogVisible(true);
-              setTimeout(() => {
-                const activeItem = document.getElementById(
-                  `chapter-${currentChapterIdx}`,
-                );
-                if (activeItem) {
-                  activeItem.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }
-              }, 100);
-            }}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={<div>减小字体</div>}
+            onClick={decrease}
           />
-        )}
-      </FloatButton.Group>
+          <FloatButton
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={<div>增大字体</div>}
+            onClick={increase}
+          />
+          {view === "reader" && (
+            <FloatButton.BackTop
+              target={() =>
+                document.querySelector(".reader-content") as HTMLElement
+              }
+              visibilityHeight={400}
+              icon={<VerticalAlignTopOutlined style={{ color: "#00a1d6" }} />}
+              tooltip={<div>回到顶部</div>}
+            />
+          )}
+          <FloatButton
+            icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+            tooltip={<div>{view === "shelf" ? "刷新书架" : "刷新本章"}</div>}
+            onClick={handleRefresh}
+          />
+          {view === "reader" && (
+            <FloatButton
+              icon={<UnorderedListOutlined style={{ color: "#faad14" }} />}
+              tooltip={<div>查看目录</div>}
+              onClick={() => {
+                setCatalogVisible(true);
+                setTimeout(() => {
+                  const activeItem = document.getElementById(
+                    `chapter-${currentChapterIdx}`,
+                  );
+                  if (activeItem) {
+                    activeItem.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                  }
+                }, 100);
+              }}
+            />
+          )}
+          <FloatButton
+            onClick={() => setFloatButtonsVisible(false)}
+            icon={<CloseOutlined />}
+            tooltip={<div>隐藏按钮</div>}
+          />
+        </FloatButton.Group>
+      ) : (
+        <FloatButton
+          style={{ right: 24, bottom: 24, opacity: 0.4 }}
+          onClick={() => setFloatButtonsVisible(true)}
+          icon={<EllipsisOutlined />}
+          tooltip={<div>显示按钮</div>}
+        />
+      )}
     </div>
   );
 };
