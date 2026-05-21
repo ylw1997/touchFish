@@ -82,10 +82,10 @@ function App() {
   const handleLogout = useCallback(async () => {
     console.log("[Logout] Starting logout...");
     try {
-      await request<any>("QQMUSIC_LOGOUT", null);
-      console.log("[Logout] QQMUSIC_LOGOUT resolved successfully");
+      await request<any>("NETEASE_LOGOUT" as any, null);
+      console.log("[Logout] NETEASE_LOGOUT resolved successfully");
     } catch (err: any) {
-      console.error("[Logout] QQMUSIC_LOGOUT error:", err.message);
+      console.error("[Logout] NETEASE_LOGOUT error:", err.message);
     }
     logout();
     setMyPlaylists([]);
@@ -119,7 +119,7 @@ function App() {
     if (result.code === 0 && result.data) {
       setRecommendPlaylists(result.data);
     } else {
-      console.error("[QQMusic] 加载推荐歌单失败:", result.message);
+      console.error("[Netease] 加载推荐歌单失败:", result.message);
     }
   }, [getRecommendPlaylists]);
 
@@ -140,7 +140,7 @@ function App() {
         }
       }
     } else {
-      console.error("[QQMusic] 加载排行榜失败:", result.message);
+      console.error("[Netease] 加载排行榜失败:", result.message);
     }
   }, [getRankDetail, getRankLists]);
 
@@ -162,7 +162,7 @@ function App() {
   useEffect(() => {
     const syncAuthState = async () => {
       try {
-        const result = await request<any>("QQMUSIC_GET_USER_INFO", null);
+        const result = await request<any>("NETEASE_GET_USER_STATUS" as any, null);
         if (result.code === 0 && result.data) {
           login(result.data);
         } else {
@@ -172,13 +172,13 @@ function App() {
         logout();
       }
     };
-
+ 
     void syncAuthState();
-
+ 
     const handleMessage = (event: MessageEvent) => {
       const payload = event.data;
-      if (payload?.command !== "QQMUSIC_AUTH_SYNC") return;
-
+      if (payload?.command !== "NETEASE_AUTH_SYNC") return;
+ 
       if (payload.payload?.isLoggedIn && payload.payload?.userInfo) {
         login(payload.payload.userInfo);
       } else {
@@ -209,13 +209,13 @@ function App() {
       if (playlist.dissid === 999991) {
         try {
           const res = await getRadarRecommend();
-          const songs = res.data?.VecSongs
-            ? res.data.VecSongs.map((item: any) => item.Track).filter(Boolean)
-            : res.data?.tracks ||
-              res.data?.songlist ||
-              res.data?.v_song ||
-              res.data?.list ||
-              [];
+          const songs = (res.data as any)?.songs ||
+            (res.data as any)?.VecSongs?.map((item: any) => item.Track).filter(Boolean) ||
+            (res.data as any)?.tracks ||
+            (res.data as any)?.songlist ||
+            (res.data as any)?.v_song ||
+            (res.data as any)?.list ||
+            [];
 
           if (songs.length > 0) {
             const player = usePlayerStore.getState();
@@ -238,10 +238,11 @@ function App() {
         try {
           const res = await getGuessRecommend();
           const songs =
-            res.data?.tracks ||
-            res.data?.songlist ||
-            res.data?.v_song ||
-            res.data?.list ||
+            (res.data as any)?.songs ||
+            (res.data as any)?.tracks ||
+            (res.data as any)?.songlist ||
+            (res.data as any)?.v_song ||
+            (res.data as any)?.list ||
             [];
 
           if (songs.length > 0) {
@@ -276,7 +277,7 @@ function App() {
         messageApi.error(error.message || "无法播放歌曲");
       }
     },
-    [playSong],
+    [playSong, messageApi],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -564,12 +565,12 @@ function App() {
   return (
     <div className="qqmusic-app" style={{ fontSize: `${fontSize}px` }}>
       <div className="qqmusic-header">
-        <h1 className="qqmusic-title">QQ音乐</h1>
+        <h1 className="qqmusic-title">网易云音乐</h1>
         <div className="qqmusic-header-actions">
           {isLoggedIn ? (
             <Popconfirm
               title="确认退出"
-              description="您确定要退出 QQ 音乐登录吗？"
+              description="您确定要注销网易云音乐登录吗？"
               onConfirm={handleLogout}
               okText="确认"
               cancelText="取消"

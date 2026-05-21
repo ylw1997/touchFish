@@ -71,6 +71,9 @@ const PlayBar: React.FC = () => {
 
   const getAlbumCover = (song: Song): string => {
     if (song.album?.pmid) {
+      if (song.album.pmid.startsWith("http")) {
+        return song.album.pmid;
+      }
       return `https://y.gtimg.cn/music/photo_new/T002R300x300M000${song.album.pmid}.jpg`;
     }
     return "https://y.gtimg.cn/mediastyle/global/img/album_300.png";
@@ -96,10 +99,11 @@ const PlayBar: React.FC = () => {
           .then((res) => {
             if (res.code === 0 && res.data) {
               const songs =
-                res.data.tracks ||
-                res.data.songlist ||
-                res.data.v_song ||
-                res.data.list ||
+                (res.data as any).songs ||
+                (res.data as any).tracks ||
+                (res.data as any).songlist ||
+                (res.data as any).v_song ||
+                (res.data as any).list ||
                 [];
               if (songs.length > 0) {
                 const player = usePlayerStore.getState();
@@ -247,7 +251,7 @@ const PlayBar: React.FC = () => {
 
     // 歌词优先显示，没有歌词时显示歌曲名称
     vscode.postMessage({
-      command: "QQMUSIC_UPDATE_PLAYING_STATUS",
+      command: "NETEASE_UPDATE_PLAYING_STATUS" as any,
       payload: {
         songName: fullTitle,
         lyric: currentLyric || fullTitle,
@@ -302,11 +306,11 @@ const PlayBar: React.FC = () => {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
-      if (message?.command === "QQMUSIC_PLAY_NEXT_COMMAND") {
+      if (message?.command === "NETEASE_PLAY_NEXT_COMMAND") {
         playNext();
-      } else if (message?.command === "QQMUSIC_PLAY_PAUSE_COMMAND") {
+      } else if (message?.command === "NETEASE_PLAY_PAUSE_COMMAND") {
         togglePlay();
-      } else if (message?.command === "QQMUSIC_PAUSE_COMMAND") {
+      } else if (message?.command === "NETEASE_PAUSE_COMMAND") {
         usePlayerStore.getState().pause();
       }
     };

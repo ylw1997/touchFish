@@ -1,6 +1,6 @@
 import { window, StatusBarAlignment, StatusBarItem, Disposable, EventEmitter, Event } from "vscode";
 
-export type MusicModule = "qqmusic" | "xiaoyuzhou";
+export type MusicModule = "qqmusic" | "xiaoyuzhou" | "netease";
 
 export interface PlaybackStatus {
   title: string;
@@ -63,7 +63,14 @@ export class MusicStatusBar implements Disposable {
       this.isPlaying = false;
     }
 
-    const moduleName = this.activeModule === "qqmusic" ? "QQ音乐" : "小宇宙";
+    let moduleName = "摸鱼播放器";
+    if (this.activeModule === "qqmusic") {
+      moduleName = "QQ音乐";
+    } else if (this.activeModule === "xiaoyuzhou") {
+      moduleName = "小宇宙";
+    } else if (this.activeModule === "netease") {
+      moduleName = "网易云音乐";
+    }
     
     this.statusBarItem.text = `$(music) ${this.title}`;
     this.statusBarItem.tooltip = `正在播放 (${moduleName}): ${this.title}${status.artist ? ` - ${status.artist}` : ""}\n点击: 打开播放器面板`;
