@@ -169,6 +169,25 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
     await toggleFollow(initParams.user_id);
   };
 
+  const handleLikeToggle = useCallback(
+    async (raw: any, targetStatus: boolean) => {
+      if (!raw?.id) return false;
+      try {
+        const payload = { note_oid: raw.id };
+        if (targetStatus) {
+          await request("XHS_NOTE_LIKE", payload);
+        } else {
+          await request("XHS_NOTE_DISLIKE", payload);
+        }
+        return true;
+      } catch (e: any) {
+        messageApi.error(e.message || "点赞操作失败");
+        return false;
+      }
+    },
+    [request, messageApi]
+  );
+
   return (
     <>
       <BaseDrawer
@@ -228,6 +247,7 @@ const UserPostedDrawer: React.FC<UserPostedDrawerProps> = ({
                   <XhsFeedCard
                     data={raw}
                     onClick={() => handleOpenDetail(raw)}
+                    onLikeToggle={handleLikeToggle}
                     onUserClick={() => {
                       // 已在当前用户主页
                       messageApi.info("已经是本用户主页了");

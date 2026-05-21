@@ -276,7 +276,7 @@ function App() {
         messageApi.error(error.message || "无法播放歌曲");
       }
     },
-    [playSong],
+    [playSong, messageApi],
   );
 
   const handleRefresh = useCallback(async () => {
