@@ -1,6 +1,34 @@
 # 更新历史 
 
 
+## [15.15.0](https://github.com/ylw1997/touchFish/compare/v15.14.0...v15.15.0) (2026-05-20)
+
+
+### ✨ Features | 新功能
+
+* 修复微信读书注释样式错误问题 ([d52683f](https://github.com/ylw1997/touchFish/commit/d52683f2d06905f54ce1d8364698fa0db2f367d6))
+* 新闻支持跳转页码 ([9d37620](https://github.com/ylw1997/touchFish/commit/9d37620d400630b5c976b9f8a7288e65e19ad4c9))
+
+## [15.14.0](https://github.com/ylw1997/touchFish/compare/v15.13.0...v15.14.0) (2026-05-18)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复qqmusic 任务栏歌词不显示问题 ([3ccd983](https://github.com/ylw1997/touchFish/commit/3ccd9837461dcf7b42278dc7d524d03a8648ef15))
+
+
+### ✨ Features | 新功能
+
+* 修复x搜索失效问题 ([8b86e8f](https://github.com/ylw1997/touchFish/commit/8b86e8f7d47d3c7623dccb59dbe80acc01f96054))
+
+## [15.13.0](https://github.com/ylw1997/touchFish/compare/v15.12.0...v15.13.0) (2026-05-18)
+
+
+### ✨ Features | 新功能
+
+* qqmusic支持登录续期功能,修复qqmusic playbar状态错误问题 ([2e54631](https://github.com/ylw1997/touchFish/commit/2e5463132db65c246fb886db2cf3060eccb4294d))
+* qqmusic支持登录续期功能,修复qqmusic playbar状态错误问题 ([af9c13a](https://github.com/ylw1997/touchFish/commit/af9c13ad13e2c8b7ca7367a172cef88fbc7e91d2))
+
 ## [15.12.0](https://github.com/ylw1997/touchFish/compare/v15.11.0...v15.12.0) (2026-05-18)
 
 
