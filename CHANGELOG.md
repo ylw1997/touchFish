@@ -1,6 +1,31 @@
 # 更新历史 
 
 
+## [16.3.0](https://github.com/ylw1997/touchFish/compare/v16.2.0...v16.3.0) (2026-05-22)
+
+
+### ✨ Features | 新功能
+
+* 优化浮动按钮点击才打开 ([4f0c251](https://github.com/ylw1997/touchFish/commit/4f0c251dc82eb86ab61dbfd776cf26e065349188))
+
+## [16.2.0](https://github.com/ylw1997/touchFish/compare/v16.1.0...v16.2.0) (2026-05-21)
+
+
+### ✨ Features | 新功能
+
+* 优化浮动按钮 ([52eb65e](https://github.com/ylw1997/touchFish/commit/52eb65e2251cf0c1adc7ae61145bbe488b4456e7))
+* 增加显示/隐藏按钮 ([575adaf](https://github.com/ylw1997/touchFish/commit/575adafdb9ce34d83075becc4d8780957ed29ee5))
+* 网易云音乐,qq音乐,小宇宙标题都改为图标 ([22fd010](https://github.com/ylw1997/touchFish/commit/22fd010b33c3b80e5446da3fef704da54b851461))
+
+## [16.1.0](https://github.com/ylw1997/touchFish/compare/v15.15.0...v16.1.0) (2026-05-21)
+
+
+### ✨ Features | 新功能
+
+* 修复部分体验问题 ([aea351e](https://github.com/ylw1997/touchFish/commit/aea351eca1d6dd592061d43f7d1887c67631f807))
+* 网易云准备发布 ([a008037](https://github.com/ylw1997/touchFish/commit/a008037d7efdf80bbab2ccdaf4006092bb696991))
+* 网易云开始 ([1a019e8](https://github.com/ylw1997/touchFish/commit/1a019e8f2328c1a5d88fd29fa0609a50c7600b5a))
+
 ## [15.15.0](https://github.com/ylw1997/touchFish/compare/v15.14.0...v15.15.0) (2026-05-20)
 
 
