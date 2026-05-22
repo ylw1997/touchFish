@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [16.3.0](https://github.com/ylw1997/touchFish/compare/v16.2.0...v16.3.0) (2026-05-22)
+
+
+### ✨ Features | 新功能
+
+* 优化浮动按钮点击才打开 ([4f0c251](https://github.com/ylw1997/touchFish/commit/4f0c251dc82eb86ab61dbfd776cf26e065349188))
+
 ## [16.2.0](https://github.com/ylw1997/touchFish/compare/v16.1.0...v16.2.0) (2026-05-21)
 
 
