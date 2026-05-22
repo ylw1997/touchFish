@@ -45,6 +45,8 @@ import { useFontSizeStore } from "../store/fontSize";
 import { useConfigStore } from "../store/config";
 
 export default function Feed() {
+  const [groupOpen, setGroupOpen] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
   const { items, loadMore, hasMore, refresh } = useXhsFeed();
   // 详情状态
   const [detailOpen, setDetailOpen] = useState(false);
@@ -272,62 +274,71 @@ export default function Feed() {
         tooltip={{ title: "回到顶部", placement: "left" }}
         target={() => scrollRef.current || window}
       />
-      <FloatButton.Group
-        trigger="hover"
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 88 }}
-        icon={<AppstoreOutlined />}
-      >
-        <FloatButton
-          onClick={refresh}
-          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-          tooltip={{ title: "刷新", placement: "left" }}
-        />
-        <FloatButton
-          onClick={() => setSearchOpen(true)}
-          icon={<SearchOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "搜索", placement: "left" }}
-        />
-        <FloatButton
-          onClick={handleMyInfo}
-          icon={<UserOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "我的", placement: "left" }}
-        />
-        <FloatButton
-          onClick={handleOpenLiked}
-          icon={<HeartOutlined style={{ color: "#ff2442" }} />}
-          tooltip={{ title: "我的点赞", placement: "left" }}
-        />
-        <FloatButton
-          onClick={() => setSendDrawerOpen(true)}
-          icon={<FormOutlined style={{ color: "#52c41a" }} />}
-          tooltip={{ title: "发布笔记", placement: "left" }}
-        />
-        <FloatButton
-          onClick={toggleShowImg}
-          icon={
-            showImg ? (
-              <EyeOutlined style={{ color: "#13c2c2" }} />
-            ) : (
-              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
-            )
-          }
-          tooltip={{
-            title: showImg ? "隐藏图片" : "显示图片",
-            placement: "left",
+      <div ref={groupRef}>
+        <FloatButton.Group
+          trigger="click"
+          open={groupOpen}
+          onOpenChange={(open) => {
+            const event = window.event as MouseEvent;
+            if (event && groupRef.current?.contains(event.target as Node)) {
+              setGroupOpen(open);
+            }
           }}
-        />
-        <FloatButton
-          onClick={increase}
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={{ title: "加大字体", placement: "left" }}
-        />
-        <FloatButton
-          onClick={decrease}
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={{ title: "减小字体", placement: "left" }}
-        />
-      </FloatButton.Group>
+          shape="circle"
+          style={{ insetInlineEnd: 24, bottom: 88 }}
+          icon={<AppstoreOutlined />}
+        >
+          <FloatButton
+            onClick={refresh}
+            icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+            tooltip={{ title: "刷新", placement: "left" }}
+          />
+          <FloatButton
+            onClick={() => setSearchOpen(true)}
+            icon={<SearchOutlined style={{ color: "#faad14" }} />}
+            tooltip={{ title: "搜索", placement: "left" }}
+          />
+          <FloatButton
+            onClick={handleMyInfo}
+            icon={<UserOutlined style={{ color: "#faad14" }} />}
+            tooltip={{ title: "我的", placement: "left" }}
+          />
+          <FloatButton
+            onClick={handleOpenLiked}
+            icon={<HeartOutlined style={{ color: "#ff2442" }} />}
+            tooltip={{ title: "我的点赞", placement: "left" }}
+          />
+          <FloatButton
+            onClick={() => setSendDrawerOpen(true)}
+            icon={<FormOutlined style={{ color: "#52c41a" }} />}
+            tooltip={{ title: "发布笔记", placement: "left" }}
+          />
+          <FloatButton
+            onClick={toggleShowImg}
+            icon={
+              showImg ? (
+                <EyeOutlined style={{ color: "#13c2c2" }} />
+              ) : (
+                <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+              )
+            }
+            tooltip={{
+              title: showImg ? "隐藏图片" : "显示图片",
+              placement: "left",
+            }}
+          />
+          <FloatButton
+            onClick={increase}
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={{ title: "加大字体", placement: "left" }}
+          />
+          <FloatButton
+            onClick={decrease}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={{ title: "减小字体", placement: "left" }}
+          />
+        </FloatButton.Group>
+      </div>
       {items.length === 0 ? (
         loaderFunc()
       ) : (

@@ -54,6 +54,8 @@ dayjs.extend(_relativeTime);
 
 function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
   const [tabs] = useState<TabItem[]>(defTab);
   const { increase, decrease } = useFontSizeStore();
 
@@ -310,49 +312,58 @@ function App() {
         tooltip={{ title: "回到顶部", placement: "left" }}
         target={() => scrollableNodeRef.current || window}
       />
-      <FloatButton.Group
-        trigger="hover"
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 88 }}
-        icon={<AppstoreOutlined />}
-      >
-        {/* 搜索按钮 */}
-        <FloatButton
-          onClick={() => setSearchDrawerOpen(true)}
-          icon={<SearchOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "搜索", placement: "left" }}
-        />
-        {/* 播放待看列表前10条 */}
-        {activeKey === "watchlater" && list.length > 0 && (
+      <div ref={groupRef}>
+        <FloatButton.Group
+          trigger="click"
+          open={groupOpen}
+          onOpenChange={(open) => {
+            const event = window.event as MouseEvent;
+            if (event && groupRef.current?.contains(event.target as Node)) {
+              setGroupOpen(open);
+            }
+          }}
+          shape="circle"
+          style={{ insetInlineEnd: 24, bottom: 88 }}
+          icon={<AppstoreOutlined />}
+        >
+          {/* 搜索按钮 */}
           <FloatButton
-            onClick={() => {
-              const top10 = list.slice(0, 10);
-              usePlayerStore.getState().replacePlaylistAndPlay(top10);
-              message.success(`已开始播放前${top10.length}条视频`);
-            }}
-            icon={<PlaySquareOutlined style={{ color: "#fb7299" }} />}
-            tooltip={{ title: "播放前10条", placement: "left" }}
+            onClick={() => setSearchDrawerOpen(true)}
+            icon={<SearchOutlined style={{ color: "#faad14" }} />}
+            tooltip={{ title: "搜索", placement: "left" }}
           />
-        )}
-        {/* 减小字体 */}
-        <FloatButton
-          onClick={decrease}
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={{ title: "减小字体", placement: "left" }}
-        />
-        {/* 加大字体 */}
-        <FloatButton
-          onClick={increase}
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={{ title: "加大字体", placement: "left" }}
-        />
-        {/* 刷新 */}
-        <FloatButton
-          onClick={refreshData}
-          icon={<RedoOutlined style={{ color: "#fb7299" }} />}
-          tooltip={{ title: "刷新", placement: "left" }}
-        />
-      </FloatButton.Group>
+          {/* 播放待看列表前10条 */}
+          {activeKey === "watchlater" && list.length > 0 && (
+            <FloatButton
+              onClick={() => {
+                const top10 = list.slice(0, 10);
+                usePlayerStore.getState().replacePlaylistAndPlay(top10);
+                message.success(`已开始播放前${top10.length}条视频`);
+              }}
+              icon={<PlaySquareOutlined style={{ color: "#fb7299" }} />}
+              tooltip={{ title: "播放前10条", placement: "left" }}
+            />
+          )}
+          {/* 减小字体 */}
+          <FloatButton
+            onClick={decrease}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={{ title: "减小字体", placement: "left" }}
+          />
+          {/* 加大字体 */}
+          <FloatButton
+            onClick={increase}
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={{ title: "加大字体", placement: "left" }}
+          />
+          {/* 刷新 */}
+          <FloatButton
+            onClick={refreshData}
+            icon={<RedoOutlined style={{ color: "#fb7299" }} />}
+            tooltip={{ title: "刷新", placement: "left" }}
+          />
+        </FloatButton.Group>
+      </div>
 
       {/* 搜索抽屉 */}
       <SearchDrawer

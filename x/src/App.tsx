@@ -50,6 +50,8 @@ dayjs.extend(_relativeTime);
 
 function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
   const {
     list,
     hasMore,
@@ -221,75 +223,84 @@ function App() {
         tooltip={{ title: "回到顶部", placement: "left" }}
         target={() => scrollableNodeRef.current || window}
       />
-      <FloatButton.Group
-        trigger="hover"
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 88 }}
-        icon={<AppstoreOutlined />}
-      >
-        {/* 个人中心按钮 */}
-        <FloatButton
-          onClick={getMyUserInfo}
-          icon={<UserOutlined style={{ color: "#ff85c0" }} />}
-          tooltip={{ title: "个人主页", placement: "left" }}
-        />
-        {/* 刷新按钮 */}
-        <FloatButton
-          shape="circle"
-          onClick={() => {
-            clearList();
-            getListData(activeKey, true);
+      <div ref={groupRef}>
+        <FloatButton.Group
+          trigger="click"
+          open={groupOpen}
+          onOpenChange={(open) => {
+            const event = window.event as MouseEvent;
+            if (event && groupRef.current?.contains(event.target as Node)) {
+              setGroupOpen(open);
+            }
           }}
-          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-          tooltip={{ title: "刷新", placement: "left" }}
-        />
-        {/* 搜索按钮 */}
-        <FloatButton
-          onClick={() => setSearchDrawerOpen(true)}
-          icon={<SearchOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "搜索", placement: "left" }}
-        />
-        {/* 发帖按钮 */}
-        <FloatButton
-          onClick={() => setSendDrawerOpen(true)}
-          icon={<FormOutlined style={{ color: "#1d9bf0" }} />}
-          tooltip={{ title: "发帖", placement: "left" }}
-        />
+          shape="circle"
+          style={{ insetInlineEnd: 24, bottom: 88 }}
+          icon={<AppstoreOutlined />}
+        >
+          {/* 个人中心按钮 */}
+          <FloatButton
+            onClick={getMyUserInfo}
+            icon={<UserOutlined style={{ color: "#ff85c0" }} />}
+            tooltip={{ title: "个人主页", placement: "left" }}
+          />
+          {/* 刷新按钮 */}
+          <FloatButton
+            shape="circle"
+            onClick={() => {
+              clearList();
+              getListData(activeKey, true);
+            }}
+            icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+            tooltip={{ title: "刷新", placement: "left" }}
+          />
+          {/* 搜索按钮 */}
+          <FloatButton
+            onClick={() => setSearchDrawerOpen(true)}
+            icon={<SearchOutlined style={{ color: "#faad14" }} />}
+            tooltip={{ title: "搜索", placement: "left" }}
+          />
+          {/* 发帖按钮 */}
+          <FloatButton
+            onClick={() => setSendDrawerOpen(true)}
+            icon={<FormOutlined style={{ color: "#1d9bf0" }} />}
+            tooltip={{ title: "发帖", placement: "left" }}
+          />
 
-        {/* 显示图片 */}
-        <FloatButton
-          shape="circle"
-          onClick={() => {
-            const newState = !showImg;
-            setShowImg(newState);
-            vscode.postMessage({
-              command: "TOGGLE_SHOW_IMG",
-              payload: newState,
-            });
-          }}
-          icon={
-            showImg ? (
-              <EyeOutlined style={{ color: "#13c2c2" }} />
-            ) : (
-              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
-            )
-          }
-          tooltip={{
-            title: `${showImg ? "隐藏" : "显示"}图片`,
-            placement: "left",
-          }}
-        />
-        <FloatButton
-          onClick={increase}
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={{ title: "加大字体", placement: "left" }}
-        />
-        <FloatButton
-          onClick={decrease}
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={{ title: "减小字体", placement: "left" }}
-        />
-      </FloatButton.Group>
+          {/* 显示图片 */}
+          <FloatButton
+            shape="circle"
+            onClick={() => {
+              const newState = !showImg;
+              setShowImg(newState);
+              vscode.postMessage({
+                command: "TOGGLE_SHOW_IMG",
+                payload: newState,
+              });
+            }}
+            icon={
+              showImg ? (
+                <EyeOutlined style={{ color: "#13c2c2" }} />
+              ) : (
+                <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+              )
+            }
+            tooltip={{
+              title: `${showImg ? "隐藏" : "显示"}图片`,
+              placement: "left",
+            }}
+          />
+          <FloatButton
+            onClick={increase}
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={{ title: "加大字体", placement: "left" }}
+          />
+          <FloatButton
+            onClick={decrease}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={{ title: "减小字体", placement: "left" }}
+          />
+        </FloatButton.Group>
+      </div>
       <Suspense fallback={null}>
         <SearchDrawer
           open={searchDrawerOpen}

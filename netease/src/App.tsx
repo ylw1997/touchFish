@@ -1,7 +1,7 @@
 /**
  * QQ音乐主应用
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   Avatar,
   Button,
@@ -49,6 +49,8 @@ import {
 import "./style/index.less";
 
 function App() {
+  const [groupOpen, setGroupOpen] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("recommend");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -637,33 +639,42 @@ function App() {
         icon={<VerticalAlignTopOutlined />}
         tooltip={{ title: "回到顶部", placement: "left" }}
       />
-      <FloatButton.Group
-        trigger="hover"
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: currentSong ? 96 : 88 }}
-        icon={<AppstoreOutlined />}
-      >
-        <FloatButton
-          icon={<SearchOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "搜索", placement: "left" }}
-          onClick={() => setSearchDrawerOpen(true)}
-        />
-        <FloatButton
-          onClick={decrease}
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={{ title: "减小字体", placement: "left" }}
-        />
-        <FloatButton
-          onClick={increase}
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={{ title: "增大字体", placement: "left" }}
-        />
-        <FloatButton
-          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
-          tooltip={{ title: "刷新当前页", placement: "left" }}
-          onClick={handleRefresh}
-        />
-      </FloatButton.Group>
+      <div ref={groupRef}>
+        <FloatButton.Group
+          trigger="click"
+          open={groupOpen}
+          onOpenChange={(open) => {
+            const event = window.event as MouseEvent;
+            if (event && groupRef.current?.contains(event.target as Node)) {
+              setGroupOpen(open);
+            }
+          }}
+          shape="circle"
+          style={{ insetInlineEnd: 24, bottom: currentSong ? 96 : 88 }}
+          icon={<AppstoreOutlined />}
+        >
+          <FloatButton
+            icon={<SearchOutlined style={{ color: "#faad14" }} />}
+            tooltip={{ title: "搜索", placement: "left" }}
+            onClick={() => setSearchDrawerOpen(true)}
+          />
+          <FloatButton
+            onClick={decrease}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={{ title: "减小字体", placement: "left" }}
+          />
+          <FloatButton
+            onClick={increase}
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={{ title: "增大字体", placement: "left" }}
+          />
+          <FloatButton
+            icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+            tooltip={{ title: "刷新当前页", placement: "left" }}
+            onClick={handleRefresh}
+          />
+        </FloatButton.Group>
+      </div>
     </div>
   );
 }

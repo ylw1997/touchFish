@@ -63,6 +63,8 @@ interface Underline {
 }
 
 const App: React.FC = () => {
+  const [groupOpen, setGroupOpen] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
   const { message } = AntdApp.useApp();
   const [loading, setLoading] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
@@ -787,48 +789,57 @@ const App: React.FC = () => {
           tooltip={<div>回到顶部</div>}
         />
       )}
-      <FloatButton.Group
-        trigger="hover"
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 88 }}
-        icon={<AppstoreOutlined />}
-      >
-        <FloatButton
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={<div>减小字体</div>}
-          onClick={decrease}
-        />
-        <FloatButton
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={<div>增大字体</div>}
-          onClick={increase}
-        />
-        <FloatButton
-          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
-          tooltip={<div>{view === "shelf" ? "刷新书架" : "刷新本章"}</div>}
-          onClick={handleRefresh}
-        />
-        {view === "reader" && (
+      <div ref={groupRef}>
+        <FloatButton.Group
+          trigger="click"
+          open={groupOpen}
+          onOpenChange={(open) => {
+            const event = window.event as MouseEvent;
+            if (event && groupRef.current?.contains(event.target as Node)) {
+              setGroupOpen(open);
+            }
+          }}
+          shape="circle"
+          style={{ insetInlineEnd: 24, bottom: 88 }}
+          icon={<AppstoreOutlined />}
+        >
           <FloatButton
-            icon={<UnorderedListOutlined style={{ color: "#faad14" }} />}
-            tooltip={<div>查看目录</div>}
-            onClick={() => {
-              setCatalogVisible(true);
-              setTimeout(() => {
-                const activeItem = document.getElementById(
-                  `chapter-${currentChapterIdx}`,
-                );
-                if (activeItem) {
-                  activeItem.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }
-              }, 100);
-            }}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={<div>减小字体</div>}
+            onClick={decrease}
           />
-        )}
-      </FloatButton.Group>
+          <FloatButton
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={<div>增大字体</div>}
+            onClick={increase}
+          />
+          <FloatButton
+            icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+            tooltip={<div>{view === "shelf" ? "刷新书架" : "刷新本章"}</div>}
+            onClick={handleRefresh}
+          />
+          {view === "reader" && (
+            <FloatButton
+              icon={<UnorderedListOutlined style={{ color: "#faad14" }} />}
+              tooltip={<div>查看目录</div>}
+              onClick={() => {
+                setCatalogVisible(true);
+                setTimeout(() => {
+                  const activeItem = document.getElementById(
+                    `chapter-${currentChapterIdx}`,
+                  );
+                  if (activeItem) {
+                    activeItem.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                  }
+                }, 100);
+              }}
+            />
+          )}
+        </FloatButton.Group>
+      </div>
     </div>
   );
 };
