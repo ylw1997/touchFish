@@ -397,11 +397,16 @@ export class QQMusicApi {
 
   // 喜欢/取消喜欢歌曲
   async likeSong(id: number | string, like: boolean) {
-    return this.request<any>(
+    const res = await this.request<any>(
       "NETEASE_LIKE_SONG" as any,
       { id, like },
       like ? "添加喜欢中..." : "取消喜欢中..."
     );
+    // 兼容网易云的 200 成功状态，转换为组件层期望的 0
+    if (res && res.code === 200) {
+      return { code: 0, message: "success", originalCode: 200 };
+    }
+    return res;
   }
 
   // 获取喜欢的歌曲 ID 列表

@@ -1,3 +1,4 @@
+import * as vscode from "vscode";
 import axios from "axios";
 import * as https from "https";
 import * as crypto from "crypto";
@@ -60,8 +61,7 @@ const request = async (options: {
   // 构造表单编码体
   const bodyData = `eparams=${encodeURIComponent(encryptedHex)}`;
 
-  // 模拟官方 Linux 客户端 Headers
-  const headers = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/x-www-form-urlencoded",
     "Referer": "https://music.163.com",
     "Origin": "https://music.163.com",
@@ -352,19 +352,56 @@ export const getMusicComments = async (
 };
 
 /**
- * 喜欢 / 取消喜欢歌曲
+ * 喜欢 / 取消喜欢歌曲 (基于纯 axios，完全移除子进程与 tls，应用终极防风控 Header 伪装)
  * @param trackId 歌曲 ID
  * @param like true 喜欢，false 取消喜欢
  */
 export const likeSong = async (trackId: number | string, like: boolean): Promise<{ code: number }> => {
-  return request({
-    url: "/api/radio/like",
-    data: {
+  try {
+    const config = vscode.workspace.getConfiguration("touchfish");
+    const configCookie = (config.get<string>("neteaseCredential") || "").trim();
+    const targetCookie = configCookie || globalCookie || "";
+    if (!targetCookie) {
+      throw new Error("请先登录网易云音乐");
+    }
+
+    const csrfToken = getCsrfToken(targetCookie);
+    const targetPath = `/weapi/song/like?csrf_token=${csrfToken}`;
+
+    const payload = {
+      alg: "itembased",
       trackId: Number(trackId),
-      like,
-      time: 25000,
-    },
-  });
+      like: Boolean(like),
+      time: "25000"
+    };
+
+    const cryptoData = weapiEncrypt(payload);
+    const bodyData = `params=${encodeURIComponent(cryptoData.params)}&encSecKey=${encodeURIComponent(cryptoData.encSecKey)}`;
+
+    const headers: any = {
+      "Host": "music.163.com",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Referer": "https://music.163.com",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) NeteaseMusicDesktop/2.9.7.199424 Chrome/84.0.4147.105 Safari/537.36",
+      "Cookie": `os=pc; appver=2.9.7; ${targetCookie}`
+    };
+
+    // 突破局限：直接利用 axios 与完美伪装后的 headers 进行底层访问，由于没有 Origin 及拥有完美的桌面级凭证，免受风控。
+    const { data: response } = await axios.post(`https://music.163.com${targetPath}`, bodyData, {
+      headers,
+      httpsAgent: safeAgent,
+    });
+
+    if (response && response.code !== 200 && response.code !== 0) {
+      throw new Error(response.message || response.msg || "操作失败");
+    }
+
+    return response;
+  } catch (error: any) {
+    const errorMsg = error.response?.data?.message || error.response?.data?.msg || error.message;
+    showError(`操作失败: ${errorMsg}`);
+    throw error;
+  }
 };
 
 /**
@@ -522,6 +559,7 @@ export const getQrCheck = async (key: string): Promise<any> => {
   // 网易云音乐服务端对于扫码状态跃迁的终极风控规则：
   // 必须使用官方 Web 端/PC 端的 weapi 双重加密协议，并且在 Header 中必须携带 os=pc 的底层身份声明 Cookie，
   // 否则要么在 801 阶段被 400 拒之门外，要么在 802 跃迁 803 时被锁死！
+
   try {
     const data = {
       key,
