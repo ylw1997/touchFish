@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   Avatar,
   Button,
@@ -54,6 +54,8 @@ import { useUserStore } from "./store/user";
 import "./style/index.less";
 
 function App() {
+  const [groupOpen, setGroupOpen] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
   const { request, messageApi } = useRequest();
   const { fontSize, increase, decrease } = useFontSizeStore();
   const { isLoggedIn, userInfo, logout, login } = useUserStore();
@@ -965,33 +967,42 @@ function App() {
         duration={1000}
         icon={<VerticalAlignTopOutlined />}
       />
-      <FloatButton.Group
-        trigger="hover"
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: currentEpisode ? 96 : 88 }}
-        icon={<AppstoreOutlined />}
-      >
-        <FloatButton
-          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
-          tooltip={{ title: "刷新" }}
-          onClick={handleRefresh}
-        />
-        <FloatButton
-          icon={<SearchOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "搜索" }}
-          onClick={() => setSearchDrawerOpen(true)}
-        />
-        <FloatButton
-          onClick={decrease}
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={{ title: "减小字体" }}
-        />
-        <FloatButton
-          onClick={increase}
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={{ title: "增大字体" }}
-        />
-      </FloatButton.Group>
+      <div ref={groupRef}>
+        <FloatButton.Group
+          trigger="click"
+          open={groupOpen}
+          onOpenChange={(open) => {
+            const event = window.event as MouseEvent;
+            if (event && groupRef.current?.contains(event.target as Node)) {
+              setGroupOpen(open);
+            }
+          }}
+          shape="circle"
+          style={{ insetInlineEnd: 24, bottom: currentEpisode ? 96 : 88 }}
+          icon={<AppstoreOutlined />}
+        >
+          <FloatButton
+            icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+            tooltip={{ title: "刷新" }}
+            onClick={handleRefresh}
+          />
+          <FloatButton
+            icon={<SearchOutlined style={{ color: "#faad14" }} />}
+            tooltip={{ title: "搜索" }}
+            onClick={() => setSearchDrawerOpen(true)}
+          />
+          <FloatButton
+            onClick={decrease}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={{ title: "减小字体" }}
+          />
+          <FloatButton
+            onClick={increase}
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={{ title: "增大字体" }}
+          />
+        </FloatButton.Group>
+      </div>
     </div>
   );
 }

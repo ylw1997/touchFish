@@ -49,6 +49,8 @@ import { useFontSizeStore } from "./store/fontSize";
 
 function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
   const {
     list,
     clearList,
@@ -190,64 +192,73 @@ function App() {
         tooltip={{ title: "回到顶部", placement: "left" }}
         target={() => scrollableNodeRef.current || window}
       />
-      <FloatButton.Group
-        trigger="hover"
-        shape="circle"
-        style={{ insetInlineEnd: 24, bottom: 88 }}
-        icon={<AppstoreOutlined />}
-      >
-        <FloatButton
-          icon={<SearchOutlined style={{ color: "#faad14" }} />}
-          tooltip={{ title: "搜索", placement: "left" }}
-          onClick={() => setSearchDrawerOpen(true)}
-        />
-        <FloatButton
-          onClick={() => {
-            clearList();
-            getListData(activeKey, true);
+      <div ref={groupRef}>
+        <FloatButton.Group
+          trigger="click"
+          open={groupOpen}
+          onOpenChange={(open) => {
+            const event = window.event as MouseEvent;
+            if (event && groupRef.current?.contains(event.target as Node)) {
+              setGroupOpen(open);
+            }
           }}
-          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-          tooltip={{ title: "刷新", placement: "left" }}
-        />
-        {hasExpanded && (
+          shape="circle"
+          style={{ insetInlineEnd: 24, bottom: 88 }}
+          icon={<AppstoreOutlined />}
+        >
           <FloatButton
-            onClick={() => collapseAll()}
-            icon={<CompressOutlined style={{ color: "#a0d911" }} />}
-            tooltip={{ title: "折叠已展开", placement: "left" }}
+            icon={<SearchOutlined style={{ color: "#faad14" }} />}
+            tooltip={{ title: "搜索", placement: "left" }}
+            onClick={() => setSearchDrawerOpen(true)}
           />
-        )}
-        <FloatButton
-          onClick={() => {
-            const newState = !showImg;
-            setShowImg(newState);
-            vscode.postMessage({
-              command: "TOGGLE_SHOW_IMG",
-              payload: newState,
-            });
-          }}
-          icon={
-            showImg ? (
-              <EyeOutlined style={{ color: "#13c2c2" }} />
-            ) : (
-              <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
-            )
-          }
-          tooltip={{
-            title: `${showImg ? "隐藏" : "显示"}图片`,
-            placement: "left",
-          }}
-        />
-        <FloatButton
-          onClick={increase}
-          icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-          tooltip={{ title: "加大字体", placement: "left" }}
-        />
-        <FloatButton
-          onClick={decrease}
-          icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-          tooltip={{ title: "减小字体", placement: "left" }}
-        />
-      </FloatButton.Group>
+          <FloatButton
+            onClick={() => {
+              clearList();
+              getListData(activeKey, true);
+            }}
+            icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+            tooltip={{ title: "刷新", placement: "left" }}
+          />
+          {hasExpanded && (
+            <FloatButton
+              onClick={() => collapseAll()}
+              icon={<CompressOutlined style={{ color: "#a0d911" }} />}
+              tooltip={{ title: "折叠已展开", placement: "left" }}
+            />
+          )}
+          <FloatButton
+            onClick={() => {
+              const newState = !showImg;
+              setShowImg(newState);
+              vscode.postMessage({
+                command: "TOGGLE_SHOW_IMG",
+                payload: newState,
+              });
+            }}
+            icon={
+              showImg ? (
+                <EyeOutlined style={{ color: "#13c2c2" }} />
+              ) : (
+                <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+              )
+            }
+            tooltip={{
+              title: `${showImg ? "隐藏" : "显示"}图片`,
+              placement: "left",
+            }}
+          />
+          <FloatButton
+            onClick={increase}
+            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+            tooltip={{ title: "加大字体", placement: "left" }}
+          />
+          <FloatButton
+            onClick={decrease}
+            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+            tooltip={{ title: "减小字体", placement: "left" }}
+          />
+        </FloatButton.Group>
+      </div>
       <Suspense fallback={<div>Loading...</div>}>
         <QuestionDetailDrawer
           open={questionDetailDrawerOpen}
