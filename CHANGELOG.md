@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [16.4.0](https://github.com/ylw1997/touchFish/compare/v16.3.0...v16.4.0) (2026-05-22)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([520417b](https://github.com/ylw1997/touchFish/commit/520417bf671d0de848dd61dc1f288360681204eb))
+
+
+### ✨ Features | 新功能
+
+* 优化qqmusic logo ([ddd52aa](https://github.com/ylw1997/touchFish/commit/ddd52aad3e58986de30e2ff32ca6cef7057a8294))
+* 修复网易云音乐喜欢失败问题 ([3eb4b07](https://github.com/ylw1997/touchFish/commit/3eb4b07cb0fe50c8cab524b6722f61ae4d6790f3))
+
 ## [16.3.0](https://github.com/ylw1997/touchFish/compare/v16.2.0...v16.3.0) (2026-05-22)
 
 
