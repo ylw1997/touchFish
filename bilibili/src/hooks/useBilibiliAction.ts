@@ -344,6 +344,7 @@ const useBilibiliAction = () => {
                 },
                 is_followed: 0,
                 pages: item.pages,
+                progress: item.progress,
               }),
             );
 
@@ -361,7 +362,7 @@ const useBilibiliAction = () => {
     },
     [
       apiClient,
-      list.length,
+      list,
       appendRecommendCache,
       clearRecommendCache,
       convertLiveToListItem,

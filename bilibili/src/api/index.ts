@@ -140,6 +140,23 @@ export class BilibiliApi {
     );
   }
 
+  // 上报视频播放心跳与历史记录
+  reportHeartbeat(payload: {
+    aid?: number;
+    bvid: string;
+    cid: number;
+    played_time: number;
+    realtime?: number;
+    start_ts?: number;
+    play_type?: number;
+  }) {
+    return this.request<any>(
+      "BILIBILI_HEARTBEAT",
+      payload,
+      "" // 心跳过程对用户无感，不用传递 loading 提示
+    );
+  }
+
   // 移除稍后再看
   delWatchLater(avid: string) {
     return this.request<BilibiliWatchLaterDelResponse>(

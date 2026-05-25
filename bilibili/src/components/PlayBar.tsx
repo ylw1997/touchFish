@@ -95,6 +95,8 @@ const PlayBar: React.FC = () => {
         requestId !== requestSeqRef.current ||
         usePlayerStore.getState().currentVideo?.id !== video.id;
 
+      setVideoUrl(null); // 先卸载旧播放器，防止新旧两个音轨同时播放
+      videoRef.current = null; // 同步清空引用，避免在这期间误操作旧播放器
       setIsLoading(true);
 
       try {
@@ -134,6 +136,7 @@ const PlayBar: React.FC = () => {
               // 同步更新 store 中的当前播放视频与 playlist，以便保存 pages
               const updatedVideo = {
                 ...video,
+                id: infoData.aid || video.id,
                 cid: currentCid,
                 pages: currentPages,
               };
@@ -147,7 +150,7 @@ const PlayBar: React.FC = () => {
               const { playlist } = usePlayerStore.getState();
               const updatedPlaylist = playlist.map((item) =>
                 item.id === video.id
-                  ? { ...item, cid: currentCid, pages: currentPages }
+                  ? { ...item, id: infoData.aid || item.id, cid: currentCid, pages: currentPages }
                   : item
               );
               usePlayerStore.getState().setPlaylist(updatedPlaylist);
@@ -212,6 +215,7 @@ const PlayBar: React.FC = () => {
       setIsLoading(false);
       setDanmakuData("");
       setVideoUrl(null);
+      videoRef.current = null;
       return;
     }
 
@@ -220,6 +224,7 @@ const PlayBar: React.FC = () => {
       currentVideo.cid !== lastVideoCidRef.current
     ) {
       ignorePauseRef.current = true;
+      lastReportedStateRef.current = null; // 重置去重引用，确保新视频事件能正常上报
       lastVideoIdRef.current = currentVideo.id;
       lastVideoCidRef.current = currentVideo.cid;
       setDanmakuData("");
@@ -229,19 +234,58 @@ const PlayBar: React.FC = () => {
 
   useEffect(() => {
     if (videoRef.current) {
+      const art = videoRef.current;
       if (isPlaying) {
-        videoRef.current.play().catch(() => {});
+        if (!art.playing) {
+          art.play().catch((err) => {
+            console.warn("自动播放失败（可能受浏览器策略限制）:", err);
+            setIsPlaying(false);
+            message.warning("自动播放受限，请手动点击播放");
+          });
+        }
       } else {
-        videoRef.current.pause();
+        if (art.playing) {
+          art.pause();
+        }
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, message, setIsPlaying]);
 
   useEffect(() => {
     if (!videoUrl) {
       setIsPip(false);
     }
   }, [videoUrl]);
+
+  // 15 秒定时心跳进度上报
+  useEffect(() => {
+    let intervalId: any = null;
+
+    if (isPlaying && currentVideo && currentVideo.duration > 0) {
+      intervalId = setInterval(() => {
+        if (videoRef.current) {
+          const playedTime = Math.floor(videoRef.current.currentTime);
+          apiClient
+            .reportHeartbeat({
+              aid: currentVideo.id,
+              bvid: currentVideo.bvid,
+              cid: currentVideo.cid || 0,
+              played_time: playedTime,
+              play_type: 3, // 播放中循环心跳
+            })
+            .catch((err) => {
+              console.error("[PlayBar] 15秒循环心跳上报异常:", err);
+            });
+        }
+      }, 15000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isPlaying, currentVideo, apiClient, videoUrl]);
 
   const handlePlayVideo = (video: typeof currentVideo) => {
     if (video) {
@@ -269,6 +313,22 @@ const PlayBar: React.FC = () => {
       return;
     }
 
+    if (playingVideo.duration > 0) {
+      console.log(`[PlayBar] 视频播放结束 -> 发起完播上报 (aid: ${playingVideo.id}, bvid: ${playingVideo.bvid}, cid: ${playingVideo.cid || 0}, played_time: -1)`);
+      apiClient
+        .reportHeartbeat({
+          aid: playingVideo.id,
+          bvid: playingVideo.bvid,
+          cid: playingVideo.cid || 0,
+          played_time: -1, // -1 表示已播放完毕
+          play_type: 4, // 播放完毕上报
+        })
+        .then(() => {})
+        .catch((err) => {
+          console.error("[PlayBar] 完播上报异常:", err);
+        });
+    }
+
     const currentIndex = queue.findIndex((video) => video.id === playingVideo.id);
     if (currentIndex === -1 || currentIndex >= queue.length - 1) {
       setIsPlaying(false);
@@ -278,7 +338,7 @@ const PlayBar: React.FC = () => {
 
     ignorePauseRef.current = true;
     playNext();
-  }, [playNext, setIsPlaying]);
+  }, [playNext, setIsPlaying, apiClient]);
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -299,32 +359,82 @@ const PlayBar: React.FC = () => {
       videoRef.current = art;
 
       if (usePlayerStore.getState().isPlaying) {
-        art.play().catch(() => {});
+        const handlePlayError = (err: any) => {
+          console.warn("Artplayer 初始化自动播放失败（可能受浏览器策略限制）:", err);
+          setIsPlaying(false);
+          message.warning("自动播放受限，请手动点击播放");
+        };
+
+        art.play().then(() => setIsPlaying(true)).catch(handlePlayError);
         art.once("ready", () => {
-          art.play().catch(() => {});
+          art.play().then(() => setIsPlaying(true)).catch(handlePlayError);
         });
-        setIsPlaying(true);
       }
 
       art.on("pip", (state: boolean) => {
         setIsPip(state);
       });
     },
-    [setIsPlaying],
+    [setIsPlaying, message],
   );
 
+  // 用于防止同状态的重复上报拦截
+  const lastReportedStateRef = useRef<boolean | null>(null);
+
   const handleArtPlay = useCallback(() => {
-    ignorePauseRef.current = false;
+    // 延迟取消忽略，防止播放器刚启动时因浏览器限制或缓冲可能出现的瞬时暂停事件导致状态机误判
+    setTimeout(() => {
+      ignorePauseRef.current = false;
+    }, 300);
+
+    if (lastReportedStateRef.current === true) {
+      return; // 防止回音壁或播放器底层重复触发 play
+    }
+    lastReportedStateRef.current = true;
     setIsPlaying(true);
-  }, [setIsPlaying]);
+
+    if (currentVideo && currentVideo.duration !== 0) {
+      setTimeout(() => {
+        if (videoRef.current) {
+          const playedTime = Math.floor(videoRef.current.currentTime);
+          apiClient.reportHeartbeat({
+            aid: currentVideo.id,
+            bvid: currentVideo.bvid,
+            cid: currentVideo.cid || 0,
+            played_time: playedTime,
+            play_type: 1, // 开始/继续播放
+          })
+          .catch((err) => console.error("[PlayBar] 播放上报异常:", err));
+        }
+      }, 50);
+    }
+  }, [setIsPlaying, currentVideo, apiClient]);
 
   const handleArtPause = useCallback(() => {
     if (ignorePauseRef.current) {
       return;
     }
 
+    if (lastReportedStateRef.current === false) {
+      return; // 防止同状态重复触发 pause
+    }
+    lastReportedStateRef.current = false;
     setIsPlaying(false);
-  }, [setIsPlaying]);
+
+    if (currentVideo && currentVideo.duration !== 0) {
+      if (videoRef.current) {
+        const playedTime = Math.floor(videoRef.current.currentTime);
+        apiClient.reportHeartbeat({
+          aid: currentVideo.id,
+          bvid: currentVideo.bvid,
+          cid: currentVideo.cid || 0,
+          played_time: playedTime,
+          play_type: 2, // 暂停
+        })
+        .catch((err) => console.error("[PlayBar] 暂停上报异常:", err));
+      }
+    }
+  }, [setIsPlaying, currentVideo, apiClient]);
 
   const handleArtError = useCallback(
     (
@@ -529,6 +639,7 @@ const PlayBar: React.FC = () => {
                     mediaId={currentVideo.id}
                     danmakuData={danmakuData}
                     isLive={currentVideo.duration === 0}
+                    progress={currentVideo.progress}
                     getInstance={handleArtInstance}
                     onPlay={handleArtPlay}
                     onPause={handleArtPause}

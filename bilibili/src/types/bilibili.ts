@@ -180,6 +180,8 @@ export interface BilibiliListItem {
   media_count?: number;
   // 多P分集相关
   pages?: BilibiliVideoPage[];
+  // 播放进度
+  progress?: number;
 }
 
 // ============== 动态 API 类型 ==============

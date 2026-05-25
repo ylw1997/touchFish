@@ -163,6 +163,28 @@ export const usePlayerStore = create<PlayerState>()(
         const { currentVideo, playlist } = get();
         if (!currentVideo || playlist.length === 0) return;
 
+        // 如果当前视频有分P，优先播放下一P
+        if (currentVideo.pages && currentVideo.pages.length > 1) {
+          const currentCidIndex = currentVideo.pages.findIndex(
+            (p) => p.cid === currentVideo.cid,
+          );
+          if (
+            currentCidIndex > -1 &&
+            currentCidIndex < currentVideo.pages.length - 1
+          ) {
+            const nextP = currentVideo.pages[currentCidIndex + 1];
+            set({
+              currentVideo: {
+                ...currentVideo,
+                cid: nextP.cid,
+              },
+              isPlaying: true,
+            });
+            return;
+          }
+        }
+
+        // 否则播放播放列表中的下一个视频
         const currentIndex = playlist.findIndex(
           (v) => v.id === currentVideo.id,
         );
@@ -170,7 +192,6 @@ export const usePlayerStore = create<PlayerState>()(
           set({
             currentVideo: playlist[currentIndex + 1],
             isPlaying: true,
-            // videoUrl: null, // Keep old videoUrl
           });
         }
       },
@@ -187,6 +208,25 @@ export const usePlayerStore = create<PlayerState>()(
         const { currentVideo, playlist } = get();
         if (!currentVideo || playlist.length === 0) return;
 
+        // 如果当前视频有分P，优先播放上一P
+        if (currentVideo.pages && currentVideo.pages.length > 1) {
+          const currentCidIndex = currentVideo.pages.findIndex(
+            (p) => p.cid === currentVideo.cid,
+          );
+          if (currentCidIndex > 0) {
+            const prevP = currentVideo.pages[currentCidIndex - 1];
+            set({
+              currentVideo: {
+                ...currentVideo,
+                cid: prevP.cid,
+              },
+              isPlaying: true,
+            });
+            return;
+          }
+        }
+
+        // 否则播放播放列表中的上一个视频
         const currentIndex = playlist.findIndex(
           (v) => v.id === currentVideo.id,
         );
