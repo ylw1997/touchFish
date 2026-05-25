@@ -153,6 +153,13 @@ export interface BilibiliFollowedLiveResponse {
   };
 }
 
+export interface BilibiliVideoPage {
+  cid: number;
+  page: number;
+  part: string;
+  duration: number;
+}
+
 export interface BilibiliListItem {
   id: number;
   bvid: string;
@@ -171,6 +178,8 @@ export interface BilibiliListItem {
   // 收藏夹相关
   is_folder?: boolean;
   media_count?: number;
+  // 多P分集相关
+  pages?: BilibiliVideoPage[];
 }
 
 // ============== 动态 API 类型 ==============

@@ -131,6 +131,15 @@ export class BilibiliApi {
     );
   }
 
+  // 获取视频详情（包含分P）
+  getVideoInfo(bvid: string) {
+    return this.request<any>(
+      "BILIBILI_VIDEO_INFO",
+      { bvid },
+      "获取视频详情中..."
+    );
+  }
+
   // 移除稍后再看
   delWatchLater(avid: string) {
     return this.request<BilibiliWatchLaterDelResponse>(

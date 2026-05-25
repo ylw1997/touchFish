@@ -44,6 +44,7 @@ const PlayBar: React.FC = () => {
   const videoRef = useRef<Artplayer | null>(null);
   const requestSeqRef = useRef(0);
   const lastVideoIdRef = useRef<number | null>(null);
+  const lastVideoCidRef = useRef<number | null>(null);
   const ignorePauseRef = useRef(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [danmakuData, setDanmakuData] = React.useState<string>("");
@@ -115,7 +116,49 @@ const PlayBar: React.FC = () => {
           return;
         }
 
-        const result = await apiClient.getPlayUrl(video.bvid, video.cid);
+        let currentCid = video.cid;
+        let currentPages = video.pages;
+
+        // 如果没有 pages 列表，或者没有 cid，我们通过 getVideoInfo 获取
+        if (!currentPages || currentPages.length === 0 || !currentCid) {
+          try {
+            const infoRes = await apiClient.getVideoInfo(video.bvid);
+            if (infoRes.data?.code === 0 && infoRes.data?.data) {
+              const infoData = infoRes.data.data;
+              const pagesList = infoData.pages || [];
+              currentPages = pagesList;
+              if (!currentCid || !pagesList.some((p: any) => p.cid === currentCid)) {
+                currentCid = infoData.cid || pagesList[0]?.cid || 0;
+              }
+
+              // 同步更新 store 中的当前播放视频与 playlist，以便保存 pages
+              const updatedVideo = {
+                ...video,
+                cid: currentCid,
+                pages: currentPages,
+              };
+
+              // 同步修改 ref，防止下一个 useEffect 重复触发
+              lastVideoIdRef.current = updatedVideo.id;
+              lastVideoCidRef.current = updatedVideo.cid;
+
+              setCurrentVideo(updatedVideo);
+
+              const { playlist } = usePlayerStore.getState();
+              const updatedPlaylist = playlist.map((item) =>
+                item.id === video.id
+                  ? { ...item, cid: currentCid, pages: currentPages }
+                  : item
+              );
+              usePlayerStore.getState().setPlaylist(updatedPlaylist);
+            }
+          } catch (e) {
+            console.error("后台补全视频分P信息失败", e);
+          }
+        }
+
+        const playCid = currentCid || video.cid;
+        const result = await apiClient.getPlayUrl(video.bvid, playCid);
         if (
           !isStaleRequest() &&
           result.code === 0 &&
@@ -124,7 +167,7 @@ const PlayBar: React.FC = () => {
           setVideoUrl(result.data.durl[0].url);
 
           try {
-            const danmakuCid = result.data?.cid || video.cid;
+            const danmakuCid = result.data?.cid || playCid;
             if (!danmakuCid) {
               setDanmakuData("");
             } else {
@@ -157,13 +200,14 @@ const PlayBar: React.FC = () => {
         }
       }
     },
-    [apiClient, handlePlaybackFailure, setVideoUrl],
+    [apiClient, handlePlaybackFailure, setVideoUrl, setCurrentVideo],
   );
 
   useEffect(() => {
     if (!currentVideo) {
       requestSeqRef.current += 1;
       lastVideoIdRef.current = null;
+      lastVideoCidRef.current = null;
       ignorePauseRef.current = false;
       setIsLoading(false);
       setDanmakuData("");
@@ -171,9 +215,13 @@ const PlayBar: React.FC = () => {
       return;
     }
 
-    if (currentVideo.id !== lastVideoIdRef.current) {
+    if (
+      currentVideo.id !== lastVideoIdRef.current ||
+      currentVideo.cid !== lastVideoCidRef.current
+    ) {
       ignorePauseRef.current = true;
       lastVideoIdRef.current = currentVideo.id;
+      lastVideoCidRef.current = currentVideo.cid;
       setDanmakuData("");
       fetchPlayUrl(currentVideo);
     }
@@ -414,6 +462,33 @@ const PlayBar: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* 选集面板 */}
+        {isExpanded && currentVideo && currentVideo.pages && currentVideo.pages.length > 1 && (
+          <div className="playbar-pages-panel">
+            <div className="playbar-pages-header">
+              <span className="playbar-pages-title">选集 ({currentVideo.pages.length})</span>
+            </div>
+            <div className="playbar-pages-content">
+              {currentVideo.pages.map((page) => (
+                <div
+                  key={page.cid}
+                  className={`playbar-page-item ${currentVideo.cid === page.cid ? "active" : ""}`}
+                  onClick={() => {
+                    setCurrentVideo({
+                      ...currentVideo,
+                      cid: page.cid,
+                    });
+                  }}
+                  title={page.part}
+                >
+                  <span className="page-num">P{page.page}</span>
+                  <span className="page-part" title={page.part}>{page.part}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="playbar-bottom">
           <div

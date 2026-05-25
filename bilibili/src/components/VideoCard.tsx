@@ -75,13 +75,19 @@ const VideoCard: React.FC<VideoCardProps> = ({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [danmakuData, setDanmakuData] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPagesExpanded, setIsPagesExpanded] = useState(false);
+  const [selectedCid, setSelectedCid] = useState<number>(item.cid || 0);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  React.useEffect(() => {
+    setSelectedCid(item.cid || 0);
+  }, [item.cid]);
 
   const handleOpenVideo = () => {
     // 在VSCode扩展中不能打开网页，仅用于阻止事件
   };
 
-  const handlePlayClick = async (e: React.MouseEvent) => {
+  const handlePlayClick = async (e: React.MouseEvent, targetCid?: number) => {
     e.stopPropagation();
 
     // 直播：获取直播流地址并播放
@@ -105,14 +111,19 @@ const VideoCard: React.FC<VideoCardProps> = ({
       return;
     }
 
+    const playCid = targetCid || selectedCid;
+    if (targetCid) {
+      setSelectedCid(targetCid);
+    }
+
     setIsLoading(true);
     try {
-      const result = await onGetPlayUrl(item.bvid, item.cid);
+      const result = await onGetPlayUrl(item.bvid, playCid);
       if (result.code === 0 && result.data?.durl?.[0]?.url) {
         setVideoUrl(result.data.durl[0].url);
 
         // 获取弹幕
-        const danmakuCid = result.data?.cid || item.cid;
+        const danmakuCid = result.data?.cid || playCid;
         if (onGetDanmaku && danmakuCid) {
           try {
             const danmakuRes = await onGetDanmaku(danmakuCid);
@@ -150,7 +161,10 @@ const VideoCard: React.FC<VideoCardProps> = ({
 
   const handleAddToPlaylist = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToPlaylist(item);
+    addToPlaylist({
+      ...item,
+      cid: selectedCid,
+    });
     message.success("已加入播放列表");
   };
 
@@ -267,9 +281,50 @@ const VideoCard: React.FC<VideoCardProps> = ({
       </div>
 
       {/* 标题 */}
-      <div className="video-title" title={item.title}>
+      <div 
+        className="video-title" 
+        title={item.title}
+        onClick={(e) => handlePlayClick(e)}
+      >
         {item.title}
       </div>
+
+      {/* 集合视频选集展开按钮 */}
+      {!is_folder && item.pages && item.pages.length > 1 && (
+        <div 
+          className="video-pages-toggle" 
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsPagesExpanded(!isPagesExpanded);
+          }}
+        >
+          <span>分P选集 ({item.pages.length})</span>
+          <span className={`toggle-icon ${isPagesExpanded ? "expanded" : ""}`}>▼</span>
+        </div>
+      )}
+
+      {/* 展开的分P列表 */}
+      {!is_folder && isPagesExpanded && item.pages && item.pages.length > 1 && (
+        <div className="video-card-pages-list">
+          {item.pages.map((page) => (
+            <div
+              key={page.cid}
+              className={`video-card-page-item ${selectedCid === page.cid ? "active" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedCid(page.cid);
+                handlePlayClick(e, page.cid);
+              }}
+            >
+              <div className="page-item-left">
+                <span className="page-index">P{page.page}</span>
+                <span className="page-part-title" title={page.part}>{page.part}</span>
+              </div>
+              <span className="page-item-duration">{formatDuration(page.duration)}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 底部信息 */}
       <div className="video-footer">
