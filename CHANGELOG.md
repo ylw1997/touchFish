@@ -1,6 +1,15 @@
 # 更新历史 
 
 
+## [16.5.0](https://github.com/ylw1997/touchFish/compare/v16.4.0...v16.5.0) (2026-05-25)
+
+
+### ✨ Features | 新功能
+
+* bilibili支持进度上报,进度自动跳转 ([fac96b7](https://github.com/ylw1997/touchFish/commit/fac96b76e4519dd996d65da163d6298dbbf46f99))
+* 优化bilibili适配白色主题 ([578fc4b](https://github.com/ylw1997/touchFish/commit/578fc4b383d2673e798f34ba61904e5eb961aa6e))
+* 支持bilibili合集播放 ([08a9849](https://github.com/ylw1997/touchFish/commit/08a98490355ad0cb3d0d1c7e1b601ec643efbac5))
+
 ## [16.4.0](https://github.com/ylw1997/touchFish/compare/v16.3.0...v16.4.0) (2026-05-22)
 
 
