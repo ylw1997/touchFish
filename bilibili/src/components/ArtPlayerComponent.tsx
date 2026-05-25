@@ -23,6 +23,7 @@ interface ArtPlayerComponentProps {
   style?: React.CSSProperties;
   controls?: boolean;
   autoSize?: boolean;
+  progress?: number;
 }
 
 const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
@@ -38,6 +39,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   style,
   controls = true,
   autoSize = true,
+  progress,
 }) => {
   const artRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Artplayer | null>(null);
@@ -57,15 +59,14 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
     onError,
   });
 
-  useEffect(() => {
-    callbacksRef.current = {
-      getInstance,
-      onPlay,
-      onPause,
-      onEnded,
-      onError,
-    };
-  }, [getInstance, onPlay, onPause, onEnded, onError]);
+  // 渲染阶段直接更新回调引用，这是最新的 React 闭包陷阱最佳实践 (类似于 useEvent)
+  callbacksRef.current = {
+    getInstance,
+    onPlay,
+    onPause,
+    onEnded,
+    onError,
+  };
 
   useEffect(() => {
     mediaRef.current = {
@@ -85,8 +86,22 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
       hlsRef.current = null;
     }
 
-    if (playerRef.current?.destroy) {
-      playerRef.current.destroy(true);
+    if (playerRef.current) {
+      // 强硬清理：强制暂停底层 video 并清空 src，防止游离节点后台继续发声
+      try {
+        const video = playerRef.current.video;
+        if (video) {
+          video.pause();
+          video.removeAttribute("src");
+          video.load();
+        }
+      } catch (e) {
+        console.error("Error pausing video during destruction", e);
+      }
+
+      if (playerRef.current.destroy) {
+        playerRef.current.destroy(true);
+      }
     }
 
     playerRef.current = null;
@@ -188,15 +203,29 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
           ],
     });
 
-    if (callbacksRef.current.onPlay) {
-      instance.on("play", callbacksRef.current.onPlay);
-    }
-    if (callbacksRef.current.onPause) {
-      instance.on("pause", callbacksRef.current.onPause);
-    }
-    if (callbacksRef.current.onEnded) {
-      instance.on("video:ended", callbacksRef.current.onEnded);
-    }
+    instance.on("play", () => {
+      callbacksRef.current.onPlay?.();
+    });
+    instance.on("pause", () => {
+      callbacksRef.current.onPause?.();
+    });
+    instance.on("video:ended", () => {
+      callbacksRef.current.onEnded?.();
+    });
+
+    instance.on("ready", () => {
+      if (progress && progress > 0) {
+        setTimeout(() => {
+          try {
+            if (instance && instance.video) {
+              instance.currentTime = progress;
+            }
+          } catch (e) {
+            console.error("历史跳转失败:", e);
+          }
+        }, 150);
+      }
+    });
 
     callbacksRef.current.getInstance?.(instance);
 
@@ -231,6 +260,17 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
       void instance
         .switchUrl(url)
         .then(() => {
+          if (progress && progress > 0) {
+            setTimeout(() => {
+              try {
+                if (instance && instance.video) {
+                  instance.currentTime = progress;
+                }
+              } catch (e) {
+                console.error("地址切换后历史跳转失败:", e);
+              }
+            }, 150);
+          }
           if (instance.option.autoplay) {
             return instance.play().catch(() => {});
           }
@@ -240,6 +280,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
           console.error("Artplayer switchUrl failed:", error);
         });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, isLive, autoSize]);
 
   useEffect(() => {

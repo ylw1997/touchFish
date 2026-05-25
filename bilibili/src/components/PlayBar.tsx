@@ -44,6 +44,7 @@ const PlayBar: React.FC = () => {
   const videoRef = useRef<Artplayer | null>(null);
   const requestSeqRef = useRef(0);
   const lastVideoIdRef = useRef<number | null>(null);
+  const lastVideoCidRef = useRef<number | null>(null);
   const ignorePauseRef = useRef(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [danmakuData, setDanmakuData] = React.useState<string>("");
@@ -94,6 +95,8 @@ const PlayBar: React.FC = () => {
         requestId !== requestSeqRef.current ||
         usePlayerStore.getState().currentVideo?.id !== video.id;
 
+      setVideoUrl(null); // 先卸载旧播放器，防止新旧两个音轨同时播放
+      videoRef.current = null; // 同步清空引用，避免在这期间误操作旧播放器
       setIsLoading(true);
 
       try {
@@ -115,7 +118,50 @@ const PlayBar: React.FC = () => {
           return;
         }
 
-        const result = await apiClient.getPlayUrl(video.bvid, video.cid);
+        let currentCid = video.cid;
+        let currentPages = video.pages;
+
+        // 如果没有 pages 列表，或者没有 cid，我们通过 getVideoInfo 获取
+        if (!currentPages || currentPages.length === 0 || !currentCid) {
+          try {
+            const infoRes = await apiClient.getVideoInfo(video.bvid);
+            if (infoRes.data?.code === 0 && infoRes.data?.data) {
+              const infoData = infoRes.data.data;
+              const pagesList = infoData.pages || [];
+              currentPages = pagesList;
+              if (!currentCid || !pagesList.some((p: any) => p.cid === currentCid)) {
+                currentCid = infoData.cid || pagesList[0]?.cid || 0;
+              }
+
+              // 同步更新 store 中的当前播放视频与 playlist，以便保存 pages
+              const updatedVideo = {
+                ...video,
+                id: infoData.aid || video.id,
+                cid: currentCid,
+                pages: currentPages,
+              };
+
+              // 同步修改 ref，防止下一个 useEffect 重复触发
+              lastVideoIdRef.current = updatedVideo.id;
+              lastVideoCidRef.current = updatedVideo.cid;
+
+              setCurrentVideo(updatedVideo);
+
+              const { playlist } = usePlayerStore.getState();
+              const updatedPlaylist = playlist.map((item) =>
+                item.id === video.id
+                  ? { ...item, id: infoData.aid || item.id, cid: currentCid, pages: currentPages }
+                  : item
+              );
+              usePlayerStore.getState().setPlaylist(updatedPlaylist);
+            }
+          } catch (e) {
+            console.error("后台补全视频分P信息失败", e);
+          }
+        }
+
+        const playCid = currentCid || video.cid;
+        const result = await apiClient.getPlayUrl(video.bvid, playCid);
         if (
           !isStaleRequest() &&
           result.code === 0 &&
@@ -124,7 +170,7 @@ const PlayBar: React.FC = () => {
           setVideoUrl(result.data.durl[0].url);
 
           try {
-            const danmakuCid = result.data?.cid || video.cid;
+            const danmakuCid = result.data?.cid || playCid;
             if (!danmakuCid) {
               setDanmakuData("");
             } else {
@@ -157,23 +203,30 @@ const PlayBar: React.FC = () => {
         }
       }
     },
-    [apiClient, handlePlaybackFailure, setVideoUrl],
+    [apiClient, handlePlaybackFailure, setVideoUrl, setCurrentVideo],
   );
 
   useEffect(() => {
     if (!currentVideo) {
       requestSeqRef.current += 1;
       lastVideoIdRef.current = null;
+      lastVideoCidRef.current = null;
       ignorePauseRef.current = false;
       setIsLoading(false);
       setDanmakuData("");
       setVideoUrl(null);
+      videoRef.current = null;
       return;
     }
 
-    if (currentVideo.id !== lastVideoIdRef.current) {
+    if (
+      currentVideo.id !== lastVideoIdRef.current ||
+      currentVideo.cid !== lastVideoCidRef.current
+    ) {
       ignorePauseRef.current = true;
+      lastReportedStateRef.current = null; // 重置去重引用，确保新视频事件能正常上报
       lastVideoIdRef.current = currentVideo.id;
+      lastVideoCidRef.current = currentVideo.cid;
       setDanmakuData("");
       fetchPlayUrl(currentVideo);
     }
@@ -181,19 +234,58 @@ const PlayBar: React.FC = () => {
 
   useEffect(() => {
     if (videoRef.current) {
+      const art = videoRef.current;
       if (isPlaying) {
-        videoRef.current.play().catch(() => {});
+        if (!art.playing) {
+          art.play().catch((err) => {
+            console.warn("自动播放失败（可能受浏览器策略限制）:", err);
+            setIsPlaying(false);
+            message.warning("自动播放受限，请手动点击播放");
+          });
+        }
       } else {
-        videoRef.current.pause();
+        if (art.playing) {
+          art.pause();
+        }
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, message, setIsPlaying]);
 
   useEffect(() => {
     if (!videoUrl) {
       setIsPip(false);
     }
   }, [videoUrl]);
+
+  // 15 秒定时心跳进度上报
+  useEffect(() => {
+    let intervalId: any = null;
+
+    if (isPlaying && currentVideo && currentVideo.duration > 0) {
+      intervalId = setInterval(() => {
+        if (videoRef.current) {
+          const playedTime = Math.floor(videoRef.current.currentTime);
+          apiClient
+            .reportHeartbeat({
+              aid: currentVideo.id,
+              bvid: currentVideo.bvid,
+              cid: currentVideo.cid || 0,
+              played_time: playedTime,
+              play_type: 3, // 播放中循环心跳
+            })
+            .catch((err) => {
+              console.error("[PlayBar] 15秒循环心跳上报异常:", err);
+            });
+        }
+      }, 15000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isPlaying, currentVideo, apiClient, videoUrl]);
 
   const handlePlayVideo = (video: typeof currentVideo) => {
     if (video) {
@@ -221,6 +313,22 @@ const PlayBar: React.FC = () => {
       return;
     }
 
+    if (playingVideo.duration > 0) {
+      console.log(`[PlayBar] 视频播放结束 -> 发起完播上报 (aid: ${playingVideo.id}, bvid: ${playingVideo.bvid}, cid: ${playingVideo.cid || 0}, played_time: -1)`);
+      apiClient
+        .reportHeartbeat({
+          aid: playingVideo.id,
+          bvid: playingVideo.bvid,
+          cid: playingVideo.cid || 0,
+          played_time: -1, // -1 表示已播放完毕
+          play_type: 4, // 播放完毕上报
+        })
+        .then(() => {})
+        .catch((err) => {
+          console.error("[PlayBar] 完播上报异常:", err);
+        });
+    }
+
     const currentIndex = queue.findIndex((video) => video.id === playingVideo.id);
     if (currentIndex === -1 || currentIndex >= queue.length - 1) {
       setIsPlaying(false);
@@ -230,7 +338,7 @@ const PlayBar: React.FC = () => {
 
     ignorePauseRef.current = true;
     playNext();
-  }, [playNext, setIsPlaying]);
+  }, [playNext, setIsPlaying, apiClient]);
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -251,32 +359,82 @@ const PlayBar: React.FC = () => {
       videoRef.current = art;
 
       if (usePlayerStore.getState().isPlaying) {
-        art.play().catch(() => {});
+        const handlePlayError = (err: any) => {
+          console.warn("Artplayer 初始化自动播放失败（可能受浏览器策略限制）:", err);
+          setIsPlaying(false);
+          message.warning("自动播放受限，请手动点击播放");
+        };
+
+        art.play().then(() => setIsPlaying(true)).catch(handlePlayError);
         art.once("ready", () => {
-          art.play().catch(() => {});
+          art.play().then(() => setIsPlaying(true)).catch(handlePlayError);
         });
-        setIsPlaying(true);
       }
 
       art.on("pip", (state: boolean) => {
         setIsPip(state);
       });
     },
-    [setIsPlaying],
+    [setIsPlaying, message],
   );
 
+  // 用于防止同状态的重复上报拦截
+  const lastReportedStateRef = useRef<boolean | null>(null);
+
   const handleArtPlay = useCallback(() => {
-    ignorePauseRef.current = false;
+    // 延迟取消忽略，防止播放器刚启动时因浏览器限制或缓冲可能出现的瞬时暂停事件导致状态机误判
+    setTimeout(() => {
+      ignorePauseRef.current = false;
+    }, 300);
+
+    if (lastReportedStateRef.current === true) {
+      return; // 防止回音壁或播放器底层重复触发 play
+    }
+    lastReportedStateRef.current = true;
     setIsPlaying(true);
-  }, [setIsPlaying]);
+
+    if (currentVideo && currentVideo.duration !== 0) {
+      setTimeout(() => {
+        if (videoRef.current) {
+          const playedTime = Math.floor(videoRef.current.currentTime);
+          apiClient.reportHeartbeat({
+            aid: currentVideo.id,
+            bvid: currentVideo.bvid,
+            cid: currentVideo.cid || 0,
+            played_time: playedTime,
+            play_type: 1, // 开始/继续播放
+          })
+          .catch((err) => console.error("[PlayBar] 播放上报异常:", err));
+        }
+      }, 50);
+    }
+  }, [setIsPlaying, currentVideo, apiClient]);
 
   const handleArtPause = useCallback(() => {
     if (ignorePauseRef.current) {
       return;
     }
 
+    if (lastReportedStateRef.current === false) {
+      return; // 防止同状态重复触发 pause
+    }
+    lastReportedStateRef.current = false;
     setIsPlaying(false);
-  }, [setIsPlaying]);
+
+    if (currentVideo && currentVideo.duration !== 0) {
+      if (videoRef.current) {
+        const playedTime = Math.floor(videoRef.current.currentTime);
+        apiClient.reportHeartbeat({
+          aid: currentVideo.id,
+          bvid: currentVideo.bvid,
+          cid: currentVideo.cid || 0,
+          played_time: playedTime,
+          play_type: 2, // 暂停
+        })
+        .catch((err) => console.error("[PlayBar] 暂停上报异常:", err));
+      }
+    }
+  }, [setIsPlaying, currentVideo, apiClient]);
 
   const handleArtError = useCallback(
     (
@@ -415,6 +573,33 @@ const PlayBar: React.FC = () => {
           )}
         </AnimatePresence>
 
+        {/* 选集面板 */}
+        {isExpanded && currentVideo && currentVideo.pages && currentVideo.pages.length > 1 && (
+          <div className="playbar-pages-panel">
+            <div className="playbar-pages-header">
+              <span className="playbar-pages-title">选集 ({currentVideo.pages.length})</span>
+            </div>
+            <div className="playbar-pages-content">
+              {currentVideo.pages.map((page) => (
+                <div
+                  key={page.cid}
+                  className={`playbar-page-item ${currentVideo.cid === page.cid ? "active" : ""}`}
+                  onClick={() => {
+                    setCurrentVideo({
+                      ...currentVideo,
+                      cid: page.cid,
+                    });
+                  }}
+                  title={page.part}
+                >
+                  <span className="page-num">P{page.page}</span>
+                  <span className="page-part" title={page.part}>{page.part}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="playbar-bottom">
           <div
             className="playbar-video-wrapper"
@@ -454,6 +639,7 @@ const PlayBar: React.FC = () => {
                     mediaId={currentVideo.id}
                     danmakuData={danmakuData}
                     isLive={currentVideo.duration === 0}
+                    progress={currentVideo.progress}
                     getInstance={handleArtInstance}
                     onPlay={handleArtPlay}
                     onPause={handleArtPause}

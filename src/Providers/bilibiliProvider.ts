@@ -14,6 +14,8 @@ import {
   getFavoriteDetail,
   addToWatchLater,
   getPlayUrl,
+  getVideoInfo,
+  reportHeartbeat,
   delWatchLater,
   getBilibiliHeaders,
   getDanmaku,
@@ -630,6 +632,34 @@ export class BilibiliProvider extends BaseWebviewProvider {
         const res = await getPlayUrl(bvid, cid);
         webviewView.webview.postMessage({
           command: "BILIBILI_PLAYURL_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_VIDEO_INFO": {
+        const { bvid } = payload || {};
+        const res = await getVideoInfo(bvid);
+        webviewView.webview.postMessage({
+          command: "BILIBILI_VIDEO_INFO_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_HEARTBEAT": {
+        const { aid, bvid, cid, played_time, realtime, start_ts, play_type } = payload || {};
+        const res = await reportHeartbeat({
+          aid,
+          bvid,
+          cid,
+          played_time,
+          realtime,
+          start_ts,
+          play_type,
+        });
+        webviewView.webview.postMessage({
+          command: "BILIBILI_HEARTBEAT_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

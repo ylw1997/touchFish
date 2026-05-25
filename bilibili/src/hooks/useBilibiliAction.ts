@@ -327,7 +327,7 @@ const useBilibiliAction = () => {
 
           if (result.code === 0 && result.data?.list) {
             const newList: BilibiliListItem[] = result.data.list.map(
-              (item) => ({
+              (item: any) => ({
                 id: item.aid,
                 bvid: item.bvid,
                 cid: item.cid,
@@ -343,6 +343,8 @@ const useBilibiliAction = () => {
                   danmaku: item.stat.danmaku,
                 },
                 is_followed: 0,
+                pages: item.pages,
+                progress: item.progress,
               }),
             );
 
@@ -360,7 +362,7 @@ const useBilibiliAction = () => {
     },
     [
       apiClient,
-      list.length,
+      list,
       appendRecommendCache,
       clearRecommendCache,
       convertLiveToListItem,
