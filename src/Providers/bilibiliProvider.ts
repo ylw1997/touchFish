@@ -7,6 +7,7 @@ import {
   getPopular,
   getFollowedLiveList,
   getLiveList,
+  getLiveIndexList,
   getLivePlayUrl,
   getDynamic,
   getWatchLater,
@@ -468,6 +469,18 @@ export class BilibiliProvider extends BaseWebviewProvider {
         }
         webviewView.webview.postMessage({
           command: "BILIBILI_LIVE_RESULT",
+          payload: res.data,
+          uuid,
+        } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_LIVE_INDEX": {
+        const res = await getLiveIndexList();
+        if (res.data?.code !== 0) {
+          showInfo(`获取B站直播首页失败: ${res.data?.message || "未知错误"}`);
+        }
+        webviewView.webview.postMessage({
+          command: "BILIBILI_LIVE_INDEX_RESULT",
           payload: res.data,
           uuid,
         } as CommandsType<any>);

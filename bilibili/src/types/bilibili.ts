@@ -129,6 +129,48 @@ export interface BilibiliLiveResponse {
   };
 }
 
+// 直播模块列表数据结构 (新接口)
+export interface LiveIndexModuleInfo {
+  id: number;
+  link: string;
+  pic: string;
+  title: string;
+  type: number;
+  sort: number;
+  count: number;
+}
+
+export interface LiveIndexRoomItem {
+  roomid: number;
+  title: string;
+  uname: string;
+  face: string;
+  cover: string;
+  online: number;
+  link: string;
+  area_v2_name: string;
+  area_v2_parent_name: string;
+  keyframe: string;
+  watched_show?: {
+    num: number;
+    text_small: string;
+    text_large: string;
+  };
+}
+
+export interface LiveIndexRoomList {
+  module_info: LiveIndexModuleInfo;
+  list: LiveIndexRoomItem[];
+}
+
+export interface BilibiliLiveIndexResponse {
+  code: number;
+  message: string;
+  data: {
+    room_list: LiveIndexRoomList[];
+  } | null;
+}
+
 // 统一的列表项类型（用于渲染）
 export interface FollowedLiveRoomItem {
   room_id?: number;

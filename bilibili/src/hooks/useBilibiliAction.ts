@@ -12,6 +12,7 @@ const useBilibiliAction = () => {
   const [list, setList] = useState<BilibiliListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
+  const [liveTabsData, setLiveTabsData] = useState<any[]>([]);
 
   // 动态分页相关
   const dynamicPageRef = useRef(1);
@@ -250,69 +251,39 @@ const useBilibiliAction = () => {
             dynamicPageRef.current += 1;
             setTotal(result.data.no_more ? list.length + newList.length : 999);
           }
-        } else if (payload === "live") {
-          // 直播接口 - 支持分页
-          if (replace) {
-            livePageRef.current = 1;
-            liveRecommendedLoadedRef.current = 0;
-
-            const [followedResult, recommendedResult] = await Promise.allSettled(
-              [apiClient.getFollowedLive(), apiClient.getLive(1)],
-            );
-
-            const followedList =
-              followedResult.status === "fulfilled" &&
-              followedResult.value.code === 0 &&
-              followedResult.value.data?.list
-                ? followedResult.value.data.list.map((item: any) =>
-                    convertLiveToListItem(item, 1),
-                  )
-                : [];
-
-            const followedIds = new Set(followedList.map((item) => item.id));
-
-            if (
-              recommendedResult.status === "fulfilled" &&
-              recommendedResult.value.code === 0 &&
-              recommendedResult.value.data?.list
-            ) {
-              const recommendedRawList = recommendedResult.value.data.list;
-              const recommendedList = recommendedRawList
-                .map((item: any) => convertLiveToListItem(item, 0))
-                .filter((item) => !followedIds.has(item.id));
-              const mergedList = [...followedList, ...recommendedList];
-
-              setList(mergedList);
-              liveRecommendedLoadedRef.current = recommendedRawList.length;
-              livePageRef.current = 2;
-
-              const hasMore =
-                liveRecommendedLoadedRef.current <
-                recommendedResult.value.data.count;
-              setTotal(hasMore ? 999 : mergedList.length);
-            } else {
-              setList(followedList);
-              setTotal(followedList.length);
+        } else if (payload === "live" || (payload.startsWith("live_") && forceRefresh)) {
+          // 直播新接口（聚合所有分类，不分页）
+          const result = await apiClient.getLiveIndex();
+          if (result.code === 0 && result.data?.room_list) {
+            setLiveTabsData(result.data.room_list);
+            
+            // 如果是因为子 Tab 的强刷进来的，需要保持对应分类，否则取第一个
+            const targetModuleId = payload.startsWith("live_") 
+              ? parseInt(payload.split("_")[1]) 
+              : (result.data.room_list.length > 0 ? result.data.room_list[0].module_info.id : 0);
+              
+            const targetTab = result.data.room_list.find((tab: any) => tab.module_info.id === targetModuleId) || result.data.room_list[0];
+            
+            if (targetTab) {
+              const convertedList = targetTab.list.map((item: any) =>
+                convertLiveToListItem(item, 0)
+              );
+              setList(convertedList);
+              setTotal(convertedList.length);
             }
-
-            return;
           }
-
-          const result = await apiClient.getLive(livePageRef.current);
-
-          if (result.code === 0 && result.data?.list) {
-            const existingIds = new Set(list.map((item) => item.id));
-            const newList = result.data.list
-              .map((item: any) => convertLiveToListItem(item, 0))
-              .filter((item) => !existingIds.has(item.id));
-
-            setList((currentList) => [...currentList, ...newList]);
-
-            liveRecommendedLoadedRef.current += result.data.list.length;
-            livePageRef.current += 1;
-            const hasMore =
-              liveRecommendedLoadedRef.current < result.data.count;
-            setTotal(hasMore ? 999 : list.length + newList.length);
+        } else if (payload.startsWith("live_")) {
+          // 切换直播子 Tab
+          const moduleId = parseInt(payload.split("_")[1]);
+          const targetTab = liveTabsData.find(
+            (tab) => tab.module_info.id === moduleId
+          );
+          if (targetTab) {
+            const convertedList = targetTab.list.map((item: any) =>
+              convertLiveToListItem(item, 0)
+            );
+            setList(convertedList);
+            setTotal(convertedList.length);
           }
         } else if (payload === "watchlater") {
           // 待看接口
@@ -369,6 +340,7 @@ const useBilibiliAction = () => {
       isRecommendCacheValid,
       recommendCachedList,
       setRecommendCache,
+      liveTabsData,
     ],
   );
 
@@ -567,6 +539,7 @@ const useBilibiliAction = () => {
     getUserCard,
     modifyRelation,
     getLivePlayUrl,
+    liveTabsData,
   };
 };
 

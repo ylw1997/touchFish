@@ -239,6 +239,30 @@ export const getPopular = async (pn: number = 1) => {
 };
 
 /**
+ * 获取直播模块数据 (新接口)
+ * https://api.live.bilibili.com/xlive/web-interface/v1/index/getList?platform=web
+ */
+export const getLiveIndexList = async () => {
+  try {
+    return await axios.get(
+      `https://api.live.bilibili.com/xlive/web-interface/v1/index/getList?platform=web`,
+      {
+        headers: await getBilibiliHeaders(),
+      },
+    );
+  } catch (error: any) {
+    showError(`获取B站直播模块数据失败: ${error.message}`);
+    return {
+      data: {
+        code: -1,
+        message: error.message,
+        data: { room_list: [] },
+      },
+    };
+  }
+};
+
+/**
  * 获取直播列表
  * https://api.live.bilibili.com/room/v3/area/getRoomList
  */

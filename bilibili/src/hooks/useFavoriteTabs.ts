@@ -1,7 +1,7 @@
 /*
  * @Description: 收藏夹 Tab 逻辑 Hook
  */
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { TabItem } from "../data/tabs";
 
 // 收藏夹 tab 项类型
@@ -22,6 +22,7 @@ interface UseFavoriteTabsOptions {
     forceRefresh?: boolean
   ) => Promise<void>;
   clearList: () => void;
+  liveTabsData?: any[];
 }
 
 export const useFavoriteTabs = ({
@@ -30,6 +31,7 @@ export const useFavoriteTabs = ({
   getFavoriteDetail,
   getListData,
   clearList,
+  liveTabsData = [],
 }: UseFavoriteTabsOptions) => {
   const [activeKey, setActiveKey] = useState(tabs[0]?.key || "");
   const [subActiveKey, setSubActiveKey] = useState("");
@@ -54,16 +56,25 @@ export const useFavoriteTabs = ({
     if (activeKey === "favorites") {
       return favoriteTabs.length > 0;
     }
+    if (activeKey === "live") {
+      return liveTabsData.length > 0;
+    }
     return curTab && curTab.childrenList && curTab.childrenList.length > 0;
-  }, [activeKey, favoriteTabs, curTab]);
+  }, [activeKey, favoriteTabs, curTab, liveTabsData]);
 
   // 获取当前二级 Tab items
   const subTabItems = useMemo(() => {
     if (activeKey === "favorites") {
       return favoriteTabItems;
     }
+    if (activeKey === "live") {
+      return liveTabsData.map((item) => ({
+        key: `live_${item.module_info.id}`,
+        label: item.module_info.title,
+      }));
+    }
     return curTab?.childrenList;
-  }, [activeKey, favoriteTabItems, curTab]);
+  }, [activeKey, favoriteTabItems, curTab, liveTabsData]);
 
   // 请求数据
   const fetchData = useCallback(() => {
@@ -112,6 +123,8 @@ export const useFavoriteTabs = ({
           setCurrentFolderId(folder.id);
           getFavoriteDetail(folder.id, true);
         }
+      } else if (activeKey === "live") {
+        getListData(key, true);
       } else {
         getListData(key, true);
       }
@@ -137,6 +150,12 @@ export const useFavoriteTabs = ({
           setSubActiveKey("");
           setCurrentFolderId(null);
         }
+      } else if (key === "live") {
+        setFavoriteTabs([]);
+        setCurrentFolderId(null);
+        // live 本身加载时会请求 live index，如果在 useBilibiliAction 里能够自动设置初始 tab 就行
+        setSubActiveKey(""); 
+        getListData(key, true);
       } else {
         setFavoriteTabs([]);
         setCurrentFolderId(null);
@@ -153,6 +172,13 @@ export const useFavoriteTabs = ({
     [clearList, getListData, tabs, getFavoriteFolders, getFavoriteDetail]
   );
 
+  // 当 liveTabsData 加载后，如果是 live tab，且当前 subActiveKey 为空，自动选中第一个
+  useEffect(() => {
+    if (activeKey === "live" && liveTabsData.length > 0 && !subActiveKey) {
+      setSubActiveKey(`live_${liveTabsData[0].module_info.id}`);
+    }
+  }, [activeKey, liveTabsData, subActiveKey]);
+
   return {
     activeKey,
     subActiveKey,
@@ -160,6 +186,7 @@ export const useFavoriteTabs = ({
     hasSubTabs,
     subTabItems,
     currentFolderId,
+    setSubActiveKey, // 把这个抛出，以便需要时可修改
     fetchData,
     refreshData,
     onSubChange,
