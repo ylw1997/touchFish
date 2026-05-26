@@ -94,19 +94,24 @@ const VideoCard: React.FC<VideoCardProps> = ({
   // 互斥互锁机制：当全局主播放器开始播放时，自动关闭当前卡片的局部播放
   React.useEffect(() => {
     if (isMainPlaying && isPlaying && artRef.current) {
-      console.log(`%c[VideoCard] 主播放器已启动，自动关闭卡片[${item.bvid}]的局部播放器防止音轨冲突`, 'color: #ff9800; font-weight: bold;');
-      
+      console.log(
+        `%c[VideoCard] 主播放器已启动，自动关闭卡片[${item.bvid}]的局部播放器防止音轨冲突`,
+        "color: #ff9800; font-weight: bold;",
+      );
+
       const playedTime = Math.floor(artRef.current.currentTime);
       if (item.duration !== 0) {
-        apiClient.reportHeartbeat({
-          aid: item.id,
-          bvid: item.bvid,
-          cid: selectedCid || item.cid || 0,
-          played_time: playedTime,
-          play_type: 2,
-        }).catch(() => {});
+        apiClient
+          .reportHeartbeat({
+            aid: item.id,
+            bvid: item.bvid,
+            cid: selectedCid || item.cid || 0,
+            played_time: playedTime,
+            play_type: 2,
+          })
+          .catch(() => {});
       }
-      
+
       artRef.current.destroy(true);
       artRef.current = null;
       setIsPlaying(false);
@@ -260,13 +265,15 @@ const VideoCard: React.FC<VideoCardProps> = ({
     if (isPlaying && artRef.current) {
       const playedTime = Math.floor(artRef.current.currentTime);
       if (item.duration > 0) {
-        apiClient.reportHeartbeat({
-          aid: item.id,
-          bvid: item.bvid,
-          cid: selectedCid || item.cid || 0,
-          played_time: playedTime,
-          play_type: 2,
-        }).catch(() => {});
+        apiClient
+          .reportHeartbeat({
+            aid: item.id,
+            bvid: item.bvid,
+            cid: selectedCid || item.cid || 0,
+            played_time: playedTime,
+            play_type: 2,
+          })
+          .catch(() => {});
       }
       artRef.current.destroy(true);
       artRef.current = null;
@@ -391,23 +398,30 @@ const VideoCard: React.FC<VideoCardProps> = ({
             )}
             {!is_folder && (
               <div className="video-duration">
-                {item.progress !== undefined && item.progress !== 0
-                  ? item.progress === -1
-                    ? `${formatDuration(item.duration)}/${formatDuration(item.duration)}`
-                    : `${formatDuration(item.progress)}/${formatDuration(item.duration)}`
+                {item.progress === -1 || item.viewed
+                  ? "已播放"
                   : formatDuration(item.duration)}
               </div>
             )}
-            {!is_folder && item.progress !== undefined && item.progress > 0 && (
-              <div className="video-progress-bar">
-                <div
-                  className="video-progress-fill"
-                  style={{
-                    width: `${Math.min(100, (item.progress / item.duration) * 100)}%`,
-                  }}
-                />
-              </div>
-            )}
+            {!is_folder &&
+              (item.viewed ||
+                (item.progress !== undefined && item.progress !== 0)) && (
+                <div className="video-progress-bar">
+                  <div
+                    className="video-progress-fill"
+                    style={{
+                      width:
+                        item.progress === -1
+                          ? "100%"
+                          : item.progress && item.duration
+                            ? `${Math.min(100, (item.progress / item.duration) * 100)}%`
+                            : item.viewed
+                              ? "100%"
+                              : "0%",
+                    }}
+                  />
+                </div>
+              )}
           </>
         )}
       </div>

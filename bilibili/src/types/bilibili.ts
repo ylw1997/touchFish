@@ -182,6 +182,7 @@ export interface BilibiliListItem {
   pages?: BilibiliVideoPage[];
   // 播放进度
   progress?: number;
+  viewed?: boolean;
 }
 
 // ============== 动态 API 类型 ==============
