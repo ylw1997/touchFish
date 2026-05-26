@@ -90,6 +90,7 @@ function App() {
     getUserCard,
     modifyRelation,
     getLivePlayUrl,
+    liveTabsData,
   } = useBilibiliAction();
 
   //   const { addListToPlaylist } = usePlayerStore();
@@ -110,6 +111,7 @@ function App() {
     getFavoriteDetail,
     getListData,
     clearList,
+    liveTabsData,
   });
 
   // 退出登录
@@ -173,8 +175,7 @@ function App() {
   }, []);
 
   // 监听登录状态变化
-  useEffect(() => {
-  }, [isLoggedIn, userInfo]);
+  useEffect(() => {}, [isLoggedIn, userInfo]);
   useEffect(() => {
     if (list.length === 0) fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -264,7 +265,7 @@ function App() {
             next={fetchData}
             loader={isFetching ? loaderFunc() : null}
             endMessage={<Divider plain>没有了🤐</Divider>}
-            hasMore={list.length < total}
+            hasMore={activeKey === "live" ? false : list.length < total}
             scrollThreshold={0.95}
             scrollableTarget="scrollableDiv"
           >

@@ -23,6 +23,7 @@ import dayjs from "dayjs";
 import ArtPlayerComponent from "./ArtPlayerComponent";
 import { useRequest } from "../hooks/useRequest";
 import { BilibiliApi } from "../api";
+import { useBilibiliHeartbeat } from "../hooks/useBilibiliHeartbeat";
 import Artplayer from "artplayer";
 
 export interface VideoCardProps {
@@ -85,7 +86,27 @@ const VideoCard: React.FC<VideoCardProps> = ({
   const [isPagesExpanded, setIsPagesExpanded] = useState(false);
   const [selectedCid, setSelectedCid] = useState<number>(item.cid || 0);
   const artRef = useRef<Artplayer | null>(null);
-  const lastReportedStateRef = useRef<boolean | null>(null); // 防抖/状态去重
+
+  const videoInfo = React.useMemo(
+    () =>
+      item
+        ? {
+            aid: item.id,
+            bvid: item.bvid,
+            cid: selectedCid || item.cid || 0,
+            duration: item.duration,
+          }
+        : null,
+    [item, selectedCid]
+  );
+
+  const { reportPlay, reportPause, reportEnded, reportClose } =
+    useBilibiliHeartbeat({
+      apiClient,
+      artRef,
+      videoInfo,
+      isPlaying,
+    });
 
   React.useEffect(() => {
     setSelectedCid(item.cid || 0);
@@ -94,27 +115,20 @@ const VideoCard: React.FC<VideoCardProps> = ({
   // 互斥互锁机制：当全局主播放器开始播放时，自动关闭当前卡片的局部播放
   React.useEffect(() => {
     if (isMainPlaying && isPlaying && artRef.current) {
-      console.log(`%c[VideoCard] 主播放器已启动，自动关闭卡片[${item.bvid}]的局部播放器防止音轨冲突`, 'color: #ff9800; font-weight: bold;');
-      
-      const playedTime = Math.floor(artRef.current.currentTime);
-      if (item.duration !== 0) {
-        apiClient.reportHeartbeat({
-          aid: item.id,
-          bvid: item.bvid,
-          cid: selectedCid || item.cid || 0,
-          played_time: playedTime,
-          play_type: 2,
-        }).catch(() => {});
-      }
-      
+      console.log(
+        `%c[VideoCard] 主播放器已启动，自动关闭卡片[${item.bvid}]的局部播放器防止音轨冲突`,
+        "color: #ff9800; font-weight: bold;",
+      );
+
+      reportClose();
+
       artRef.current.destroy(true);
       artRef.current = null;
       setIsPlaying(false);
       setVideoUrl(null);
       setDanmakuData("");
-      lastReportedStateRef.current = null;
     }
-  }, [isMainPlaying, isPlaying, item, selectedCid, apiClient]);
+  }, [isMainPlaying, isPlaying, item, selectedCid, apiClient, reportClose]);
 
   const handleOpenVideo = () => {
     // 在VSCode扩展中不能打开网页，仅用于阻止事件
@@ -180,61 +194,17 @@ const VideoCard: React.FC<VideoCardProps> = ({
   };
 
   const handleArtPlay = () => {
-    if (lastReportedStateRef.current === true) return;
-    lastReportedStateRef.current = true;
-
-    if (item.duration !== 0 && artRef.current) {
-      const playedTime = Math.floor(artRef.current.currentTime);
-      apiClient
-        .reportHeartbeat({
-          aid: item.id,
-          bvid: item.bvid,
-          cid: selectedCid || item.cid || 0,
-          played_time: playedTime,
-          play_type: 1, // 播放中上报
-        })
-        .then(() => {})
-        .catch((err) => console.error("[VideoCard] 局部播放上报异常:", err));
-    }
+    reportPlay();
   };
 
   const handleArtPause = () => {
-    if (lastReportedStateRef.current === false) return;
-    lastReportedStateRef.current = false;
-
-    if (item.duration !== 0 && artRef.current) {
-      const playedTime = Math.floor(artRef.current.currentTime);
-      apiClient
-        .reportHeartbeat({
-          aid: item.id,
-          bvid: item.bvid,
-          cid: selectedCid || item.cid || 0,
-          played_time: playedTime,
-          play_type: 2, // 暂停上报
-        })
-        .then(() => {})
-        .catch((err) => console.error("[VideoCard] 局部暂停上报异常:", err));
-    }
+    reportPause();
   };
 
   const handleCloseVideo = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (item.duration !== 0 && artRef.current) {
-      const playedTime = Math.floor(artRef.current.currentTime);
-      apiClient
-        .reportHeartbeat({
-          aid: item.id,
-          bvid: item.bvid,
-          cid: selectedCid || item.cid || 0,
-          played_time: playedTime,
-          play_type: 2, // 暂停形式保存
-        })
-        .then(() => {})
-        .catch((err) =>
-          console.error("[VideoCard] 局部播放关闭上报异常:", err),
-        );
-    }
+    reportClose();
 
     if (artRef.current) {
       artRef.current.destroy(true);
@@ -243,7 +213,10 @@ const VideoCard: React.FC<VideoCardProps> = ({
     setIsPlaying(false);
     setVideoUrl(null);
     setDanmakuData("");
-    lastReportedStateRef.current = null;
+  };
+
+  const handleArtEnded = () => {
+    reportEnded();
   };
 
   const handleAddToWatchLater = (e: React.MouseEvent) => {
@@ -258,16 +231,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
 
     // 如果当前卡片有局部播放器正在播放，先停止并上报进度，防止两个音轨同时播放
     if (isPlaying && artRef.current) {
-      const playedTime = Math.floor(artRef.current.currentTime);
-      if (item.duration > 0) {
-        apiClient.reportHeartbeat({
-          aid: item.id,
-          bvid: item.bvid,
-          cid: selectedCid || item.cid || 0,
-          played_time: playedTime,
-          play_type: 2,
-        }).catch(() => {});
-      }
+      reportClose();
       artRef.current.destroy(true);
       artRef.current = null;
       setIsPlaying(false);
@@ -309,6 +273,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 getInstance={handleArtInstance}
                 onPlay={handleArtPlay}
                 onPause={handleArtPause}
+                onEnded={handleArtEnded}
               />
             </div>
             <div className="video-close-btn" onClick={handleCloseVideo}>
@@ -391,23 +356,32 @@ const VideoCard: React.FC<VideoCardProps> = ({
             )}
             {!is_folder && (
               <div className="video-duration">
-                {item.progress !== undefined && item.progress !== 0
-                  ? item.progress === -1
-                    ? `${formatDuration(item.duration)}/${formatDuration(item.duration)}`
-                    : `${formatDuration(item.progress)}/${formatDuration(item.duration)}`
-                  : formatDuration(item.duration)}
+                {item.progress === -1 || item.viewed
+                  ? "已播放"
+                  : item.progress && item.progress > 0 && item.duration
+                    ? `${formatDuration(item.progress)} / ${formatDuration(item.duration)}`
+                    : formatDuration(item.duration)}
               </div>
             )}
-            {!is_folder && item.progress !== undefined && item.progress > 0 && (
-              <div className="video-progress-bar">
-                <div
-                  className="video-progress-fill"
-                  style={{
-                    width: `${Math.min(100, (item.progress / item.duration) * 100)}%`,
-                  }}
-                />
-              </div>
-            )}
+            {!is_folder &&
+              (item.viewed ||
+                (item.progress !== undefined && item.progress !== 0)) && (
+                <div className="video-progress-bar">
+                  <div
+                    className="video-progress-fill"
+                    style={{
+                      width:
+                        item.progress === -1
+                          ? "100%"
+                          : item.progress && item.duration
+                            ? `${Math.min(100, (item.progress / item.duration) * 100)}%`
+                            : item.viewed
+                              ? "100%"
+                              : "0%",
+                    }}
+                  />
+                </div>
+              )}
           </>
         )}
       </div>

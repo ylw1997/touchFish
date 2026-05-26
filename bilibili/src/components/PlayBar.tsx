@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ArtPlayerComponent from "./ArtPlayerComponent";
 import Artplayer from "artplayer";
 import { App, Button } from "antd";
+import { useBilibiliHeartbeat } from "../hooks/useBilibiliHeartbeat";
 
 const PlayBar: React.FC = () => {
   const { message } = App.useApp();
@@ -45,13 +46,38 @@ const PlayBar: React.FC = () => {
   const requestSeqRef = useRef(0);
   const lastVideoIdRef = useRef<number | null>(null);
   const lastVideoCidRef = useRef<number | null>(null);
-  const ignorePauseRef = useRef(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [danmakuData, setDanmakuData] = React.useState<string>("");
   const [isPip, setIsPip] = React.useState(false);
 
   const { request } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
+
+  const videoInfo = React.useMemo(
+    () =>
+      currentVideo
+        ? {
+            aid: currentVideo.id,
+            bvid: currentVideo.bvid,
+            cid: currentVideo.cid || 0,
+            duration: currentVideo.duration,
+          }
+        : null,
+    [currentVideo]
+  );
+
+  const {
+    reportPlay,
+    reportPause,
+    reportEnded,
+    setIgnorePause,
+    resetState,
+  } = useBilibiliHeartbeat({
+    apiClient,
+    artRef: videoRef,
+    videoInfo,
+    isPlaying,
+  });
 
   const handlePlaybackFailure = useCallback(
     (
@@ -72,7 +98,7 @@ const PlayBar: React.FC = () => {
       setVideoUrl(null);
       setDanmakuData("");
       setIsPlaying(false);
-      ignorePauseRef.current = false;
+      setIgnorePause(false);
       setIsPip(false);
 
       if (video.duration === 0 && options?.removeFailedLive) {
@@ -83,7 +109,7 @@ const PlayBar: React.FC = () => {
         message.error(options.messageText);
       }
     },
-    [message, removeFromPlaylist, setIsPlaying, setVideoUrl],
+    [message, removeFromPlaylist, setIsPlaying, setVideoUrl, setIgnorePause],
   );
 
   const fetchPlayUrl = useCallback(
@@ -97,6 +123,7 @@ const PlayBar: React.FC = () => {
 
       setVideoUrl(null); // 先卸载旧播放器，防止新旧两个音轨同时播放
       videoRef.current = null; // 同步清空引用，避免在这期间误操作旧播放器
+      resetState();
       setIsLoading(true);
 
       try {
@@ -203,7 +230,7 @@ const PlayBar: React.FC = () => {
         }
       }
     },
-    [apiClient, handlePlaybackFailure, setVideoUrl, setCurrentVideo],
+    [apiClient, handlePlaybackFailure, setVideoUrl, setCurrentVideo, resetState],
   );
 
   useEffect(() => {
@@ -211,7 +238,8 @@ const PlayBar: React.FC = () => {
       requestSeqRef.current += 1;
       lastVideoIdRef.current = null;
       lastVideoCidRef.current = null;
-      ignorePauseRef.current = false;
+      setIgnorePause(false);
+      resetState();
       setIsLoading(false);
       setDanmakuData("");
       setVideoUrl(null);
@@ -223,14 +251,14 @@ const PlayBar: React.FC = () => {
       currentVideo.id !== lastVideoIdRef.current ||
       currentVideo.cid !== lastVideoCidRef.current
     ) {
-      ignorePauseRef.current = true;
-      lastReportedStateRef.current = null; // 重置去重引用，确保新视频事件能正常上报
+      setIgnorePause(true);
+      resetState(); // 重置去重引用，确保新视频事件能正常上报
       lastVideoIdRef.current = currentVideo.id;
       lastVideoCidRef.current = currentVideo.cid;
       setDanmakuData("");
       fetchPlayUrl(currentVideo);
     }
-  }, [currentVideo, fetchPlayUrl, setVideoUrl]);
+  }, [currentVideo, fetchPlayUrl, setVideoUrl, setIgnorePause, resetState]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -257,39 +285,9 @@ const PlayBar: React.FC = () => {
     }
   }, [videoUrl]);
 
-  // 15 秒定时心跳进度上报
-  useEffect(() => {
-    let intervalId: any = null;
-
-    if (isPlaying && currentVideo && currentVideo.duration > 0) {
-      intervalId = setInterval(() => {
-        if (videoRef.current) {
-          const playedTime = Math.floor(videoRef.current.currentTime);
-          apiClient
-            .reportHeartbeat({
-              aid: currentVideo.id,
-              bvid: currentVideo.bvid,
-              cid: currentVideo.cid || 0,
-              played_time: playedTime,
-              play_type: 3, // 播放中循环心跳
-            })
-            .catch((err) => {
-              console.error("[PlayBar] 15秒循环心跳上报异常:", err);
-            });
-        }
-      }, 15000);
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isPlaying, currentVideo, apiClient, videoUrl]);
-
   const handlePlayVideo = (video: typeof currentVideo) => {
     if (video) {
-      ignorePauseRef.current = true;
+      setIgnorePause(true);
       setDanmakuData("");
       setCurrentVideo(video);
     }
@@ -313,32 +311,18 @@ const PlayBar: React.FC = () => {
       return;
     }
 
-    if (playingVideo.duration > 0) {
-      console.log(`[PlayBar] 视频播放结束 -> 发起完播上报 (aid: ${playingVideo.id}, bvid: ${playingVideo.bvid}, cid: ${playingVideo.cid || 0}, played_time: -1)`);
-      apiClient
-        .reportHeartbeat({
-          aid: playingVideo.id,
-          bvid: playingVideo.bvid,
-          cid: playingVideo.cid || 0,
-          played_time: -1, // -1 表示已播放完毕
-          play_type: 4, // 播放完毕上报
-        })
-        .then(() => {})
-        .catch((err) => {
-          console.error("[PlayBar] 完播上报异常:", err);
-        });
-    }
+    reportEnded();
 
     const currentIndex = queue.findIndex((video) => video.id === playingVideo.id);
     if (currentIndex === -1 || currentIndex >= queue.length - 1) {
       setIsPlaying(false);
-      ignorePauseRef.current = false;
+      setIgnorePause(false);
       return;
     }
 
-    ignorePauseRef.current = true;
+    setIgnorePause(true);
     playNext();
-  }, [playNext, setIsPlaying, apiClient]);
+  }, [playNext, setIsPlaying, reportEnded, setIgnorePause]);
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -378,63 +362,19 @@ const PlayBar: React.FC = () => {
     [setIsPlaying, message],
   );
 
-  // 用于防止同状态的重复上报拦截
-  const lastReportedStateRef = useRef<boolean | null>(null);
-
   const handleArtPlay = useCallback(() => {
-    // 延迟取消忽略，防止播放器刚启动时因浏览器限制或缓冲可能出现的瞬时暂停事件导致状态机误判
-    setTimeout(() => {
-      ignorePauseRef.current = false;
-    }, 300);
-
-    if (lastReportedStateRef.current === true) {
-      return; // 防止回音壁或播放器底层重复触发 play
+    const shouldUpdate = reportPlay();
+    if (shouldUpdate) {
+      setIsPlaying(true);
     }
-    lastReportedStateRef.current = true;
-    setIsPlaying(true);
-
-    if (currentVideo && currentVideo.duration !== 0) {
-      setTimeout(() => {
-        if (videoRef.current) {
-          const playedTime = Math.floor(videoRef.current.currentTime);
-          apiClient.reportHeartbeat({
-            aid: currentVideo.id,
-            bvid: currentVideo.bvid,
-            cid: currentVideo.cid || 0,
-            played_time: playedTime,
-            play_type: 1, // 开始/继续播放
-          })
-          .catch((err) => console.error("[PlayBar] 播放上报异常:", err));
-        }
-      }, 50);
-    }
-  }, [setIsPlaying, currentVideo, apiClient]);
+  }, [setIsPlaying, reportPlay]);
 
   const handleArtPause = useCallback(() => {
-    if (ignorePauseRef.current) {
-      return;
+    const shouldUpdate = reportPause();
+    if (shouldUpdate) {
+      setIsPlaying(false);
     }
-
-    if (lastReportedStateRef.current === false) {
-      return; // 防止同状态重复触发 pause
-    }
-    lastReportedStateRef.current = false;
-    setIsPlaying(false);
-
-    if (currentVideo && currentVideo.duration !== 0) {
-      if (videoRef.current) {
-        const playedTime = Math.floor(videoRef.current.currentTime);
-        apiClient.reportHeartbeat({
-          aid: currentVideo.id,
-          bvid: currentVideo.bvid,
-          cid: currentVideo.cid || 0,
-          played_time: playedTime,
-          play_type: 2, // 暂停
-        })
-        .catch((err) => console.error("[PlayBar] 暂停上报异常:", err));
-      }
-    }
-  }, [setIsPlaying, currentVideo, apiClient]);
+  }, [setIsPlaying, reportPause]);
 
   const handleArtError = useCallback(
     (

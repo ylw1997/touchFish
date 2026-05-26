@@ -7,6 +7,7 @@ import type {
   BilibiliPopularResponse,
   BilibiliFollowedLiveResponse,
   BilibiliLiveResponse,
+  BilibiliLiveIndexResponse,
   BilibiliDynamicResponse,
   BilibiliWatchLaterResponse,
   BilibiliFavoriteFoldersResponse,
@@ -65,6 +66,15 @@ export class BilibiliApi {
       "BILIBILI_LIVE",
       { page },
       "请求直播中..."
+    );
+  }
+
+  // 获取直播首页模块（新接口聚合数据）
+  getLiveIndex() {
+    return this.request<BilibiliLiveIndexResponse>(
+      "BILIBILI_LIVE_INDEX",
+      null,
+      "请求直播首页中..."
     );
   }
 
