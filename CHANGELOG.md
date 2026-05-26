@@ -1,6 +1,16 @@
 # 更新历史 
 
 
+## [16.6.0](https://github.com/ylw1997/touchFish/compare/v16.5.0...v16.6.0) (2026-05-26)
+
+
+### ✨ Features | 新功能
+
+* 优化已播放视频显示效果 ([e29fc51](https://github.com/ylw1997/touchFish/commit/e29fc514b4c2514ec5175cdfcd7103998b810925))
+* 修复已播放显示错误问题 ([1becdaf](https://github.com/ylw1997/touchFish/commit/1becdafd4b6344bca54b52f27afbbfbfc97c33b5))
+* 修复播放完状态 ([6879285](https://github.com/ylw1997/touchFish/commit/68792859389dc6cfed25c4d1deb2623172f1ab42))
+* 替换直播接口,使用首页推荐接口 ([6956652](https://github.com/ylw1997/touchFish/commit/695665267473d1e8fbe3c7af7a527369f467ec6b))
+
 ## [16.5.0](https://github.com/ylw1997/touchFish/compare/v16.4.0...v16.5.0) (2026-05-25)
 
 
