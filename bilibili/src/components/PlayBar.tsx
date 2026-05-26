@@ -305,6 +305,7 @@ const PlayBar: React.FC = () => {
   };
 
   const handleVideoEnded = useCallback(() => {
+    isEndedRef.current = true;
     const { currentVideo: playingVideo, playlist: queue } =
       usePlayerStore.getState();
 
@@ -380,8 +381,10 @@ const PlayBar: React.FC = () => {
 
   // 用于防止同状态的重复上报拦截
   const lastReportedStateRef = useRef<boolean | null>(null);
+  const isEndedRef = useRef<boolean>(false);
 
   const handleArtPlay = useCallback(() => {
+    isEndedRef.current = false;
     // 延迟取消忽略，防止播放器刚启动时因浏览器限制或缓冲可能出现的瞬时暂停事件导致状态机误判
     setTimeout(() => {
       ignorePauseRef.current = false;
@@ -411,6 +414,7 @@ const PlayBar: React.FC = () => {
   }, [setIsPlaying, currentVideo, apiClient]);
 
   const handleArtPause = useCallback(() => {
+    if (isEndedRef.current) return;
     if (ignorePauseRef.current) {
       return;
     }

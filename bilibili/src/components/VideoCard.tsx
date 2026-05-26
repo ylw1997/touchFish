@@ -86,6 +86,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   const [selectedCid, setSelectedCid] = useState<number>(item.cid || 0);
   const artRef = useRef<Artplayer | null>(null);
   const lastReportedStateRef = useRef<boolean | null>(null); // 防抖/状态去重
+  const isEndedRef = useRef<boolean>(false);
 
   React.useEffect(() => {
     setSelectedCid(item.cid || 0);
@@ -185,6 +186,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   };
 
   const handleArtPlay = () => {
+    isEndedRef.current = false;
     if (lastReportedStateRef.current === true) return;
     lastReportedStateRef.current = true;
 
@@ -204,6 +206,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   };
 
   const handleArtPause = () => {
+    if (isEndedRef.current) return;
     if (lastReportedStateRef.current === false) return;
     lastReportedStateRef.current = false;
 
@@ -225,7 +228,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   const handleCloseVideo = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (item.duration !== 0 && artRef.current) {
+    if (item.duration !== 0 && artRef.current && !isEndedRef.current) {
       const playedTime = Math.floor(artRef.current.currentTime);
       apiClient
         .reportHeartbeat({
@@ -249,6 +252,23 @@ const VideoCard: React.FC<VideoCardProps> = ({
     setVideoUrl(null);
     setDanmakuData("");
     lastReportedStateRef.current = null;
+    isEndedRef.current = false;
+  };
+
+  const handleArtEnded = () => {
+    isEndedRef.current = true;
+    if (item.duration !== 0 && artRef.current) {
+      apiClient
+        .reportHeartbeat({
+          aid: item.id,
+          bvid: item.bvid,
+          cid: selectedCid || item.cid || 0,
+          played_time: -1,
+          play_type: 4, // 播放完毕上报
+        })
+        .then(() => {})
+        .catch((err) => console.error("[VideoCard] 局部播放完毕上报异常:", err));
+    }
   };
 
   const handleAddToWatchLater = (e: React.MouseEvent) => {
@@ -316,6 +336,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
                 getInstance={handleArtInstance}
                 onPlay={handleArtPlay}
                 onPause={handleArtPause}
+                onEnded={handleArtEnded}
               />
             </div>
             <div className="video-close-btn" onClick={handleCloseVideo}>
