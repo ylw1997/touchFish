@@ -790,6 +790,13 @@ const App: React.FC = () => {
         />
       )}
       <div ref={groupRef}>
+        <FloatButton
+          className="touchfish-float-refresh"
+          style={{ insetInlineEnd: 24, bottom: 88 }}
+          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+          tooltip={<div>{view === "shelf" ? "刷新书架" : "刷新本章"}</div>}
+          onClick={handleRefresh}
+        />
         <FloatButton.Group
           trigger="click"
           open={groupOpen}
@@ -800,7 +807,7 @@ const App: React.FC = () => {
             }
           }}
           shape="circle"
-          style={{ insetInlineEnd: 24, bottom: 88 }}
+          style={{ insetInlineEnd: 24, bottom: 152 }}
           icon={<AppstoreOutlined />}
         >
           <FloatButton
@@ -813,11 +820,7 @@ const App: React.FC = () => {
             tooltip={<div>增大字体</div>}
             onClick={increase}
           />
-          <FloatButton
-            icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
-            tooltip={<div>{view === "shelf" ? "刷新书架" : "刷新本章"}</div>}
-            onClick={handleRefresh}
-          />
+
           {view === "reader" && (
             <FloatButton
               icon={<UnorderedListOutlined style={{ color: "#faad14" }} />}

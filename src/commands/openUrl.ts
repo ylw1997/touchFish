@@ -11,7 +11,7 @@ import { ReadState } from "../core/readState";
 import { BaseNewsProvider } from "../core/baseNewsProvider";
 import ContextManager from "../utils/extensionContext";
 import { getChipHellNewsDetail } from "../api/chipHell";
-import { getNewsDetail } from "../api/ithome";
+import { getNewsDetail, getNewsComment } from "../api/ithome";
 import { getV2exDetail } from "../api/v2ex";
 import { getHupuDetail } from "../api/hupu";
 import { getNgaNewsDetail } from "../api/nga";
@@ -214,13 +214,145 @@ const registerArticleCommand = (
  */
 export const openUrl = registerArticleCommand(
   "itHome.openUrl",
-  async (_title, id: number) => {
-    const res = await getNewsDetail(id);
-    const extraCss = `p { font-size: 16px; line-height: 1.9; }`;
+  async (_title, id: any) => {
+    // 1. 提炼出纯数字新闻 ID (支持相对路径如 "/0/956/268.htm" 或纯数字 "956268")
+    const pathStr = id ? id.toString() : "";
+    let numericId = 0;
+    const match = pathStr.match(/\/0\/(\d+)\/(\d+)\.htm/);
+    if (match) {
+      numericId = Number(match[1] + match[2]);
+    } else {
+      const digits = pathStr.replace(/\D/g, "");
+      numericId = Number(digits.startsWith("0") ? digits.substring(1) : digits);
+    }
+
+    // 2. 拼接出原文章链接并实现“查看原文”
+    let originalUrl = undefined;
+    if (pathStr) {
+      if (pathStr.startsWith("http")) {
+        originalUrl = pathStr;
+      } else if (pathStr.startsWith("/")) {
+        originalUrl = `https://www.ithome.com${pathStr}`;
+      } else {
+        // 如果是纯数字新闻 ID，按照 IT之家 官方规则拼接出网页 URL
+        // 规则：后三位为后半部分，前部为前半部分。例如 956272 -> 956/272 -> /0/956/272.htm
+        const s_id = pathStr.replace(/\D/g, "");
+        if (s_id.length >= 4) {
+          const part1 = s_id.slice(0, -3);
+          const part2 = s_id.slice(-3);
+          originalUrl = `https://www.ithome.com/0/${part1}/${part2}.htm`;
+        }
+      }
+    }
+
+    // 3. 并发请求新闻详情与评论 (使用精准的纯数字 ID)
+    const [res, commentRes] = await Promise.all([
+      getNewsDetail(numericId),
+      getNewsComment(numericId).catch((err) => {
+        console.error("[touchfish] fetch comments error", err);
+        return null;
+      }),
+    ]);
+
+    const renderCommentCard = (comment: any) => {
+      const m = comment.M || {};
+      const nickname = m.N || "匿名网友";
+      const city = m.Y ? `(${m.Y})` : "";
+      const time = m.T ? m.T.replace("T", " ").split(".")[0] : "";
+      const floor = m.SF || "";
+      const device = m.Ta ? `<span class="comment-device">${m.Ta}</span>` : "";
+      const body = m.C || "";
+      const support = m.S !== undefined ? m.S : 0;
+      const against = m.A !== undefined ? m.A : 0;
+
+      return `
+        <div class="comment-card">
+          <div class="comment-meta">
+            <span class="comment-user">${nickname}<span class="comment-city">${city}</span></span>
+            <div class="comment-floor-area">
+              ${device}
+              <span class="comment-floor">${floor}</span>
+            </div>
+          </div>
+          <div class="comment-body">${body}</div>
+          <div class="comment-footer">
+            <div class="comment-votes">
+              <span class="comment-vote-btn">支持 ${support}</span>
+              <span class="comment-vote-btn">反对 ${against}</span>
+            </div>
+            <div class="comment-time">${time}</div>
+          </div>
+        </div>
+      `;
+    };
+
+    let commentHtml = "";
+    if (commentRes?.data?.success) {
+      const { hlist, clist } = commentRes.data.content || {};
+
+      let hotHtml = "";
+      if (hlist && hlist.length > 0) {
+        hotHtml = `
+          <div class="comment-header">热门评论 (${hlist.length})</div>
+          ${hlist.map(renderCommentCard).join("")}
+        `;
+      }
+
+      let newHtml = "";
+      if (clist && clist.length > 0) {
+        newHtml = `
+          <div class="comment-header">最新评论 (${clist.length})</div>
+          ${clist.map(renderCommentCard).join("")}
+        `;
+      }
+
+      if (hotHtml || newHtml) {
+        commentHtml = `
+          <div class="comment-section">
+            ${hotHtml}
+            ${newHtml}
+          </div>
+        `;
+      } else {
+        commentHtml = `
+          <div class="comment-section">
+            <div class="comment-header">评论区</div>
+            <div class="comment-empty">暂无评论</div>
+          </div>
+        `;
+      }
+    } else {
+      commentHtml = `
+        <div class="comment-section">
+          <div class="comment-header">评论区</div>
+          <div class="comment-empty">评论加载失败</div>
+        </div>
+      `;
+    }
+
+    const extraCss = `
+      p { font-size: 16px; line-height: 1.9; }
+      .comment-section { border-top: 2px dashed var(--vscode-panel-border); }
+      .comment-header { font-size: 18px; font-weight: bold; margin: 25px 0 15px 0; display: flex; align-items: center; gap: 8px; }
+      .comment-header::before { content: ""; display: inline-block; width: 4px; height: 18px; background: var(--vscode-progressBar-background, var(--vscode-textLink-foreground)); border-radius: 2px; }
+      .comment-card { padding: 16px; margin-bottom: 16px; background: var(--vscode-textBlockQuote-background, rgba(120, 120, 120, 0.05)); border-radius: 8px; border: 1px solid var(--vscode-panel-border); transition: all 0.2s ease-in-out; }
+      .comment-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px; }
+      .comment-user { font-weight: 600; color: var(--vscode-textLink-foreground); }
+      .comment-city { font-weight: normal; color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: 4px; }
+      .comment-floor-area { display: flex; gap: 8px; align-items: center; }
+      .comment-device { background: var(--vscode-badge-background, rgba(120, 120, 120, 0.2)); color: var(--vscode-badge-foreground, var(--vscode-editor-foreground)); padding: 2px 8px; border-radius: 12px; font-size: 11px; opacity: 0.8; }
+      .comment-floor { color: var(--vscode-descriptionForeground); font-size: 12px; font-weight: 500; }
+      .comment-body { font-size: 14.5px; line-height: 1.6; word-break: break-word; color: var(--vscode-editor-foreground); margin-bottom: 8px; }
+      .comment-footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--vscode-descriptionForeground); margin-top: 12px; }
+      .comment-votes { display: flex; gap: 12px; }
+      .comment-vote-btn { font-size: 11px; color: var(--vscode-descriptionForeground); opacity: 0.85; }
+      .comment-time { font-size: 11px; color: var(--vscode-descriptionForeground); text-align: right; }
+      .comment-empty { text-align: center; color: var(--vscode-descriptionForeground); padding: 30px 0; font-style: italic; font-size: 14px; }
+    `;
     const extraHead =
       '<link rel="stylesheet" href="https://www.ithome.com/css/detail.min.css">';
-    const content = res?.data?.detail;
-    return { content: content || "内容加载失败", extraCss, extraHead };
+    const content = (res?.data?.detail || "内容加载失败") + commentHtml;
+    return { content, extraCss, extraHead, originalUrl };
   },
 );
 

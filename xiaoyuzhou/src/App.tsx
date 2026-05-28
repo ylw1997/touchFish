@@ -968,6 +968,13 @@ function App() {
         icon={<VerticalAlignTopOutlined />}
       />
       <div ref={groupRef}>
+        <FloatButton
+          className="touchfish-float-refresh"
+          style={{ insetInlineEnd: 24, bottom: currentEpisode ? 96 : 88 }}
+          icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
+          tooltip={{ title: "刷新" }}
+          onClick={handleRefresh}
+        />
         <FloatButton.Group
           trigger="click"
           open={groupOpen}
@@ -978,14 +985,10 @@ function App() {
             }
           }}
           shape="circle"
-          style={{ insetInlineEnd: 24, bottom: currentEpisode ? 96 : 88 }}
+          style={{ insetInlineEnd: 24, bottom: currentEpisode ? 160 : 152 }}
           icon={<AppstoreOutlined />}
         >
-          <FloatButton
-            icon={<ReloadOutlined style={{ color: "#1890ff" }} />}
-            tooltip={{ title: "刷新" }}
-            onClick={handleRefresh}
-          />
+
           <FloatButton
             icon={<SearchOutlined style={{ color: "#faad14" }} />}
             tooltip={{ title: "搜索" }}
