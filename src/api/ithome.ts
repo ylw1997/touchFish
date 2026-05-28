@@ -17,3 +17,8 @@ export const getNewsList = ()=>{
 export const getNewsDetail = (id:number)=>{
   return axios.get(`https://api.ithome.com/json/newscontent/${id}`);
 };
+
+// 获取新闻评论
+export const getNewsComment = (id:number)=>{
+  return axios.get(`https://cmt.ithome.com/api/comment/getnewscomment?newsid=${id}`);
+};
