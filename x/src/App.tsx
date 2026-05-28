@@ -224,6 +224,18 @@ function App() {
         target={() => scrollableNodeRef.current || window}
       />
       <div ref={groupRef}>
+        {/* 刷新按钮 */}
+        <FloatButton
+          className="touchfish-float-refresh"
+          shape="circle"
+          style={{ insetInlineEnd: 24, bottom: 88 }}
+          onClick={() => {
+            clearList();
+            getListData(activeKey, true);
+          }}
+          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+          tooltip={{ title: "刷新", placement: "left" }}
+        />
         <FloatButton.Group
           trigger="click"
           open={groupOpen}
@@ -234,7 +246,7 @@ function App() {
             }
           }}
           shape="circle"
-          style={{ insetInlineEnd: 24, bottom: 88 }}
+          style={{ insetInlineEnd: 24, bottom: 152 }}
           icon={<AppstoreOutlined />}
         >
           {/* 个人中心按钮 */}
@@ -243,16 +255,7 @@ function App() {
             icon={<UserOutlined style={{ color: "#ff85c0" }} />}
             tooltip={{ title: "个人主页", placement: "left" }}
           />
-          {/* 刷新按钮 */}
-          <FloatButton
-            shape="circle"
-            onClick={() => {
-              clearList();
-              getListData(activeKey, true);
-            }}
-            icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-            tooltip={{ title: "刷新", placement: "left" }}
-          />
+
           {/* 搜索按钮 */}
           <FloatButton
             onClick={() => setSearchDrawerOpen(true)}

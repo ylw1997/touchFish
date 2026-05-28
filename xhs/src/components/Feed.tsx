@@ -275,6 +275,13 @@ export default function Feed() {
         target={() => scrollRef.current || window}
       />
       <div ref={groupRef}>
+        <FloatButton
+          className="touchfish-float-refresh"
+          style={{ insetInlineEnd: 24, bottom: 88 }}
+          onClick={refresh}
+          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+          tooltip={{ title: "刷新", placement: "left" }}
+        />
         <FloatButton.Group
           trigger="click"
           open={groupOpen}
@@ -285,14 +292,10 @@ export default function Feed() {
             }
           }}
           shape="circle"
-          style={{ insetInlineEnd: 24, bottom: 88 }}
+          style={{ insetInlineEnd: 24, bottom: 152 }}
           icon={<AppstoreOutlined />}
         >
-          <FloatButton
-            onClick={refresh}
-            icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-            tooltip={{ title: "刷新", placement: "left" }}
-          />
+
           <FloatButton
             onClick={() => setSearchOpen(true)}
             icon={<SearchOutlined style={{ color: "#faad14" }} />}
