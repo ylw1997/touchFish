@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [16.7.0](https://github.com/ylw1997/touchFish/compare/v16.6.0...v16.7.0) (2026-05-28)
+
+
+### ✨ Features | 新功能
+
+* ithome增加评论显示和显示原文功能 ([71922ef](https://github.com/ylw1997/touchFish/commit/71922ef083b8a262cce61a4ecce13b82d89bfe6e))
+* 优化悬浮按钮 ([51a64c9](https://github.com/ylw1997/touchFish/commit/51a64c93d9b776ee6769dd2ecc883d64ec21e727))
+
 ## [16.6.0](https://github.com/ylw1997/touchFish/compare/v16.5.0...v16.6.0) (2026-05-26)
 
 
