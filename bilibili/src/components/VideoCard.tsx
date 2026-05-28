@@ -75,7 +75,6 @@ const VideoCard: React.FC<VideoCardProps> = ({
 }) => {
   const { message } = App.useApp();
   const { addToPlaylist } = usePlayerStore();
-  const isMainPlaying = usePlayerStore((state) => state.isPlaying);
   const { request } = useRequest();
   const apiClient = React.useMemo(() => new BilibiliApi(request), [request]);
 
@@ -112,23 +111,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
     setSelectedCid(item.cid || 0);
   }, [item.cid]);
 
-  // 互斥互锁机制：当全局主播放器开始播放时，自动关闭当前卡片的局部播放
-  React.useEffect(() => {
-    if (isMainPlaying && isPlaying && artRef.current) {
-      console.log(
-        `%c[VideoCard] 主播放器已启动，自动关闭卡片[${item.bvid}]的局部播放器防止音轨冲突`,
-        "color: #ff9800; font-weight: bold;",
-      );
 
-      reportClose();
-
-      artRef.current.destroy(true);
-      artRef.current = null;
-      setIsPlaying(false);
-      setVideoUrl(null);
-      setDanmakuData("");
-    }
-  }, [isMainPlaying, isPlaying, item, selectedCid, apiClient, reportClose]);
 
   const handleOpenVideo = () => {
     // 在VSCode扩展中不能打开网页，仅用于阻止事件
@@ -228,16 +211,6 @@ const VideoCard: React.FC<VideoCardProps> = ({
 
   const handleAddToPlaylist = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    // 如果当前卡片有局部播放器正在播放，先停止并上报进度，防止两个音轨同时播放
-    if (isPlaying && artRef.current) {
-      reportClose();
-      artRef.current.destroy(true);
-      artRef.current = null;
-      setIsPlaying(false);
-      setVideoUrl(null);
-      setDanmakuData("");
-    }
 
     addToPlaylist({
       ...item,
