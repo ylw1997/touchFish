@@ -126,7 +126,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
       setting: false,
       pip: true,
       fullscreen: false,
-      fullscreenWeb: false,
+      fullscreenWeb: true,
       loop: false,
       subtitleOffset: true,
       miniProgressBar: true,
@@ -137,11 +137,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
       airplay: true,
       theme: "#23ade5",
       customType: {
-        m3u8: (
-          video: HTMLVideoElement,
-          sourceUrl: string,
-          art: Artplayer,
-        ) => {
+        m3u8: (video: HTMLVideoElement, sourceUrl: string, art: Artplayer) => {
           if (Hls.isSupported()) {
             const hls = new Hls({
               enableWorker: true,
@@ -186,9 +182,10 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
               color: "#FFFFFF",
               mode: 0,
               emitter: false,
+              modes: [0],
               margin: [10, "75%"],
               antiOverlap: true,
-              synchronousPlayback: false,
+              synchronousPlayback: true,
               filter: (danmu) => danmu.text.length <= 100,
               lockTime: 5,
               maxLength: 100,
@@ -280,7 +277,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
           console.error("Artplayer switchUrl failed:", error);
         });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, isLive, autoSize]);
 
   useEffect(() => {

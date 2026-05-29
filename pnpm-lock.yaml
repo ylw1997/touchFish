@@ -109,11 +109,11 @@ importers:
         specifier: ^5.26.6
         version: 5.27.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       artplayer:
+        specifier: ^5.4.0
+        version: 5.4.0
+      artplayer-plugin-danmuku:
         specifier: ^5.3.0
         version: 5.3.0
-      artplayer-plugin-danmuku:
-        specifier: ^5.2.0
-        version: 5.2.0
       dayjs:
         specifier: ^1.11.13
         version: 1.11.18
@@ -1631,11 +1631,11 @@ packages:
     resolution: {integrity: sha512-3CYzex9M9FGQjCGMGyi6/31c8GJbgb0qGyrx5HWxPd0aCwh4cB2YjMb2Xf9UuoogrMrlO9cTqnB5rI5GHZTcUA==}
     engines: {node: '>=0.10.0'}
 
-  artplayer-plugin-danmuku@5.2.0:
-    resolution: {integrity: sha512-iHHSGEc0J+gl7imX4nmLqqC7LXmv8xeGf2lUevhhyUCoiCRZplecpKQICHjErVb1Yqyp1xCy6Sp8eYN+EpFWFw==}
+  artplayer-plugin-danmuku@5.3.0:
+    resolution: {integrity: sha512-a76bU1cWEZr53hD1X8IHfOzS4QawGHn8dQ3fIYyJ5TsyhTSnznhi2WzkS8M7LL3H02ekXRZTUFan9+9EERk12g==}
 
-  artplayer@5.3.0:
-    resolution: {integrity: sha512-yExO39MpEg4P+bxgChxx1eJfiUPE4q1QQRLCmqGhlsj+ANuaoEkR8hF93LdI5ZyrAcIbJkuEndxEiUoKobifDw==}
+  artplayer@5.4.0:
+    resolution: {integrity: sha512-2B+plbx8N2yNsjK4nJU3+EOG8TULm1LRZk/QPkWRAMEX2Ee/MSnZG/WJYz8kcoZxZuLKcQ3uXifqLuPxZOH29A==}
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
@@ -2340,6 +2340,7 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   globals@14.0.0:
@@ -4961,9 +4962,9 @@ snapshots:
 
   arrify@1.0.1: {}
 
-  artplayer-plugin-danmuku@5.2.0: {}
+  artplayer-plugin-danmuku@5.3.0: {}
 
-  artplayer@5.3.0:
+  artplayer@5.4.0:
     dependencies:
       option-validator: 2.0.6
 

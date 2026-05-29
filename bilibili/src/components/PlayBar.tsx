@@ -11,7 +11,6 @@ import {
   CaretRightOutlined,
   PlayCircleFilled,
   FullscreenExitOutlined,
-  SwitcherOutlined,
 } from "@ant-design/icons";
 import { usePlayerStore } from "../store/player";
 import { useRequest } from "../hooks/useRequest";
@@ -48,7 +47,6 @@ const PlayBar: React.FC = () => {
   const lastVideoCidRef = useRef<number | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [danmakuData, setDanmakuData] = React.useState<string>("");
-  const [isPip, setIsPip] = React.useState(false);
 
   const { request } = useRequest();
   const apiClient = useMemo(() => new BilibiliApi(request), [request]);
@@ -99,7 +97,6 @@ const PlayBar: React.FC = () => {
       setDanmakuData("");
       setIsPlaying(false);
       setIgnorePause(false);
-      setIsPip(false);
 
       if (video.duration === 0 && options?.removeFailedLive) {
         removeFromPlaylist(video.id);
@@ -121,8 +118,6 @@ const PlayBar: React.FC = () => {
         requestId !== requestSeqRef.current ||
         usePlayerStore.getState().currentVideo?.id !== video.id;
 
-      setVideoUrl(null); // 先卸载旧播放器，防止新旧两个音轨同时播放
-      videoRef.current = null; // 同步清空引用，避免在这期间误操作旧播放器
       resetState();
       setIsLoading(true);
 
@@ -279,11 +274,7 @@ const PlayBar: React.FC = () => {
     }
   }, [isPlaying, message, setIsPlaying]);
 
-  useEffect(() => {
-    if (!videoUrl) {
-      setIsPip(false);
-    }
-  }, [videoUrl]);
+
 
   const handlePlayVideo = (video: typeof currentVideo) => {
     if (video) {
@@ -331,12 +322,7 @@ const PlayBar: React.FC = () => {
     }
   };
 
-  const handlePipClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (videoRef.current) {
-      videoRef.current.pip = !videoRef.current.pip;
-    }
-  };
+
 
   const handleArtInstance = useCallback(
     (art: Artplayer) => {
@@ -355,9 +341,7 @@ const PlayBar: React.FC = () => {
         });
       }
 
-      art.on("pip", (state: boolean) => {
-        setIsPip(state);
-      });
+
     },
     [setIsPlaying, message],
   );
@@ -643,16 +627,7 @@ const PlayBar: React.FC = () => {
             {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
           </Button>
 
-          <Button
-            color={isPip ? "primary" : "default"}
-            variant="filled"
-            onClick={handlePipClick}
-            title="视频画中画"
-            shape="circle"
-            disabled={!videoUrl}
-          >
-            <SwitcherOutlined />
-          </Button>
+
 
           <Button
             color={isPlaylistOpen ? "primary" : "default"}
