@@ -1,6 +1,46 @@
 # 更新历史 
 
 
+## [16.7.0](https://github.com/ylw1997/touchFish/compare/v16.6.0...v16.7.0) (2026-05-28)
+
+
+### ✨ Features | 新功能
+
+* ithome增加评论显示和显示原文功能 ([71922ef](https://github.com/ylw1997/touchFish/commit/71922ef083b8a262cce61a4ecce13b82d89bfe6e))
+* 优化悬浮按钮 ([51a64c9](https://github.com/ylw1997/touchFish/commit/51a64c93d9b776ee6769dd2ecc883d64ec21e727))
+
+## [16.6.0](https://github.com/ylw1997/touchFish/compare/v16.5.0...v16.6.0) (2026-05-26)
+
+
+### ✨ Features | 新功能
+
+* 优化已播放视频显示效果 ([e29fc51](https://github.com/ylw1997/touchFish/commit/e29fc514b4c2514ec5175cdfcd7103998b810925))
+* 修复已播放显示错误问题 ([1becdaf](https://github.com/ylw1997/touchFish/commit/1becdafd4b6344bca54b52f27afbbfbfc97c33b5))
+* 修复播放完状态 ([6879285](https://github.com/ylw1997/touchFish/commit/68792859389dc6cfed25c4d1deb2623172f1ab42))
+* 替换直播接口,使用首页推荐接口 ([6956652](https://github.com/ylw1997/touchFish/commit/695665267473d1e8fbe3c7af7a527369f467ec6b))
+
+## [16.5.0](https://github.com/ylw1997/touchFish/compare/v16.4.0...v16.5.0) (2026-05-25)
+
+
+### ✨ Features | 新功能
+
+* bilibili支持进度上报,进度自动跳转 ([fac96b7](https://github.com/ylw1997/touchFish/commit/fac96b76e4519dd996d65da163d6298dbbf46f99))
+* 优化bilibili适配白色主题 ([578fc4b](https://github.com/ylw1997/touchFish/commit/578fc4b383d2673e798f34ba61904e5eb961aa6e))
+* 支持bilibili合集播放 ([08a9849](https://github.com/ylw1997/touchFish/commit/08a98490355ad0cb3d0d1c7e1b601ec643efbac5))
+
+## [16.4.0](https://github.com/ylw1997/touchFish/compare/v16.3.0...v16.4.0) (2026-05-22)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([520417b](https://github.com/ylw1997/touchFish/commit/520417bf671d0de848dd61dc1f288360681204eb))
+
+
+### ✨ Features | 新功能
+
+* 优化qqmusic logo ([ddd52aa](https://github.com/ylw1997/touchFish/commit/ddd52aad3e58986de30e2ff32ca6cef7057a8294))
+* 修复网易云音乐喜欢失败问题 ([3eb4b07](https://github.com/ylw1997/touchFish/commit/3eb4b07cb0fe50c8cab524b6722f61ae4d6790f3))
+
 ## [16.3.0](https://github.com/ylw1997/touchFish/compare/v16.2.0...v16.3.0) (2026-05-22)
 
 
