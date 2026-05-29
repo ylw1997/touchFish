@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [16.8.0](https://github.com/ylw1997/touchFish/compare/v16.7.0...v16.8.0) (2026-05-29)
+
+
+### ✨ Features | 新功能
+
+* 升级bilibili播放器版本,优化弹幕显示 ([6f10ade](https://github.com/ylw1997/touchFish/commit/6f10ade70a4c6cc4a2addb35782cf6373f9fb7cb))
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([03bd719](https://github.com/ylw1997/touchFish/commit/03bd71912a15084063ccbef1bd8339fc094f6fff))
+
 ## [16.7.0](https://github.com/ylw1997/touchFish/compare/v16.6.0...v16.7.0) (2026-05-28)
 
 
