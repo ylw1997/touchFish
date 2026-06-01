@@ -63,7 +63,10 @@ if not os.path.exists(package_path):
         sub_path = os.path.join(installation, item, 'resources', 'app', 'package.json')
         if os.path.exists(sub_path):
             package_path = sub_path
-            installation = os.path.dirname(os.path.dirname(os.path.dirname(package_path)))
+            if system == 'darwin':
+                installation = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(package_path))))
+            else:
+                installation = os.path.dirname(os.path.dirname(os.path.dirname(package_path)))
             break
 
 try:
