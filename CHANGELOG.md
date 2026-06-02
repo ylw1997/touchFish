@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+### [16.8.1](https://github.com/ylw1997/touchFish/compare/v16.8.0...v16.8.1) (2026-06-02)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* adjust installation path resolution for macOS to correctly locate package directory ([5f4b0eb](https://github.com/ylw1997/touchFish/commit/5f4b0eb2329726f72cf7ef8dd4f4ea5c35ee9195))
+* **bilibili:** 修复播放器切换分P时没有重置播放进度的问题 ([01573b7](https://github.com/ylw1997/touchFish/commit/01573b76dcafc4d771e915c3b67cb571d86da321))
+
 ## [16.8.0](https://github.com/ylw1997/touchFish/compare/v16.7.0...v16.8.0) (2026-05-29)
 
 
