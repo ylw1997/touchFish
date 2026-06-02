@@ -177,6 +177,7 @@ export const usePlayerStore = create<PlayerState>()(
               currentVideo: {
                 ...currentVideo,
                 cid: nextP.cid,
+                progress: 0,
               },
               isPlaying: true,
             });
@@ -219,6 +220,7 @@ export const usePlayerStore = create<PlayerState>()(
               currentVideo: {
                 ...currentVideo,
                 cid: prevP.cid,
+                progress: 0,
               },
               isPlaying: true,
             });

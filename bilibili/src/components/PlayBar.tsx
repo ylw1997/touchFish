@@ -512,6 +512,7 @@ const PlayBar: React.FC = () => {
                     setCurrentVideo({
                       ...currentVideo,
                       cid: page.cid,
+                      progress: 0,
                     });
                   }}
                   title={page.part}
