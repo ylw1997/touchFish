@@ -221,6 +221,16 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
             console.error("历史跳转失败:", e);
           }
         }, 150);
+      } else {
+        setTimeout(() => {
+          try {
+            if (instance && instance.video) {
+              instance.currentTime = 0;
+            }
+          } catch {
+            // ignore
+          }
+        }, 150);
       }
     });
 
@@ -265,6 +275,16 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
                 }
               } catch (e) {
                 console.error("地址切换后历史跳转失败:", e);
+              }
+            }, 150);
+          } else {
+            setTimeout(() => {
+              try {
+                if (instance && instance.video) {
+                  instance.currentTime = 0;
+                }
+              } catch {
+                // ignore
               }
             }, 150);
           }
