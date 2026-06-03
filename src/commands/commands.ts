@@ -464,7 +464,14 @@ export const setXTokenCommand = () => {
         return;
       }
 
+      const xAuthorization = await vscode.window.showInputBox({
+        prompt: "请输入 X 的 Authorization (Bearer Token)",
+        placeHolder: "请输入 X 的 Authorization",
+      });
+      if (xAuthorization === undefined) return;
+
       await setConfigByKey("xCookie", xCookie.trim());
+      await setConfigByKey("xAuthorization", xAuthorization.trim());
       await showInfo("X 凭据设置成功，ct0 已自动提取为 csrf-token！");
     }
   );
