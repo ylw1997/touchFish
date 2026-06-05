@@ -24,6 +24,7 @@ interface ArtPlayerComponentProps {
   controls?: boolean;
   autoSize?: boolean;
   progress?: number;
+  isDanmakuOpen?: boolean;
 }
 
 const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
@@ -40,6 +41,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   controls = true,
   autoSize = true,
   progress,
+  isDanmakuOpen = true,
 }) => {
   const artRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Artplayer | null>(null);
@@ -311,12 +313,17 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
     if (danmukuPlugin?.config) {
       danmukuPlugin.config({ danmuku: danmakuUrl });
       danmukuPlugin.load();
+      if (!isDanmakuOpen) {
+        danmukuPlugin.hide();
+      } else {
+        danmukuPlugin.show();
+      }
     }
 
     return () => {
       URL.revokeObjectURL(danmakuUrl);
     };
-  }, [danmakuData, isLive, url]);
+  }, [danmakuData, isLive, url, isDanmakuOpen]);
 
   useEffect(() => {
     return () => {

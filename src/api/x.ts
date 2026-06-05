@@ -504,10 +504,6 @@ function extractCt0FromCookie(cookie: string): string | undefined {
   return match?.[1];
 }
 
-/** 固定的公开 Bearer Token，所有 X Web 客户端都用这个 */
-const X_DEFAULT_BEARER_TOKEN =
-  "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
-
 export async function getStoredXCredential(): Promise<XCredential | null> {
   const { getConfigByKey } = (await import("../core/config")) as ConfigModule;
   const cookie = getConfigByKey("xCookie");
@@ -517,9 +513,8 @@ export async function getStoredXCredential(): Promise<XCredential | null> {
   const csrfToken = extractCt0FromCookie(cookie);
   if (!csrfToken) return null;
 
-  // authorization 优先读取配置，否则使用默认公开 token
-  const authorization =
-    getConfigByKey("xAuthorization") || X_DEFAULT_BEARER_TOKEN;
+  const authorization = getConfigByKey("xAuthorization");
+  if (!authorization) return null;
 
   return { cookie, authorization, csrfToken };
 }
@@ -556,8 +551,8 @@ export async function getOrSetXCredential(): Promise<XCredential | null> {
   const csrfToken = extractCt0FromCookie(cookie);
   if (!csrfToken) return null;
 
-  // authorization 使用默认值，不再要求用户输入
-  const authorization = X_DEFAULT_BEARER_TOKEN;
+  const authorization = await askForCredentialField("xAuthorization", "请输入 X 的 Authorization");
+  if (!authorization) return null;
 
   return { cookie, authorization, csrfToken };
 }

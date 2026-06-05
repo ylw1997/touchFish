@@ -11,6 +11,7 @@ import {
   CaretRightOutlined,
   PlayCircleFilled,
   FullscreenExitOutlined,
+  CommentOutlined,
 } from "@ant-design/icons";
 import { usePlayerStore } from "../store/player";
 import { useRequest } from "../hooks/useRequest";
@@ -30,9 +31,11 @@ const PlayBar: React.FC = () => {
     playlist,
     isPlaylistOpen,
     isExpanded,
+    isDanmakuOpen,
     togglePlay,
     togglePlaylistOpen,
     toggleExpand,
+    toggleDanmakuOpen,
     setCurrentVideo,
     setVideoUrl,
     setIsPlaying,
@@ -498,7 +501,7 @@ const PlayBar: React.FC = () => {
         </AnimatePresence>
 
         {/* 选集面板 */}
-        {isExpanded && currentVideo && currentVideo.pages && currentVideo.pages.length > 1 && (
+        {isPlaylistOpen && currentVideo && currentVideo.pages && currentVideo.pages.length > 1 && (
           <div className="playbar-pages-panel">
             <div className="playbar-pages-header">
               <span className="playbar-pages-title">选集 ({currentVideo.pages.length})</span>
@@ -565,6 +568,7 @@ const PlayBar: React.FC = () => {
                     danmakuData={danmakuData}
                     isLive={currentVideo.duration === 0}
                     progress={currentVideo.progress}
+                    isDanmakuOpen={isDanmakuOpen}
                     getInstance={handleArtInstance}
                     onPlay={handleArtPlay}
                     onPause={handleArtPause}
@@ -617,6 +621,18 @@ const PlayBar: React.FC = () => {
               <div className="playbar-title">暂无播放</div>
             )}
           </div>
+
+          <Button
+            color={isDanmakuOpen ? "primary" : "default"}
+            variant="filled"
+            onClick={() => {
+              if (currentVideo) toggleDanmakuOpen();
+            }}
+            title={isDanmakuOpen ? "关闭弹幕" : "打开弹幕"}
+            shape="circle"
+          >
+            <CommentOutlined />
+          </Button>
 
           <Button
             color="default"
