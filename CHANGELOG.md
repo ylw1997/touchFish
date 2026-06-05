@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [16.9.0](https://github.com/ylw1997/touchFish/compare/v16.8.1...v16.9.0) (2026-06-05)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* **zhihu:** 修复评论区内容不会随侧边面板宽度缩窄自适应的问题 ([da2ffba](https://github.com/ylw1997/touchFish/commit/da2ffba2921d7d61148b90412e96b67867238d57))
+
+
+### ✨ Features | 新功能
+
+* playbar增加打开关闭弹幕按钮 ([b387d33](https://github.com/ylw1997/touchFish/commit/b387d33e989288c818c9d4e8521a0e86a17e983a))
+* 优化x填写cookie和auth ([728e9cb](https://github.com/ylw1997/touchFish/commit/728e9cb615eb9b622169ca8a1c66a73f492184e8))
+* 选集面板和播放列表一起展示一起关闭 ([6c6af09](https://github.com/ylw1997/touchFish/commit/6c6af0966e366871e52bfce8b3fcadc6588e967f))
+
 ### [16.8.1](https://github.com/ylw1997/touchFish/compare/v16.8.0...v16.8.1) (2026-06-02)
 
 
