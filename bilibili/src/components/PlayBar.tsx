@@ -501,7 +501,7 @@ const PlayBar: React.FC = () => {
         </AnimatePresence>
 
         {/* 选集面板 */}
-        {isExpanded && currentVideo && currentVideo.pages && currentVideo.pages.length > 1 && (
+        {isPlaylistOpen && currentVideo && currentVideo.pages && currentVideo.pages.length > 1 && (
           <div className="playbar-pages-panel">
             <div className="playbar-pages-header">
               <span className="playbar-pages-title">选集 ({currentVideo.pages.length})</span>
