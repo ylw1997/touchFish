@@ -18,6 +18,8 @@ interface PlayerState {
   isPlaylistOpen: boolean;
   // 播放条是否展开
   isExpanded: boolean;
+  // 弹幕是否打开
+  isDanmakuOpen: boolean;
 
   // Actions
   setCurrentVideo: (video: BilibiliListItem | null) => void;
@@ -32,6 +34,7 @@ interface PlayerState {
   clearPlaylist: () => void;
   togglePlaylistOpen: () => void;
   toggleExpand: () => void;
+  toggleDanmakuOpen: () => void;
   playNext: () => void;
   playPrev: () => void;
 }
@@ -45,6 +48,7 @@ export const usePlayerStore = create<PlayerState>()(
       playlist: [],
       isPlaylistOpen: false,
       isExpanded: false,
+      isDanmakuOpen: true,
 
       setCurrentVideo: (video) =>
         set({ currentVideo: video, isPlaying: !!video }), // Keep old videoUrl
@@ -159,6 +163,11 @@ export const usePlayerStore = create<PlayerState>()(
           isExpanded: !state.isExpanded,
         })),
 
+      toggleDanmakuOpen: () =>
+        set((state) => ({
+          isDanmakuOpen: !state.isDanmakuOpen,
+        })),
+
       playNext: () => {
         const { currentVideo, playlist } = get();
         if (!currentVideo || playlist.length === 0) return;
@@ -250,6 +259,7 @@ export const usePlayerStore = create<PlayerState>()(
         currentVideo: state.currentVideo,
         isPlaylistOpen: state.isPlaylistOpen,
         isExpanded: state.isExpanded,
+        isDanmakuOpen: state.isDanmakuOpen,
       }),
     },
   ),
