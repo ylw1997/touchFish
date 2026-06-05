@@ -69,7 +69,7 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
           src={comment.author.avatar_url}
           style={{ borderRadius: 8, flexShrink: 0 }}
         />
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontWeight: "bold" }}>
             {comment.author.name}
             {comment.reply_to_author ? (

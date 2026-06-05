@@ -358,9 +358,23 @@ a {
 
 .comment-content {
   line-height: 2;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
   span {
     p {
       margin: 0;
     }
+  }
+  img {
+    max-width: 100%;
+  }
+}
+
+/* 评论列表容器 — 防止内容撑开父容器 */
+.comment-list {
+  overflow: hidden;
+  .ant-list-item {
+    overflow: hidden;
   }
 }
