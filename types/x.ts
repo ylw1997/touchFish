@@ -95,6 +95,7 @@ export interface commentsItem extends baseXField {
   pic_ids?: string[];
   pic_infos?: any;
   translatedText?: string;
+  autoTranslatedText?: string;
 }
 
 interface commentsPicItemImg {
