@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [16.11.0](https://github.com/ylw1997/touchFish/compare/v16.10.0...v16.11.0) (2026-06-08)
+
+
+### ✨ Features | 新功能
+
+* 小红书使用纯算代替原来的扒代码,另外x优化评论显示 ([aa52940](https://github.com/ylw1997/touchFish/commit/aa529406a0f7a336e07cf331805ef9454690995d))
+
 ## [16.10.0](https://github.com/ylw1997/touchFish/compare/v16.9.0...v16.10.0) (2026-06-08)
 
 
