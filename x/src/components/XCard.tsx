@@ -158,7 +158,7 @@ const XCard: React.FC<XCardProps> = ({
                   ? parseXText(item, getUserByName, onTopicClick)
                   : parseH5XText(item.text, getUserByName, onTopicClick)
                 : parseXText(item, getUserByName, onTopicClick)}
-          {hasExpandableLongText ? (
+          {hasExpandableLongText && !item.translatedText ? (
             <Tag
               color="blue"
               style={{ marginLeft: "8px", cursor: "pointer" }}
