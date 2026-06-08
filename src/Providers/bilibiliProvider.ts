@@ -408,6 +408,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
                   const cookie = await window.showInputBox({
                     placeHolder: "请输入B站的cookie",
                     prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                    ignoreFocusOut: true,
                   });
                   if (cookie) {
                     await setConfigByKey("bilibiliCookie", cookie);
@@ -440,6 +441,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
                   const cookie = await window.showInputBox({
                     placeHolder: "请输入B站的cookie",
                     prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                    ignoreFocusOut: true,
                   });
                   if (cookie) {
                     await setConfigByKey("bilibiliCookie", cookie);
@@ -520,6 +522,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
                   const cookie = await window.showInputBox({
                     placeHolder: "请输入B站的cookie",
                     prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                    ignoreFocusOut: true,
                   });
                   if (cookie) {
                     await setConfigByKey("bilibiliCookie", cookie);
@@ -552,6 +555,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
                   const cookie = await window.showInputBox({
                     placeHolder: "请输入B站的cookie",
                     prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                    ignoreFocusOut: true,
                   });
                   if (cookie) {
                     await setConfigByKey("bilibiliCookie", cookie);
@@ -580,6 +584,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
             const cookie = await window.showInputBox({
               placeHolder: "请输入B站的cookie",
               prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+              ignoreFocusOut: true,
             });
             if (cookie) {
               await setConfigByKey("bilibiliCookie", cookie);
@@ -607,6 +612,7 @@ export class BilibiliProvider extends BaseWebviewProvider {
                   const cookie = await window.showInputBox({
                     placeHolder: "请输入B站的cookie",
                     prompt: "请输入B站的cookie（从浏览器开发者工具中获取）",
+                    ignoreFocusOut: true,
                   });
                   if (cookie) {
                     await setConfigByKey("bilibiliCookie", cookie);

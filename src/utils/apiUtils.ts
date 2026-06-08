@@ -23,6 +23,7 @@ export async function getOrSetCookie(
     cookie = await vscode.window.showInputBox({
       placeHolder: promptMessage,
       prompt: promptMessage,
+      ignoreFocusOut: true,
     });
 
     if (cookie) {

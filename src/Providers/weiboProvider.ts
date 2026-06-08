@@ -64,6 +64,7 @@ export class WeiboProvider extends BaseWebviewProvider {
     const cookie = await window.showInputBox({
       placeHolder: "请输入微博的cookie",
       prompt: "请输入微博的cookie",
+      ignoreFocusOut: true,
     });
     if (!cookie) return undefined;
 
@@ -84,6 +85,7 @@ export class WeiboProvider extends BaseWebviewProvider {
             const cookie = await window.showInputBox({
               placeHolder: "请输入微博的cookie",
               prompt: "请输入微博的cookie",
+              ignoreFocusOut: true,
             });
             if (cookie) {
               await setConfigByKey("weiboCookie", cookie);
@@ -273,6 +275,7 @@ export class WeiboProvider extends BaseWebviewProvider {
           const cookie = await window.showInputBox({
             placeHolder: "请输入微博的cookie",
             prompt: "请输入微博的cookie",
+            ignoreFocusOut: true,
           });
           if (cookie) {
             await setConfigByKey("weiboCookie", cookie);

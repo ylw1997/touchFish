@@ -355,6 +355,7 @@ export function activate(context: vscode.ExtensionContext) {
       const cookie = await vscode.window.showInputBox({
         prompt: "请输入微信读书 Cookie",
         placeHolder: "wr_skey=...; wr_vid=...;",
+        ignoreFocusOut: true,
       });
       if (cookie) {
         await setConfigByKey("wereadCookie", cookie);
@@ -367,6 +368,7 @@ export function activate(context: vscode.ExtensionContext) {
       const cookie = await vscode.window.showInputBox({
         prompt: "请输入网易云音乐 Cookie (MUSIC_U 等)",
         placeHolder: "MUSIC_U=...; NeteaseMusic...;",
+        ignoreFocusOut: true,
       });
       if (cookie !== undefined) {
         await setConfigByKey("neteaseCredential", cookie);
