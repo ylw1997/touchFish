@@ -100,17 +100,64 @@ const XCard: React.FC<XCardProps> = ({
     >
       {!isPureRetweet && (
         <div className="content">
-          {isExpanded
-            ? parseXText(
-                { ...item, text: longText, text_raw: longText },
-                getUserByName,
-                onTopicClick,
-              )
-            : isH5
-              ? item.text_raw
-                ? parseXText(item, getUserByName, onTopicClick)
-                : parseH5XText(item.text, getUserByName, onTopicClick)
-              : parseXText(item, getUserByName, onTopicClick)}
+          {/* 有翻译时：上方显示提示 + 显示原文按钮 */}
+          {item.translatedText ? (
+            <div
+              style={{
+                fontSize: "12px",
+                opacity: 0.6,
+                marginBottom: "6px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>翻译自 Grok</span>
+              <Tag
+                color="gold"
+                bordered={false}
+                style={{ cursor: "pointer", margin: 0 }}
+                className="link-tag"
+                onClick={() => onClearTranslation?.(item)}
+              >
+                显示原文
+              </Tag>
+            </div>
+          ) : item.autoTranslatedText ? (
+            /* 原文模式但有翻译缓存：显示"显示翻译"按钮 */
+            <div
+              style={{
+                fontSize: "12px",
+                opacity: 0.6,
+                marginBottom: "6px",
+              }}
+            >
+              <Tag
+                color="cyan"
+                bordered={false}
+                style={{ cursor: "pointer", margin: 0 }}
+                className="link-tag"
+                onClick={() => onClearTranslation?.(item)}
+              >
+                显示翻译
+              </Tag>
+            </div>
+          ) : null}
+
+          {/* 正文内容：有翻译时直接显示翻译文本 */}
+          {item.translatedText
+            ? item.translatedText
+            : isExpanded
+              ? parseXText(
+                  { ...item, text: longText, text_raw: longText },
+                  getUserByName,
+                  onTopicClick,
+                )
+              : isH5
+                ? item.text_raw
+                  ? parseXText(item, getUserByName, onTopicClick)
+                  : parseH5XText(item.text, getUserByName, onTopicClick)
+                : parseXText(item, getUserByName, onTopicClick)}
           {hasExpandableLongText ? (
             <Tag
               color="blue"
@@ -123,40 +170,27 @@ const XCard: React.FC<XCardProps> = ({
               {isExpanded ? "收起" : "展开全文"}
             </Tag>
           ) : null}
-          {canTranslate ? (
+          {/* 无自动翻译且无翻译内容时显示手动翻译按钮 */}
+          {canTranslate && !item.autoTranslatedText && !item.translatedText ? (
             <Tag
               color={item.translatedText ? "gold" : "cyan"}
               bordered={false}
               style={{ marginLeft: "8px", cursor: "pointer" }}
               className="link-tag"
-              onClick={() =>
-                item.translatedText
-                  ? onClearTranslation?.(item)
-                  : !item.isTranslating && onTranslate?.(item)
-              }
+              onClick={() => {
+                if (item.translatedText) {
+                  onClearTranslation?.(item);
+                } else {
+                  !item.isTranslating && onTranslate?.(item);
+                }
+              }}
             >
               {item.isTranslating
                 ? "翻译中..."
                 : item.translatedText
-                  ? "还原"
+                  ? "显示原文"
                   : "翻译"}
             </Tag>
-          ) : null}
-
-          {item.translatedText ? (
-            <div
-              className="border-top-divider"
-              style={{ marginTop: "8px", paddingTop: "8px" }}
-            >
-              <div
-                style={{ fontSize: "12px", opacity: 0.6, marginBottom: "4px" }}
-              >
-                翻译结果
-              </div>
-              <div style={{ color: "var(--vscode-editor-foreground)" }}>
-                {item.translatedText}
-              </div>
-            </div>
           ) : null}
 
           {item.article && (

@@ -120,6 +120,7 @@ export const xHttp = axios.create({
 
 const HOME_TIMELINE_FEATURES: XFeatureFlags = {
   rweb_video_screen_enabled: false,
+  rweb_cashtags_enabled: true,
   profile_label_improvements_pcf_label_in_post_enabled: true,
   responsive_web_profile_redirect_enabled: false,
   rweb_tipjar_consumption_enabled: false,
@@ -132,11 +133,13 @@ const HOME_TIMELINE_FEATURES: XFeatureFlags = {
   c9s_tweet_anatomy_moderator_badge_enabled: true,
   responsive_web_grok_analyze_button_fetch_trends_enabled: false,
   responsive_web_grok_analyze_post_followups_enabled: true,
+  rweb_cashtags_composer_attachment_enabled: true,
   responsive_web_jetfuel_frame: true,
   responsive_web_grok_share_attachment_enabled: true,
   responsive_web_grok_annotations_enabled: true,
   articles_preview_enabled: true,
   responsive_web_edit_tweet_api_enabled: true,
+  rweb_conversational_replies_downvote_enabled: false,
   graphql_is_translatable_rweb_tweet_is_translatable_enabled: true,
   view_counts_everywhere_api_enabled: true,
   longform_notetweets_consumption_enabled: true,
@@ -322,12 +325,19 @@ export function buildXHeaders(
     Cookie: credential.cookie,
     "content-type": "application/json",
     Referer: "https://x.com/home",
+    Origin: "https://x.com",
     "x-csrf-token": credential.csrfToken,
     "x-twitter-active-user": "yes",
     "x-twitter-auth-type": "OAuth2Session",
     "x-twitter-client-language": "zh-cn",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "sec-ch-ua": '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
     "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
     ...extraHeaders,
   };
 }
@@ -390,9 +400,12 @@ export async function getHomeLatestTimeline(
 ): Promise<XApiResult<any>> {
   try {
     const auth = ensureCredential(credential);
-    const url = `${X_BASE_URL}/i/api/graphql/${X_HOME_LATEST_TIMELINE_QUERY_ID}/HomeLatestTimeline`;
-    const response = await xHttp.get(url, {
-      headers: buildXHeaders(auth),
+    const path = `/i/api/graphql/${X_HOME_LATEST_TIMELINE_QUERY_ID}/HomeLatestTimeline`;
+    const transactionId = await xTransactionIdProvider(path, "GET");
+    const response = await xHttp.get(`${X_BASE_URL}${path}`, {
+      headers: buildXHeaders(auth, {
+        "x-client-transaction-id": transactionId,
+      }),
       params: {
         variables: {
           count,
@@ -422,7 +435,8 @@ export async function getHomeLatestTimelineNext(
 ): Promise<XApiResult<any>> {
   try {
     const auth = ensureCredential(credential);
-    const url = `${X_BASE_URL}/i/api/graphql/${X_HOME_LATEST_TIMELINE_QUERY_ID}/HomeLatestTimeline`;
+    const path = `/i/api/graphql/${X_HOME_LATEST_TIMELINE_QUERY_ID}/HomeLatestTimeline`;
+    const transactionId = await xTransactionIdProvider(path, "POST");
     const payload = {
       variables: {
         count: params.count ?? 20,
@@ -438,8 +452,10 @@ export async function getHomeLatestTimelineNext(
       queryId: X_HOME_LATEST_TIMELINE_QUERY_ID,
     };
 
-    const res = await xHttp.post(url, payload, {
-      headers: buildXHeaders(auth),
+    const res = await xHttp.post(`${X_BASE_URL}${path}`, payload, {
+      headers: buildXHeaders(auth, {
+        "x-client-transaction-id": transactionId,
+      }),
     });
 
     return {
@@ -492,7 +508,6 @@ function buildUserTweetsVariables(params: XUserTweetsParams) {
     includePromotedContent: true,
     withQuickPromoteEligibilityTweetFields: true,
     withVoice: true,
-    withV2Timeline: true,
   };
 }
 
@@ -637,11 +652,14 @@ export async function getTweetDetail(
 ): Promise<XApiResult<any>> {
   try {
     const auth = ensureCredential(credential);
+    const path = `/i/api/graphql/${X_TWEET_DETAIL_QUERY_ID}/TweetDetail`;
+    const transactionId = await xTransactionIdProvider(path, "GET");
     const response = await xHttp.get(
-      `${X_BASE_URL}/i/api/graphql/${X_TWEET_DETAIL_QUERY_ID}/TweetDetail`,
+      `${X_BASE_URL}${path}`,
       {
         headers: buildXHeaders(auth, {
           Referer: `https://x.com/i/status/${focalTweetId}`,
+          "x-client-transaction-id": transactionId,
         }),
         params: {
           variables: buildTweetDetailVariables({
@@ -748,10 +766,14 @@ export async function getXUserTweets(
 ): Promise<XApiResult<any>> {
   try {
     const auth = ensureCredential(credential);
+    const path = `/i/api/graphql/${X_USER_TWEETS_QUERY_ID}/UserTweets`;
+    const transactionId = await xTransactionIdProvider(path, "GET");
     const response = await xHttp.get(
-      `${X_BASE_URL}/i/api/graphql/${X_USER_TWEETS_QUERY_ID}/UserTweets`,
+      `${X_BASE_URL}${path}`,
       {
-        headers: buildXHeaders(auth),
+        headers: buildXHeaders(auth, {
+          "x-client-transaction-id": transactionId,
+        }),
         params: {
           variables: buildUserTweetsVariables(params),
           features: USER_TWEETS_FEATURES,

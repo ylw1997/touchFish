@@ -183,6 +183,13 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     };
   }
 
+  // 提取 Grok 自动翻译内容
+  let autoTranslatedText: string | undefined;
+  const grokTranslated = t.grok_translated_post_with_availability;
+  if (grokTranslated?.is_available && grokTranslated?.data) {
+    autoTranslatedText = grokTranslated.data.translation || undefined;
+  }
+
   return {
     id: legacy.id_str || legacy.conversation_id_str,
     text: previewText,
@@ -207,6 +214,8 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     article,
     is_retweet,
     is_quote,
+    translatedText: autoTranslatedText,
+    autoTranslatedText: autoTranslatedText,
   };
 }
 
@@ -344,8 +353,8 @@ export class XProvider extends BaseWebviewProvider {
           isRefresh = !!payload.refresh;
           seenTweetIds = Array.isArray(payload.seenTweetIds)
             ? payload.seenTweetIds
-              .map((id: unknown) => String(id))
-              .filter(Boolean)
+                .map((id: unknown) => String(id))
+                .filter(Boolean)
             : [];
           if (isNextPage) {
             this.currentCursor =
@@ -459,15 +468,22 @@ export class XProvider extends BaseWebviewProvider {
           let finalUser = userResult;
           // 严格按照 JSON 路径：data.user.result.timeline.timeline.instructions
           if (!finalUser?.legacy) {
-            const instructions = res.data.user?.result?.timeline?.timeline?.instructions || [];
+            const instructions =
+              res.data.user?.result?.timeline?.timeline?.instructions || [];
             // 1. 定位 TimelineAddEntries
-            const addEntriesInst = instructions.find((i: any) => i.type === 'TimelineAddEntries');
+            const addEntriesInst = instructions.find(
+              (i: any) => i.type === "TimelineAddEntries",
+            );
             if (addEntriesInst?.entries) {
               // 2. 找到第一个包含推文的 entry (entryId 包含 tweet-)
-              const tweetEntry = addEntriesInst.entries.find((e: any) => e.entryId?.startsWith('tweet-'));
+              const tweetEntry = addEntriesInst.entries.find((e: any) =>
+                e.entryId?.startsWith("tweet-"),
+              );
               if (tweetEntry) {
                 // 3. 提取核心路径：content.itemContent.tweet_results.result.core.user_results.result
-                const u = tweetEntry.content?.itemContent?.tweet_results?.result?.core?.user_results?.result;
+                const u =
+                  tweetEntry.content?.itemContent?.tweet_results?.result?.core
+                    ?.user_results?.result;
                 if (u?.legacy) {
                   finalUser = u;
                 }
@@ -478,32 +494,43 @@ export class XProvider extends BaseWebviewProvider {
           const legacy = finalUser?.legacy;
 
           if (finalUser && legacy) {
-
             // 根据 JSON 示例和实际表现进行最高优先级的字段捕获
-            const avatarUrl = finalUser.avatar?.image_url
-              || (finalUser as any).avatar_url_https
-              || legacy.profile_image_url_https
-              || "";
+            const avatarUrl =
+              finalUser.avatar?.image_url ||
+              (finalUser as any).avatar_url_https ||
+              legacy.profile_image_url_https ||
+              "";
 
             mappedData = {
               ok: 1,
               data: {
                 id: finalUser.rest_id || userId,
                 name: legacy.name || (finalUser as any).core?.name || "",
-                screen_name_raw: legacy.screen_name || (finalUser as any).core?.screen_name || "",
-                screen_name: (legacy.name || (finalUser as any).core?.name)
-                  ? `${legacy.name || (finalUser as any).core?.name} (@${legacy.screen_name || (finalUser as any).core?.screen_name})`
-                  : (legacy.screen_name || (finalUser as any).core?.screen_name),
+                screen_name_raw:
+                  legacy.screen_name ||
+                  (finalUser as any).core?.screen_name ||
+                  "",
+                screen_name:
+                  legacy.name || (finalUser as any).core?.name
+                    ? `${legacy.name || (finalUser as any).core?.name} (@${legacy.screen_name || (finalUser as any).core?.screen_name})`
+                    : legacy.screen_name ||
+                      (finalUser as any).core?.screen_name,
                 avatar_hd: avatarUrl?.replace(/_normal/, "_400x400"),
                 followers_count_str: String(legacy.followers_count || 0),
                 friends_count_str: String(legacy.friends_count || 0),
-                descText: legacy.description || (finalUser as any).profile_bio?.description || "",
+                descText:
+                  legacy.description ||
+                  (finalUser as any).profile_bio?.description ||
+                  "",
                 location: legacy.location?.location || legacy.location || "",
                 isOwner: true,
               },
             };
           } else {
-            mappedData = { ok: 1, data: { id: userId, name: "我的个人页面", isOwner: true } };
+            mappedData = {
+              ok: 1,
+              data: { id: userId, name: "我的个人页面", isOwner: true },
+            };
           }
         }
 
