@@ -76,49 +76,67 @@ export const renderComments = (
                 description={
                   <>
                     <div className="content comment-content">
-                      {parseXText(item, getUserByName, onTopicClick)}
-                      {(item.text_raw || item.text)?.trim() ? (
+                      {item.translatedText ? (
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            opacity: 0.6,
+                            marginBottom: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <span>翻译自 Grok</span>
+                          <Tag
+                            color="gold"
+                            bordered={false}
+                            style={{ cursor: "pointer", margin: 0 }}
+                            className="link-tag"
+                            onClick={() => onClearTranslation?.(item)}
+                          >
+                            显示原文
+                          </Tag>
+                        </div>
+                      ) : item.autoTranslatedText ? (
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            opacity: 0.6,
+                            marginBottom: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <Tag
+                            color="cyan"
+                            bordered={false}
+                            style={{ cursor: "pointer", margin: 0 }}
+                            className="link-tag"
+                            onClick={() => onTranslate?.(item)}
+                          >
+                            显示翻译
+                          </Tag>
+                        </div>
+                      ) : null}
+
+                      {item.translatedText 
+                        ? item.translatedText 
+                        : parseXText(item, getUserByName, onTopicClick)}
+                        
+                      {!item.translatedText && !item.autoTranslatedText && (item.text_raw || item.text)?.trim() ? (
                         <Tag
-                          color={item.translatedText ? "gold" : "cyan"}
+                          color="cyan"
                           bordered={false}
                           style={{ marginLeft: "8px", cursor: "pointer" }}
                           className="link-tag"
-                          onClick={() =>
-                            item.translatedText
-                              ? onClearTranslation?.(item)
-                              : !item.isTranslating && onTranslate?.(item)
-                          }
+                          onClick={() => !item.isTranslating && onTranslate?.(item)}
                         >
-                          {item.isTranslating
-                            ? "翻译中..."
-                            : item.translatedText
-                              ? "还原"
-                              : "翻译"}
+                          {item.isTranslating ? "翻译中..." : "翻译"}
                         </Tag>
                       ) : null}
                     </div>
-
-                    {item.translatedText ? (
-                      <div style={{ marginTop: "4px", paddingTop: "4px" }}>
-                        <div
-                          style={{
-                            fontSize: "10px",
-                            opacity: 0.6,
-                            marginBottom: "2px",
-                          }}
-                        >
-                          翻译结果
-                        </div>
-                        <div
-                          style={{
-                            color: "var(--vscode-editor-foreground)",
-                            marginTop: "4px",
-                          }}
-                        >
-                          {item.translatedText}
-                        </div>
-                      </div>
-                    ) : null}
 
                     {((item.pic_ids && item.pic_ids.length > 0) ||
                       (item.url_struct && item.url_struct.length > 0)) && (
