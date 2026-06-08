@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [16.10.0](https://github.com/ylw1997/touchFish/compare/v16.9.0...v16.10.0) (2026-06-08)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([0de942f](https://github.com/ylw1997/touchFish/commit/0de942fadc0be1a62aa9c898ca2a5312b82e64d3))
+
+
+### ✨ Features | 新功能
+
+* x默认显示翻译过的帖子 ([623c249](https://github.com/ylw1997/touchFish/commit/623c24920029922b350df5c966261a7f3e0e7413))
+* 修复输入cookie弹窗消失问题 ([f9b9006](https://github.com/ylw1997/touchFish/commit/f9b9006b349e175dcc4252251206ebd82398bcd6))
+* 原文才显示展开原文,翻译的不需要 ([46bdae1](https://github.com/ylw1997/touchFish/commit/46bdae10fa196606b0aed478ff10363a11701d80))
+
 ## [16.9.0](https://github.com/ylw1997/touchFish/compare/v16.8.1...v16.9.0) (2026-06-05)
 
 
