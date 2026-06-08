@@ -291,6 +291,7 @@ export const changeNgaTab = (getProvider: () => TabProvider) => {
         const customInput = await vscode.window.showInputBox({
           prompt: "请输入自定义的 NGA 版块ID",
           placeHolder: "例如: -7, 524, -39223361 等",
+          ignoreFocusOut: true,
         });
         if (!customInput) return; // 用户取消输入
         tabValue = customInput;
@@ -312,6 +313,7 @@ export const setZhihuTokenCommand = () => {
       const zhihuCookie = await vscode.window.showInputBox({
         prompt: "请输入知乎的Cookie",
         placeHolder: "请输入知乎的Cookie",
+        ignoreFocusOut: true,
       });
       if (zhihuCookie !== undefined) {
         await setConfigByKey("zhihuCookie", zhihuCookie);
@@ -329,6 +331,7 @@ export const setWeiboTokenCommand = (reloadGroups?: () => void) => {
       const weiboCookie = await vscode.window.showInputBox({
         prompt: "请输入微博的Cookie",
         placeHolder: "请输入微博的Cookie",
+        ignoreFocusOut: true,
       });
       if (weiboCookie !== undefined) {
         await setConfigByKey("weiboCookie", weiboCookie);
@@ -345,6 +348,7 @@ export const setNgaTokenCommand = () => {
     const ngaCookie = await vscode.window.showInputBox({
       prompt: "请输入NGA的Cookie",
       placeHolder: "请输入NGA的Cookie",
+      ignoreFocusOut: true,
     });
     if (ngaCookie !== undefined) {
       await setConfigByKey("ngaCookie", ngaCookie);
@@ -359,6 +363,7 @@ export const setXhsTokenCommand = () => {
     const xhsCookie = await vscode.window.showInputBox({
       prompt: "请输入小红书的Cookie",
       placeHolder: "请输入小红书的Cookie",
+      ignoreFocusOut: true,
     });
     if (xhsCookie !== undefined) {
       await setConfigByKey("xhsCookie", xhsCookie);
@@ -394,6 +399,7 @@ export const setLinuxDoTokenCommand = () => {
       const linuxDoCookie = await vscode.window.showInputBox({
         prompt: "请输入 Linux.do 的 Cookie",
         placeHolder: "请输入 Linux.do 的 Cookie",
+        ignoreFocusOut: true,
       });
       if (linuxDoCookie !== undefined) {
         await setConfigByKey("linuxDoCookie", linuxDoCookie);
@@ -412,6 +418,7 @@ export const setBilibiliTokenCommand = () => {
       const bilibiliCookie = await vscode.window.showInputBox({
         prompt: "请输入B站的Cookie",
         placeHolder: "请输入B站的Cookie（从浏览器开发者工具中获取）",
+        ignoreFocusOut: true,
       });
       if (bilibiliCookie !== undefined) {
         await setConfigByKey("bilibiliCookie", bilibiliCookie);
@@ -429,6 +436,7 @@ export const setXiaoyuzhouTokenCommand = () => {
         prompt: "请输入小宇宙 Access Token",
         placeHolder: "x-jike-access-token",
         password: true,
+        ignoreFocusOut: true,
       });
       if (accessToken === undefined) return;
 
@@ -436,6 +444,7 @@ export const setXiaoyuzhouTokenCommand = () => {
         prompt: "请输入小宇宙 Refresh Token",
         placeHolder: "x-jike-refresh-token",
         password: true,
+        ignoreFocusOut: true,
       });
       if (refreshToken === undefined) return;
 
@@ -454,6 +463,7 @@ export const setXTokenCommand = () => {
       const xCookie = await vscode.window.showInputBox({
         prompt: "请输入 X 的 Cookie（包含 ct0 字段即可，无需额外设置 csrf-token）",
         placeHolder: "请输入 X 的 Cookie",
+        ignoreFocusOut: true,
       });
       if (xCookie === undefined) return;
 
@@ -466,7 +476,8 @@ export const setXTokenCommand = () => {
 
       const xAuthorization = await vscode.window.showInputBox({
         prompt: "请输入 X 的 Authorization (Bearer Token)",
-        placeHolder: "请输入 X 的 Authorization",
+        placeHolder: "Bearer ...",
+        ignoreFocusOut: true,
       });
       if (xAuthorization === undefined) return;
 
@@ -565,6 +576,7 @@ export const loginXhsPhoneCommand = () => {
       const phone = await vscode.window.showInputBox({
         prompt: "请输入小红书手机号 (中国大陆 11 位)",
         placeHolder: "13800138000",
+        ignoreFocusOut: true,
         validateInput: (text) => {
           return /^\d{11}$/.test(text) ? null : "手机号必须为 11 位数字";
         }
@@ -580,6 +592,7 @@ export const loginXhsPhoneCommand = () => {
       const code = await vscode.window.showInputBox({
         prompt: `验证码已发送到 ${phone}，请输入 6 位验证码`,
         placeHolder: "123456",
+        ignoreFocusOut: true,
         validateInput: (text) => {
           return /^\d{6}$/.test(text) ? null : "验证码必须为 6 位数字";
         }

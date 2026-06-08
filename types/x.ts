@@ -76,6 +76,7 @@ export interface xItem extends baseXField {
   followBtnCode?: { followcardid: string; uid: string };
   retweeted_status?: xItem;
   translatedText?: string;
+  autoTranslatedText?: string;
   article?: xArticle;
   is_retweet?: boolean;
   is_quote?: boolean;

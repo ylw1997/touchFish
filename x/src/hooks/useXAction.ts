@@ -504,7 +504,7 @@ const useXAction = () => {
         if (res.ok === 1 && res.data) {
           updateList(
             (i) => i.id === item.id,
-            (i) => ({ ...i, translatedText: res.data, isTranslating: false }),
+            (i) => ({ ...i, translatedText: res.data, autoTranslatedText: res.data, isTranslating: false }),
           );
         } else {
           messageApi.error(res.msg || "翻译失败");
@@ -524,12 +524,21 @@ const useXAction = () => {
     [apiClient, updateList, messageApi],
   );
 
-  // 清除翻译
+  // 清除翻译 / 切换原文与翻译
   const handleClearTranslation = useCallback(
     (item: xItem) => {
       updateList(
         (i) => i.id === item.id,
-        (i) => ({ ...i, translatedText: undefined }),
+        (i) => {
+          if (i.translatedText) {
+            // 当前显示翻译 → 显示原文
+            return { ...i, translatedText: undefined };
+          } else if (i.autoTranslatedText) {
+            // 当前显示原文但有自动翻译缓存 → 恢复翻译
+            return { ...i, translatedText: i.autoTranslatedText };
+          }
+          return { ...i, translatedText: undefined };
+        },
       );
     },
     [updateList],

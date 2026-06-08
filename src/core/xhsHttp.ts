@@ -21,6 +21,7 @@ xhsHttp.interceptors.response.use(
                 const input = await vscode.window.showInputBox({
                   prompt: '请输入小红书 Cookie',
                   placeHolder: '请输入小红书 Cookie',
+                  ignoreFocusOut: true,
                 });
                 if (input) {
                   await setConfigByKey('xhsCookie', input);
