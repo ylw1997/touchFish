@@ -52,6 +52,7 @@ function App() {
   const [groupOpen, setGroupOpen] = useState(false);
   const groupRef = useRef<HTMLDivElement>(null);
   const [floatButtonsVisible, setFloatButtonsVisible] = useState(true);
+  const floatBtnVisibleRef = useRef(true);
   const lastScrollTop = useRef(0);
   const {
     list,
@@ -122,10 +123,16 @@ function App() {
 
         if (isScrollingDown && currentScrollTop > 30) {
           // 向下滚动且滚动距离超过30px时隐藏按钮
-          setFloatButtonsVisible(false);
+          if (floatBtnVisibleRef.current) {
+            floatBtnVisibleRef.current = false;
+            setFloatButtonsVisible(false);
+          }
         } else if (!isScrollingDown) {
           // 向上滚动时显示按钮
-          setFloatButtonsVisible(true);
+          if (!floatBtnVisibleRef.current) {
+            floatBtnVisibleRef.current = true;
+            setFloatButtonsVisible(true);
+          }
         }
 
         lastScrollTop.current = currentScrollTop;
@@ -169,9 +176,9 @@ function App() {
           <motion.div
             key="tabs-shell"
             className="tabs-shell"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
             <Tabs
@@ -224,9 +231,9 @@ function App() {
         {floatButtonsVisible && (
           <motion.div
             key="float-buttons"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
             <FloatButton.BackTop
