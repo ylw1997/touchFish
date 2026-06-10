@@ -110,6 +110,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
                 placement="bottom"
                 trigger={["click"]}
                 overlayStyle={{ zIndex: 3000 }}
+                overlayClassName="quality-dropdown"
               >
                 <div className="quality-selector-btn">
                   <span>{getQualityText(songQuality)}</span>
