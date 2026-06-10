@@ -265,6 +265,19 @@ export class NeteaseProvider extends BaseWebviewProvider {
         case "NETEASE_GET_SONG_URL": {
           const { id, level } = payload || {};
           const result = await getSongUrl(id, level || "standard");
+          if (result && result.data && Array.isArray(result.data)) {
+            result.data = result.data.map((item: any) => {
+              if (item && item.url) {
+                // 将 http 强转 https
+                if (item.url.startsWith("http://")) {
+                  item.url = item.url.replace("http://", "https://");
+                }
+                // 替换网易云的旧节点为 m7c/m8c 等新节点，解决 HTTPS 加载慢的问题
+                item.url = item.url.replace(/(m\d+)\.music\.126\.net/, "$1c.music.126.net");
+              }
+              return item;
+            });
+          }
           webviewView.webview.postMessage({
             command: "NETEASE_GET_SONG_URL_RESULT",
             payload: result,

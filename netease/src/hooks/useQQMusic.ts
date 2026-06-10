@@ -11,7 +11,7 @@ import { QQMusicApi } from "../api";
 
 export const useQQMusic = () => {
   const { request, messageApi } = useRequest();
-  const { play, setCurrentSongUrl } = usePlayerStore();
+  const { play } = usePlayerStore();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -91,15 +91,10 @@ export const useQQMusic = () => {
       quality: SongQuality = SongQuality.STANDARD,
       source: PlaySource = "normal",
     ) => {
-      const urlResult = await getSongUrl(song.mid, quality);
-      if (urlResult.code === 0 && urlResult.data) {
-        setCurrentSongUrl(urlResult.data);
-        play(song, source);
-      } else {
-        throw new Error(urlResult.message || "无法获取播放链接");
-      }
+      void quality;
+      play(song, source);
     },
-    [getSongUrl, play, setCurrentSongUrl]
+    [play]
   );
 
   // ==================== 歌单 ====================

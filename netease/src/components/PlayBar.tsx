@@ -9,7 +9,7 @@ import {
   StepForwardOutlined,
   FullscreenExitOutlined,
 } from "@ant-design/icons";
-import { Button, Space, message } from "antd";
+import { Button, Space } from "antd";
 
 import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
@@ -90,11 +90,7 @@ const PlayBar: React.FC = () => {
 
   // 猜你喜欢 (电台) 自动续播预加载
   useEffect(() => {
-    if (
-      effectivePlaySource === "guess" &&
-      currentSong &&
-      playlist.length > 0
-    ) {
+    if (effectivePlaySource === "guess" && currentSong && playlist.length > 0) {
       const currIdx = playlist.findIndex((s) => s.mid === currentSong.mid);
       const remaining = playlist.length - (currIdx + 1);
 
@@ -157,9 +153,9 @@ const PlayBar: React.FC = () => {
   // 播放/暂停控制
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !currentSongUrl) return;
+    if (!audio) return;
 
-    if (isPlaying) {
+    if (isPlaying && currentSongUrl) {
       audio.play().catch((err) => {
         if (err && err.name !== "AbortError") {
           console.error("播放失败:", err);
@@ -188,19 +184,31 @@ const PlayBar: React.FC = () => {
         setCurrentSongUrl(null);
         return;
       }
+
+      // 切歌时立刻暂停上一首并清除旧 URL
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setCurrentSongUrl(null);
+
       try {
         const res = await getSongUrl(currentSong.mid, songQuality);
         if (!active) return;
-        if (res.code === 0 && res.data) {
-          setCurrentSongUrl(res.data);
+        const url = typeof res.data === "string" ? res.data.trim() : "";
+        if (res.code === 0 && url && url.startsWith("http")) {
+          setCurrentSongUrl(url);
         } else {
-          message.error(`无法播放《${currentSong.name}》: 可能是VIP或独家单曲`);
+          messageApi.error(`无法播放《${currentSong.name}》: ${res.message || "获取播放链接为空，可能是VIP或版权限制"}`);
           setCurrentSongUrl(null);
+          // 加载失败自动跳下一首
+          setTimeout(() => playNext(), 1500);
         }
       } catch {
         if (!active) return;
-        message.error(`获取拉取链接失败`);
+        messageApi.error(`获取播放链接失败`);
         setCurrentSongUrl(null);
+        // 加载失败自动跳下一首
+        setTimeout(() => playNext(), 1500);
       }
     };
 
@@ -209,7 +217,15 @@ const PlayBar: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [currentSong, currentSong?.mid, songQuality, getSongUrl, setCurrentSongUrl]);
+  }, [
+    currentSong,
+    currentSong?.mid,
+    songQuality,
+    getSongUrl,
+    setCurrentSongUrl,
+    playNext,
+    messageApi,
+  ]);
 
   // 获取并解析歌词
   useEffect(() => {
@@ -362,11 +378,17 @@ const PlayBar: React.FC = () => {
     <>
       <audio
         ref={audioRef}
-        src={currentSongUrl || ""}
-        preload="metadata"
+        src={currentSongUrl || undefined}
+        preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => playNext()}
+        onError={() => {
+          if (currentSongUrl) {
+            messageApi.error(`播放失败，自动跳到下一首`);
+            setTimeout(() => playNext(), 1500);
+          }
+        }}
       />
 
       <div
