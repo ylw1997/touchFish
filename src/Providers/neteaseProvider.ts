@@ -71,7 +71,18 @@ export class NeteaseProvider extends BaseWebviewProvider {
     this.webviewView = webviewView;
     const resolved = super.resolveWebviewView(webviewView);
     void this.notifyAuthState();
+    this.notifyQuality();
     return resolved;
+  }
+
+  private notifyQuality() {
+    if (!this.webviewView) return;
+    const config = workspace.getConfiguration("touchfish");
+    const quality = config.get<number>("neteaseQuality", 128);
+    this.webviewView.webview.postMessage({
+      command: "NETEASE_QUALITY_SYNC",
+      payload: { quality },
+    });
   }
 
   private getCredentialFromConfig(): string {
@@ -217,6 +228,17 @@ export class NeteaseProvider extends BaseWebviewProvider {
 
     try {
       switch (command) {
+        case "NETEASE_GET_QUALITY": {
+          this.notifyQuality();
+          break;
+        }
+        case "NETEASE_SET_QUALITY": {
+          const { quality } = payload || {};
+          if (quality !== undefined) {
+            await setConfigByKey("neteaseQuality", quality);
+          }
+          break;
+        }
         // ==================== 搜索 & 歌曲 ====================
         case "NETEASE_SEARCH": {
           const { keyword, page, limit } = payload || {};

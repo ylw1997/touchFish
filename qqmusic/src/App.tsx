@@ -178,15 +178,21 @@ function App() {
     };
 
     void syncAuthState();
+    void request("QQMUSIC_GET_QUALITY" as any, null).catch(console.error);
 
     const handleMessage = (event: MessageEvent) => {
       const payload = event.data;
-      if (payload?.command !== "QQMUSIC_AUTH_SYNC") return;
-
-      if (payload.payload?.isLoggedIn && payload.payload?.userInfo) {
-        login(payload.payload.userInfo);
-      } else {
-        logout();
+      if (payload?.command === "QQMUSIC_AUTH_SYNC") {
+        if (payload.payload?.isLoggedIn && payload.payload?.userInfo) {
+          login(payload.payload.userInfo);
+        } else {
+          logout();
+        }
+      } else if (payload?.command === "QQMUSIC_QUALITY_SYNC") {
+        const { quality } = payload.payload || {};
+        if (quality !== undefined) {
+          usePlayerStore.getState().setSongQuality(quality);
+        }
       }
     };
 

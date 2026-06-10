@@ -79,7 +79,18 @@ export class QQMusicProvider extends BaseWebviewProvider {
     this.webviewView = webviewView;
     const resolved = super.resolveWebviewView(webviewView);
     void this.notifyAuthState();
+    this.notifyQuality();
     return resolved;
+  }
+
+  private notifyQuality() {
+    if (!this.webviewView) return;
+    const config = workspace.getConfiguration("touchfish");
+    const quality = config.get<number>("qqmusicQuality", 128);
+    this.webviewView.webview.postMessage({
+      command: "QQMUSIC_QUALITY_SYNC",
+      payload: { quality },
+    });
   }
 
   private getCredentialFromConfig(): QQMusicCredential | null {
@@ -239,6 +250,17 @@ export class QQMusicProvider extends BaseWebviewProvider {
 
     try {
       switch (command) {
+        case "QQMUSIC_GET_QUALITY": {
+          this.notifyQuality();
+          break;
+        }
+        case "QQMUSIC_SET_QUALITY": {
+          const { quality } = payload || {};
+          if (quality !== undefined) {
+            await setConfigByKey("qqmusicQuality", quality);
+          }
+          break;
+        }
         case "QQMUSIC_SEARCH": {
           const { keyword, page, num } = payload || {};
           const result = await searchSongs(keyword, page || 1, num || 20);

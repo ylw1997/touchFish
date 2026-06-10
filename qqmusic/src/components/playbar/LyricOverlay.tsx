@@ -1,7 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SongQuality } from "../../types/qqmusic";
 import type { Song } from "../../types/qqmusic";
 import { ProgressBar } from "./ProgressBar";
+import { Dropdown } from "antd";
+import type { MenuProps } from "antd";
+import { usePlayerStore } from "../../store/player";
 
 interface LyricOverlayProps {
   isLyricOpen: boolean;
@@ -22,6 +26,41 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
   audioRef,
 }) => {
   const lyricContainerRef = useRef<HTMLDivElement>(null);
+
+  const songQuality = usePlayerStore((state) => state.songQuality);
+  const setSongQuality = usePlayerStore((state) => state.setSongQuality);
+
+  const getQualityText = (q: SongQuality) => {
+    switch (q) {
+      case SongQuality.STANDARD:
+        return "标准音质";
+      case SongQuality.HIGH:
+        return "极高音质";
+      case SongQuality.LOSSLESS:
+        return "无损音质";
+      default:
+        return "标准音质";
+    }
+  };
+
+  const menuItems: MenuProps["items"] = [
+    {
+      key: String(SongQuality.STANDARD),
+      label: "标准音质",
+    },
+    {
+      key: String(SongQuality.HIGH),
+      label: "极高音质",
+    },
+    {
+      key: String(SongQuality.LOSSLESS),
+      label: "无损音质",
+    },
+  ];
+
+  const handleQualityChange: MenuProps["onClick"] = ({ key }) => {
+    setSongQuality(Number(key) as SongQuality);
+  };
 
   // Handle auto-scroll for lyrics when expanded
   useEffect(() => {
@@ -61,6 +100,21 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
                 alt={currentSong.name}
                 referrerPolicy="no-referrer"
               />
+              <Dropdown
+                menu={{
+                  items: menuItems,
+                  onClick: handleQualityChange,
+                  selectable: true,
+                  defaultSelectedKeys: [String(songQuality)],
+                }}
+                placement="bottom"
+                trigger={["click"]}
+                overlayStyle={{ zIndex: 3000 }}
+              >
+                <div className="quality-selector-btn">
+                  <span>{getQualityText(songQuality)}</span>
+                </div>
+              </Dropdown>
             </div>
             <div className="lyric-list-container" ref={lyricContainerRef}>
               {lyrics.length > 0 ? (

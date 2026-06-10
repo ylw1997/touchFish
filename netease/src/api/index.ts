@@ -170,12 +170,18 @@ export class QQMusicApi {
 
   // ==================== 歌曲 ====================
   // 获取歌曲播放链接
-  async getSongUrl(mid: string, _quality: SongQuality = 128, _credential?: any) {
-    void _quality;
+  async getSongUrl(mid: string, quality: SongQuality = 128, _credential?: any) {
     void _credential;
+    let level: "standard" | "higher" | "exhigh" | "lossless" = "standard";
+    if (quality === 320) {
+      level = "exhigh";
+    } else if (quality === 999) {
+      level = "lossless";
+    }
+
     const result = await this.request<any>(
       "NETEASE_GET_SONG_URL" as any,
-      { id: mid, level: "standard" },
+      { id: mid, level },
       "获取播放链接中..."
     );
     const url = result?.data?.[0]?.url || "";

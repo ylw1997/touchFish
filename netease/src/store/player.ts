@@ -4,6 +4,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Song, PlayMode, SongQuality } from "../types/qqmusic";
+import { vscode } from "../utils/vscode";
 
 export type PlaySource = "radar" | "guess" | "normal";
 
@@ -102,7 +103,14 @@ export const usePlayerStore = create<PlayerState>()(
       setPlaylist: (playlist) => set({ playlist }),
       setCurrentIndex: (index) => set({ currentIndex: index }),
       setPlayMode: (mode) => set({ playMode: mode }),
-      setSongQuality: (quality) => set({ songQuality: quality }),
+      setSongQuality: (quality) => {
+        if (get().songQuality === quality) return;
+        set({ songQuality: quality });
+        vscode.postMessage({
+          command: "NETEASE_SET_QUALITY",
+          payload: { quality },
+        });
+      },
 
       togglePlaylistOpen: () =>
         set((state) => ({ isPlaylistOpen: !state.isPlaylistOpen })),

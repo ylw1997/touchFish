@@ -355,6 +355,36 @@
 					"type": "boolean",
 					"default": true,
 					"description": "启用网易云音乐模块"
+				},
+				"touchfish.neteaseQuality": {
+					"type": "number",
+					"default": 128,
+					"description": "网易云音乐默认音质 (128 标准音质, 320 极高音质, 999 无损音质)",
+					"enum": [
+						128,
+						320,
+						999
+					],
+					"enumDescriptions": [
+						"标准音质",
+						"极高音质",
+						"无损音质"
+					]
+				},
+				"touchfish.qqmusicQuality": {
+					"type": "number",
+					"default": 128,
+					"description": "QQ音乐默认音质 (128 标准音质, 320 极高音质, 999 无损音质)",
+					"enum": [
+						128,
+						320,
+						999
+					],
+					"enumDescriptions": [
+						"标准音质",
+						"极高音质",
+						"无损音质"
+					]
 				}
 			}
 		},
