@@ -1,6 +1,27 @@
 # 更新历史 
 
 
+## [16.12.0](https://github.com/ylw1997/touchFish/compare/v16.11.0...v16.12.0) (2026-06-10)
+
+
+### ❤️ Code Refactoring | 代码重构
+
+* **zhihu:** 统一投票函数类型定义并添加加载状态 ([df826de](https://github.com/ylw1997/touchFish/commit/df826dea321a1c25d84e2c0da83d242027a5fbb1))
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([591b8dc](https://github.com/ylw1997/touchFish/commit/591b8dc168444b6c5c19d0256b23648910ff0db3))
+* update x ids ([ecb4354](https://github.com/ylw1997/touchFish/commit/ecb4354cf50e1f41f2391aec54258f6d9c72326b))
+
+
+### ✨ Features | 新功能
+
+* **zhihu:** 添加知乎页面悬浮按钮自动隐藏功能 ([15fadae](https://github.com/ylw1997/touchFish/commit/15fadae157e2886f99d3f67571abfb14dc43cbc0))
+* 优化选择音质按钮样式 ([0b214a2](https://github.com/ylw1997/touchFish/commit/0b214a2b1bbdc043ef20bbc79e92dbb38a71cb4a))
+* 网易云和qq音乐选择音质功能上线 ([39b7a64](https://github.com/ylw1997/touchFish/commit/39b7a64b47a3b516fb624121f57e4602770e74aa))
+* 网易云和qq音乐音质选择功能上线 ([23bbd58](https://github.com/ylw1997/touchFish/commit/23bbd58930fdc643347b1b46533f05033f48bed8))
+
 ## [16.11.0](https://github.com/ylw1997/touchFish/compare/v16.10.0...v16.11.0) (2026-06-08)
 
 
