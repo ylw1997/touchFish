@@ -6,25 +6,25 @@ const X_BASE_URL = "https://x.com";
 
 // 默认 Query ID，会被 X 定期轮换。如果 404，需要从浏览器 DevTools 抓取最新值。
 // @operation: HomeTimeline
-export let X_HOME_TIMELINE_QUERY_ID = "fMIHESk23o0S6-kx6AoS4w";
+export let X_HOME_TIMELINE_QUERY_ID = "yXkXiX5sZhWEsOjz4u9dSQ";
 // @operation: TweetDetail
-export let X_TWEET_DETAIL_QUERY_ID = "kZ61rljDhCohzzIeMI32Aw";
+export let X_TWEET_DETAIL_QUERY_ID = "DYCGBel_pHWgbQYKynAxnA";
 // @operation: SearchTimeline
-export let X_SEARCH_TIMELINE_QUERY_ID = "mjP9fB_MpScfXblKwpTDBg";
+export let X_SEARCH_TIMELINE_QUERY_ID = "tWipOZNWJfoG6roZ9Yk6KA";
 // @operation: UserByScreenName
 export let X_USER_BY_SCREEN_NAME_QUERY_ID = "681MIj51w00Aj6dY0GXnHw";
 // @operation: UserTweets
-export let X_USER_TWEETS_QUERY_ID = "MfZxUa_UBsNtXHjSoVrFIA";
+export let X_USER_TWEETS_QUERY_ID = "fVhuOkcsO6w1T0nmCAo_sw";
 // @operation: CreateTweet
 export let X_CREATE_TWEET_QUERY_ID = "zWBsbUW6mqkNJv25Yrp-_Q";
 // @operation: HomeLatestTimeline
-export const X_HOME_LATEST_TIMELINE_QUERY_ID = "lrjR402D2F2JkxVan2rykA";
+export const X_HOME_LATEST_TIMELINE_QUERY_ID = "3EReKHnXX2ebBZP1afZnXw";
 // @operation: FavoriteTweet
 export const X_FAVORITE_TWEET_QUERY_ID = "lI07N6Otwv1PhnEgXILM7A";
 // @operation: UnfavoriteTweet
 export const X_UNFAVORITE_TWEET_QUERY_ID = "ZYKSe-w7KEslx3JhSIk5LA";
 // @operation: Following
-export let X_FOLLOWING_QUERY_ID = "L3Q5oqPNkfmWT1e4QyyIDg";
+export let X_FOLLOWING_QUERY_ID = "wgJMiQOBJUHD1BW00My09Q";
 
 /**
  * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
