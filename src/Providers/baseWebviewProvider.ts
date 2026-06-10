@@ -114,6 +114,8 @@ export abstract class BaseWebviewProvider
     if (showImg === undefined) showImg = true;
     let fontSize = config.get("fontSize") as number | undefined;
     if (fontSize === undefined) fontSize = 14;
+    let zhihuAutoHideBtn = config.get("zhihuAutoHideBtn") as boolean | undefined;
+    if (zhihuAutoHideBtn === undefined) zhihuAutoHideBtn = false;
 
     webviewView.webview.html = getWebviewHtml({
       webviewView,
@@ -121,7 +123,7 @@ export abstract class BaseWebviewProvider
       distPath: this.options.distPath,
       devPort: this.options.devPort,
       title: this.options.title,
-      windowConfig: { showImg, fontSize },
+      windowConfig: { showImg, fontSize, zhihuAutoHideBtn },
     });
   }
 }

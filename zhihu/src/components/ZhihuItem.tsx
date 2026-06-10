@@ -7,6 +7,7 @@ import {
   FireOutlined,
   LikeFilled,
   ShareAltOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
@@ -20,7 +21,7 @@ import React, {
 import CommentItem from "./CommentItem";
 import { parseZhihuItemContent } from "../utils/textParser";
 import type { ZhihuCommentItem, ZhihuItemData } from "../../../types/zhihu";
-import useZhihuAction from "../hooks/useZhihuAction";
+import useZhihuAction, { type VoteFnType } from "../hooks/useZhihuAction";
 import { loaderFunc } from "../utils/loader";
 import { useExpandedStore } from "../store/expanded";
 import ImagePreviewToolbar from "./ImagePreviewToolbar";
@@ -29,7 +30,7 @@ export interface ZhihuItemProps {
   item: ZhihuItemData;
   openQuestionDetailDrawer?: (questionId: string, title: string) => void;
   isDetail?: boolean;
-  handleVote: (answerId: string, type: "up" | "neutral") => void;
+  handleVote: VoteFnType;
   showImg?: boolean;
 }
 const ZhihuItem: React.FC<ZhihuItemProps> = ({
@@ -51,11 +52,25 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const { getZhihuComment, copyLink } = useZhihuAction();
   const [overrideShow, setOverrideShow] = useState(false);
+  const [voting, setVoting] = useState(false);
   const imagesVisible = globalShowImg || overrideShow;
   const hasImages = useMemo(
     () => (item.content && item.content.includes("<img")) || item.image_area,
     [item.content, item.image_area],
   );
+
+  const handleVoteClick = async () => {
+    if (voting) return;
+    setVoting(true);
+    try {
+      await handleVote(
+        item.id,
+        item.vote_next_step === "unvote" ? "neutral" : "up",
+      );
+    } finally {
+      setVoting(false);
+    }
+  };
 
   const backToView = () => {
     if (cardRef.current) {
@@ -158,14 +173,11 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
       <span
         className="link"
         key="voteup"
-        onClick={() =>
-          handleVote(
-            item.id,
-            item.vote_next_step === "unvote" ? "neutral" : "up",
-          )
-        }
+        onClick={handleVoteClick}
       >
-        {item.vote_next_step === "unvote" ? (
+        {voting ? (
+          <LoadingOutlined />
+        ) : item.vote_next_step === "unvote" ? (
           <LikeFilled style={{ color: "red" }} />
         ) : (
           <LikeOutlined />
