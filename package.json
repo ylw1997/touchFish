@@ -181,6 +181,11 @@
 					"type": "string",
 					"description": "知乎 cookie"
 				},
+				"touchfish.zhihuAutoHideBtn": {
+					"type": "boolean",
+					"default": false,
+					"description": "向下滚动时自动隐藏悬浮按钮，向上滚动时显示"
+				},
 				"touchfish.xhsCookie": {
 					"type": "string",
 					"description": "小红书 cookie"
@@ -906,12 +911,14 @@
 	"dependencies": {
 		"axios": "1.10.0",
 		"bufferutil": "^4.0.9",
-		"canvas": "^3.2.0",
 		"cheerio": "1.1.0",
 		"crypto-js": "^4.2.0",
 		"iconv-lite": "^0.7.2",
 		"utf-8-validate": "^6.0.5",
 		"x-client-transaction-id": "^0.2.3"
+	},
+	"optionalDependencies": {
+		"canvas": "^3.2.0"
 	},
 	"repository": {
 		"type": "git",

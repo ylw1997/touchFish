@@ -10,7 +10,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Divider, FloatButton, Tabs } from "antd";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import "./style/index.less";
 import {
   RedoOutlined,
@@ -51,6 +51,8 @@ function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const [groupOpen, setGroupOpen] = useState(false);
   const groupRef = useRef<HTMLDivElement>(null);
+  const [floatButtonsVisible, setFloatButtonsVisible] = useState(true);
+  const lastScrollTop = useRef(0);
   const {
     list,
     clearList,
@@ -75,11 +77,11 @@ function App() {
     questionOrder,
     changeQuestionOrder,
   } = useZhihuAction();
-  const [tabs] = useState(defTab);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const [showImg, setShowImg] = useState(
     window.showImg != undefined ? window.showImg : true,
   );
+  const zhihuAutoHideBtn = window.zhihuAutoHideBtn ?? false;
 
   const [activeKey, setActiveKey] = useState(defTab[0].key);
   const hasExpanded = useHasExpanded();
@@ -111,11 +113,35 @@ function App() {
       unsolicitedMessageHandler,
     );
 
+    // 自动隐藏按钮逻辑
+    let handleAutoHideScroll: (() => void) | null = null;
+    if (zhihuAutoHideBtn) {
+      handleAutoHideScroll = () => {
+        const currentScrollTop = scrollableNode.scrollTop;
+        const isScrollingDown = currentScrollTop > lastScrollTop.current;
+
+        if (isScrollingDown && currentScrollTop > 30) {
+          // 向下滚动且滚动距离超过30px时隐藏按钮
+          setFloatButtonsVisible(false);
+        } else if (!isScrollingDown) {
+          // 向上滚动时显示按钮
+          setFloatButtonsVisible(true);
+        }
+
+        lastScrollTop.current = currentScrollTop;
+      };
+
+      scrollableNode.addEventListener("scroll", handleAutoHideScroll);
+    }
+
     return () => {
       scrollableNode.removeEventListener("scroll", handleScroll);
+      if (handleAutoHideScroll) {
+        scrollableNode.removeEventListener("scroll", handleAutoHideScroll);
+      }
       removeListener();
     };
-  }, []);
+  }, [zhihuAutoHideBtn]);
 
   const fetchData = useCallback(() => {
     // load next page (initial load will call getListData via fetchNext)
@@ -138,19 +164,30 @@ function App() {
 
   return (
     <>
-      <div className="tabs-shell">
-        <Tabs
-          activeKey={activeKey}
-          centered
-          className="zhihu-tabs dynamic-font-size"
-          items={tabs.map((tab) => ({
-            key: tab.key,
-            label: tab.label,
-            children: null,
-          }))}
-          onChange={onChange}
-        />
-      </div>
+      <AnimatePresence>
+        {floatButtonsVisible && (
+          <motion.div
+            key="tabs-shell"
+            className="tabs-shell"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Tabs
+              activeKey={activeKey}
+              centered
+              className="zhihu-tabs dynamic-font-size"
+              items={defTab.map((tab) => ({
+                key: tab.key,
+                label: tab.label,
+                children: null,
+              }))}
+              onChange={onChange}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div id="scrollableDiv" ref={scrollableNodeRef} className="list">
         {loading && list.length === 0 ? (
           loaderFunc()
@@ -183,85 +220,97 @@ function App() {
           </InfiniteScroll>
         )}
       </div>
-      <FloatButton.BackTop
-        className="touchfish-float-backtop"
-        style={{ insetInlineEnd: 24, bottom: 24 }}
-        visibilityHeight={500}
-        duration={1000}
-        icon={<VerticalAlignTopOutlined />}
-        tooltip={{ title: "回到顶部", placement: "left" }}
-        target={() => scrollableNodeRef.current || window}
-      />
-      <div ref={groupRef}>
-        <FloatButton
-          className="touchfish-float-refresh"
-          style={{ insetInlineEnd: 24, bottom: 88 }}
-          onClick={() => {
-            clearList();
-            getListData(activeKey, true);
-          }}
-          icon={<RedoOutlined style={{ color: "#b37feb" }} />}
-          tooltip={{ title: "刷新", placement: "left" }}
-        />
-        <FloatButton.Group
-          trigger="click"
-          open={groupOpen}
-          onOpenChange={(open) => {
-            const event = window.event as MouseEvent;
-            if (event && groupRef.current?.contains(event.target as Node)) {
-              setGroupOpen(open);
-            }
-          }}
-          shape="circle"
-          style={{ insetInlineEnd: 24, bottom: 152 }}
-          icon={<AppstoreOutlined />}
-        >
-          <FloatButton
-            icon={<SearchOutlined style={{ color: "#faad14" }} />}
-            tooltip={{ title: "搜索", placement: "left" }}
-            onClick={() => setSearchDrawerOpen(true)}
-          />
-
-          {hasExpanded && (
-            <FloatButton
-              onClick={() => collapseAll()}
-              icon={<CompressOutlined style={{ color: "#a0d911" }} />}
-              tooltip={{ title: "折叠已展开", placement: "left" }}
+      <AnimatePresence>
+        {floatButtonsVisible && (
+          <motion.div
+            key="float-buttons"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <FloatButton.BackTop
+              className="touchfish-float-backtop"
+              style={{ insetInlineEnd: 24, bottom: 24 }}
+              visibilityHeight={500}
+              duration={1000}
+              icon={<VerticalAlignTopOutlined />}
+              tooltip={{ title: "回到顶部", placement: "left" }}
+              target={() => scrollableNodeRef.current || window}
             />
-          )}
-          <FloatButton
-            onClick={() => {
-              const newState = !showImg;
-              setShowImg(newState);
-              vscode.postMessage({
-                command: "TOGGLE_SHOW_IMG",
-                payload: newState,
-              });
-            }}
-            icon={
-              showImg ? (
-                <EyeOutlined style={{ color: "#13c2c2" }} />
-              ) : (
-                <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
-              )
-            }
-            tooltip={{
-              title: `${showImg ? "隐藏" : "显示"}图片`,
-              placement: "left",
-            }}
-          />
-          <FloatButton
-            onClick={increase}
-            icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
-            tooltip={{ title: "加大字体", placement: "left" }}
-          />
-          <FloatButton
-            onClick={decrease}
-            icon={<MinusOutlined style={{ color: "#52c41a" }} />}
-            tooltip={{ title: "减小字体", placement: "left" }}
-          />
-        </FloatButton.Group>
-      </div>
+            <div ref={groupRef}>
+              <FloatButton
+                className="touchfish-float-refresh"
+                style={{ insetInlineEnd: 24, bottom: 88 }}
+                onClick={() => {
+                  clearList();
+                  getListData(activeKey, true);
+                }}
+                icon={<RedoOutlined style={{ color: "#b37feb" }} />}
+                tooltip={{ title: "刷新", placement: "left" }}
+              />
+              <FloatButton.Group
+                trigger="click"
+                open={groupOpen}
+                onOpenChange={(open) => {
+                  const event = window.event as MouseEvent;
+                  if (event && groupRef.current?.contains(event.target as Node)) {
+                    setGroupOpen(open);
+                  }
+                }}
+                shape="circle"
+                style={{ insetInlineEnd: 24, bottom: 152 }}
+                icon={<AppstoreOutlined />}
+              >
+                <FloatButton
+                  icon={<SearchOutlined style={{ color: "#faad14" }} />}
+                  tooltip={{ title: "搜索", placement: "left" }}
+                  onClick={() => setSearchDrawerOpen(true)}
+                />
+
+                {hasExpanded && (
+                  <FloatButton
+                    onClick={() => collapseAll()}
+                    icon={<CompressOutlined style={{ color: "#a0d911" }} />}
+                    tooltip={{ title: "折叠已展开", placement: "left" }}
+                  />
+                )}
+                <FloatButton
+                  onClick={() => {
+                    const newState = !showImg;
+                    setShowImg(newState);
+                    vscode.postMessage({
+                      command: "TOGGLE_SHOW_IMG",
+                      payload: newState,
+                    });
+                  }}
+                  icon={
+                    showImg ? (
+                      <EyeOutlined style={{ color: "#13c2c2" }} />
+                    ) : (
+                      <EyeInvisibleOutlined style={{ color: "#13c2c2" }} />
+                    )
+                  }
+                  tooltip={{
+                    title: `${showImg ? "隐藏" : "显示"}图片`,
+                    placement: "left",
+                  }}
+                />
+                <FloatButton
+                  onClick={increase}
+                  icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
+                  tooltip={{ title: "加大字体", placement: "left" }}
+                />
+                <FloatButton
+                  onClick={decrease}
+                  icon={<MinusOutlined style={{ color: "#52c41a" }} />}
+                  tooltip={{ title: "减小字体", placement: "left" }}
+                />
+              </FloatButton.Group>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <Suspense fallback={<div>Loading...</div>}>
         <QuestionDetailDrawer
           open={questionDetailDrawerOpen}
