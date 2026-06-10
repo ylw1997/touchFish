@@ -57,6 +57,10 @@ const PlayBar: React.FC = () => {
   const isRadioMode = usePlayerStore((state) => state.isRadioMode);
   const openSingerDrawer = usePlayerStore((state) => state.openSingerDrawer);
   const playSource = usePlayerStore((state) => state.playSource);
+  const songQuality = usePlayerStore((state) => state.songQuality);
+
+  const restoreTimeRef = useRef<number>(0);
+  const lastQualityRef = useRef(songQuality);
 
   const { likedSongMids, toggleLikeSong } = useUserStore();
   const isLiked = currentSong ? likedSongMids.includes(currentSong.mid) : false;
@@ -162,7 +166,17 @@ const PlayBar: React.FC = () => {
     }
   }, [isPlaying, currentSongUrl]);
 
-  // Handle auto-fetching the song URL when currentSong changes
+  // 监控音质改变，保存当前时间
+  useEffect(() => {
+    if (lastQualityRef.current !== songQuality) {
+      if (audioRef.current && isPlaying) {
+        restoreTimeRef.current = audioRef.current.currentTime;
+      }
+      lastQualityRef.current = songQuality;
+    }
+  }, [songQuality, isPlaying]);
+
+  // Handle auto-fetching the song URL when currentSong or songQuality changes
   useEffect(() => {
     let active = true;
     const fetchUrl = async () => {
@@ -171,7 +185,7 @@ const PlayBar: React.FC = () => {
         return;
       }
       try {
-        const res = await getSongUrl(currentSong.mid);
+        const res = await getSongUrl(currentSong.mid, songQuality);
         if (!active) return;
         if (res.code === 0 && res.data) {
           setCurrentSongUrl(res.data);
@@ -191,7 +205,7 @@ const PlayBar: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [currentSong, currentSong?.mid, getSongUrl, setCurrentSongUrl]);
+  }, [currentSong, currentSong?.mid, songQuality, getSongUrl, setCurrentSongUrl]);
 
   // 获取并解析歌词
   useEffect(() => {
@@ -332,6 +346,14 @@ const PlayBar: React.FC = () => {
     }
   };
 
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const audio = e.target as HTMLAudioElement;
+    if (restoreTimeRef.current > 0) {
+      audio.currentTime = restoreTimeRef.current;
+      restoreTimeRef.current = 0;
+    }
+  };
+
   return (
     <>
       <audio
@@ -339,6 +361,7 @@ const PlayBar: React.FC = () => {
         src={currentSongUrl || ""}
         preload="metadata"
         onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => playNext()}
       />
 
@@ -351,7 +374,7 @@ const PlayBar: React.FC = () => {
           isPlaylistOpen={isPlaylistOpen}
           playlist={playlist}
           currentSong={currentSong}
-          playSong={(song) => playSong(song, undefined, effectivePlaySource)}
+          playSong={(song) => playSong(song, songQuality, effectivePlaySource)}
           removeFromPlaylist={removeFromPlaylist}
           clearPlaylist={clearPlaylist}
           getAlbumCover={getAlbumCover}

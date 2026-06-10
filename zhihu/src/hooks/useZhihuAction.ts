@@ -3,6 +3,8 @@ import type { ZhihuItemData } from "../../../types/zhihu";
 import { useRequest } from "./useRequest";
 import { ZhihuApi } from "../api";
 
+export type VoteFnType = (answerId: string, type: "up" | "neutral") => Promise<void>
+
 const useZhihuAction = () => {
   const [list, setList] = useState<ZhihuItemData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -178,12 +180,12 @@ const useZhihuAction = () => {
     messageApi.success("操作成功!");
   };
 
-  const handleVote = (answerId: string, type: "up" | "neutral") => {
-    voteHandler(answerId, type, list, setList);
+  const handleVote: VoteFnType = async (answerId, type) => {
+    await voteHandler(answerId, type, list, setList);
   };
 
-  const handleQuestionVote = (answerId: string, type: "up" | "neutral") => {
-    voteHandler(answerId, type, questionData, setQuestionData);
+  const handleQuestionVote = async (answerId: string, type: "up" | "neutral") => {
+    await voteHandler(answerId, type, questionData, setQuestionData);
   };
 
   const followHandler = async () => {
