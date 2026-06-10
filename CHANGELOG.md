@@ -1,6 +1,16 @@
 # 更新历史 
 
 
+## [16.13.0](https://github.com/ylw1997/touchFish/compare/v16.12.0...v16.13.0) (2026-06-10)
+
+
+### ✨ Features | 新功能
+
+* **App:** 优化浮动按钮显示逻辑并简化动画配置 ([aedbde1](https://github.com/ylw1997/touchFish/commit/aedbde13f8ecd7059ca31d07ba7c6ff4bbcc9e5a))
+* 优化播放失效没有提示问题,优化播放体验 ([623cce3](https://github.com/ylw1997/touchFish/commit/623cce3dc681090d51bfc92e185ca06264a18cd8))
+* 优化网易云节点,提升加载速度 ([b930194](https://github.com/ylw1997/touchFish/commit/b93019464b5d2bb50a23dcce65a469c3f5d0e503))
+* 修复问题 ([e6099e0](https://github.com/ylw1997/touchFish/commit/e6099e011ca5ed586327296604f3066a5d9e564d))
+
 ## [16.12.0](https://github.com/ylw1997/touchFish/compare/v16.11.0...v16.12.0) (2026-06-10)
 
 
