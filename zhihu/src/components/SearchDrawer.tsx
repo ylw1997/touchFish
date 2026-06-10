@@ -6,16 +6,13 @@ import type { ZhihuItemData } from "../../../types/zhihu";
 import ZhihuItem from "./ZhihuItem";
 import { loaderFunc } from "../utils/loader";
 import { useHasExpanded, useExpandedStore } from "../store/expanded";
-import useZhihuAction from "../hooks/useZhihuAction";
+import useZhihuAction, { type VoteFnType } from "../hooks/useZhihuAction";
 
 interface SearchDrawerProps {
   open: boolean;
   onClose: () => void;
   openQuestionDetailDrawer: (questionId: string, title: string) => void;
-  handleVote: (
-    answerId: string,
-    type: "up" | "neutral",
-  ) => void;
+  handleVote: VoteFnType;
   showImg?: boolean;
 }
 

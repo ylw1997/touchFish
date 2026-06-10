@@ -15,6 +15,7 @@ import { useHasExpanded, useExpandedStore } from "../store/expanded";
 import ZhihuItem from "./ZhihuItem";
 import type { ZhihuItemData } from "../../../types/zhihu";
 import { loaderFunc } from "../utils/loader";
+import type { VoteFnType } from "../hooks/useZhihuAction";
 
 interface QuestionDetailDrawerProps {
   open: boolean;
@@ -24,7 +25,7 @@ interface QuestionDetailDrawerProps {
   questionId?: string;
   hasMore?: boolean;
   title: string;
-  handleVote: (answerId: string, type: "up" | "neutral") => void;
+  handleVote: VoteFnType;
   questionDetail: string;
   isFollowing: boolean | undefined;
   followHandler: () => void;
