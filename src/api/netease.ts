@@ -210,7 +210,7 @@ export const getSongUrl = async (
     data: {
       ids: [Number(id)],
       level,
-      encodeType: "mp3",
+      encodeType: level === "lossless" ? "flac" : "mp3",
     },
   });
 };

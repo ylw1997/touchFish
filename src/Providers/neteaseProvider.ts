@@ -265,6 +265,14 @@ export class NeteaseProvider extends BaseWebviewProvider {
         case "NETEASE_GET_SONG_URL": {
           const { id, level } = payload || {};
           const result = await getSongUrl(id, level || "standard");
+          if (result && result.data && Array.isArray(result.data)) {
+            result.data = result.data.map((item: any) => {
+              if (item && item.url && item.url.startsWith("http://")) {
+                item.url = item.url.replace("http://", "https://");
+              }
+              return item;
+            });
+          }
           webviewView.webview.postMessage({
             command: "NETEASE_GET_SONG_URL_RESULT",
             payload: result,
