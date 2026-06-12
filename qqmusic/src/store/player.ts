@@ -182,12 +182,14 @@ export const usePlayerStore = create<PlayerState>()(
       },
 
       playNext: () => {
-        const { playlist, currentIndex, playMode } = get();
+        const { playlist, currentIndex, playMode, playSource } = get();
         if (playlist.length === 0) return;
 
         let nextIndex: number;
 
-        switch (playMode) {
+        const actualPlayMode = (playSource === "radar" || playSource === "guess") ? "order" : playMode;
+
+        switch (actualPlayMode) {
           case "random":
             nextIndex = Math.floor(Math.random() * playlist.length);
             break;
