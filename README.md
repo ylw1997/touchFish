@@ -4,7 +4,7 @@
 
 # TouchFish
 
-**一款专为打工人设计的 VS Code 摸鱼神器，让你在编码的同时，尽享冲浪的乐趣。**
+**一款专为打工人设计的 VScode、Cursor、Trae、CodeBuddy、Qorder、Antigravity 摸鱼神器，让你在编码的同时，尽享冲浪的乐趣。**
 
 [![VS Code Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/ylw.touchfish?style=for-the-badge&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=ylw.touchfish)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/ylw.touchfish?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=ylw.touchfish)
@@ -17,23 +17,23 @@
 
 ## 🔥open-vsx 地址
 
-**第三方市场可用**
+**Cursor、Trae、CodeBuddy、Qorder、Antigravity市场链接**
 
 https://open-vsx.org/extension/ylw/touchfish
 
 ## ✨ 核心功能
 
-- **多平台聚合**: 无需离开 VS Code，即可沉浸式浏览来自 **IT 之家、Chiphell、V2EX、虎扑、NGA、Linux.do** 等多个热门社区的资讯。
-- **X (Twitter) 集成**: 在 VS Code 里刷推！支持 **首页时间线、搜索推文、查看推文详情、浏览评论、用户主页、关注/取关、点赞/转发、发推文、上传图片**，享受完整的 X 浏览与互动体验。
+- **多平台聚合**: 无需离开编辑器，即可沉浸式浏览来自 **IT 之家、Chiphell、V2EX、虎扑、NGA、Linux.do** 等多个热门社区的资讯。
+- **X (Twitter) 集成**: 在编辑器里刷推！支持 **首页时间线、搜索推文、查看推文详情、浏览评论、用户主页、关注/取关、点赞/转发、发推文、上传图片**，享受完整的 X 浏览与互动体验。
 - **全功能微博**: 不仅仅是看！你可以 **刷微博、看评论、点赞、转发、发微博、关注/取关用户**，享受近乎完整的桌面端微博体验。
 - **深度集成知乎**: 在代码的海洋里，随时潜入知乎探索答案。支持 **查看热榜、浏览推荐、查看问题和回答详情、展开/折叠评论、点赞/反对、关注问题** 等深度互动。
-- **小红书浏览**: 完整的小红书体验，支持 **首页推荐流、搜索笔记、查看详情、浏览评论、用户主页、关注/取关用户**，在 VS Code 内完成完整的小红书浏览闭环。
-- **B 站视频**: 在 VS Code 里刷 B 站！支持 **首页推荐、动态更新、待看列表、收藏夹浏览、视频搜索、用户主页、关注/取关、视频内联播放、加入播放列表、加入待看**，让你在代码间隙享受视频内容。
-- **QQ音乐**: 在 VS Code 中畅享音乐！支持 **歌单推荐、排行榜、搜索歌曲、播放音乐、查看歌手专辑、歌词显示、收藏歌曲**，状态栏实时显示歌词，代码摸鱼两不误。
+- **小红书浏览**: 完整的小红书体验，支持 **首页推荐流、搜索笔记、查看详情、浏览评论、用户主页、关注/取关用户**，在 编辑器 内完成完整的小红书浏览闭环。
+- **B 站视频**: 在 编辑器 里刷 B 站！支持 **首页推荐、动态更新、待看列表、收藏夹浏览、视频搜索、用户主页、关注/取关、视频内联播放、加入播放列表、加入待看**，让你在代码间隙享受视频内容。
+- **QQ音乐**: 在 编辑器 中畅享音乐！支持 **歌单推荐、排行榜、搜索歌曲、播放音乐、查看歌手专辑、歌词显示、收藏歌曲**，状态栏实时显示歌词，代码摸鱼两不误。
 - **网易云音乐**: 极致的音乐播放体验！支持 **推荐歌单、每日歌曲推荐、排行榜、搜索歌曲、内联播放、查看歌手详情（带头像/歌曲总数）、歌词同步及播放列表管理**，状态栏支持实时滚动歌词显示。
 - **小宇宙播客**: 订阅你喜爱的播客！支持 **发现页流、个人订阅列表、收件箱更新、节目/单集详情浏览、订阅/取消订阅、播放进度同步及 Shownotes 显示**，让你在敲代码时也能听见世界的声音。
-- **微信读书集成**: 沉浸式阅读体验！支持 **书架同步、阅读进度云同步、章节目录导航、划线笔记查看**，支持自定义字体大小，在 VS Code 里静心研读。
-- **无缝主题切换**: 插件界面能够 **自动侦测并适配** 你当前的 VS Code 主题。无论你切换到任何亮色或暗色主题，视图都会即时响应，实现真正的沉浸式体验，摸鱼不留痕迹。
+- **微信读书集成**: 沉浸式阅读体验！支持 **书架同步、阅读进度云同步、章节目录导航、划线笔记查看**，支持自定义字体大小，在 编辑器 里静心研读。
+- **无缝主题切换**: 插件界面能够 **自动侦测并适配** 你当前的 编辑器 主题。无论你切换到任何亮色或暗色主题，视图都会即时响应，实现真正的沉浸式体验，摸鱼不留痕迹。
 - **丰富交互体验**: 支持 **图片懒加载、视频播放、长文展开、加载动画、列表无限滚动、瀑布流布局** 等特性，提供流畅、现代的浏览体验。
 - **高度可配置**: 从新闻源到栏目分类，再到内容展示方式，多种参数均可自定义，打造最适合你的摸鱼环境。
 
@@ -78,7 +78,7 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 
 ![网易云音乐](https://github.com/user-attachments/assets/e19c4cc8-eebd-47a1-b0f2-9d13a9d39f65)
 
-### 📰 新闻阅读
+### 📰 NGA,LINUXDO,V2EX,IT之家,CHIPHELL,虎扑
 
 ![ScreenShot_2025-11-05_150613_386](https://github.com/user-attachments/assets/533fbebe-2f5c-468c-a3d1-c588c86664ec)
 
@@ -115,12 +115,12 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 
 ## 🛠️ 安装
 
-1.  打开 **VS Code**。
+1.  打开 **编辑器**。
 2.  进入 **扩展** 视图 (`Ctrl+Shift+X`)。
 3.  搜索 `TouchFish`。
 4.  点击 **安装**。
 
-或者，[直接访问 VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ylw.touchfish)。
+或者，[直接访问 编辑器 Marketplace](https://marketplace.visualstudio.com/items?itemName=ylw.touchfish)。
 
 ## ⚙️ 配置与使用
 
@@ -134,7 +134,7 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 
 ### 手动配置
 
-你也可以在 VS Code 的设置中 (`Ctrl+,`) 搜索 `touchfish` 来找到所有可配置的选项，例如：
+你也可以在 编辑器 的设置中 (`Ctrl+,`) 搜索 `touchfish` 来找到所有可配置的选项，例如：
 
 - `touchfish.weiboCookie`: 你的微博 Cookie。
 - `touchfish.zhihuCookie`: 你的知乎 Cookie。
@@ -163,7 +163,7 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
   - 小宇宙支持手机短信验证码登录，无需手动配置 Cookie。
   - **X (Twitter)** 需要科学上网，并需配置 Cookie 和 csrf-token 才能使用。
 - **标签页切换**: 支持 **Linux.do**（最新/热门/排行榜）、**V2EX**（全部/技术/创意等）、**虎扑**（步行街热帖/主干道等）、**NGA**（网事杂谈/晴风村等）多个平台的栏目切换。
-- **视频播放无声音**：VS Code 内置的 Electron/Chromium 精简版不含部分专利音频解码器，出现“有画面没声音”。
+- **视频播放无声音**：编辑器 内置的 Electron/Chromium 精简版不含部分专利音频解码器，出现“有画面没声音”。
   **一键脚本（替换 ffmpeg.dll）—使用前请确认 Electron 版本并自担风险**：
 
   > Windows PowerShell
