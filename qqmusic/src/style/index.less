@@ -1182,7 +1182,7 @@ a {
     // 确保子元素在进度条上方
     .playbar-video-wrapper,
     .playbar-info,
-    .ant-space {
+    .playbar-controls {
       position: relative;
       z-index: 1;
     }
@@ -1229,6 +1229,43 @@ a {
         text-overflow: ellipsis;
         white-space: nowrap;
         line-height: normal;
+      }
+    }
+  }
+
+  .playbar-controls {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-left: auto;
+
+    .playbar-action-btns {
+      display: flex;
+      gap: 8px;
+      max-width: 0;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .playbar-menu-btn-wrapper {
+      display: flex;
+      max-width: 32px;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &:hover {
+      .playbar-action-btns {
+        max-width: 250px;
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .playbar-menu-btn-wrapper {
+        max-width: 0;
+        opacity: 0;
+        transform: scale(0.5);
       }
     }
   }

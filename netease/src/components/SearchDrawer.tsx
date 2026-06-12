@@ -24,7 +24,8 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
   const [isSearching, setIsSearching] = useState(false);
 
   const { searchSongs, searchSingers, isLoading, playSong } = useQQMusic();
-  const { currentSong, openSingerDrawer } = usePlayerStore();
+  const { currentSong, openSingerDrawer, addToPlaylist } = usePlayerStore();
+  const [messageApi, contextHolder] = message.useMessage();
 
   const handleSearch = useCallback(async () => {
     if (!keyword.trim()) return;
@@ -52,10 +53,18 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
       try {
         await playSong(song);
       } catch (error: any) {
-        message.error(error.message || "无法播放歌曲");
+        messageApi.error(error.message || "无法播放歌曲");
       }
     },
-    [playSong],
+    [playSong, messageApi],
+  );
+
+  const handleAddToPlaylist = useCallback(
+    (song: Song) => {
+      addToPlaylist(song);
+      messageApi.success("已添加到播放列表");
+    },
+    [addToPlaylist, messageApi]
   );
 
   const tabItems = [
@@ -85,6 +94,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
                   isPlaying={currentSong?.mid === song.mid}
                   isCurrent={currentSong?.mid === song.mid}
                   onPlay={handlePlaySong}
+                  onAddToPlaylist={handleAddToPlaylist}
                 />
               ))}
             </div>
@@ -169,6 +179,7 @@ const SearchDrawer: React.FC<SearchDrawerProps> = ({ open, onClose }) => {
         },
       }}
     >
+      {contextHolder}
       <div className="search-header">
         <Search
           placeholder="搜索歌曲、歌手"

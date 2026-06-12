@@ -8,8 +8,12 @@ import {
   HeartFilled,
   StepForwardOutlined,
   FullscreenExitOutlined,
+  AppstoreOutlined,
+  RetweetOutlined,
+  SwapOutlined,
+  SyncOutlined,
 } from "@ant-design/icons";
-import { Button, Space } from "antd";
+import { Button } from "antd";
 
 import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
@@ -58,6 +62,8 @@ const PlayBar: React.FC = () => {
   const openSingerDrawer = usePlayerStore((state) => state.openSingerDrawer);
   const playSource = usePlayerStore((state) => state.playSource);
   const songQuality = usePlayerStore((state) => state.songQuality);
+  const playMode = usePlayerStore((state) => state.playMode);
+  const setPlayMode = usePlayerStore((state) => state.setPlayMode);
 
   const restoreTimeRef = useRef<number>(0);
   const lastQualityRef = useRef(songQuality);
@@ -198,7 +204,9 @@ const PlayBar: React.FC = () => {
         if (res.code === 0 && url && url.startsWith("http")) {
           setCurrentSongUrl(url);
         } else {
-          messageApi.error(`无法播放《${currentSong.name}》: ${res.message || "获取播放链接为空，可能是VIP或版权限制"}`);
+          messageApi.error(
+            `无法播放《${currentSong.name}》: ${res.message || "获取播放链接为空，可能是VIP或版权限制"}`,
+          );
           setCurrentSongUrl(null);
           // 加载失败自动跳下一首
           setTimeout(() => playNext(), 1500);
@@ -380,6 +388,7 @@ const PlayBar: React.FC = () => {
         ref={audioRef}
         src={currentSongUrl || undefined}
         preload="auto"
+        loop={playMode === "single"}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => playNext()}
@@ -501,61 +510,102 @@ const PlayBar: React.FC = () => {
             )}
           </div>
 
-          {/* 控制按钮放在右侧，仿 Bilibili 风格 */}
-          <Space size="small" style={{ marginLeft: "auto" }}>
-            <Button
-              color="default"
-              shape="circle"
-              variant="filled"
-              icon={
-                isLiked ? (
-                  <HeartFilled style={{ color: "#ff4d4f" }} />
-                ) : (
-                  <HeartOutlined />
-                )
-              }
-              onClick={handleToggleLike}
-              title={isLiked ? "取消我喜欢" : "添加到我喜欢"}
-            />
+          {/* 控制按钮放在右侧，悬浮展开 */}
+          <div className="playbar-controls">
+            <div className="playbar-action-btns">
+              <Button
+                color="default"
+                shape="circle"
+                variant="filled"
+                icon={
+                  isLiked ? (
+                    <HeartFilled style={{ color: "#ff4d4f" }} />
+                  ) : (
+                    <HeartOutlined />
+                  )
+                }
+                onClick={handleToggleLike}
+                title={isLiked ? "取消我喜欢" : "添加到我喜欢"}
+              />
 
-            <Button
-              color="default"
-              variant="filled"
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlay();
-              }}
-              title={isPlaying ? "暂停" : "播放"}
-              shape="circle"
-            >
-              {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
-            </Button>
-            <Button
-              color="default"
-              shape="circle"
-              variant="filled"
-              onClick={(e) => {
-                e.stopPropagation();
-                playNext();
-              }}
-              title="下一首"
-            >
-              <StepForwardOutlined />
-            </Button>
+              <Button
+                color="default"
+                variant="filled"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePlay();
+                }}
+                title={isPlaying ? "暂停" : "播放"}
+                shape="circle"
+              >
+                {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
+              </Button>
+              <Button
+                color="default"
+                shape="circle"
+                variant="filled"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playNext();
+                }}
+                title="下一首"
+              >
+                <StepForwardOutlined />
+              </Button>
 
-            <Button
-              color={isPlaylistOpen ? "primary" : "default"}
-              shape="circle"
-              variant="filled"
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlaylistOpen();
-              }}
-              title="播放列表"
-            >
-              <UnorderedListOutlined />
-            </Button>
-          </Space>
+              {effectivePlaySource !== "radar" &&
+                effectivePlaySource !== "guess" && (
+                  <Button
+                    color="default"
+                    shape="circle"
+                    variant="filled"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (playMode === "order") setPlayMode("random");
+                      else if (playMode === "random") setPlayMode("single");
+                      else setPlayMode("order");
+                    }}
+                    title={
+                      playMode === "single"
+                        ? "单曲循环"
+                        : playMode === "random"
+                          ? "随机播放"
+                          : "顺序播放"
+                    }
+                  >
+                    {playMode === "single" ? (
+                      <SyncOutlined />
+                    ) : playMode === "random" ? (
+                      <SwapOutlined />
+                    ) : (
+                      <RetweetOutlined />
+                    )}
+                  </Button>
+                )}
+
+              <Button
+                color={isPlaylistOpen ? "primary" : "default"}
+                shape="circle"
+                variant="filled"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePlaylistOpen();
+                }}
+                title="播放列表"
+              >
+                <UnorderedListOutlined />
+              </Button>
+            </div>
+            <div className="playbar-menu-btn-wrapper">
+              <Button
+                color="default"
+                shape="circle"
+                variant="filled"
+                icon={<AppstoreOutlined />}
+                title="更多功能"
+              />
+            </div>
+          </div>
         </div>
 
         <LyricOverlay
