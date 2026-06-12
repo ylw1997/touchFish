@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [16.14.0](https://github.com/ylw1997/touchFish/compare/v16.13.0...v16.14.0) (2026-06-12)
+
+
+### ✨ Features | 新功能
+
+* 网易云和qq音乐增加随机播放功能,修复搜索无法添加到播放列表问题,重新设计playbar ([7443d1c](https://github.com/ylw1997/touchFish/commit/7443d1c3106c766e310147cb2dd1e690dde1ef92))
+
 ## [16.13.0](https://github.com/ylw1997/touchFish/compare/v16.12.0...v16.13.0) (2026-06-10)
 
 
