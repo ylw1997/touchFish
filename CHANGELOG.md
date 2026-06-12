@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [16.15.0](https://github.com/ylw1997/touchFish/compare/v16.14.0...v16.15.0) (2026-06-12)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([4dd09f2](https://github.com/ylw1997/touchFish/commit/4dd09f2f3cf6238f2ce364b3e0bccc0a5369e9c9))
+
+
+### ✨ Features | 新功能
+
+* 猜你喜欢和雷达不要管播放模式,一律顺序播放 ([b5b1261](https://github.com/ylw1997/touchFish/commit/b5b126144328aecff308d586949bff72d61765aa))
+
 ## [16.14.0](https://github.com/ylw1997/touchFish/compare/v16.13.0...v16.14.0) (2026-06-12)
 
 
