@@ -822,17 +822,17 @@
 				},
 				{
 					"command": "touchfish.setZhihuToken",
-					"when": "view == zhihu",
+					"when": "view == zhihu && !config.touchfish.zhihuCookie",
 					"group": "navigation"
 				},
 				{
 					"command": "touchfish.setWeiboToken",
-					"when": "view == weibo",
+					"when": "view == weibo && !config.touchfish.weiboCookie",
 					"group": "navigation"
 				},
 				{
 					"command": "touchfish.setNgaToken",
-					"when": "view == view.ngaList",
+					"when": "view == view.ngaList && !config.touchfish.ngaCookie",
 					"group": "navigation"
 				},
 				{
@@ -847,12 +847,12 @@
 				},
 				{
 					"command": "touchfish.setLinuxDoToken",
-					"when": "view == view.linuxdoList",
+					"when": "view == view.linuxdoList && !config.touchfish.linuxDoCookie",
 					"group": "navigation"
 				},
 				{
 					"command": "touchfish.setXhsToken",
-					"when": "view == xhs",
+					"when": "view == xhs && !config.touchfish.xhsCookie",
 					"group": "navigation"
 				},
 				{
@@ -867,27 +867,27 @@
 				},
 				{
 					"command": "touchfish.setBilibiliToken",
-					"when": "view == bilibili",
+					"when": "view == bilibili && !config.touchfish.bilibiliCookie",
 					"group": "navigation"
 				},
 				{
 					"command": "touchfish.setXiaoyuzhouToken",
-					"when": "view == xiaoyuzhou",
+					"when": "view == xiaoyuzhou && !config.touchfish.xiaoyuzhouAccessToken && !config.touchfish.xiaoyuzhouRefreshToken",
 					"group": "navigation"
 				},
 				{
 					"command": "touchfish.setXToken",
-					"when": "view == x",
+					"when": "view == x && !config.touchfish.xCookie && !config.touchfish.xAuthorization",
 					"group": "navigation"
 				},
 				{
 					"command": "touchfish.setWereadCookie",
-					"when": "view == weread",
+					"when": "view == weread && !config.touchfish.wereadCookie",
 					"group": "navigation"
 				},
 				{
 					"command": "touchfish.setNeteaseCookie",
-					"when": "view == netease",
+					"when": "view == netease && !config.touchfish.neteaseCredential",
 					"group": "navigation"
 				}
 			]
