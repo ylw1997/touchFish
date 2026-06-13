@@ -8,6 +8,7 @@ packages:
   - "x"
   - "weread"
   - "netease"
+  - "package-parts"
 allowBuilds:
   '@vscode/vsce-sign': true
   bufferutil: true

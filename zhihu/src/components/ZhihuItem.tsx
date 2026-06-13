@@ -9,7 +9,6 @@ import {
   ShareAltOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
-import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import React, {
   useMemo,
@@ -25,6 +24,7 @@ import useZhihuAction, { type VoteFnType } from "../hooks/useZhihuAction";
 import { loaderFunc } from "../utils/loader";
 import { useExpandedStore } from "../store/expanded";
 import ImagePreviewToolbar from "./ImagePreviewToolbar";
+import { RelativeTime } from "@touchfish/shared-components";
 
 export interface ZhihuItemProps {
   item: ZhihuItemData;
@@ -160,7 +160,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
         <div className="info">
           <span>
             {isDetail ? "" : item.author?.name}{" "}
-            {item.created_time ? dayjs.unix(item.created_time).fromNow() : ""}
+            <RelativeTime timestamp={item.created_time} />
           </span>
         </div>
       </div>

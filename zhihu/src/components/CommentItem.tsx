@@ -9,11 +9,11 @@
  */
 import { Avatar, Button, Flex, List, Space, Tag } from "antd";
 import React, { useState } from "react";
-import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../types/zhihu";
 import { useRequest } from "../hooks/useRequest";
 import { processCommentContent } from "../utils/textParser";
 import { CaretRightOutlined, LikeOutlined } from "@ant-design/icons";
+import { RelativeTime } from "@touchfish/shared-components";
 
 const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
   const [childComments, setChildComments] = useState<ZhihuCommentItem[]>(
@@ -92,7 +92,7 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
                   {tag.text}
                 </Tag>
               ))}
-              <span>{dayjs(comment.created_time * 1000).fromNow()}</span>
+              <RelativeTime timestamp={comment.created_time * 1000} needUnix={false} />
             </Space>
             <span>
               <LikeOutlined /> {comment.like_count}
