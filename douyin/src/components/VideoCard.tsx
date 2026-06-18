@@ -358,15 +358,6 @@ export default function VideoCard({
 
       {/* 右侧浮动控制条 */}
       <div className="side-actions">
-        {/* 上一个视频 */}
-        <div className="action-item" style={{ marginBottom: "10px" }}>
-          <FloatButton
-            style={{ position: "static" }}
-            icon={<UpOutlined />}
-            onClick={handleScrollToPrev}
-          />
-        </div>
-
         {/* 作者头像 */}
         <div
           className="action-item"
@@ -435,13 +426,24 @@ export default function VideoCard({
           <span className="action-count">{isMuted ? "静音" : "有声"}</span>
         </div>
 
+        {/* 上一个视频 */}
+        <div className="action-item" style={{ marginTop: "10px", marginBottom: "10px" }}>
+          <FloatButton
+            style={{ position: "static" }}
+            icon={<UpOutlined />}
+            onClick={handleScrollToPrev}
+          />
+          <span className="action-count">上一个</span>
+        </div>
+
         {/* 下一个视频 */}
-        <div className="action-item" style={{ marginTop: "10px" }}>
+        <div className="action-item">
           <FloatButton
             style={{ position: "static" }}
             icon={<DownOutlined />}
             onClick={handleScrollToNext}
           />
+          <span className="action-count">下一个</span>
         </div>
       </div>
 
