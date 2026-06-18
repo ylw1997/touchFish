@@ -32,6 +32,7 @@ https://open-vsx.org/extension/ylw/touchfish
 - **QQ音乐**: 在 编辑器 中畅享音乐！支持 **歌单推荐、排行榜、搜索歌曲、播放音乐、查看歌手专辑、歌词显示、收藏歌曲**，状态栏实时显示歌词，代码摸鱼两不误。
 - **网易云音乐**: 极致的音乐播放体验！支持 **推荐歌单、每日歌曲推荐、排行榜、搜索歌曲、内联播放、查看歌手详情（带头像/歌曲总数）、歌词同步及播放列表管理**，状态栏支持实时滚动歌词显示。
 - **小宇宙播客**: 订阅你喜爱的播客！支持 **发现页流、个人订阅列表、收件箱更新、节目/单集详情浏览、订阅/取消订阅、播放进度同步及 Shownotes 显示**，让你在敲代码时也能听见世界的声音。
+- **抖音**: 沉浸式全屏短视频体验！支持 **个性推荐流、关注博主列表、喜欢列表**。拥有丝滑的原生手势感滑动对齐、智能静音与自动播放、暗黑磨砂玻璃质感的评论区抽屉、无缝转场封面防黑屏等体验。
 - **微信读书集成**: 沉浸式阅读体验！支持 **书架同步、阅读进度云同步、章节目录导航、划线笔记查看**，支持自定义字体大小，在 编辑器 里静心研读。
 - **无缝主题切换**: 插件界面能够 **自动侦测并适配** 你当前的 编辑器 主题。无论你切换到任何亮色或暗色主题，视图都会即时响应，实现真正的沉浸式体验，摸鱼不留痕迹。
 - **丰富交互体验**: 支持 **图片懒加载、视频播放、长文展开、加载动画、列表无限滚动、瀑布流布局** 等特性，提供流畅、现代的浏览体验。
@@ -72,11 +73,16 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 ![x](https://github.com/user-attachments/assets/11c009b6-b039-4eb6-8aff-a4b3dbf26491)
 
 ### 📗 微信读书
+
 ![weread](https://github.com/user-attachments/assets/9146d4e5-e1e1-4372-a7de-20c6952c3bff)
 
 ### 网易云音乐
 
 ![网易云音乐](https://github.com/user-attachments/assets/e19c4cc8-eebd-47a1-b0f2-9d13a9d39f65)
+
+### 抖音
+
+![douyin](https://github.com/user-attachments/assets/cdfca430-029b-481c-a8ab-4ddd6ed6bebf)
 
 ### 📰 NGA,LINUXDO,V2EX,IT之家,CHIPHELL,虎扑
 
@@ -85,33 +91,6 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 ### 🎮 VSCODE 暗色主题
 
 ![主题](https://oss.qmsznj.com/prod/2025/08/13/800c066c-bce9-4041-a6d0-fbb1bf459855_20250813173043A282.png)
-
-## 📊 平台功能对比
-
-| 功能特性      | 🔴 微博 | 🔵 知乎 | 🟥 小红书 | 📺 B 站 | 🎵 QQ音乐 | ❤️ 网易云 | 🎙️ 小宇宙 | 🐦 X | 📖 微信读书 |
-| ------------- | ------- | ------- | --------- | ------- | --------- | --------- | --------- | ---- | ----------- |
-| 📱 首页推荐流 | ✅      | ✅      | ✅        | ✅      | ✅        | ✅        | ✅        | ✅   |             |
-| 🔍 搜索内容   | ✅      | ✅      | ✅        | ✅      | ✅        | ✅        | ✅        | ✅   |             |
-| 📄 查看详情   | ✅      | ✅      | ✅        | ✅      | ✅        | ✅        | ✅        | ✅   |             |
-| 💬 浏览评论   | ✅      | ✅      | ✅        | ❌      | ❌        | ❌        | ✅        | ✅   |             |
-| 📝 发表评论   | ✅      | ❌      | ❌        | ❌      | ❌        | ❌        | ❌        | ✅   |             |
-| 👤 用户主页   | ✅      | ❌      | ✅        | ✅      | ✅        | ✅        | ✅        | ✅   |             |
-| ➕ 关注/取关  | ✅      | ❌      | ✅        | ✅      | ❌        | ❌        | ✅        | ✅   |             |
-| 👍 点赞/反对  | ✅      | ✅      | ❌        | ❌      | ✅        | ✅        | ✅        | ✅   |             |
-| 🔄 转发内容   | ✅      | ❌      | ❌        | ❌      | ❌        | ❌        | ❌        | ✅   |             |
-| ✍️ 发布内容   | ✅      | ❌      | ❌        | ❌      | ❌        | ❌        | ❌        | ✅   |             |
-| 📸 上传图片   | ✅      | ❌      | ❌        | ❌      | ❌        | ❌        | ❌        | ✅   |             |
-| 🎬 视频播放   | ✅      | ❌      | ✅        | ✅      | ❌        | ❌        | ❌        | ❌   |             |
-| 🎵 音乐播放   | ❌      | ❌      | ❌        | ❌      | ✅        | ✅        | ✅        | ❌   |             |
-| 🎤 歌词/文案  | ❌      | ❌      | ❌        | ❌      | ✅        | ✅        | ✅        | ❌   |             |
-| 🔥 热榜/热搜  | ✅      | ✅      | ❌        | ❌      | ✅        | ✅        | ✅        | ❌   |             |
-| 🌊 瀑布流布局 | ❌      | ❌      | ✅        | ❌      | ❌        | ❌        | ❌        | ❌   |             |
-| 📋 播放列表   | ❌      | ❌      | ❌        | ✅      | ✅        | ✅        | ✅        | ❌   | ❌          |
-| 📂 收藏夹     | ❌      | ❌      | ❌        | ✅      | ❌        | ❌        | ❌        | ❌   | ❌          |
-| ⏰ 待看/更新  | ❌      | ❌      | ❌        | ✅      | ❌        | ❌        | ✅        | ❌   | ✅          |
-| 🎨 主题适配   | ✅      | ✅      | ✅        | ✅      | ✅        | ✅        | ✅        | ✅   | ✅          |
-
-> 💡 **说明**：✅ 已支持 | ❌ 暂不支持
 
 ## 🛠️ 安装
 
@@ -148,6 +127,7 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 - `touchfish.linuxDoCookie`: 你的 Linux.do Cookie (访问 RSS 源需要)。
 - `touchfish.xCookie`: 你的 X (Twitter) Cookie（ct0 会自动提取为 csrf-token，无需单独配置）。
 - `touchfish.wereadCookie`: 你的微信读书 Cookie。
+- `touchfish.douyinCookie`: 你的抖音 Cookie。
 - `touchfish.showImg`: 是否显示图片（目前主要支持微博）。
 - `touchfish.showQQMusicStatusBar`: 是否在状态栏显示 QQ音乐播放信息（也支持小宇宙、网易云）。
 - `touchfish.qqmusicShowLyric`: 状态栏显示歌词（关闭则显示歌名）。
@@ -181,4 +161,4 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
 - **问题反馈**: 如果遇到任何 Bug 或有功能建议，欢迎在 [GitHub Issues](https://github.com/ylw1997/touchFish/issues) 中提出。
 
 - ## 友链
-- [https://linux.do/](https://linux.do/u/ylw/summary) 
+- [https://linux.do/](https://linux.do/u/ylw/summary)

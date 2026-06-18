@@ -158,6 +158,23 @@ netease/pnpm-lock.yaml
 netease/temp/**
 netease/package-lock.json
 
+# douyin webview (exclude source & deps; only dist assets should be packed if needed)
+douyin/src/**
+douyin/node_modules/**
+douyin/public/**
+douyin/.gitignore
+douyin/eslint.config.js
+douyin/index.html
+douyin/package.json
+douyin/README.md
+douyin/tsconfig.json
+douyin/tsconfig.app.json
+douyin/tsconfig.node.json
+douyin/vite.config.ts
+douyin/pnpm-lock.yaml
+douyin/temp/**
+douyin/package-lock.json
+
 qqmusic-api-test/**
 .github/**
 .ruff_cache/**
