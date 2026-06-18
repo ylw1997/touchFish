@@ -84,6 +84,7 @@ export default function VideoCard({
           console.log("自动播放被阻拦:", err);
           setIsPlaying(false);
           setIsVideoLoading(false);
+          setShowPlayOverlay(true);
         });
     } else {
       videoRef.current.pause();
