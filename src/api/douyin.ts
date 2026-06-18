@@ -25,7 +25,7 @@ export const getDouyinHeaders = async (extraHeaders = {}) => {
 export const getDouyinFeed = async () => {
   try {
     const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
-    const apiPath = "https://www.douyin.com/aweme/v1/web/channel/feed/?device_platform=webapp&aid=6383&channel=channel_pc_web&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32";
+    const apiPath = "https://www.douyin.com/aweme/v1/web/channel/feed/?device_platform=webapp&aid=6383&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32";
     
     // 生成签名 URL
     const signedUrl = signDouyinUrl(apiPath, ua);
@@ -78,7 +78,7 @@ export const getDouyinFavorites = async (maxCursor: number = 0) => {
 export const getDouyinComments = async (awemeId: string, cursor: number = 0) => {
   try {
     const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
-    const apiPath = `https://www.douyin.com/aweme/v1/web/comment/list/?device_platform=webapp&aid=6383&channel=channel_pc_web&aweme_id=${awemeId}&cursor=${cursor}&count=20&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32`;
+    const apiPath = `https://www.douyin.com/aweme/v1/web/comment/list/?device_platform=webapp&aid=6383&aweme_id=${awemeId}&cursor=${cursor}&count=20&item_type=0&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32`;
     
     const signedUrl = signDouyinUrl(apiPath, ua);
     const headers = await getDouyinHeaders({

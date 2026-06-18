@@ -601,13 +601,17 @@ body {
     padding: 0 16px !important;
     overflow-y: auto !important;
 
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.4) transparent !important;
+
     &::-webkit-scrollbar {
       display: block !important;
-      width: 4px !important;
+      width: 6px !important;
+      height: 6px !important;
     }
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15) !important;
-      border-radius: 2px !important;
+      background: rgba(255, 255, 255, 0.4) !important;
+      border-radius: 3px !important;
     }
     &::-webkit-scrollbar-track {
       background: transparent !important;
