@@ -1,6 +1,22 @@
 # 更新历史 
 
 
+## [17.1.0](https://github.com/ylw1997/touchFish/compare/v16.16.0...v17.1.0) (2026-06-18)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 喜欢按钮点击调整为暂不支持提示并修复antd警告 ([9d8884c](https://github.com/ylw1997/touchFish/commit/9d8884c2248a13b1c5f798c48985cc294e994fa6))
+
+
+### ✨ Features | 新功能
+
+* 在配置文件及说明文档中增加抖音相关内容 ([3bf0bdf](https://github.com/ylw1997/touchFish/commit/3bf0bdf8f73eb7c3937bb2178de76cdbeb132b48))
+* 抖音优化样式 ([d574ba9](https://github.com/ylw1997/touchFish/commit/d574ba9c3e9713aebd89639e0f7923575ac79790))
+* 抖音图标 ([cbe3ba4](https://github.com/ylw1997/touchFish/commit/cbe3ba487e80d02ac53201097759d502a6f805be))
+* 评论功能 ([a804db5](https://github.com/ylw1997/touchFish/commit/a804db5f263524cf5c40db434abccf43e25c4b2c))
+* 进度条拖动 ([2e3225a](https://github.com/ylw1997/touchFish/commit/2e3225a2c4c50bb7d7e8b8cd0dfdac9ef9c7e02c))
+
 ## [16.16.0](https://github.com/ylw1997/touchFish/compare/v16.15.0...v16.16.0) (2026-06-18)
 
 
