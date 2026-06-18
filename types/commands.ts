@@ -216,7 +216,8 @@ export type CommandList =
   | "DY_SAVE_COOKIE"
   | "DY_OPEN_COOKIE_SETTING"
   | "DY_GET_COMMENTS"
-  | "DY_GET_FOLLOWING";
+  | "DY_GET_FOLLOWING"
+  | "DY_LIKE_VIDEO";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"

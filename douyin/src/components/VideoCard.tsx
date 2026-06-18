@@ -1,7 +1,6 @@
 import { Avatar, FloatButton, Spin, Drawer, List } from "antd";
 import { HeartFilled, HeartOutlined, MessageOutlined, SoundOutlined, PlayCircleFilled, MutedOutlined, LoadingOutlined, CloseOutlined } from "@ant-design/icons";
 import { useState, useEffect, useRef } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
 import { useRequest } from "../hooks/useRequest";
 
 interface VideoCardProps {
@@ -14,19 +13,23 @@ interface VideoCardProps {
 export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: VideoCardProps) {
   const { desc, author, video, statistics } = aweme;
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(aweme?.user_digg === 1 || aweme?.user_digg === true);
   const [likeCount, setLikeCount] = useState(statistics?.digg_count || 0);
   const [showPlayOverlay, setShowPlayOverlay] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const progressRef = useRef<HTMLDivElement>(null);
   
   const { request } = useRequest();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [commentsList, setCommentsList] = useState<any[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsTotal, setCommentsTotal] = useState(0);
+  
   const [commentsCursor, setCommentsCursor] = useState(0);
   const [commentsHasMore, setCommentsHasMore] = useState(true);
-  const [commentsTotal, setCommentsTotal] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -101,18 +104,69 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
     }
   };
 
+  // 格式化时间 00:00
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds === Infinity) return "00:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   // 监听视频时间更新
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       const current = videoRef.current.currentTime;
-      const duration = videoRef.current.duration;
-      if (duration > 0) {
-        setProgress((current / duration) * 100);
+      const dur = videoRef.current.duration;
+      setCurrentTime(current);
+      if (dur > 0) {
+        setDuration(dur);
+        setProgress((current / dur) * 100);
       }
     }
   };
 
+  // 进度条点击与鼠标拖拽跳转
+  const handleProgressMouseDown = (mouseDownEvent: React.MouseEvent<HTMLDivElement>) => {
+    mouseDownEvent.stopPropagation();
+    mouseDownEvent.preventDefault();
+    if (!videoRef.current || !progressRef.current) return;
+
+    const dur = videoRef.current.duration;
+    if (!(dur > 0)) return;
+
+    const updateProgress = (clientX: number) => {
+      if (!progressRef.current || !videoRef.current) return;
+      const rect = progressRef.current.getBoundingClientRect();
+      const width = rect.width;
+      if (width > 0) {
+        let clickX = clientX - rect.left;
+        if (clickX < 0) clickX = 0;
+        if (clickX > width) clickX = width;
+        const percent = clickX / width;
+        videoRef.current.currentTime = percent * dur;
+        setProgress(percent * 100);
+        setCurrentTime(percent * dur);
+      }
+    };
+
+    updateProgress(mouseDownEvent.clientX);
+
+    const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
+      updateProgress(mouseMoveEvent.clientX);
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
   // 模拟点赞
+  // 真实点赞/取消点赞
+  // 喜欢与取消喜欢改回纯前端模拟（防止调用接口触发抖音云端掉登录风控）
   const handleLikeToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isLiked) {
@@ -137,7 +191,11 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
     setCommentsLoading(true);
     try {
       const cursor = isRefresh ? 0 : commentsCursor;
+      console.log(`[fetchComments] 开始请求数据: awemeId=${aweme?.aweme_id || aweme?.id}, cursor=${cursor}, isRefresh=${isRefresh}`);
+      
       const res = await request("DY_GET_COMMENTS", { aweme_id: aweme?.aweme_id || aweme?.id, cursor });
+      console.log("[fetchComments] 收到响应 res:", res);
+
       if (res && res.status_code === 0) {
         const list = res.comments || [];
         if (isRefresh) {
@@ -148,9 +206,11 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
         setCommentsCursor(res.cursor || 0);
         setCommentsHasMore(res.has_more === 1 || res.has_more === true);
         setCommentsTotal(res.total || 0);
+      } else {
+        console.warn("[fetchComments] 请求失败或状态码异常, res_status:", res?.status_code);
       }
     } catch (err) {
-      console.error("获取评论列表失败:", err);
+      console.error("[fetchComments] 异常:", err);
     } finally {
       setCommentsLoading(false);
     }
@@ -178,6 +238,11 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
         onSeeked={() => setIsVideoLoading(false)}
         onSeeking={() => setIsVideoLoading(true)}
         onLoadStart={() => setIsVideoLoading(true)}
+        onLoadedMetadata={() => {
+          if (videoRef.current) {
+            setDuration(videoRef.current.duration);
+          }
+        }}
         className="video-player"
         loop
         muted={isMuted}
@@ -186,9 +251,17 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
         {...({ referrerPolicy: "no-referrer" } as any)}
       />
 
-      {/* 播放进度条 */}
-      <div className="video-progress-bar">
-        <div className="progress-fill" style={{ width: `${progress}%` }} />
+      {/* 播放进度条容器 */}
+      <div className="progress-container" onClick={(e) => e.stopPropagation()}>
+        <span className="time-text">{formatTime(currentTime)}</span>
+        <div 
+          ref={progressRef}
+          className="video-progress-bar"
+          onMouseDown={handleProgressMouseDown}
+        >
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <span className="time-text">{formatTime(duration)}</span>
       </div>
 
       {/* 缓冲时垫底的封面（解决黑屏闪烁，优化卡顿感知） */}
@@ -296,34 +369,20 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
           }
         }}
         rootClassName="dy-comment-drawer-root"
-        rootStyle={{ pointerEvents: "auto" }}
+        rootStyle={{ pointerEvents: isCommentsOpen ? "auto" : "none" }}
         destroyOnClose={false}
       >
         <div 
           onClick={(e) => e.stopPropagation()} 
           onWheel={(e) => e.stopPropagation()}
-          style={{ height: "100%", display: "flex", flexDirection: "column" }}
+          style={{ height: "100%", display: "flex", flexDirection: "column", paddingBottom: "24px" }}
         >
           {commentsList.length === 0 && !commentsLoading ? (
             <div style={{ padding: "40px 0", textAlign: "center", color: "rgba(255, 255, 255, 0.45)" }}>
               还没有人评论，快来抢沙发吧！
             </div>
           ) : (
-            <InfiniteScroll
-              dataLength={commentsList.length}
-              next={() => fetchComments(false)}
-              hasMore={commentsHasMore && !commentsLoading}
-              loader={
-                <div style={{ padding: "10px 0", textAlign: "center" }}>
-                  <Spin size="small" />
-                </div>
-              }
-              endMessage={
-                <div style={{ padding: "15px 0", textAlign: "center", fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
-                  没有更多评论了
-                </div>
-              }
-            >
+            <>
               <List
                 dataSource={commentsList}
                 renderItem={(comment) => (
@@ -348,6 +407,52 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
                           <span style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "10px" }}>
                             {new Date(comment.create_time * 1000).toLocaleDateString()}
                           </span>
+
+                          {/* 渲染子评论回复 */}
+                          {comment.reply_comment && comment.reply_comment.length > 0 && (
+                            <div style={{ 
+                              marginTop: "8px", 
+                              padding: "10px 10px 10px 12px", 
+                              backgroundColor: "rgba(255, 255, 255, 0.025)", 
+                              borderRadius: "8px",
+                              borderLeft: "2px solid rgba(254, 44, 85, 0.55)"
+                            }}>
+                              <List
+                                size="small"
+                                split={false}
+                                dataSource={comment.reply_comment}
+                                renderItem={(reply: any) => (
+                                  <div key={reply.cid} style={{ display: "flex", gap: "8px", marginBottom: reply === comment.reply_comment[comment.reply_comment.length - 1] ? 0 : "10px", alignItems: "flex-start" }}>
+                                    <Avatar src={reply.user?.avatar_thumb?.url_list?.[0]} size={20} />
+                                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1px" }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <span style={{ color: "rgba(255, 255, 255, 0.45)", fontSize: "11px" }}>
+                                          {reply.user?.nickname || "未知用户"}
+                                        </span>
+                                        <div style={{ display: "flex", alignItems: "center", color: "rgba(255, 255, 255, 0.3)", fontSize: "10px", gap: "2px" }}>
+                                          <HeartOutlined style={{ fontSize: "10px" }} />
+                                          <span>{reply.digg_count > 0 ? formatCount(reply.digg_count) : ""}</span>
+                                        </div>
+                                      </div>
+                                      <span style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "12px", lineHeight: "1.4", wordBreak: "break-all" }}>
+                                        {reply.text}
+                                      </span>
+                                      <span style={{ color: "rgba(255, 255, 255, 0.22)", fontSize: "9px" }}>
+                                        {new Date(reply.create_time * 1000).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              />
+                              
+                              {/* 如果还有更多子评论，显示统计提示 */}
+                              {comment.reply_comment_total > comment.reply_comment.length && (
+                                <div style={{ fontSize: "10.5px", color: "rgba(255, 255, 255, 0.32)", marginTop: "6px", paddingLeft: "28px" }}>
+                                  共 {comment.reply_comment_total} 条回复
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       }
                     />
@@ -358,7 +463,37 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
                   </List.Item>
                 )}
               />
-            </InfiniteScroll>
+              
+              {/* 加载更多按钮或状态提示 */}
+              {commentsLoading ? (
+                <div style={{ padding: "16px 0", textAlign: "center" }}>
+                  <Spin size="small" tip="加载中..." style={{ color: "rgba(255,255,255,0.6)" }} />
+                </div>
+              ) : commentsHasMore ? (
+                <div style={{ padding: "16px 0", textAlign: "center" }}>
+                  <span 
+                    onClick={() => fetchComments(false)}
+                    style={{ 
+                      color: "#fe2c55", 
+                      fontSize: "13px", 
+                      cursor: "pointer", 
+                      fontWeight: "bold",
+                      padding: "6px 16px",
+                      borderRadius: "16px",
+                      border: "1px solid rgba(254, 44, 85, 0.3)",
+                      backgroundColor: "rgba(254, 44, 85, 0.05)",
+                      display: "inline-block"
+                    }}
+                  >
+                    点击加载更多评论
+                  </span>
+                </div>
+              ) : (
+                <div style={{ padding: "20px 0", textAlign: "center", fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
+                  没有更多评论了
+                </div>
+              )}
+            </>
           )}
         </div>
       </Drawer>

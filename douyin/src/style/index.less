@@ -1,3 +1,20 @@
+/* 彻底隐藏全局所有滚动条及滑块拖动栏 */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE */
+}
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
 .dy-app-container {
   position: relative;
   display: flex;
@@ -181,7 +198,7 @@
 .bottom-info {
   position: absolute;
   left: 12px;
-  bottom: 24px;
+  bottom: 50px;
   right: 75px;
   z-index: 10;
   pointer-events: none; /* 防止遮挡双击手势 */
@@ -218,7 +235,7 @@
 .side-actions {
   position: absolute;
   right: 12px;
-  bottom: 24px;
+  bottom: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -488,21 +505,50 @@
   }
 }
 
-/* 视频进度条 */
-.video-progress-bar {
+/* 视频进度条容器 (包含两端时间显示) */
+.progress-container {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: rgba(255, 255, 255, 0.25);
-  z-index: 12;
-  pointer-events: none; /* 穿透点击，避免阻碍播放暂停 */
+  bottom: 8px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 25;
+  pointer-events: auto; /* 必须支持点击和拖动 */
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: saturate(180%) blur(4px);
+  -webkit-backdrop-filter: saturate(180%) blur(4px);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 
-  .progress-fill {
-    height: 100%;
-    background-color: #fe2c55; /* 抖音红 */
-    transition: width 0.1s linear;
+  .time-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .video-progress-bar {
+    position: relative;
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    overflow: hidden;
+    transition: height 0.1s ease;
+
+    &:hover {
+      height: 6px; /* 悬停时加粗，暗示可以点击交互 */
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: #fe2c55; /* 抖音红 */
+      border-radius: 2px;
+    }
   }
 }
 
@@ -571,7 +617,7 @@
   .ant-list-item {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
     padding: 12px 0 !important;
-    
+
     .ant-list-item-meta {
       width: 100% !important;
     }
@@ -579,7 +625,7 @@
     .ant-list-item-meta-title {
       margin-bottom: 4px !important;
     }
-    
+
     .ant-list-item-meta-description {
       color: rgba(255, 255, 255, 0.85) !important;
     }
@@ -589,4 +635,3 @@
     overflow: hidden !important;
   }
 }
-

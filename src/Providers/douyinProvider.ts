@@ -1,6 +1,6 @@
 import { WebviewView, ExtensionContext } from "vscode";
 import * as vscode from "vscode";
-import { getDouyinFeed, getDouyinFavorites, getDouyinComments, getDouyinFollowing } from "../api/douyin";
+import { getDouyinFeed, getDouyinFavorites, getDouyinComments, getDouyinFollowing, diggDouyinVideo } from "../api/douyin";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 
 interface DouyinMessage<T = any> {
@@ -65,6 +65,15 @@ export class DouyinProvider extends BaseWebviewProvider {
       case "DY_GET_FOLLOWING": {
         const maxCursor = (payload && (payload as any).max_cursor) || 0;
         const data = await getDouyinFollowing(maxCursor);
+        webviewView.webview.postMessage({ payload: data, uuid });
+        break;
+      }
+      case "DY_LIKE_VIDEO": {
+        const { aweme_id, type } = (payload || {}) as { aweme_id: string; type: number };
+        if (!aweme_id) {
+          throw new Error("视频 ID 不能为空");
+        }
+        const data = await diggDouyinVideo(aweme_id, type);
         webviewView.webview.postMessage({ payload: data, uuid });
         break;
       }

@@ -86,9 +86,13 @@ export const getDouyinComments = async (awemeId: string, cursor: number = 0) => 
       "Referer": `https://www.douyin.com/video/${awemeId}`,
     });
 
+    console.log(`[getDouyinComments] 开始请求评论: awemeId=${awemeId}, cursor=${cursor}`);
     const response = await axios.get(signedUrl, { headers });
+    console.log(`[getDouyinComments] 请求完成: status_code=${response.data.status_code}, comments count=${response.data.comments?.length || 0}, has_more=${response.data.has_more}, cursor=${response.data.cursor}`);
+    
     return response.data;
   } catch (error: any) {
+    console.error(`[getDouyinComments] 请求失败: ${error.message}`);
     showError(`获取抖音评论失败: ${error.message}`);
     return {
       status_code: -1,
@@ -96,6 +100,49 @@ export const getDouyinComments = async (awemeId: string, cursor: number = 0) => 
       total: 0,
       cursor: cursor,
       has_more: 0,
+    };
+  }
+};
+
+/**
+ * 抖音视频点赞与取消点赞 (喜欢/取消喜欢)
+ * 接口: https://www.douyin.com/aweme/v1/web/commit/item/digg/
+ */
+export const diggDouyinVideo = async (awemeId: string, type: number) => {
+  try {
+    const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+    const apiPath = `https://www.douyin.com/aweme/v1/web/commit/item/digg/?device_platform=webapp&aid=6383&channel=channel_pc_web&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32`;
+    
+    // 构建 POST Body 并序列化
+    const postDataStr = `aweme_id=${awemeId}&type=${type}`;
+    
+    // 对 URL 和 Body 组合签名以过 xbogus 校验
+    const signedUrl = signDouyinUrl(apiPath + "&" + postDataStr, ua);
+    
+    // 从 Cookie 提取 passport_csrf_token，防止 403 跨站伪造拦截
+    const cookie = (await getOrSetDouyinCookie()) as string;
+    const csrfMatch = cookie.match(/passport_csrf_token=([^;]+)/);
+    const csrfToken = csrfMatch ? csrfMatch[1] : "";
+    
+    const headers = await getDouyinHeaders({
+      "User-Agent": ua,
+      "Referer": `https://www.douyin.com/video/${awemeId}`,
+      "Origin": "https://www.douyin.com",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-Secsdk-Csrf-Token": csrfToken
+    });
+
+    console.log(`[diggDouyinVideo] 请求点赞接口: awemeId=${awemeId}, type=${type}, csrfToken=${csrfToken ? "存在" : "缺失"}`);
+    const response = await axios.post(signedUrl, postDataStr, { headers });
+    console.log(`[diggDouyinVideo] 点赞接口返回: status_code=${response.data.status_code}, status_msg=${response.data.status_msg}`);
+    
+    return response.data;
+  } catch (error: any) {
+    console.error(`[diggDouyinVideo] 点赞接口异常: ${error.message}`);
+    showError(`抖音视频喜欢操作失败: ${error.message}`);
+    return {
+      status_code: -1,
+      status_msg: error.message
     };
   }
 };
