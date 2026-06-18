@@ -8,7 +8,6 @@ import {
   HeartFilled,
   StepForwardOutlined,
   FullscreenExitOutlined,
-  AppstoreOutlined,
   RetweetOutlined,
   SwapOutlined,
   SyncOutlined,
@@ -585,15 +584,6 @@ const PlayBar: React.FC = () => {
               >
                 <UnorderedListOutlined />
               </Button>
-            </div>
-            <div className="playbar-menu-btn-wrapper">
-              <Button
-                color="default"
-                shape="circle"
-                variant="filled"
-                icon={<AppstoreOutlined />}
-                title="更多功能"
-              />
             </div>
           </div>
         </div>
