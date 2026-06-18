@@ -10,3 +10,5 @@
 export { getZhihuSignature } from "./signature/zhihuSigner";
 export { getXhsSignature } from "./signature/xhsSigner";
 export type { XhsSignature } from "./signature/xhsSigner";
+export { getDouyinSignature, signDouyinUrl } from "./signature/douyinSigner";
+

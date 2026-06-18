@@ -190,6 +190,10 @@
 					"type": "string",
 					"description": "小红书 cookie"
 				},
+				"touchfish.douyinCookie": {
+					"type": "string",
+					"description": "抖音 cookie"
+				},
 				"touchfish.linuxDoCookie": {
 					"type": "string",
 					"description": "Linux.do cookie，访问 RSS 源需要"
@@ -356,6 +360,11 @@
 					"default": true,
 					"description": "启用网易云音乐模块"
 				},
+				"touchfish.enableDouyin": {
+					"type": "boolean",
+					"default": true,
+					"description": "启用抖音模块"
+				},
 				"touchfish.neteaseQuality": {
 					"type": "number",
 					"default": 128,
@@ -448,6 +457,12 @@
 					"title": "TouchFish-Netease",
 					"icon": "assets/netease.svg",
 					"when": "config.touchfish.enableNetease"
+				},
+				{
+					"id": "douyin",
+					"title": "TouchFish-Douyin",
+					"icon": "assets/training.svg",
+					"when": "config.touchfish.enableDouyin"
 				}
 			]
 		},
@@ -576,6 +591,15 @@
 					"id": "netease",
 					"when": "config.touchfish.enableNetease"
 				}
+			],
+			"douyin": [
+				{
+					"icon": "assets/training.svg",
+					"type": "webview",
+					"name": "抖音",
+					"id": "douyin",
+					"when": "config.touchfish.enableDouyin"
+				}
 			]
 		},
 		"viewsWelcome": [
@@ -673,6 +697,11 @@
 			{
 				"command": "touchfish.setBilibiliToken",
 				"title": "设置B站Cookie",
+				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "touchfish.setDouyinCookie",
+				"title": "设置抖音Cookie",
 				"icon": "$(settings-gear)"
 			},
 			{
@@ -889,6 +918,11 @@
 					"command": "touchfish.setNeteaseCookie",
 					"when": "view == netease",
 					"group": "navigation"
+				},
+				{
+					"command": "touchfish.setDouyinCookie",
+					"when": "view == douyin",
+					"group": "navigation"
 				}
 			]
 		}
@@ -907,11 +941,11 @@
 		"changelog": "standard-version",
 		"publish": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"unpublish": "vsce unpublish && ovsx unpublish",
-		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter netease build && pnpm --filter xiaoyuzhou build && pnpm --filter x build && pnpm --filter weread build",
+		"build-webviews": "pnpm --filter zhihu build && pnpm --filter weibo build && pnpm --filter xhs build && pnpm --filter bilibili build && pnpm --filter qqmusic build && pnpm --filter netease build && pnpm --filter xiaoyuzhou build && pnpm --filter x build && pnpm --filter weread build && pnpm --filter douyin build",
 		"xhs:test": "node ./tools/xhs/test-xhs.js",
 		"xhs:test:live": "node ./tools/xhs/test-xhs.js",
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
-		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,NETEASE,XIAOYUZHOU,WEREAD -c magenta,cyan,yellow,blue,green,red,red,white,blue \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter netease dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\" \"pnpm --filter weread dev\"",
+		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,NETEASE,XIAOYUZHOU,WEREAD,DOUYIN -c magenta,cyan,yellow,blue,green,red,red,white,blue,black \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter netease dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\" \"pnpm --filter weread dev\" \"pnpm --filter douyin dev\"",
 		"build-xhs": "pnpm --filter xhs build",
 		"update-x-ids": "node tools/update_x_ids.js"
 	},
@@ -945,7 +979,8 @@
 		"crypto-js": "^4.2.0",
 		"iconv-lite": "^0.7.2",
 		"utf-8-validate": "^6.0.5",
-		"x-client-transaction-id": "^0.2.3"
+		"x-client-transaction-id": "^0.2.3",
+		"xbogus": "^1.0.2"
 	},
 	"optionalDependencies": {
 		"canvas": "^3.2.0"
