@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [17.2.0](https://github.com/ylw1997/touchFish/compare/v17.1.0...v17.2.0) (2026-06-18)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复视频由于频繁重载导致的一直缓冲问题 ([8d65460](https://github.com/ylw1997/touchFish/commit/8d65460f049fb69db94b394bc829fbadcc337888))
+* 解决视频自动播放被阻拦时缺少播放暂停标志的问题 ([0d067a7](https://github.com/ylw1997/touchFish/commit/0d067a7a5291ff988ba261ec3b587ae0aa83718e))
+
+
+### ✨ Features | 新功能
+
+* 上一个下一个 ([3b653c8](https://github.com/ylw1997/touchFish/commit/3b653c894e4e96d16daa333926b465ecb31175be))
+* 在控制栏新增上一个与下一个视频快速切换按钮 ([8e4db4f](https://github.com/ylw1997/touchFish/commit/8e4db4f940d8782cd0ef3060318bbbb429bc634a))
+
 ## [17.1.0](https://github.com/ylw1997/touchFish/compare/v16.16.0...v17.1.0) (2026-06-18)
 
 
