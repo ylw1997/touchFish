@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { Button, Space } from "antd";
+import { DeleteOutlined, SyncOutlined, SwapOutlined, RetweetOutlined } from "@ant-design/icons";
 import type { Song } from "../../types/qqmusic";
 
 interface PlaylistDrawerProps {
@@ -13,6 +13,9 @@ interface PlaylistDrawerProps {
   playSong: (song: Song) => void;
   removeFromPlaylist: (index: number) => void;
   clearPlaylist: () => void;
+  playMode: "order" | "random" | "single";
+  setPlayMode: (mode: "order" | "random" | "single") => void;
+  effectivePlaySource: string;
 }
 
 export const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({
@@ -24,6 +27,9 @@ export const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({
   playSong,
   removeFromPlaylist,
   clearPlaylist,
+  playMode,
+  setPlayMode,
+  effectivePlaySource,
 }) => {
   return (
     <AnimatePresence>
@@ -39,17 +45,47 @@ export const PlaylistDrawer: React.FC<PlaylistDrawerProps> = ({
             <span className="playbar-playlist-title">
               播放列表 ({playlist.length})
             </span>
-            {playlist.length > 0 && (
-              <Button
-                color="red"
-                variant="filled"
-                onClick={clearPlaylist}
-                title="清空列表"
-                shape="circle"
-              >
-                <DeleteOutlined />
-              </Button>
-            )}
+            <Space size="small">
+              {effectivePlaySource !== "radar" && effectivePlaySource !== "guess" && (
+                  <Button
+                    color="default"
+                    variant="filled"
+                    shape="circle"
+                    title={
+                      playMode === "single"
+                        ? "单曲循环"
+                        : playMode === "random"
+                          ? "随机播放"
+                          : "顺序播放"
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (playMode === "order") setPlayMode("random");
+                      else if (playMode === "random") setPlayMode("single");
+                      else setPlayMode("order");
+                    }}
+                  >
+                    {playMode === "single" ? (
+                      <SyncOutlined />
+                    ) : playMode === "random" ? (
+                      <SwapOutlined />
+                    ) : (
+                      <RetweetOutlined />
+                    )}
+                  </Button>
+              )}
+              {playlist.length > 0 && (
+                <Button
+                  color="red"
+                  variant="filled"
+                  onClick={clearPlaylist}
+                  title="清空列表"
+                  shape="circle"
+                >
+                  <DeleteOutlined />
+                </Button>
+              )}
+            </Space>
           </div>
           <div className="playbar-playlist-content">
             {playlist.length === 0 ? (

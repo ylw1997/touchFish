@@ -8,10 +8,6 @@ import {
   HeartFilled,
   StepForwardOutlined,
   FullscreenExitOutlined,
-  AppstoreOutlined,
-  RetweetOutlined,
-  SwapOutlined,
-  SyncOutlined,
 } from "@ant-design/icons";
 import { Button } from "antd";
 
@@ -414,6 +410,9 @@ const PlayBar: React.FC = () => {
           clearPlaylist={clearPlaylist}
           getAlbumCover={getAlbumCover}
           getSingerName={getSingerName}
+          playMode={playMode}
+          setPlayMode={setPlayMode}
+          effectivePlaySource={effectivePlaySource}
         />
 
         <div className="playbar-bottom">
@@ -553,36 +552,6 @@ const PlayBar: React.FC = () => {
                 <StepForwardOutlined />
               </Button>
 
-              {effectivePlaySource !== "radar" &&
-                effectivePlaySource !== "guess" && (
-                  <Button
-                    color="default"
-                    shape="circle"
-                    variant="filled"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (playMode === "order") setPlayMode("random");
-                      else if (playMode === "random") setPlayMode("single");
-                      else setPlayMode("order");
-                    }}
-                    title={
-                      playMode === "single"
-                        ? "单曲循环"
-                        : playMode === "random"
-                          ? "随机播放"
-                          : "顺序播放"
-                    }
-                  >
-                    {playMode === "single" ? (
-                      <SyncOutlined />
-                    ) : playMode === "random" ? (
-                      <SwapOutlined />
-                    ) : (
-                      <RetweetOutlined />
-                    )}
-                  </Button>
-                )}
-
               <Button
                 color={isPlaylistOpen ? "primary" : "default"}
                 shape="circle"
@@ -595,15 +564,6 @@ const PlayBar: React.FC = () => {
               >
                 <UnorderedListOutlined />
               </Button>
-            </div>
-            <div className="playbar-menu-btn-wrapper">
-              <Button
-                color="default"
-                shape="circle"
-                variant="filled"
-                icon={<AppstoreOutlined />}
-                title="更多功能"
-              />
             </div>
           </div>
         </div>
