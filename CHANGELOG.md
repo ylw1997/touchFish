@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [16.16.0](https://github.com/ylw1997/touchFish/compare/v16.15.0...v16.16.0) (2026-06-18)
+
+
+### ✨ Features | 新功能
+
+* 恢复之前playbar样式 ([97b5833](https://github.com/ylw1997/touchFish/commit/97b5833419a971db7a425cd762ed34e9f5fbc331))
+
 ## [16.15.0](https://github.com/ylw1997/touchFish/compare/v16.14.0...v16.15.0) (2026-06-12)
 
 
