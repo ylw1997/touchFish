@@ -89,8 +89,8 @@ export default function VideoCard({
     if (!videoRef.current) return;
     if (isActive) {
       setIsVideoLoading(true);
-      // 在播放前重载，以便切换源生效
-      videoRef.current.load();
+      // 如果不是因为切源，不应频繁调用 load()，浏览器自带对 src 的监听
+      // 只有进度重置是必要的
       setProgress(0);
       videoRef.current
         .play()
@@ -140,6 +140,7 @@ export default function VideoCard({
       setPlayUrlIndex((prev) => prev + 1);
     } else {
       console.error("[VideoCard] 所有可用的抖音视频播放源均播放失败！");
+      setIsVideoLoading(false);
     }
   };
 
@@ -274,6 +275,8 @@ export default function VideoCard({
         onSeeked={() => setIsVideoLoading(false)}
         onSeeking={() => setIsVideoLoading(true)}
         onLoadStart={() => setIsVideoLoading(true)}
+        onLoadedData={() => setIsVideoLoading(false)}
+        onSuspend={() => setIsVideoLoading(false)}
         onLoadedMetadata={() => {
           if (videoRef.current) {
             setDuration(videoRef.current.duration);
