@@ -8,6 +8,8 @@ import {
   MutedOutlined,
   LoadingOutlined,
   CloseOutlined,
+  UpOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef } from "react";
 import { useRequest } from "../hooks/useRequest";
@@ -36,6 +38,21 @@ export default function VideoCard({
   const [duration, setDuration] = useState(0);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollToNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (containerRef.current && containerRef.current.nextElementSibling) {
+      containerRef.current.nextElementSibling.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleScrollToPrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (containerRef.current && containerRef.current.previousElementSibling) {
+      containerRef.current.previousElementSibling.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   const { request } = useRequest();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -243,7 +260,7 @@ export default function VideoCard({
   };
 
   return (
-    <div className="dy-video-item" onClick={handlePlayToggle}>
+    <div className="dy-video-item" ref={containerRef} onClick={handlePlayToggle}>
       {contextHolder}
       {/* 视频播放器 */}
       <video
@@ -338,6 +355,15 @@ export default function VideoCard({
 
       {/* 右侧浮动控制条 */}
       <div className="side-actions">
+        {/* 上一个视频 */}
+        <div className="action-item" style={{ marginBottom: "10px" }}>
+          <FloatButton
+            style={{ position: "static" }}
+            icon={<UpOutlined />}
+            onClick={handleScrollToPrev}
+          />
+        </div>
+
         {/* 作者头像 */}
         <div
           className="action-item"
@@ -404,6 +430,15 @@ export default function VideoCard({
             }}
           />
           <span className="action-count">{isMuted ? "静音" : "有声"}</span>
+        </div>
+
+        {/* 下一个视频 */}
+        <div className="action-item" style={{ marginTop: "10px" }}>
+          <FloatButton
+            style={{ position: "static" }}
+            icon={<DownOutlined />}
+            onClick={handleScrollToNext}
+          />
         </div>
       </div>
 
