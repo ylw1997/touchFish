@@ -8,6 +8,8 @@ import {
   MutedOutlined,
   LoadingOutlined,
   CloseOutlined,
+  UpOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef } from "react";
 import { useRequest } from "../hooks/useRequest";
@@ -36,6 +38,21 @@ export default function VideoCard({
   const [duration, setDuration] = useState(0);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollToNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (containerRef.current && containerRef.current.nextElementSibling) {
+      containerRef.current.nextElementSibling.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleScrollToPrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (containerRef.current && containerRef.current.previousElementSibling) {
+      containerRef.current.previousElementSibling.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   const { request } = useRequest();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -72,8 +89,8 @@ export default function VideoCard({
     if (!videoRef.current) return;
     if (isActive) {
       setIsVideoLoading(true);
-      // 在播放前重载，以便切换源生效
-      videoRef.current.load();
+      // 如果不是因为切源，不应频繁调用 load()，浏览器自带对 src 的监听
+      // 只有进度重置是必要的
       setProgress(0);
       videoRef.current
         .play()
@@ -84,6 +101,7 @@ export default function VideoCard({
           console.log("自动播放被阻拦:", err);
           setIsPlaying(false);
           setIsVideoLoading(false);
+          setShowPlayOverlay(true);
         });
     } else {
       videoRef.current.pause();
@@ -122,6 +140,7 @@ export default function VideoCard({
       setPlayUrlIndex((prev) => prev + 1);
     } else {
       console.error("[VideoCard] 所有可用的抖音视频播放源均播放失败！");
+      setIsVideoLoading(false);
     }
   };
 
@@ -242,7 +261,7 @@ export default function VideoCard({
   };
 
   return (
-    <div className="dy-video-item" onClick={handlePlayToggle}>
+    <div className="dy-video-item" ref={containerRef} onClick={handlePlayToggle}>
       {contextHolder}
       {/* 视频播放器 */}
       <video
@@ -256,6 +275,8 @@ export default function VideoCard({
         onSeeked={() => setIsVideoLoading(false)}
         onSeeking={() => setIsVideoLoading(true)}
         onLoadStart={() => setIsVideoLoading(true)}
+        onLoadedData={() => setIsVideoLoading(false)}
+        onSuspend={() => setIsVideoLoading(false)}
         onLoadedMetadata={() => {
           if (videoRef.current) {
             setDuration(videoRef.current.duration);
@@ -403,6 +424,26 @@ export default function VideoCard({
             }}
           />
           <span className="action-count">{isMuted ? "静音" : "有声"}</span>
+        </div>
+
+        {/* 上一个视频 */}
+        <div className="action-item" style={{ marginTop: "10px", marginBottom: "10px" }}>
+          <FloatButton
+            style={{ position: "static" }}
+            icon={<UpOutlined />}
+            onClick={handleScrollToPrev}
+          />
+          <span className="action-count">上一个</span>
+        </div>
+
+        {/* 下一个视频 */}
+        <div className="action-item">
+          <FloatButton
+            style={{ position: "static" }}
+            icon={<DownOutlined />}
+            onClick={handleScrollToNext}
+          />
+          <span className="action-count">下一个</span>
         </div>
       </div>
 
