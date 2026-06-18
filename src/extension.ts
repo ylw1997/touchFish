@@ -55,6 +55,7 @@ import { NeteaseProvider } from "./Providers/neteaseProvider";
 import { XiaoyuzhouProvider } from "./Providers/xiaoyuzhouProvider";
 import { XProvider } from "./Providers/xProvider";
 import { WereadProvider } from "./Providers/wereadProvider";
+import { DouyinProvider } from "./Providers/douyinProvider";
 
 import ContextManager from "./utils/extensionContext";
 import { Uri } from "vscode";
@@ -202,6 +203,9 @@ export function activate(context: vscode.ExtensionContext) {
   const wereadProvider = createLazyWebviewProvider(
     () => new WereadProvider(context),
   );
+  const douyinProvider = createLazyWebviewProvider(
+    () => new DouyinProvider(context),
+  );
 
   registerLazyTreeView(
     context,
@@ -313,6 +317,15 @@ export function activate(context: vscode.ExtensionContext) {
       },
     },
   );
+  vscode.window.registerWebviewViewProvider(
+    "douyin",
+    douyinProvider.provider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    },
+  );
 
   context.subscriptions.push(refresh(itHomeProvider.getInstance));
   context.subscriptions.push(refreshChipHellNews(chiphellProvider.getInstance));
@@ -373,6 +386,21 @@ export function activate(context: vscode.ExtensionContext) {
       if (cookie !== undefined) {
         await setConfigByKey("neteaseCredential", cookie);
         vscode.window.showInformationMessage("网易云音乐 Cookie 设置成功");
+      }
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.setDouyinCookie", async () => {
+      const cookie = await vscode.window.showInputBox({
+        prompt: "请输入抖音 Cookie (可在浏览器登录douyin.com后通过控制台获取)",
+        placeHolder: "sessionid=...; ttwid=...;",
+        ignoreFocusOut: true,
+      });
+      if (cookie !== undefined) {
+        await setConfigByKey("douyinCookie", cookie);
+        vscode.window.showInformationMessage("抖音 Cookie 设置成功");
+        const douyinInstance = douyinProvider.getInstance() as DouyinProvider;
+        douyinInstance.refreshWebview();
       }
     }),
   );

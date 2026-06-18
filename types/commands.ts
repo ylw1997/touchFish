@@ -209,7 +209,15 @@ export type CommandList =
   | "ZHIHU_UNFOLLOW_QUESTION"
   | "ZHIHU_DOWNLOAD_IMAGE"
   | "ZHIHU_RESTORE_SCROLL_POSITION"
-  | "TOGGLE_SHOW_IMG";
+  | "TOGGLE_SHOW_IMG"
+  // Douyin Commands
+  | "DY_GET_HOME_FEED"
+  | "DY_GET_FAVORITES"
+  | "DY_SAVE_COOKIE"
+  | "DY_OPEN_COOKIE_SETTING"
+  | "DY_GET_COMMENTS"
+  | "DY_GET_FOLLOWING"
+  | "DY_LIKE_VIDEO";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"

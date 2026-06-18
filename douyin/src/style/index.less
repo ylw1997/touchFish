@@ -1,0 +1,637 @@
+/* 彻底隐藏全局所有滚动条及滑块拖动栏 */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE */
+}
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+.dy-app-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #000;
+  color: #fff;
+  font-size: var(--app-font-size, 14px);
+  overflow: hidden;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+
+  /* 统一隐藏滚动条 */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 顶部 Tab 悬浮层 (模仿抖音顶部半透明白字 Tab) */
+.dy-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 0 16px;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.75) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  border-bottom: none !important;
+
+  .ant-tabs {
+    width: calc(100% - 32px);
+
+    .ant-tabs-nav {
+      margin: 0;
+      border-bottom: none;
+
+      &::before {
+        display: none;
+      }
+    }
+
+    .ant-tabs-tab {
+      padding: 16px 8px 12px 8px;
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 500;
+
+      &:hover {
+        color: #fff;
+      }
+    }
+
+    .ant-tabs-tab-active {
+      .ant-tabs-tab-btn {
+        color: #fff !important;
+        font-weight: bold;
+      }
+    }
+
+    .ant-tabs-ink-bar {
+      background: #fe2c55 !important; /* 抖音红 */
+      height: 3px !important;
+      border-radius: 2px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    margin-left: 8px;
+
+    .ant-btn {
+      color: rgba(255, 255, 255, 0.8) !important;
+
+      &:hover {
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+      }
+    }
+  }
+}
+
+/* 推荐流滚动区：Snap 滚动 */
+.dy-scroll-container {
+  width: 100%;
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  background-color: #000;
+
+  &.grid-mode {
+    scroll-snap-type: none;
+    overflow-y: auto;
+    background-color: var(--vscode-sideBar-background, #1e1e1e);
+  }
+}
+
+/* 每一个全屏视频项 */
+.dy-video-item {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  .video-player {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* 缓冲垫底封面，用于避免 load 阶段黑屏 */
+  .video-loading-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 6;
+    background-color: #000;
+    pointer-events: none;
+  }
+
+  /* 加载指示器蒙层 */
+  .video-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 8;
+    pointer-events: none; /* 让鼠标点击穿透，不阻挡双击/单击视频播放控制 */
+
+    .loading-text {
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      font-weight: 500;
+    }
+  }
+
+  /* 蒙版层以显示大按钮 */
+  .play-pause-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    z-index: 5;
+
+    .overlay-play-icon {
+      font-size: 64px;
+      color: rgba(255, 255, 255, 0.7);
+      animation: pulse 1s infinite alternate;
+      pointer-events: none;
+    }
+  }
+}
+
+/* 左下角作者信息与描述 */
+.bottom-info {
+  position: absolute;
+  left: 12px;
+  bottom: 50px;
+  right: 75px;
+  z-index: 10;
+  pointer-events: none; /* 防止遮挡双击手势 */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background-color: rgba(30, 30, 30, 0.4);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  .author-name {
+    font-size: 15px;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  .video-desc {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* 右侧悬浮图标控制栏 */
+.side-actions {
+  position: absolute;
+  right: 12px;
+  bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 15;
+
+  .ant-float-btn {
+    background-color: rgba(30, 30, 30, 0.4) !important;
+    backdrop-filter: saturate(180%) blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+    transition: all 0.2s ease !important;
+
+    .ant-float-btn-body {
+      background: transparent !important;
+
+      .ant-float-btn-content .ant-float-btn-icon {
+        color: #fff !important;
+      }
+    }
+
+    &:not(.avatar-float-btn):hover {
+      background-color: rgba(254, 44, 85, 0.85) !important;
+      transform: scale(1.08) !important;
+      border-color: rgba(254, 44, 85, 0.5) !important;
+    }
+  }
+
+  .action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+
+    .ant-avatar {
+      border: 2px solid #fff;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .avatar-float-btn {
+      overflow: hidden;
+
+      .ant-float-btn-body {
+        width: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
+      }
+
+      .ant-float-btn-content {
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      .ant-float-btn-icon {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        .ant-avatar {
+          width: 100% !important;
+          height: 100% !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+      }
+    }
+
+    .action-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: rgba(30, 30, 30, 0.6) !important;
+      backdrop-filter: saturate(180%) blur(12px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      color: #fff;
+      font-size: 20px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+
+      &:hover {
+        background-color: rgba(254, 44, 85, 0.85) !important;
+        transform: scale(1.08);
+        border-color: rgba(254, 44, 85, 0.5) !important;
+      }
+
+      &.liked {
+        color: #fe2c55;
+        background-color: rgba(254, 44, 85, 0.15);
+      }
+    }
+
+    .action-count {
+      font-size: 11px;
+      color: #fff;
+      margin-top: 4px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      font-weight: 500;
+    }
+  }
+
+  /* 唱片旋转动画 */
+  .music-disc-wrapper {
+    margin-top: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #111;
+    border: 7px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: rotate 6s linear infinite;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+
+    .disc-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+    }
+  }
+}
+
+/* 喜欢页：三列卡片列表 */
+.dy-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 12px;
+  margin-top: 52px; /* 留出顶部 Tab */
+  padding-bottom: 30px;
+}
+
+.dy-grid-card {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  aspect-ratio: 3/4.2;
+  cursor: pointer;
+  background-color: #000;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+
+    .grid-cover {
+      transform: scale(1.04);
+    }
+  }
+
+  .grid-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .grid-info-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 6px;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    pointer-events: none;
+
+    .grid-title {
+      font-size: 13px;
+      color: #fff;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      white-space: normal;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .grid-stats {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+}
+
+/* 喜欢页：全屏弹窗播放器 */
+.overlay-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: #000;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .close-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 220;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(30, 30, 30, 0.6) !important;
+    backdrop-filter: saturate(180%) blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #fff;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+
+    &:hover {
+      background-color: rgba(254, 44, 85, 0.85) !important;
+      transform: scale(1.08);
+      border-color: rgba(254, 44, 85, 0.5) !important;
+    }
+  }
+}
+
+/* 动画定义 */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  from {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+/* 视频进度条容器 (包含两端时间显示) */
+.progress-container {
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 25;
+  pointer-events: auto; /* 必须支持点击和拖动 */
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: saturate(180%) blur(4px);
+  -webkit-backdrop-filter: saturate(180%) blur(4px);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  .time-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .video-progress-bar {
+    position: relative;
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    overflow: hidden;
+    transition: height 0.1s ease;
+
+    &:hover {
+      height: 6px; /* 悬停时加粗，暗示可以点击交互 */
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: #fe2c55; /* 抖音红 */
+      border-radius: 2px;
+    }
+  }
+}
+
+/* 喜欢页加载与结束文字样式，防止高度塌陷抖动 */
+.list-loading,
+.list-end-msg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* 底部评论抽屉样式定制 */
+.dy-comment-drawer-root {
+  z-index: 300 !important;
+
+  .ant-drawer-mask {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+}
+
+.dy-comment-drawer {
+  .ant-drawer-content {
+    background: rgba(18, 18, 18, 0.8) !important;
+    backdrop-filter: saturate(180%) blur(20px) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 16px 16px 0 0 !important;
+    color: #fff !important;
+  }
+
+  .ant-drawer-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 16px !important;
+
+    .ant-drawer-title {
+      color: #fff !important;
+    }
+  }
+
+  .ant-drawer-body {
+    background: transparent !important;
+    padding: 0 16px !important;
+    overflow-y: auto !important;
+
+    &::-webkit-scrollbar {
+      display: block !important;
+      width: 4px !important;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15) !important;
+      border-radius: 2px !important;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent !important;
+    }
+  }
+
+  .ant-list-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 12px 0 !important;
+
+    .ant-list-item-meta {
+      width: 100% !important;
+    }
+
+    .ant-list-item-meta-title {
+      margin-bottom: 4px !important;
+    }
+
+    .ant-list-item-meta-description {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+  }
+
+  .infinite-scroll-component {
+    overflow: hidden !important;
+  }
+}
