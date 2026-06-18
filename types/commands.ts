@@ -214,7 +214,9 @@ export type CommandList =
   | "DY_GET_HOME_FEED"
   | "DY_GET_FAVORITES"
   | "DY_SAVE_COOKIE"
-  | "DY_OPEN_COOKIE_SETTING";
+  | "DY_OPEN_COOKIE_SETTING"
+  | "DY_GET_COMMENTS"
+  | "DY_GET_FOLLOWING";
 
 export type ZhihuCommandList =
   | "ZHIHU_GETDATA"

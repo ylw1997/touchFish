@@ -85,22 +85,58 @@ export default function DouyinApp() {
       setLoading(false);
     }
   }, [request, loading, maxCursor, messageApi]);
+  
+  // 获取关注博主视频列表
+  const fetchFollowingFeed = useCallback(async (isRefresh = false) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const cursor = isRefresh ? 0 : maxCursor;
+      const res = await request("DY_GET_FOLLOWING", { max_cursor: cursor });
+      if (res && res.status_code === 0 && Array.isArray(res.aweme_list)) {
+        if (isRefresh) {
+          setList(res.aweme_list);
+          setActiveIndex(0);
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = 0;
+          }
+        } else {
+          setList((prev) => [...prev, ...res.aweme_list]);
+        }
+        setMaxCursor(res.max_cursor || 0);
+        setHasMore(res.has_more === true);
+      } else {
+        messageApi.error(res?.msg || "获取关注博主视频失败，请先设置 Cookie");
+        if (isRefresh) setList([]);
+        setHasMore(false);
+      }
+    } catch (e: any) {
+      console.error(e);
+      messageApi.error(e.message || "获取关注博主视频失败");
+    } finally {
+      setLoading(false);
+    }
+  }, [request, loading, maxCursor, messageApi]);
 
   // 初始化加载
   useEffect(() => {
     if (activeTab === "recommend") {
       fetchRecommendFeed(true);
+    } else if (activeTab === "following") {
+      fetchFollowingFeed(true);
     } else {
       fetchFavorites(true);
     }
   }, [activeTab]);
 
-  // 推荐流中：划到倒数第2个视频时，预加载下 10 个视频，实现无缝连续滑动
+  // 推荐流/关注流中：划到倒数第2个视频时，预加载下 10 个视频，实现无缝连续滑动
   useEffect(() => {
     if (activeTab === "recommend" && list.length > 0 && activeIndex >= list.length - 2) {
       fetchRecommendFeed();
+    } else if (activeTab === "following" && list.length > 0 && activeIndex >= list.length - 2) {
+      fetchFollowingFeed();
     }
-  }, [activeIndex, list.length, activeTab, fetchRecommendFeed]);
+  }, [activeIndex, list.length, activeTab, fetchRecommendFeed, fetchFollowingFeed]);
 
   // 监听 VS Code 刷新事件
   useEffect(() => {
@@ -108,6 +144,8 @@ export default function DouyinApp() {
       if (event.data?.command === "DY_FORCE_REFRESH") {
         if (activeTab === "recommend") {
           fetchRecommendFeed(true);
+        } else if (activeTab === "following") {
+          fetchFollowingFeed(true);
         } else {
           fetchFavorites(true);
         }
@@ -115,7 +153,7 @@ export default function DouyinApp() {
     };
     window.addEventListener("message", handleEvent);
     return () => window.removeEventListener("message", handleEvent);
-  }, [activeTab, fetchRecommendFeed, fetchFavorites]);
+  }, [activeTab, fetchRecommendFeed, fetchFollowingFeed, fetchFavorites]);
 
   // 处理推荐页滚动事件，计算当前激活的视频序号
   const handleRecommendScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -144,6 +182,7 @@ export default function DouyinApp() {
           }}
           items={[
             { key: "recommend", label: "推荐" },
+            { key: "following", label: "关注" },
             { key: "favorites", label: "我的" },
           ]}
           tabBarExtraContent={
@@ -154,6 +193,7 @@ export default function DouyinApp() {
                 icon={<SyncOutlined style={{ color: "#fe2c55" }} />}
                 onClick={() => {
                   if (activeTab === "recommend") fetchRecommendFeed(true);
+                  else if (activeTab === "following") fetchFollowingFeed(true);
                   else fetchFavorites(true);
                 }}
                 loading={loading}
@@ -164,8 +204,8 @@ export default function DouyinApp() {
         />
       </div>
 
-      {/* 推荐模式下的 Snap 滚动播放器容器 */}
-      {activeTab === "recommend" && (
+      {/* 推荐模式和关注模式下的 Snap 滚动播放器容器 */}
+      {(activeTab === "recommend" || activeTab === "following") && (
         <div
           ref={scrollContainerRef}
           className="dy-scroll-container"
@@ -173,7 +213,7 @@ export default function DouyinApp() {
         >
           {list.length === 0 && !loading ? (
             <div className="empty-wrapper">
-              <Empty description="暂无推荐视频，建议配置 Cookie 后重试">
+              <Empty description="暂无视频，建议配置 Cookie 后重试">
                 <Button type="primary" onClick={() => request("DY_OPEN_COOKIE_SETTING")}>
                   配置 Cookie
                 </Button>

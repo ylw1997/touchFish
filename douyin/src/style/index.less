@@ -519,3 +519,74 @@
   width: 100%;
   margin-top: 10px;
 }
+
+/* 底部评论抽屉样式定制 */
+.dy-comment-drawer-root {
+  z-index: 300 !important;
+
+  .ant-drawer-mask {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+}
+
+.dy-comment-drawer {
+  .ant-drawer-content {
+    background: rgba(18, 18, 18, 0.8) !important;
+    backdrop-filter: saturate(180%) blur(20px) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 16px 16px 0 0 !important;
+    color: #fff !important;
+  }
+
+  .ant-drawer-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 16px !important;
+
+    .ant-drawer-title {
+      color: #fff !important;
+    }
+  }
+
+  .ant-drawer-body {
+    background: transparent !important;
+    padding: 0 16px !important;
+    overflow-y: auto !important;
+
+    &::-webkit-scrollbar {
+      display: block !important;
+      width: 4px !important;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15) !important;
+      border-radius: 2px !important;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent !important;
+    }
+  }
+
+  .ant-list-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 12px 0 !important;
+    
+    .ant-list-item-meta {
+      width: 100% !important;
+    }
+
+    .ant-list-item-meta-title {
+      margin-bottom: 4px !important;
+    }
+    
+    .ant-list-item-meta-description {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+  }
+
+  .infinite-scroll-component {
+    overflow: hidden !important;
+  }
+}
+

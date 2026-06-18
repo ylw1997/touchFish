@@ -1,6 +1,8 @@
-import { Avatar, FloatButton, Spin } from "antd";
-import { HeartFilled, HeartOutlined, MessageOutlined, SoundOutlined, PlayCircleFilled, MutedOutlined, LoadingOutlined } from "@ant-design/icons";
+import { Avatar, FloatButton, Spin, Drawer, List } from "antd";
+import { HeartFilled, HeartOutlined, MessageOutlined, SoundOutlined, PlayCircleFilled, MutedOutlined, LoadingOutlined, CloseOutlined } from "@ant-design/icons";
 import { useState, useEffect, useRef } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { useRequest } from "../hooks/useRequest";
 
 interface VideoCardProps {
   aweme: any;
@@ -17,6 +19,14 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
   const [showPlayOverlay, setShowPlayOverlay] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
+  
+  const { request } = useRequest();
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [commentsList, setCommentsList] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsCursor, setCommentsCursor] = useState(0);
+  const [commentsHasMore, setCommentsHasMore] = useState(true);
+  const [commentsTotal, setCommentsTotal] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -122,6 +132,38 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
     return count.toString();
   };
 
+  const fetchComments = async (isRefresh = false) => {
+    if (commentsLoading || (!isRefresh && !commentsHasMore)) return;
+    setCommentsLoading(true);
+    try {
+      const cursor = isRefresh ? 0 : commentsCursor;
+      const res = await request("DY_GET_COMMENTS", { aweme_id: aweme?.aweme_id || aweme?.id, cursor });
+      if (res && res.status_code === 0) {
+        const list = res.comments || [];
+        if (isRefresh) {
+          setCommentsList(list);
+        } else {
+          setCommentsList((prev) => [...prev, ...list]);
+        }
+        setCommentsCursor(res.cursor || 0);
+        setCommentsHasMore(res.has_more === 1 || res.has_more === true);
+        setCommentsTotal(res.total || 0);
+      }
+    } catch (err) {
+      console.error("获取评论列表失败:", err);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleOpenComments = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsCommentsOpen(true);
+    if (commentsList.length === 0) {
+      fetchComments(true);
+    }
+  };
+
   return (
     <div className="dy-video-item" onClick={handlePlayToggle}>
       {/* 视频播放器 */}
@@ -208,7 +250,7 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
           <FloatButton
             style={{ position: "static" }}
             icon={<MessageOutlined />}
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleOpenComments}
           />
           <span className="action-count">{formatCount(statistics?.comment_count)}</span>
         </div>
@@ -223,6 +265,103 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
           <span className="action-count">{isMuted ? "静音" : "有声"}</span>
         </div>
       </div>
+
+      {/* 底部向上弹出的评论抽屉 */}
+      <Drawer
+        title={
+          <div style={{ color: "#fff", fontSize: "14px", fontWeight: "bold", textAlign: "center" }}>
+            {commentsTotal > 0 ? `${formatCount(commentsTotal)} 条评论` : "暂无评论"}
+          </div>
+        }
+        placement="bottom"
+        onClose={() => setIsCommentsOpen(false)}
+        open={isCommentsOpen}
+        height="70%"
+        className="dy-comment-drawer"
+        closeIcon={<CloseOutlined style={{ color: "rgba(255, 255, 255, 0.85)" }} />}
+        styles={{
+          header: { borderBottom: "1px solid rgba(255, 255, 255, 0.08)", padding: "14px 16px", background: "transparent" },
+          body: { padding: "0 16px", overflowY: "auto", background: "transparent" },
+          content: {
+            background: "rgba(18, 18, 18, 0.7)",
+            backdropFilter: "saturate(180%) blur(20px)",
+            WebkitBackdropFilter: "saturate(180%) blur(20px)",
+            borderTop: "1px solid rgba(255, 255, 255, 0.12)",
+            borderRadius: "16px 16px 0 0",
+            transform: "translate3d(0, 0, 0)",
+            willChange: "transform"
+          },
+          mask: {
+            background: "rgba(0, 0, 0, 0.45)"
+          }
+        }}
+        rootClassName="dy-comment-drawer-root"
+        rootStyle={{ pointerEvents: "auto" }}
+        destroyOnClose={false}
+      >
+        <div 
+          onClick={(e) => e.stopPropagation()} 
+          onWheel={(e) => e.stopPropagation()}
+          style={{ height: "100%", display: "flex", flexDirection: "column" }}
+        >
+          {commentsList.length === 0 && !commentsLoading ? (
+            <div style={{ padding: "40px 0", textAlign: "center", color: "rgba(255, 255, 255, 0.45)" }}>
+              还没有人评论，快来抢沙发吧！
+            </div>
+          ) : (
+            <InfiniteScroll
+              dataLength={commentsList.length}
+              next={() => fetchComments(false)}
+              hasMore={commentsHasMore && !commentsLoading}
+              loader={
+                <div style={{ padding: "10px 0", textAlign: "center" }}>
+                  <Spin size="small" />
+                </div>
+              }
+              endMessage={
+                <div style={{ padding: "15px 0", textAlign: "center", fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
+                  没有更多评论了
+                </div>
+              }
+            >
+              <List
+                dataSource={commentsList}
+                renderItem={(comment) => (
+                  <List.Item 
+                    key={comment.cid} 
+                    style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)", padding: "12px 0", alignItems: "flex-start" }}
+                  >
+                    <List.Item.Meta
+                      avatar={<Avatar src={comment.user?.avatar_thumb?.url_list?.[0]} size={32} />}
+                      title={
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ color: "rgba(255, 255, 255, 0.5)", fontSize: "12px", fontWeight: "normal" }}>
+                            {comment.user?.nickname || "未知用户"}
+                          </span>
+                        </div>
+                      }
+                      description={
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "2px" }}>
+                          <span style={{ color: "#fff", fontSize: "13px", lineHeight: "1.4", wordBreak: "break-all" }}>
+                            {comment.text}
+                          </span>
+                          <span style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "10px" }}>
+                            {new Date(comment.create_time * 1000).toLocaleDateString()}
+                          </span>
+                        </div>
+                      }
+                    />
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", color: "rgba(255, 255, 255, 0.4)", fontSize: "11px", gap: "2px", marginLeft: "12px", flexShrink: 0 }}>
+                      <HeartOutlined style={{ fontSize: "13px" }} />
+                      <span>{comment.digg_count > 0 ? formatCount(comment.digg_count) : ""}</span>
+                    </div>
+                  </List.Item>
+                )}
+              />
+            </InfiniteScroll>
+          )}
+        </div>
+      </Drawer>
     </div>
   );
 }
