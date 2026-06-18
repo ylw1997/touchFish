@@ -1,5 +1,5 @@
-import { Avatar, FloatButton } from "antd";
-import { HeartFilled, HeartOutlined, MessageOutlined, SoundOutlined, PlayCircleFilled, MutedOutlined } from "@ant-design/icons";
+import { Avatar, FloatButton, Spin } from "antd";
+import { HeartFilled, HeartOutlined, MessageOutlined, SoundOutlined, PlayCircleFilled, MutedOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useState, useEffect, useRef } from "react";
 
 interface VideoCardProps {
@@ -16,6 +16,7 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
   const [likeCount, setLikeCount] = useState(statistics?.digg_count || 0);
   const [showPlayOverlay, setShowPlayOverlay] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -42,6 +43,7 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
   useEffect(() => {
     if (!videoRef.current) return;
     if (isActive) {
+      setIsVideoLoading(true);
       // 在播放前重载，以便切换源生效
       videoRef.current.load();
       setProgress(0);
@@ -52,10 +54,12 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
         .catch((err) => {
           console.log("自动播放被阻拦:", err);
           setIsPlaying(false);
+          setIsVideoLoading(false);
         });
     } else {
       videoRef.current.pause();
       setIsPlaying(false);
+      setIsVideoLoading(false);
     }
   }, [isActive, currentPlayUrl]);
 
@@ -126,6 +130,12 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
         src={currentPlayUrl}
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
+        onWaiting={() => setIsVideoLoading(true)}
+        onPlaying={() => setIsVideoLoading(false)}
+        onCanPlay={() => setIsVideoLoading(false)}
+        onSeeked={() => setIsVideoLoading(false)}
+        onSeeking={() => setIsVideoLoading(true)}
+        onLoadStart={() => setIsVideoLoading(true)}
         className="video-player"
         loop
         muted={isMuted}
@@ -138,6 +148,26 @@ export default function VideoCard({ aweme, isActive, isMuted, onToggleMute }: Vi
       <div className="video-progress-bar">
         <div className="progress-fill" style={{ width: `${progress}%` }} />
       </div>
+
+      {/* 缓冲时垫底的封面（解决黑屏闪烁，优化卡顿感知） */}
+      {isVideoLoading && coverUrl && (
+        <img
+          src={coverUrl}
+          alt="loading cover"
+          className="video-loading-cover"
+          referrerPolicy="no-referrer"
+        />
+      )}
+
+      {/* 加载中的 Loading 蒙版 */}
+      {isVideoLoading && (
+        <div className="video-loading-overlay">
+          <Spin indicator={<LoadingOutlined style={{ fontSize: 36, color: '#fe2c55' }} spin />} />
+          <span className="loading-text" style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>
+            视频缓冲中...
+          </span>
+        </div>
+      )}
 
       {/* 播放/暂停状态悬浮提示 */}
       {!isPlaying && showPlayOverlay && (

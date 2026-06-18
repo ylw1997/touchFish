@@ -120,6 +120,41 @@
     object-fit: contain;
   }
 
+  /* 缓冲垫底封面，用于避免 load 阶段黑屏 */
+  .video-loading-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 6;
+    background-color: #000;
+    pointer-events: none;
+  }
+
+  /* 加载指示器蒙层 */
+  .video-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 8;
+    pointer-events: none; /* 让鼠标点击穿透，不阻挡双击/单击视频播放控制 */
+
+    .loading-text {
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      font-weight: 500;
+    }
+  }
+
   /* 蒙版层以显示大按钮 */
   .play-pause-overlay {
     position: absolute;
