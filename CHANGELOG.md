@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [17.4.0](https://github.com/ylw1997/touchFish/compare/v17.3.0...v17.4.0) (2026-06-22)
+
+
+### ✨ Features | 新功能
+
+* 优化所有playbar性能 ([a8faf3f](https://github.com/ylw1997/touchFish/commit/a8faf3f86b0b257aef74e0da9b145cc36eccf563))
+
 ## [17.3.0](https://github.com/ylw1997/touchFish/compare/v17.2.0...v17.3.0) (2026-06-18)
 
 
