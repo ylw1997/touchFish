@@ -32,17 +32,19 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   const lastDurationRef = useRef(0);
 
   useEffect(() => {
-    let animationFrameId: number;
+    const audio = audioRef.current;
 
-    const renderLoop = () => {
-      const audio = audioRef.current;
+    const renderProgress = () => {
+      const currentAudio = audioRef.current;
       const isSeeking = isSeekingRef.current;
 
-      if (audio) {
-        const nextCurrentTime = Number.isFinite(audio.currentTime)
-          ? audio.currentTime
+      if (currentAudio) {
+        const nextCurrentTime = Number.isFinite(currentAudio.currentTime)
+          ? currentAudio.currentTime
           : 0;
-        const nextDuration = Number.isFinite(audio.duration) ? audio.duration : 0;
+        const nextDuration = Number.isFinite(currentAudio.duration)
+          ? currentAudio.duration
+          : 0;
 
         const percent = nextDuration > 0 ? (nextCurrentTime / nextDuration) * 100 : 0;
         if (bgRef.current) {
@@ -96,14 +98,29 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
         }
         lastDurationRef.current = 0;
       }
-
-      animationFrameId = requestAnimationFrame(renderLoop);
     };
 
-    animationFrameId = requestAnimationFrame(renderLoop);
+    renderProgress();
+
+    if (!audio) return;
+
+    const events = [
+      "timeupdate",
+      "durationchange",
+      "loadedmetadata",
+      "play",
+      "pause",
+      "seeked",
+      "emptied",
+    ] as const;
+    events.forEach((eventName) =>
+      audio.addEventListener(eventName, renderProgress),
+    );
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      events.forEach((eventName) =>
+        audio.removeEventListener(eventName, renderProgress),
+      );
     };
   }, [audioRef]);
 

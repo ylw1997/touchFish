@@ -13,6 +13,7 @@ interface LyricOverlayProps {
   lyrics: { time: number; text: string }[];
   currentLyric: string;
   activeIdx: number;
+  isPlaying: boolean;
   getAlbumCover: (song: Song) => string;
   audioRef: React.RefObject<HTMLAudioElement | null>;
 }
@@ -22,6 +23,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
   currentSong,
   lyrics,
   activeIdx,
+  isPlaying,
   getAlbumCover,
   audioRef,
 }) => {
@@ -119,32 +121,19 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
             </div>
             <div className="lyric-list-container" ref={lyricContainerRef}>
               {lyrics.length > 0 ? (
-                lyrics.map((l, idx) => (
-                  <div
-                    key={idx}
-                    data-index={idx}
-                    className={`lyric-line ${
-                      idx === activeIdx ? "active" : ""
-                    }`}
-                  >
-                    {idx === activeIdx
-                      ? Array.from(l.text).map((char, charIdx, arr) => (
-                          <span
-                            key={charIdx}
-                            className="lyric-char"
-                            style={
-                              {
-                                "--char-start": (charIdx / arr.length) * 100,
-                                "--char-width": (1 / arr.length) * 100,
-                              } as React.CSSProperties
-                            }
-                          >
-                            {char}
-                          </span>
-                        ))
-                      : l.text}
-                  </div>
-                ))
+                lyrics.map((l, idx) => {
+                  return (
+                    <div
+                      key={idx}
+                      data-index={idx}
+                      className={`lyric-line ${idx === activeIdx ? "active" : ""} ${
+                        isPlaying ? "" : "paused"
+                      }`}
+                    >
+                      {l.text}
+                    </div>
+                  );
+                })
               ) : (
                 <div className="lyric-line active">暂无歌词 / 纯音乐</div>
               )}
