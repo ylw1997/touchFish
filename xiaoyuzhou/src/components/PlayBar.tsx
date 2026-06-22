@@ -53,6 +53,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
   const [lyrics, setLyrics] = React.useState<{ time: number; text: string }[]>([]);
   const [currentLyric, setCurrentLyric] = React.useState<string>("");
   const [activeIdx, setActiveIdx] = React.useState<number>(-1);
+  const activeIdxRef = useRef<number>(-1);
 
   const getAlbumCover = (episode: any): string => {
     return (
@@ -117,6 +118,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
     if (!currentEpisode) {
       setLyrics([]);
       setCurrentLyric("");
+      activeIdxRef.current = -1;
       setActiveIdx(-1);
       return;
     }
@@ -142,15 +144,23 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
               };
             });
             setLyrics(parsed);
+            activeIdxRef.current = -1;
+            setActiveIdx(-1);
           } else {
             setLyrics([]);
+            activeIdxRef.current = -1;
+            setActiveIdx(-1);
           }
         } catch {
           setLyrics([]);
+          activeIdxRef.current = -1;
+          setActiveIdx(-1);
         }
       });
     } else {
       setLyrics([]);
+      activeIdxRef.current = -1;
+      setActiveIdx(-1);
     }
 
     return () => {
@@ -174,49 +184,26 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
     const audio = e.target as HTMLAudioElement;
     if (lyrics.length === 0) return;
     const currTime = audio.currentTime;
-    let idx = lyrics.length - 1;
-    while (idx >= 0 && lyrics[idx].time > currTime) {
-      idx--;
+    if (lyrics[0].time > currTime) {
+      setCurrentLyric("");
+      if (activeIdxRef.current !== -1) {
+        activeIdxRef.current = -1;
+        setActiveIdx(-1);
+      }
+      return;
     }
+    let idx = Math.min(Math.max(activeIdxRef.current, 0), lyrics.length - 1);
+    while (idx < lyrics.length - 1 && lyrics[idx + 1].time <= currTime) idx++;
+    while (idx > 0 && lyrics[idx].time > currTime) idx--;
     if (idx >= 0) {
       const lineText = lyrics[idx].text;
       setCurrentLyric((prev) => (prev !== lineText ? lineText : prev));
-      setActiveIdx((prev) => (prev !== idx ? idx : prev));
+      if (activeIdxRef.current !== idx) {
+        activeIdxRef.current = idx;
+        setActiveIdx(idx);
+      }
     }
   };
-
-  useEffect(() => {
-    let animationFrameId: number;
-    const findLyric = () => {
-      if (audioRef.current && lyrics.length > 0) {
-        const currTime = audioRef.current.currentTime;
-        let idx = lyrics.length - 1;
-        while (idx >= 0 && lyrics[idx].time > currTime) {
-          idx--;
-        }
-        if (idx >= 0) {
-          const currentLine = lyrics[idx];
-          const nextLine = lyrics[idx + 1];
-          const duration = nextLine ? nextLine.time - currentLine.time : 4;
-          let progress = ((currTime - currentLine.time) / duration) * 100;
-          if (progress > 100) progress = 100;
-
-          const lyricList = document.querySelector(".playbar-lyric-overlay");
-          if (lyricList) {
-            const targetEl = lyricList.querySelector(
-              `.lyric-line[data-index="${idx}"]`,
-            ) as HTMLElement;
-            if (targetEl) {
-              targetEl.style.setProperty("--lyric-progress-raw", `${progress}`);
-            }
-          }
-        }
-      }
-      animationFrameId = requestAnimationFrame(findLyric);
-    };
-    animationFrameId = requestAnimationFrame(findLyric);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [lyrics]);
 
   return (
     <>
@@ -353,6 +340,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
           lyrics={lyrics}
           currentLyric={currentLyric}
           activeIdx={activeIdx}
+          isPlaying={isPlaying}
           getAlbumCover={getAlbumCover}
           audioRef={audioRef}
         />

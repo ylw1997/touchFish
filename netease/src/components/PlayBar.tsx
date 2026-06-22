@@ -36,6 +36,7 @@ const PlayBar: React.FC = () => {
   const [lyrics, setLyrics] = useState<{ time: number; text: string }[]>([]);
   const [currentLyric, setCurrentLyric] = useState<string>("");
   const [activeIdx, setActiveIdx] = useState<number>(-1);
+  const activeIdxRef = useRef<number>(-1);
 
   const currentSong = usePlayerStore((state) => state.currentSong);
   const currentSongUrl = usePlayerStore((state) => state.currentSongUrl);
@@ -237,6 +238,7 @@ const PlayBar: React.FC = () => {
     if (!currentSong) {
       setLyrics([]);
       setCurrentLyric("");
+      activeIdxRef.current = -1;
       setActiveIdx(-1);
       return;
     }
@@ -268,6 +270,7 @@ const PlayBar: React.FC = () => {
         }
         setLyrics(parsed);
         setCurrentLyric("");
+        activeIdxRef.current = -1;
         setActiveIdx(-1);
       }
     });
@@ -294,48 +297,6 @@ const PlayBar: React.FC = () => {
     });
   }, [currentSong, currentLyric, isPlaying]);
 
-  // 监听独立时钟来更新歌词的高亮进度 (只负责纯视觉 UI，因为后台标签页时 requestAnimationFrame 会被浏览器暂停)
-  useEffect(() => {
-    let animationFrameId: number;
-
-    const findLyric = () => {
-      if (audioRef.current && lyrics.length > 0) {
-        const currTime = audioRef.current.currentTime;
-        let idx = lyrics.length - 1;
-        while (idx >= 0 && lyrics[idx].time > currTime) {
-          idx--;
-        }
-
-        if (idx >= 0) {
-          const currentLine = lyrics[idx];
-
-          // 计算卡拉OK式的文本填充进度
-          const nextLine = lyrics[idx + 1];
-          // 如果是最后一句，给个默认填充时间为 4 秒
-          const duration = nextLine ? nextLine.time - currentLine.time : 4;
-          let progress = ((currTime - currentLine.time) / duration) * 100;
-          if (progress > 100) progress = 100;
-
-          // 使用 requestAnimationFrame 直接修改 DOM 级 CSS 变量，绕过 React 重绘
-          const lyricList = document.querySelector(".playbar-lyric-overlay");
-          if (lyricList) {
-            // 精确查询当前 index 对应的行，而非盲目查询 .active（防止 React 还没来得及更新 active 类时更新错位）
-            const targetEl = lyricList.querySelector(
-              `.lyric-line[data-index="${idx}"]`,
-            ) as HTMLElement;
-            if (targetEl) {
-              targetEl.style.setProperty("--lyric-progress-raw", `${progress}`);
-            }
-          }
-        }
-      }
-      animationFrameId = requestAnimationFrame(findLyric);
-    };
-
-    animationFrameId = requestAnimationFrame(findLyric);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [lyrics, currentLyric]);
-
   // 监听来自扩展端的消息
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -359,14 +320,24 @@ const PlayBar: React.FC = () => {
     const audio = e.target as HTMLAudioElement;
     if (lyrics.length === 0) return;
     const currTime = audio.currentTime;
-    let idx = lyrics.length - 1;
-    while (idx >= 0 && lyrics[idx].time > currTime) {
-      idx--;
+    if (lyrics[0].time > currTime) {
+      setCurrentLyric("");
+      if (activeIdxRef.current !== -1) {
+        activeIdxRef.current = -1;
+        setActiveIdx(-1);
+      }
+      return;
     }
+    let idx = Math.min(Math.max(activeIdxRef.current, 0), lyrics.length - 1);
+    while (idx < lyrics.length - 1 && lyrics[idx + 1].time <= currTime) idx++;
+    while (idx > 0 && lyrics[idx].time > currTime) idx--;
     if (idx >= 0) {
       const lineText = lyrics[idx].text;
       setCurrentLyric((prev) => (prev !== lineText ? lineText : prev));
-      setActiveIdx((prev) => (prev !== idx ? idx : prev));
+      if (activeIdxRef.current !== idx) {
+        activeIdxRef.current = idx;
+        setActiveIdx(idx);
+      }
     }
   };
 
@@ -574,6 +545,7 @@ const PlayBar: React.FC = () => {
           lyrics={lyrics}
           currentLyric={currentLyric}
           activeIdx={activeIdx}
+          isPlaying={isPlaying}
           getAlbumCover={getAlbumCover}
           audioRef={audioRef}
         />
