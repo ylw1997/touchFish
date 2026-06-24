@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [17.5.0](https://github.com/ylw1997/touchFish/compare/v17.4.1...v17.5.0) (2026-06-24)
+
+
+### ✨ Features | 新功能
+
+* 知乎评论点赞功能完成 ([b80b9eb](https://github.com/ylw1997/touchFish/commit/b80b9eb2a8faceb93984c0d23367cec0a9a1752b))
+
 ### [17.4.1](https://github.com/ylw1997/touchFish/compare/v17.4.0...v17.4.1) (2026-06-24)
 
 
