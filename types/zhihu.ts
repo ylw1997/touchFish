@@ -23,6 +23,7 @@ export interface ZhihuCommentItem {
   created_time: number;
   id: number;
   is_author: boolean;
+  liked?: boolean;
   like_count: number;
   reply_to_id: number;
   type: number;

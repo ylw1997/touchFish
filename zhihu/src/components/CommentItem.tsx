@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 import type { ZhihuCommentItem } from "../../../types/zhihu";
 import { useRequest } from "../hooks/useRequest";
 import { processCommentContent } from "../utils/textParser";
-import { CaretRightOutlined, LikeOutlined } from "@ant-design/icons";
+import { CaretRightOutlined, LikeOutlined, LikeFilled } from "@ant-design/icons";
 
 const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
   const [childComments, setChildComments] = useState<ZhihuCommentItem[]>(
@@ -23,8 +23,28 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
     { is_end: boolean; next?: string } | undefined
   >(comment.paging);
   const [loading, setLoading] = useState(false);
-  const { request } = useRequest();
+  const { request, messageApi } = useRequest();
   const [childrenLoaded, setChildrenLoaded] = useState<boolean>(false);
+
+  const [likeCount, setLikeCount] = useState<number>(comment.like_count || 0);
+  const [isLiked, setIsLiked] = useState<boolean>(!!comment.liked);
+
+  const handleLike = async () => {
+    const newIsLiked = !isLiked;
+    // optimistic update
+    setIsLiked(newIsLiked);
+    setLikeCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
+    try {
+      await request("ZHIHU_LIKE_COMMENT", { commentId: comment.id, isLike: newIsLiked });
+      messageApi.success(newIsLiked ? "点赞成功" : "取消点赞成功");
+    } catch (e) {
+      // rollback
+      setIsLiked(!newIsLiked);
+      setLikeCount((prev) => (!newIsLiked ? prev + 1 : prev - 1));
+      console.error("Like comment failed", e);
+      messageApi.error(newIsLiked ? "点赞失败" : "取消点赞失败");
+    }
+  };
 
   const loadChildComments = async (replace = true) => {
     if (!comment.id) return;
@@ -94,8 +114,11 @@ const CommentItem: React.FC<{ comment: ZhihuCommentItem }> = ({ comment }) => {
               ))}
               <span>{dayjs(comment.created_time * 1000).fromNow()}</span>
             </Space>
-            <span>
-              <LikeOutlined /> {comment.like_count}
+            <span
+              onClick={handleLike}
+              style={{ cursor: "pointer", color: isLiked ? "#1890ff" : "inherit" }}
+            >
+              {isLiked ? <LikeFilled /> : <LikeOutlined />} {likeCount}
             </span>
           </Flex>
 
