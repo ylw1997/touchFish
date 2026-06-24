@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [17.4.1](https://github.com/ylw1997/touchFish/compare/v17.4.0...v17.4.1) (2026-06-24)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复 XClientTransaction 报错与增加 Mock DOM 降级机制 ([e3f95ea](https://github.com/ylw1997/touchFish/commit/e3f95ea9544f21acae557980f771ae4eb1dbdbcf))
+
 ## [17.4.0](https://github.com/ylw1997/touchFish/compare/v17.3.0...v17.4.0) (2026-06-22)
 
 
