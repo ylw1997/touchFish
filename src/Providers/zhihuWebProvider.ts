@@ -19,6 +19,7 @@ import {
   followQuestion,
   unfollowQuestion,
   readZhihuItems,
+  likeZhihuComment,
 } from "../api/zhihu";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { ZhihuCommandsType } from "../../types/commands";
@@ -139,6 +140,12 @@ export class ZhihuWebProvider extends BaseWebviewProvider {
           referer: "https://www.zhihu.com/",
           successLabel: "知乎图片",
         });
+        break;
+      }
+      case "ZHIHU_LIKE_COMMENT": {
+        const { commentId, isLike } = payload as { commentId: string | number; isLike: boolean };
+        const res = await likeZhihuComment(commentId, isLike);
+        webviewView.webview.postMessage({ payload: res?.data || {}, uuid });
         break;
       }
     }

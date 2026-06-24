@@ -220,6 +220,14 @@ const useZhihuAction = () => {
     [apiClient]
   );
 
+  const likeZhihuComment = useCallback(
+    async (commentId: string | number, isLike: boolean) => {
+      const result = await apiClient.likeZhihuComment(commentId, isLike);
+      return result;
+    },
+    [apiClient]
+  );
+
   return {
     list,
     clearList,
@@ -243,6 +251,7 @@ const useZhihuAction = () => {
     unfollowHandler,
     searchZhihu,
     getZhihuComment,
+    likeZhihuComment,
     copyLink,
     loading,
     messageApi,

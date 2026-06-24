@@ -269,6 +269,30 @@ export const voteZhihuAnswer = async (
   return await axios.post(`https://www.zhihu.com${url}`, { type }, { headers });
 };
 
+// 点赞评论 https://www.zhihu.com/api/v4/comments/10632140296/like
+export const likeZhihuComment = async (
+  commentId: string | number,
+  isLike: boolean = true,
+) => {
+  const url = `/api/v4/comments/${commentId}/like`;
+  const xzse96 = await getZhihu96(url);
+  const cookie = (await getOrSetZhihuCookie()) as string;
+  const headers = {
+    Cookie: cookie,
+    "x-zse-96": xzse96,
+    "x-zse-93": xzse93,
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+  };
+
+  const fullUrl = `https://www.zhihu.com${url}`;
+  if (isLike) {
+    return await axios.post(fullUrl, {}, { headers });
+  } else {
+    return await axios.delete(fullUrl, { headers });
+  }
+};
+
 // 搜索接口 https://www.zhihu.com/api/v4/search_v3?gk_version=gz-gaokao&t=general&q=OpenAI%E5%8F%91%E5%B8%83GPT-5&correction=1&offset=0&limit=20&filter_fields=&lc_idx=0&show_all_topics=0&search_source=Normal
 export const searchZhihu = async (query: string): Promise<ZhihuItemData[]> => {
   const encodedQuery = encodeURIComponent(query);

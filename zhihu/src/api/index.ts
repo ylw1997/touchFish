@@ -59,4 +59,8 @@ export class ZhihuApi {
   getZhihuComment(answerId: string) {
     return this.request<any>("getZhihuComment", answerId, "获取评论中...");
   }
+
+  likeZhihuComment(commentId: string | number, isLike: boolean) {
+    return this.request<any>("ZHIHU_LIKE_COMMENT", { commentId, isLike }, "操作中...");
+  }
 }
