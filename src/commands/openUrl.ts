@@ -822,7 +822,6 @@ const loadNgaPage = async () => {
   const extraCss = `
     p,span { font-size:16px; }
     .c1, .posterinfo, .postrow span br, h3, .postbodysubtitle, .comment_c .postInfo, .small_colored_text_btn { display:none; }
-    img { max-height:600px; display:block; }
     #postcontent0 br { display:block !important; }
     #post1strow0 .c2 { flex-wrap:wrap; }
     .postbox { padding:12px 0; width:100%; border-bottom:1px solid var(--vscode-button-secondaryBackground); }

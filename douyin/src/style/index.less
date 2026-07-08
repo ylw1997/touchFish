@@ -105,6 +105,7 @@ body {
 
 /* 推荐流滚动区：Snap 滚动 */
 .dy-scroll-container {
+  position: relative;
   width: 100%;
   height: 100vh;
   overflow-y: scroll;
@@ -116,6 +117,15 @@ body {
     overflow-y: auto;
     background-color: var(--vscode-sideBar-background, #1e1e1e);
   }
+}
+
+.dy-active-player-layer {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 20;
+  background: #000;
 }
 
 /* 每一个全屏视频项 */

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Tabs, Button, Spin, Empty } from "antd";
 import { SyncOutlined, CloseOutlined } from "@ant-design/icons";
 import { useRequest } from "../hooks/useRequest";
@@ -15,40 +15,89 @@ interface SavedState {
   maxCursor?: number;
 }
 
+type PlaybackResumeReason =
+  | "active-change"
+  | "visibility"
+  | "restore"
+  | "user"
+  | "tab";
+
 export default function DouyinApp() {
   const { request, messageApi } = useRequest();
 
-  const savedState = (vscode.getState() as SavedState) || {};
+  // 从 vscode state 恢复（仅组件初始化时读一次）
+  const savedStateRef = useRef((vscode.getState() as SavedState) || {});
 
-  const [activeTab, setActiveTab] = useState(savedState.activeTab || "recommend");
-  const [list, setList] = useState<any[]>(savedState.list || []);
+  const [activeTab, setActiveTab] = useState(savedStateRef.current.activeTab || "recommend");
+  const [list, setList] = useState<any[]>(savedStateRef.current.list || []);
   const [loading, setLoading] = useState(false);
-  
-  // 共享静音状态 (为了防止多视频混乱，推荐默认静音，由用户手动解除)
+
+  // 共享静音状态
   const [isMuted, setIsMuted] = useState(true);
 
   // 推荐流滚动及自动播放控制
-  const [activeIndex, setActiveIndex] = useState(savedState.activeIndex || 0);
+  const [activeIndex, setActiveIndex] = useState(savedStateRef.current.activeIndex || 0);
+  const activeIndexRef = useRef(savedStateRef.current.activeIndex || 0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // 防御标志位：恢复滚动位置期间屏蔽 scroll handler
+  const isRestoringRef = useRef(false);
+
+  // 播放控制器：父级决定是否应该继续播放，VideoCard 只执行。
+  const [playbackToken, setPlaybackToken] = useState(0);
+  const [playbackReason, setPlaybackReason] =
+    useState<PlaybackResumeReason>("active-change");
+  const [shouldPlay, setShouldPlay] = useState(true);
+  const userPausedRef = useRef(false);
+  const userActivatedRef = useRef(false);
 
   // 喜欢列表分页
   const [hasMore, setHasMore] = useState(true);
-  const [maxCursor, setMaxCursor] = useState(savedState.maxCursor || 0);
+  const [maxCursor, setMaxCursor] = useState(savedStateRef.current.maxCursor || 0);
 
-  // 全屏 Overlay 播放状态 (喜欢列表中点击卡片后全屏播放该视频)
+  // 全屏 Overlay 播放状态
   const [overlayVideo, setOverlayVideo] = useState<any>(null);
 
-  // 保存状态到 vscode state
+  // ===== 状态持久化 =====
   useEffect(() => {
-    vscode.setState({
-      activeTab,
-      list,
-      activeIndex,
-      maxCursor,
-    });
+    vscode.setState({ activeTab, list, activeIndex, maxCursor });
   }, [activeTab, list, activeIndex, maxCursor]);
 
-  // 保存滚动位置到插件端 workspaceState
+  const requestPlayback = useCallback((reason: PlaybackResumeReason) => {
+    if (userPausedRef.current) return;
+    setShouldPlay(true);
+    setPlaybackReason(reason);
+    setPlaybackToken((token) => token + 1);
+  }, []);
+
+  const pausePlayback = useCallback((isUserPause = false) => {
+    if (isUserPause) {
+      userPausedRef.current = true;
+    }
+    setShouldPlay(false);
+  }, []);
+
+  const resumeFromUserGesture = useCallback(() => {
+    userActivatedRef.current = true;
+    userPausedRef.current = false;
+    requestPlayback("user");
+  }, [requestPlayback]);
+
+  useEffect(() => {
+    const markActivated = () => {
+      userActivatedRef.current = true;
+    };
+    window.addEventListener("pointerdown", markActivated, true);
+    window.addEventListener("keydown", markActivated, true);
+    window.addEventListener("wheel", markActivated, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", markActivated, true);
+      window.removeEventListener("keydown", markActivated, true);
+      window.removeEventListener("wheel", markActivated, true);
+    };
+  }, []);
+
+  // 同步 activeIndex 到插件端 workspaceState（用于 onDidChangeVisibility 恢复）
   useEffect(() => {
     if (activeTab === "recommend" || activeTab === "following") {
       vscode.postMessage({
@@ -58,38 +107,72 @@ export default function DouyinApp() {
     }
   }, [activeIndex, activeTab]);
 
-  // 组件刚挂载且已有缓存数据时，恢复滚动位置
+  // ===== 滚动位置恢复 =====
+  const restoreScrollPosition = useCallback((targetIndex: number) => {
+    isRestoringRef.current = true;
+    activeIndexRef.current = targetIndex;
+    setActiveIndex(targetIndex);
+
+    // 立即设置一次
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = targetIndex * scrollContainerRef.current.clientHeight;
+    }
+
+    // 延迟二次校准（等 layout 稳定后）
+    requestAnimationFrame(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = targetIndex * scrollContainerRef.current.clientHeight;
+      }
+      // 再等一帧后解除防御
+      requestAnimationFrame(() => {
+        isRestoringRef.current = false;
+      });
+    });
+  }, []);
+
+  // 组件初次挂载，如果有缓存的非 0 位置则恢复
   useEffect(() => {
-    if (list.length > 0 && scrollContainerRef.current) {
-      const timer = setTimeout(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = activeIndex * scrollContainerRef.current.clientHeight;
-        }
-      }, 100);
-      return () => clearTimeout(timer);
+    if (list.length > 0 && activeIndexRef.current > 0) {
+      // 等一帧让 DOM 渲染完毕再恢复滚动
+      requestAnimationFrame(() => {
+        restoreScrollPosition(activeIndexRef.current);
+      });
     }
   }, []);
 
-  // 监听 VS Code 侧的主动滚动恢复命令 (例如从别的 Tab 切回来，Webview 可见性变化时)
+  // 监听 document.visibilitychange（VS Code 隐藏 webview 时 scrollTop 会被浏览器重置为 0）
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        // 恢复滚动位置
+        if (activeIndexRef.current > 0) {
+          restoreScrollPosition(activeIndexRef.current);
+        }
+        requestPlayback("visibility");
+      } else {
+        pausePlayback(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [pausePlayback, requestPlayback, restoreScrollPosition]);
+
+  // 监听 VS Code 侧的滚动恢复命令（WebviewView.onDidChangeVisibility）
   useEffect(() => {
     const handleRestoreEvent = (event: MessageEvent) => {
       if (event.data?.command === "DY_RESTORE_SCROLL_POSITION") {
-        const restoredIndex = event.data.payload;
-        if (typeof restoredIndex === "number" && restoredIndex >= 0) {
-          setActiveIndex(restoredIndex);
-          if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = restoredIndex * scrollContainerRef.current.clientHeight;
-          }
+        const idx = event.data.payload;
+        if (typeof idx === "number" && idx >= 0) {
+          restoreScrollPosition(idx);
+          requestPlayback("restore");
         }
       }
     };
     window.addEventListener("message", handleRestoreEvent);
     return () => window.removeEventListener("message", handleRestoreEvent);
-  }, []);
+  }, [requestPlayback, restoreScrollPosition]);
 
-
-
-  // 获取推荐视频
+  // ===== 数据获取 =====
   const fetchRecommendFeed = useCallback(async (isRefresh = false) => {
     if (loading) return;
     setLoading(true);
@@ -99,6 +182,7 @@ export default function DouyinApp() {
         if (isRefresh) {
           setList(res.aweme_list);
           setActiveIndex(0);
+          activeIndexRef.current = 0;
           if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = 0;
           }
@@ -118,7 +202,6 @@ export default function DouyinApp() {
     }
   }, [request, loading, messageApi]);
 
-  // 获取喜欢视频列表
   const fetchFavorites = useCallback(async (isRefresh = false) => {
     if (loading) return;
     setLoading(true);
@@ -145,8 +228,7 @@ export default function DouyinApp() {
       setLoading(false);
     }
   }, [request, loading, maxCursor, messageApi]);
-  
-  // 获取关注博主视频列表
+
   const fetchFollowingFeed = useCallback(async (isRefresh = false) => {
     if (loading) return;
     setLoading(true);
@@ -157,6 +239,7 @@ export default function DouyinApp() {
         if (isRefresh) {
           setList(res.aweme_list);
           setActiveIndex(0);
+          activeIndexRef.current = 0;
           if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = 0;
           }
@@ -178,7 +261,7 @@ export default function DouyinApp() {
     }
   }, [request, loading, maxCursor, messageApi]);
 
-  // 初始化加载
+  // 初始化加载（仅 list 为空时请求）
   useEffect(() => {
     if (list.length === 0) {
       if (activeTab === "recommend") {
@@ -191,7 +274,7 @@ export default function DouyinApp() {
     }
   }, [activeTab, list.length]);
 
-  // 推荐流/关注流中：划到倒数第2个视频时，预加载下 10 个视频，实现无缝连续滑动
+  // 推荐流/关注流中：划到倒数第2个视频时，预加载下一批
   useEffect(() => {
     if (activeTab === "recommend" && list.length > 0 && activeIndex >= list.length - 2) {
       fetchRecommendFeed();
@@ -204,33 +287,50 @@ export default function DouyinApp() {
   useEffect(() => {
     const handleEvent = (event: MessageEvent) => {
       if (event.data?.command === "DY_FORCE_REFRESH") {
-        if (activeTab === "recommend") {
-          fetchRecommendFeed(true);
-        } else if (activeTab === "following") {
-          fetchFollowingFeed(true);
-        } else {
-          fetchFavorites(true);
-        }
+        if (activeTab === "recommend") fetchRecommendFeed(true);
+        else if (activeTab === "following") fetchFollowingFeed(true);
+        else fetchFavorites(true);
       }
     };
     window.addEventListener("message", handleEvent);
     return () => window.removeEventListener("message", handleEvent);
   }, [activeTab, fetchRecommendFeed, fetchFollowingFeed, fetchFavorites]);
 
-  // 处理推荐页滚动事件，计算当前激活的视频序号
+  // ===== 滚动处理 =====
   const handleRecommendScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isRestoringRef.current) return;
     const target = e.currentTarget;
+    if (target.clientHeight === 0) return; // 容器不可见时跳过
     const index = Math.round(target.scrollTop / target.clientHeight);
     if (index !== activeIndex && index >= 0 && index < list.length) {
       setActiveIndex(index);
+      activeIndexRef.current = index;
+      requestPlayback("active-change");
     }
   };
 
-
+  const scrollToIndex = useCallback((index: number) => {
+    const targetIndex = Math.max(0, Math.min(index, list.length - 1));
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    container.scrollTo({
+      top: targetIndex * container.clientHeight,
+      behavior: "smooth",
+    });
+    activeIndexRef.current = targetIndex;
+    setActiveIndex(targetIndex);
+    requestPlayback("active-change");
+  }, [list.length, requestPlayback]);
 
   const toggleMute = () => {
     setIsMuted((prev) => !prev);
+    resumeFromUserGesture();
   };
+
+  const activeVideo = useMemo(() => {
+    if (activeTab !== "recommend" && activeTab !== "following") return null;
+    return list[activeIndex] || null;
+  }, [activeIndex, activeTab, list]);
 
   return (
     <div className="dy-app-container">
@@ -241,6 +341,7 @@ export default function DouyinApp() {
           onChange={(key) => {
             setList([]);
             setActiveIndex(0);
+            activeIndexRef.current = 0;
             setMaxCursor(0);
             setActiveTab(key);
           }}
@@ -274,6 +375,8 @@ export default function DouyinApp() {
           ref={scrollContainerRef}
           className="dy-scroll-container"
           onScroll={handleRecommendScroll}
+          onPointerDown={resumeFromUserGesture}
+          onWheel={resumeFromUserGesture}
         >
           {list.length === 0 && !loading ? (
             <div className="empty-wrapper">
@@ -284,25 +387,13 @@ export default function DouyinApp() {
               </Empty>
             </div>
           ) : (
-            list.map((item, index) => {
-              const isActive = index === activeIndex;
-              if (!isActive) {
-                // 非激活视频只渲染带封面的占位，免去 video 标签及其它复杂 UI 的 DOM 开销和网络请求
+            <>
+              {list.map((item, index) => {
                 const coverUrl = item.video?.cover?.url_list?.[0] || "";
                 return (
                   <div
                     key={`${item.aweme_id || item.id}-${index}`}
                     className="dy-video-item placeholder"
-                    style={{
-                      height: "100vh",
-                      scrollSnapAlign: "start",
-                      backgroundColor: "#000",
-                      position: "relative",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                    }}
                   >
                     {coverUrl && (
                       <img
@@ -318,17 +409,30 @@ export default function DouyinApp() {
                     )}
                   </div>
                 );
-              }
-              return (
-                <VideoCard
-                  key={`${item.aweme_id || item.id}-${index}`}
-                  aweme={item}
-                  isActive={isActive}
-                  isMuted={isMuted}
-                  onToggleMute={toggleMute}
-                />
-              );
-            })
+              })}
+              {activeVideo && (
+                <div
+                  className="dy-active-player-layer"
+                  style={{ top: `${activeIndex * 100}vh` }}
+                >
+                  <VideoCard
+                    key="recommend-single-player"
+                    aweme={activeVideo}
+                    isActive={document.visibilityState !== "hidden"}
+                    isMuted={isMuted}
+                    onToggleMute={toggleMute}
+                    shouldPlay={shouldPlay}
+                    playSignal={playbackToken}
+                    playReason={playbackReason}
+                    userActivated={userActivatedRef.current}
+                    onUserPlayRequest={resumeFromUserGesture}
+                    onUserPauseRequest={() => pausePlayback(true)}
+                    onScrollToPrev={() => scrollToIndex(activeIndex - 1)}
+                    onScrollToNext={() => scrollToIndex(activeIndex + 1)}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -381,9 +485,15 @@ export default function DouyinApp() {
           </button>
           <VideoCard
             aweme={overlayVideo}
-            isActive={true} // 悬浮播放时一直处于 active 播放状态
+            isActive={true}
             isMuted={isMuted}
             onToggleMute={toggleMute}
+            shouldPlay={true}
+            playSignal={playbackToken}
+            playReason="user"
+            userActivated={userActivatedRef.current}
+            onUserPlayRequest={resumeFromUserGesture}
+            onUserPauseRequest={() => pausePlayback(true)}
           />
         </div>
       )}

@@ -11,7 +11,7 @@ import {
   UpOutlined,
   DownOutlined,
 } from "@ant-design/icons";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRequest } from "../hooks/useRequest";
 
 interface VideoCardProps {
@@ -19,6 +19,14 @@ interface VideoCardProps {
   isActive: boolean;
   isMuted: boolean;
   onToggleMute: () => void;
+  shouldPlay?: boolean;
+  playSignal?: number;
+  playReason?: "active-change" | "visibility" | "restore" | "user" | "tab";
+  userActivated?: boolean;
+  onUserPlayRequest?: () => void;
+  onUserPauseRequest?: () => void;
+  onScrollToNext?: () => void;
+  onScrollToPrev?: () => void;
 }
 
 export default function VideoCard({
@@ -26,6 +34,14 @@ export default function VideoCard({
   isActive,
   isMuted,
   onToggleMute,
+  shouldPlay = true,
+  playSignal = 0,
+  playReason = "active-change",
+  userActivated = false,
+  onUserPlayRequest,
+  onUserPauseRequest,
+  onScrollToNext,
+  onScrollToPrev,
 }: VideoCardProps) {
   const { desc, author, video, statistics } = aweme;
   const [isPlaying, setIsPlaying] = useState(false);
@@ -42,6 +58,10 @@ export default function VideoCard({
 
   const handleScrollToNext = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (onScrollToNext) {
+      onScrollToNext();
+      return;
+    }
     if (containerRef.current && containerRef.current.nextElementSibling) {
       containerRef.current.nextElementSibling.scrollIntoView({ behavior: "smooth" });
     }
@@ -49,6 +69,10 @@ export default function VideoCard({
 
   const handleScrollToPrev = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (onScrollToPrev) {
+      onScrollToPrev();
+      return;
+    }
     if (containerRef.current && containerRef.current.previousElementSibling) {
       containerRef.current.previousElementSibling.scrollIntoView({ behavior: "smooth" });
     }
@@ -65,67 +89,142 @@ export default function VideoCard({
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [playUrlList, setPlayUrlList] = useState<string[]>([]);
-  const [playUrlIndex, setPlayUrlIndex] = useState(0);
+  const awemeId = aweme?.aweme_id || aweme?.id;
+  const [playSource, setPlaySource] = useState<{
+    awemeId?: string | number;
+    index: number;
+  }>({ awemeId, index: 0 });
+  const playSeqRef = useRef(0);
 
   const coverUrl = video?.cover?.url_list?.[0] || "";
 
-  // 整理并优化播放地址优先级（优先推荐带 /aweme/v1/play/ 的高兼容官方重定向地址）
-  useEffect(() => {
+  // 播放地址排序：同步计算，避免 useEffect 异步导致 currentPlayUrl 先空后有效
+  const playUrlList = useMemo(() => {
     const list: string[] = video?.play_addr?.url_list || [];
-    const sorted = [...list].sort((a, b) => {
-      const aIsPlay = a.includes("/aweme/v1/play/") ? 1 : 0;
-      const bIsPlay = b.includes("/aweme/v1/play/") ? 1 : 0;
-      return bIsPlay - aIsPlay;
+    const normalized = [...new Set(list)].filter(Boolean);
+    return normalized.sort((a, b) => {
+      const score = (url: string) => {
+        if (url.includes("/aweme/v1/play/")) return 3;
+        if (url.includes("douyinvod.com")) return 2;
+        if (url.includes("douyin.com")) return 1;
+        return 0;
+      };
+      return score(b) - score(a);
     });
-    setPlayUrlList(sorted);
-    setPlayUrlIndex(0);
   }, [video]);
 
-  const currentPlayUrl = playUrlList[playUrlIndex] || "";
+  const effectivePlayUrlIndex =
+    playSource.awemeId === awemeId ? playSource.index : 0;
+  const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
 
-  // 联动 isActive 播放与暂停
-  useEffect(() => {
-    if (!videoRef.current) return;
-    if (isActive) {
-      setIsVideoLoading(true);
-      // 如果不是因为切源，不应频繁调用 load()，浏览器自带对 src 的监听
-      // 只有进度重置是必要的
-      setProgress(0);
-      videoRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-        })
-        .catch((err) => {
-          console.log("自动播放被阻拦:", err);
+  // ===== 核心播放逻辑 =====
+  const requestPlay = useCallback((reason: string) => {
+    const el = videoRef.current;
+    if (!el || !currentPlayUrl || !isActive || !shouldPlay) return;
+
+    const seq = ++playSeqRef.current;
+    setIsVideoLoading(true);
+    setShowPlayOverlay(false);
+
+    const playPromise = el.play();
+    if (!playPromise) {
+      setIsPlaying(!el.paused);
+      setIsVideoLoading(false);
+      return;
+    }
+
+    playPromise
+      .then(() => {
+        if (seq !== playSeqRef.current) return;
+        setIsPlaying(true);
+        setShowPlayOverlay(false);
+        setIsVideoLoading(false);
+      })
+      .catch((err) => {
+        if (seq !== playSeqRef.current) return;
+        if (err?.name === "AbortError") return;
+
+        if (
+          err?.name === "NotSupportedError" ||
+          String(err?.message || "").includes("no supported source")
+        ) {
           setIsPlaying(false);
           setIsVideoLoading(false);
-          setShowPlayOverlay(true);
-        });
-    } else {
-      videoRef.current.pause();
+          return;
+        }
+
+        console.warn(
+          `[VideoCard] 播放被浏览器拒绝(${reason})，需要一次用户点击:`,
+          err?.message || err,
+        );
+        setIsPlaying(false);
+        setIsVideoLoading(false);
+        setShowPlayOverlay(true);
+      });
+  }, [currentPlayUrl, isActive, shouldPlay]);
+
+  useEffect(() => {
+    if (playSource.awemeId !== awemeId) {
+      setPlaySource({ awemeId, index: 0 });
+      setProgress(0);
+      setCurrentTime(0);
+      setDuration(0);
+      setIsVideoLoading(false);
+      setShowPlayOverlay(false);
+    }
+  }, [awemeId, playSource.awemeId]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+
+    if (!isActive || !shouldPlay) {
+      playSeqRef.current += 1;
+      el.pause();
       setIsPlaying(false);
       setIsVideoLoading(false);
+      setShowPlayOverlay(!shouldPlay);
+      return;
     }
-  }, [isActive, currentPlayUrl]);
 
+    if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA || userActivated) {
+      requestPlay(playReason);
+    }
+  }, [
+    currentPlayUrl,
+    isActive,
+    playReason,
+    playSignal,
+    requestPlay,
+    shouldPlay,
+    userActivated,
+  ]);
+
+  const handleCanPlay = () => {
+    setIsVideoLoading(false);
+    if (isActive && shouldPlay) {
+      requestPlay("canplay");
+    }
+  };
+
+  const handlePlaying = () => {
+    setIsPlaying(true);
+    setShowPlayOverlay(false);
+    setIsVideoLoading(false);
+  };
+
+  // 手动点击播放/暂停
   const handlePlayToggle = () => {
     if (!videoRef.current) return;
     if (isPlaying) {
+      playSeqRef.current += 1;
       videoRef.current.pause();
       setIsPlaying(false);
       setShowPlayOverlay(true);
+      onUserPauseRequest?.();
     } else {
-      videoRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-          setShowPlayOverlay(false);
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      onUserPlayRequest?.();
+      requestPlay("user-click");
     }
   };
 
@@ -136,11 +235,12 @@ export default function VideoCard({
       currentPlayUrl,
       e,
     );
-    if (playUrlIndex < playUrlList.length - 1) {
-      setPlayUrlIndex((prev) => prev + 1);
+    if (effectivePlayUrlIndex < playUrlList.length - 1) {
+      setPlaySource({ awemeId, index: effectivePlayUrlIndex + 1 });
     } else {
       console.error("[VideoCard] 所有可用的抖音视频播放源均播放失败！");
       setIsVideoLoading(false);
+      setShowPlayOverlay(true);
     }
   };
 
@@ -270,13 +370,12 @@ export default function VideoCard({
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => setIsVideoLoading(true)}
-        onPlaying={() => setIsVideoLoading(false)}
-        onCanPlay={() => setIsVideoLoading(false)}
+        onPlaying={handlePlaying}
+        onCanPlay={handleCanPlay}
         onSeeked={() => setIsVideoLoading(false)}
         onSeeking={() => setIsVideoLoading(true)}
         onLoadStart={() => setIsVideoLoading(true)}
         onLoadedData={() => setIsVideoLoading(false)}
-        onSuspend={() => setIsVideoLoading(false)}
         onLoadedMetadata={() => {
           if (videoRef.current) {
             setDuration(videoRef.current.duration);
