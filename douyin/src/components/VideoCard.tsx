@@ -8,8 +8,6 @@ import {
   MutedOutlined,
   LoadingOutlined,
   CloseOutlined,
-  UpOutlined,
-  DownOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRequest } from "../hooks/useRequest";
@@ -26,7 +24,6 @@ interface VideoCardProps {
   onUserPlayRequest?: () => void;
   onUserPauseRequest?: () => void;
   onScrollToNext?: () => void;
-  onScrollToPrev?: () => void;
 }
 
 export default function VideoCard({
@@ -41,7 +38,6 @@ export default function VideoCard({
   onUserPlayRequest,
   onUserPauseRequest,
   onScrollToNext,
-  onScrollToPrev,
 }: VideoCardProps) {
   const { desc, author, video, statistics } = aweme;
   const [isPlaying, setIsPlaying] = useState(false);
@@ -55,28 +51,6 @@ export default function VideoCard({
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleScrollToNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onScrollToNext) {
-      onScrollToNext();
-      return;
-    }
-    if (containerRef.current && containerRef.current.nextElementSibling) {
-      containerRef.current.nextElementSibling.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  const handleScrollToPrev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onScrollToPrev) {
-      onScrollToPrev();
-      return;
-    }
-    if (containerRef.current && containerRef.current.previousElementSibling) {
-      containerRef.current.previousElementSibling.scrollIntoView({ behavior: "smooth" });
-    }
-  };
 
   const { request } = useRequest();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -488,6 +462,18 @@ export default function VideoCard({
           <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
         <span className="time-text">{formatTime(duration)}</span>
+        <button
+          type="button"
+          className={`sound-toggle-btn ${isMuted ? "muted" : ""}`}
+          aria-label={isMuted ? "解除静音" : "静音"}
+          title={isMuted ? "解除静音" : "静音"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleMute();
+          }}
+        >
+          {isMuted ? <MutedOutlined /> : <SoundOutlined />}
+        </button>
       </div>
 
       {/* 缓冲时垫底的封面（解决黑屏闪烁，优化卡顿感知） */}
@@ -598,44 +584,6 @@ export default function VideoCard({
           </span>
         </div>
 
-        {/* 声音静音/解除静音控制 */}
-        <div className="action-item">
-          <FloatButton
-            style={{ position: "static" }}
-            icon={
-              isMuted ? (
-                <MutedOutlined style={{ color: "#fe2c55" }} />
-              ) : (
-                <SoundOutlined />
-              )
-            }
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleMute();
-            }}
-          />
-          <span className="action-count">{isMuted ? "静音" : "有声"}</span>
-        </div>
-
-        {/* 上一个视频 */}
-        <div className="action-item" style={{ marginTop: "10px", marginBottom: "10px" }}>
-          <FloatButton
-            style={{ position: "static" }}
-            icon={<UpOutlined />}
-            onClick={handleScrollToPrev}
-          />
-          <span className="action-count">上一个</span>
-        </div>
-
-        {/* 下一个视频 */}
-        <div className="action-item">
-          <FloatButton
-            style={{ position: "static" }}
-            icon={<DownOutlined />}
-            onClick={handleScrollToNext}
-          />
-          <span className="action-count">下一个</span>
-        </div>
       </div>
 
       {/* 底部向上弹出的评论抽屉 */}

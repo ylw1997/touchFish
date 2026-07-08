@@ -207,20 +207,16 @@ body {
 /* 左下角作者信息与描述 */
 .bottom-info {
   position: absolute;
-  left: 12px;
-  bottom: 50px;
-  right: 75px;
+  left: 16px;
+  bottom: 70px;
+  right: 92px;
   z-index: 10;
   pointer-events: none; /* 防止遮挡双击手势 */
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  background-color: rgba(30, 30, 30, 0.4);
-  backdrop-filter: saturate(180%) blur(12px);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  gap: 7px;
+  max-width: min(520px, calc(100vw - 124px));
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
 
   .author-name {
     font-size: 15px;
@@ -244,17 +240,19 @@ body {
 /* 右侧悬浮图标控制栏 */
 .side-actions {
   position: absolute;
-  right: 12px;
-  bottom: 50px;
+  right: 18px;
+  bottom: 82px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   z-index: 15;
 
   .ant-float-btn {
-    background-color: rgba(30, 30, 30, 0.4) !important;
-    backdrop-filter: saturate(180%) blur(12px) !important;
+    width: 46px !important;
+    height: 46px !important;
+    background-color: rgba(24, 24, 24, 0.48) !important;
+    backdrop-filter: saturate(180%) blur(10px) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
     transition: all 0.2s ease !important;
@@ -518,20 +516,20 @@ body {
 /* 视频进度条容器 (包含两端时间显示) */
 .progress-container {
   position: absolute;
-  bottom: 8px;
-  left: 12px;
-  right: 12px;
+  bottom: 14px;
+  left: 16px;
+  right: 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   z-index: 25;
   pointer-events: auto; /* 必须支持点击和拖动 */
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: saturate(180%) blur(4px);
-  -webkit-backdrop-filter: saturate(180%) blur(4px);
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(8, 8, 8, 0.58);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  padding: 7px 8px 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 
   .time-text {
     font-size: 12px;
@@ -558,6 +556,38 @@ body {
       height: 100%;
       background-color: #fe2c55; /* 抖音红 */
       border-radius: 2px;
+    }
+  }
+
+  .sound-toggle-btn {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0 0 0 8px;
+    margin-left: 2px;
+    color: rgba(255, 255, 255, 0.88);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover {
+      color: #fff;
+    }
+
+    &.muted {
+      color: #fe2c55;
+
+      &:hover {
+        color: #ff496d;
+      }
+    }
+
+    .anticon {
+      font-size: 17px;
     }
   }
 }

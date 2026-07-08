@@ -428,7 +428,6 @@ export default function DouyinApp() {
                     userActivated={userActivatedRef.current}
                     onUserPlayRequest={resumeFromUserGesture}
                     onUserPauseRequest={() => pausePlayback(true)}
-                    onScrollToPrev={() => scrollToIndex(activeIndex - 1)}
                     onScrollToNext={() => scrollToIndex(activeIndex + 1)}
                   />
                 </div>
