@@ -260,8 +260,9 @@ export default function VideoCard({
 
   // 手动点击播放/暂停
   const handlePlayToggle = () => {
-    if (!videoRef.current) return;
-    if (isPlaying) {
+    const el = videoRef.current;
+    if (!el) return;
+    if (!el.paused && !el.ended) {
       pauseVideoByUser();
     } else {
       onUserPlayRequest?.();
@@ -414,14 +415,12 @@ export default function VideoCard({
   };
 
   const handleContainerClick = () => {
-    if (
-      ignoreNextContainerClickRef.current ||
-      isCommentsOpen ||
-      Date.now() < suppressPlaybackUntilRef.current
-    ) {
+    const isSuppressed = Date.now() < suppressPlaybackUntilRef.current;
+    if (isCommentsOpen || isSuppressed) {
       ignoreNextContainerClickRef.current = false;
       return;
     }
+    ignoreNextContainerClickRef.current = false;
     handlePlayToggle();
   };
 
