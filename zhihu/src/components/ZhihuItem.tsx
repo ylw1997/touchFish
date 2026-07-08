@@ -72,11 +72,19 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
     }
   };
 
-  const backToView = () => {
+  const backToView = (align: "start" | "center-bottom" = "start") => {
     if (cardRef.current) {
-      const cardTop = cardRef.current.getBoundingClientRect().top;
-      if (cardTop < 0) {
-        cardRef.current.scrollIntoView({ behavior: "auto", block: "start" });
+      if (align === "start") {
+        const cardTop = cardRef.current.getBoundingClientRect().top;
+        if (cardTop < 0) {
+          cardRef.current.scrollIntoView({ behavior: "auto", block: "start" });
+        }
+      } else if (align === "center-bottom") {
+        const rect = cardRef.current.getBoundingClientRect();
+        // 将卡片底部（操作栏所在位置）放到屏幕中间稍微靠下一点（比如 60% 的高度）
+        const offset = rect.bottom - window.innerHeight * 0.6;
+        const scrollContainer = cardRef.current.closest(".list") || window;
+        scrollContainer.scrollBy({ top: offset, behavior: "auto" });
       }
     }
   };
@@ -109,7 +117,7 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const getComments = async () => {
     if (showComments) {
       setShowComments(false);
-      backToView();
+      setTimeout(() => backToView("center-bottom"), 0);
       return;
     }
     setShowComments(true);
@@ -123,9 +131,9 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   };
 
   const closeComments = () => {
-    // 隐藏评论并把卡片滚回视图
+    // 隐藏评论并把卡片滚回视图偏下位置
     setShowComments(false);
-    backToView();
+    setTimeout(() => backToView("center-bottom"), 0);
   };
 
   const renderTitle = () => (

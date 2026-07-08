@@ -8,10 +8,8 @@ import {
   MutedOutlined,
   LoadingOutlined,
   CloseOutlined,
-  UpOutlined,
-  DownOutlined,
 } from "@ant-design/icons";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRequest } from "../hooks/useRequest";
 
 interface VideoCardProps {
@@ -19,6 +17,14 @@ interface VideoCardProps {
   isActive: boolean;
   isMuted: boolean;
   onToggleMute: () => void;
+  shouldPlay?: boolean;
+  playSignal?: number;
+  playReason?: "active-change" | "visibility" | "restore" | "user" | "tab";
+  userActivated?: boolean;
+  onUserPlayRequest?: () => void;
+  onUserPauseRequest?: () => void;
+  onScrollToNext?: () => void;
+  onAuthorClick?: (author: any, aweme: any) => void;
 }
 
 export default function VideoCard({
@@ -26,6 +32,14 @@ export default function VideoCard({
   isActive,
   isMuted,
   onToggleMute,
+  shouldPlay = true,
+  playSignal = 0,
+  playReason = "active-change",
+  userActivated = false,
+  onUserPlayRequest,
+  onUserPauseRequest,
+  onScrollToNext,
+  onAuthorClick,
 }: VideoCardProps) {
   const { desc, author, video, statistics } = aweme;
   const [isPlaying, setIsPlaying] = useState(false);
@@ -40,20 +54,6 @@ export default function VideoCard({
   const progressRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleScrollToNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (containerRef.current && containerRef.current.nextElementSibling) {
-      containerRef.current.nextElementSibling.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  const handleScrollToPrev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (containerRef.current && containerRef.current.previousElementSibling) {
-      containerRef.current.previousElementSibling.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   const { request } = useRequest();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [commentsList, setCommentsList] = useState<any[]>([]);
@@ -62,70 +62,187 @@ export default function VideoCard({
 
   const [commentsCursor, setCommentsCursor] = useState(0);
   const [commentsHasMore, setCommentsHasMore] = useState(true);
+  const ignoreNextContainerClickRef = useRef(false);
+  const suppressPlaybackUntilRef = useRef(0);
+  const currentAwemeIdRef = useRef<string | number | undefined>(undefined);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [playUrlList, setPlayUrlList] = useState<string[]>([]);
-  const [playUrlIndex, setPlayUrlIndex] = useState(0);
+  const awemeId = aweme?.aweme_id || aweme?.id;
+  const [playSource, setPlaySource] = useState<{
+    awemeId?: string | number;
+    index: number;
+  }>({ awemeId, index: 0 });
+  const playSeqRef = useRef(0);
 
   const coverUrl = video?.cover?.url_list?.[0] || "";
 
-  // 整理并优化播放地址优先级（优先推荐带 /aweme/v1/play/ 的高兼容官方重定向地址）
-  useEffect(() => {
+  // 播放地址排序：同步计算，避免 useEffect 异步导致 currentPlayUrl 先空后有效
+  const playUrlList = useMemo(() => {
     const list: string[] = video?.play_addr?.url_list || [];
-    const sorted = [...list].sort((a, b) => {
-      const aIsPlay = a.includes("/aweme/v1/play/") ? 1 : 0;
-      const bIsPlay = b.includes("/aweme/v1/play/") ? 1 : 0;
-      return bIsPlay - aIsPlay;
+    const normalized = [...new Set(list)].filter(Boolean);
+    return normalized.sort((a, b) => {
+      const score = (url: string) => {
+        if (url.includes("/aweme/v1/play/")) return 3;
+        if (url.includes("douyinvod.com")) return 2;
+        if (url.includes("douyin.com")) return 1;
+        return 0;
+      };
+      return score(b) - score(a);
     });
-    setPlayUrlList(sorted);
-    setPlayUrlIndex(0);
   }, [video]);
 
-  const currentPlayUrl = playUrlList[playUrlIndex] || "";
+  const effectivePlayUrlIndex =
+    playSource.awemeId === awemeId ? playSource.index : 0;
+  const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
 
-  // 联动 isActive 播放与暂停
-  useEffect(() => {
-    if (!videoRef.current) return;
-    if (isActive) {
-      setIsVideoLoading(true);
-      // 如果不是因为切源，不应频繁调用 load()，浏览器自带对 src 的监听
-      // 只有进度重置是必要的
-      setProgress(0);
-      videoRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-        })
-        .catch((err) => {
-          console.log("自动播放被阻拦:", err);
+  const stopCardClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation?.();
+  };
+
+  const stopCardPointer = (event: React.PointerEvent) => {
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation?.();
+  };
+
+  const suppressPlaybackBriefly = () => {
+    suppressPlaybackUntilRef.current = Date.now() + 300;
+    ignoreNextContainerClickRef.current = true;
+  };
+
+  // ===== 核心播放逻辑 =====
+  const requestPlay = useCallback((reason: string) => {
+    const el = videoRef.current;
+    if (!el || !currentPlayUrl || !isActive || !shouldPlay) return;
+
+    const seq = ++playSeqRef.current;
+    setIsVideoLoading(el.readyState < HTMLMediaElement.HAVE_CURRENT_DATA);
+    setShowPlayOverlay(false);
+
+    const playPromise = el.play();
+    if (!playPromise) {
+      setIsPlaying(!el.paused);
+      setIsVideoLoading(false);
+      return;
+    }
+
+    playPromise
+      .then(() => {
+        if (seq !== playSeqRef.current) return;
+        setIsPlaying(true);
+        setShowPlayOverlay(false);
+        setIsVideoLoading(false);
+      })
+      .catch((err) => {
+        if (seq !== playSeqRef.current) return;
+        if (err?.name === "AbortError") return;
+
+        if (
+          err?.name === "NotSupportedError" ||
+          String(err?.message || "").includes("no supported source")
+        ) {
           setIsPlaying(false);
           setIsVideoLoading(false);
-          setShowPlayOverlay(true);
-        });
-    } else {
-      videoRef.current.pause();
+          return;
+        }
+
+        console.warn(
+          `[VideoCard] 播放被浏览器拒绝(${reason})，需要一次用户点击:`,
+          err?.message || err,
+        );
+        setIsPlaying(false);
+        setIsVideoLoading(false);
+        setShowPlayOverlay(true);
+      });
+  }, [currentPlayUrl, isActive, shouldPlay]);
+
+  useEffect(() => {
+    if (playSource.awemeId !== awemeId) {
+      setPlaySource({ awemeId, index: 0 });
+      setProgress(0);
+      setCurrentTime(0);
+      setDuration(0);
+      setIsVideoLoading(true);
+      setShowPlayOverlay(false);
+    }
+  }, [awemeId, playSource.awemeId]);
+
+  useEffect(() => {
+    currentAwemeIdRef.current = awemeId;
+    setIsCommentsOpen(false);
+    setCommentsList([]);
+    setCommentsCursor(0);
+    setCommentsHasMore(true);
+    setCommentsTotal(0);
+    setCommentsLoading(false);
+  }, [awemeId]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+
+    if (!isActive || !shouldPlay) {
+      playSeqRef.current += 1;
+      el.pause();
       setIsPlaying(false);
       setIsVideoLoading(false);
+      return;
     }
-  }, [isActive, currentPlayUrl]);
 
-  const handlePlayToggle = () => {
+    if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA || userActivated) {
+      requestPlay(playReason);
+    }
+  }, [
+    currentPlayUrl,
+    isActive,
+    playReason,
+    playSignal,
+    requestPlay,
+    shouldPlay,
+    userActivated,
+  ]);
+
+  const handleCanPlay = () => {
+    setIsVideoLoading(false);
+    if (isActive && shouldPlay) {
+      requestPlay("canplay");
+    }
+  };
+
+  const handlePlaying = () => {
+    setIsPlaying(true);
+    setShowPlayOverlay(false);
+    setIsVideoLoading(false);
+  };
+
+  const handleVideoEnded = () => {
+    playSeqRef.current += 1;
+    setIsPlaying(false);
+    setIsVideoLoading(false);
+    setShowPlayOverlay(false);
+    onScrollToNext?.();
+  };
+
+  const pauseVideoByUser = () => {
     if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-      setShowPlayOverlay(true);
+    playSeqRef.current += 1;
+    videoRef.current.pause();
+    setIsPlaying(false);
+    setIsVideoLoading(false);
+    setShowPlayOverlay(true);
+    onUserPauseRequest?.();
+  };
+
+  // 手动点击播放/暂停
+  const handlePlayToggle = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (!el.paused && !el.ended) {
+      pauseVideoByUser();
     } else {
-      videoRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-          setShowPlayOverlay(false);
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      onUserPlayRequest?.();
+      requestPlay("user-click");
     }
   };
 
@@ -136,11 +253,12 @@ export default function VideoCard({
       currentPlayUrl,
       e,
     );
-    if (playUrlIndex < playUrlList.length - 1) {
-      setPlayUrlIndex((prev) => prev + 1);
+    if (effectivePlayUrlIndex < playUrlList.length - 1) {
+      setPlaySource({ awemeId, index: effectivePlayUrlIndex + 1 });
     } else {
       console.error("[VideoCard] 所有可用的抖音视频播放源均播放失败！");
       setIsVideoLoading(false);
+      setShowPlayOverlay(true);
     }
   };
 
@@ -214,19 +332,28 @@ export default function VideoCard({
     return count.toString();
   };
 
+  const closeComments = (event?: React.MouseEvent | React.KeyboardEvent) => {
+    event?.stopPropagation();
+    suppressPlaybackBriefly();
+    setIsCommentsOpen(false);
+  };
+
   const fetchComments = async (isRefresh = false) => {
     if (commentsLoading || (!isRefresh && !commentsHasMore)) return;
+    const requestAwemeId = awemeId;
+    if (!requestAwemeId) return;
     setCommentsLoading(true);
     try {
       const cursor = isRefresh ? 0 : commentsCursor;
       console.log(
-        `[fetchComments] 开始请求数据: awemeId=${aweme?.aweme_id || aweme?.id}, cursor=${cursor}, isRefresh=${isRefresh}`,
+        `[fetchComments] 开始请求数据: awemeId=${requestAwemeId}, cursor=${cursor}, isRefresh=${isRefresh}`,
       );
 
       const res = await request("DY_GET_COMMENTS", {
-        aweme_id: aweme?.aweme_id || aweme?.id,
+        aweme_id: requestAwemeId,
         cursor,
       });
+      if (currentAwemeIdRef.current !== requestAwemeId) return;
       console.log("[fetchComments] 收到响应 res:", res);
 
       if (res && res.status_code === 0) {
@@ -248,20 +375,45 @@ export default function VideoCard({
     } catch (err) {
       console.error("[fetchComments] 异常:", err);
     } finally {
-      setCommentsLoading(false);
+      if (currentAwemeIdRef.current === requestAwemeId) {
+        setCommentsLoading(false);
+      }
     }
   };
 
   const handleOpenComments = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    stopCardClick(e);
+    suppressPlaybackBriefly();
     setIsCommentsOpen(true);
     if (commentsList.length === 0) {
       fetchComments(true);
     }
   };
 
+  const handleContainerClick = () => {
+    const isSuppressed = Date.now() < suppressPlaybackUntilRef.current;
+    if (isCommentsOpen || isSuppressed) {
+      ignoreNextContainerClickRef.current = false;
+      return;
+    }
+    ignoreNextContainerClickRef.current = false;
+    handlePlayToggle();
+  };
+
+  const handleContainerPointerDown = (event: React.PointerEvent) => {
+    if (isCommentsOpen || Date.now() < suppressPlaybackUntilRef.current) {
+      event.stopPropagation();
+      event.nativeEvent.stopImmediatePropagation?.();
+    }
+  };
+
   return (
-    <div className="dy-video-item" ref={containerRef} onClick={handlePlayToggle}>
+    <div
+      className="dy-video-item"
+      ref={containerRef}
+      onClick={handleContainerClick}
+      onPointerDown={handleContainerPointerDown}
+    >
       {contextHolder}
       {/* 视频播放器 */}
       <video
@@ -269,23 +421,35 @@ export default function VideoCard({
         src={currentPlayUrl}
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
-        onWaiting={() => setIsVideoLoading(true)}
-        onPlaying={() => setIsVideoLoading(false)}
-        onCanPlay={() => setIsVideoLoading(false)}
+        onWaiting={() => {
+          if (videoRef.current?.readyState === HTMLMediaElement.HAVE_NOTHING) {
+            setIsVideoLoading(true);
+          }
+        }}
+        onPlaying={handlePlaying}
+        onEnded={handleVideoEnded}
+        onCanPlay={handleCanPlay}
         onSeeked={() => setIsVideoLoading(false)}
-        onSeeking={() => setIsVideoLoading(true)}
-        onLoadStart={() => setIsVideoLoading(true)}
+        onSeeking={() => {
+          if (videoRef.current?.readyState === HTMLMediaElement.HAVE_NOTHING) {
+            setIsVideoLoading(true);
+          }
+        }}
+        onLoadStart={() => {
+          if (videoRef.current?.readyState === HTMLMediaElement.HAVE_NOTHING) {
+            setIsVideoLoading(true);
+          }
+        }}
         onLoadedData={() => setIsVideoLoading(false)}
-        onSuspend={() => setIsVideoLoading(false)}
         onLoadedMetadata={() => {
           if (videoRef.current) {
             setDuration(videoRef.current.duration);
           }
         }}
         className="video-player"
-        loop
         muted={isMuted}
         playsInline
+        preload="auto"
         poster={coverUrl}
         {...({ referrerPolicy: "no-referrer" } as any)}
       />
@@ -301,6 +465,18 @@ export default function VideoCard({
           <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
         <span className="time-text">{formatTime(duration)}</span>
+        <button
+          type="button"
+          className={`sound-toggle-btn ${isMuted ? "muted" : ""}`}
+          aria-label={isMuted ? "解除静音" : "静音"}
+          title={isMuted ? "解除静音" : "静音"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleMute();
+          }}
+        >
+          {isMuted ? <MutedOutlined /> : <SoundOutlined />}
+        </button>
       </div>
 
       {/* 缓冲时垫底的封面（解决黑屏闪烁，优化卡顿感知） */}
@@ -357,7 +533,11 @@ export default function VideoCard({
       </div>
 
       {/* 右侧浮动控制条 */}
-      <div className="side-actions">
+      <div
+        className="side-actions"
+        onClick={stopCardClick}
+        onPointerDown={stopCardPointer}
+      >
         {/* 作者头像 */}
         <div
           className="action-item"
@@ -367,6 +547,11 @@ export default function VideoCard({
           <FloatButton
             className="avatar-float-btn"
             style={{ position: "static", overflow: "hidden" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              suppressPlaybackBriefly();
+              onAuthorClick?.(author, aweme);
+            }}
             icon={
               <Avatar
                 src={author?.avatar_thumb?.url_list?.[0]}
@@ -407,44 +592,6 @@ export default function VideoCard({
           </span>
         </div>
 
-        {/* 声音静音/解除静音控制 */}
-        <div className="action-item">
-          <FloatButton
-            style={{ position: "static" }}
-            icon={
-              isMuted ? (
-                <MutedOutlined style={{ color: "#fe2c55" }} />
-              ) : (
-                <SoundOutlined />
-              )
-            }
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleMute();
-            }}
-          />
-          <span className="action-count">{isMuted ? "静音" : "有声"}</span>
-        </div>
-
-        {/* 上一个视频 */}
-        <div className="action-item" style={{ marginTop: "10px", marginBottom: "10px" }}>
-          <FloatButton
-            style={{ position: "static" }}
-            icon={<UpOutlined />}
-            onClick={handleScrollToPrev}
-          />
-          <span className="action-count">上一个</span>
-        </div>
-
-        {/* 下一个视频 */}
-        <div className="action-item">
-          <FloatButton
-            style={{ position: "static" }}
-            icon={<DownOutlined />}
-            onClick={handleScrollToNext}
-          />
-          <span className="action-count">下一个</span>
-        </div>
       </div>
 
       {/* 底部向上弹出的评论抽屉 */}
@@ -464,7 +611,7 @@ export default function VideoCard({
           </div>
         }
         placement="bottom"
-        onClose={() => setIsCommentsOpen(false)}
+        onClose={closeComments}
         open={isCommentsOpen}
         height="70%"
         className="dy-comment-drawer"
