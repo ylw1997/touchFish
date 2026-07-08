@@ -4,28 +4,88 @@ import { SyncOutlined, CloseOutlined } from "@ant-design/icons";
 import { useRequest } from "../hooks/useRequest";
 import VideoCard from "./VideoCard";
 import FavoriteGridCard from "./FavoriteGridCard";
+import { vscode } from "../utils/vscode";
 
 import InfiniteScroll from "react-infinite-scroll-component";
 
+interface SavedState {
+  activeTab?: string;
+  list?: any[];
+  activeIndex?: number;
+  maxCursor?: number;
+}
+
 export default function DouyinApp() {
   const { request, messageApi } = useRequest();
-  const [activeTab, setActiveTab] = useState("recommend");
-  const [list, setList] = useState<any[]>([]);
+
+  const savedState = (vscode.getState() as SavedState) || {};
+
+  const [activeTab, setActiveTab] = useState(savedState.activeTab || "recommend");
+  const [list, setList] = useState<any[]>(savedState.list || []);
   const [loading, setLoading] = useState(false);
   
   // 共享静音状态 (为了防止多视频混乱，推荐默认静音，由用户手动解除)
   const [isMuted, setIsMuted] = useState(true);
 
   // 推荐流滚动及自动播放控制
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(savedState.activeIndex || 0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // 喜欢列表分页
   const [hasMore, setHasMore] = useState(true);
-  const [maxCursor, setMaxCursor] = useState(0);
+  const [maxCursor, setMaxCursor] = useState(savedState.maxCursor || 0);
 
   // 全屏 Overlay 播放状态 (喜欢列表中点击卡片后全屏播放该视频)
   const [overlayVideo, setOverlayVideo] = useState<any>(null);
+
+  // 保存状态到 vscode state
+  useEffect(() => {
+    vscode.setState({
+      activeTab,
+      list,
+      activeIndex,
+      maxCursor,
+    });
+  }, [activeTab, list, activeIndex, maxCursor]);
+
+  // 保存滚动位置到插件端 workspaceState
+  useEffect(() => {
+    if (activeTab === "recommend" || activeTab === "following") {
+      vscode.postMessage({
+        command: "DY_SAVE_SCROLL_POSITION",
+        payload: activeIndex,
+      });
+    }
+  }, [activeIndex, activeTab]);
+
+  // 组件刚挂载且已有缓存数据时，恢复滚动位置
+  useEffect(() => {
+    if (list.length > 0 && scrollContainerRef.current) {
+      const timer = setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = activeIndex * scrollContainerRef.current.clientHeight;
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // 监听 VS Code 侧的主动滚动恢复命令 (例如从别的 Tab 切回来，Webview 可见性变化时)
+  useEffect(() => {
+    const handleRestoreEvent = (event: MessageEvent) => {
+      if (event.data?.command === "DY_RESTORE_SCROLL_POSITION") {
+        const restoredIndex = event.data.payload;
+        if (typeof restoredIndex === "number" && restoredIndex >= 0) {
+          setActiveIndex(restoredIndex);
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = restoredIndex * scrollContainerRef.current.clientHeight;
+          }
+        }
+      }
+    };
+    window.addEventListener("message", handleRestoreEvent);
+    return () => window.removeEventListener("message", handleRestoreEvent);
+  }, []);
 
 
 
@@ -120,14 +180,16 @@ export default function DouyinApp() {
 
   // 初始化加载
   useEffect(() => {
-    if (activeTab === "recommend") {
-      fetchRecommendFeed(true);
-    } else if (activeTab === "following") {
-      fetchFollowingFeed(true);
-    } else {
-      fetchFavorites(true);
+    if (list.length === 0) {
+      if (activeTab === "recommend") {
+        fetchRecommendFeed(true);
+      } else if (activeTab === "following") {
+        fetchFollowingFeed(true);
+      } else {
+        fetchFavorites(true);
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, list.length]);
 
   // 推荐流/关注流中：划到倒数第2个视频时，预加载下 10 个视频，实现无缝连续滑动
   useEffect(() => {
@@ -178,6 +240,8 @@ export default function DouyinApp() {
           activeKey={activeTab}
           onChange={(key) => {
             setList([]);
+            setActiveIndex(0);
+            setMaxCursor(0);
             setActiveTab(key);
           }}
           items={[
@@ -220,15 +284,51 @@ export default function DouyinApp() {
               </Empty>
             </div>
           ) : (
-            list.map((item, index) => (
-              <VideoCard
-                key={`${item.aweme_id || item.id}-${index}`}
-                aweme={item}
-                isActive={index === activeIndex}
-                isMuted={isMuted}
-                onToggleMute={toggleMute}
-              />
-            ))
+            list.map((item, index) => {
+              const isActive = index === activeIndex;
+              if (!isActive) {
+                // 非激活视频只渲染带封面的占位，免去 video 标签及其它复杂 UI 的 DOM 开销和网络请求
+                const coverUrl = item.video?.cover?.url_list?.[0] || "";
+                return (
+                  <div
+                    key={`${item.aweme_id || item.id}-${index}`}
+                    className="dy-video-item placeholder"
+                    style={{
+                      height: "100vh",
+                      scrollSnapAlign: "start",
+                      backgroundColor: "#000",
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {coverUrl && (
+                      <img
+                        src={coverUrl}
+                        alt="cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                        }}
+                        referrerPolicy="no-referrer"
+                      />
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <VideoCard
+                  key={`${item.aweme_id || item.id}-${index}`}
+                  aweme={item}
+                  isActive={isActive}
+                  isMuted={isMuted}
+                  onToggleMute={toggleMute}
+                />
+              );
+            })
           )}
         </div>
       )}
