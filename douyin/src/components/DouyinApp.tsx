@@ -311,6 +311,7 @@ export default function DouyinApp() {
 
   const scrollToIndex = useCallback((index: number) => {
     const targetIndex = Math.max(0, Math.min(index, list.length - 1));
+    if (targetIndex === activeIndexRef.current) return;
     const container = scrollContainerRef.current;
     if (!container) return;
     container.scrollTo({

@@ -87,6 +87,7 @@ export default function VideoCard({
   const [commentsCursor, setCommentsCursor] = useState(0);
   const [commentsHasMore, setCommentsHasMore] = useState(true);
   const ignoreNextContainerClickRef = useRef(false);
+  const currentAwemeIdRef = useRef<string | number | undefined>(undefined);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -117,6 +118,11 @@ export default function VideoCard({
   const effectivePlayUrlIndex =
     playSource.awemeId === awemeId ? playSource.index : 0;
   const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
+
+  const stopCardClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation?.();
+  };
 
   // ===== 核心播放逻辑 =====
   const requestPlay = useCallback((reason: string) => {
@@ -176,6 +182,16 @@ export default function VideoCard({
   }, [awemeId, playSource.awemeId]);
 
   useEffect(() => {
+    currentAwemeIdRef.current = awemeId;
+    setIsCommentsOpen(false);
+    setCommentsList([]);
+    setCommentsCursor(0);
+    setCommentsHasMore(true);
+    setCommentsTotal(0);
+    setCommentsLoading(false);
+  }, [awemeId]);
+
+  useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
@@ -212,6 +228,14 @@ export default function VideoCard({
     setIsPlaying(true);
     setShowPlayOverlay(false);
     setIsVideoLoading(false);
+  };
+
+  const handleVideoEnded = () => {
+    playSeqRef.current += 1;
+    setIsPlaying(false);
+    setIsVideoLoading(false);
+    setShowPlayOverlay(false);
+    onScrollToNext?.();
   };
 
   const pauseVideoByUser = () => {
@@ -332,17 +356,20 @@ export default function VideoCard({
 
   const fetchComments = async (isRefresh = false) => {
     if (commentsLoading || (!isRefresh && !commentsHasMore)) return;
+    const requestAwemeId = awemeId;
+    if (!requestAwemeId) return;
     setCommentsLoading(true);
     try {
       const cursor = isRefresh ? 0 : commentsCursor;
       console.log(
-        `[fetchComments] 开始请求数据: awemeId=${aweme?.aweme_id || aweme?.id}, cursor=${cursor}, isRefresh=${isRefresh}`,
+        `[fetchComments] 开始请求数据: awemeId=${requestAwemeId}, cursor=${cursor}, isRefresh=${isRefresh}`,
       );
 
       const res = await request("DY_GET_COMMENTS", {
-        aweme_id: aweme?.aweme_id || aweme?.id,
+        aweme_id: requestAwemeId,
         cursor,
       });
+      if (currentAwemeIdRef.current !== requestAwemeId) return;
       console.log("[fetchComments] 收到响应 res:", res);
 
       if (res && res.status_code === 0) {
@@ -364,13 +391,14 @@ export default function VideoCard({
     } catch (err) {
       console.error("[fetchComments] 异常:", err);
     } finally {
-      setCommentsLoading(false);
+      if (currentAwemeIdRef.current === requestAwemeId) {
+        setCommentsLoading(false);
+      }
     }
   };
 
   const handleOpenComments = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    pauseVideoByUser();
+    stopCardClick(e);
     ignoreNextContainerClickRef.current = true;
     setIsCommentsOpen(true);
     if (commentsList.length === 0) {
@@ -397,6 +425,7 @@ export default function VideoCard({
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => setIsVideoLoading(true)}
         onPlaying={handlePlaying}
+        onEnded={handleVideoEnded}
         onCanPlay={handleCanPlay}
         onSeeked={() => setIsVideoLoading(false)}
         onSeeking={() => setIsVideoLoading(true)}
@@ -408,7 +437,6 @@ export default function VideoCard({
           }
         }}
         className="video-player"
-        loop
         muted={isMuted}
         playsInline
         poster={coverUrl}
@@ -482,7 +510,7 @@ export default function VideoCard({
       </div>
 
       {/* 右侧浮动控制条 */}
-      <div className="side-actions">
+      <div className="side-actions" onClick={stopCardClick}>
         {/* 作者头像 */}
         <div
           className="action-item"
