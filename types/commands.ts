@@ -218,6 +218,7 @@ export type CommandList =
   | "DY_OPEN_COOKIE_SETTING"
   | "DY_GET_COMMENTS"
   | "DY_GET_FOLLOWING"
+  | "DY_GET_USER_POSTS"
   | "DY_LIKE_VIDEO";
 
 export type ZhihuCommandList =

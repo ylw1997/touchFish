@@ -449,6 +449,7 @@ export default function VideoCard({
         className="video-player"
         muted={isMuted}
         playsInline
+        preload="auto"
         poster={coverUrl}
         {...({ referrerPolicy: "no-referrer" } as any)}
       />

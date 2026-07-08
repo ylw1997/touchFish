@@ -593,6 +593,8 @@ body {
 }
 
 .author-player {
+  inset: 0;
+  height: auto;
   z-index: 240;
   align-items: stretch;
   justify-content: stretch;
@@ -601,14 +603,14 @@ body {
 .author-player-scroll {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   background: #000;
 
   > .dy-video-item,
   > .dy-active-player-layer {
-    height: 100vh;
+    height: 100%;
   }
 }
 

@@ -425,10 +425,11 @@ export default function DouyinApp() {
     if (!current) return;
     const targetIndex = Math.max(0, Math.min(index, current.list.length - 1));
     const container = authorPlayerScrollRef.current;
+    const pageHeight = container?.clientHeight || 0;
     setAuthorWorks((prev) => prev ? { ...prev, playIndex: targetIndex } : prev);
-    if (container) {
+    if (container && pageHeight > 0) {
       container.scrollTo({
-        top: targetIndex * container.clientHeight,
+        top: targetIndex * pageHeight,
         behavior: "smooth",
       });
     }
@@ -439,8 +440,9 @@ export default function DouyinApp() {
     const current = authorWorks;
     if (!current || current.playIndex === null) return;
     const target = e.currentTarget;
-    if (target.clientHeight === 0) return;
-    const index = Math.round(target.scrollTop / target.clientHeight);
+    const pageHeight = target.clientHeight;
+    if (pageHeight === 0) return;
+    const index = Math.round(target.scrollTop / pageHeight);
     if (index !== current.playIndex && index >= 0 && index < current.list.length) {
       setAuthorWorks({ ...current, playIndex: index });
       requestPlayback("active-change");
@@ -452,7 +454,8 @@ export default function DouyinApp() {
     const container = authorPlayerScrollRef.current;
     if (!container) return;
     requestAnimationFrame(() => {
-      container.scrollTop = authorWorks.playIndex! * container.clientHeight;
+      const pageHeight = container.clientHeight;
+      container.scrollTop = authorWorks.playIndex! * pageHeight;
     });
   }, [authorWorks?.playIndex]);
 
@@ -460,6 +463,7 @@ export default function DouyinApp() {
     if (activeTab !== "recommend" && activeTab !== "following") return null;
     return list[activeIndex] || null;
   }, [activeIndex, activeTab, list]);
+  const activeAuthorPlayIndex = authorWorks?.playIndex ?? null;
 
   return (
     <div className="dy-app-container">
@@ -690,7 +694,7 @@ export default function DouyinApp() {
         </div>
       )}
 
-      {authorWorks && authorWorks.playIndex !== null && authorWorks.list[authorWorks.playIndex] && (
+      {authorWorks && activeAuthorPlayIndex !== null && authorWorks.list[activeAuthorPlayIndex] && (
         <div
           className="overlay-player author-player"
           onWheel={(e) => e.stopPropagation()}
@@ -707,12 +711,33 @@ export default function DouyinApp() {
           >
             {authorWorks.list.map((item, index) => {
               const coverUrl = item.video?.cover?.url_list?.[0] || "";
+              const shouldMountPlayer = Math.abs(index - activeAuthorPlayIndex) <= 1;
+              const isCurrentAuthorVideo = index === activeAuthorPlayIndex;
+              if (shouldMountPlayer) {
+                return (
+                  <VideoCard
+                    key={`${item.aweme_id || item.id}-${index}`}
+                    aweme={item}
+                    isActive={isCurrentAuthorVideo}
+                    isMuted={isMuted}
+                    onToggleMute={toggleMute}
+                    shouldPlay={shouldPlay && isCurrentAuthorVideo}
+                    playSignal={playbackToken}
+                    playReason={playbackReason}
+                    userActivated={userActivatedRef.current}
+                    onUserPlayRequest={resumeFromUserGesture}
+                    onUserPauseRequest={() => pausePlayback(true)}
+                    onScrollToNext={() => scrollAuthorPlaybackToIndex(index + 1)}
+                    onAuthorClick={openAuthorWorks}
+                  />
+                );
+              }
               return (
                 <div
                   key={`${item.aweme_id || item.id}-${index}`}
                   className="dy-video-item placeholder"
                 >
-                  {coverUrl && (
+                  {coverUrl ? (
                     <img
                       src={coverUrl}
                       alt="cover"
@@ -723,30 +748,10 @@ export default function DouyinApp() {
                       }}
                       referrerPolicy="no-referrer"
                     />
-                  )}
+                  ) : null}
                 </div>
               );
             })}
-            <div
-              className="dy-active-player-layer"
-              style={{ top: `${authorWorks.playIndex * 100}vh` }}
-            >
-              <VideoCard
-                key="author-single-player"
-                aweme={authorWorks.list[authorWorks.playIndex]}
-                isActive={true}
-                isMuted={isMuted}
-                onToggleMute={toggleMute}
-                shouldPlay={shouldPlay}
-                playSignal={playbackToken}
-                playReason={playbackReason}
-                userActivated={userActivatedRef.current}
-                onUserPlayRequest={resumeFromUserGesture}
-                onUserPauseRequest={() => pausePlayback(true)}
-                onScrollToNext={() => scrollAuthorPlaybackToIndex(authorWorks.playIndex! + 1)}
-                onAuthorClick={openAuthorWorks}
-              />
-            </div>
           </div>
         </div>
       )}
