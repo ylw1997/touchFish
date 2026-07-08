@@ -24,6 +24,7 @@ interface VideoCardProps {
   onUserPlayRequest?: () => void;
   onUserPauseRequest?: () => void;
   onScrollToNext?: () => void;
+  onAuthorClick?: (author: any, aweme: any) => void;
 }
 
 export default function VideoCard({
@@ -38,6 +39,7 @@ export default function VideoCard({
   onUserPlayRequest,
   onUserPauseRequest,
   onScrollToNext,
+  onAuthorClick,
 }: VideoCardProps) {
   const { desc, author, video, statistics } = aweme;
   const [isPlaying, setIsPlaying] = useState(false);
@@ -544,6 +546,11 @@ export default function VideoCard({
           <FloatButton
             className="avatar-float-btn"
             style={{ position: "static", overflow: "hidden" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              suppressPlaybackBriefly();
+              onAuthorClick?.(author, aweme);
+            }}
             icon={
               <Avatar
                 src={author?.avatar_thumb?.url_list?.[0]}

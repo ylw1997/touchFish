@@ -15,6 +15,15 @@ interface SavedState {
   maxCursor?: number;
 }
 
+interface AuthorWorksState {
+  author: any;
+  list: any[];
+  maxCursor: number;
+  hasMore: boolean;
+  loading: boolean;
+  playIndex: number | null;
+}
+
 type PlaybackResumeReason =
   | "active-change"
   | "visibility"
@@ -57,6 +66,8 @@ export default function DouyinApp() {
 
   // 全屏 Overlay 播放状态
   const [overlayVideo, setOverlayVideo] = useState<any>(null);
+  const [authorWorks, setAuthorWorks] = useState<AuthorWorksState | null>(null);
+  const authorPlayerScrollRef = useRef<HTMLDivElement>(null);
 
   // ===== 状态持久化 =====
   useEffect(() => {
@@ -323,10 +334,127 @@ export default function DouyinApp() {
     requestPlayback("active-change");
   }, [list.length, requestPlayback]);
 
+  const isAuthorPlaybackOpen = authorWorks?.playIndex !== null && authorWorks?.playIndex !== undefined;
+  const isExclusivePlayerOpen = Boolean(overlayVideo) || Boolean(isAuthorPlaybackOpen);
+
   const toggleMute = () => {
     setIsMuted((prev) => !prev);
     resumeFromUserGesture();
   };
+
+  const getAuthorSecUid = (author: any) =>
+    author?.sec_uid || author?.sec_user_id || author?.secUid || "";
+
+  const fetchAuthorWorks = useCallback(async (
+    author: any,
+    isRefresh = false,
+  ) => {
+    const secUserId = getAuthorSecUid(author);
+    if (!secUserId) {
+      messageApi.warning("当前作者缺少作品列表 ID");
+      return;
+    }
+
+    let cursor = 0;
+    setAuthorWorks((prev) => {
+      cursor = isRefresh ? 0 : prev?.maxCursor || 0;
+      return {
+        author,
+        list: isRefresh ? [] : prev?.list || [],
+        maxCursor: cursor,
+        hasMore: true,
+        loading: true,
+        playIndex: prev?.playIndex ?? null,
+      };
+    });
+
+    try {
+      const res = await request("DY_GET_USER_POSTS", {
+        sec_user_id: secUserId,
+        max_cursor: cursor,
+      });
+      if (res && res.status_code === 0 && Array.isArray(res.aweme_list)) {
+        setAuthorWorks((prev) => {
+          if (!prev || getAuthorSecUid(prev.author) !== secUserId) return prev;
+          return {
+            ...prev,
+            list: isRefresh ? res.aweme_list : [...prev.list, ...res.aweme_list],
+            maxCursor: res.max_cursor || res.cursor || cursor,
+            hasMore: res.has_more === 1 || res.has_more === true,
+            loading: false,
+          };
+        });
+      } else {
+        messageApi.error(res?.status_msg || "获取作者作品失败");
+        setAuthorWorks((prev) => prev ? { ...prev, loading: false, hasMore: false } : prev);
+      }
+    } catch (e: any) {
+      console.error(e);
+      messageApi.error(e.message || "获取作者作品失败");
+      setAuthorWorks((prev) => prev ? { ...prev, loading: false, hasMore: false } : prev);
+    }
+  }, [messageApi, request]);
+
+  const openAuthorWorks = useCallback((author: any) => {
+    pausePlayback(false);
+    setAuthorWorks({
+      author,
+      list: [],
+      maxCursor: 0,
+      hasMore: true,
+      loading: true,
+      playIndex: null,
+    });
+    void fetchAuthorWorks(author, true);
+  }, [fetchAuthorWorks, pausePlayback]);
+
+  const closeAuthorWorks = useCallback(() => {
+    setAuthorWorks(null);
+    requestPlayback("restore");
+  }, [requestPlayback]);
+
+  const enterAuthorPlayback = (index: number) => {
+    userActivatedRef.current = true;
+    userPausedRef.current = false;
+    setAuthorWorks((prev) => prev ? { ...prev, playIndex: index } : prev);
+    requestPlayback("user");
+  };
+
+  const scrollAuthorPlaybackToIndex = useCallback((index: number) => {
+    const current = authorWorks;
+    if (!current) return;
+    const targetIndex = Math.max(0, Math.min(index, current.list.length - 1));
+    const container = authorPlayerScrollRef.current;
+    setAuthorWorks((prev) => prev ? { ...prev, playIndex: targetIndex } : prev);
+    if (container) {
+      container.scrollTo({
+        top: targetIndex * container.clientHeight,
+        behavior: "smooth",
+      });
+    }
+    requestPlayback("active-change");
+  }, [authorWorks, requestPlayback]);
+
+  const handleAuthorPlayerScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const current = authorWorks;
+    if (!current || current.playIndex === null) return;
+    const target = e.currentTarget;
+    if (target.clientHeight === 0) return;
+    const index = Math.round(target.scrollTop / target.clientHeight);
+    if (index !== current.playIndex && index >= 0 && index < current.list.length) {
+      setAuthorWorks({ ...current, playIndex: index });
+      requestPlayback("active-change");
+    }
+  };
+
+  useEffect(() => {
+    if (!authorWorks || authorWorks.playIndex === null) return;
+    const container = authorPlayerScrollRef.current;
+    if (!container) return;
+    requestAnimationFrame(() => {
+      container.scrollTop = authorWorks.playIndex! * container.clientHeight;
+    });
+  }, [authorWorks?.playIndex]);
 
   const activeVideo = useMemo(() => {
     if (activeTab !== "recommend" && activeTab !== "following") return null;
@@ -419,16 +547,17 @@ export default function DouyinApp() {
                   <VideoCard
                     key="recommend-single-player"
                     aweme={activeVideo}
-                    isActive={document.visibilityState !== "hidden"}
+                    isActive={document.visibilityState !== "hidden" && !isExclusivePlayerOpen}
                     isMuted={isMuted}
                     onToggleMute={toggleMute}
-                    shouldPlay={shouldPlay}
+                    shouldPlay={shouldPlay && !isExclusivePlayerOpen}
                     playSignal={playbackToken}
                     playReason={playbackReason}
                     userActivated={userActivatedRef.current}
                     onUserPlayRequest={resumeFromUserGesture}
                     onUserPauseRequest={() => pausePlayback(true)}
                     onScrollToNext={() => scrollToIndex(activeIndex + 1)}
+                    onAuthorClick={openAuthorWorks}
                   />
                 </div>
               )}
@@ -494,7 +623,131 @@ export default function DouyinApp() {
             userActivated={userActivatedRef.current}
             onUserPlayRequest={resumeFromUserGesture}
             onUserPauseRequest={() => pausePlayback(true)}
+            onAuthorClick={openAuthorWorks}
           />
+        </div>
+      )}
+
+      {authorWorks && authorWorks.playIndex === null && (
+        <div className="author-works-panel">
+          <button className="close-btn" onClick={closeAuthorWorks}>
+            <CloseOutlined />
+          </button>
+          <div className="author-works-header">
+            <img
+              src={authorWorks.author?.avatar_thumb?.url_list?.[0]}
+              alt=""
+              className="author-works-avatar"
+              referrerPolicy="no-referrer"
+            />
+            <div className="author-works-meta">
+              <div className="author-works-name">
+                @{authorWorks.author?.nickname || "未知作者"}
+              </div>
+              <div className="author-works-count">
+                {authorWorks.list.length > 0
+                  ? `${authorWorks.list.length} 个作品`
+                  : "作品"}
+              </div>
+            </div>
+          </div>
+
+          <div id="authorWorksScrollableDiv" className="author-works-scroll">
+            {authorWorks.list.length === 0 && authorWorks.loading ? (
+              <div className="author-works-loading">
+                <Spin size="small" />
+                <span>加载作品中...</span>
+              </div>
+            ) : authorWorks.list.length === 0 ? (
+              <div className="empty-wrapper">
+                <Empty description="暂无作品" />
+              </div>
+            ) : (
+              <InfiniteScroll
+                dataLength={authorWorks.list.length}
+                next={() => fetchAuthorWorks(authorWorks.author, false)}
+                hasMore={authorWorks.hasMore && !authorWorks.loading}
+                loader={
+                  <div className="list-loading">
+                    <Spin size="small" /> 加载中...
+                  </div>
+                }
+                endMessage={<div className="list-end-msg">没有更多作品了</div>}
+                scrollableTarget="authorWorksScrollableDiv"
+              >
+                <div className="dy-grid-container author-grid">
+                  {authorWorks.list.map((item, index) => (
+                    <FavoriteGridCard
+                      key={`${item.aweme_id || item.id}-${index}`}
+                      aweme={item}
+                      onClick={() => enterAuthorPlayback(index)}
+                    />
+                  ))}
+                </div>
+              </InfiniteScroll>
+            )}
+          </div>
+        </div>
+      )}
+
+      {authorWorks && authorWorks.playIndex !== null && authorWorks.list[authorWorks.playIndex] && (
+        <div
+          className="overlay-player author-player"
+          onWheel={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button className="close-btn" onClick={closeAuthorWorks}>
+            <CloseOutlined />
+          </button>
+          <div
+            ref={authorPlayerScrollRef}
+            className="author-player-scroll"
+            onScroll={handleAuthorPlayerScroll}
+            onWheel={(e) => e.stopPropagation()}
+          >
+            {authorWorks.list.map((item, index) => {
+              const coverUrl = item.video?.cover?.url_list?.[0] || "";
+              return (
+                <div
+                  key={`${item.aweme_id || item.id}-${index}`}
+                  className="dy-video-item placeholder"
+                >
+                  {coverUrl && (
+                    <img
+                      src={coverUrl}
+                      alt="cover"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                      }}
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                </div>
+              );
+            })}
+            <div
+              className="dy-active-player-layer"
+              style={{ top: `${authorWorks.playIndex * 100}vh` }}
+            >
+              <VideoCard
+                key="author-single-player"
+                aweme={authorWorks.list[authorWorks.playIndex]}
+                isActive={true}
+                isMuted={isMuted}
+                onToggleMute={toggleMute}
+                shouldPlay={shouldPlay}
+                playSignal={playbackToken}
+                playReason={playbackReason}
+                userActivated={userActivatedRef.current}
+                onUserPlayRequest={resumeFromUserGesture}
+                onUserPauseRequest={() => pausePlayback(true)}
+                onScrollToNext={() => scrollAuthorPlaybackToIndex(authorWorks.playIndex! + 1)}
+                onAuthorClick={openAuthorWorks}
+              />
+            </div>
+          </div>
         </div>
       )}
 
