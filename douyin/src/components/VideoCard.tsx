@@ -86,6 +86,7 @@ export default function VideoCard({
 
   const [commentsCursor, setCommentsCursor] = useState(0);
   const [commentsHasMore, setCommentsHasMore] = useState(true);
+  const ignoreNextContainerClickRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -213,15 +214,21 @@ export default function VideoCard({
     setIsVideoLoading(false);
   };
 
+  const pauseVideoByUser = () => {
+    if (!videoRef.current) return;
+    playSeqRef.current += 1;
+    videoRef.current.pause();
+    setIsPlaying(false);
+    setIsVideoLoading(false);
+    setShowPlayOverlay(true);
+    onUserPauseRequest?.();
+  };
+
   // 手动点击播放/暂停
   const handlePlayToggle = () => {
     if (!videoRef.current) return;
     if (isPlaying) {
-      playSeqRef.current += 1;
-      videoRef.current.pause();
-      setIsPlaying(false);
-      setShowPlayOverlay(true);
-      onUserPauseRequest?.();
+      pauseVideoByUser();
     } else {
       onUserPlayRequest?.();
       requestPlay("user-click");
@@ -314,6 +321,15 @@ export default function VideoCard({
     return count.toString();
   };
 
+  const closeComments = (event?: React.MouseEvent | React.KeyboardEvent) => {
+    event?.stopPropagation();
+    ignoreNextContainerClickRef.current = true;
+    setIsCommentsOpen(false);
+    window.setTimeout(() => {
+      ignoreNextContainerClickRef.current = false;
+    }, 0);
+  };
+
   const fetchComments = async (isRefresh = false) => {
     if (commentsLoading || (!isRefresh && !commentsHasMore)) return;
     setCommentsLoading(true);
@@ -354,14 +370,24 @@ export default function VideoCard({
 
   const handleOpenComments = (e: React.MouseEvent) => {
     e.stopPropagation();
+    pauseVideoByUser();
+    ignoreNextContainerClickRef.current = true;
     setIsCommentsOpen(true);
     if (commentsList.length === 0) {
       fetchComments(true);
     }
   };
 
+  const handleContainerClick = () => {
+    if (ignoreNextContainerClickRef.current || isCommentsOpen) {
+      ignoreNextContainerClickRef.current = false;
+      return;
+    }
+    handlePlayToggle();
+  };
+
   return (
-    <div className="dy-video-item" ref={containerRef} onClick={handlePlayToggle}>
+    <div className="dy-video-item" ref={containerRef} onClick={handleContainerClick}>
       {contextHolder}
       {/* 视频播放器 */}
       <video
@@ -563,7 +589,7 @@ export default function VideoCard({
           </div>
         }
         placement="bottom"
-        onClose={() => setIsCommentsOpen(false)}
+        onClose={closeComments}
         open={isCommentsOpen}
         height="70%"
         className="dy-comment-drawer"

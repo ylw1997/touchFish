@@ -78,7 +78,46 @@ export const getDouyinFavorites = async (maxCursor: number = 0) => {
 export const getDouyinComments = async (awemeId: string, cursor: number = 0) => {
   try {
     const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
-    const apiPath = `https://www.douyin.com/aweme/v1/web/comment/list/?device_platform=webapp&aid=6383&aweme_id=${awemeId}&cursor=${cursor}&count=20&item_type=0&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32`;
+    const params = new URLSearchParams({
+      device_platform: "webapp",
+      aid: "6383",
+      channel: "channel_pc_web",
+      aweme_id: awemeId,
+      pc_img_format: "webp",
+      cursor: String(cursor),
+      count: "10",
+      item_type: "0",
+      insert_ids: "",
+      whale_cut_token: "",
+      cut_version: "1",
+      rcFT: "",
+      update_version_code: "170400",
+      pc_client_type: "1",
+      pc_libra_divert: "Windows",
+      support_h265: "1",
+      support_dash: "1",
+      cpu_core_num: "22",
+      version_code: "170400",
+      version_name: "17.4.0",
+      cookie_enabled: "true",
+      screen_width: "1646",
+      screen_height: "1098",
+      browser_language: "zh-CN",
+      browser_platform: "Win32",
+      browser_name: "Chrome",
+      browser_version: "129.0.0.0",
+      browser_online: "true",
+      engine_name: "Blink",
+      engine_version: "129.0.0.0",
+      os_name: "Windows",
+      os_version: "10",
+      device_memory: "32",
+      platform: "PC",
+      downlink: "5.75",
+      effective_type: "4g",
+      round_trip_time: "50",
+    });
+    const apiPath = `https://www-hj.douyin.com/aweme/v1/web/comment/list/?${params.toString()}`;
     
     const signedUrl = signDouyinUrl(apiPath, ua);
     const headers = await getDouyinHeaders({
