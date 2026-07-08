@@ -87,6 +87,7 @@ export default function VideoCard({
   const [commentsCursor, setCommentsCursor] = useState(0);
   const [commentsHasMore, setCommentsHasMore] = useState(true);
   const ignoreNextContainerClickRef = useRef(false);
+  const suppressPlaybackUntilRef = useRef(0);
   const currentAwemeIdRef = useRef<string | number | undefined>(undefined);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -124,13 +125,23 @@ export default function VideoCard({
     event.nativeEvent.stopImmediatePropagation?.();
   };
 
+  const stopCardPointer = (event: React.PointerEvent) => {
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation?.();
+  };
+
+  const suppressPlaybackBriefly = () => {
+    suppressPlaybackUntilRef.current = Date.now() + 300;
+    ignoreNextContainerClickRef.current = true;
+  };
+
   // ===== 核心播放逻辑 =====
   const requestPlay = useCallback((reason: string) => {
     const el = videoRef.current;
     if (!el || !currentPlayUrl || !isActive || !shouldPlay) return;
 
     const seq = ++playSeqRef.current;
-    setIsVideoLoading(true);
+    setIsVideoLoading(el.readyState < HTMLMediaElement.HAVE_CURRENT_DATA);
     setShowPlayOverlay(false);
 
     const playPromise = el.play();
@@ -176,7 +187,7 @@ export default function VideoCard({
       setProgress(0);
       setCurrentTime(0);
       setDuration(0);
-      setIsVideoLoading(false);
+      setIsVideoLoading(true);
       setShowPlayOverlay(false);
     }
   }, [awemeId, playSource.awemeId]);
@@ -200,7 +211,6 @@ export default function VideoCard({
       el.pause();
       setIsPlaying(false);
       setIsVideoLoading(false);
-      setShowPlayOverlay(!shouldPlay);
       return;
     }
 
@@ -347,11 +357,8 @@ export default function VideoCard({
 
   const closeComments = (event?: React.MouseEvent | React.KeyboardEvent) => {
     event?.stopPropagation();
-    ignoreNextContainerClickRef.current = true;
+    suppressPlaybackBriefly();
     setIsCommentsOpen(false);
-    window.setTimeout(() => {
-      ignoreNextContainerClickRef.current = false;
-    }, 0);
   };
 
   const fetchComments = async (isRefresh = false) => {
@@ -399,7 +406,7 @@ export default function VideoCard({
 
   const handleOpenComments = (e: React.MouseEvent) => {
     stopCardClick(e);
-    ignoreNextContainerClickRef.current = true;
+    suppressPlaybackBriefly();
     setIsCommentsOpen(true);
     if (commentsList.length === 0) {
       fetchComments(true);
@@ -407,15 +414,31 @@ export default function VideoCard({
   };
 
   const handleContainerClick = () => {
-    if (ignoreNextContainerClickRef.current || isCommentsOpen) {
+    if (
+      ignoreNextContainerClickRef.current ||
+      isCommentsOpen ||
+      Date.now() < suppressPlaybackUntilRef.current
+    ) {
       ignoreNextContainerClickRef.current = false;
       return;
     }
     handlePlayToggle();
   };
 
+  const handleContainerPointerDown = (event: React.PointerEvent) => {
+    if (isCommentsOpen || Date.now() < suppressPlaybackUntilRef.current) {
+      event.stopPropagation();
+      event.nativeEvent.stopImmediatePropagation?.();
+    }
+  };
+
   return (
-    <div className="dy-video-item" ref={containerRef} onClick={handleContainerClick}>
+    <div
+      className="dy-video-item"
+      ref={containerRef}
+      onClick={handleContainerClick}
+      onPointerDown={handleContainerPointerDown}
+    >
       {contextHolder}
       {/* 视频播放器 */}
       <video
@@ -423,13 +446,25 @@ export default function VideoCard({
         src={currentPlayUrl}
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
-        onWaiting={() => setIsVideoLoading(true)}
+        onWaiting={() => {
+          if (videoRef.current?.readyState === HTMLMediaElement.HAVE_NOTHING) {
+            setIsVideoLoading(true);
+          }
+        }}
         onPlaying={handlePlaying}
         onEnded={handleVideoEnded}
         onCanPlay={handleCanPlay}
         onSeeked={() => setIsVideoLoading(false)}
-        onSeeking={() => setIsVideoLoading(true)}
-        onLoadStart={() => setIsVideoLoading(true)}
+        onSeeking={() => {
+          if (videoRef.current?.readyState === HTMLMediaElement.HAVE_NOTHING) {
+            setIsVideoLoading(true);
+          }
+        }}
+        onLoadStart={() => {
+          if (videoRef.current?.readyState === HTMLMediaElement.HAVE_NOTHING) {
+            setIsVideoLoading(true);
+          }
+        }}
         onLoadedData={() => setIsVideoLoading(false)}
         onLoadedMetadata={() => {
           if (videoRef.current) {
@@ -510,7 +545,11 @@ export default function VideoCard({
       </div>
 
       {/* 右侧浮动控制条 */}
-      <div className="side-actions" onClick={stopCardClick}>
+      <div
+        className="side-actions"
+        onClick={stopCardClick}
+        onPointerDown={stopCardPointer}
+      >
         {/* 作者头像 */}
         <div
           className="action-item"
