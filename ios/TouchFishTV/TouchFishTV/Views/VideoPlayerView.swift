@@ -2,11 +2,11 @@ import SwiftUI
 import AVKit
 
 class PlayerManager: ObservableObject {
-    @Published var player: AVPlayer?
+    @Published var player: AVQueuePlayer?
+    private var playerLooper: AVPlayerLooper?
     private var currentAwemeId: String?
     
     func setup(aweme: Aweme) {
-        // 防止 LazyVStack 复用 View 时导致播放旧视频的 Bug
         if player != nil && currentAwemeId == aweme.aweme_id {
             player?.play()
             return
@@ -38,15 +38,13 @@ class PlayerManager: ObservableObject {
         
         playerItem.externalMetadata = [titleItem, authorItem]
         
-        let newPlayer = AVPlayer(playerItem: playerItem)
-        newPlayer.automaticallyWaitsToMinimizeStalling = true
-        self.player = newPlayer
-        newPlayer.play()
+        let queuePlayer = AVQueuePlayer(items: [playerItem])
+        queuePlayer.automaticallyWaitsToMinimizeStalling = true
         
-        NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: newPlayer.currentItem, queue: .main) { _ in
-            newPlayer.seek(to: .zero)
-            newPlayer.play()
-        }
+        self.playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem)
+        self.player = queuePlayer
+        
+        queuePlayer.play()
     }
     
     func play() {
@@ -59,8 +57,15 @@ class PlayerManager: ObservableObject {
     
     func cleanup() {
         player?.pause()
+        player?.removeAllItems()
+        playerLooper?.disableLooping()
+        playerLooper = nil
         player = nil
         currentAwemeId = nil
+    }
+    
+    deinit {
+        cleanup()
     }
 }
 
