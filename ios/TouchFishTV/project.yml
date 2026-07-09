@@ -1,0 +1,21 @@
+name: TouchFishTV
+options:
+  bundleIdPrefix: com.touchfish.tv
+targets:
+  TouchFishTV:
+    type: application
+    platform: tvOS
+    deploymentTarget: "16.0"
+    sources:
+      - TouchFishTV
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: 3
+        INFOPLIST_FILE: TouchFishTV/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.touchfish.tv.app
+        MARKETING_VERSION: 1.0.0
+        CURRENT_PROJECT_VERSION: 1
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGN_STYLE: Manual

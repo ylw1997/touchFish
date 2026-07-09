@@ -1,0 +1,364 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		038E0BDB16AD8D7D7D74BBA6 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE517C3E2F80EB8040277984 /* FavoritesView.swift */; };
+		071B1F259DDF3A5A62577990 /* TouchFishTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C1FBFC651B99D83C5C07BEB /* TouchFishTVApp.swift */; };
+		390B965C44B862EC8A2BFFAA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F750D7C19980FA685D78654E /* SettingsView.swift */; };
+		4191754519B17D786C07CEFC /* xbogus.js in Resources */ = {isa = PBXBuildFile; fileRef = 91006EA23AB5374632594F93 /* xbogus.js */; };
+		4647AFC71DA8577FA0720670 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 787C12CA036B04D801B48976 /* Assets.xcassets */; };
+		47E7C5BC661E9410867650BA /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300A1D0AFB147F8C5CD61575 /* VideoPlayerView.swift */; };
+		AA33553ECB9B9B674918D3DD /* AuthorWorksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79827515A3652DDBCCD154B6 /* AuthorWorksView.swift */; };
+		BD1F999D9B6A8AF843300AA7 /* DouyinFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81C84B0AC7662FB0C2D47FB8 /* DouyinFeedView.swift */; };
+		D3DC237A564C388E375C2957 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2294102FFDB4D3B8A404C8A /* ContentView.swift */; };
+		D832C6EA4862C95A92D6FCE8 /* CommentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA10E64F57BE14B887901EAB /* CommentsView.swift */; };
+		DF3D95DC1777E153CF79E6D3 /* SignatureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */; };
+		F9A3B0A011C8DA362744FE29 /* DouyinAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F804EF8A5BE8C664BDCD24A /* DouyinAPI.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		150D7845E836A0833BE226BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2C1FBFC651B99D83C5C07BEB /* TouchFishTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchFishTVApp.swift; sourceTree = "<group>"; };
+		300A1D0AFB147F8C5CD61575 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
+		787C12CA036B04D801B48976 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		79827515A3652DDBCCD154B6 /* AuthorWorksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorWorksView.swift; sourceTree = "<group>"; };
+		81C84B0AC7662FB0C2D47FB8 /* DouyinFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DouyinFeedView.swift; sourceTree = "<group>"; };
+		91006EA23AB5374632594F93 /* xbogus.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = xbogus.js; sourceTree = "<group>"; };
+		9F804EF8A5BE8C664BDCD24A /* DouyinAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DouyinAPI.swift; sourceTree = "<group>"; };
+		AE517C3E2F80EB8040277984 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
+		C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignatureManager.swift; sourceTree = "<group>"; };
+		D2294102FFDB4D3B8A404C8A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		E3B8A6691377409FD6C0BB1E /* TouchFishTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TouchFishTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F750D7C19980FA685D78654E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FA10E64F57BE14B887901EAB /* CommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		3958579287E7493AA40485FD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E3B8A6691377409FD6C0BB1E /* TouchFishTV.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7882035E47150A2BBE3479D4 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				79827515A3652DDBCCD154B6 /* AuthorWorksView.swift */,
+				FA10E64F57BE14B887901EAB /* CommentsView.swift */,
+				81C84B0AC7662FB0C2D47FB8 /* DouyinFeedView.swift */,
+				AE517C3E2F80EB8040277984 /* FavoritesView.swift */,
+				F750D7C19980FA685D78654E /* SettingsView.swift */,
+				300A1D0AFB147F8C5CD61575 /* VideoPlayerView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		9A1EAB690002A553A9229612 /* TouchFishTV */ = {
+			isa = PBXGroup;
+			children = (
+				787C12CA036B04D801B48976 /* Assets.xcassets */,
+				D2294102FFDB4D3B8A404C8A /* ContentView.swift */,
+				9F804EF8A5BE8C664BDCD24A /* DouyinAPI.swift */,
+				150D7845E836A0833BE226BE /* Info.plist */,
+				C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */,
+				2C1FBFC651B99D83C5C07BEB /* TouchFishTVApp.swift */,
+				91006EA23AB5374632594F93 /* xbogus.js */,
+				7882035E47150A2BBE3479D4 /* Views */,
+			);
+			path = TouchFishTV;
+			sourceTree = "<group>";
+		};
+		CA7FBFA556CE89FFFB70A239 = {
+			isa = PBXGroup;
+			children = (
+				9A1EAB690002A553A9229612 /* TouchFishTV */,
+				3958579287E7493AA40485FD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		00E3BDFCCA09429B7B5CAA81 /* TouchFishTV */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 927BA8C5073AFD3A2589966C /* Build configuration list for PBXNativeTarget "TouchFishTV" */;
+			buildPhases = (
+				BB75F793FBCCDD3B00915D4A /* Sources */,
+				E327FA2EF330243272D6114C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TouchFishTV;
+			packageProductDependencies = (
+			);
+			productName = TouchFishTV;
+			productReference = E3B8A6691377409FD6C0BB1E /* TouchFishTV.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0DA21C64CB0838A51ED9A44F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					00E3BDFCCA09429B7B5CAA81 = {
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 6968527443E4556706B77197 /* Build configuration list for PBXProject "TouchFishTV" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CA7FBFA556CE89FFFB70A239;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3958579287E7493AA40485FD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				00E3BDFCCA09429B7B5CAA81 /* TouchFishTV */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E327FA2EF330243272D6114C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4647AFC71DA8577FA0720670 /* Assets.xcassets in Resources */,
+				4191754519B17D786C07CEFC /* xbogus.js in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BB75F793FBCCDD3B00915D4A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA33553ECB9B9B674918D3DD /* AuthorWorksView.swift in Sources */,
+				D832C6EA4862C95A92D6FCE8 /* CommentsView.swift in Sources */,
+				D3DC237A564C388E375C2957 /* ContentView.swift in Sources */,
+				F9A3B0A011C8DA362744FE29 /* DouyinAPI.swift in Sources */,
+				BD1F999D9B6A8AF843300AA7 /* DouyinFeedView.swift in Sources */,
+				038E0BDB16AD8D7D7D74BBA6 /* FavoritesView.swift in Sources */,
+				390B965C44B862EC8A2BFFAA /* SettingsView.swift in Sources */,
+				DF3D95DC1777E153CF79E6D3 /* SignatureManager.swift in Sources */,
+				071B1F259DDF3A5A62577990 /* TouchFishTVApp.swift in Sources */,
+				47E7C5BC661E9410867650BA /* VideoPlayerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2E10777F55B35025D2C7674E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		7DAEB97892C586C21A480C89 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = TouchFishTV/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.touchfish.tv.app;
+				SDKROOT = appletvos;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_TVOS_DEPLOYMENT_TARGET)";
+			};
+			name = Debug;
+		};
+		9FB0BF421E22E6E227175716 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = TouchFishTV/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.touchfish.tv.app;
+				SDKROOT = appletvos;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_TVOS_DEPLOYMENT_TARGET)";
+			};
+			name = Release;
+		};
+		CCE331E776AA0838418AB12C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6968527443E4556706B77197 /* Build configuration list for PBXProject "TouchFishTV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2E10777F55B35025D2C7674E /* Debug */,
+				CCE331E776AA0838418AB12C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		927BA8C5073AFD3A2589966C /* Build configuration list for PBXNativeTarget "TouchFishTV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7DAEB97892C586C21A480C89 /* Debug */,
+				9FB0BF421E22E6E227175716 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0DA21C64CB0838A51ED9A44F /* Project object */;
+}
