@@ -14,9 +14,7 @@ struct DouyinFeedView: View {
     @State private var hasMore: Bool = true
     @State private var isLoading: Bool = false
     
-    // 用 FocusState 追踪当前聚焦的视频行项目
-    @FocusState private var focusedIndex: Int?
-    // 用 activeIndex 锁定正在播放的视频，即使焦点临时离开去顶部的 TabBar，当前视频也会在后台保持播放而不被暂停
+    // 永远只有这一个 activeIndex，直接控制单一播放器的数据源
     @State private var activeIndex: Int = 0
     
     var body: some View {
@@ -38,24 +36,28 @@ struct DouyinFeedView: View {
                     }
                 }
             } else {
-                // 原生垂直滚动聚焦流，通过 D-pad 移动焦点的物理反弹来自然上下滚屏
-                ScrollView(.vertical, showsIndicators: false) {
-                    LazyVStack(spacing: 0) {
-                        ForEach(list.indices, id: \.self) { index in
-                            VideoPlayerView(
-                                aweme: list[index],
-                                playlist: list,
-                                isModal: false,
-                                onClose: {},
-                                isActive: activeIndex == index // 使用 activeIndex，不受焦点跳往 Tab 栏的影响
-                            )
-                            .frame(width: 1920, height: 1080) // 锁定逻辑全屏高度，确保滚屏精准对齐
-                            .focused($focusedIndex, equals: index)
-                            .id(index)
-                        }
+                // 核心重构：彻底抛弃 ScrollView 和 List！
+                // 永远只实例化一个播放器，当按下下方向键时，只修改 activeIndex 数据源，
+                // 播放器内部会自动平滑切换到下个视频！这彻底解决了苹果焦点引擎乱弹和 Menu 键回退问题。
+                VideoPlayerView(
+                    aweme: list[activeIndex],
+                    playlist: list,
+                    isModal: false,
+                    onClose: {},
+                    isActive: true
+                )
+                .ignoresSafeArea()
+                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("requestScrollToNext"))) { _ in
+                    if activeIndex < list.count - 1 {
+                        activeIndex += 1
+                        checkPreload()
                     }
                 }
-                .ignoresSafeArea() // 确保滚动容器不受安全区偏移影响
+                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("requestScrollToPrevious"))) { _ in
+                    if activeIndex > 0 {
+                        activeIndex -= 1
+                    }
+                }
             }
         }
         .onAppear {
@@ -63,20 +65,14 @@ struct DouyinFeedView: View {
                 Task {
                     await loadFeed(isRefresh: true)
                 }
-            } else {
-                focusedIndex = activeIndex
             }
         }
-        .onChange(of: focusedIndex) { index in
-            guard let index = index else { return }
-            // 只有当用户确实在视频列表里发生了焦点滑动，才更新播放 index
-            activeIndex = index
-            
-            // 预加载：当播放到倒数第二条时，拉取新数据
-            if index >= list.count - 2 && hasMore && !isLoading {
-                Task {
-                    await loadFeed(isRefresh: false)
-                }
+    }
+    
+    private func checkPreload() {
+        if activeIndex >= list.count - 2 && hasMore && !isLoading {
+            Task {
+                await loadFeed(isRefresh: false)
             }
         }
     }
@@ -107,7 +103,6 @@ struct DouyinFeedView: View {
         await MainActor.run {
             if isRefresh {
                 self.list = awemes
-                self.focusedIndex = 0
                 self.activeIndex = 0
             } else {
                 self.list.append(contentsOf: awemes)
