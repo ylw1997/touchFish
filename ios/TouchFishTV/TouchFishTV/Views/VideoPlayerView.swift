@@ -109,8 +109,10 @@ struct VideoPlayerView: View {
     
     private func setupPlayer() {
         guard player == nil else { return }
-        guard let playUrlStr = aweme.video?.play_addr?.url_list?.first,
-              let playUrl = URL(string: playUrlStr) else { return }
+        
+        let playUrlStr = aweme.video?.play_addr?.url_list?.first
+        
+        guard let urlStr = playUrlStr, let playUrl = URL(string: urlStr) else { return }
         
         let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
         let headers: [String: String] = [
@@ -120,7 +122,22 @@ struct VideoPlayerView: View {
         
         let asset = AVURLAsset(url: playUrl, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
         let playerItem = AVPlayerItem(asset: asset)
+        
+        // 提取视频的基础元数据：标题与作者，赋值给 playerItem
+        let titleItem = AVMutableMetadataItem()
+        titleItem.identifier = .commonIdentifierTitle
+        titleItem.value = aweme.desc as (NSCopying & NSObjectProtocol)?
+        titleItem.extendedLanguageTag = "und"
+        
+        let authorItem = AVMutableMetadataItem()
+        authorItem.identifier = .iTunesMetadataTrackSubTitle
+        authorItem.value = aweme.author?.nickname as (NSCopying & NSObjectProtocol)?
+        authorItem.extendedLanguageTag = "und"
+        
+        playerItem.externalMetadata = [titleItem, authorItem]
+        
         let player = AVPlayer(playerItem: playerItem)
+        player.automaticallyWaitsToMinimizeStalling = true // 允许缓冲，减少卡顿
         self.player = player
         
         player.play()
@@ -150,30 +167,21 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         controller.player = player
         controller.showsPlaybackControls = true
         
-        // 提取视频的基础元数据：标题与作者
         let titleItem = AVMutableMetadataItem()
         titleItem.identifier = .commonIdentifierTitle
         titleItem.value = aweme.desc as (NSCopying & NSObjectProtocol)?
         titleItem.extendedLanguageTag = "und"
         
         let authorItem = AVMutableMetadataItem()
-        authorItem.identifier = .commonIdentifierArtist
+        authorItem.identifier = .iTunesMetadataTrackSubTitle
         authorItem.value = aweme.author?.nickname as (NSCopying & NSObjectProtocol)?
         authorItem.extendedLanguageTag = "und"
         
-        let artworkItem = AVMutableMetadataItem()
-        artworkItem.identifier = .commonIdentifierArtwork
-        
         controller.player?.currentItem?.externalMetadata = [titleItem, authorItem]
         
-        let customInfoVC = UIHostingController(rootView: PlayerCustomInfoView(
-            aweme: aweme,
-            isLiked: $isLiked,
-            showCommentsOverlay: $showCommentsOverlay,
-            showAuthorWorks: $showAuthorWorks
-        ))
+        // 使用原生的 transportBarCustomMenuItems，将功能按钮直接放在进度条上！
+        updateTransportBarMenuItems(controller: controller)
         
-        controller.customInfoViewController = customInfoVC
         return controller
     }
     
@@ -181,64 +189,38 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         if uiViewController.player != player {
             uiViewController.player = player
         }
-    }
-}
-
-struct PlayerCustomInfoView: View {
-    let aweme: Aweme
-    @Binding var isLiked: Bool
-    @Binding var showCommentsOverlay: Bool
-    @Binding var showAuthorWorks: Bool
-    
-    @FocusState private var focusedElement: FocusElement?
-    
-    enum FocusElement: Hashable {
-        case like, comments, author
+        // 动态更新喜欢状态
+        updateTransportBarMenuItems(controller: uiViewController)
     }
     
-    var body: some View {
-        HStack(spacing: 40) {
-            Button(action: {
+    private func updateTransportBarMenuItems(controller: AVPlayerViewController) {
+        let likeAction = UIAction(
+            title: "喜欢",
+            image: UIImage(systemName: isLiked ? "heart.fill" : "heart"),
+            handler: { _ in
                 isLiked.toggle()
-            }) {
-                VStack(spacing: 12) {
-                    ControlButton(icon: isLiked ? "heart.fill" : "heart", color: isLiked ? .red : .white, isFocused: focusedElement == .like)
-                    Text("喜欢").foregroundColor(.white).font(.headline)
-                }
             }
-            .buttonStyle(.plain)
-            .focused($focusedElement, equals: .like)
-            
-            Button(action: {
+        )
+        
+        let commentAction = UIAction(
+            title: "评论",
+            image: UIImage(systemName: "message.fill"),
+            handler: { _ in
                 withAnimation {
                     showCommentsOverlay.toggle()
                 }
-            }) {
-                VStack(spacing: 12) {
-                    ControlButton(icon: "message.fill", isFocused: focusedElement == .comments)
-                    Text("评论").foregroundColor(.white).font(.headline)
-                }
             }
-            .buttonStyle(.plain)
-            .focused($focusedElement, equals: .comments)
-            
-            Button(action: {
+        )
+        
+        let authorAction = UIAction(
+            title: "主页",
+            image: UIImage(systemName: "person.crop.circle.fill"),
+            handler: { _ in
                 showAuthorWorks = true
-            }) {
-                VStack(spacing: 12) {
-                    ControlButton(icon: "person.crop.circle.fill", isFocused: focusedElement == .author)
-                    Text("作者").foregroundColor(.white).font(.headline)
-                }
             }
-            .buttonStyle(.plain)
-            .focused($focusedElement, equals: .author)
-        }
-        .padding(.vertical, 40)
-        .frame(maxWidth: .infinity)
-        .background(Color.clear)
-        .onAppear {
-            focusedElement = .like
-        }
+        )
+        
+        controller.transportBarCustomMenuItems = [likeAction, commentAction, authorAction]
     }
 }
 
