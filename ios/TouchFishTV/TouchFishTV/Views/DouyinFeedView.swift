@@ -16,6 +16,8 @@ struct DouyinFeedView: View {
     
     // 永远只有这一个 activeIndex，直接控制单一播放器的数据源
     @State private var activeIndex: Int = 0
+    @State private var showToast: Bool = false
+    @State private var toastMessage: String = ""
     
     var body: some View {
         ZStack {
@@ -45,6 +47,32 @@ struct DouyinFeedView: View {
                     onNext: playNext
                 )
                 .ignoresSafeArea()
+                
+                if isLoading {
+                    VStack {
+                        Spacer()
+                        ProgressView("正在加载更多...")
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .padding()
+                            .background(Color.black.opacity(0.6))
+                            .cornerRadius(10)
+                            .padding(.bottom, 50)
+                    }
+                }
+                
+                if showToast {
+                    VStack {
+                        Spacer()
+                        Text(toastMessage)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.black.opacity(0.6))
+                            .cornerRadius(10)
+                            .padding(.bottom, 50)
+                    }
+                    .transition(.opacity)
+                }
             }
         }
         .onAppear {
@@ -123,10 +151,29 @@ struct DouyinFeedView: View {
             self.hasMore = more
             self.isLoading = false
             
-            // 如果是在最后一个视频按了“下”触发的加载，且成功加载到了新视频，则自动播放下一首
-            if autoPlayNextAfterLoad && addedCount > 0 {
-                if self.activeIndex + 1 < self.list.count {
-                    self.activeIndex += 1
+            // 如果是在最后一个视频按了“下”触发的加载
+            if autoPlayNextAfterLoad {
+                if addedCount > 0 {
+                    if self.activeIndex + 1 < self.list.count {
+                        self.activeIndex += 1
+                    }
+                } else {
+                    self.showToastMessage("当前无更多新视频，请稍后再试")
+                }
+            }
+        }
+    }
+    
+    private func showToastMessage(_ message: String) {
+        self.toastMessage = message
+        withAnimation {
+            self.showToast = true
+        }
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            await MainActor.run {
+                withAnimation {
+                    self.showToast = false
                 }
             }
         }
