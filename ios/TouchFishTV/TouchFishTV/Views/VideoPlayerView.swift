@@ -82,6 +82,10 @@ struct VideoPlayerView: View {
                 onNext: onNext
             )
             .ignoresSafeArea()
+
+            VideoInfoOverlay(aweme: aweme)
+                .allowsHitTesting(false)
+                .zIndex(10)
             
             if showCommentsOverlay {
                 HStack {
@@ -111,6 +115,51 @@ struct VideoPlayerView: View {
         }
         .onChange(of: aweme.aweme_id) { _ in
             manager.setup(aweme: aweme)
+        }
+    }
+}
+
+private struct VideoInfoOverlay: View {
+    let aweme: Aweme
+
+    private var authorName: String {
+        guard let nickname = aweme.author?.nickname, !nickname.isEmpty else {
+            return "未知作者"
+        }
+        return nickname
+    }
+
+    private var videoTitle: String {
+        guard let desc = aweme.desc, !desc.isEmpty else {
+            return "无描述"
+        }
+        return desc
+    }
+
+    var body: some View {
+        VStack {
+            Spacer()
+
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("@\(authorName)")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+
+                    Text(videoTitle)
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .shadow(color: .black.opacity(0.75), radius: 5, x: 0, y: 2)
+                .frame(maxWidth: 640, alignment: .leading)
+
+                Spacer()
+            }
+            .padding(.horizontal, 48)
+            .padding(.bottom, 92)
         }
     }
 }
