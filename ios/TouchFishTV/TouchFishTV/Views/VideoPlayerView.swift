@@ -38,6 +38,7 @@ final class PlayerManager: ObservableObject {
             options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
         )
         let playerItem = AVPlayerItem(asset: asset)
+        playerItem.externalMetadata = playbackMetadata(for: aweme)
 
         guard generation == playbackGeneration else { return }
 
@@ -57,6 +58,27 @@ final class PlayerManager: ObservableObject {
         playerLooper?.disableLooping()
         playerLooper = nil
         player.removeAllItems()
+    }
+
+    private func playbackMetadata(for aweme: Aweme) -> [AVMetadataItem] {
+        [
+            metadataItem(
+                identifier: .commonIdentifierTitle,
+                value: aweme.desc ?? "无描述"
+            ),
+            metadataItem(
+                identifier: .iTunesMetadataTrackSubTitle,
+                value: aweme.author?.nickname ?? "未知作者"
+            )
+        ]
+    }
+
+    private func metadataItem(identifier: AVMetadataIdentifier, value: String) -> AVMetadataItem {
+        let item = AVMutableMetadataItem()
+        item.identifier = identifier
+        item.value = value as NSString
+        item.extendedLanguageTag = "zh-Hans"
+        return item.copy() as! AVMetadataItem
     }
     
 }
@@ -82,10 +104,6 @@ struct VideoPlayerView: View {
                 onNext: onNext
             )
             .ignoresSafeArea()
-
-            VideoInfoOverlay(aweme: aweme)
-                .allowsHitTesting(false)
-                .zIndex(10)
             
             if showCommentsOverlay {
                 HStack {
@@ -115,51 +133,6 @@ struct VideoPlayerView: View {
         }
         .onChange(of: aweme.aweme_id) { _ in
             manager.setup(aweme: aweme)
-        }
-    }
-}
-
-private struct VideoInfoOverlay: View {
-    let aweme: Aweme
-
-    private var authorName: String {
-        guard let nickname = aweme.author?.nickname, !nickname.isEmpty else {
-            return "未知作者"
-        }
-        return nickname
-    }
-
-    private var videoTitle: String {
-        guard let desc = aweme.desc, !desc.isEmpty else {
-            return "无描述"
-        }
-        return desc
-    }
-
-    var body: some View {
-        VStack {
-            Spacer()
-
-            HStack {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("@\(authorName)")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-
-                    Text(videoTitle)
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .shadow(color: .black.opacity(0.75), radius: 5, x: 0, y: 2)
-                .frame(maxWidth: 640, alignment: .leading)
-
-                Spacer()
-            }
-            .padding(.horizontal, 48)
-            .padding(.bottom, 92)
         }
     }
 }
@@ -235,6 +208,7 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         let controller = RemotePlayerViewController()
         controller.player = player
         controller.showsPlaybackControls = true
+        controller.transportBarIncludesTitleView = true
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         
@@ -246,6 +220,7 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         if uiViewController.player !== player {
             uiViewController.player = player
         }
+        uiViewController.transportBarIncludesTitleView = true
         uiViewController.onPrevious = onPrevious
         uiViewController.onNext = onNext
         updateTransportBarMenuItems(controller: uiViewController)
