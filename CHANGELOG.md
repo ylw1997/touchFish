@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+### [17.6.1](https://github.com/ylw1997/touchFish/compare/v17.6.0...v17.6.1) (2026-07-10)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复知乎搜索结果点击问题时详情弹窗被搜索弹窗遮挡的问题 ([3384805](https://github.com/ylw1997/touchFish/commit/338480580ab48f5fe473ee667681486e9e957889))
+* 修复知乎问题详情内容为空只显示标题的问题 ([1d6e550](https://github.com/ylw1997/touchFish/commit/1d6e550c74cf288522af739eab71ca0a1e25b9ab)), closes [#117](https://github.com/ylw1997/touchFish/issues/117)
+
 ## [17.6.0](https://github.com/ylw1997/touchFish/compare/v17.5.0...v17.6.0) (2026-07-08)
 
 
