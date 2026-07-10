@@ -46,6 +46,7 @@ class DouyinAPI: ObservableObject {
         request.httpMethod = method
         request.httpBody = body
         request.timeoutInterval = 15.0
+        request.cachePolicy = .reloadIgnoringLocalCacheData // 禁用本地缓存，保证网络请求能获取最新数据
         
         let headers = getHeaders(extra: extraHeaders)
         for (key, val) in headers {
@@ -71,7 +72,8 @@ class DouyinAPI: ObservableObject {
     
     /// 获取推荐视频流
     func getFeed() async -> [Aweme] {
-        let url = "https://www.douyin.com/aweme/v1/web/channel/feed/?device_platform=webapp&aid=6383&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
+        let ts = Int(Date().timeIntervalSince1970 * 1000)
+        let url = "https://www.douyin.com/aweme/v1/web/channel/feed/?device_platform=webapp&aid=6383&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32&_t=\(ts)"
         do {
             let res: FeedResponse = try await request(url: url)
             return res.aweme_list ?? []

@@ -103,7 +103,11 @@ struct DouyinFeedView: View {
                 self.list = awemes
                 self.activeIndex = 0
             } else {
-                self.list.append(contentsOf: awemes)
+                // 去重，过滤掉已存在的视频，避免在列表中出现重复的视频项
+                let newAwemes = awemes.filter { newAweme in
+                    !self.list.contains(where: { $0.aweme_id == newAweme.aweme_id })
+                }
+                self.list.append(contentsOf: newAwemes)
             }
             self.maxCursor = nextCursor
             self.hasMore = more
