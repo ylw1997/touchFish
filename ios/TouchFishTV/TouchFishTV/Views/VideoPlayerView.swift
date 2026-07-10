@@ -1,55 +1,70 @@
 import SwiftUI
 import AVKit
 
-class PlayerManager: ObservableObject {
-    @Published var player: AVQueuePlayer?
+@MainActor
+final class PlayerManager: ObservableObject {
+    let player = AVQueuePlayer()
+
     private var playerLooper: AVPlayerLooper?
     private var currentAwemeId: String?
+    private var playbackGeneration: UInt = 0
     
     func setup(aweme: Aweme) {
-        if player != nil && currentAwemeId == aweme.aweme_id {
-            player?.play()
+        if currentAwemeId == aweme.aweme_id, !player.items().isEmpty {
+            player.play()
             return
         }
-        
-        cleanup()
+
+        playbackGeneration &+= 1
+        let generation = playbackGeneration
+        stopCurrentItem()
         currentAwemeId = aweme.aweme_id
-        
-        let playUrlStr = aweme.video?.play_addr?.url_list?.first
-        guard let urlStr = playUrlStr, let playUrl = URL(string: urlStr) else { return }
-        
+
+        guard
+            let urlString = aweme.video?.play_addr?.url_list?.first,
+            let playURL = URL(string: urlString)
+        else {
+            currentAwemeId = nil
+            return
+        }
+
         let headers: [String: String] = [
             "User-Agent": "Mozilla/5.0",
             "Referer": "https://www.douyin.com/"
         ]
-        
-        let asset = AVURLAsset(url: playUrl, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
+
+        let asset = AVURLAsset(
+            url: playURL,
+            options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
+        )
         let playerItem = AVPlayerItem(asset: asset)
-        
-        let queuePlayer = AVQueuePlayer(items: [playerItem])
-        queuePlayer.automaticallyWaitsToMinimizeStalling = true
-        
-        self.playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem)
-        self.player = queuePlayer
-        
-        queuePlayer.play()
+
+        guard generation == playbackGeneration else { return }
+
+        playerLooper = AVPlayerLooper(player: player, templateItem: playerItem)
+        player.automaticallyWaitsToMinimizeStalling = true
+        player.play()
     }
     
     func play() {
-        player?.play()
+        player.play()
     }
     
     func pause() {
-        player?.pause()
+        player.pause()
     }
     
     func cleanup() {
-        player?.pause()
-        player?.removeAllItems()
+        playbackGeneration &+= 1
+        stopCurrentItem()
+        currentAwemeId = nil
+    }
+
+    private func stopCurrentItem() {
+        player.pause()
         playerLooper?.disableLooping()
         playerLooper = nil
-        player = nil
-        currentAwemeId = nil
+        player.removeAllItems()
     }
     
     deinit {
@@ -75,19 +90,14 @@ struct VideoPlayerView: View {
             Color.black.ignoresSafeArea()
             
             if isActive {
-                if let player = manager.player {
-                    NativeAVPlayerView(
-                        player: player,
-                        aweme: aweme,
-                        isLiked: $isLiked,
-                        showCommentsOverlay: $showCommentsOverlay,
-                        showAuthorWorks: $showAuthorWorks
-                    )
-                    .ignoresSafeArea()
-                } else {
-                    ProgressView("正在缓冲...")
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                }
+                NativeAVPlayerView(
+                    player: manager.player,
+                    aweme: aweme,
+                    isLiked: $isLiked,
+                    showCommentsOverlay: $showCommentsOverlay,
+                    showAuthorWorks: $showAuthorWorks
+                )
+                .ignoresSafeArea()
             } else {
                 // 封面图，同时承担未激活时的背景
                 AsyncImage(url: URL(string: aweme.video?.cover?.url_list?.first ?? "")) { img in
