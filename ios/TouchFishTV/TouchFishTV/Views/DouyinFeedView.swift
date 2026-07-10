@@ -41,23 +41,10 @@ struct DouyinFeedView: View {
                 // 播放器内部会自动平滑切换到下个视频！这彻底解决了苹果焦点引擎乱弹和 Menu 键回退问题。
                 VideoPlayerView(
                     aweme: list[activeIndex],
-                    playlist: list,
-                    isModal: false,
-                    onClose: {},
-                    isActive: true
+                    onPrevious: playPrevious,
+                    onNext: playNext
                 )
                 .ignoresSafeArea()
-                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("requestScrollToNext"))) { _ in
-                    if activeIndex < list.count - 1 {
-                        activeIndex += 1
-                        checkPreload()
-                    }
-                }
-                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("requestScrollToPrevious"))) { _ in
-                    if activeIndex > 0 {
-                        activeIndex -= 1
-                    }
-                }
             }
         }
         .onAppear {
@@ -67,6 +54,17 @@ struct DouyinFeedView: View {
                 }
             }
         }
+    }
+
+    private func playPrevious() {
+        guard activeIndex > list.startIndex else { return }
+        activeIndex -= 1
+    }
+
+    private func playNext() {
+        guard activeIndex + 1 < list.count else { return }
+        activeIndex += 1
+        checkPreload()
     }
     
     private func checkPreload() {
