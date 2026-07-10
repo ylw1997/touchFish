@@ -46,14 +46,6 @@ final class PlayerManager: ObservableObject {
         player.play()
     }
     
-    func play() {
-        player.play()
-    }
-    
-    func pause() {
-        player.pause()
-    }
-    
     func cleanup() {
         playbackGeneration &+= 1
         stopCurrentItem()
@@ -74,43 +66,25 @@ final class PlayerManager: ObservableObject {
 
 struct VideoPlayerView: View {
     let aweme: Aweme
-    let playlist: [Aweme]
-    var isModal: Bool = false
-    let onClose: () -> Void
-    var isActive: Bool = true
     var onPrevious: (() -> Void)? = nil
     var onNext: (() -> Void)? = nil
     
-    @EnvironmentObject var api: DouyinAPI
     @StateObject private var manager = PlayerManager()
     @State private var isLiked: Bool = false
     @State private var showCommentsOverlay: Bool = false
-    @State private var showAuthorWorks: Bool = false
     
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             
-            if isActive {
-                NativeAVPlayerView(
-                    player: manager.player,
-                    aweme: aweme,
-                    isLiked: $isLiked,
-                    showCommentsOverlay: $showCommentsOverlay,
-                    showAuthorWorks: $showAuthorWorks,
-                    onPrevious: onPrevious,
-                    onNext: onNext
-                )
-                .ignoresSafeArea()
-            } else {
-                // 封面图，同时承担未激活时的背景
-                AsyncImage(url: URL(string: aweme.video?.cover?.url_list?.first ?? "")) { img in
-                    img.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.black
-                }
-                .ignoresSafeArea()
-            }
+            NativeAVPlayerView(
+                player: manager.player,
+                isLiked: $isLiked,
+                showCommentsOverlay: $showCommentsOverlay,
+                onPrevious: onPrevious,
+                onNext: onNext
+            )
+            .ignoresSafeArea()
             
             if showCommentsOverlay {
                 HStack {
@@ -133,33 +107,13 @@ struct VideoPlayerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            if isActive { 
-                if manager.player == nil {
-                    manager.setup(aweme: aweme) 
-                } else {
-                    manager.play()
-                }
-            } 
+            manager.setup(aweme: aweme)
         }
-        .onDisappear { 
-            // 切换 Tab 时只暂停，不销毁，避免返回时重新加载导致严重卡顿
-            manager.pause() 
+        .onDisappear {
+            manager.cleanup()
         }
         .onChange(of: aweme.aweme_id) { _ in
-            if isActive {
-                manager.setup(aweme: aweme)
-            }
-        }
-        .onChange(of: isActive) { active in
-            if active { 
-                if manager.player == nil {
-                    manager.setup(aweme: aweme) 
-                } else {
-                    manager.play()
-                }
-            } else { 
-                manager.cleanup() // 只有当滚动离开当前视频时才销毁
-            }
+            manager.setup(aweme: aweme)
         }
     }
 }
@@ -218,10 +172,8 @@ final class RemotePlayerViewController: AVPlayerViewController {
 
 struct NativeAVPlayerView: UIViewControllerRepresentable {
     let player: AVPlayer
-    let aweme: Aweme
     @Binding var isLiked: Bool
     @Binding var showCommentsOverlay: Bool
-    @Binding var showAuthorWorks: Bool
     let onPrevious: (() -> Void)?
     let onNext: (() -> Void)?
     
@@ -272,11 +224,7 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         let commentAction = UIAction(title: "评论", image: UIImage(systemName: "message.fill")) { _ in
             withAnimation { showCommentsOverlay.toggle() }
         }
-        let authorAction = UIAction(title: "主页", image: UIImage(systemName: "person.crop.circle.fill")) { _ in
-            showAuthorWorks = true
-        }
-        
-        menuItems.append(contentsOf: [likeAction, commentAction, authorAction])
+        menuItems.append(contentsOf: [likeAction, commentAction])
         controller.transportBarCustomMenuItems = menuItems
     }
 }

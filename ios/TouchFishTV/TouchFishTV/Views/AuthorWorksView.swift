@@ -107,14 +107,7 @@ struct AuthorWorksView: View {
             }
         }
         .fullScreenCover(item: $selectedVideo) { aweme in
-            VideoPlayerView(
-                aweme: aweme,
-                playlist: list,
-                isModal: true,
-                onClose: {
-                    self.selectedVideo = nil
-                }
-            )
+            VideoPlayerView(aweme: aweme)
         }
         .onAppear {
             Task {

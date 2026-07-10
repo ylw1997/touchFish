@@ -67,14 +67,7 @@ struct FavoritesView: View {
         }
         .fullScreenCover(item: $selectedVideo) { aweme in
             // 打开沉浸式全屏播放器
-            VideoPlayerView(
-                aweme: aweme,
-                playlist: list,
-                isModal: true,
-                onClose: {
-                    self.selectedVideo = nil
-                }
-            )
+            VideoPlayerView(aweme: aweme)
         }
         .onAppear {
             if list.isEmpty {
