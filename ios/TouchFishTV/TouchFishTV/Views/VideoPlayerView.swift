@@ -78,6 +78,8 @@ struct VideoPlayerView: View {
     var isModal: Bool = false
     let onClose: () -> Void
     var isActive: Bool = true
+    var onPrevious: (() -> Void)? = nil
+    var onNext: (() -> Void)? = nil
     
     @EnvironmentObject var api: DouyinAPI
     @StateObject private var manager = PlayerManager()
@@ -95,7 +97,9 @@ struct VideoPlayerView: View {
                     aweme: aweme,
                     isLiked: $isLiked,
                     showCommentsOverlay: $showCommentsOverlay,
-                    showAuthorWorks: $showAuthorWorks
+                    showAuthorWorks: $showAuthorWorks,
+                    onPrevious: onPrevious,
+                    onNext: onNext
                 )
                 .ignoresSafeArea()
             } else {
@@ -160,36 +164,108 @@ struct VideoPlayerView: View {
     }
 }
 
+final class RemotePlayerViewController: AVPlayerViewController {
+    var onPrevious: (() -> Void)?
+    var onNext: (() -> Void)?
+
+    override func pressesBegan(
+        _ presses: Set<UIPress>,
+        with event: UIPressesEvent?
+    ) {
+        guard !isPlaybackControlFocused else {
+            super.pressesBegan(presses, with: event)
+            return
+        }
+
+        var unhandledPresses = presses
+        for press in presses {
+            switch press.type {
+            case .upArrow:
+                onPrevious?()
+                unhandledPresses.remove(press)
+            case .downArrow:
+                onNext?()
+                unhandledPresses.remove(press)
+            default:
+                break
+            }
+        }
+
+        if !unhandledPresses.isEmpty {
+            super.pressesBegan(unhandledPresses, with: event)
+        }
+    }
+
+    private var isPlaybackControlFocused: Bool {
+        guard var focusedView = UIFocusSystem.focusSystem(for: view)?.focusedItem as? UIView else {
+            return false
+        }
+
+        while focusedView !== view {
+            if focusedView is UIControl
+                || focusedView.accessibilityTraits.contains(.button)
+                || focusedView.accessibilityTraits.contains(.adjustable) {
+                return true
+            }
+
+            guard let superview = focusedView.superview else { break }
+            focusedView = superview
+        }
+
+        return false
+    }
+}
+
 struct NativeAVPlayerView: UIViewControllerRepresentable {
     let player: AVPlayer
     let aweme: Aweme
     @Binding var isLiked: Bool
     @Binding var showCommentsOverlay: Bool
     @Binding var showAuthorWorks: Bool
+    let onPrevious: (() -> Void)?
+    let onNext: (() -> Void)?
     
-    func makeUIViewController(context: Context) -> AVPlayerViewController {
-        let controller = AVPlayerViewController()
+    func makeUIViewController(context: Context) -> RemotePlayerViewController {
+        let controller = RemotePlayerViewController()
         controller.player = player
         controller.showsPlaybackControls = true
+        controller.onPrevious = onPrevious
+        controller.onNext = onNext
         
         updateTransportBarMenuItems(controller: controller)
         return controller
     }
     
-    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
+    func updateUIViewController(_ uiViewController: RemotePlayerViewController, context: Context) {
         if uiViewController.player !== player {
             uiViewController.player = player
         }
+        uiViewController.onPrevious = onPrevious
+        uiViewController.onNext = onNext
         updateTransportBarMenuItems(controller: uiViewController)
     }
     
-    private func updateTransportBarMenuItems(controller: AVPlayerViewController) {
-        let prevAction = UIAction(title: "上一个视频", image: UIImage(systemName: "backward.end.fill")) { _ in
-            NotificationCenter.default.post(name: NSNotification.Name("requestScrollToPrevious"), object: nil)
+    private func updateTransportBarMenuItems(controller: RemotePlayerViewController) {
+        var menuItems: [UIMenuElement] = []
+
+        if let onPrevious {
+            menuItems.append(UIAction(
+                title: "上一个视频",
+                image: UIImage(systemName: "backward.end.fill")
+            ) { _ in
+                onPrevious()
+            })
         }
-        let nextAction = UIAction(title: "下一个视频", image: UIImage(systemName: "forward.end.fill")) { _ in
-            NotificationCenter.default.post(name: NSNotification.Name("requestScrollToNext"), object: nil)
+
+        if let onNext {
+            menuItems.append(UIAction(
+                title: "下一个视频",
+                image: UIImage(systemName: "forward.end.fill")
+            ) { _ in
+                onNext()
+            })
         }
+
         let likeAction = UIAction(title: "喜欢", image: UIImage(systemName: isLiked ? "heart.fill" : "heart")) { _ in
             isLiked.toggle()
         }
@@ -200,7 +276,8 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
             showAuthorWorks = true
         }
         
-        controller.transportBarCustomMenuItems = [prevAction, nextAction, likeAction, commentAction, authorAction]
+        menuItems.append(contentsOf: [likeAction, commentAction, authorAction])
+        controller.transportBarCustomMenuItems = menuItems
     }
 }
 
