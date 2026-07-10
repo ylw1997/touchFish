@@ -62,9 +62,17 @@ struct DouyinFeedView: View {
     }
 
     private func playNext() {
-        guard activeIndex + 1 < list.count else { return }
-        activeIndex += 1
-        checkPreload()
+        if activeIndex + 1 < list.count {
+            activeIndex += 1
+            checkPreload()
+        } else {
+            // 已在最后一个视频，若还有更多且当前不在加载中，则触发加载并自动跳转至新视频播放
+            if hasMore && !isLoading {
+                Task {
+                    await loadFeed(isRefresh: false, autoPlayNextAfterLoad: true)
+                }
+            }
+        }
     }
     
     private func checkPreload() {
@@ -75,7 +83,7 @@ struct DouyinFeedView: View {
         }
     }
     
-    private func loadFeed(isRefresh: Bool) async {
+    private func loadFeed(isRefresh: Bool, autoPlayNextAfterLoad: Bool = false) async {
         guard !isLoading else { return }
         
         await MainActor.run {
@@ -99,6 +107,7 @@ struct DouyinFeedView: View {
         }
         
         await MainActor.run {
+            var addedCount = 0
             if isRefresh {
                 self.list = awemes
                 self.activeIndex = 0
@@ -107,11 +116,19 @@ struct DouyinFeedView: View {
                 let newAwemes = awemes.filter { newAweme in
                     !self.list.contains(where: { $0.aweme_id == newAweme.aweme_id })
                 }
+                addedCount = newAwemes.count
                 self.list.append(contentsOf: newAwemes)
             }
             self.maxCursor = nextCursor
             self.hasMore = more
             self.isLoading = false
+            
+            // 如果是在最后一个视频按了“下”触发的加载，且成功加载到了新视频，则自动播放下一首
+            if autoPlayNextAfterLoad && addedCount > 0 {
+                if self.activeIndex + 1 < self.list.count {
+                    self.activeIndex += 1
+                }
+            }
         }
     }
 }
