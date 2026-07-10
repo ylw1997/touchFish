@@ -123,7 +123,7 @@ final class RemotePlayerViewController: AVPlayerViewController {
         _ presses: Set<UIPress>,
         with event: UIPressesEvent?
     ) {
-        guard !isPlaybackControlFocused else {
+        guard shouldHandleVideoNavigation else {
             super.pressesBegan(presses, with: event)
             return
         }
@@ -145,6 +145,14 @@ final class RemotePlayerViewController: AVPlayerViewController {
         if !unhandledPresses.isEmpty {
             super.pressesBegan(unhandledPresses, with: event)
         }
+    }
+
+    private var shouldHandleVideoNavigation: Bool {
+        guard let player, player.timeControlStatus != .paused else {
+            return false
+        }
+
+        return !isPlaybackControlFocused
     }
 
     private var isPlaybackControlFocused: Bool {
