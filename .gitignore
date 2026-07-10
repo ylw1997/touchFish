@@ -23,4 +23,5 @@ touchfish-*.vsix
 xapi/
 APIS/
 .claude/
+.worktrees/
 server/
