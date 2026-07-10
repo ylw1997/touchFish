@@ -198,12 +198,7 @@ export default function DouyinApp() {
             scrollContainerRef.current.scrollTop = 0;
           }
         } else {
-          setList((prev) => {
-            const newItems = res.aweme_list.filter((item: any) => 
-              !prev.some((p: any) => (p.aweme_id || p.id) === (item.aweme_id || item.id))
-            );
-            return [...prev, ...newItems];
-          });
+          setList((prev) => [...prev, ...res.aweme_list]);
         }
         setHasMore(true);
       } else {
@@ -228,12 +223,7 @@ export default function DouyinApp() {
         if (isRefresh) {
           setList(res.aweme_list);
         } else {
-          setList((prev) => {
-            const newItems = res.aweme_list.filter((item: any) => 
-              !prev.some((p: any) => (p.aweme_id || p.id) === (item.aweme_id || item.id))
-            );
-            return [...prev, ...newItems];
-          });
+          setList((prev) => [...prev, ...res.aweme_list]);
         }
         setMaxCursor(res.max_cursor || 0);
         setHasMore(res.has_more === 1 || res.has_more === true);

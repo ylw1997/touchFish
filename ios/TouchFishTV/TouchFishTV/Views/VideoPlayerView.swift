@@ -3,9 +3,8 @@ import AVKit
 
 @MainActor
 final class PlayerManager: ObservableObject {
-    let player = AVQueuePlayer()
+    let player = AVPlayer()
 
-    private var playerLooper: AVPlayerLooper?
     private var currentAwemeId: String?
     private var playbackGeneration: UInt = 0
     
@@ -46,7 +45,7 @@ final class PlayerManager: ObservableObject {
 
         guard generation == playbackGeneration else { return }
 
-        playerLooper = AVPlayerLooper(player: player, templateItem: playerItem)
+        player.replaceCurrentItem(with: playerItem)
         player.automaticallyWaitsToMinimizeStalling = true
         player.play()
     }
@@ -59,9 +58,7 @@ final class PlayerManager: ObservableObject {
 
     private func stopCurrentItem() {
         player.pause()
-        playerLooper?.disableLooping()
-        playerLooper = nil
-        player.removeAllItems()
+        player.replaceCurrentItem(with: nil)
     }
     
     private func score(for url: String) -> Int {
@@ -144,6 +141,10 @@ struct VideoPlayerView: View {
         }
         .onChange(of: aweme.aweme_id) { _ in
             manager.setup(aweme: aweme)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
+            guard let item = notification.object as? AVPlayerItem, item == manager.player.currentItem else { return }
+            onNext?()
         }
     }
 }
