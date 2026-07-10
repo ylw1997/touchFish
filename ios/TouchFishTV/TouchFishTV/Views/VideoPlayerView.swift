@@ -59,9 +59,6 @@ final class PlayerManager: ObservableObject {
         player.removeAllItems()
     }
     
-    deinit {
-        cleanup()
-    }
 }
 
 struct VideoPlayerView: View {
