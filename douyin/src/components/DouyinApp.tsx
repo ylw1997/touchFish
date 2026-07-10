@@ -198,7 +198,12 @@ export default function DouyinApp() {
             scrollContainerRef.current.scrollTop = 0;
           }
         } else {
-          setList((prev) => [...prev, ...res.aweme_list]);
+          setList((prev) => {
+            const newItems = res.aweme_list.filter((item: any) => 
+              !prev.some((p: any) => (p.aweme_id || p.id) === (item.aweme_id || item.id))
+            );
+            return [...prev, ...newItems];
+          });
         }
         setHasMore(true);
       } else {
@@ -223,7 +228,12 @@ export default function DouyinApp() {
         if (isRefresh) {
           setList(res.aweme_list);
         } else {
-          setList((prev) => [...prev, ...res.aweme_list]);
+          setList((prev) => {
+            const newItems = res.aweme_list.filter((item: any) => 
+              !prev.some((p: any) => (p.aweme_id || p.id) === (item.aweme_id || item.id))
+            );
+            return [...prev, ...newItems];
+          });
         }
         setMaxCursor(res.max_cursor || 0);
         setHasMore(res.has_more === 1 || res.has_more === true);

@@ -20,10 +20,14 @@ final class PlayerManager: ObservableObject {
         stopCurrentItem()
         currentAwemeId = aweme.aweme_id
 
-        guard
-            let urlString = aweme.video?.play_addr?.url_list?.first,
-            let playURL = URL(string: urlString)
-        else {
+        let urls = aweme.video?.play_addr?.url_list ?? []
+        let sortedUrls = urls.compactMap { URL(string: $0) }.sorted { url1, url2 in
+            let score1 = score(for: url1.absoluteString)
+            let score2 = score(for: url2.absoluteString)
+            return score1 > score2
+        }
+
+        guard let playURL = sortedUrls.first else {
             currentAwemeId = nil
             return
         }
@@ -58,6 +62,13 @@ final class PlayerManager: ObservableObject {
         playerLooper?.disableLooping()
         playerLooper = nil
         player.removeAllItems()
+    }
+    
+    private func score(for url: String) -> Int {
+        if url.contains("/aweme/v1/play/") { return 3 }
+        if url.contains("douyinvod.com") { return 2 }
+        if url.contains("douyin.com") { return 1 }
+        return 0
     }
 
     private func playbackMetadata(for aweme: Aweme) -> [AVMetadataItem] {
