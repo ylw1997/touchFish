@@ -9,7 +9,7 @@ final class PlayerManager: ObservableObject {
     private var playbackGeneration: UInt = 0
     
     func setup(aweme: Aweme) {
-        if currentAwemeId == aweme.aweme_id, !player.items().isEmpty {
+        if currentAwemeId == aweme.aweme_id, player.currentItem != nil {
             player.play()
             return
         }
