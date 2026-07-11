@@ -95,10 +95,30 @@ struct VideoPlayerView: View {
     let aweme: Aweme
     var onPrevious: (() -> Void)? = nil
     var onNext: (() -> Void)? = nil
-    
+    var onLikeChanged: ((String, Bool) -> Void)? = nil
+
+    @EnvironmentObject private var api: DouyinAPI
     @StateObject private var manager = PlayerManager()
-    @State private var isLiked: Bool = false
+    @State private var isLiked: Bool
+    @State private var isLiking: Bool = false
     @State private var showCommentsOverlay: Bool = false
+    @State private var wasPlayingBeforeComments: Bool = false
+    @State private var showAuthorWorks: Bool = false
+    @State private var authorImage: UIImage?
+    @State private var actionError: String?
+
+    init(
+        aweme: Aweme,
+        onPrevious: (() -> Void)? = nil,
+        onNext: (() -> Void)? = nil,
+        onLikeChanged: ((String, Bool) -> Void)? = nil
+    ) {
+        self.aweme = aweme
+        self.onPrevious = onPrevious
+        self.onNext = onNext
+        self.onLikeChanged = onLikeChanged
+        _isLiked = State(initialValue: aweme.user_digg == 1)
+    }
     
     var body: some View {
         ZStack {
@@ -108,6 +128,12 @@ struct VideoPlayerView: View {
                 player: manager.player,
                 isLiked: $isLiked,
                 showCommentsOverlay: $showCommentsOverlay,
+                authorName: aweme.author?.nickname ?? "作者主页",
+                authorImage: authorImage,
+                isLiking: isLiking,
+                blocksVideoNavigation: showCommentsOverlay,
+                onOpenAuthor: openAuthorWorks,
+                onToggleLike: toggleLike,
                 onPrevious: onPrevious,
                 onNext: onNext
             )
@@ -116,20 +142,29 @@ struct VideoPlayerView: View {
             if showCommentsOverlay {
                 HStack {
                     Spacer()
-                    VStack {
-                        Text("评论区")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.top, 40)
-                            .padding(.bottom, 10)
-                        CommentsListSmallView(awemeId: aweme.aweme_id)
-                    }
-                    .frame(width: 450)
-                    .background(Color.black.opacity(0.6).background(.ultraThinMaterial))
-                    .ignoresSafeArea()
+                    CommentsView(
+                        awemeId: aweme.aweme_id,
+                        onClose: closeComments
+                    )
                 }
                 .transition(.move(edge: .trailing))
                 .zIndex(100)
+            }
+
+            if let actionError {
+                VStack {
+                    Spacer()
+                    Text(actionError)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 14)
+                        .background(Color.red.opacity(0.85))
+                        .cornerRadius(12)
+                        .padding(.bottom, 70)
+                }
+                .allowsHitTesting(false)
+                .zIndex(200)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -140,18 +175,134 @@ struct VideoPlayerView: View {
             manager.cleanup()
         }
         .onChange(of: aweme.aweme_id) { _ in
+            isLiked = aweme.user_digg == 1
+            showCommentsOverlay = false
             manager.setup(aweme: aweme)
+        }
+        .onChange(of: showCommentsOverlay) { isPresented in
+            if isPresented {
+                wasPlayingBeforeComments = manager.player.timeControlStatus != .paused
+                manager.player.pause()
+            } else if wasPlayingBeforeComments {
+                manager.player.play()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             guard let item = notification.object as? AVPlayerItem, item == manager.player.currentItem else { return }
             onNext?()
         }
+        .task(id: aweme.author?.avatar_thumb?.url_list?.first) {
+            await loadAuthorImage()
+        }
+        .fullScreenCover(isPresented: $showAuthorWorks) {
+            if let author = aweme.author {
+                AuthorWorksView(author: author) {
+                    showAuthorWorks = false
+                }
+            }
+        }
     }
+
+    private func closeComments() {
+        withAnimation {
+            showCommentsOverlay = false
+        }
+    }
+
+    private func openAuthorWorks() {
+        guard aweme.author != nil else {
+            showActionError("当前视频没有作者信息")
+            return
+        }
+        showAuthorWorks = true
+    }
+
+    private func toggleLike() {
+        guard !isLiking else { return }
+        isLiking = true
+        let targetLiked = !isLiked
+
+        Task {
+            do {
+                try await api.likeVideo(awemeId: aweme.aweme_id, type: targetLiked ? 1 : 0)
+                isLiked = targetLiked
+                onLikeChanged?(aweme.aweme_id, targetLiked)
+            } catch {
+                showActionError("喜欢操作失败：\(error.localizedDescription)")
+            }
+            isLiking = false
+        }
+    }
+
+    private func showActionError(_ message: String) {
+        actionError = message
+        Task {
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            if actionError == message {
+                actionError = nil
+            }
+        }
+    }
+
+    private func loadAuthorImage() async {
+        authorImage = nil
+        guard
+            let urlString = aweme.author?.avatar_thumb?.url_list?.first,
+            let url = URL(string: urlString)
+        else { return }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard !Task.isCancelled else { return }
+            authorImage = UIImage(data: data)?.withRenderingMode(.alwaysOriginal)
+        } catch {
+            // 头像失败时保留系统人物图标，不影响作者主页入口。
+        }
+    }
+}
+
+private final class PlayerFocusAnchorView: UIView {
+    override var canBecomeFocused: Bool { true }
 }
 
 final class RemotePlayerViewController: AVPlayerViewController {
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
+    var blocksVideoNavigation = false
+    private var prefersPlayerFocus = true
+    private let focusAnchor = PlayerFocusAnchorView()
+
+    override var preferredFocusEnvironments: [UIFocusEnvironment] {
+        prefersPlayerFocus ? [focusAnchor] : super.preferredFocusEnvironments
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        focusAnchor.translatesAutoresizingMaskIntoConstraints = false
+        focusAnchor.backgroundColor = .clear
+        focusAnchor.isAccessibilityElement = false
+        view.addSubview(focusAnchor)
+        NSLayoutConstraint.activate([
+            focusAnchor.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            focusAnchor.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            focusAnchor.widthAnchor.constraint(equalToConstant: 1),
+            focusAnchor.heightAnchor.constraint(equalToConstant: 1)
+        ])
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        DispatchQueue.main.async { [weak self] in
+            self?.requestPlayerFocus()
+        }
+    }
+
+    func requestPlayerFocus() {
+        prefersPlayerFocus = true
+        setNeedsFocusUpdate()
+        updateFocusIfNeeded()
+        prefersPlayerFocus = false
+    }
 
     override func pressesBegan(
         _ presses: Set<UIPress>,
@@ -182,7 +333,9 @@ final class RemotePlayerViewController: AVPlayerViewController {
     }
 
     private var shouldHandleVideoNavigation: Bool {
-        guard let player, player.timeControlStatus != .paused else {
+        guard !blocksVideoNavigation,
+              let player,
+              player.timeControlStatus != .paused else {
             return false
         }
 
@@ -213,6 +366,12 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
     let player: AVPlayer
     @Binding var isLiked: Bool
     @Binding var showCommentsOverlay: Bool
+    let authorName: String
+    let authorImage: UIImage?
+    let isLiking: Bool
+    let blocksVideoNavigation: Bool
+    let onOpenAuthor: () -> Void
+    let onToggleLike: () -> Void
     let onPrevious: (() -> Void)?
     let onNext: (() -> Void)?
     
@@ -223,6 +382,7 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         controller.transportBarIncludesTitleView = true
         controller.onPrevious = onPrevious
         controller.onNext = onNext
+        controller.blocksVideoNavigation = blocksVideoNavigation
         
         updateTransportBarMenuItems(controller: controller)
         return controller
@@ -235,97 +395,31 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         uiViewController.transportBarIncludesTitleView = true
         uiViewController.onPrevious = onPrevious
         uiViewController.onNext = onNext
+        let wasBlockingNavigation = uiViewController.blocksVideoNavigation
+        uiViewController.blocksVideoNavigation = blocksVideoNavigation
         updateTransportBarMenuItems(controller: uiViewController)
+        if wasBlockingNavigation && !blocksVideoNavigation {
+            uiViewController.requestPlayerFocus()
+        }
     }
     
     private func updateTransportBarMenuItems(controller: RemotePlayerViewController) {
-        var menuItems: [UIMenuElement] = []
-
-        if let onPrevious {
-            menuItems.append(UIAction(
-                title: "上一个视频",
-                image: UIImage(systemName: "backward.end.fill")
-            ) { _ in
-                onPrevious()
-            })
+        let authorAction = UIAction(
+            title: authorName,
+            image: authorImage ?? UIImage(systemName: "person.crop.circle.fill")
+        ) { _ in
+            onOpenAuthor()
         }
-
-        if let onNext {
-            menuItems.append(UIAction(
-                title: "下一个视频",
-                image: UIImage(systemName: "forward.end.fill")
-            ) { _ in
-                onNext()
-            })
-        }
-
-        let likeAction = UIAction(title: "喜欢", image: UIImage(systemName: isLiked ? "heart.fill" : "heart")) { _ in
-            isLiked.toggle()
+        let likeAction = UIAction(
+            title: isLiked ? "取消喜欢" : "喜欢",
+            image: UIImage(systemName: isLiked ? "heart.fill" : "heart"),
+            attributes: isLiking ? .disabled : []
+        ) { _ in
+            onToggleLike()
         }
         let commentAction = UIAction(title: "评论", image: UIImage(systemName: "message.fill")) { _ in
             withAnimation { showCommentsOverlay.toggle() }
         }
-        menuItems.append(contentsOf: [likeAction, commentAction])
-        controller.transportBarCustomMenuItems = menuItems
-    }
-}
-
-
-struct CommentsListSmallView: View {
-    let awemeId: String
-    @EnvironmentObject var api: DouyinAPI
-    @State private var comments: [Comment] = []
-    @State private var isLoading: Bool = false
-    
-    var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 15) {
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .padding(.top, 50)
-                } else if comments.isEmpty {
-                    Text("暂无评论")
-                        .foregroundColor(.gray)
-                        .padding(.top, 50)
-                } else {
-                    ForEach(comments) { comment in
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack {
-                                AsyncImage(url: URL(string: comment.user?.avatar_thumb?.url_list?.first ?? "")) { img in
-                                    img.resizable()
-                                } placeholder: {
-                                    Circle().fill(Color.gray.opacity(0.3))
-                                }
-                                .frame(width: 24, height: 24)
-                                .clipShape(Circle())
-                                
-                                Text(comment.user?.nickname ?? "未知用户")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            Text(comment.text ?? "")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.9))
-                                .lineLimit(nil)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(.leading, 32)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 20)
-        }
-        .onAppear {
-            Task {
-                isLoading = true
-                let (list, _, _, _) = await api.getComments(awemeId: awemeId, cursor: 0)
-                await MainActor.run {
-                    self.comments = list
-                    self.isLoading = false
-                }
-            }
-        }
+        controller.transportBarCustomMenuItems = [authorAction, likeAction, commentAction]
     }
 }

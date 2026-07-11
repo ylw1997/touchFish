@@ -5,6 +5,7 @@ struct SettingsView: View {
     @State private var inputCookie: String = ""
     @State private var showSaveAlert: Bool = false
     @State private var alertMessage: String = ""
+    @State private var isValidating: Bool = false
     @FocusState private var focusedField: Field?
     
     enum Field: Hashable {
@@ -59,11 +60,17 @@ struct SettingsView: View {
                 
                 HStack(spacing: 25) {
                     Button(action: saveCookie) {
-                        Label("保存设置", systemImage: "checkmark.circle.fill")
-                            .font(.headline)
-                            .padding(.horizontal, 10)
+                        if isValidating {
+                            ProgressView()
+                                .padding(.horizontal, 36)
+                        } else {
+                            Label("验证并保存", systemImage: "checkmark.circle.fill")
+                                .font(.headline)
+                                .padding(.horizontal, 10)
+                        }
                     }
                     .focused($focusedField, equals: .saveBtn)
+                    .disabled(isValidating)
                     
                     Button(action: clearCookie) {
                         Label("清空 Cookie", systemImage: "trash.fill")
@@ -72,6 +79,7 @@ struct SettingsView: View {
                             .padding(.horizontal, 10)
                     }
                     .focused($focusedField, equals: .clearBtn)
+                    .disabled(isValidating)
                 }
                 
                 Spacer()
@@ -93,15 +101,21 @@ struct SettingsView: View {
     }
     
     private func saveCookie() {
-        let trimmed = inputCookie.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty {
-            alertMessage = "Cookie 不能为空，请粘贴有效的 Cookie 内容"
+        guard !isValidating else { return }
+        isValidating = true
+
+        Task {
+            defer { isValidating = false }
+            do {
+                let validatedCookie = try await api.validateCookie(inputCookie)
+                inputCookie = validatedCookie
+                api.cookie = validatedCookie
+                alertMessage = "Cookie 验证成功，视频数据正在刷新"
+            } catch {
+                alertMessage = "Cookie 验证失败：\(error.localizedDescription)"
+            }
             showSaveAlert = true
-            return
         }
-        api.cookie = trimmed
-        alertMessage = "Cookie 保存成功，数据已生效！"
-        showSaveAlert = true
     }
     
     private func clearCookie() {

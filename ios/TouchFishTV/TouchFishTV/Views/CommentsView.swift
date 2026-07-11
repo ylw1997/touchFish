@@ -2,12 +2,15 @@ import SwiftUI
 
 struct CommentsView: View {
     let awemeId: String
+    let onClose: () -> Void
     @EnvironmentObject var api: DouyinAPI
     @State private var comments: [Comment] = []
     @State private var cursor: Int = 0
     @State private var hasMore: Bool = true
     @State private var totalCount: Int = 0
     @State private var isLoading: Bool = false
+    @State private var errorMessage: String?
+    @FocusState private var closeButtonFocused: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -21,17 +24,36 @@ struct CommentsView: View {
                     ProgressView()
                         .scaleEffect(0.6)
                 }
+                Button(action: onClose) {
+                    Label("关闭评论", systemImage: "xmark.circle.fill")
+                }
+                .focused($closeButtonFocused)
             }
             .padding()
             .background(Color.white.opacity(0.05))
+
+            if let errorMessage, !comments.isEmpty {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.white)
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.red.opacity(0.7))
+            }
             
             // 评论列表
             if comments.isEmpty && !isLoading {
                 VStack {
                     Spacer()
-                    Text("还没有人评论，快来抢沙发吧！")
+                    Text(errorMessage ?? "还没有人评论")
                         .foregroundColor(.gray)
                         .font(.body)
+                    if errorMessage != nil {
+                        Button("重新加载") {
+                            Task { await loadComments(isRefresh: true) }
+                        }
+                    }
                     Spacer()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -126,28 +148,37 @@ struct CommentsView: View {
         .padding(.vertical, 20)
         .padding(.trailing, 20)
         .onAppear {
+            closeButtonFocused = true
             Task {
                 await loadComments(isRefresh: true)
             }
         }
+        .onExitCommand(perform: onClose)
     }
     
     private func loadComments(isRefresh: Bool) async {
         guard !isLoading else { return }
         isLoading = true
+        errorMessage = nil
         let requestCursor = isRefresh ? 0 : cursor
-        let (list, nextCursor, hasMoreComments, total) = await api.getComments(awemeId: awemeId, cursor: requestCursor)
-        
-        await MainActor.run {
-            if isRefresh {
-                self.comments = list
-            } else {
-                self.comments.append(contentsOf: list)
+        do {
+            let (list, nextCursor, hasMoreComments, total) = try await api.getComments(awemeId: awemeId, cursor: requestCursor)
+            await MainActor.run {
+                if isRefresh {
+                    self.comments = list
+                } else {
+                    self.comments.append(contentsOf: list)
+                }
+                self.cursor = nextCursor
+                self.hasMore = hasMoreComments
+                self.totalCount = total
+                self.isLoading = false
             }
-            self.cursor = nextCursor
-            self.hasMore = hasMoreComments
-            self.totalCount = total
-            self.isLoading = false
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
         }
     }
     

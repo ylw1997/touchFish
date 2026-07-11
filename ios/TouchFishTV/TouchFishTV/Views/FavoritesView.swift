@@ -6,6 +6,8 @@ struct FavoritesView: View {
     @State private var maxCursor: Int = 0
     @State private var hasMore: Bool = true
     @State private var isLoading: Bool = false
+    @State private var errorMessage: String?
+    @State private var dataGeneration: UInt = 0
     
     // 选中的播放视频
     @State private var selectedVideo: Aweme? = nil
@@ -17,13 +19,17 @@ struct FavoritesView: View {
     var body: some View {
         ZStack {
             if list.isEmpty && !isLoading {
-                VStack(spacing: 20) {
-                    Image(systemName: "heart.slash.fill")
+                VStack(spacing: 24) {
+                    Image(systemName: errorMessage == nil ? "heart.slash.fill" : "exclamationmark.triangle.fill")
                         .font(.system(size: 80))
-                        .foregroundColor(.gray)
-                    Text("暂无喜欢的视频，请先在“设置”中配置 Cookie")
+                        .foregroundColor(errorMessage == nil ? .gray : .orange)
+                    Text(errorMessage ?? "暂无喜欢的视频")
                         .font(.title3)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                    Button("重新加载") {
+                        Task { await loadFavorites(isRefresh: true) }
+                    }
                 }
             } else {
                 ScrollView {
@@ -34,7 +40,7 @@ struct FavoritesView: View {
                             .padding(.leading, 20)
                         
                         LazyVGrid(columns: columns, spacing: 50) {
-                            ForEach(list) { aweme in
+                            ForEach(Array(list.enumerated()), id: \.offset) { index, aweme in
                                 Button(action: {
                                     self.selectedVideo = aweme
                                 }) {
@@ -42,7 +48,7 @@ struct FavoritesView: View {
                                 }
                                 .buttonStyle(.card) // tvOS 专属系统卡片样式，包含自动焦点缩放与视差效果
                                 .onAppear {
-                                    if aweme.id == list.last?.id && hasMore && !isLoading {
+                                    if index == list.indices.last && hasMore && !isLoading {
                                         Task {
                                             await loadFavorites(isRefresh: false)
                                         }
@@ -64,10 +70,24 @@ struct FavoritesView: View {
                     .padding(.vertical, 40)
                 }
             }
+
+            if let errorMessage, !list.isEmpty {
+                VStack {
+                    Spacer()
+                    Text(errorMessage)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.red.opacity(0.82))
+                        .cornerRadius(12)
+                        .padding(.bottom, 36)
+                }
+                .allowsHitTesting(false)
+            }
         }
         .fullScreenCover(item: $selectedVideo) { aweme in
             // 打开沉浸式全屏播放器
-            VideoPlayerView(aweme: aweme)
+            VideoPlayerView(aweme: aweme, onLikeChanged: updateLikeState)
         }
         .onAppear {
             if list.isEmpty {
@@ -76,27 +96,52 @@ struct FavoritesView: View {
                 }
             }
         }
+        .onChange(of: api.cookieRevision) { _ in
+            dataGeneration &+= 1
+            isLoading = false
+            list = []
+            maxCursor = 0
+            hasMore = true
+            errorMessage = nil
+            Task { await loadFavorites(isRefresh: true) }
+        }
     }
     
     private func loadFavorites(isRefresh: Bool) async {
         guard !isLoading else { return }
+        let requestGeneration = dataGeneration
         
         await MainActor.run {
             isLoading = true
+            errorMessage = nil
         }
         
         let cursor = isRefresh ? 0 : maxCursor
-        let (awemes, nextCursor, more) = await api.getFavorites(maxCursor: cursor)
-        
-        await MainActor.run {
-            if isRefresh {
-                self.list = awemes
-            } else {
-                self.list.append(contentsOf: awemes)
+        do {
+            let (awemes, nextCursor, more) = try await api.getFavorites(maxCursor: cursor)
+            await MainActor.run {
+                guard requestGeneration == dataGeneration else { return }
+                if isRefresh {
+                    self.list = awemes
+                } else {
+                    self.list.append(contentsOf: awemes)
+                }
+                self.maxCursor = nextCursor
+                self.hasMore = more
+                self.isLoading = false
             }
-            self.maxCursor = nextCursor
-            self.hasMore = more
-            self.isLoading = false
+        } catch {
+            await MainActor.run {
+                guard requestGeneration == dataGeneration else { return }
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+
+    private func updateLikeState(awemeId: String, isLiked: Bool) {
+        for index in list.indices where list[index].aweme_id == awemeId {
+            list[index].user_digg = isLiked ? 1 : 0
         }
     }
 }

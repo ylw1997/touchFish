@@ -14,10 +14,12 @@ struct DouyinFeedView: View {
     @State private var hasMore: Bool = true
     @State private var isLoading: Bool = false
     
-    // 永远只有这一个 activeIndex，直接控制单一播放器的数据源
+    // 单一播放器由 activeIndex 驱动，避免多个视频同时播放。
     @State private var activeIndex: Int = 0
     @State private var showToast: Bool = false
     @State private var toastMessage: String = ""
+    @State private var errorMessage: String?
+    @State private var dataGeneration: UInt = 0
     
     var body: some View {
         ZStack {
@@ -28,24 +30,27 @@ struct DouyinFeedView: View {
                     ProgressView("正在载入视频...")
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    VStack(spacing: 20) {
-                        Image(systemName: "video.slash.fill")
+                    VStack(spacing: 24) {
+                        Image(systemName: errorMessage == nil ? "video.slash.fill" : "exclamationmark.triangle.fill")
                             .font(.system(size: 80))
-                            .foregroundColor(.gray)
-                        Text("无可用视频流，请配置您的 Cookie")
+                            .foregroundColor(errorMessage == nil ? .gray : .orange)
+                        Text(errorMessage ?? "当前没有可播放的视频")
                             .font(.title3)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.white.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                        Button("重新加载") {
+                            Task { await loadFeed(isRefresh: true) }
+                        }
                     }
                 }
             } else {
-                // 核心重构：彻底抛弃 ScrollView 和 List！
-                // 永远只实例化一个播放器，当按下下方向键时，只修改 activeIndex 数据源，
-                // 播放器内部会自动平滑切换到下个视频！这彻底解决了苹果焦点引擎乱弹和 Menu 键回退问题。
                 VideoPlayerView(
                     aweme: list[activeIndex],
                     onPrevious: playPrevious,
-                    onNext: playNext
+                    onNext: playNext,
+                    onLikeChanged: updateLikeState
                 )
+                .id(activeIndex)
                 .ignoresSafeArea()
                 
                 if isLoading {
@@ -82,6 +87,16 @@ struct DouyinFeedView: View {
                 }
             }
         }
+        .onChange(of: api.cookieRevision) { _ in
+            dataGeneration &+= 1
+            isLoading = false
+            list = []
+            activeIndex = 0
+            maxCursor = 0
+            hasMore = true
+            errorMessage = nil
+            Task { await loadFeed(isRefresh: true) }
+        }
     }
 
     private func playPrevious() {
@@ -110,42 +125,61 @@ struct DouyinFeedView: View {
             }
         }
     }
+
+    private func updateLikeState(awemeId: String, isLiked: Bool) {
+        for index in list.indices where list[index].aweme_id == awemeId {
+            list[index].user_digg = isLiked ? 1 : 0
+        }
+    }
     
     private func loadFeed(isRefresh: Bool, autoPlayNextAfterLoad: Bool = false) async {
         guard !isLoading else { return }
+        let requestGeneration = dataGeneration
         
         await MainActor.run {
             isLoading = true
+            errorMessage = nil
         }
         
         var awemes: [Aweme] = []
         var nextCursor = maxCursor
         var more = true
         
-        switch feedType {
-        case .recommend:
-            awemes = await api.getFeed()
-            nextCursor = 0
-            more = true
-        case .following:
-            let (followingAwemes, cursor, hasMoreFollowing) = await api.getFollowing(maxCursor: maxCursor)
-            awemes = followingAwemes
-            nextCursor = cursor
-            more = hasMoreFollowing
+        do {
+            switch feedType {
+            case .recommend:
+                awemes = try await api.getFeed()
+                nextCursor = 0
+                more = true
+            case .following:
+                let (followingAwemes, cursor, hasMoreFollowing) = try await api.getFollowing(maxCursor: maxCursor)
+                awemes = followingAwemes
+                nextCursor = cursor
+                more = hasMoreFollowing
+            }
+        } catch {
+            await MainActor.run {
+                guard requestGeneration == dataGeneration else { return }
+                if list.isEmpty {
+                    errorMessage = error.localizedDescription
+                } else {
+                    showToastMessage(error.localizedDescription)
+                }
+                isLoading = false
+            }
+            return
         }
         
         await MainActor.run {
+            guard requestGeneration == dataGeneration else { return }
             var addedCount = 0
             if isRefresh {
                 self.list = awemes
                 self.activeIndex = 0
+                addedCount = awemes.count
             } else {
-                // 去重，过滤掉已存在的视频，避免在列表中出现重复的视频项
-                let newAwemes = awemes.filter { newAweme in
-                    !self.list.contains(where: { $0.aweme_id == newAweme.aweme_id })
-                }
-                addedCount = newAwemes.count
-                self.list.append(contentsOf: newAwemes)
+                addedCount = awemes.count
+                self.list.append(contentsOf: awemes)
             }
             self.maxCursor = nextCursor
             self.hasMore = more
