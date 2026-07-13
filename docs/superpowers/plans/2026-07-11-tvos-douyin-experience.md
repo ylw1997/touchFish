@@ -4,7 +4,7 @@
 
 **Goal:** 收敛 Apple TV 抖音模块的原生播放器交互、Cookie 数据流、评论与作者主页，使遥控器操作清晰且功能与 Douyin Web 模块一致。
 
-**Architecture:** 保留 `AVPlayerViewController` 作为唯一播放控制器，在 transport bar 只暴露作者、喜欢、评论三项操作；SwiftUI 负责评论和作者主页的呈现。网络层改为显式抛出 HTTP、解析和抖音业务错误，Cookie 经过规范化与登录接口验证后再保存，并由各数据页监听变更后刷新。
+**Architecture:** 保留 `AVPlayerViewController` 作为唯一播放控制器，在 transport bar 只暴露作者和评论两项操作；SwiftUI 负责评论和作者主页的呈现。网络层改为显式抛出 HTTP、解析和抖音业务错误，Cookie 经过规范化与登录接口验证后再保存，并由各数据页监听变更后刷新。
 
 **Tech Stack:** SwiftUI、AVKit、Foundation URLSession、JavaScriptCore、tvOS 16+
 
@@ -52,7 +52,7 @@ Expected: 找到工具栏重复导航动作和播放器内重复评论列表。
 
 - [ ] **Step 2: 精简原生工具栏并统一评论视图**
 
-删除 transport bar 的上一个/下一个动作，保留作者、真实喜欢和评论；评论面板提供关闭按钮与 Menu/返回键关闭路径，并删除 `CommentsListSmallView`。
+删除 transport bar 的上一个/下一个和喜欢动作，仅保留作者与评论；评论面板提供关闭按钮与 Menu/返回键关闭路径，并删除 `CommentsListSmallView`。
 
 - [ ] **Step 3: 将初始焦点请求交给播放器**
 
@@ -64,7 +64,7 @@ Run: `rg -n "上一个视频|下一个视频|CommentsListSmallView|onExitCommand
 
 Expected: 前三项旧实现无匹配，存在评论退出和关闭入口。
 
-### Task 3: 视频列表策略与真实点赞
+### Task 3: 视频列表策略
 
 **Files:**
 - Modify: `ios/TouchFishTV/TouchFishTV/Views/DouyinFeedView.swift`
@@ -79,10 +79,6 @@ Expected: 找到对所有 feed 类型生效的去重代码。
 - [ ] **Step 2: 删除所有视频列表去重**
 
 推荐、关注、喜欢和作者作品接口每次返回的条目都按原顺序直接追加，允许相同视频重复出现。
-
-- [ ] **Step 3: 接通点赞 API**
-
-喜欢动作先进入请求中状态，接口成功后更新图标，失败保持原状态并显示错误，避免仅本地假喜欢。
 
 ### Task 4: 作者入口和作者作品播放
 
@@ -100,7 +96,7 @@ Expected: 找到对所有 feed 类型生效的去重代码。
 
 - [ ] **Step 3: 作者作品支持连续播放**
 
-从网格进入作品播放器后，上下键在作者作品列表内切换，并在接近末尾时继续加载。
+从网格进入作品播放器后，上下键仅在首次加载的作品集合内切换，不触发额外分页请求。
 
 ### Task 5: 整体清理与验证
 
@@ -128,4 +124,4 @@ Run: `xcodebuild -project ios/TouchFishTV/TouchFishTV.xcodeproj -scheme TouchFis
 
 Expected: `** BUILD SUCCEEDED **`。
 
-手工验收：启动焦点在视频；播放时上下切换；暂停时进入原生控制；评论可按钮或 Menu 关闭；所有视频列表允许重复；Cookie 保存后刷新；作者头像进入主页；喜欢失败时不会假成功。
+手工验收：启动焦点在视频；播放时上下切换；暂停时进入原生控制；评论可按钮或 Menu 关闭；所有视频列表允许重复；Cookie 保存后刷新；作者头像进入主页；作者作品不自动加载更多。

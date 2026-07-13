@@ -87,7 +87,7 @@ struct FavoritesView: View {
         }
         .fullScreenCover(item: $selectedVideo) { aweme in
             // 打开沉浸式全屏播放器
-            VideoPlayerView(aweme: aweme, onLikeChanged: updateLikeState)
+            VideoPlayerView(aweme: aweme)
         }
         .onAppear {
             if list.isEmpty {
@@ -139,11 +139,6 @@ struct FavoritesView: View {
         }
     }
 
-    private func updateLikeState(awemeId: String, isLiked: Bool) {
-        for index in list.indices where list[index].aweme_id == awemeId {
-            list[index].user_digg = isLiked ? 1 : 0
-        }
-    }
 }
 
 struct FavoriteGridCard: View {

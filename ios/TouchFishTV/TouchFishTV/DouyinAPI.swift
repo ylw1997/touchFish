@@ -182,36 +182,6 @@ class DouyinAPI: ObservableObject {
         return (res.comments ?? [], res.cursor ?? cursor, hasMore, res.total ?? 0)
     }
     
-    /// 点赞视频
-    func likeVideo(awemeId: String, type: Int) async throws {
-        guard !cookie.isEmpty else { throw APIError.emptyCookie }
-        let baseUrl = "https://www.douyin.com/aweme/v1/web/commit/item/digg/?device_platform=webapp&aid=6383&channel=channel_pc_web&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
-        let postDataStr = "aweme_id=\(awemeId)&type=\(type)"
-        
-        // 抖音点赞需要 csrf token 验证，防止 403 跨站伪造拦截
-        var csrfToken = ""
-        if let range = cookie.range(of: "passport_csrf_token=") {
-            let start = range.upperBound
-            let endStr = cookie[start...]
-            if let semicolon = endStr.range(of: ";") {
-                csrfToken = String(endStr[..<semicolon.lowerBound])
-            } else {
-                csrfToken = String(endStr)
-            }
-        }
-        
-        let extraHeaders = [
-            "Referer": "https://www.douyin.com/video/\(awemeId)",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "X-Secsdk-Csrf-Token": csrfToken
-        ]
-        
-        let bodyData = postDataStr.data(using: .utf8)
-        let fullUrlForSign = baseUrl + "&" + postDataStr
-        
-        let res: DiggResponse = try await request(url: fullUrlForSign, method: "POST", body: bodyData, extraHeaders: extraHeaders)
-        try validateStatus(res.status_code, message: res.status_msg)
-    }
 }
 
 // MARK: - Models
@@ -287,11 +257,6 @@ struct CommentsResponse: Decodable {
     let has_more: Int?
 }
 
-struct DiggResponse: Decodable {
-    let status_code: Int
-    let status_msg: String?
-}
-
 struct Aweme: Decodable, Identifiable, Equatable {
     var id: String { aweme_id }
     let aweme_id: String
@@ -299,7 +264,6 @@ struct Aweme: Decodable, Identifiable, Equatable {
     let author: Author?
     let video: Video?
     let statistics: Statistics?
-    var user_digg: Int? // 1: 喜欢, 0: 未喜欢
     
     enum CodingKeys: String, CodingKey {
         case aweme_id
@@ -307,7 +271,6 @@ struct Aweme: Decodable, Identifiable, Equatable {
         case author
         case video
         case statistics
-        case user_digg
     }
     
     init(from decoder: Decoder) throws {
@@ -317,14 +280,6 @@ struct Aweme: Decodable, Identifiable, Equatable {
         self.author = try container.decodeIfPresent(Author.self, forKey: .author)
         self.video = try container.decodeIfPresent(Video.self, forKey: .video)
         self.statistics = try container.decodeIfPresent(Statistics.self, forKey: .statistics)
-        
-        if let intVal = try? container.decode(Int.self, forKey: .user_digg) {
-            self.user_digg = intVal
-        } else if let boolVal = try? container.decode(Bool.self, forKey: .user_digg) {
-            self.user_digg = boolVal ? 1 : 0
-        } else {
-            self.user_digg = 0
-        }
     }
     
     static func == (lhs: Aweme, rhs: Aweme) -> Bool {

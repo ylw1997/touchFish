@@ -47,8 +47,7 @@ struct DouyinFeedView: View {
                 VideoPlayerView(
                     aweme: list[activeIndex],
                     onPrevious: playPrevious,
-                    onNext: playNext,
-                    onLikeChanged: updateLikeState
+                    onNext: playNext
                 )
                 .id(activeIndex)
                 .ignoresSafeArea()
@@ -126,12 +125,6 @@ struct DouyinFeedView: View {
         }
     }
 
-    private func updateLikeState(awemeId: String, isLiked: Bool) {
-        for index in list.indices where list[index].aweme_id == awemeId {
-            list[index].user_digg = isLiked ? 1 : 0
-        }
-    }
-    
     private func loadFeed(isRefresh: Bool, autoPlayNextAfterLoad: Bool = false) async {
         guard !isLoading else { return }
         let requestGeneration = dataGeneration
