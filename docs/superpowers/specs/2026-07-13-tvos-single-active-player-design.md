@@ -1,4 +1,4 @@
-# tvOS 抖音单活动播放器设计
+# tvOS 抖音全局单播放器设计
 
 ## 问题
 
@@ -9,7 +9,8 @@
 ## 目标
 
 - 保留当前原生 `TabView` 顶栏和页面样式。
-- 任意时刻只允许当前选中的标签拥有活动播放器。
+- 整个抖音模块只创建一个根级 `PlaybackCoordinator` 与 `AVPlayer`。
+- 任意时刻只允许当前选中的播放器视图取得该全局播放器的所有权。
 - 标签失活时立即停止播放、取消加载，并释放 `AVPlayerItem`。
 - 返回推荐或关注标签时，从该 Feed 当前视频重新开始播放。
 - 不改变上下切换、左右进度、弹幕和“我的喜欢”列表交互。
@@ -17,7 +18,12 @@
 ## 方案
 
 `ContentView` 使用带 `selection` 的 `TabView`，并为四个标签定义稳定标识。
-顶层把 `isActive` 传入推荐、关注和“我的喜欢”页面。
+顶层创建唯一 `PlaybackCoordinator`，通过 SwiftUI Environment 分发给推荐、关注和
+“我的喜欢”的播放器视图。页面不再自行创建播放器。
+
+每个 `VideoPlayerView` 创建一个稳定 UUID，与来源组成 `PlaybackOwner` 租约。播放器切换
+时记录当前租约；视图消失时只有租约仍匹配的视图才能停止播放器。这样即使旧页面的
+`onDisappear` 晚于新页面的 `onAppear` 到达，也不会误停新视频。
 
 `DouyinFeedView` 只有在 `isActive` 为真时才挂载 `VideoPlayerView`；失活后播放器视图
 从层级中移除，由现有 `onDisappear -> PlaybackCoordinator.stop()` 完成以下清理：
@@ -35,6 +41,8 @@
 
 - 静态回归检查确认 `TabView` 具有 selection，三个视频入口都接收活动状态，播放器只在
   `isActive` 时挂载或展示，喜欢详情播放期间不保留封面网格。
+- 检查整个工程只有 `ContentView` 创建 `PlaybackCoordinator()`，`VideoPlayerView` 只通过
+  Environment 取得全局实例，并使用唯一所有权租约执行播放与停止。
 - 检查 `PlaybackCoordinator.stop()` 与播放器控制器 dismantle 的资源清理仍然存在。
 - Mac 模拟器依次切换推荐、关注、喜欢、设置，日志中同一时刻只能有一个 generation
   序列持续输出；连续切换视频后内存应进入平台期，而不是随每条视频单调增长。

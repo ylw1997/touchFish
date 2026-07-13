@@ -4,13 +4,20 @@ import UIKit
 
 @MainActor
 struct VideoPlayerView: View {
+    @EnvironmentObject private var coordinator: PlaybackCoordinator
+
     let aweme: Aweme
     let cookie: String
     let playbackToken: UInt64
+    let source: PlaybackOwner.Source
     let onPrevious: () -> Void
     let onNext: () -> Void
 
-    @StateObject private var coordinator = PlaybackCoordinator()
+    @State private var ownerID = UUID()
+
+    private var owner: PlaybackOwner {
+        PlaybackOwner(id: ownerID, source: source)
+    }
 
     var body: some View {
         NativePlayerController(
@@ -24,16 +31,18 @@ struct VideoPlayerView: View {
         )
         .opacity(coordinator.presentationOpacity)
         .animation(.easeOut(duration: 0.18), value: coordinator.presentationOpacity)
-        .onAppear { coordinator.play(aweme, cookie: cookie, playbackToken: playbackToken) }
+        .onAppear {
+            coordinator.play(aweme, cookie: cookie, playbackToken: playbackToken, owner: owner)
+        }
         .onChange(of: playbackToken) { _, token in
-            coordinator.play(aweme, cookie: cookie, playbackToken: token)
+            coordinator.play(aweme, cookie: cookie, playbackToken: token, owner: owner)
         }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             guard let item = notification.object as? AVPlayerItem,
                   item === coordinator.player.currentItem else { return }
             onNext()
         }
-        .onDisappear { coordinator.stop() }
+        .onDisappear { coordinator.stop(owner: owner) }
     }
 }
 

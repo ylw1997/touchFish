@@ -4,7 +4,7 @@
 
 **Goal:** 保证 tvOS 抖音模块任意时刻只有当前标签页挂载一个活动播放器，避免后台播放器互相暂停和内存持续累积。
 
-**Architecture:** `ContentView` 维护原生 `TabView` 的显式 selection，并向推荐、关注页面传递 `isActive`。`DouyinFeedView` 继续保留 Feed 数据状态，但仅在活动标签中挂载 `VideoPlayerView`，从而复用现有 `onDisappear` 和 dismantle 清理链路。
+**Architecture:** `ContentView` 维护原生 `TabView` 的显式 selection，并持有唯一根级 `PlaybackCoordinator`。各页面保留 Feed 数据状态，但仅在活动标签中挂载 `VideoPlayerView`；播放器视图通过 Environment 共享全局播放器，并使用来源加 UUID 的所有权租约避免异步生命周期竞态。
 
 **Tech Stack:** SwiftUI、AVKit、tvOS、PowerShell 静态回归脚本
 
@@ -151,3 +151,20 @@ Expected: 播放器仍正常推进；内存允许随解码升降并进入平台�
 - [x] **Step 2: 将 `isActive` 传入 `FavoritesLibraryView`**
 - [x] **Step 3: 非活动标签关闭详情，播放期间卸载封面网格**
 - [x] **Step 4: 运行回归检查与 `git diff --check`**
+
+### Task 4: 收敛为全局单播放器
+
+**Files:**
+- Modify: `ios/TouchFishTV/TouchFishTV/ContentView.swift`
+- Modify: `ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift`
+- Modify: `ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift`
+- Modify: `ios/TouchFishTV/TouchFishTV/Views/DouyinFeedView.swift`
+- Modify: `ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift`
+- Modify: `scripts/verify-tvos-douyin.ps1`
+
+- [x] **Step 1: 写入并运行全局播放器失败检查**
+- [x] **Step 2: 在 `ContentView` 创建并分发唯一 `PlaybackCoordinator`**
+- [x] **Step 3: 删除 `VideoPlayerView` 内的独立 `@StateObject`**
+- [x] **Step 4: 使用来源加 UUID 的 `PlaybackOwner` 保护播放与停止时序**
+- [x] **Step 5: 扫描工程，确认仅根页面创建 `PlaybackCoordinator()`**
+- [x] **Step 6: 运行回归检查与 `git diff --check`**

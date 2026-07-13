@@ -1,6 +1,21 @@
 import AVFoundation
 import Foundation
 
+struct PlaybackOwner: Equatable {
+    enum Source: String {
+        case recommend
+        case following
+        case favorites
+    }
+
+    let id: UUID
+    let source: Source
+
+    var debugLabel: String {
+        "\(source.rawValue):\(id.uuidString.prefix(6))"
+    }
+}
+
 @MainActor
 final class PlaybackCoordinator: ObservableObject {
     let player = AVPlayer()
@@ -11,6 +26,7 @@ final class PlaybackCoordinator: ObservableObject {
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
     private var currentPlaybackToken: UInt64?
+    private var currentOwner: PlaybackOwner?
 #if DEBUG
     private var diagnosticsTask: Task<Void, Never>?
 #endif
@@ -27,10 +43,10 @@ final class PlaybackCoordinator: ObservableObject {
 #endif
     }
 
-    func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64) {
-        guard currentPlaybackToken != playbackToken || player.currentItem == nil else {
+    func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64, owner: PlaybackOwner) {
+        guard currentOwner != owner || currentPlaybackToken != playbackToken || player.currentItem == nil else {
 #if DEBUG
-            debugLog("忽略重复播放请求 token=\(playbackToken) id=\(aweme.aweme_id)")
+            debugLog("忽略重复播放请求 owner=\(owner.debugLabel) token=\(playbackToken) id=\(aweme.aweme_id)")
             debugSnapshot(label: "ignored-same-token")
 #endif
             return
@@ -42,10 +58,11 @@ final class PlaybackCoordinator: ObservableObject {
         isTransitioning = true
         presentationOpacity = 0.82
         releaseCurrentItem()
+        currentOwner = owner
         currentPlaybackToken = playbackToken
 #if DEBUG
         diagnosticsTask?.cancel()
-        debugLog("开始切换 generation=\(requestedGeneration) token=\(playbackToken) id=\(aweme.aweme_id)")
+        debugLog("开始切换 owner=\(owner.debugLabel) generation=\(requestedGeneration) token=\(playbackToken) id=\(aweme.aweme_id)")
 #endif
 
         let urls = preferredURLs(for: aweme)
@@ -101,17 +118,25 @@ final class PlaybackCoordinator: ObservableObject {
         presentationOpacity = 1
     }
 
-    func stop() {
+    func stop(owner: PlaybackOwner) {
+        guard currentOwner == owner else {
+#if DEBUG
+            debugLog("忽略过期停止请求 owner=\(owner.debugLabel) current=\(currentOwner?.debugLabel ?? "none")")
+#endif
+            return
+        }
+
         generation &+= 1
         assetTask?.cancel()
         assetTask = nil
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsTask = nil
-        debugLog("stop and release")
+        debugLog("stop and release owner=\(owner.debugLabel)")
 #endif
         releaseCurrentItem()
         currentPlaybackToken = nil
+        currentOwner = nil
         isTransitioning = false
     }
 

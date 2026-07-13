@@ -98,6 +98,7 @@ struct FavoritesLibraryView: View {
                     aweme: store.items[index],
                     cookie: api.cookie,
                     playbackToken: playbackToken,
+                    source: .favorites,
                     onPrevious: playPrevious,
                     onNext: playNext
                 )

@@ -10,9 +10,14 @@ struct DouyinFeedView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store: DouyinFeedStore
     private let isActive: Bool
+    private let playbackSource: PlaybackOwner.Source
 
     init(feedType: FeedType, isActive: Bool) {
         self.isActive = isActive
+        switch feedType {
+        case .recommend: playbackSource = .recommend
+        case .following: playbackSource = .following
+        }
         _store = StateObject(wrappedValue: DouyinFeedStore(feedType: feedType))
     }
 
@@ -25,6 +30,7 @@ struct DouyinFeedView: View {
                     aweme: aweme,
                     cookie: api.cookie,
                     playbackToken: store.playbackToken,
+                    source: playbackSource,
                     onPrevious: store.previous,
                     onNext: { Task { await store.next() } }
                 )

@@ -9,13 +9,21 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'asset\.cancelLoading\(\)'; Description = 'old asset loading cancellation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'instanceID'; Description = 'player instance diagnostics identity' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'deinit\s*\{'; Description = 'player instance release diagnostics' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'struct\s+PlaybackOwner'; Description = 'global playback ownership lease' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'currentOwner'; Description = 'current global playback owner' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'func\s+stop\(owner:\s*PlaybackOwner\)'; Description = 'owner-guarded global player cleanup' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'playbackToken'; Description = 'sequence-based playback identity' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = '@EnvironmentObject\s+private\s+var\s+coordinator:\s*PlaybackCoordinator'; Description = 'shared playback coordinator injection' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'private\s+var\s+owner:\s*PlaybackOwner'; Description = 'player view ownership lease' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = '@State\s+private\s+var\s+ownerID\s*=\s*UUID\(\)'; Description = 'unique player view ownership token' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'retainedPreviousItems\s*=\s*5'; Description = '5-item previous history' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'activeIndex\s*-\s*retainedPreviousItems'; Description = 'played history trimming' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'preloadRemainingItems\s*=\s*2'; Description = 'two-item preload threshold' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinAPI.swift'; Pattern = 'channel/feed/\?device_platform=webapp&aid=6383&count=10&'; Description = 'ten-item recommendation request upper bound' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DanmakuOverlayController.swift'; Pattern = 'rateObservation'; Description = 'danmaku rate observation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'TabView\(selection:\s*\$selectedTab\)'; Description = 'selected native tab lifecycle' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = '@StateObject\s+private\s+var\s+playbackSession\s*=\s*PlaybackCoordinator\(\)'; Description = 'single root playback session' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'environmentObject\(playbackSession\)'; Description = 'global playback session distribution' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'DouyinFeedView\(feedType:\s*\.recommend,\s*isActive:\s*selectedTab\s*==\s*\.recommend\)'; Description = 'recommend feed active state' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'DouyinFeedView\(feedType:\s*\.following,\s*isActive:\s*selectedTab\s*==\s*\.following\)'; Description = 'following feed active state' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'FavoritesLibraryView\(isActive:\s*selectedTab\s*==\s*\.favorites\)'; Description = 'favorites active state' },
@@ -47,8 +55,13 @@ $favoritesPath = Join-Path $root 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLib
 $favorites = Get-Content -Raw -LiteralPath $favoritesPath
 $playbackPath = Join-Path $root 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'
 $playback = Get-Content -Raw -LiteralPath $playbackPath
+$videoPlayerPath = Join-Path $root 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'
+$videoPlayer = Get-Content -Raw -LiteralPath $videoPlayerPath
 if ($playback -match 'load\(\.commonMetadata\)') {
     $failures += 'common metadata still blocks startup'
+}
+if ($videoPlayer -match '@StateObject\s+private\s+var\s+coordinator\s*=\s*PlaybackCoordinator\(\)') {
+    $failures += 'per-view playback coordinator remains'
 }
 if ($favorites -match 'Text\("\\\(store\.items\.count') {
     $failures += 'favorite count label remains'
