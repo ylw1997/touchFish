@@ -9,8 +9,10 @@ enum FeedType {
 struct DouyinFeedView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store: DouyinFeedStore
+    private let isActive: Bool
 
-    init(feedType: FeedType) {
+    init(feedType: FeedType, isActive: Bool) {
+        self.isActive = isActive
         _store = StateObject(wrappedValue: DouyinFeedStore(feedType: feedType))
     }
 
@@ -18,7 +20,7 @@ struct DouyinFeedView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            if let aweme = store.activeItem {
+            if isActive, let aweme = store.activeItem {
                 VideoPlayerView(
                     aweme: aweme,
                     cookie: api.cookie,
@@ -29,7 +31,7 @@ struct DouyinFeedView: View {
                 .ignoresSafeArea()
             } else if store.isLoading {
                 loadingView
-            } else {
+            } else if store.activeItem == nil {
                 emptyView
             }
         }

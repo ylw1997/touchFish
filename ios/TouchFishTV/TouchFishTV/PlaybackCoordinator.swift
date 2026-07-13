@@ -7,12 +7,25 @@ final class PlaybackCoordinator: ObservableObject {
     @Published private(set) var isTransitioning = false
     @Published private(set) var presentationOpacity = 1.0
 
+    private let instanceID = String(UUID().uuidString.prefix(6))
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
     private var currentPlaybackToken: UInt64?
 #if DEBUG
     private var diagnosticsTask: Task<Void, Never>?
 #endif
+
+    init() {
+#if DEBUG
+        print("[PlaybackDiagnostics] instance=\(instanceID) init")
+#endif
+    }
+
+    deinit {
+#if DEBUG
+        print("[PlaybackDiagnostics] instance=\(instanceID) deinit")
+#endif
+    }
 
     func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64) {
         guard currentPlaybackToken != playbackToken || player.currentItem == nil else {
@@ -91,9 +104,11 @@ final class PlaybackCoordinator: ObservableObject {
     func stop() {
         generation &+= 1
         assetTask?.cancel()
+        assetTask = nil
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsTask = nil
+        debugLog("stop and release")
 #endif
         releaseCurrentItem()
         currentPlaybackToken = nil
@@ -172,7 +187,7 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func debugLog(_ message: String) {
-        print("[PlaybackDiagnostics] \(message)")
+        print("[PlaybackDiagnostics] instance=\(instanceID) \(message)")
     }
 
     private func debugTimeControlStatus(_ status: AVPlayer.TimeControlStatus) -> String {
