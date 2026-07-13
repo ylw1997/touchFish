@@ -43,8 +43,29 @@ class DouyinAPI: ObservableObject {
     @Published private(set) var cookieRevision: UInt = 0
     
     private init() {
-        self.cookie = UserDefaults.standard.string(forKey: "douyin_cookie") ?? ""
+        let savedCookie = UserDefaults.standard.string(forKey: "douyin_cookie") ?? ""
+#if DEBUG
+        self.cookie = savedCookie.isEmpty ? Self.loadDebugCookieFile() : savedCookie
+#else
+        self.cookie = savedCookie
+#endif
     }
+
+#if DEBUG
+    /// 模拟器调试专用。Cookie 文件位于 App 沙盒 Documents，不会进入应用包或 Git。
+    private static func loadDebugCookieFile() -> String {
+        guard let documentsURL = FileManager.default.urls(
+            for: .documentDirectory,
+            in: .userDomainMask
+        ).first else { return "" }
+
+        let cookieURL = documentsURL.appendingPathComponent("douyin-cookie.txt")
+        guard let content = try? String(contentsOf: cookieURL, encoding: .utf8) else {
+            return ""
+        }
+        return normalizedCookie(from: content)
+    }
+#endif
     
     static func normalizedCookie(from input: String) -> String {
         let lines = input
