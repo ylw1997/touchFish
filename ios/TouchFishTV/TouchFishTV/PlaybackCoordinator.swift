@@ -10,9 +10,18 @@ final class PlaybackCoordinator: ObservableObject {
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
     private var currentAwemeID: String?
+#if DEBUG
+    private var diagnosticsTask: Task<Void, Never>?
+#endif
 
     func play(_ aweme: Aweme, cookie: String) {
-        guard currentAwemeID != aweme.aweme_id || player.currentItem == nil else { return }
+        guard currentAwemeID != aweme.aweme_id || player.currentItem == nil else {
+#if DEBUG
+            debugLog("忽略播放请求：aweme_id 与当前视频相同 id=\(aweme.aweme_id)")
+            debugSnapshot(label: "ignored-same-id")
+#endif
+            return
+        }
 
         generation &+= 1
         let requestedGeneration = generation
@@ -22,6 +31,10 @@ final class PlaybackCoordinator: ObservableObject {
         player.pause()
         player.replaceCurrentItem(with: nil)
         currentAwemeID = aweme.aweme_id
+#if DEBUG
+        diagnosticsTask?.cancel()
+        debugLog("开始切换 generation=\(requestedGeneration) id=\(aweme.aweme_id)")
+#endif
 
         let urls = preferredURLs(for: aweme)
         guard !urls.isEmpty else {
@@ -50,6 +63,10 @@ final class PlaybackCoordinator: ObservableObject {
                     player.replaceCurrentItem(with: item)
                     player.automaticallyWaitsToMinimizeStalling = true
                     player.play()
+#if DEBUG
+                    debugLog("已设置 PlayerItem 并调用 play generation=\(requestedGeneration) urlHost=\(url.host ?? "unknown")")
+                    startDiagnostics(generation: requestedGeneration)
+#endif
                     completeTransition(for: requestedGeneration)
                     return
                 } catch {
@@ -72,6 +89,10 @@ final class PlaybackCoordinator: ObservableObject {
     func stop() {
         generation &+= 1
         assetTask?.cancel()
+#if DEBUG
+        diagnosticsTask?.cancel()
+        diagnosticsTask = nil
+#endif
         player.pause()
         player.replaceCurrentItem(with: nil)
         currentAwemeID = nil
@@ -105,4 +126,66 @@ final class PlaybackCoordinator: ObservableObject {
         item.extendedLanguageTag = "zh-Hans"
         return item.copy() as! AVMetadataItem
     }
+
+#if DEBUG
+    private func startDiagnostics(generation requestedGeneration: UInt) {
+        diagnosticsTask?.cancel()
+        diagnosticsTask = Task { [weak self] in
+            guard let self else { return }
+            debugSnapshot(label: "play-called")
+            for step in 1...12 {
+                do {
+                    try await Task.sleep(nanoseconds: 500_000_000)
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled, requestedGeneration == generation else { return }
+                debugSnapshot(label: String(format: "after-%.1fs", Double(step) * 0.5))
+            }
+        }
+    }
+
+    private func debugSnapshot(label: String) {
+        let item = player.currentItem
+        let current = player.currentTime().seconds
+        let duration = item?.duration.seconds ?? .nan
+        let bufferedEnd = item?.loadedTimeRanges.last?.timeRangeValue.end.seconds ?? 0
+        let error = item?.error?.localizedDescription ?? "none"
+        let waitingReason = player.reasonForWaitingToPlay?.rawValue ?? "none"
+        debugLog(
+            "\(label) player=\(debugTimeControlStatus(player.timeControlStatus)) " +
+            "rate=\(player.rate) item=\(debugItemStatus(item?.status)) " +
+            "time=\(debugSeconds(current))/\(debugSeconds(duration)) " +
+            "bufferedEnd=\(debugSeconds(bufferedEnd)) likelyToKeepUp=\(item?.isPlaybackLikelyToKeepUp ?? false) " +
+            "bufferEmpty=\(item?.isPlaybackBufferEmpty ?? false) waiting=\(waitingReason) error=\(error)"
+        )
+    }
+
+    private func debugLog(_ message: String) {
+        print("[PlaybackDiagnostics] \(message)")
+    }
+
+    private func debugTimeControlStatus(_ status: AVPlayer.TimeControlStatus) -> String {
+        switch status {
+        case .paused: return "paused"
+        case .waitingToPlayAtSpecifiedRate: return "waiting"
+        case .playing: return "playing"
+        @unknown default: return "unknown"
+        }
+    }
+
+    private func debugItemStatus(_ status: AVPlayerItem.Status?) -> String {
+        guard let status else { return "nil" }
+        switch status {
+        case .unknown: return "unknown"
+        case .readyToPlay: return "ready"
+        case .failed: return "failed"
+        @unknown default: return "unknown-future"
+        }
+    }
+
+    private func debugSeconds(_ value: Double) -> String {
+        value.isFinite ? String(format: "%.3f", value) : "nan"
+    }
+#endif
 }
