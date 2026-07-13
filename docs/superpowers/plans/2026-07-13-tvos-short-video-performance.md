@@ -37,7 +37,7 @@
 - Modify: `ios/TouchFishTV/TouchFishTV/Views/DouyinFeedView.swift`
 
 - [x] 增加单调递增的 `playbackToken`，刷新和每次有效上下切换都更新。
-- [x] Feed 只裁剪已播放历史，当前视频向上最多保留 5 条供“上一个”使用；推荐按 6 条请求，并在剩余 2 条时预取下一批。
+- [x] Feed 只裁剪已播放历史，当前视频向上最多保留 5 条供“上一个”使用；推荐请求保持 `count=10`，实际数量以响应为准，并在剩余 2 条时预取下一批。
 - [x] 裁剪头部后同步修正 `activeIndex`，不改变当前播放内容。
 
 ### Task 4: 同步弹幕并收敛喜欢页面

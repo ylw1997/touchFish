@@ -180,7 +180,7 @@ class DouyinAPI: ObservableObject {
     /// 获取推荐视频流
     func getFeed() async throws -> [Aweme] {
         let ts = Int(Date().timeIntervalSince1970 * 1000)
-        let url = "https://www.douyin.com/aweme/v1/web/channel/feed/?device_platform=webapp&aid=6383&count=6&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32&_t=\(ts)"
+        let url = "https://www.douyin.com/aweme/v1/web/channel/feed/?device_platform=webapp&aid=6383&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32&_t=\(ts)"
         let res: FeedResponse = try await request(url: url)
         try validateStatus(res.status_code, message: res.status_msg)
         return res.aweme_list ?? []
