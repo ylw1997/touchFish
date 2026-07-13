@@ -255,6 +255,7 @@ struct AvatarUrl: Decodable {
 struct Video: Decodable {
     let play_addr: VideoAddr?
     let cover: AvatarUrl?
+    let duration: Int?
 }
 
 struct VideoAddr: Decodable {

@@ -16,6 +16,11 @@
 		D3DC237A564C388E375C2957 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2294102FFDB4D3B8A404C8A /* ContentView.swift */; };
 		DF3D95DC1777E153CF79E6D3 /* SignatureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */; };
 		F9A3B0A011C8DA362744FE29 /* DouyinAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F804EF8A5BE8C664BDCD24A /* DouyinAPI.swift */; };
+		A10000000000000000000001 /* DouyinFeedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* DouyinFeedStore.swift */; };
+		A10000000000000000000002 /* PlaybackCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* PlaybackCoordinator.swift */; };
+		A10000000000000000000003 /* DanmakuModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* DanmakuModels.swift */; };
+		A10000000000000000000004 /* DanmakuService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* DanmakuService.swift */; };
+		A10000000000000000000005 /* DanmakuOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* DanmakuOverlayController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +34,11 @@
 		C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignatureManager.swift; sourceTree = "<group>"; };
 		D2294102FFDB4D3B8A404C8A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E3B8A6691377409FD6C0BB1E /* TouchFishTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TouchFishTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000001 /* DouyinFeedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DouyinFeedStore.swift; sourceTree = "<group>"; };
+		B10000000000000000000002 /* PlaybackCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackCoordinator.swift; sourceTree = "<group>"; };
+		B10000000000000000000003 /* DanmakuModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuModels.swift; sourceTree = "<group>"; };
+		B10000000000000000000004 /* DanmakuService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuService.swift; sourceTree = "<group>"; };
+		B10000000000000000000005 /* DanmakuOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuOverlayController.swift; sourceTree = "<group>"; };
 		F750D7C19980FA685D78654E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -55,11 +65,16 @@
 			isa = PBXGroup;
 			children = (
 				787C12CA036B04D801B48976 /* Assets.xcassets */,
+				B10000000000000000000003 /* DanmakuModels.swift */,
+				B10000000000000000000005 /* DanmakuOverlayController.swift */,
+				B10000000000000000000004 /* DanmakuService.swift */,
 				D2294102FFDB4D3B8A404C8A /* ContentView.swift */,
 				9F804EF8A5BE8C664BDCD24A /* DouyinAPI.swift */,
+				B10000000000000000000001 /* DouyinFeedStore.swift */,
 				150D7845E836A0833BE226BE /* Info.plist */,
 				C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */,
 				2C1FBFC651B99D83C5C07BEB /* TouchFishTVApp.swift */,
+				B10000000000000000000002 /* PlaybackCoordinator.swift */,
 				91006EA23AB5374632594F93 /* xbogus.js */,
 				7882035E47150A2BBE3479D4 /* Views */,
 			);
@@ -140,11 +155,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000003 /* DanmakuModels.swift in Sources */,
+				A10000000000000000000005 /* DanmakuOverlayController.swift in Sources */,
+				A10000000000000000000004 /* DanmakuService.swift in Sources */,
 				D3DC237A564C388E375C2957 /* ContentView.swift in Sources */,
 				F9A3B0A011C8DA362744FE29 /* DouyinAPI.swift in Sources */,
+				A10000000000000000000001 /* DouyinFeedStore.swift in Sources */,
 				BD1F999D9B6A8AF843300AA7 /* DouyinFeedView.swift in Sources */,
 				390B965C44B862EC8A2BFFAA /* SettingsView.swift in Sources */,
 				DF3D95DC1777E153CF79E6D3 /* SignatureManager.swift in Sources */,
+				A10000000000000000000002 /* PlaybackCoordinator.swift in Sources */,
 				071B1F259DDF3A5A62577990 /* TouchFishTVApp.swift in Sources */,
 				47E7C5BC661E9410867650BA /* VideoPlayerView.swift in Sources */,
 			);

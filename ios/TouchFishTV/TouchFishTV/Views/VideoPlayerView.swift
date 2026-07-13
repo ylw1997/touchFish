@@ -1,149 +1,51 @@
-import SwiftUI
 import AVKit
+import SwiftUI
+import UIKit
 
 @MainActor
-final class PlayerManager: ObservableObject {
-    let player = AVPlayer()
-
-    private var currentAwemeId: String?
-    private var playbackGeneration: UInt = 0
-    
-    func setup(aweme: Aweme) {
-        if currentAwemeId == aweme.aweme_id, player.currentItem != nil {
-            player.play()
-            return
-        }
-
-        playbackGeneration &+= 1
-        let generation = playbackGeneration
-        stopCurrentItem()
-        currentAwemeId = aweme.aweme_id
-
-        let urls = aweme.video?.play_addr?.url_list ?? []
-        let sortedUrls = urls.compactMap { URL(string: $0) }.sorted { url1, url2 in
-            let score1 = score(for: url1.absoluteString)
-            let score2 = score(for: url2.absoluteString)
-            return score1 > score2
-        }
-
-        guard let playURL = sortedUrls.first else {
-            currentAwemeId = nil
-            return
-        }
-
-        let headers: [String: String] = [
-            "User-Agent": "Mozilla/5.0",
-            "Referer": "https://www.douyin.com/"
-        ]
-
-        let asset = AVURLAsset(
-            url: playURL,
-            options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
-        )
-        let playerItem = AVPlayerItem(asset: asset)
-        playerItem.externalMetadata = playbackMetadata(for: aweme)
-
-        guard generation == playbackGeneration else { return }
-
-        player.replaceCurrentItem(with: playerItem)
-        player.automaticallyWaitsToMinimizeStalling = true
-        player.play()
-    }
-    
-    func cleanup() {
-        playbackGeneration &+= 1
-        stopCurrentItem()
-        currentAwemeId = nil
-    }
-
-    private func stopCurrentItem() {
-        player.pause()
-        player.replaceCurrentItem(with: nil)
-    }
-    
-    private func score(for url: String) -> Int {
-        if url.contains("/aweme/v1/play/") { return 3 }
-        if url.contains("douyinvod.com") { return 2 }
-        if url.contains("douyin.com") { return 1 }
-        return 0
-    }
-
-    private func playbackMetadata(for aweme: Aweme) -> [AVMetadataItem] {
-        [
-            metadataItem(
-                identifier: .commonIdentifierTitle,
-                value: aweme.desc ?? "无描述"
-            ),
-            metadataItem(
-                identifier: .iTunesMetadataTrackSubTitle,
-                value: aweme.author?.nickname ?? "未知作者"
-            )
-        ]
-    }
-
-    private func metadataItem(identifier: AVMetadataIdentifier, value: String) -> AVMetadataItem {
-        let item = AVMutableMetadataItem()
-        item.identifier = identifier
-        item.value = value as NSString
-        item.extendedLanguageTag = "zh-Hans"
-        return item.copy() as! AVMetadataItem
-    }
-    
-}
-
 struct VideoPlayerView: View {
     let aweme: Aweme
-    var onPrevious: (() -> Void)? = nil
-    var onNext: (() -> Void)? = nil
+    let cookie: String
+    let onPrevious: () -> Void
+    let onNext: () -> Void
 
-    @StateObject private var manager = PlayerManager()
-    init(
-        aweme: Aweme,
-        onPrevious: (() -> Void)? = nil,
-        onNext: (() -> Void)? = nil
-    ) {
-        self.aweme = aweme
-        self.onPrevious = onPrevious
-        self.onNext = onNext
-    }
-    
+    @StateObject private var coordinator = PlaybackCoordinator()
+
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            
-            NativeAVPlayerView(
-                player: manager.player,
-                onPrevious: onPrevious,
-                onNext: onNext
-            )
-            .ignoresSafeArea()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            manager.setup(aweme: aweme)
-        }
-        .onDisappear {
-            manager.cleanup()
-        }
-        .onChange(of: aweme.aweme_id) { _ in
-            manager.setup(aweme: aweme)
-        }
+        NativePlayerController(
+            player: coordinator.player,
+            aweme: aweme,
+            cookie: cookie,
+            isTransitioning: coordinator.isTransitioning,
+            onPrevious: onPrevious,
+            onNext: onNext
+        )
+        .opacity(coordinator.presentationOpacity)
+        .animation(.easeOut(duration: 0.18), value: coordinator.presentationOpacity)
+        .onAppear { coordinator.play(aweme) }
+        .onChange(of: aweme.aweme_id) { _ in coordinator.play(aweme) }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
-            guard let item = notification.object as? AVPlayerItem, item == manager.player.currentItem else { return }
-            onNext?()
+            guard let item = notification.object as? AVPlayerItem,
+                  item === coordinator.player.currentItem else { return }
+            onNext()
         }
+        .onDisappear { coordinator.stop() }
     }
 }
 
-private final class PlayerFocusAnchorView: UIView {
+private final class FocusAnchorView: UIView {
     override var canBecomeFocused: Bool { true }
 }
 
-final class RemotePlayerViewController: AVPlayerViewController {
+final class DouyinPlayerViewController: AVPlayerViewController {
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
+    var isTransitioning = false
+    let danmakuController = DanmakuOverlayController()
+
+    private let focusAnchor = FocusAnchorView()
     private var prefersPlayerFocus = true
-    private let focusAnchor = PlayerFocusAnchorView()
+    private var navigationLocked = false
 
     override var preferredFocusEnvironments: [UIFocusEnvironment] {
         prefersPlayerFocus ? [focusAnchor] : super.preferredFocusEnvironments
@@ -151,9 +53,9 @@ final class RemotePlayerViewController: AVPlayerViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        showsPlaybackControls = true
+        transportBarIncludesTitleView = true
         focusAnchor.translatesAutoresizingMaskIntoConstraints = false
-        focusAnchor.backgroundColor = .clear
-        focusAnchor.isAccessibilityElement = false
         view.addSubview(focusAnchor)
         NSLayoutConstraint.activate([
             focusAnchor.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -161,13 +63,12 @@ final class RemotePlayerViewController: AVPlayerViewController {
             focusAnchor.widthAnchor.constraint(equalToConstant: 1),
             focusAnchor.heightAnchor.constraint(equalToConstant: 1)
         ])
+        danmakuController.install(in: self)
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        DispatchQueue.main.async { [weak self] in
-            self?.requestPlayerFocus()
-        }
+        DispatchQueue.main.async { [weak self] in self?.requestPlayerFocus() }
     }
 
     func requestPlayerFocus() {
@@ -177,84 +78,86 @@ final class RemotePlayerViewController: AVPlayerViewController {
         prefersPlayerFocus = false
     }
 
-    override func pressesBegan(
-        _ presses: Set<UIPress>,
-        with event: UIPressesEvent?
-    ) {
-        guard shouldHandleVideoNavigation else {
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        guard canNavigateVideos else {
             super.pressesBegan(presses, with: event)
             return
         }
 
-        var unhandledPresses = presses
+        var remaining = presses
         for press in presses {
             switch press.type {
             case .upArrow:
+                lockNavigationBriefly()
                 onPrevious?()
-                unhandledPresses.remove(press)
+                remaining.remove(press)
             case .downArrow:
+                lockNavigationBriefly()
                 onNext?()
-                unhandledPresses.remove(press)
+                remaining.remove(press)
             default:
                 break
             }
         }
+        if !remaining.isEmpty { super.pressesBegan(remaining, with: event) }
+    }
 
-        if !unhandledPresses.isEmpty {
-            super.pressesBegan(unhandledPresses, with: event)
+    private func lockNavigationBriefly() {
+        navigationLocked = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.navigationLocked = false
         }
     }
 
-    private var shouldHandleVideoNavigation: Bool {
-        guard let player,
-              player.timeControlStatus != .paused else {
-            return false
-        }
-
+    private var canNavigateVideos: Bool {
+        guard !isTransitioning, !navigationLocked,
+              let player,
+              player.timeControlStatus == .playing else { return false }
         return !isPlaybackControlFocused
     }
 
     private var isPlaybackControlFocused: Bool {
-        guard var focusedView = UIFocusSystem.focusSystem(for: view)?.focusedItem as? UIView else {
-            return false
-        }
-
-        while focusedView !== view {
-            if focusedView is UIControl
-                || focusedView.accessibilityTraits.contains(.button)
-                || focusedView.accessibilityTraits.contains(.adjustable) {
+        guard var focused = UIFocusSystem.focusSystem(for: view)?.focusedItem as? UIView else { return false }
+        while focused !== view {
+            if focused is UIControl || focused.accessibilityTraits.contains(.button) || focused.accessibilityTraits.contains(.adjustable) {
                 return true
             }
-
-            guard let superview = focusedView.superview else { break }
-            focusedView = superview
+            guard let parent = focused.superview else { break }
+            focused = parent
         }
-
         return false
     }
 }
 
-struct NativeAVPlayerView: UIViewControllerRepresentable {
+struct NativePlayerController: UIViewControllerRepresentable {
     let player: AVPlayer
-    let onPrevious: (() -> Void)?
-    let onNext: (() -> Void)?
-    
-    func makeUIViewController(context: Context) -> RemotePlayerViewController {
-        let controller = RemotePlayerViewController()
+    let aweme: Aweme
+    let cookie: String
+    let isTransitioning: Bool
+    let onPrevious: () -> Void
+    let onNext: () -> Void
+
+    func makeUIViewController(context: Context) -> DouyinPlayerViewController {
+        let controller = DouyinPlayerViewController()
         controller.player = player
-        controller.showsPlaybackControls = true
-        controller.transportBarIncludesTitleView = true
-        controller.onPrevious = onPrevious
-        controller.onNext = onNext
+        configure(controller)
         return controller
     }
-    
-    func updateUIViewController(_ uiViewController: RemotePlayerViewController, context: Context) {
-        if uiViewController.player !== player {
-            uiViewController.player = player
-        }
-        uiViewController.transportBarIncludesTitleView = true
-        uiViewController.onPrevious = onPrevious
-        uiViewController.onNext = onNext
+
+    func updateUIViewController(_ controller: DouyinPlayerViewController, context: Context) {
+        if controller.player !== player { controller.player = player }
+        configure(controller)
+    }
+
+    private func configure(_ controller: DouyinPlayerViewController) {
+        controller.onPrevious = onPrevious
+        controller.onNext = onNext
+        controller.isTransitioning = isTransitioning
+        controller.danmakuController.configure(aweme: aweme, player: player, cookie: cookie)
+    }
+
+    static func dismantleUIViewController(_ controller: DouyinPlayerViewController, coordinator: ()) {
+        controller.danmakuController.stop()
+        controller.player = nil
     }
 }
