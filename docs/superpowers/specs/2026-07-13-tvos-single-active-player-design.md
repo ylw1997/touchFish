@@ -17,7 +17,7 @@
 ## 方案
 
 `ContentView` 使用带 `selection` 的 `TabView`，并为四个标签定义稳定标识。
-顶层把 `isActive` 传入推荐和关注的 `DouyinFeedView`。
+顶层把 `isActive` 传入推荐、关注和“我的喜欢”页面。
 
 `DouyinFeedView` 只有在 `isActive` 为真时才挂载 `VideoPlayerView`；失活后播放器视图
 从层级中移除，由现有 `onDisappear -> PlaybackCoordinator.stop()` 完成以下清理：
@@ -27,13 +27,14 @@
 3. 将 `currentItem` 替换为 `nil`。
 4. 拆除弹幕时间观察器、KVO、网络任务和动画视图。
 
-“我的喜欢”仅在用户点开某个视频时创建播放器；离开详情时继续沿用现有销毁逻辑。
+“我的喜欢”仅在当前标签中允许展示播放详情；离开标签时关闭详情并释放播放器。
+进入播放详情后卸载封面网格，避免全屏播放器背后仍保留大量图片与焦点视图；Feed 数据
+继续保留，退出详情后重新构建网格并恢复焦点。
 
 ## 验证
 
-- 静态回归检查确认 `TabView` 具有 selection，两个 Feed 都接收活动状态，播放器只在
-  `isActive` 时挂载。
+- 静态回归检查确认 `TabView` 具有 selection，三个视频入口都接收活动状态，播放器只在
+  `isActive` 时挂载或展示，喜欢详情播放期间不保留封面网格。
 - 检查 `PlaybackCoordinator.stop()` 与播放器控制器 dismantle 的资源清理仍然存在。
 - Mac 模拟器依次切换推荐、关注、喜欢、设置，日志中同一时刻只能有一个 generation
   序列持续输出；连续切换视频后内存应进入平台期，而不是随每条视频单调增长。
-

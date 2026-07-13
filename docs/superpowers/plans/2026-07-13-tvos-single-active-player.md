@@ -140,3 +140,14 @@ Expected: Xcode 控制台中同一时刻只有当前页面的一组 `PlaybackDia
 
 Expected: 播放器仍正常推进；内存允许随解码升降并进入平台期，不应随着每次切换持续单调增长。
 
+### Task 3: 收紧“我的喜欢”播放器生命周期
+
+**Files:**
+- Modify: `ios/TouchFishTV/TouchFishTV/ContentView.swift`
+- Modify: `ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift`
+- Modify: `scripts/verify-tvos-douyin.ps1`
+
+- [x] **Step 1: 用失败检查覆盖喜欢标签活动状态、离开标签关闭详情和播放时卸载网格**
+- [x] **Step 2: 将 `isActive` 传入 `FavoritesLibraryView`**
+- [x] **Step 3: 非活动标签关闭详情，播放期间卸载封面网格**
+- [x] **Step 4: 运行回归检查与 `git diff --check`**

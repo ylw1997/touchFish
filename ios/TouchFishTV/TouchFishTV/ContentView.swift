@@ -24,7 +24,7 @@ struct ContentView: View {
                 }
                 .tag(DouyinTab.following)
 
-            FavoritesLibraryView()
+            FavoritesLibraryView(isActive: selectedTab == .favorites)
                 .tabItem {
                     Label("我的喜欢", systemImage: "heart.fill")
                 }

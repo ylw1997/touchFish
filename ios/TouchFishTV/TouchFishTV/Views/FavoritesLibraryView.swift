@@ -52,6 +52,7 @@ final class FavoritesLibraryStore: ObservableObject {
 struct FavoritesLibraryView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store = FavoritesLibraryStore()
+    private let isActive: Bool
     @State private var selectedIndex: Int?
     @State private var playbackToken: UInt64 = 0
     @State private var lastSelectedIndex: Int?
@@ -62,6 +63,10 @@ struct FavoritesLibraryView: View {
         count: 4
     )
 
+    init(isActive: Bool) {
+        self.isActive = isActive
+    }
+
     var body: some View {
         ZStack {
             LinearGradient(
@@ -71,7 +76,9 @@ struct FavoritesLibraryView: View {
             )
             .ignoresSafeArea()
 
-            if store.items.isEmpty {
+            if !isActive || selectedIndex != nil {
+                Color.black.ignoresSafeArea()
+            } else if store.items.isEmpty {
                 emptyState
             } else {
                 libraryGrid
@@ -81,6 +88,9 @@ struct FavoritesLibraryView: View {
         .onChange(of: api.cookieRevision) { _, _ in
             selectedIndex = nil
             Task { await store.refresh() }
+        }
+        .onChange(of: isActive) { _, active in
+            if !active { selectedIndex = nil }
         }
         .fullScreenCover(isPresented: playerPresented, onDismiss: restoreFocus) {
             if let index = selectedIndex, store.items.indices.contains(index) {
@@ -151,7 +161,7 @@ struct FavoritesLibraryView: View {
 
     private var playerPresented: Binding<Bool> {
         Binding(
-            get: { selectedIndex != nil },
+            get: { isActive && selectedIndex != nil },
             set: { if !$0 { selectedIndex = nil } }
         )
     }
