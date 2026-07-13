@@ -199,10 +199,10 @@ private struct FavoriteVideoCard: View {
                 FavoriteArtwork(aweme: aweme)
 
                 Text(aweme.desc?.isEmpty == false ? aweme.desc! : "无标题")
-                    .font(.headline)
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
-                    .frame(minHeight: 54, alignment: .topLeading)
+                    .frame(minHeight: 46, alignment: .topLeading)
 
                 HStack(spacing: 10) {
                     AuthorAvatar(author: aweme.author)
@@ -227,7 +227,7 @@ private struct FavoriteVideoCard: View {
             }
             .contentShape(Rectangle())
             .frame(maxWidth: .infinity, alignment: .topLeading)
-            .scaleEffect(isFocused ? 1.04 : 1)
+            .scaleEffect(isFocused ? 1.03 : 1)
             .shadow(
                 color: .black.opacity(isFocused ? 0.45 : 0),
                 radius: isFocused ? 18 : 0,
@@ -235,7 +235,7 @@ private struct FavoriteVideoCard: View {
             )
             .animation(.easeOut(duration: 0.16), value: isFocused)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(FavoriteButtonStyle())
         .focusEffectDisabled()
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .zIndex(isFocused ? 1 : 0)
@@ -255,6 +255,13 @@ private struct FavoriteVideoCard: View {
         value.rounded() == value
             ? "\(Int(value))\(suffix)"
             : String(format: "%.1f", value) + suffix
+    }
+}
+
+private struct FavoriteButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.82 : 1)
     }
 }
 
@@ -291,26 +298,25 @@ private struct FavoriteArtwork: View {
     }
 
     var body: some View {
-        ZStack {
-            Color.white.opacity(0.045)
-
-            AsyncImage(url: artworkURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .failure:
-                    placeholder(systemImage: "photo.badge.exclamationmark")
-                default:
-                    ProgressView()
+        Color.clear
+            .aspectRatio(3.0 / 4.0, contentMode: .fit)
+            .overlay {
+                AsyncImage(url: artworkURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        placeholder(systemImage: "photo.badge.exclamationmark")
+                    default:
+                        ProgressView()
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
             }
-        }
-        .aspectRatio(3.0 / 4.0, contentMode: .fit)
-        .frame(maxWidth: .infinity)
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private func placeholder(systemImage: String) -> some View {
