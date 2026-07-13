@@ -14,7 +14,9 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinAPI.swift'; Pattern = 'channel/feed/\?device_platform=webapp&aid=6383&count=10&'; Description = 'ten-item recommendation request upper bound' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DanmakuOverlayController.swift'; Pattern = 'rateObservation'; Description = 'danmaku rate observation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'aspectRatio\(3\.0\s*/\s*4\.0'; Description = '3:4 favorite artwork' },
-    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'buttonStyle\(\.borderless\)'; Description = 'native borderless favorite lockup' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'buttonStyle\(\.plain\)'; Description = 'plain favorite button' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'focusEffectDisabled\(\)'; Description = 'disabled inner focus effect' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'scaleEffect\(isFocused'; Description = 'whole lockup focus scaling' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'lineLimit\(2\)'; Description = 'two-line favorite title' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'avatar_thumb'; Description = 'favorite author avatar' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'digg_count'; Description = 'favorite like count' }
@@ -45,8 +47,8 @@ if ($favorites -match '\.blur\(') {
 if ($favorites -match 'buttonStyle\(\.card\)') {
     $failures += 'favorite outer card background remains'
 }
-if ($favorites -match 'scaleEffect\(isFocused') {
-    $failures += 'custom favorite focus scaling remains'
+if ($favorites -match 'buttonStyle\(\.borderless\)') {
+    $failures += 'borderless inner artwork focus effect remains'
 }
 if ($favorites -match 'private struct FavoriteArtwork[\s\S]*?GeometryReader') {
     $failures += 'favorite artwork still uses focus-unsafe GeometryReader sizing'

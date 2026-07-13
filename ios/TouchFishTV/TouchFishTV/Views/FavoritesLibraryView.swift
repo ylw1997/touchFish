@@ -102,7 +102,10 @@ struct FavoritesLibraryView: View {
             VStack(alignment: .leading, spacing: 36) {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 42) {
                     ForEach(Array(store.items.enumerated()), id: \.offset) { index, aweme in
-                        FavoriteVideoCard(aweme: aweme) {
+                        FavoriteVideoCard(
+                            aweme: aweme,
+                            isFocused: focusedIndex == index
+                        ) {
                             selectedIndex = index
                             lastSelectedIndex = index
                             playbackToken &+= 1
@@ -187,19 +190,19 @@ struct FavoritesLibraryView: View {
 
 private struct FavoriteVideoCard: View {
     let aweme: Aweme
+    let isFocused: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 13) {
                 FavoriteArtwork(aweme: aweme)
-                    .aspectRatio(3.0 / 4.0, contentMode: .fit)
 
                 Text(aweme.desc?.isEmpty == false ? aweme.desc! : "无标题")
-                    .font(.title3.weight(.semibold))
+                    .font(.headline)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
-                    .frame(minHeight: 68, alignment: .topLeading)
+                    .frame(minHeight: 54, alignment: .topLeading)
 
                 HStack(spacing: 10) {
                     AuthorAvatar(author: aweme.author)
@@ -216,12 +219,26 @@ private struct FavoriteVideoCard: View {
                         systemImage: "heart"
                     )
                     .font(.callout.weight(.medium))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .layoutPriority(1)
                 }
                 .foregroundStyle(.secondary)
             }
             .contentShape(Rectangle())
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .scaleEffect(isFocused ? 1.04 : 1)
+            .shadow(
+                color: .black.opacity(isFocused ? 0.45 : 0),
+                radius: isFocused ? 18 : 0,
+                y: isFocused ? 10 : 0
+            )
+            .animation(.easeOut(duration: 0.16), value: isFocused)
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(.plain)
+        .focusEffectDisabled()
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .zIndex(isFocused ? 1 : 0)
     }
 
     private func formattedCount(_ count: Int) -> String {
@@ -274,24 +291,25 @@ private struct FavoriteArtwork: View {
     }
 
     var body: some View {
-        AsyncImage(url: artworkURL) { phase in
-            switch phase {
-            case .success(let image):
-                image
-                    .resizable()
-                    .scaledToFill()
-            case .failure:
-                placeholder(systemImage: "photo.badge.exclamationmark")
-            default:
-                ZStack {
-                    Color.white.opacity(0.055)
+        ZStack {
+            Color.white.opacity(0.045)
+
+            AsyncImage(url: artworkURL) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .failure:
+                    placeholder(systemImage: "photo.badge.exclamationmark")
+                default:
                     ProgressView()
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .aspectRatio(3.0 / 4.0, contentMode: .fit)
+        .frame(maxWidth: .infinity)
         .clipped()
-        .background(Color.white.opacity(0.045))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
