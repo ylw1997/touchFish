@@ -12,6 +12,11 @@ struct ContentView: View {
                 .tabItem {
                     Label("关注", systemImage: "person.2.fill")
                 }
+
+            DouyinFeedView(feedType: .favorites)
+                .tabItem {
+                    Label("我的喜欢", systemImage: "heart.fill")
+                }
             
             SettingsView()
                 .tabItem {

@@ -3,6 +3,7 @@ import SwiftUI
 enum FeedType {
     case recommend
     case following
+    case favorites
 }
 
 @MainActor

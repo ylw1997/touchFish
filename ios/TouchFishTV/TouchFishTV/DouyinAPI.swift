@@ -154,6 +154,14 @@ class DouyinAPI: ObservableObject {
         let hasMore = res.has_more ?? (res.has_more_int == 1)
         return (awemes, nextCursor, hasMore)
     }
+
+    /// 获取当前账号已喜欢的视频，只读展示，不执行点赞或取消点赞。
+    func getFavorites(maxCursor: Int = 0) async throws -> ([Aweme], Int, Bool) {
+        let url = "https://www.douyin.com/aweme/v1/web/aweme/favorite/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&max_cursor=\(maxCursor)&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
+        let res: FavoritesResponse = try await request(url: url)
+        try validateStatus(res.status_code, message: res.status_msg)
+        return (res.aweme_list ?? [], res.max_cursor ?? maxCursor, res.has_more == 1)
+    }
     
 }
 
@@ -260,4 +268,12 @@ struct Video: Decodable {
 
 struct VideoAddr: Decodable {
     let url_list: [String]?
+}
+
+struct FavoritesResponse: Decodable {
+    let status_code: Int
+    let status_msg: String?
+    let aweme_list: [Aweme]?
+    let max_cursor: Int?
+    let has_more: Int?
 }
