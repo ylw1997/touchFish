@@ -274,26 +274,23 @@ private struct FavoriteArtwork: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            AsyncImage(url: artworkURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                case .failure:
-                    placeholder(systemImage: "photo.badge.exclamationmark")
-                default:
-                    ZStack {
-                        Color.white.opacity(0.055)
-                        ProgressView()
-                    }
+        AsyncImage(url: artworkURL) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .scaledToFill()
+            case .failure:
+                placeholder(systemImage: "photo.badge.exclamationmark")
+            default:
+                ZStack {
+                    Color.white.opacity(0.055)
+                    ProgressView()
                 }
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
-            .clipped()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
         .background(Color.white.opacity(0.045))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }

@@ -48,6 +48,9 @@ if ($favorites -match 'buttonStyle\(\.card\)') {
 if ($favorites -match 'scaleEffect\(isFocused') {
     $failures += 'custom favorite focus scaling remains'
 }
+if ($favorites -match 'private struct FavoriteArtwork[\s\S]*?GeometryReader') {
+    $failures += 'favorite artwork still uses focus-unsafe GeometryReader sizing'
+}
 
 if ($failures.Count -gt 0) {
     Write-Host 'tvOS Douyin regression checks failed:' -ForegroundColor Red
