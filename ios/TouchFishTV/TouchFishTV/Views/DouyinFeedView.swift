@@ -33,7 +33,7 @@ struct DouyinFeedView: View {
             }
         }
         .task { if store.items.isEmpty { await store.refresh() } }
-        .onChange(of: api.cookieRevision) { _ in
+        .onChange(of: api.cookieRevision) { _, _ in
             Task { await store.refresh() }
         }
     }
@@ -51,7 +51,7 @@ struct DouyinFeedView: View {
         VStack(spacing: 24) {
             Image(systemName: store.errorMessage == nil ? "play.slash.fill" : "exclamationmark.triangle.fill")
                 .font(.system(size: 64, weight: .light))
-                .foregroundStyle(store.errorMessage == nil ? .secondary : .orange)
+                .foregroundStyle(store.errorMessage == nil ? Color.secondary : Color.orange)
             Text(store.errorMessage ?? "当前没有可播放的视频")
                 .font(.title2.weight(.semibold))
                 .multilineTextAlignment(.center)
