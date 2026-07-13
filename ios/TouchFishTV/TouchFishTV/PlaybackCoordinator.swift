@@ -11,7 +11,7 @@ final class PlaybackCoordinator: ObservableObject {
     private var assetTask: Task<Void, Never>?
     private var currentAwemeID: String?
 
-    func play(_ aweme: Aweme) {
+    func play(_ aweme: Aweme, cookie: String) {
         guard currentAwemeID != aweme.aweme_id || player.currentItem == nil else { return }
 
         generation &+= 1
@@ -23,21 +23,44 @@ final class PlaybackCoordinator: ObservableObject {
         player.replaceCurrentItem(with: nil)
         currentAwemeID = aweme.aweme_id
 
-        guard let url = preferredURL(for: aweme) else {
+        let urls = preferredURLs(for: aweme)
+        guard !urls.isEmpty else {
             isTransitioning = false
             return
         }
 
-        let headers = ["User-Agent": "Mozilla/5.0", "Referer": "https://www.douyin.com/"]
-        let asset = AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
-        let item = AVPlayerItem(asset: asset)
-        item.externalMetadata = metadata(for: aweme)
+        var headers = ["User-Agent": "Mozilla/5.0", "Referer": "https://www.douyin.com/"]
+        if !cookie.isEmpty { headers["Cookie"] = cookie }
 
-        guard requestedGeneration == generation else { return }
-        player.replaceCurrentItem(with: item)
-        player.automaticallyWaitsToMinimizeStalling = true
-        player.play()
-        completeTransition(for: requestedGeneration)
+        assetTask = Task { [weak self] in
+            guard let self else { return }
+            for url in urls {
+                guard !Task.isCancelled, requestedGeneration == generation else { return }
+                do {
+                    let asset = AVURLAsset(
+                        url: url,
+                        options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
+                    )
+                    guard try await asset.load(.isPlayable) else { continue }
+                    _ = try await asset.load(.commonMetadata)
+                    guard !Task.isCancelled, requestedGeneration == generation else { return }
+
+                    let item = AVPlayerItem(asset: asset)
+                    item.externalMetadata = metadata(for: aweme)
+                    player.replaceCurrentItem(with: item)
+                    player.automaticallyWaitsToMinimizeStalling = true
+                    player.play()
+                    completeTransition(for: requestedGeneration)
+                    return
+                } catch {
+                    continue
+                }
+            }
+
+            guard requestedGeneration == generation else { return }
+            isTransitioning = false
+            presentationOpacity = 1
+        }
     }
 
     func completeTransition(for requestedGeneration: UInt) {
@@ -55,10 +78,10 @@ final class PlaybackCoordinator: ObservableObject {
         isTransitioning = false
     }
 
-    private func preferredURL(for aweme: Aweme) -> URL? {
+    private func preferredURLs(for aweme: Aweme) -> [URL] {
         let urls = aweme.video?.play_addr?.url_list ?? []
-        return urls.compactMap(URL.init(string:)).max {
-            score($0.absoluteString) < score($1.absoluteString)
+        return urls.compactMap(URL.init(string:)).sorted {
+            score($0.absoluteString) > score($1.absoluteString)
         }
     }
 

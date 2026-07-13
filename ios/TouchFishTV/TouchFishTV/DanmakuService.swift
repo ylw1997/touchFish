@@ -29,6 +29,7 @@ struct DanmakuService {
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("https://www.douyin.com/", forHTTPHeaderField: "Referer")
         request.setValue("application/json, text/plain, */*", forHTTPHeaderField: "Accept")
+        request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
         if !cookie.isEmpty { request.setValue(cookie, forHTTPHeaderField: "Cookie") }
 
         let (data, response) = try await URLSession.shared.data(for: request)

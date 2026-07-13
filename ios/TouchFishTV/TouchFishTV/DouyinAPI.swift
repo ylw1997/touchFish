@@ -70,7 +70,11 @@ class DouyinAPI: ObservableObject {
         var headers = [
             "User-Agent": userAgent,
             "Referer": "https://www.douyin.com/",
-            "Origin": "https://www.douyin.com"
+            "Origin": "https://www.douyin.com",
+            // tvOS 27 模拟器偶尔会把 Brotli 正文原样交给 JSONDecoder。
+            // 请求未压缩 JSON，避免响应以二进制 br 数据开头。
+            "Accept-Encoding": "identity",
+            "Accept": "application/json, text/plain, */*"
         ]
         let requestCookie = cookieOverride ?? cookie
         if !requestCookie.isEmpty {
@@ -114,6 +118,11 @@ class DouyinAPI: ObservableObject {
         
         if !(200...299).contains(httpResponse.statusCode) {
             throw APIError.httpError(statusCode: httpResponse.statusCode)
+        }
+
+        guard httpResponse.value(forHTTPHeaderField: "Content-Type")?
+            .lowercased().contains("application/json") == true else {
+            throw APIError.invalidResponseData
         }
         
         guard !data.isEmpty else { throw APIError.emptyResponse }

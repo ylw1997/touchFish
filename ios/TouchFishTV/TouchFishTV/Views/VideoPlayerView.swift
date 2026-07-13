@@ -22,8 +22,8 @@ struct VideoPlayerView: View {
         )
         .opacity(coordinator.presentationOpacity)
         .animation(.easeOut(duration: 0.18), value: coordinator.presentationOpacity)
-        .onAppear { coordinator.play(aweme) }
-        .onChange(of: aweme.aweme_id) { _ in coordinator.play(aweme) }
+        .onAppear { coordinator.play(aweme, cookie: cookie) }
+        .onChange(of: aweme.aweme_id) { _, _ in coordinator.play(aweme, cookie: cookie) }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             guard let item = notification.object as? AVPlayerItem,
                   item === coordinator.player.currentItem else { return }

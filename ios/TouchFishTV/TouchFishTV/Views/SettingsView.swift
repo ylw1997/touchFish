@@ -49,6 +49,13 @@ struct SettingsView: View {
                 Text("设置您的抖音 Cookie")
                     .font(.title2)
                     .foregroundColor(.white)
+
+                Label(
+                    api.cookie.isEmpty ? "当前未配置" : "已配置（\(api.cookie.count) 个字符）",
+                    systemImage: api.cookie.isEmpty ? "xmark.circle" : "checkmark.circle.fill"
+                )
+                .font(.headline)
+                .foregroundStyle(api.cookie.isEmpty ? Color.orange : Color.green)
                 
                 TextField("在此粘贴或输入您的 Cookie 字符串", text: $inputCookie)
                     .font(.body)
