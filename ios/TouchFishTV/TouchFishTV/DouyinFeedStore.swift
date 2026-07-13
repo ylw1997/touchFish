@@ -14,6 +14,7 @@ enum FeedNavigation {
 final class DouyinFeedStore: ObservableObject {
     @Published private(set) var items: [Aweme] = []
     @Published private(set) var activeIndex = 0
+    @Published private(set) var playbackToken: UInt64 = 0
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
 
@@ -22,6 +23,8 @@ final class DouyinFeedStore: ObservableObject {
     private var cursor = 0
     private var hasMore = true
     private var generation: UInt = 0
+    private let maximumRetainedItems = 40
+    private let retainedPreviousItems = 12
 
     init(feedType: FeedType, api: DouyinAPI = .shared) {
         self.feedType = feedType
@@ -42,20 +45,22 @@ final class DouyinFeedStore: ObservableObject {
 
     func previous() {
         guard let index = FeedNavigation.previousIndex(current: activeIndex, count: items.count) else { return }
-        activeIndex = index
+        select(index)
     }
 
     func next() async {
         if let index = FeedNavigation.nextIndex(current: activeIndex, count: items.count) {
-            activeIndex = index
+            select(index)
             await preloadIfNeeded()
+            trimPlayedHistoryIfNeeded()
             return
         }
 
         let oldCount = items.count
         await load(isRefresh: false)
         if items.count > oldCount {
-            activeIndex = oldCount
+            select(oldCount)
+            trimPlayedHistoryIfNeeded()
         }
     }
 
@@ -83,6 +88,7 @@ final class DouyinFeedStore: ObservableObject {
             if isRefresh {
                 items = result.0
                 activeIndex = 0
+                playbackToken &+= 1
             } else {
                 items.append(contentsOf: result.0)
             }
@@ -94,5 +100,19 @@ final class DouyinFeedStore: ObservableObject {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    private func select(_ index: Int) {
+        activeIndex = index
+        playbackToken &+= 1
+    }
+
+    private func trimPlayedHistoryIfNeeded() {
+        let excess = max(0, items.count - maximumRetainedItems)
+        let safelyRemovable = max(0, activeIndex - retainedPreviousItems)
+        let removeCount = min(excess, safelyRemovable)
+        guard removeCount > 0 else { return }
+        items.removeFirst(removeCount)
+        activeIndex -= removeCount
     }
 }

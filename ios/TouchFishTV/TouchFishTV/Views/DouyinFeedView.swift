@@ -22,6 +22,7 @@ struct DouyinFeedView: View {
                 VideoPlayerView(
                     aweme: aweme,
                     cookie: api.cookie,
+                    playbackToken: store.playbackToken,
                     onPrevious: store.previous,
                     onNext: { Task { await store.next() } }
                 )

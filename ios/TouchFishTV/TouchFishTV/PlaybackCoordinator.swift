@@ -9,16 +9,16 @@ final class PlaybackCoordinator: ObservableObject {
 
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
-    private var currentAwemeID: String?
+    private var currentPlaybackToken: UInt64?
 #if DEBUG
     private var diagnosticsTask: Task<Void, Never>?
 #endif
 
-    func play(_ aweme: Aweme, cookie: String) {
-        guard currentAwemeID != aweme.aweme_id || player.currentItem == nil else {
+    func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64) {
+        guard currentPlaybackToken != playbackToken || player.currentItem == nil else {
 #if DEBUG
-            debugLog("忽略播放请求：aweme_id 与当前视频相同 id=\(aweme.aweme_id)")
-            debugSnapshot(label: "ignored-same-id")
+            debugLog("忽略重复播放请求 token=\(playbackToken) id=\(aweme.aweme_id)")
+            debugSnapshot(label: "ignored-same-token")
 #endif
             return
         }
@@ -28,12 +28,11 @@ final class PlaybackCoordinator: ObservableObject {
         assetTask?.cancel()
         isTransitioning = true
         presentationOpacity = 0.82
-        player.pause()
-        player.replaceCurrentItem(with: nil)
-        currentAwemeID = aweme.aweme_id
+        releaseCurrentItem()
+        currentPlaybackToken = playbackToken
 #if DEBUG
         diagnosticsTask?.cancel()
-        debugLog("开始切换 generation=\(requestedGeneration) id=\(aweme.aweme_id)")
+        debugLog("开始切换 generation=\(requestedGeneration) token=\(playbackToken) id=\(aweme.aweme_id)")
 #endif
 
         let urls = preferredURLs(for: aweme)
@@ -55,16 +54,18 @@ final class PlaybackCoordinator: ObservableObject {
                         options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
                     )
                     guard try await asset.load(.isPlayable) else { continue }
-                    _ = try await asset.load(.commonMetadata)
                     guard !Task.isCancelled, requestedGeneration == generation else { return }
 
                     let item = AVPlayerItem(asset: asset)
                     item.externalMetadata = metadata(for: aweme)
+                    item.preferredForwardBufferDuration = 8
+                    item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
                     player.replaceCurrentItem(with: item)
-                    player.automaticallyWaitsToMinimizeStalling = true
-                    player.play()
+                    player.automaticallyWaitsToMinimizeStalling = false
+                    player.playImmediately(atRate: 1)
+                    assetTask = nil
 #if DEBUG
-                    debugLog("已设置 PlayerItem 并调用 play generation=\(requestedGeneration) urlHost=\(url.host ?? "unknown")")
+                    debugLog("已设置 PlayerItem 并立即播放 generation=\(requestedGeneration) urlHost=\(url.host ?? "unknown")")
                     startDiagnostics(generation: requestedGeneration)
 #endif
                     completeTransition(for: requestedGeneration)
@@ -75,6 +76,7 @@ final class PlaybackCoordinator: ObservableObject {
             }
 
             guard requestedGeneration == generation else { return }
+            assetTask = nil
             isTransitioning = false
             presentationOpacity = 1
         }
@@ -93,10 +95,18 @@ final class PlaybackCoordinator: ObservableObject {
         diagnosticsTask?.cancel()
         diagnosticsTask = nil
 #endif
-        player.pause()
-        player.replaceCurrentItem(with: nil)
-        currentAwemeID = nil
+        releaseCurrentItem()
+        currentPlaybackToken = nil
         isTransitioning = false
+    }
+
+    private func releaseCurrentItem() {
+        player.pause()
+        player.cancelPendingPrerolls()
+        guard let item = player.currentItem else { return }
+        item.cancelPendingSeeks()
+        item.asset.cancelLoading()
+        player.replaceCurrentItem(with: nil)
     }
 
     private func preferredURLs(for aweme: Aweme) -> [URL] {

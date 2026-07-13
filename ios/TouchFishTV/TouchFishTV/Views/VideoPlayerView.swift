@@ -6,6 +6,7 @@ import UIKit
 struct VideoPlayerView: View {
     let aweme: Aweme
     let cookie: String
+    let playbackToken: UInt64
     let onPrevious: () -> Void
     let onNext: () -> Void
 
@@ -16,14 +17,17 @@ struct VideoPlayerView: View {
             player: coordinator.player,
             aweme: aweme,
             cookie: cookie,
+            playbackToken: playbackToken,
             isTransitioning: coordinator.isTransitioning,
             onPrevious: onPrevious,
             onNext: onNext
         )
         .opacity(coordinator.presentationOpacity)
         .animation(.easeOut(duration: 0.18), value: coordinator.presentationOpacity)
-        .onAppear { coordinator.play(aweme, cookie: cookie) }
-        .onChange(of: aweme.aweme_id) { _, _ in coordinator.play(aweme, cookie: cookie) }
+        .onAppear { coordinator.play(aweme, cookie: cookie, playbackToken: playbackToken) }
+        .onChange(of: playbackToken) { _, token in
+            coordinator.play(aweme, cookie: cookie, playbackToken: token)
+        }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             guard let item = notification.object as? AVPlayerItem,
                   item === coordinator.player.currentItem else { return }
@@ -133,6 +137,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let player: AVPlayer
     let aweme: Aweme
     let cookie: String
+    let playbackToken: UInt64
     let isTransitioning: Bool
     let onPrevious: () -> Void
     let onNext: () -> Void
@@ -153,7 +158,12 @@ struct NativePlayerController: UIViewControllerRepresentable {
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.isTransitioning = isTransitioning
-        controller.danmakuController.configure(aweme: aweme, player: player, cookie: cookie)
+        controller.danmakuController.configure(
+            aweme: aweme,
+            player: player,
+            cookie: cookie,
+            playbackToken: playbackToken
+        )
     }
 
     static func dismantleUIViewController(_ controller: DouyinPlayerViewController, coordinator: ()) {

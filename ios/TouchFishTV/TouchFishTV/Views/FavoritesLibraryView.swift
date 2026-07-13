@@ -52,8 +52,9 @@ struct FavoritesLibraryView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store = FavoritesLibraryStore()
     @State private var selectedIndex: Int?
-    @State private var lastSelectedAwemeID: String?
-    @FocusState private var focusedAwemeID: String?
+    @State private var playbackToken: UInt64 = 0
+    @State private var lastSelectedIndex: Int?
+    @FocusState private var focusedIndex: Int?
 
     private let columns = Array(
         repeating: GridItem(.flexible(), spacing: 34, alignment: .top),
@@ -85,6 +86,7 @@ struct FavoritesLibraryView: View {
                 VideoPlayerView(
                     aweme: store.items[index],
                     cookie: api.cookie,
+                    playbackToken: playbackToken,
                     onPrevious: playPrevious,
                     onNext: playNext
                 )
@@ -96,23 +98,15 @@ struct FavoritesLibraryView: View {
 
     private var libraryGrid: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 30) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("我的喜欢")
-                        .font(.system(size: 46, weight: .bold, design: .rounded))
-                    Text("\(store.items.count) 个视频")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-
+            VStack(alignment: .leading, spacing: 36) {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 42) {
-                    ForEach(Array(store.items.enumerated()), id: \.element.aweme_id) { index, aweme in
+                    ForEach(Array(store.items.enumerated()), id: \.offset) { index, aweme in
                         FavoriteVideoCard(aweme: aweme) {
                             selectedIndex = index
-                            lastSelectedAwemeID = aweme.aweme_id
+                            lastSelectedIndex = index
+                            playbackToken &+= 1
                         }
-                        .focused($focusedAwemeID, equals: aweme.aweme_id)
+                        .focused($focusedIndex, equals: index)
                         .onAppear {
                             Task { await store.loadMoreIfNeeded(currentIndex: index) }
                         }
@@ -129,7 +123,7 @@ struct FavoritesLibraryView: View {
                 }
             }
             .padding(.horizontal, 72)
-            .padding(.top, 36)
+            .padding(.top, 44)
             .padding(.bottom, 70)
         }
     }
@@ -161,14 +155,16 @@ struct FavoritesLibraryView: View {
     private func playPrevious() {
         guard let index = selectedIndex, index > 0 else { return }
         selectedIndex = index - 1
-        lastSelectedAwemeID = store.items[index - 1].aweme_id
+        lastSelectedIndex = index - 1
+        playbackToken &+= 1
     }
 
     private func playNext() {
         guard let index = selectedIndex else { return }
         if index + 1 < store.items.count {
             selectedIndex = index + 1
-            lastSelectedAwemeID = store.items[index + 1].aweme_id
+            lastSelectedIndex = index + 1
+            playbackToken &+= 1
             Task { await store.loadMoreIfNeeded(currentIndex: index + 1) }
         } else {
             Task {
@@ -176,14 +172,15 @@ struct FavoritesLibraryView: View {
                 await store.loadNextPage()
                 if store.items.count > oldCount {
                     selectedIndex = oldCount
-                    lastSelectedAwemeID = store.items[oldCount].aweme_id
+                    lastSelectedIndex = oldCount
+                    playbackToken &+= 1
                 }
             }
         }
     }
 
     private func restoreFocus() {
-        focusedAwemeID = lastSelectedAwemeID
+        focusedIndex = lastSelectedIndex
     }
 }
 
@@ -195,15 +192,10 @@ private struct FavoriteVideoCard: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 14) {
                 FavoriteArtwork(aweme: aweme)
-                    .aspectRatio(16 / 9, contentMode: .fit)
+                    .aspectRatio(3.0 / 4.0, contentMode: .fit)
 
                 Text(aweme.desc?.isEmpty == false ? aweme.desc! : "无标题")
                     .font(.headline)
-                    .lineLimit(1)
-
-                Text(aweme.author?.nickname?.isEmpty == false ? aweme.author!.nickname! : "未知作者")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
         }
@@ -218,31 +210,15 @@ private struct FavoriteArtwork: View {
         aweme.video?.cover?.url_list?.compactMap(URL.init(string:)).first
     }
 
-    private var isPortrait: Bool {
-        guard let width = aweme.video?.width, let height = aweme.video?.height else { return false }
-        return height > width
-    }
-
     var body: some View {
         GeometryReader { proxy in
             AsyncImage(url: artworkURL) { phase in
                 switch phase {
                 case .success(let image):
-                    ZStack {
-                        if isPortrait {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: proxy.size.width, height: proxy.size.height)
-                                .blur(radius: 24)
-                                .overlay(Color.black.opacity(0.28))
-                        }
-
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: isPortrait ? .fit : .fill)
-                            .frame(width: proxy.size.width, height: proxy.size.height)
-                    }
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: proxy.size.width, height: proxy.size.height)
                 case .failure:
                     placeholder(systemImage: "photo.badge.exclamationmark")
                 default:

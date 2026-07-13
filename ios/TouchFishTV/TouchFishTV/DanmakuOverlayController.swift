@@ -10,6 +10,8 @@ final class DanmakuOverlayController {
     private var cookie = ""
     private var timeObserver: Any?
     private var playbackObservation: NSKeyValueObservation?
+    private var rateObservation: NSKeyValueObservation?
+    private var playbackToken: UInt64?
     private var fetchTasks: [Int: Task<Void, Never>] = [:]
     private var loadedWindows: Set<Int> = []
     private var pending: [DanmakuItem] = []
@@ -32,16 +34,22 @@ final class DanmakuOverlayController {
         ])
     }
 
-    func configure(aweme: Aweme, player: AVPlayer, cookie: String) {
-        let changed = self.aweme?.aweme_id != aweme.aweme_id || self.player !== player
+    func configure(aweme: Aweme, player: AVPlayer, cookie: String, playbackToken: UInt64) {
+        let changed = self.playbackToken != playbackToken || self.player !== player
         self.cookie = cookie
         guard changed else { return }
         stop()
         self.aweme = aweme
         self.player = player
+        self.playbackToken = playbackToken
         playbackObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
             Task { @MainActor in
-                self?.setAnimationsPaused(player.timeControlStatus != .playing)
+                self?.synchronizeAnimationState(with: player)
+            }
+        }
+        rateObservation = player.observe(\.rate, options: [.initial, .new]) { [weak self] player, _ in
+            Task { @MainActor in
+                self?.synchronizeAnimationState(with: player)
             }
         }
         installTimeObserver()
@@ -53,6 +61,8 @@ final class DanmakuOverlayController {
         timeObserver = nil
         playbackObservation?.invalidate()
         playbackObservation = nil
+        rateObservation?.invalidate()
+        rateObservation = nil
         fetchTasks.values.forEach { $0.cancel() }
         fetchTasks.removeAll()
         loadedWindows.removeAll()
@@ -67,6 +77,7 @@ final class DanmakuOverlayController {
         overlayView.subviews.forEach { $0.removeFromSuperview() }
         aweme = nil
         player = nil
+        playbackToken = nil
         lastTime = 0
     }
 
@@ -79,7 +90,7 @@ final class DanmakuOverlayController {
 
     private func tick(seconds: Double) {
         guard seconds.isFinite, let player else { return }
-        setAnimationsPaused(player.timeControlStatus != .playing)
+        synchronizeAnimationState(with: player)
         if abs(seconds - lastTime) > 1.5 {
             clearForSeek()
         }
@@ -89,7 +100,7 @@ final class DanmakuOverlayController {
         if Int(seconds * 1000) - start >= 16_000 {
             loadWindow(start: start + DanmakuWindow.lengthMilliseconds)
         }
-        if player.timeControlStatus == .playing { displayDueItems(at: Int(seconds * 1000)) }
+        if isActuallyPlaying(player) { displayDueItems(at: Int(seconds * 1000)) }
     }
 
     private func loadWindow(start: Int) {
@@ -98,17 +109,25 @@ final class DanmakuOverlayController {
         loadedWindows.insert(start)
         let duration = aweme.video?.duration ?? DanmakuWindow.lengthMilliseconds
         let id = aweme.aweme_id
+        let token = playbackToken
+        let danmakuService = service
+        let requestCookie = cookie
         fetchTasks[start] = Task { [weak self] in
-            guard let self else { return }
             do {
-                let items = try await service.fetch(awemeID: id, duration: duration, start: start, cookie: cookie)
-                guard !Task.isCancelled, self.aweme?.aweme_id == id else { return }
+                let items = try await danmakuService.fetch(
+                    awemeID: id,
+                    duration: duration,
+                    start: start,
+                    cookie: requestCookie
+                )
+                guard !Task.isCancelled, let self,
+                      self.playbackToken == token else { return }
                 pending.append(contentsOf: items)
                 pending.sort { $0.offset_time < $1.offset_time }
             } catch {
                 // 弹幕失败不打断视频；下一窗口仍可独立请求。
             }
-            fetchTasks[start] = nil
+            self?.fetchTasks[start] = nil
         }
     }
 
@@ -119,7 +138,8 @@ final class DanmakuOverlayController {
     }
 
     private func display(_ item: DanmakuItem, at milliseconds: Int) {
-        guard overlayView.bounds.width > 0, overlayView.bounds.height > 0 else { return }
+        guard let player, isActuallyPlaying(player),
+              overlayView.bounds.width > 0, overlayView.bounds.height > 0 else { return }
         displayedIDs.insert(item.id)
         let font = UIFont.systemFont(ofSize: max(28, min(38, overlayView.bounds.height * 0.14)), weight: .semibold)
         let label = StrokeLabel()
@@ -173,6 +193,14 @@ final class DanmakuOverlayController {
             layer.beginTime = 0
             layer.beginTime = layer.convertTime(CACurrentMediaTime(), from: nil) - pausedTime
         }
+    }
+
+    private func synchronizeAnimationState(with player: AVPlayer) {
+        setAnimationsPaused(!isActuallyPlaying(player))
+    }
+
+    private func isActuallyPlaying(_ player: AVPlayer) -> Bool {
+        player.rate > 0 && player.timeControlStatus == .playing
     }
 }
 
