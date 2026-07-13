@@ -4,7 +4,7 @@
 
 **Goal:** 让原生播放器快速出首帧、限制连续播放的内存增长，并完成“我的喜欢”竖屏封面及弹幕暂停同步。
 
-**Architecture:** 保留单一 `AVPlayer`，通过明确的资源释放顺序和有限前向缓冲控制每条视频的生命周期。Feed 使用有界滑动窗口，并以播放序列而非 `aweme_id` 驱动切换，确保重复视频仍会重新安装 item。弹幕同时观察 `rate` 与 `timeControlStatus`。
+**Architecture:** 保留单一 `AVPlayer`，通过明确的资源释放顺序和有限前向缓冲控制每条视频的生命周期。Feed 只保留当前项向上最多 5 条已播放历史，并以播放序列而非 `aweme_id` 驱动切换，确保重复视频仍会重新安装 item。弹幕同时观察 `rate` 与 `timeControlStatus`。
 
 **Tech Stack:** Swift、SwiftUI、AVFoundation、AVKit、tvOS、PowerShell 源级回归检查
 
@@ -37,7 +37,7 @@
 - Modify: `ios/TouchFishTV/TouchFishTV/Views/DouyinFeedView.swift`
 
 - [x] 增加单调递增的 `playbackToken`，刷新和每次有效上下切换都更新。
-- [x] Feed 最多保留 40 条，且至少保留当前视频之前 12 条供“上一个”使用。
+- [x] Feed 只裁剪已播放历史，当前视频向上最多保留 5 条供“上一个”使用；推荐按 6 条请求，并在剩余 2 条时预取下一批。
 - [x] 裁剪头部后同步修正 `activeIndex`，不改变当前播放内容。
 
 ### Task 4: 同步弹幕并收敛喜欢页面

@@ -23,8 +23,8 @@ final class DouyinFeedStore: ObservableObject {
     private var cursor = 0
     private var hasMore = true
     private var generation: UInt = 0
-    private let maximumRetainedItems = 40
-    private let retainedPreviousItems = 12
+    private let retainedPreviousItems = 5
+    private let preloadRemainingItems = 2
 
     init(feedType: FeedType, api: DouyinAPI = .shared) {
         self.feedType = feedType
@@ -51,8 +51,8 @@ final class DouyinFeedStore: ObservableObject {
     func next() async {
         if let index = FeedNavigation.nextIndex(current: activeIndex, count: items.count) {
             select(index)
-            await preloadIfNeeded()
             trimPlayedHistoryIfNeeded()
+            await preloadIfNeeded()
             return
         }
 
@@ -65,7 +65,8 @@ final class DouyinFeedStore: ObservableObject {
     }
 
     private func preloadIfNeeded() async {
-        guard activeIndex >= max(0, items.count - 2) else { return }
+        let remainingItems = items.count - activeIndex - 1
+        guard remainingItems <= preloadRemainingItems else { return }
         await load(isRefresh: false)
     }
 
@@ -108,9 +109,7 @@ final class DouyinFeedStore: ObservableObject {
     }
 
     private func trimPlayedHistoryIfNeeded() {
-        let excess = max(0, items.count - maximumRetainedItems)
-        let safelyRemovable = max(0, activeIndex - retainedPreviousItems)
-        let removeCount = min(excess, safelyRemovable)
+        let removeCount = max(0, activeIndex - retainedPreviousItems)
         guard removeCount > 0 else { return }
         items.removeFirst(removeCount)
         activeIndex -= removeCount

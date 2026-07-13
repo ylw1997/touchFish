@@ -8,8 +8,10 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'cancelPendingSeeks\(\)'; Description = 'old item seek cancellation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'asset\.cancelLoading\(\)'; Description = 'old asset loading cancellation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'playbackToken'; Description = 'sequence-based playback identity' },
-    @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'maximumRetainedItems\s*=\s*40'; Description = '40-item feed limit' },
-    @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'retainedPreviousItems\s*=\s*12'; Description = '12-item previous history' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'retainedPreviousItems\s*=\s*5'; Description = '5-item previous history' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'activeIndex\s*-\s*retainedPreviousItems'; Description = 'played history trimming' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'preloadRemainingItems\s*=\s*2'; Description = 'two-item preload threshold' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinAPI.swift'; Pattern = 'channel/feed/\?device_platform=webapp&aid=6383&count=6&'; Description = 'six-item recommendation request' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DanmakuOverlayController.swift'; Pattern = 'rateObservation'; Description = 'danmaku rate observation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'aspectRatio\(3\.0\s*/\s*4\.0'; Description = '3:4 favorite artwork' }
 )
