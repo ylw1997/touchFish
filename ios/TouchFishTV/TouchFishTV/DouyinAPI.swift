@@ -266,12 +266,14 @@ struct Aweme: Decodable, Identifiable, Equatable {
     let desc: String?
     let author: Author?
     let video: Video?
+    let statistics: Statistics?
     
     enum CodingKeys: String, CodingKey {
         case aweme_id
         case desc
         case author
         case video
+        case statistics
     }
     
     init(from decoder: Decoder) throws {
@@ -280,6 +282,7 @@ struct Aweme: Decodable, Identifiable, Equatable {
         self.desc = try container.decodeIfPresent(String.self, forKey: .desc)
         self.author = try container.decodeIfPresent(Author.self, forKey: .author)
         self.video = try container.decodeIfPresent(Video.self, forKey: .video)
+        self.statistics = try container.decodeIfPresent(Statistics.self, forKey: .statistics)
     }
     
     static func == (lhs: Aweme, rhs: Aweme) -> Bool {
@@ -296,6 +299,10 @@ struct Author: Decodable {
     var uid: String {
         return sec_uid ?? sec_user_id ?? ""
     }
+}
+
+struct Statistics: Decodable {
+    let digg_count: Int?
 }
 
 struct AvatarUrl: Decodable {

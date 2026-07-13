@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 @MainActor
@@ -190,16 +191,78 @@ private struct FavoriteVideoCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 13) {
                 FavoriteArtwork(aweme: aweme)
                     .aspectRatio(3.0 / 4.0, contentMode: .fit)
 
                 Text(aweme.desc?.isEmpty == false ? aweme.desc! : "无标题")
-                    .font(.headline)
-                    .lineLimit(1)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .frame(minHeight: 68, alignment: .topLeading)
+
+                HStack(spacing: 10) {
+                    AuthorAvatar(author: aweme.author)
+
+                    Text(aweme.author?.nickname?.isEmpty == false ? aweme.author!.nickname! : "未知作者")
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer(minLength: 8)
+
+                    Label(
+                        formattedCount(aweme.statistics?.digg_count ?? 0),
+                        systemImage: "heart"
+                    )
+                    .font(.callout.weight(.medium))
+                }
+                .foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+    }
+
+    private func formattedCount(_ count: Int) -> String {
+        if count >= 100_000_000 {
+            return formattedUnit(Double(count) / 100_000_000, suffix: "亿")
+        }
+        if count >= 10_000 {
+            return formattedUnit(Double(count) / 10_000, suffix: "万")
+        }
+        return String(count)
+    }
+
+    private func formattedUnit(_ value: Double, suffix: String) -> String {
+        value.rounded() == value
+            ? "\(Int(value))\(suffix)"
+            : String(format: "%.1f", value) + suffix
+    }
+}
+
+private struct AuthorAvatar: View {
+    let author: Author?
+
+    private var avatarURL: URL? {
+        author?.avatar_thumb?.url_list?.compactMap(URL.init(string:)).first
+    }
+
+    var body: some View {
+        AsyncImage(url: avatarURL) { phase in
+            if case .success(let image) = phase {
+                image.resizable().scaledToFill()
+            } else {
+                ZStack {
+                    Color.white.opacity(0.1)
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .buttonStyle(.card)
+        .frame(width: 34, height: 34)
+        .clipShape(Circle())
     }
 }
 
