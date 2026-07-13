@@ -13,11 +13,6 @@ struct ContentView: View {
                     Label("关注", systemImage: "person.2.fill")
                 }
             
-            FavoritesView()
-                .tabItem {
-                    Label("我的喜欢", systemImage: "heart.fill")
-                }
-            
             SettingsView()
                 .tabItem {
                     Label("设置", systemImage: "gearshape.fill")

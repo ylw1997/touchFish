@@ -122,7 +122,7 @@ class DouyinAPI: ObservableObject {
         guard !normalized.isEmpty else { throw APIError.emptyCookie }
 
         let url = "https://www.douyin.com/aweme/v1/web/aweme/favorite/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&max_cursor=0&count=1&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
-        let res: FavoritesResponse = try await request(url: url, cookieOverride: normalized)
+        let res: StatusResponse = try await request(url: url, cookieOverride: normalized)
         try validateStatus(res.status_code, message: res.status_msg)
         return normalized
     }
@@ -153,33 +153,6 @@ class DouyinAPI: ObservableObject {
         let nextCursor = res.cursor ?? maxCursor
         let hasMore = res.has_more ?? (res.has_more_int == 1)
         return (awemes, nextCursor, hasMore)
-    }
-    
-    /// 获取喜欢视频列表
-    func getFavorites(maxCursor: Int = 0) async throws -> ([Aweme], Int, Bool) {
-        let url = "https://www.douyin.com/aweme/v1/web/aweme/favorite/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&max_cursor=\(maxCursor)&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
-        let res: FavoritesResponse = try await request(url: url)
-        try validateStatus(res.status_code, message: res.status_msg)
-        let hasMore = res.has_more == 1
-        return (res.aweme_list ?? [], res.max_cursor ?? maxCursor, hasMore)
-    }
-    
-    /// 获取指定作者作品列表
-    func getUserPosts(secUserId: String, maxCursor: Int = 0) async throws -> ([Aweme], Int, Bool) {
-        let url = "https://www.douyin.com/aweme/v1/web/aweme/post/?device_platform=webapp&aid=6383&channel=channel_pc_web&sec_user_id=\(secUserId)&max_cursor=\(maxCursor)&count=18&publish_video_strategy_type=2&pc_client_type=1&version_code=170400&version_name=17.4.0&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
-        let res: UserPostsResponse = try await request(url: url, extraHeaders: ["Referer": "https://www.douyin.com/user/\(secUserId)"])
-        try validateStatus(res.status_code, message: res.status_msg)
-        let hasMore = res.has_more == 1
-        return (res.aweme_list ?? [], res.max_cursor ?? maxCursor, hasMore)
-    }
-    
-    /// 获取视频评论列表
-    func getComments(awemeId: String, cursor: Int = 0) async throws -> ([Comment], Int, Bool, Int) {
-        let url = "https://www-hj.douyin.com/aweme/v1/web/comment/list/?device_platform=webapp&aid=6383&channel=channel_pc_web&aweme_id=\(awemeId)&pc_img_format=webp&cursor=\(cursor)&count=10&item_type=0&update_version_code=170400&pc_client_type=1&pc_libra_divert=Windows&support_h265=1&support_dash=1&cpu_core_num=22&version_code=170400&version_name=17.4.0&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
-        let res: CommentsResponse = try await request(url: url, extraHeaders: ["Referer": "https://www.douyin.com/video/\(awemeId)"])
-        try validateStatus(res.status_code, message: res.status_msg)
-        let hasMore = res.has_more == 1
-        return (res.comments ?? [], res.cursor ?? cursor, hasMore, res.total ?? 0)
     }
     
 }
@@ -232,29 +205,9 @@ struct FollowingItem: Decodable {
     let aweme: Aweme?
 }
 
-struct FavoritesResponse: Decodable {
+struct StatusResponse: Decodable {
     let status_code: Int
     let status_msg: String?
-    let aweme_list: [Aweme]?
-    let max_cursor: Int?
-    let has_more: Int?
-}
-
-struct UserPostsResponse: Decodable {
-    let status_code: Int
-    let status_msg: String?
-    let aweme_list: [Aweme]?
-    let max_cursor: Int?
-    let has_more: Int?
-}
-
-struct CommentsResponse: Decodable {
-    let status_code: Int
-    let status_msg: String?
-    let comments: [Comment]?
-    let total: Int?
-    let cursor: Int?
-    let has_more: Int?
 }
 
 struct Aweme: Decodable, Identifiable, Equatable {
@@ -263,14 +216,12 @@ struct Aweme: Decodable, Identifiable, Equatable {
     let desc: String?
     let author: Author?
     let video: Video?
-    let statistics: Statistics?
     
     enum CodingKeys: String, CodingKey {
         case aweme_id
         case desc
         case author
         case video
-        case statistics
     }
     
     init(from decoder: Decoder) throws {
@@ -279,7 +230,6 @@ struct Aweme: Decodable, Identifiable, Equatable {
         self.desc = try container.decodeIfPresent(String.self, forKey: .desc)
         self.author = try container.decodeIfPresent(Author.self, forKey: .author)
         self.video = try container.decodeIfPresent(Video.self, forKey: .video)
-        self.statistics = try container.decodeIfPresent(Statistics.self, forKey: .statistics)
     }
     
     static func == (lhs: Aweme, rhs: Aweme) -> Bool {
@@ -311,21 +261,3 @@ struct VideoAddr: Decodable {
     let url_list: [String]?
 }
 
-struct Statistics: Decodable {
-    let digg_count: Int?
-    let comment_count: Int?
-}
-
-struct Comment: Decodable, Identifiable {
-    var id: String { cid }
-    let cid: String
-    let text: String?
-    let create_time: Int?
-    let user: CommentUser?
-    let reply_comment: [Comment]?
-}
-
-struct CommentUser: Decodable {
-    let nickname: String?
-    let avatar_thumb: AvatarUrl?
-}

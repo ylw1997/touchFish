@@ -7,16 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		038E0BDB16AD8D7D7D74BBA6 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE517C3E2F80EB8040277984 /* FavoritesView.swift */; };
 		071B1F259DDF3A5A62577990 /* TouchFishTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C1FBFC651B99D83C5C07BEB /* TouchFishTVApp.swift */; };
 		390B965C44B862EC8A2BFFAA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F750D7C19980FA685D78654E /* SettingsView.swift */; };
 		4191754519B17D786C07CEFC /* xbogus.js in Resources */ = {isa = PBXBuildFile; fileRef = 91006EA23AB5374632594F93 /* xbogus.js */; };
 		4647AFC71DA8577FA0720670 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 787C12CA036B04D801B48976 /* Assets.xcassets */; };
 		47E7C5BC661E9410867650BA /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300A1D0AFB147F8C5CD61575 /* VideoPlayerView.swift */; };
-		AA33553ECB9B9B674918D3DD /* AuthorWorksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79827515A3652DDBCCD154B6 /* AuthorWorksView.swift */; };
 		BD1F999D9B6A8AF843300AA7 /* DouyinFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81C84B0AC7662FB0C2D47FB8 /* DouyinFeedView.swift */; };
 		D3DC237A564C388E375C2957 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2294102FFDB4D3B8A404C8A /* ContentView.swift */; };
-		D832C6EA4862C95A92D6FCE8 /* CommentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA10E64F57BE14B887901EAB /* CommentsView.swift */; };
 		DF3D95DC1777E153CF79E6D3 /* SignatureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */; };
 		F9A3B0A011C8DA362744FE29 /* DouyinAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F804EF8A5BE8C664BDCD24A /* DouyinAPI.swift */; };
 /* End PBXBuildFile section */
@@ -26,16 +23,13 @@
 		2C1FBFC651B99D83C5C07BEB /* TouchFishTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchFishTVApp.swift; sourceTree = "<group>"; };
 		300A1D0AFB147F8C5CD61575 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		787C12CA036B04D801B48976 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		79827515A3652DDBCCD154B6 /* AuthorWorksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorWorksView.swift; sourceTree = "<group>"; };
 		81C84B0AC7662FB0C2D47FB8 /* DouyinFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DouyinFeedView.swift; sourceTree = "<group>"; };
 		91006EA23AB5374632594F93 /* xbogus.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = xbogus.js; sourceTree = "<group>"; };
 		9F804EF8A5BE8C664BDCD24A /* DouyinAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DouyinAPI.swift; sourceTree = "<group>"; };
-		AE517C3E2F80EB8040277984 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignatureManager.swift; sourceTree = "<group>"; };
 		D2294102FFDB4D3B8A404C8A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E3B8A6691377409FD6C0BB1E /* TouchFishTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TouchFishTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F750D7C19980FA685D78654E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		FA10E64F57BE14B887901EAB /* CommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -50,10 +44,7 @@
 		7882035E47150A2BBE3479D4 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				79827515A3652DDBCCD154B6 /* AuthorWorksView.swift */,
-				FA10E64F57BE14B887901EAB /* CommentsView.swift */,
 				81C84B0AC7662FB0C2D47FB8 /* DouyinFeedView.swift */,
-				AE517C3E2F80EB8040277984 /* FavoritesView.swift */,
 				F750D7C19980FA685D78654E /* SettingsView.swift */,
 				300A1D0AFB147F8C5CD61575 /* VideoPlayerView.swift */,
 			);
@@ -149,12 +140,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA33553ECB9B9B674918D3DD /* AuthorWorksView.swift in Sources */,
-				D832C6EA4862C95A92D6FCE8 /* CommentsView.swift in Sources */,
 				D3DC237A564C388E375C2957 /* ContentView.swift in Sources */,
 				F9A3B0A011C8DA362744FE29 /* DouyinAPI.swift in Sources */,
 				BD1F999D9B6A8AF843300AA7 /* DouyinFeedView.swift in Sources */,
-				038E0BDB16AD8D7D7D74BBA6 /* FavoritesView.swift in Sources */,
 				390B965C44B862EC8A2BFFAA /* SettingsView.swift in Sources */,
 				DF3D95DC1777E153CF79E6D3 /* SignatureManager.swift in Sources */,
 				071B1F259DDF3A5A62577990 /* TouchFishTVApp.swift in Sources */,

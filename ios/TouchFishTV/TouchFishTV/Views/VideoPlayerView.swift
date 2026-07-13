@@ -97,11 +97,6 @@ struct VideoPlayerView: View {
     var onNext: (() -> Void)? = nil
 
     @StateObject private var manager = PlayerManager()
-    @State private var showCommentsOverlay: Bool = false
-    @State private var wasPlayingBeforeComments: Bool = false
-    @State private var showAuthorWorks: Bool = false
-    @State private var authorImage: UIImage?
-
     init(
         aweme: Aweme,
         onPrevious: (() -> Void)? = nil,
@@ -118,28 +113,10 @@ struct VideoPlayerView: View {
             
             NativeAVPlayerView(
                 player: manager.player,
-                showCommentsOverlay: $showCommentsOverlay,
-                authorName: aweme.author?.nickname ?? "作者主页",
-                authorImage: authorImage,
-                blocksVideoNavigation: showCommentsOverlay,
-                onOpenAuthor: openAuthorWorks,
                 onPrevious: onPrevious,
                 onNext: onNext
             )
             .ignoresSafeArea()
-            
-            if showCommentsOverlay {
-                HStack {
-                    Spacer()
-                    CommentsView(
-                        awemeId: aweme.aweme_id,
-                        onClose: closeComments
-                    )
-                }
-                .transition(.move(edge: .trailing))
-                .zIndex(100)
-            }
-
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
@@ -149,57 +126,11 @@ struct VideoPlayerView: View {
             manager.cleanup()
         }
         .onChange(of: aweme.aweme_id) { _ in
-            showCommentsOverlay = false
             manager.setup(aweme: aweme)
-        }
-        .onChange(of: showCommentsOverlay) { isPresented in
-            if isPresented {
-                wasPlayingBeforeComments = manager.player.timeControlStatus != .paused
-                manager.player.pause()
-            } else if wasPlayingBeforeComments {
-                manager.player.play()
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             guard let item = notification.object as? AVPlayerItem, item == manager.player.currentItem else { return }
             onNext?()
-        }
-        .task(id: aweme.author?.avatar_thumb?.url_list?.first) {
-            await loadAuthorImage()
-        }
-        .fullScreenCover(isPresented: $showAuthorWorks) {
-            if let author = aweme.author {
-                AuthorWorksView(author: author) {
-                    showAuthorWorks = false
-                }
-            }
-        }
-    }
-
-    private func closeComments() {
-        withAnimation {
-            showCommentsOverlay = false
-        }
-    }
-
-    private func openAuthorWorks() {
-        guard aweme.author != nil else { return }
-        showAuthorWorks = true
-    }
-
-    private func loadAuthorImage() async {
-        authorImage = nil
-        guard
-            let urlString = aweme.author?.avatar_thumb?.url_list?.first,
-            let url = URL(string: urlString)
-        else { return }
-
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            guard !Task.isCancelled else { return }
-            authorImage = UIImage(data: data)?.withRenderingMode(.alwaysOriginal)
-        } catch {
-            // 头像失败时保留系统人物图标，不影响作者主页入口。
         }
     }
 }
@@ -211,7 +142,6 @@ private final class PlayerFocusAnchorView: UIView {
 final class RemotePlayerViewController: AVPlayerViewController {
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
-    var blocksVideoNavigation = false
     private var prefersPlayerFocus = true
     private let focusAnchor = PlayerFocusAnchorView()
 
@@ -276,8 +206,7 @@ final class RemotePlayerViewController: AVPlayerViewController {
     }
 
     private var shouldHandleVideoNavigation: Bool {
-        guard !blocksVideoNavigation,
-              let player,
+        guard let player,
               player.timeControlStatus != .paused else {
             return false
         }
@@ -307,11 +236,6 @@ final class RemotePlayerViewController: AVPlayerViewController {
 
 struct NativeAVPlayerView: UIViewControllerRepresentable {
     let player: AVPlayer
-    @Binding var showCommentsOverlay: Bool
-    let authorName: String
-    let authorImage: UIImage?
-    let blocksVideoNavigation: Bool
-    let onOpenAuthor: () -> Void
     let onPrevious: (() -> Void)?
     let onNext: (() -> Void)?
     
@@ -322,9 +246,6 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         controller.transportBarIncludesTitleView = true
         controller.onPrevious = onPrevious
         controller.onNext = onNext
-        controller.blocksVideoNavigation = blocksVideoNavigation
-        
-        updateTransportBarMenuItems(controller: controller)
         return controller
     }
     
@@ -335,24 +256,5 @@ struct NativeAVPlayerView: UIViewControllerRepresentable {
         uiViewController.transportBarIncludesTitleView = true
         uiViewController.onPrevious = onPrevious
         uiViewController.onNext = onNext
-        let wasBlockingNavigation = uiViewController.blocksVideoNavigation
-        uiViewController.blocksVideoNavigation = blocksVideoNavigation
-        updateTransportBarMenuItems(controller: uiViewController)
-        if wasBlockingNavigation && !blocksVideoNavigation {
-            uiViewController.requestPlayerFocus()
-        }
-    }
-    
-    private func updateTransportBarMenuItems(controller: RemotePlayerViewController) {
-        let authorAction = UIAction(
-            title: authorName,
-            image: authorImage ?? UIImage(systemName: "person.crop.circle.fill")
-        ) { _ in
-            onOpenAuthor()
-        }
-        let commentAction = UIAction(title: "评论", image: UIImage(systemName: "message.fill")) { _ in
-            withAnimation { showCommentsOverlay.toggle() }
-        }
-        controller.transportBarCustomMenuItems = [authorAction, commentAction]
     }
 }
