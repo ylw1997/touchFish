@@ -77,8 +77,6 @@ final class DouyinFeedStore: ObservableObject {
                 result = (try await api.getFeed(), 0, true)
             case .following:
                 result = try await api.getFollowing(maxCursor: cursor)
-            case .favorites:
-                result = try await api.getFavorites(maxCursor: cursor)
             }
 
             guard requestGeneration == generation else { return }

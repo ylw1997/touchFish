@@ -21,6 +21,7 @@
 		A10000000000000000000003 /* DanmakuModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* DanmakuModels.swift */; };
 		A10000000000000000000004 /* DanmakuService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* DanmakuService.swift */; };
 		A10000000000000000000005 /* DanmakuOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* DanmakuOverlayController.swift */; };
+		A10000000000000000000006 /* FavoritesLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* FavoritesLibraryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +40,7 @@
 		B10000000000000000000003 /* DanmakuModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuModels.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* DanmakuService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuService.swift; sourceTree = "<group>"; };
 		B10000000000000000000005 /* DanmakuOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuOverlayController.swift; sourceTree = "<group>"; };
+		B10000000000000000000006 /* FavoritesLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesLibraryView.swift; sourceTree = "<group>"; };
 		F750D7C19980FA685D78654E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -55,6 +57,7 @@
 			isa = PBXGroup;
 			children = (
 				81C84B0AC7662FB0C2D47FB8 /* DouyinFeedView.swift */,
+				B10000000000000000000006 /* FavoritesLibraryView.swift */,
 				F750D7C19980FA685D78654E /* SettingsView.swift */,
 				300A1D0AFB147F8C5CD61575 /* VideoPlayerView.swift */,
 			);
@@ -158,6 +161,7 @@
 				A10000000000000000000003 /* DanmakuModels.swift in Sources */,
 				A10000000000000000000005 /* DanmakuOverlayController.swift in Sources */,
 				A10000000000000000000004 /* DanmakuService.swift in Sources */,
+				A10000000000000000000006 /* FavoritesLibraryView.swift in Sources */,
 				D3DC237A564C388E375C2957 /* ContentView.swift in Sources */,
 				F9A3B0A011C8DA362744FE29 /* DouyinAPI.swift in Sources */,
 				A10000000000000000000001 /* DouyinFeedStore.swift in Sources */,

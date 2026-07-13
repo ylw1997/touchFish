@@ -306,6 +306,8 @@ struct Video: Decodable {
     let play_addr: VideoAddr?
     let cover: AvatarUrl?
     let duration: Int?
+    let width: Int?
+    let height: Int?
 }
 
 struct VideoAddr: Decodable {
