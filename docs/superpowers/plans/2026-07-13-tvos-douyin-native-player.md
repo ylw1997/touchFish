@@ -47,7 +47,7 @@ git add ios/TouchFishTV
 git commit -m "refactor(tvos): 删除旧抖音页面与接口"
 ```
 
-### Task 2: 修复完整 URL 签名
+### Task 2: 对齐 X-Bogus 签名输入契约
 
 **Files:**
 - Modify: `ios/TouchFishTV/TouchFishTV/SignatureManager.swift`
@@ -57,14 +57,15 @@ git commit -m "refactor(tvos): 删除旧抖音页面与接口"
 
 Run: `rg -n "queryRange|queryString" ios/TouchFishTV/TouchFishTV/SignatureManager.swift`
 
-Expected: 找到只截取 query 的旧实现。
+Expected: 找到签名输入处理位置。
 
-- [ ] **Step 2: 将完整 URL 传入 JS**
+- [ ] **Step 2: 将 query 传入内置算法本体**
 
 将签名调用改为：
 
 ```swift
-guard let signedValue = signFunction.call(withArguments: [url, userAgent])?.toString(),
+let query = url.range(of: "?").map { String(url[$0.upperBound...]) } ?? ""
+guard let signedValue = signFunction.call(withArguments: [query, userAgent])?.toString(),
       !signedValue.isEmpty else {
     return url
 }
@@ -76,11 +77,11 @@ guard let signedValue = signFunction.call(withArguments: [url, userAgent])?.toSt
 
 推荐和关注接口保持与桌面 `src/api/douyin.ts` 相同的 URL 参数及 Chrome 129 User-Agent；弹幕请求不经过签名。
 
-- [ ] **Step 4: 验证旧 query 签名路径不存在**
+- [ ] **Step 4: 验证内置算法接收 query**
 
-Run: `rg -n "queryRange|queryString" ios/TouchFishTV/TouchFishTV/SignatureManager.swift`
+Run: `rg -n "call\(withArguments: \[query, userAgent\]\)" ios/TouchFishTV/TouchFishTV/SignatureManager.swift`
 
-Expected: 无匹配。
+Expected: 有匹配。
 
 - [ ] **Step 5: 提交签名修复**
 

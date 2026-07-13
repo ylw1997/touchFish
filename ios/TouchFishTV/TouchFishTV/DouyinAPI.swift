@@ -6,6 +6,8 @@ enum APIError: LocalizedError {
     case httpError(statusCode: Int)
     case apiError(message: String)
     case emptyCookie
+    case emptyResponse
+    case invalidResponseData
 
     var errorDescription: String? {
         switch self {
@@ -19,6 +21,10 @@ enum APIError: LocalizedError {
             return message
         case .emptyCookie:
             return "Cookie 不能为空"
+        case .emptyResponse:
+            return "抖音接口返回了空数据，请稍后重试"
+        case .invalidResponseData:
+            return "抖音接口数据格式发生变化，请更新后重试"
         }
     }
 }
@@ -83,7 +89,7 @@ class DouyinAPI: ObservableObject {
         cookieOverride: String? = nil,
         extraHeaders: [String: String] = [:]
     ) async throws -> T {
-        // 使用完整 URL 生成 X-Bogus，保持与桌面端已验证的调用方式一致。
+        // SignatureManager 会按内置算法的契约提取 query 并生成 X-Bogus。
         let signedUrlStr = SignatureManager.shared.sign(url: url, userAgent: userAgent)
         guard let requestUrl = URL(string: signedUrlStr) else {
             throw APIError.invalidURL
@@ -110,8 +116,14 @@ class DouyinAPI: ObservableObject {
             throw APIError.httpError(statusCode: httpResponse.statusCode)
         }
         
-        let decoder = JSONDecoder()
-        return try decoder.decode(T.self, from: data)
+        guard !data.isEmpty else { throw APIError.emptyResponse }
+
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch let decodingError as DecodingError {
+            print("[DouyinAPI] JSON decode failed: \(decodingError)")
+            throw APIError.invalidResponseData
+        }
     }
 
     

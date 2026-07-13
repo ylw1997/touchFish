@@ -47,8 +47,11 @@ class SignatureManager {
             return url
         }
         
-        // 当前 xbogus 实现需要完整 URL；只传 query 会得到 HTTP 200 空响应。
-        guard let signedValVal = signFunction.call(withArguments: [url, userAgent]) else {
+        // Bundle 内是 xbogus 的算法本体；npm 入口会先截取 query，再调用这个函数。
+        // 因此这里必须保持相同契约，只传入问号后的查询参数。
+        let query = url.range(of: "?").map { String(url[$0.upperBound...]) } ?? ""
+        guard !query.isEmpty,
+              let signedValVal = signFunction.call(withArguments: [query, userAgent]) else {
             print("[SignatureManager] Calling sign function failed")
             return url
         }
