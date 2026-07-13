@@ -47,16 +47,8 @@ class SignatureManager {
             return url
         }
         
-        // xbogus 的核心方法接受的是 URL 的 query 参数串而非完整 URL
-        // 比如: device_platform=webapp&aid=6383...
-        let queryString: String
-        if let queryRange = url.range(of: "?") {
-            queryString = String(url[queryRange.upperBound...])
-        } else {
-            queryString = ""
-        }
-        
-        guard let signedValVal = signFunction.call(withArguments: [queryString, userAgent]) else {
+        // 当前 xbogus 实现需要完整 URL；只传 query 会得到 HTTP 200 空响应。
+        guard let signedValVal = signFunction.call(withArguments: [url, userAgent]) else {
             print("[SignatureManager] Calling sign function failed")
             return url
         }

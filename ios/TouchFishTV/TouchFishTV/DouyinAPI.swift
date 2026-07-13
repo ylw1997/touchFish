@@ -83,7 +83,7 @@ class DouyinAPI: ObservableObject {
         cookieOverride: String? = nil,
         extraHeaders: [String: String] = [:]
     ) async throws -> T {
-        // 进行 X-Bogus 签名
+        // 使用完整 URL 生成 X-Bogus，保持与桌面端已验证的调用方式一致。
         let signedUrlStr = SignatureManager.shared.sign(url: url, userAgent: userAgent)
         guard let requestUrl = URL(string: signedUrlStr) else {
             throw APIError.invalidURL
