@@ -261,4 +261,3 @@ struct Video: Decodable {
 struct VideoAddr: Decodable {
     let url_list: [String]?
 }
-
