@@ -104,7 +104,7 @@ final class PlaybackCoordinator: ObservableObject {
 
     private let instanceID = String(UUID().uuidString.prefix(6))
     private let source: PlaybackSource
-    private var playerLease: PlaybackPlayerLease
+    private let playerLease: PlaybackPlayerLease
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
     private var loadingAsset: AVURLAsset?
@@ -160,11 +160,13 @@ final class PlaybackCoordinator: ObservableObject {
         isTransitioning = true
         presentationOpacity = 0.82
         playbackError = nil
-        if currentAwemeID == nil {
-            releaseCurrentItem()
-        } else {
-            rotatePlayerForNextVideo()
-        }
+        // 一个活动页面只持有一个 AVPlayer。AVPlayer 背后的 VideoToolbox /
+        // 网络缓冲资源并不会在 Swift 对象 deinit 时同步释放；按视频重建
+        // AVPlayer 会让多个底层缓冲池在短时间内并存，连续切换后内存持续抬升。
+        // 视频之间只替换 AVPlayerItem，离开页面时再由 PlaybackSessionSlot
+        // 销毁整个播放会话。
+        playerViewController.danmakuController.stop()
+        releaseCurrentItem()
         if playerViewController.player !== player {
             playerViewController.player = player
         }
@@ -467,30 +469,6 @@ final class PlaybackCoordinator: ObservableObject {
             "release-current-item-end",
             category: "item",
             fields: ["hasCurrentItem": player.currentItem != nil]
-        )
-#endif
-    }
-
-    private func rotatePlayerForNextVideo() {
-        let previousLease = playerLease
-        let previousPlayerID = previousLease.id
-        playerViewController.danmakuController.stop()
-        releaseCurrentItem()
-        if playerViewController.player === previousLease.player {
-            playerViewController.player = nil
-        }
-
-        let nextLease = PlaybackPlayerLease(source: source)
-        playerLease = nextLease
-        playerViewController.player = nextLease.player
-#if DEBUG
-        diagnosticsEvent(
-            "rotated",
-            category: "player",
-            fields: [
-                "previousPlayer": previousPlayerID,
-                "nextPlayer": nextLease.id
-            ]
         )
 #endif
     }
