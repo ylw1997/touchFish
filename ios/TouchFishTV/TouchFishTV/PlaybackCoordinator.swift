@@ -28,7 +28,7 @@ final class PlaybackCoordinator: ObservableObject {
     private var assetTask: Task<Void, Never>?
     private var loadingAsset: AVURLAsset?
     private var currentPlaybackToken: UInt64?
-    private var currentOwner: PlaybackOwner?
+    @Published private var currentOwner: PlaybackOwner?
 #if DEBUG
     private var diagnosticsTask: Task<Void, Never>?
 #endif

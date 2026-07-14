@@ -183,3 +183,16 @@ Expected: 播放器仍正常推进；内存允许随解码升降并进入平台�
 - [x] **Step 4: 为播放地址失败增加状态提示，并允许上下键跳过**
 - [x] **Step 5: 为喜欢分页增加 generation，并阻止退出后的异步选择回写**
 - [x] **Step 6: 运行回归检查与 `git diff --check`**
+
+### Task 6: 强制原生控制器单 owner 绑定
+
+**Files:**
+- Modify: `ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift`
+- Modify: `ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift`
+- Modify: `scripts/verify-tvos-douyin.ps1`
+
+- [x] **Step 1: 写入并验证非 owner 控制器解绑的失败检查**
+- [x] **Step 2: 发布 currentOwner 变化，确保 SwiftUI 精确刷新控制器绑定**
+- [x] **Step 3: 非 owner 控制器停止弹幕并将 player 设为 nil**
+- [x] **Step 4: 仅当前 owner 绑定全局 AVPlayer 并配置弹幕**
+- [x] **Step 5: 运行回归检查与 `git diff --check`**

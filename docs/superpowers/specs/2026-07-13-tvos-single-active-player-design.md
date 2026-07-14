@@ -24,7 +24,9 @@
 每个 `VideoPlayerView` 创建一个稳定 UUID，与来源组成 `PlaybackOwner` 租约。播放器切换
 时记录当前租约；视图消失时只有租约仍匹配的视图才能停止播放器。这样即使旧页面的
 `onDisappear` 晚于新页面的 `onAppear` 到达，也不会误停新视频。播放结束通知和原生
-遥控导航同样必须校验当前租约，避免转场期间旧控制器操作错误的 Feed。
+遥控导航同样必须校验当前租约，避免转场期间旧控制器操作错误的 Feed。非 owner 的
+`AVPlayerViewController` 必须立即停止弹幕并解绑 `player`，防止其原生生命周期暂停或
+控制全局播放器。
 
 `DouyinFeedView` 只有在 `isActive` 为真时才挂载 `VideoPlayerView`；失活后播放器视图
 从层级中移除，由现有 `onDisappear -> PlaybackCoordinator.stop()` 完成以下清理：

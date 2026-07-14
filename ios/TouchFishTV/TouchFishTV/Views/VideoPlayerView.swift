@@ -176,13 +176,11 @@ struct NativePlayerController: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> DouyinPlayerViewController {
         let controller = DouyinPlayerViewController()
-        controller.player = player
         configure(controller)
         return controller
     }
 
     func updateUIViewController(_ controller: DouyinPlayerViewController, context: Context) {
-        if controller.player !== player { controller.player = player }
         configure(controller)
     }
 
@@ -192,6 +190,14 @@ struct NativePlayerController: UIViewControllerRepresentable {
         controller.isTransitioning = isTransitioning
         controller.isPlaybackOwner = isPlaybackOwner
         controller.allowsNavigationWhileStopped = allowsNavigationWhileStopped
+
+        guard isPlaybackOwner else {
+            controller.danmakuController.stop()
+            controller.player = nil
+            return
+        }
+
+        if controller.player !== player { controller.player = player }
         controller.danmakuController.configure(
             aweme: aweme,
             player: player,

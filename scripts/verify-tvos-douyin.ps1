@@ -23,6 +23,7 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'coordinator\.isOwned\(by:\s*owner\)'; Description = 'owner-guarded playback end event' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'isPlaybackOwner:\s*coordinator\.isOwned\(by:\s*owner\)'; Description = 'owner-guarded native remote navigation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'allowsNavigationWhileStopped:\s*coordinator\.playbackError\s*!=\s*nil'; Description = 'failed playback remote navigation' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'guard\s+isPlaybackOwner\s+else\s*\{[\s\S]*?danmakuController\.stop\(\)[\s\S]*?controller\.player\s*=\s*nil'; Description = 'non-owner native controller detachment' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'retainedPreviousItems\s*=\s*5'; Description = '5-item previous history' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'activeIndex\s*-\s*retainedPreviousItems'; Description = 'played history trimming' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'preloadRemainingItems\s*=\s*2'; Description = 'two-item preload threshold' },
@@ -71,6 +72,9 @@ if ($playback -match 'load\(\.commonMetadata\)') {
 }
 if ($videoPlayer -match '@StateObject\s+private\s+var\s+coordinator\s*=\s*PlaybackCoordinator\(\)') {
     $failures += 'per-view playback coordinator remains'
+}
+if ($videoPlayer -match 'makeUIViewController[\s\S]*?controller\.player\s*=\s*player[\s\S]*?return\s+controller') {
+    $failures += 'native controller still binds player before ownership check'
 }
 if ($favorites -match 'Text\("\\\(store\.items\.count') {
     $failures += 'favorite count label remains'
