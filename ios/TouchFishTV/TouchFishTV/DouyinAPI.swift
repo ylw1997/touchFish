@@ -29,7 +29,8 @@ enum APIError: LocalizedError {
     }
 }
 
-class DouyinAPI: ObservableObject {
+@MainActor
+final class DouyinAPI: ObservableObject {
     static let shared = DouyinAPI()
     
     private let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
@@ -138,23 +139,48 @@ class DouyinAPI: ObservableObject {
         }
         
         if !(200...299).contains(httpResponse.statusCode) {
+#if DEBUG
+            logResponseFailure(data: data, response: httpResponse, reason: "http-error")
+#endif
             throw APIError.httpError(statusCode: httpResponse.statusCode)
         }
-
-        guard httpResponse.value(forHTTPHeaderField: "Content-Type")?
-            .lowercased().contains("application/json") == true else {
-            throw APIError.invalidResponseData
-        }
         
-        guard !data.isEmpty else { throw APIError.emptyResponse }
+        guard !data.isEmpty else {
+#if DEBUG
+            logResponseFailure(data: data, response: httpResponse, reason: "empty-response")
+#endif
+            throw APIError.emptyResponse
+        }
 
         do {
             return try JSONDecoder().decode(T.self, from: data)
-        } catch let decodingError as DecodingError {
-            print("[DouyinAPI] JSON decode failed: \(decodingError)")
+        } catch {
+#if DEBUG
+            logResponseFailure(data: data, response: httpResponse, reason: "decode-error")
+            print("[DouyinAPI] decodingError=\(error)")
+#endif
             throw APIError.invalidResponseData
         }
     }
+
+#if DEBUG
+    private func logResponseFailure(data: Data, response: HTTPURLResponse, reason: String) {
+        let contentType = response.value(forHTTPHeaderField: "Content-Type") ?? "unknown"
+        let contentEncoding = response.value(forHTTPHeaderField: "Content-Encoding") ?? "identity"
+        let firstByte = data.first.map { String(format: "%02X", $0) } ?? "none"
+        let rawPrefix = String(data: data.prefix(160), encoding: .utf8) ?? "non-utf8"
+        let prefix = rawPrefix
+            .replacingOccurrences(of: "\r", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\t", with: " ")
+            .prefix(160)
+        print(
+            "[DouyinAPI] reason=\(reason) status=\(response.statusCode) "
+            + "contentType=\(contentType) contentEncoding=\(contentEncoding) "
+            + "bytes=\(data.count) firstByte=\(firstByte) prefix=\(prefix)"
+        )
+    }
+#endif
 
     
     // MARK: - API Methods

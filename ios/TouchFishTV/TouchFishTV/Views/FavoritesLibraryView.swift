@@ -48,6 +48,8 @@ final class FavoritesLibraryStore: ObservableObject {
             cursor = result.1
             hasMore = result.2
             if items.isEmpty { errorMessage = "还没有喜欢的视频" }
+        } catch is CancellationError {
+            return
         } catch {
             guard requestGeneration == generation else { return }
             errorMessage = error.localizedDescription

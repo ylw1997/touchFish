@@ -75,6 +75,9 @@ final class DouyinFeedStore: ObservableObject {
         let requestGeneration = generation
         isLoading = true
         errorMessage = nil
+        defer {
+            if requestGeneration == generation { isLoading = false }
+        }
 
         do {
             let result: ([Aweme], Int, Bool)
@@ -96,11 +99,12 @@ final class DouyinFeedStore: ObservableObject {
             cursor = result.1
             hasMore = result.2
             if items.isEmpty { errorMessage = "当前没有可播放的视频" }
+        } catch is CancellationError {
+            return
         } catch {
             guard requestGeneration == generation else { return }
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
     private func select(_ index: Int) {

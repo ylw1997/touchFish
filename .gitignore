@@ -25,3 +25,8 @@ APIS/
 .claude/
 .worktrees/
 server/
+
+# macOS / Xcode user state
+.DS_Store
+**/xcuserdata/
+*.xcuserstate
