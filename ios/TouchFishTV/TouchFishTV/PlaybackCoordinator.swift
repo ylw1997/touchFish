@@ -338,9 +338,8 @@ final class PlaybackCoordinator: ObservableObject {
     private func releaseCurrentItem() {
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
-        player.pause()
-        player.cancelPendingPrerolls()
         guard let item = player.currentItem else {
+            player.pause()
 #if DEBUG
             diagnosticsEvent("release-no-current-item", category: "item")
 #endif
@@ -354,6 +353,14 @@ final class PlaybackCoordinator: ObservableObject {
                 "itemStatus": debugItemStatus(item.status),
                 "time": debugSeconds(player.currentTime().seconds)
             ]
+        )
+#endif
+        player.pause()
+#if DEBUG
+        diagnosticsEvent(
+            "release-current-item-paused",
+            category: "item",
+            fields: ["rate": player.rate]
         )
 #endif
         item.cancelPendingSeeks()
