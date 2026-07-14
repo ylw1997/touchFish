@@ -9,7 +9,7 @@ enum FeedType {
 struct DouyinFeedView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store: DouyinFeedStore
-    @StateObject private var playbackSession: PlaybackCoordinator
+    @StateObject private var playbackSlot: PlaybackSessionSlot
     private let isActive: Bool
 
     init(feedType: FeedType, isActive: Bool) {
@@ -20,14 +20,16 @@ struct DouyinFeedView: View {
         case .following: source = .following
         }
         _store = StateObject(wrappedValue: DouyinFeedStore(feedType: feedType))
-        _playbackSession = StateObject(wrappedValue: PlaybackCoordinator(source: source))
+        _playbackSlot = StateObject(wrappedValue: PlaybackSessionSlot(source: source))
     }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            if isActive, let aweme = store.activeItem {
+            if isActive,
+               let aweme = store.activeItem,
+               let playbackSession = playbackSlot.session {
                 VideoPlayerView(
                     aweme: aweme,
                     cookie: api.cookie,
@@ -37,6 +39,8 @@ struct DouyinFeedView: View {
                     onNext: { Task { await store.next() } }
                 )
                 .ignoresSafeArea()
+            } else if isActive, store.activeItem != nil {
+                loadingView
             } else if store.isLoading {
                 loadingView
             } else if store.activeItem == nil {
@@ -44,8 +48,9 @@ struct DouyinFeedView: View {
             }
         }
         .task(id: isActive) {
-            guard isActive, store.items.isEmpty else { return }
-            await store.refresh()
+            guard isActive else { return }
+            if store.items.isEmpty { await store.refresh() }
+            startPlaybackIfPossible()
         }
         .onChange(of: api.cookieRevision) { _, _ in
             Task { await store.refresh() }
@@ -57,7 +62,7 @@ struct DouyinFeedView: View {
             if active {
                 startPlaybackIfPossible()
             } else {
-                playbackSession.stop()
+                playbackSlot.deactivate()
             }
         }
     }
@@ -91,10 +96,10 @@ struct DouyinFeedView: View {
     private func startPlaybackIfPossible() {
         guard isActive else { return }
         guard let aweme = store.activeItem else {
-            playbackSession.stop()
+            playbackSlot.deactivate()
             return
         }
-        playbackSession.play(
+        playbackSlot.activate().play(
             aweme,
             cookie: api.cookie,
             playbackToken: store.playbackToken

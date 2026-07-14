@@ -7,6 +7,52 @@ enum PlaybackSource: String {
     case favorites
 }
 
+/// 保留页面自己的播放状态，但只在页面真正需要播放时持有原生播放器。
+///
+/// `TabView` 会提前创建所有标签页。如果直接把 `PlaybackCoordinator` 放在
+/// 每个标签页的 `@StateObject` 中，会在启动时常驻多套 AVPlayer 和
+/// AVPlayerViewController。即使清空 currentItem，原生解码/渲染缓存也可能继续
+/// 跟随播放器实例存活。这个容器让列表页可以常驻，同时在离开播放页面后释放
+/// 整个原生播放会话。
+@MainActor
+final class PlaybackSessionSlot: ObservableObject {
+    @Published private(set) var session: PlaybackCoordinator?
+
+    private let source: PlaybackSource
+
+    init(source: PlaybackSource) {
+        self.source = source
+    }
+
+    @discardableResult
+    func activate() -> PlaybackCoordinator {
+        if let session { return session }
+        let session = PlaybackCoordinator(source: source)
+        self.session = session
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "activated",
+            category: "session-slot",
+            fields: ["source": source.rawValue]
+        )
+#endif
+        return session
+    }
+
+    func deactivate() {
+        guard let session else { return }
+        session.stop()
+        self.session = nil
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "released",
+            category: "session-slot",
+            fields: ["source": source.rawValue]
+        )
+#endif
+    }
+}
+
 @MainActor
 final class PlaybackCoordinator: ObservableObject {
     let player: AVPlayer

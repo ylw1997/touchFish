@@ -61,7 +61,7 @@ final class FavoritesLibraryStore: ObservableObject {
 struct FavoritesLibraryView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store = FavoritesLibraryStore()
-    @StateObject private var playbackSession = PlaybackCoordinator(source: .favorites)
+    @StateObject private var playbackSlot = PlaybackSessionSlot(source: .favorites)
     private let isActive: Bool
     @State private var selectedIndex: Int?
     @State private var playbackToken: UInt64 = 0
@@ -103,18 +103,23 @@ struct FavoritesLibraryView: View {
             Task { await store.refresh() }
         }
         .onChange(of: isActive) { _, active in
-            if !active { selectedIndex = nil }
+            if !active {
+                selectedIndex = nil
+                playbackSlot.deactivate()
+            }
         }
         .onChange(of: playbackToken) { _, _ in
             startPlaybackIfPossible()
         }
         .onChange(of: selectedIndex) { previousIndex, selectedIndex in
             if previousIndex != nil, selectedIndex == nil {
-                playbackSession.stop()
+                playbackSlot.deactivate()
             }
         }
         .fullScreenCover(isPresented: playerPresented, onDismiss: restoreFocus) {
-            if let index = selectedIndex, store.items.indices.contains(index) {
+            if let index = selectedIndex,
+               store.items.indices.contains(index),
+               let playbackSession = playbackSlot.session {
                 VideoPlayerView(
                     aweme: store.items[index],
                     cookie: api.cookie,
@@ -227,7 +232,7 @@ struct FavoritesLibraryView: View {
         guard isActive,
               let index = selectedIndex,
               store.items.indices.contains(index) else { return }
-        playbackSession.play(
+        playbackSlot.activate().play(
             store.items[index],
             cookie: api.cookie,
             playbackToken: playbackToken
