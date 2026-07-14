@@ -97,17 +97,18 @@ final class PlaybackCoordinator: ObservableObject {
 
     func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64) {
         if currentPlaybackToken == playbackToken,
-           currentAwemeID == aweme.aweme_id,
-           player.currentItem != nil {
-            resume()
+           currentAwemeID == aweme.aweme_id {
+            if player.currentItem != nil {
+                resume()
 #if DEBUG
-            diagnosticsEvent(
-                "existing-play-resumed",
-                category: "session",
-                fields: ["token": playbackToken, "aweme": aweme.aweme_id]
-            )
-            debugSnapshot(label: "resumed-same-token")
+                diagnosticsEvent(
+                    "existing-play-resumed",
+                    category: "session",
+                    fields: ["token": playbackToken, "aweme": aweme.aweme_id]
+                )
+                debugSnapshot(label: "resumed-same-token")
 #endif
+            }
             return
         }
 
@@ -158,7 +159,7 @@ final class PlaybackCoordinator: ObservableObject {
             playerViewController.player = player
         }
         guard player.timeControlStatus != .playing || player.rate == 0 else { return }
-        player.playImmediately(atRate: 1)
+        player.play()
 #if DEBUG
         diagnosticsEvent("resume", category: "session")
 #endif
@@ -208,7 +209,6 @@ final class PlaybackCoordinator: ObservableObject {
                     item.preferredForwardBufferDuration = 8
                     item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
                     player.replaceCurrentItem(with: item)
-                    player.automaticallyWaitsToMinimizeStalling = false
                     observeStatus(
                         of: item,
                         candidateIndex: candidateIndex,
@@ -217,7 +217,7 @@ final class PlaybackCoordinator: ObservableObject {
                         headers: headers,
                         requestedGeneration: requestedGeneration
                     )
-                    player.playImmediately(atRate: 1)
+                    player.play()
                     assetTask = nil
 #if DEBUG
                     diagnosticsEvent(
