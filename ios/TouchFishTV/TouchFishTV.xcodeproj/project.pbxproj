@@ -22,6 +22,7 @@
 		A10000000000000000000004 /* DanmakuService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* DanmakuService.swift */; };
 		A10000000000000000000005 /* DanmakuOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* DanmakuOverlayController.swift */; };
 		A10000000000000000000006 /* FavoritesLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* FavoritesLibraryView.swift */; };
+		A10000000000000000000007 /* PlaybackDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* PlaybackDiagnostics.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 		B10000000000000000000004 /* DanmakuService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuService.swift; sourceTree = "<group>"; };
 		B10000000000000000000005 /* DanmakuOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuOverlayController.swift; sourceTree = "<group>"; };
 		B10000000000000000000006 /* FavoritesLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesLibraryView.swift; sourceTree = "<group>"; };
+		B10000000000000000000007 /* PlaybackDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackDiagnostics.swift; sourceTree = "<group>"; };
 		F750D7C19980FA685D78654E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -78,6 +80,7 @@
 				C1E2B32F0ACBE01F0070854F /* SignatureManager.swift */,
 				2C1FBFC651B99D83C5C07BEB /* TouchFishTVApp.swift */,
 				B10000000000000000000002 /* PlaybackCoordinator.swift */,
+				B10000000000000000000007 /* PlaybackDiagnostics.swift */,
 				91006EA23AB5374632594F93 /* xbogus.js */,
 				7882035E47150A2BBE3479D4 /* Views */,
 			);
@@ -169,6 +172,7 @@
 				390B965C44B862EC8A2BFFAA /* SettingsView.swift in Sources */,
 				DF3D95DC1777E153CF79E6D3 /* SignatureManager.swift in Sources */,
 				A10000000000000000000002 /* PlaybackCoordinator.swift in Sources */,
+				A10000000000000000000007 /* PlaybackDiagnostics.swift in Sources */,
 				071B1F259DDF3A5A62577990 /* TouchFishTVApp.swift in Sources */,
 				47E7C5BC661E9410867650BA /* VideoPlayerView.swift in Sources */,
 			);
