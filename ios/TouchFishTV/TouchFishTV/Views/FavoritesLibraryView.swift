@@ -61,6 +61,7 @@ final class FavoritesLibraryStore: ObservableObject {
 struct FavoritesLibraryView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store = FavoritesLibraryStore()
+    @StateObject private var playbackSession = PlaybackCoordinator(source: .favorites)
     private let isActive: Bool
     @State private var selectedIndex: Int?
     @State private var playbackToken: UInt64 = 0
@@ -104,13 +105,21 @@ struct FavoritesLibraryView: View {
         .onChange(of: isActive) { _, active in
             if !active { selectedIndex = nil }
         }
+        .onChange(of: playbackToken) { _, _ in
+            startPlaybackIfPossible()
+        }
+        .onChange(of: selectedIndex) { previousIndex, selectedIndex in
+            if previousIndex != nil, selectedIndex == nil {
+                playbackSession.stop()
+            }
+        }
         .fullScreenCover(isPresented: playerPresented, onDismiss: restoreFocus) {
             if let index = selectedIndex, store.items.indices.contains(index) {
                 VideoPlayerView(
                     aweme: store.items[index],
                     cookie: api.cookie,
                     playbackToken: playbackToken,
-                    source: .favorites,
+                    coordinator: playbackSession,
                     onPrevious: playPrevious,
                     onNext: playNext
                 )
@@ -212,6 +221,17 @@ struct FavoritesLibraryView: View {
 
     private func restoreFocus() {
         focusedIndex = lastSelectedIndex
+    }
+
+    private func startPlaybackIfPossible() {
+        guard isActive,
+              let index = selectedIndex,
+              store.items.indices.contains(index) else { return }
+        playbackSession.play(
+            store.items[index],
+            cookie: api.cookie,
+            playbackToken: playbackToken
+        )
     }
 }
 

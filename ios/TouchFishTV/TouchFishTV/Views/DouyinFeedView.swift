@@ -9,16 +9,18 @@ enum FeedType {
 struct DouyinFeedView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store: DouyinFeedStore
+    @StateObject private var playbackSession: PlaybackCoordinator
     private let isActive: Bool
-    private let playbackSource: PlaybackSource
 
     init(feedType: FeedType, isActive: Bool) {
         self.isActive = isActive
+        let source: PlaybackSource
         switch feedType {
-        case .recommend: playbackSource = .recommend
-        case .following: playbackSource = .following
+        case .recommend: source = .recommend
+        case .following: source = .following
         }
         _store = StateObject(wrappedValue: DouyinFeedStore(feedType: feedType))
+        _playbackSession = StateObject(wrappedValue: PlaybackCoordinator(source: source))
     }
 
     var body: some View {
@@ -30,7 +32,7 @@ struct DouyinFeedView: View {
                     aweme: aweme,
                     cookie: api.cookie,
                     playbackToken: store.playbackToken,
-                    source: playbackSource,
+                    coordinator: playbackSession,
                     onPrevious: store.previous,
                     onNext: { Task { await store.next() } }
                 )
@@ -47,6 +49,16 @@ struct DouyinFeedView: View {
         }
         .onChange(of: api.cookieRevision) { _, _ in
             Task { await store.refresh() }
+        }
+        .onChange(of: store.playbackToken) { _, _ in
+            startPlaybackIfPossible()
+        }
+        .onChange(of: isActive) { _, active in
+            if active {
+                startPlaybackIfPossible()
+            } else {
+                playbackSession.stop()
+            }
         }
     }
 
@@ -74,5 +86,18 @@ struct DouyinFeedView: View {
                 .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: 620)
+    }
+
+    private func startPlaybackIfPossible() {
+        guard isActive else { return }
+        guard let aweme = store.activeItem else {
+            playbackSession.stop()
+            return
+        }
+        playbackSession.play(
+            aweme,
+            cookie: api.cookie,
+            playbackToken: store.playbackToken
+        )
     }
 }

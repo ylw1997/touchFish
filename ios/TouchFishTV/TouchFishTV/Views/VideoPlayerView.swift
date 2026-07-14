@@ -4,7 +4,7 @@ import UIKit
 
 @MainActor
 struct VideoPlayerView: View {
-    @StateObject private var coordinator: PlaybackCoordinator
+    @ObservedObject var coordinator: PlaybackCoordinator
 
     let aweme: Aweme
     let cookie: String
@@ -16,16 +16,16 @@ struct VideoPlayerView: View {
         aweme: Aweme,
         cookie: String,
         playbackToken: UInt64,
-        source: PlaybackSource,
+        coordinator: PlaybackCoordinator,
         onPrevious: @escaping () -> Void,
         onNext: @escaping () -> Void
     ) {
         self.aweme = aweme
         self.cookie = cookie
         self.playbackToken = playbackToken
+        self.coordinator = coordinator
         self.onPrevious = onPrevious
         self.onNext = onNext
-        _coordinator = StateObject(wrappedValue: PlaybackCoordinator(source: source))
     }
 
     var body: some View {
@@ -39,7 +39,8 @@ struct VideoPlayerView: View {
                 isTransitioning: coordinator.isTransitioning,
                 allowsNavigationWhileStopped: coordinator.playbackError != nil,
                 onPrevious: onPrevious,
-                onNext: onNext
+                onNext: onNext,
+                onVisible: { [weak coordinator] in coordinator?.resume() }
             )
 
             if let playbackError = coordinator.playbackError {
@@ -57,18 +58,11 @@ struct VideoPlayerView: View {
         }
         .opacity(coordinator.presentationOpacity)
         .animation(.easeOut(duration: 0.18), value: coordinator.presentationOpacity)
-        .onAppear {
-            coordinator.play(aweme, cookie: cookie, playbackToken: playbackToken)
-        }
-        .onChange(of: playbackToken) { _, token in
-            coordinator.play(aweme, cookie: cookie, playbackToken: token)
-        }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             guard let item = notification.object as? AVPlayerItem,
                   item === coordinator.player.currentItem else { return }
             onNext()
         }
-        .onDisappear { coordinator.stop() }
     }
 }
 
@@ -80,6 +74,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     let diagnosticsID = String(UUID().uuidString.prefix(6))
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
+    var onVisible: (() -> Void)?
     var isTransitioning = false
     var allowsNavigationWhileStopped = false
     let danmakuController = DanmakuOverlayController()
@@ -127,7 +122,17 @@ final class DouyinPlayerViewController: AVPlayerViewController {
             category: "controller",
             fields: ["controller": diagnosticsID, "hasPlayer": player != nil]
         )
+        onVisible?()
         DispatchQueue.main.async { [weak self] in self?.requestPlayerFocus() }
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        PlaybackDiagnostics.shared.event(
+            "view-did-disappear",
+            category: "controller",
+            fields: ["controller": diagnosticsID, "hasPlayer": player != nil]
+        )
     }
 
     func requestPlayerFocus() {
@@ -208,6 +213,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let allowsNavigationWhileStopped: Bool
     let onPrevious: () -> Void
     let onNext: () -> Void
+    let onVisible: () -> Void
 
     func makeUIViewController(context: Context) -> DouyinPlayerViewController {
         configure(controller)
@@ -224,6 +230,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
         }
         controller.onPrevious = onPrevious
         controller.onNext = onNext
+        controller.onVisible = onVisible
         controller.isTransitioning = isTransitioning
         controller.allowsNavigationWhileStopped = allowsNavigationWhileStopped
         controller.danmakuController.configure(
@@ -240,6 +247,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
     ) {
         controller.onPrevious = nil
         controller.onNext = nil
+        controller.onVisible = nil
         controller.danmakuController.stop()
         PlaybackDiagnostics.shared.event(
             "dismantle",
@@ -249,7 +257,5 @@ struct NativePlayerController: UIViewControllerRepresentable {
                 "hasPlayer": controller.player != nil
             ]
         )
-        controller.player?.pause()
-        controller.player = nil
     }
 }

@@ -50,14 +50,17 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64) {
-        guard currentPlaybackToken != playbackToken || player.currentItem == nil else {
+        if currentPlaybackToken == playbackToken,
+           currentAwemeID == aweme.aweme_id,
+           player.currentItem != nil {
+            resume()
 #if DEBUG
             diagnosticsEvent(
-                "duplicate-play-ignored",
+                "existing-play-resumed",
                 category: "session",
                 fields: ["token": playbackToken, "aweme": aweme.aweme_id]
             )
-            debugSnapshot(label: "ignored-same-token")
+            debugSnapshot(label: "resumed-same-token")
 #endif
             return
         }
@@ -99,6 +102,20 @@ final class PlaybackCoordinator: ObservableObject {
             headers: headers,
             requestedGeneration: requestedGeneration
         )
+    }
+
+    func resume() {
+        guard playbackError == nil,
+              let item = player.currentItem,
+              item.status != .failed else { return }
+        if playerViewController.player !== player {
+            playerViewController.player = player
+        }
+        guard player.timeControlStatus != .playing || player.rate == 0 else { return }
+        player.playImmediately(atRate: 1)
+#if DEBUG
+        diagnosticsEvent("resume", category: "session")
+#endif
     }
 
     private func loadCandidates(
