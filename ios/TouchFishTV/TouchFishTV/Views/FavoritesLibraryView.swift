@@ -79,19 +79,16 @@ struct FavoritesLibraryView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color.black, Color(red: 0.055, green: 0.06, blue: 0.075)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
-            if !isActive || selectedIndex != nil {
+            if !isActive {
                 Color.black.ignoresSafeArea()
+            } else if selectedIndex != nil {
+                playerContent
             } else if store.items.isEmpty {
-                emptyState
+                libraryBackground
+                    .overlay { emptyState }
             } else {
-                libraryGrid
+                libraryBackground
+                    .overlay { libraryGrid }
             }
         }
         .task(id: isActive) {
@@ -112,25 +109,58 @@ struct FavoritesLibraryView: View {
             startPlaybackIfPossible()
         }
         .onChange(of: selectedIndex) { previousIndex, selectedIndex in
+#if DEBUG
+            var fields: [String: CustomStringConvertible] = [
+                "items": store.items.count,
+                "mode": selectedIndex == nil ? "grid" : "player"
+            ]
+            if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
+                fields["memoryMB"] = String(format: "%.1f", memory)
+            }
+            PlaybackDiagnostics.shared.event(
+                selectedIndex == nil ? "show-grid" : "show-player",
+                category: "favorites-ui",
+                fields: fields
+            )
+#endif
             if previousIndex != nil, selectedIndex == nil {
                 playbackSlot.deactivate()
+                restoreFocus()
             }
         }
-        .fullScreenCover(isPresented: playerPresented, onDismiss: restoreFocus) {
-            if let index = selectedIndex,
-               store.items.indices.contains(index),
-               let playbackSession = playbackSlot.session {
-                VideoPlayerView(
-                    aweme: store.items[index],
-                    cookie: api.cookie,
-                    playbackToken: playbackToken,
-                    coordinator: playbackSession,
-                    onPrevious: playPrevious,
-                    onNext: playNext
-                )
+    }
+
+    private var libraryBackground: some View {
+        LinearGradient(
+            colors: [Color.black, Color(red: 0.055, green: 0.06, blue: 0.075)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
+    }
+
+    @ViewBuilder
+    private var playerContent: some View {
+        if let index = selectedIndex,
+           store.items.indices.contains(index),
+           let playbackSession = playbackSlot.session {
+            VideoPlayerView(
+                aweme: store.items[index],
+                cookie: api.cookie,
+                playbackToken: playbackToken,
+                coordinator: playbackSession,
+                onPrevious: playPrevious,
+                onNext: playNext
+            )
+            .ignoresSafeArea()
+            .onExitCommand { selectedIndex = nil }
+        } else {
+            Color.black
                 .ignoresSafeArea()
-                .onExitCommand { selectedIndex = nil }
-            }
+                .overlay {
+                    ProgressView("正在载入视频")
+                        .controlSize(.large)
+                }
         }
     }
 
@@ -186,13 +216,6 @@ struct FavoritesLibraryView: View {
         }
     }
 
-    private var playerPresented: Binding<Bool> {
-        Binding(
-            get: { isActive && selectedIndex != nil },
-            set: { if !$0 { selectedIndex = nil } }
-        )
-    }
-
     private func playPrevious() {
         guard let index = selectedIndex, index > 0 else { return }
         selectedIndex = index - 1
@@ -225,7 +248,9 @@ struct FavoritesLibraryView: View {
     }
 
     private func restoreFocus() {
-        focusedIndex = lastSelectedIndex
+        DispatchQueue.main.async {
+            focusedIndex = lastSelectedIndex
+        }
     }
 
     private func startPlaybackIfPossible() {
