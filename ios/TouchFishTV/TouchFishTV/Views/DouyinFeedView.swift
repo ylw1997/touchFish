@@ -49,7 +49,10 @@ struct DouyinFeedView: View {
         }
         .task(id: isActive) {
             guard isActive else { return }
-            if store.items.isEmpty { await store.refresh() }
+            if store.items.isEmpty {
+                await store.refresh()
+                return
+            }
             startPlaybackIfPossible()
         }
         .onChange(of: api.cookieRevision) { _, _ in
