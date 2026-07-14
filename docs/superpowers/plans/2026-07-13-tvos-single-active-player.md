@@ -168,3 +168,18 @@ Expected: 播放器仍正常推进；内存允许随解码升降并进入平台�
 - [x] **Step 4: 使用来源加 UUID 的 `PlaybackOwner` 保护播放与停止时序**
 - [x] **Step 5: 扫描工程，确认仅根页面创建 `PlaybackCoordinator()`**
 - [x] **Step 6: 运行回归检查与 `git diff --check`**
+
+### Task 5: 修复全局播放竞态与失败恢复
+
+**Files:**
+- Modify: `ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift`
+- Modify: `ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift`
+- Modify: `ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift`
+- Modify: `scripts/verify-tvos-douyin.ps1`
+
+- [x] **Step 1: 先用失败检查覆盖结束事件所有权、加载中 Asset 和喜欢异步回写**
+- [x] **Step 2: 结束通知和遥控导航仅允许当前 PlaybackOwner 响应**
+- [x] **Step 3: 显式持有并取消尚未成为 currentItem 的 AVURLAsset**
+- [x] **Step 4: 为播放地址失败增加状态提示，并允许上下键跳过**
+- [x] **Step 5: 为喜欢分页增加 generation，并阻止退出后的异步选择回写**
+- [x] **Step 6: 运行回归检查与 `git diff --check`**

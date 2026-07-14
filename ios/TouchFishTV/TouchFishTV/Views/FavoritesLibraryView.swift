@@ -10,39 +10,46 @@ final class FavoritesLibraryStore: ObservableObject {
     private let api: DouyinAPI
     private var cursor = 0
     private var hasMore = true
+    private var generation: UInt = 0
 
     init(api: DouyinAPI = .shared) {
         self.api = api
     }
 
     func refresh() async {
+        generation &+= 1
         cursor = 0
         hasMore = true
-        await load(reset: true)
+        isLoading = false
+        await load(reset: true, requestGeneration: generation)
     }
 
     func loadMoreIfNeeded(currentIndex: Int) async {
         guard currentIndex >= max(0, items.count - 4) else { return }
-        await load(reset: false)
+        await load(reset: false, requestGeneration: generation)
     }
 
     func loadNextPage() async {
-        await load(reset: false)
+        await load(reset: false, requestGeneration: generation)
     }
 
-    private func load(reset: Bool) async {
+    private func load(reset: Bool, requestGeneration: UInt) async {
         guard !isLoading, reset || hasMore else { return }
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+        defer {
+            if requestGeneration == generation { isLoading = false }
+        }
 
         do {
             let result = try await api.getFavorites(maxCursor: reset ? 0 : cursor)
+            guard requestGeneration == generation else { return }
             if reset { items = result.0 } else { items.append(contentsOf: result.0) }
             cursor = result.1
             hasMore = result.2
             if items.isEmpty { errorMessage = "还没有喜欢的视频" }
         } catch {
+            guard requestGeneration == generation else { return }
             errorMessage = error.localizedDescription
         }
     }
@@ -182,9 +189,13 @@ struct FavoritesLibraryView: View {
             playbackToken &+= 1
             Task { await store.loadMoreIfNeeded(currentIndex: index + 1) }
         } else {
+            let expectedIndex = index
+            let expectedToken = playbackToken
             Task {
                 let oldCount = store.items.count
                 await store.loadNextPage()
+                guard selectedIndex == expectedIndex,
+                      playbackToken == expectedToken else { return }
                 if store.items.count > oldCount {
                     selectedIndex = oldCount
                     lastSelectedIndex = oldCount

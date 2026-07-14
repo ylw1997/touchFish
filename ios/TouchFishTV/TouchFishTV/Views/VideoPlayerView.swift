@@ -20,15 +20,33 @@ struct VideoPlayerView: View {
     }
 
     var body: some View {
-        NativePlayerController(
-            player: coordinator.player,
-            aweme: aweme,
-            cookie: cookie,
-            playbackToken: playbackToken,
-            isTransitioning: coordinator.isTransitioning,
-            onPrevious: onPrevious,
-            onNext: onNext
-        )
+        ZStack {
+            NativePlayerController(
+                player: coordinator.player,
+                aweme: aweme,
+                cookie: cookie,
+                playbackToken: playbackToken,
+                isTransitioning: coordinator.isTransitioning,
+                isPlaybackOwner: coordinator.isOwned(by: owner),
+                allowsNavigationWhileStopped: coordinator.playbackError != nil,
+                onPrevious: onPrevious,
+                onNext: onNext
+            )
+
+            if let playbackError = coordinator.playbackError,
+               coordinator.isOwned(by: owner) {
+                VStack(spacing: 18) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 54, weight: .light))
+                        .foregroundStyle(.orange)
+                    Text(playbackError)
+                        .font(.title3.weight(.semibold))
+                    Text("使用遥控器上键或下键切换视频")
+                        .foregroundStyle(.secondary)
+                }
+                .allowsHitTesting(false)
+            }
+        }
         .opacity(coordinator.presentationOpacity)
         .animation(.easeOut(duration: 0.18), value: coordinator.presentationOpacity)
         .onAppear {
@@ -39,7 +57,8 @@ struct VideoPlayerView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             guard let item = notification.object as? AVPlayerItem,
-                  item === coordinator.player.currentItem else { return }
+                  item === coordinator.player.currentItem,
+                  coordinator.isOwned(by: owner) else { return }
             onNext()
         }
         .onDisappear { coordinator.stop(owner: owner) }
@@ -54,6 +73,8 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
     var isTransitioning = false
+    var isPlaybackOwner = false
+    var allowsNavigationWhileStopped = false
     let danmakuController = DanmakuOverlayController()
 
     private let focusAnchor = FocusAnchorView()
@@ -123,9 +144,9 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     }
 
     private var canNavigateVideos: Bool {
-        guard !isTransitioning, !navigationLocked,
-              let player,
-              player.timeControlStatus == .playing else { return false }
+        guard isPlaybackOwner, !isTransitioning, !navigationLocked,
+              let player else { return false }
+        guard player.timeControlStatus == .playing || allowsNavigationWhileStopped else { return false }
         return !isPlaybackControlFocused
     }
 
@@ -148,6 +169,8 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let cookie: String
     let playbackToken: UInt64
     let isTransitioning: Bool
+    let isPlaybackOwner: Bool
+    let allowsNavigationWhileStopped: Bool
     let onPrevious: () -> Void
     let onNext: () -> Void
 
@@ -167,6 +190,8 @@ struct NativePlayerController: UIViewControllerRepresentable {
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.isTransitioning = isTransitioning
+        controller.isPlaybackOwner = isPlaybackOwner
+        controller.allowsNavigationWhileStopped = allowsNavigationWhileStopped
         controller.danmakuController.configure(
             aweme: aweme,
             player: player,

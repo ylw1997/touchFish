@@ -23,15 +23,20 @@
 
 每个 `VideoPlayerView` 创建一个稳定 UUID，与来源组成 `PlaybackOwner` 租约。播放器切换
 时记录当前租约；视图消失时只有租约仍匹配的视图才能停止播放器。这样即使旧页面的
-`onDisappear` 晚于新页面的 `onAppear` 到达，也不会误停新视频。
+`onDisappear` 晚于新页面的 `onAppear` 到达，也不会误停新视频。播放结束通知和原生
+遥控导航同样必须校验当前租约，避免转场期间旧控制器操作错误的 Feed。
 
 `DouyinFeedView` 只有在 `isActive` 为真时才挂载 `VideoPlayerView`；失活后播放器视图
 从层级中移除，由现有 `onDisappear -> PlaybackCoordinator.stop()` 完成以下清理：
 
 1. 取消异步资产加载和诊断任务。
-2. 暂停 `AVPlayer` 并取消 preroll、seek 与 asset loading。
-3. 将 `currentItem` 替换为 `nil`。
-4. 拆除弹幕时间观察器、KVO、网络任务和动画视图。
+2. 显式取消尚未成为 `currentItem` 的加载中 `AVURLAsset`。
+3. 暂停 `AVPlayer` 并取消 preroll、seek 与 asset loading。
+4. 将 `currentItem` 替换为 `nil`。
+5. 拆除弹幕时间观察器、KVO、网络任务和动画视图。
+
+所有播放地址失败时发布明确失败状态，播放器视图显示提示，并允许用户继续使用遥控器
+上下键切换，避免停在无法操作的黑屏。
 
 “我的喜欢”仅在当前标签中允许展示播放详情；离开标签时关闭详情并释放播放器。
 进入播放详情后卸载封面网格，避免全屏播放器背后仍保留大量图片与焦点视图；Feed 数据

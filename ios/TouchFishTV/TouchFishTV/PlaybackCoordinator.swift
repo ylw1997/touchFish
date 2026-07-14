@@ -21,10 +21,12 @@ final class PlaybackCoordinator: ObservableObject {
     let player = AVPlayer()
     @Published private(set) var isTransitioning = false
     @Published private(set) var presentationOpacity = 1.0
+    @Published private(set) var playbackError: String?
 
     private let instanceID = String(UUID().uuidString.prefix(6))
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
+    private var loadingAsset: AVURLAsset?
     private var currentPlaybackToken: UInt64?
     private var currentOwner: PlaybackOwner?
 #if DEBUG
@@ -54,9 +56,10 @@ final class PlaybackCoordinator: ObservableObject {
 
         generation &+= 1
         let requestedGeneration = generation
-        assetTask?.cancel()
+        cancelPendingLoad()
         isTransitioning = true
         presentationOpacity = 0.82
+        playbackError = nil
         releaseCurrentItem()
         currentOwner = owner
         currentPlaybackToken = playbackToken
@@ -67,7 +70,7 @@ final class PlaybackCoordinator: ObservableObject {
 
         let urls = preferredURLs(for: aweme)
         guard !urls.isEmpty else {
-            isTransitioning = false
+            failPlayback(generation: requestedGeneration, message: "该视频没有可用的播放地址")
             return
         }
 
@@ -78,12 +81,15 @@ final class PlaybackCoordinator: ObservableObject {
             guard let self else { return }
             for url in urls {
                 guard !Task.isCancelled, requestedGeneration == generation else { return }
+                let asset = AVURLAsset(
+                    url: url,
+                    options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
+                )
+                loadingAsset = asset
                 do {
-                    let asset = AVURLAsset(
-                        url: url,
-                        options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
-                    )
-                    guard try await asset.load(.isPlayable) else { continue }
+                    let isPlayable = try await asset.load(.isPlayable)
+                    clearLoadingAsset(ifMatching: asset)
+                    guard isPlayable else { continue }
                     guard !Task.isCancelled, requestedGeneration == generation else { return }
 
                     let item = AVPlayerItem(asset: asset)
@@ -101,15 +107,19 @@ final class PlaybackCoordinator: ObservableObject {
                     completeTransition(for: requestedGeneration)
                     return
                 } catch {
+                    clearLoadingAsset(ifMatching: asset)
                     continue
                 }
             }
 
             guard requestedGeneration == generation else { return }
             assetTask = nil
-            isTransitioning = false
-            presentationOpacity = 1
+            failPlayback(generation: requestedGeneration, message: "该视频暂时无法播放，按上下键切换")
         }
+    }
+
+    func isOwned(by owner: PlaybackOwner) -> Bool {
+        currentOwner == owner
     }
 
     func completeTransition(for requestedGeneration: UInt) {
@@ -127,8 +137,7 @@ final class PlaybackCoordinator: ObservableObject {
         }
 
         generation &+= 1
-        assetTask?.cancel()
-        assetTask = nil
+        cancelPendingLoad()
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsTask = nil
@@ -138,6 +147,27 @@ final class PlaybackCoordinator: ObservableObject {
         currentPlaybackToken = nil
         currentOwner = nil
         isTransitioning = false
+        presentationOpacity = 1
+        playbackError = nil
+    }
+
+    private func cancelPendingLoad() {
+        assetTask?.cancel()
+        assetTask = nil
+        loadingAsset?.cancelLoading()
+        loadingAsset = nil
+    }
+
+    private func clearLoadingAsset(ifMatching asset: AVURLAsset?) {
+        guard let asset, loadingAsset === asset else { return }
+        loadingAsset = nil
+    }
+
+    private func failPlayback(generation requestedGeneration: UInt, message: String) {
+        guard requestedGeneration == generation else { return }
+        isTransitioning = false
+        presentationOpacity = 1
+        playbackError = message
     }
 
     private func releaseCurrentItem() {
