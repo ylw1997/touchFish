@@ -28,6 +28,7 @@ final class PlaybackCoordinator: ObservableObject {
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
     private var loadingAsset: AVURLAsset?
+    private var itemStatusObservation: NSKeyValueObservation?
     private var currentPlaybackToken: UInt64?
     private var currentAwemeID: String?
     @Published private var currentOwner: PlaybackOwner?
@@ -97,9 +98,26 @@ final class PlaybackCoordinator: ObservableObject {
         var headers = ["User-Agent": "Mozilla/5.0", "Referer": "https://www.douyin.com/"]
         if !cookie.isEmpty { headers["Cookie"] = cookie }
 
+        loadCandidates(
+            urls,
+            startingAt: 0,
+            aweme: aweme,
+            headers: headers,
+            requestedGeneration: requestedGeneration
+        )
+    }
+
+    private func loadCandidates(
+        _ urls: [URL],
+        startingAt startIndex: Int,
+        aweme: Aweme,
+        headers: [String: String],
+        requestedGeneration: UInt
+    ) {
         assetTask = Task { [weak self] in
             guard let self else { return }
-            for (candidateIndex, url) in urls.enumerated() {
+            for candidateIndex in startIndex..<urls.count {
+                let url = urls[candidateIndex]
                 guard !Task.isCancelled, requestedGeneration == generation else { return }
 #if DEBUG
                 diagnosticsEvent(
@@ -134,6 +152,14 @@ final class PlaybackCoordinator: ObservableObject {
                     item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
                     player.replaceCurrentItem(with: item)
                     player.automaticallyWaitsToMinimizeStalling = false
+                    observeStatus(
+                        of: item,
+                        candidateIndex: candidateIndex,
+                        urls: urls,
+                        aweme: aweme,
+                        headers: headers,
+                        requestedGeneration: requestedGeneration
+                    )
                     player.playImmediately(atRate: 1)
                     assetTask = nil
 #if DEBUG
@@ -142,9 +168,7 @@ final class PlaybackCoordinator: ObservableObject {
                         category: "item",
                         fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
                     )
-                    startDiagnostics(generation: requestedGeneration)
 #endif
-                    completeTransition(for: requestedGeneration)
                     return
                 } catch {
                     clearLoadingAsset(ifMatching: asset)
@@ -167,6 +191,72 @@ final class PlaybackCoordinator: ObservableObject {
             guard requestedGeneration == generation else { return }
             assetTask = nil
             failPlayback(generation: requestedGeneration, message: "该视频暂时无法播放，按上下键切换")
+        }
+    }
+
+    private func observeStatus(
+        of item: AVPlayerItem,
+        candidateIndex: Int,
+        urls: [URL],
+        aweme: Aweme,
+        headers: [String: String],
+        requestedGeneration: UInt
+    ) {
+        itemStatusObservation?.invalidate()
+        itemStatusObservation = item.observe(\.status, options: [.initial, .new]) { [weak self, weak item] _, _ in
+            Task { @MainActor [weak self, weak item] in
+                guard let self, let item,
+                      requestedGeneration == self.generation,
+                      self.player.currentItem === item else { return }
+
+                switch item.status {
+                case .unknown:
+                    break
+                case .readyToPlay:
+#if DEBUG
+                    self.diagnosticsEvent(
+                        "item-ready",
+                        category: "item",
+                        fields: ["candidate": candidateIndex, "host": urls[candidateIndex].host ?? "unknown"]
+                    )
+                    self.startDiagnostics(generation: requestedGeneration)
+#endif
+                    self.completeTransition(for: requestedGeneration)
+                case .failed:
+                    let error = item.error
+#if DEBUG
+                    self.diagnosticsEvent(
+                        "item-failed-try-next-candidate",
+                        category: "item",
+                        fields: [
+                            "candidate": candidateIndex,
+                            "host": urls[candidateIndex].host ?? "unknown",
+                            "errorType": error.map { String(describing: type(of: $0)) } ?? "none",
+                            "error": error?.localizedDescription ?? "unknown",
+                            "underlyingError": self.errorChain(error)
+                        ]
+                    )
+#endif
+                    self.itemStatusObservation?.invalidate()
+                    self.itemStatusObservation = nil
+#if DEBUG
+                    self.diagnosticsTask?.cancel()
+                    self.diagnosticsTask = nil
+#endif
+                    self.releaseCurrentItem()
+                    self.isTransitioning = true
+                    self.presentationOpacity = 0.82
+                    self.loadCandidates(
+                        urls,
+                        startingAt: candidateIndex + 1,
+                        aweme: aweme,
+                        headers: headers,
+                        requestedGeneration: requestedGeneration
+                    )
+                @unknown default:
+                    break
+                }
+            }
         }
     }
 
@@ -222,6 +312,8 @@ final class PlaybackCoordinator: ObservableObject {
         assetTask = nil
         loadingAsset?.cancelLoading()
         loadingAsset = nil
+        itemStatusObservation?.invalidate()
+        itemStatusObservation = nil
     }
 
     private func clearLoadingAsset(ifMatching asset: AVURLAsset?) {
@@ -244,6 +336,8 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func releaseCurrentItem() {
+        itemStatusObservation?.invalidate()
+        itemStatusObservation = nil
         player.pause()
         player.cancelPendingPrerolls()
         guard let item = player.currentItem else {
@@ -300,6 +394,19 @@ final class PlaybackCoordinator: ObservableObject {
         item.value = value as NSString
         item.extendedLanguageTag = "zh-Hans"
         return item.copy() as! AVMetadataItem
+    }
+
+    private func errorChain(_ error: Error?) -> String {
+        guard let error else { return "none" }
+        var parts: [String] = []
+        var current: NSError? = error as NSError
+        var visited = Set<ObjectIdentifier>()
+        while let value = current, !visited.contains(ObjectIdentifier(value)) {
+            visited.insert(ObjectIdentifier(value))
+            parts.append("\(value.domain):\(value.code):\(value.localizedDescription)")
+            current = value.userInfo[NSUnderlyingErrorKey] as? NSError
+        }
+        return parts.joined(separator: " <- ")
     }
 
 #if DEBUG
