@@ -10,7 +10,7 @@ struct DouyinFeedView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store: DouyinFeedStore
     private let isActive: Bool
-    private let playbackSource: PlaybackOwner.Source
+    private let playbackSource: PlaybackSource
 
     init(feedType: FeedType, isActive: Bool) {
         self.isActive = isActive
@@ -41,7 +41,10 @@ struct DouyinFeedView: View {
                 emptyView
             }
         }
-        .task { if store.items.isEmpty { await store.refresh() } }
+        .task(id: isActive) {
+            guard isActive, store.items.isEmpty else { return }
+            await store.refresh()
+        }
         .onChange(of: api.cookieRevision) { _, _ in
             Task { await store.refresh() }
         }

@@ -9,7 +9,6 @@ private enum DouyinTab: Hashable {
 
 struct ContentView: View {
     @State private var selectedTab: DouyinTab = .recommend
-    @StateObject private var playbackSession = PlaybackCoordinator()
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -37,7 +36,6 @@ struct ContentView: View {
                 }
                 .tag(DouyinTab.settings)
         }
-        .environmentObject(playbackSession)
         .onAppear {
             PlaybackDiagnostics.shared.event(
                 "initial",

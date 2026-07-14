@@ -4,19 +4,28 @@ import UIKit
 
 @MainActor
 struct VideoPlayerView: View {
-    @EnvironmentObject private var coordinator: PlaybackCoordinator
+    @StateObject private var coordinator: PlaybackCoordinator
 
     let aweme: Aweme
     let cookie: String
     let playbackToken: UInt64
-    let source: PlaybackOwner.Source
     let onPrevious: () -> Void
     let onNext: () -> Void
 
-    @State private var ownerID = UUID()
-
-    private var owner: PlaybackOwner {
-        PlaybackOwner(id: ownerID, source: source)
+    init(
+        aweme: Aweme,
+        cookie: String,
+        playbackToken: UInt64,
+        source: PlaybackSource,
+        onPrevious: @escaping () -> Void,
+        onNext: @escaping () -> Void
+    ) {
+        self.aweme = aweme
+        self.cookie = cookie
+        self.playbackToken = playbackToken
+        self.onPrevious = onPrevious
+        self.onNext = onNext
+        _coordinator = StateObject(wrappedValue: PlaybackCoordinator(source: source))
     }
 
     var body: some View {
@@ -28,14 +37,12 @@ struct VideoPlayerView: View {
                 cookie: cookie,
                 playbackToken: playbackToken,
                 isTransitioning: coordinator.isTransitioning,
-                isPlaybackOwner: coordinator.isOwned(by: owner),
                 allowsNavigationWhileStopped: coordinator.playbackError != nil,
                 onPrevious: onPrevious,
                 onNext: onNext
             )
 
-            if let playbackError = coordinator.playbackError,
-               coordinator.isOwned(by: owner) {
+            if let playbackError = coordinator.playbackError {
                 VStack(spacing: 18) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 54, weight: .light))
@@ -51,18 +58,17 @@ struct VideoPlayerView: View {
         .opacity(coordinator.presentationOpacity)
         .animation(.easeOut(duration: 0.18), value: coordinator.presentationOpacity)
         .onAppear {
-            coordinator.play(aweme, cookie: cookie, playbackToken: playbackToken, owner: owner)
+            coordinator.play(aweme, cookie: cookie, playbackToken: playbackToken)
         }
         .onChange(of: playbackToken) { _, token in
-            coordinator.play(aweme, cookie: cookie, playbackToken: token, owner: owner)
+            coordinator.play(aweme, cookie: cookie, playbackToken: token)
         }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             guard let item = notification.object as? AVPlayerItem,
-                  item === coordinator.player.currentItem,
-                  coordinator.isOwned(by: owner) else { return }
+                  item === coordinator.player.currentItem else { return }
             onNext()
         }
-        .onDisappear { coordinator.stop(owner: owner) }
+        .onDisappear { coordinator.stop() }
     }
 }
 
@@ -75,7 +81,6 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
     var isTransitioning = false
-    var isPlaybackOwner = false
     var allowsNavigationWhileStopped = false
     let danmakuController = DanmakuOverlayController()
 
@@ -174,7 +179,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     }
 
     private var canNavigateVideos: Bool {
-        guard isPlaybackOwner, !isTransitioning, !navigationLocked,
+        guard !isTransitioning, !navigationLocked,
               let player else { return false }
         guard player.timeControlStatus == .playing || allowsNavigationWhileStopped else { return false }
         return !isPlaybackControlFocused
@@ -200,37 +205,26 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let cookie: String
     let playbackToken: UInt64
     let isTransitioning: Bool
-    let isPlaybackOwner: Bool
     let allowsNavigationWhileStopped: Bool
     let onPrevious: () -> Void
     let onNext: () -> Void
 
-    func makeUIViewController(context: Context) -> PlayerContainerViewController {
-        PlayerContainerViewController()
+    func makeUIViewController(context: Context) -> DouyinPlayerViewController {
+        configure(controller)
+        return controller
     }
 
-    func updateUIViewController(_ container: PlayerContainerViewController, context: Context) {
-        configure(controller, in: container)
+    func updateUIViewController(_ controller: DouyinPlayerViewController, context: Context) {
+        configure(controller)
     }
 
-    private func configure(
-        _ controller: DouyinPlayerViewController,
-        in container: PlayerContainerViewController
-    ) {
-        guard isPlaybackOwner else {
-            guard container.detach(controller) else { return }
-            controller.onPrevious = nil
-            controller.onNext = nil
-            controller.isPlaybackOwner = false
-            controller.danmakuController.stop()
-            return
+    private func configure(_ controller: DouyinPlayerViewController) {
+        if controller.player !== player {
+            controller.player = player
         }
-
-        container.embed(controller)
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.isTransitioning = isTransitioning
-        controller.isPlaybackOwner = isPlaybackOwner
         controller.allowsNavigationWhileStopped = allowsNavigationWhileStopped
         controller.danmakuController.configure(
             aweme: aweme,
@@ -241,112 +235,21 @@ struct NativePlayerController: UIViewControllerRepresentable {
     }
 
     static func dismantleUIViewController(
-        _ container: PlayerContainerViewController,
+        _ controller: DouyinPlayerViewController,
         coordinator: ()
     ) {
-        guard let controller = container.embeddedPlayerController,
-              container.detach(controller) else { return }
         controller.onPrevious = nil
         controller.onNext = nil
-        controller.isPlaybackOwner = false
         controller.danmakuController.stop()
-    }
-}
-
-final class PlayerContainerViewController: UIViewController {
-    let diagnosticsID = String(UUID().uuidString.prefix(6))
-    private(set) weak var embeddedPlayerController: DouyinPlayerViewController?
-
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        log("init")
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        log("init-coder")
-    }
-
-    deinit {
         PlaybackDiagnostics.shared.event(
-            "container-deinit",
-            category: "controller",
-            fields: ["container": diagnosticsID]
-        )
-    }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .black
-        log("container-view-did-load")
-    }
-
-    func embed(_ controller: DouyinPlayerViewController) {
-        guard controller.parent !== self else {
-            embeddedPlayerController = controller
-            log("embed-already-current", controller: controller)
-            return
-        }
-
-        if let previousParent = controller.parent {
-            PlaybackDiagnostics.shared.event(
-                "migrate",
-                category: "controller",
-                fields: [
-                    "controller": controller.diagnosticsID,
-                    "fromContainer": (previousParent as? PlayerContainerViewController)?.diagnosticsID ?? "unknown",
-                    "toContainer": diagnosticsID
-                ]
-            )
-            controller.willMove(toParent: nil)
-            controller.view.removeFromSuperview()
-            controller.removeFromParent()
-            if let previousContainer = previousParent as? PlayerContainerViewController {
-                previousContainer.embeddedPlayerController = nil
-            }
-        }
-
-        addChild(controller)
-        controller.view.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(controller.view)
-        NSLayoutConstraint.activate([
-            controller.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            controller.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            controller.view.topAnchor.constraint(equalTo: view.topAnchor),
-            controller.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-        controller.didMove(toParent: self)
-        embeddedPlayerController = controller
-        log("embed", controller: controller)
-    }
-
-    @discardableResult
-    func detach(_ controller: DouyinPlayerViewController) -> Bool {
-        guard controller.parent === self else {
-            if embeddedPlayerController === controller {
-                embeddedPlayerController = nil
-            }
-            log("detach-stale-ignored", controller: controller)
-            return false
-        }
-
-        controller.willMove(toParent: nil)
-        controller.view.removeFromSuperview()
-        controller.removeFromParent()
-        embeddedPlayerController = nil
-        log("detach", controller: controller)
-        return true
-    }
-
-    private func log(_ event: String, controller: DouyinPlayerViewController? = nil) {
-        PlaybackDiagnostics.shared.event(
-            event,
+            "dismantle",
             category: "controller",
             fields: [
-                "container": diagnosticsID,
-                "controller": controller?.diagnosticsID ?? "none",
-                "hasEmbeddedController": embeddedPlayerController != nil
+                "controller": controller.diagnosticsID,
+                "hasPlayer": controller.player != nil
             ]
         )
+        controller.player?.pause()
+        controller.player = nil
     }
 }

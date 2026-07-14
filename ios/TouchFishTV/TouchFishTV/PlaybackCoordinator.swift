@@ -1,19 +1,10 @@
 import AVFoundation
 import Foundation
 
-struct PlaybackOwner: Equatable {
-    enum Source: String {
-        case recommend
-        case following
-        case favorites
-    }
-
-    let id: UUID
-    let source: Source
-
-    var debugLabel: String {
-        "\(source.rawValue):\(id.uuidString.prefix(6))"
-    }
+enum PlaybackSource: String {
+    case recommend
+    case following
+    case favorites
 }
 
 @MainActor
@@ -25,18 +16,19 @@ final class PlaybackCoordinator: ObservableObject {
     @Published private(set) var playbackError: String?
 
     private let instanceID = String(UUID().uuidString.prefix(6))
+    private let source: PlaybackSource
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
     private var loadingAsset: AVURLAsset?
     private var itemStatusObservation: NSKeyValueObservation?
     private var currentPlaybackToken: UInt64?
     private var currentAwemeID: String?
-    @Published private var currentOwner: PlaybackOwner?
 #if DEBUG
     private var diagnosticsTask: Task<Void, Never>?
 #endif
 
-    init() {
+    init(source: PlaybackSource) {
+        self.source = source
         let player = AVPlayer()
         let playerViewController = DouyinPlayerViewController()
         playerViewController.player = player
@@ -52,18 +44,18 @@ final class PlaybackCoordinator: ObservableObject {
         PlaybackDiagnostics.shared.event(
             "deinit",
             category: "session",
-            fields: ["instance": instanceID]
+            fields: ["instance": instanceID, "source": source.rawValue]
         )
 #endif
     }
 
-    func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64, owner: PlaybackOwner) {
-        guard currentOwner != owner || currentPlaybackToken != playbackToken || player.currentItem == nil else {
+    func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64) {
+        guard currentPlaybackToken != playbackToken || player.currentItem == nil else {
 #if DEBUG
             diagnosticsEvent(
                 "duplicate-play-ignored",
-                category: "owner",
-                fields: ["requestedOwner": owner.debugLabel, "token": playbackToken, "aweme": aweme.aweme_id]
+                category: "session",
+                fields: ["token": playbackToken, "aweme": aweme.aweme_id]
             )
             debugSnapshot(label: "ignored-same-token")
 #endif
@@ -77,15 +69,17 @@ final class PlaybackCoordinator: ObservableObject {
         presentationOpacity = 0.82
         playbackError = nil
         releaseCurrentItem()
-        currentOwner = owner
+        if playerViewController.player !== player {
+            playerViewController.player = player
+        }
         currentPlaybackToken = playbackToken
         currentAwemeID = aweme.aweme_id
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsEvent(
             "play-request",
-            category: "owner",
-            fields: ["requestedOwner": owner.debugLabel, "token": playbackToken, "aweme": aweme.aweme_id]
+            category: "session",
+            fields: ["token": playbackToken, "aweme": aweme.aweme_id]
         )
 #endif
 
@@ -260,42 +254,26 @@ final class PlaybackCoordinator: ObservableObject {
         }
     }
 
-    func isOwned(by owner: PlaybackOwner) -> Bool {
-        currentOwner == owner
-    }
-
     func completeTransition(for requestedGeneration: UInt) {
         guard requestedGeneration == generation else { return }
         isTransitioning = false
         presentationOpacity = 1
     }
 
-    func stop(owner: PlaybackOwner) {
-        guard currentOwner == owner else {
-#if DEBUG
-            diagnosticsEvent(
-                "stale-stop-ignored",
-                category: "owner",
-                fields: ["requestedOwner": owner.debugLabel]
-            )
-#endif
-            return
-        }
-
+    func stop() {
         generation &+= 1
         cancelPendingLoad()
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsTask = nil
-        diagnosticsEvent(
-            "stop",
-            category: "owner",
-            fields: ["requestedOwner": owner.debugLabel]
-        )
+        diagnosticsEvent("stop", category: "session")
 #endif
         releaseCurrentItem()
+        playerViewController.danmakuController.stop()
+        playerViewController.onPrevious = nil
+        playerViewController.onNext = nil
+        playerViewController.player = nil
         currentPlaybackToken = nil
-        currentOwner = nil
         currentAwemeID = nil
         isTransitioning = false
         presentationOpacity = 1
@@ -501,7 +479,7 @@ final class PlaybackCoordinator: ObservableObject {
         values["instance"] = instanceID
         values["controller"] = playerViewController.diagnosticsID
         values["generation"] = generation
-        values["owner"] = currentOwner?.debugLabel ?? "none"
+        values["source"] = source.rawValue
         values["aweme"] = currentAwemeID ?? "none"
         if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
             values["memoryMB"] = String(format: "%.1f", memory)

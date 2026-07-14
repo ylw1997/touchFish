@@ -91,7 +91,10 @@ struct FavoritesLibraryView: View {
                 libraryGrid
             }
         }
-        .task { if store.items.isEmpty { await store.refresh() } }
+        .task(id: isActive) {
+            guard isActive, store.items.isEmpty else { return }
+            await store.refresh()
+        }
         .onChange(of: api.cookieRevision) { _, _ in
             selectedIndex = nil
             Task { await store.refresh() }

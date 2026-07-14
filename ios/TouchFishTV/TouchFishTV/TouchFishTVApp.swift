@@ -4,8 +4,7 @@ import SwiftUI
 struct TouchFishTVApp: App {
     
     init() {
-        // 关键修复：tvOS 的系统窗口默认背景是浅色/半透明的，
-        // 这就是产生"白雾"的根本原因。必须在 UIKit 层面强制设为黑色。
+        // 避免系统窗口的半透明背景透出浅色。
         UIWindow.appearance().backgroundColor = .black
     }
     
