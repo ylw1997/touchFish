@@ -2,6 +2,8 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
 $checks = @(
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackDiagnostics.swift'; Pattern = 'maximumFileSize\s*=\s*2\s*\*\s*1024\s*\*\s*1024'; Description = '2 MB diagnostics file limit' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackDiagnostics.swift'; Pattern = 'task_info\('; Description = 'resident memory sampling' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'preferredForwardBufferDuration\s*=\s*8'; Description = '8-second forward buffer limit' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'automaticallyWaitsToMinimizeStalling\s*=\s*false'; Description = 'short-form startup waiting policy' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'playImmediately\(atRate:\s*1\)'; Description = 'immediate playback call' },
@@ -18,6 +20,7 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = '@Published\s+private\(set\)\s+var\s+playbackError:'; Description = 'published playback failure state' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'let\s+playerViewController:\s*DouyinPlayerViewController'; Description = 'single persistent native player controller' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'playerViewController\.player\s*=\s*player'; Description = 'persistent native controller binding' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'PlaybackDiagnostics\.shared\.event'; Description = 'playback diagnostics events' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'playbackToken'; Description = 'sequence-based playback identity' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = '@EnvironmentObject\s+private\s+var\s+coordinator:\s*PlaybackCoordinator'; Description = 'shared playback coordinator injection' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'private\s+var\s+owner:\s*PlaybackOwner'; Description = 'player view ownership lease' },
@@ -28,11 +31,13 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'final\s+class\s+PlayerContainerViewController'; Description = 'lightweight native player container' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'func\s+makeUIViewController\(context:\s*Context\)\s*->\s*PlayerContainerViewController'; Description = 'representable creates lightweight container' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'container\.embed\(controller\)'; Description = 'persistent controller reparenting' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'category:\s*"controller"'; Description = 'native controller lifecycle diagnostics' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'retainedPreviousItems\s*=\s*5'; Description = '5-item previous history' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'activeIndex\s*-\s*retainedPreviousItems'; Description = 'played history trimming' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'preloadRemainingItems\s*=\s*2'; Description = 'two-item preload threshold' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinAPI.swift'; Pattern = 'channel/feed/\?device_platform=webapp&aid=6383&count=10&'; Description = 'ten-item recommendation request upper bound' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DanmakuOverlayController.swift'; Pattern = 'rateObservation'; Description = 'danmaku rate observation' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/DanmakuOverlayController.swift'; Pattern = 'category:\s*"danmaku"'; Description = 'danmaku lifecycle diagnostics' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'TabView\(selection:\s*\$selectedTab\)'; Description = 'selected native tab lifecycle' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = '@StateObject\s+private\s+var\s+playbackSession\s*=\s*PlaybackCoordinator\(\)'; Description = 'single root playback session' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'environmentObject\(playbackSession\)'; Description = 'global playback session distribution' },
@@ -59,6 +64,10 @@ $checks = @(
 $failures = @()
 foreach ($check in $checks) {
     $path = Join-Path $root $check.Path
+    if (-not (Test-Path -LiteralPath $path)) {
+        $failures += $check.Description
+        continue
+    }
     $content = Get-Content -Raw -LiteralPath $path
     if ($content -notmatch $check.Pattern) {
         $failures += $check.Description
@@ -71,6 +80,12 @@ $playbackPath = Join-Path $root 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator
 $playback = Get-Content -Raw -LiteralPath $playbackPath
 $videoPlayerPath = Join-Path $root 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'
 $videoPlayer = Get-Content -Raw -LiteralPath $videoPlayerPath
+$diagnosticsCallLines = Get-ChildItem -Path (Join-Path $root 'ios/TouchFishTV/TouchFishTV') -Filter '*.swift' -Recurse |
+    Select-String -Pattern 'PlaybackDiagnostics\.shared\.event' |
+    ForEach-Object { $_.Line }
+if (($diagnosticsCallLines -join "`n") -match 'cookie|authentication_token|headers|absoluteString') {
+    $failures += 'diagnostics call may expose credentials or full URLs'
+}
 if ($playback -match 'load\(\.commonMetadata\)') {
     $failures += 'common metadata still blocks startup'
 }
