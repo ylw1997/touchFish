@@ -44,6 +44,7 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'DouyinFeedView\(feedType:\s*\.recommend,\s*isActive:\s*selectedTab\s*==\s*\.recommend\)'; Description = 'recommend feed active state' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'DouyinFeedView\(feedType:\s*\.following,\s*isActive:\s*selectedTab\s*==\s*\.following\)'; Description = 'following feed active state' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'FavoritesLibraryView\(isActive:\s*selectedTab\s*==\s*\.favorites\)'; Description = 'favorites active state' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/ContentView.swift'; Pattern = 'category:\s*"tab"'; Description = 'tab transition diagnostics' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/DouyinFeedView.swift'; Pattern = 'if\s+isActive,\s*let\s+aweme\s*=\s*store\.activeItem'; Description = 'active-only player mounting' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'get:\s*\{\s*isActive\s*&&\s*selectedIndex\s*!=\s*nil\s*\}'; Description = 'active-only favorites player presentation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/FavoritesLibraryView.swift'; Pattern = 'onChange\(of:\s*isActive\)[\s\S]*?if\s*!active\s*\{\s*selectedIndex\s*=\s*nil'; Description = 'favorites player dismissal on tab exit' },
@@ -85,6 +86,15 @@ $diagnosticsCallLines = Get-ChildItem -Path (Join-Path $root 'ios/TouchFishTV/To
     ForEach-Object { $_.Line }
 if (($diagnosticsCallLines -join "`n") -match 'cookie|authentication_token|headers|absoluteString') {
     $failures += 'diagnostics call may expose credentials or full URLs'
+}
+$diagnosticsSources = @(
+    'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift',
+    'ios/TouchFishTV/TouchFishTV/ContentView.swift',
+    'ios/TouchFishTV/TouchFishTV/DanmakuOverlayController.swift',
+    'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'
+) | ForEach-Object { Get-Content -Raw -LiteralPath (Join-Path $root $_) }
+if (($diagnosticsSources -join "`n") -match '(?is)PlaybackDiagnostics\.shared\.event\(.{0,500}?fields:\s*\[.{0,500}?"(cookie|authentication_token|headers|absoluteString)"\s*:') {
+    $failures += 'diagnostics fields expose credentials or full URLs'
 }
 if ($playback -match 'load\(\.commonMetadata\)') {
     $failures += 'common metadata still blocks startup'

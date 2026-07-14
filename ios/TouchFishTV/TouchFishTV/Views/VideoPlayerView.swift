@@ -71,6 +71,7 @@ private final class FocusAnchorView: UIView {
 }
 
 final class DouyinPlayerViewController: AVPlayerViewController {
+    let diagnosticsID = String(UUID().uuidString.prefix(6))
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
     var isTransitioning = false
@@ -82,12 +83,25 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     private var prefersPlayerFocus = true
     private var navigationLocked = false
 
+    deinit {
+        PlaybackDiagnostics.shared.event(
+            "deinit",
+            category: "controller",
+            fields: ["controller": diagnosticsID]
+        )
+    }
+
     override var preferredFocusEnvironments: [UIFocusEnvironment] {
         prefersPlayerFocus ? [focusAnchor] : super.preferredFocusEnvironments
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        PlaybackDiagnostics.shared.event(
+            "view-did-load",
+            category: "controller",
+            fields: ["controller": diagnosticsID]
+        )
         showsPlaybackControls = true
         transportBarIncludesTitleView = true
         focusAnchor.translatesAutoresizingMaskIntoConstraints = false
@@ -103,6 +117,11 @@ final class DouyinPlayerViewController: AVPlayerViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        PlaybackDiagnostics.shared.event(
+            "view-did-appear",
+            category: "controller",
+            fields: ["controller": diagnosticsID, "hasPlayer": player != nil]
+        )
         DispatchQueue.main.async { [weak self] in self?.requestPlayerFocus() }
     }
 
@@ -123,10 +142,20 @@ final class DouyinPlayerViewController: AVPlayerViewController {
         for press in presses {
             switch press.type {
             case .upArrow:
+                PlaybackDiagnostics.shared.event(
+                    "navigate-previous",
+                    category: "controller",
+                    fields: ["controller": diagnosticsID]
+                )
                 lockNavigationBriefly()
                 onPrevious?()
                 remaining.remove(press)
             case .downArrow:
+                PlaybackDiagnostics.shared.event(
+                    "navigate-next",
+                    category: "controller",
+                    fields: ["controller": diagnosticsID]
+                )
                 lockNavigationBriefly()
                 onNext?()
                 remaining.remove(press)
@@ -225,20 +254,50 @@ struct NativePlayerController: UIViewControllerRepresentable {
 }
 
 final class PlayerContainerViewController: UIViewController {
+    let diagnosticsID = String(UUID().uuidString.prefix(6))
     private(set) weak var embeddedPlayerController: DouyinPlayerViewController?
+
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        log("init")
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        log("init-coder")
+    }
+
+    deinit {
+        PlaybackDiagnostics.shared.event(
+            "container-deinit",
+            category: "controller",
+            fields: ["container": diagnosticsID]
+        )
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
+        log("container-view-did-load")
     }
 
     func embed(_ controller: DouyinPlayerViewController) {
         guard controller.parent !== self else {
             embeddedPlayerController = controller
+            log("embed-already-current", controller: controller)
             return
         }
 
         if let previousParent = controller.parent {
+            PlaybackDiagnostics.shared.event(
+                "migrate",
+                category: "controller",
+                fields: [
+                    "controller": controller.diagnosticsID,
+                    "fromContainer": (previousParent as? PlayerContainerViewController)?.diagnosticsID ?? "unknown",
+                    "toContainer": diagnosticsID
+                ]
+            )
             controller.willMove(toParent: nil)
             controller.view.removeFromSuperview()
             controller.removeFromParent()
@@ -258,6 +317,7 @@ final class PlayerContainerViewController: UIViewController {
         ])
         controller.didMove(toParent: self)
         embeddedPlayerController = controller
+        log("embed", controller: controller)
     }
 
     @discardableResult
@@ -266,6 +326,7 @@ final class PlayerContainerViewController: UIViewController {
             if embeddedPlayerController === controller {
                 embeddedPlayerController = nil
             }
+            log("detach-stale-ignored", controller: controller)
             return false
         }
 
@@ -273,6 +334,19 @@ final class PlayerContainerViewController: UIViewController {
         controller.view.removeFromSuperview()
         controller.removeFromParent()
         embeddedPlayerController = nil
+        log("detach", controller: controller)
         return true
+    }
+
+    private func log(_ event: String, controller: DouyinPlayerViewController? = nil) {
+        PlaybackDiagnostics.shared.event(
+            event,
+            category: "controller",
+            fields: [
+                "container": diagnosticsID,
+                "controller": controller?.diagnosticsID ?? "none",
+                "hasEmbeddedController": embeddedPlayerController != nil
+            ]
+        )
     }
 }

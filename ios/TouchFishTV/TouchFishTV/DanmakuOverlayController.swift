@@ -32,6 +32,11 @@ final class DanmakuOverlayController {
             overlayView.trailingAnchor.constraint(equalTo: host.trailingAnchor),
             overlayView.heightAnchor.constraint(equalTo: host.heightAnchor, multiplier: 0.25)
         ])
+        PlaybackDiagnostics.shared.event(
+            "installed",
+            category: "danmaku",
+            fields: ["overlaySubviews": overlayView.subviews.count]
+        )
     }
 
     func configure(aweme: Aweme, player: AVPlayer, cookie: String, playbackToken: UInt64) {
@@ -42,6 +47,11 @@ final class DanmakuOverlayController {
         self.aweme = aweme
         self.player = player
         self.playbackToken = playbackToken
+        PlaybackDiagnostics.shared.event(
+            "configured",
+            category: "danmaku",
+            fields: ["aweme": aweme.aweme_id, "token": playbackToken]
+        )
         playbackObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
             Task { @MainActor in
                 self?.synchronizeAnimationState(with: player)
@@ -57,6 +67,19 @@ final class DanmakuOverlayController {
     }
 
     func stop() {
+        if playbackToken != nil || timeObserver != nil || !fetchTasks.isEmpty || !overlayView.subviews.isEmpty {
+            PlaybackDiagnostics.shared.event(
+                "stop",
+                category: "danmaku",
+                fields: [
+                    "aweme": aweme?.aweme_id ?? "none",
+                    "token": playbackToken.map { String($0) } ?? "none",
+                    "fetchTasks": fetchTasks.count,
+                    "overlaySubviews": overlayView.subviews.count,
+                    "pending": pending.count
+                ]
+            )
+        }
         if let observer = timeObserver, let player { player.removeTimeObserver(observer) }
         timeObserver = nil
         playbackObservation?.invalidate()
@@ -112,6 +135,11 @@ final class DanmakuOverlayController {
         let token = playbackToken
         let danmakuService = service
         let requestCookie = cookie
+        PlaybackDiagnostics.shared.event(
+            "load-window",
+            category: "danmaku",
+            fields: ["aweme": id, "token": token.map { String($0) } ?? "none", "start": start]
+        )
         fetchTasks[start] = Task { [weak self] in
             do {
                 let items = try await danmakuService.fetch(
@@ -124,8 +152,28 @@ final class DanmakuOverlayController {
                       self.playbackToken == token else { return }
                 pending.append(contentsOf: items)
                 pending.sort { $0.offset_time < $1.offset_time }
+                PlaybackDiagnostics.shared.event(
+                    "window-loaded",
+                    category: "danmaku",
+                    fields: [
+                        "aweme": id,
+                        "token": token.map { String($0) } ?? "none",
+                        "start": start,
+                        "items": items.count
+                    ]
+                )
             } catch {
                 // 弹幕失败不打断视频；下一窗口仍可独立请求。
+                PlaybackDiagnostics.shared.event(
+                    error is CancellationError ? "window-cancelled" : "window-failed",
+                    category: "danmaku",
+                    fields: [
+                        "aweme": id,
+                        "token": token.map { String($0) } ?? "none",
+                        "start": start,
+                        "errorType": String(describing: type(of: error))
+                    ]
+                )
             }
             self?.fetchTasks[start] = nil
         }

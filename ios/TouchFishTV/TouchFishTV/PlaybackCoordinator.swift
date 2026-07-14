@@ -385,6 +385,7 @@ final class PlaybackCoordinator: ObservableObject {
     ) {
         var values = fields
         values["instance"] = instanceID
+        values["controller"] = playerViewController.diagnosticsID
         values["generation"] = generation
         values["owner"] = currentOwner?.debugLabel ?? "none"
         values["aweme"] = currentAwemeID ?? "none"

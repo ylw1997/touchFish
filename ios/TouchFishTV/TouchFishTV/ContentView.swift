@@ -38,5 +38,22 @@ struct ContentView: View {
                 .tag(DouyinTab.settings)
         }
         .environmentObject(playbackSession)
+        .onAppear {
+            PlaybackDiagnostics.shared.event(
+                "initial",
+                category: "tab",
+                fields: ["selected": String(describing: selectedTab)]
+            )
+        }
+        .onChange(of: selectedTab) { previousTab, selectedTab in
+            PlaybackDiagnostics.shared.event(
+                "changed",
+                category: "tab",
+                fields: [
+                    "from": String(describing: previousTab),
+                    "to": String(describing: selectedTab)
+                ]
+            )
+        }
     }
 }
