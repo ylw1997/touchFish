@@ -16,6 +16,8 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'private\s+var\s+loadingAsset:\s*AVURLAsset\?'; Description = 'in-flight asset ownership' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'loadingAsset\?\.cancelLoading\(\)'; Description = 'in-flight asset cancellation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = '@Published\s+private\(set\)\s+var\s+playbackError:'; Description = 'published playback failure state' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'let\s+playerViewController:\s*DouyinPlayerViewController'; Description = 'single persistent native player controller' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/PlaybackCoordinator.swift'; Pattern = 'playerViewController\.player\s*=\s*player'; Description = 'persistent native controller binding' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'playbackToken'; Description = 'sequence-based playback identity' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = '@EnvironmentObject\s+private\s+var\s+coordinator:\s*PlaybackCoordinator'; Description = 'shared playback coordinator injection' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'private\s+var\s+owner:\s*PlaybackOwner'; Description = 'player view ownership lease' },
@@ -23,7 +25,9 @@ $checks = @(
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'coordinator\.isOwned\(by:\s*owner\)'; Description = 'owner-guarded playback end event' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'isPlaybackOwner:\s*coordinator\.isOwned\(by:\s*owner\)'; Description = 'owner-guarded native remote navigation' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'allowsNavigationWhileStopped:\s*coordinator\.playbackError\s*!=\s*nil'; Description = 'failed playback remote navigation' },
-    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'guard\s+isPlaybackOwner\s+else\s*\{[\s\S]*?danmakuController\.stop\(\)[\s\S]*?controller\.player\s*=\s*nil'; Description = 'non-owner native controller detachment' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'final\s+class\s+PlayerContainerViewController'; Description = 'lightweight native player container' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'func\s+makeUIViewController\(context:\s*Context\)\s*->\s*PlayerContainerViewController'; Description = 'representable creates lightweight container' },
+    @{ Path = 'ios/TouchFishTV/TouchFishTV/Views/VideoPlayerView.swift'; Pattern = 'container\.embed\(controller\)'; Description = 'persistent controller reparenting' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'retainedPreviousItems\s*=\s*5'; Description = '5-item previous history' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'activeIndex\s*-\s*retainedPreviousItems'; Description = 'played history trimming' },
     @{ Path = 'ios/TouchFishTV/TouchFishTV/DouyinFeedStore.swift'; Pattern = 'preloadRemainingItems\s*=\s*2'; Description = 'two-item preload threshold' },
@@ -73,8 +77,17 @@ if ($playback -match 'load\(\.commonMetadata\)') {
 if ($videoPlayer -match '@StateObject\s+private\s+var\s+coordinator\s*=\s*PlaybackCoordinator\(\)') {
     $failures += 'per-view playback coordinator remains'
 }
-if ($videoPlayer -match 'makeUIViewController[\s\S]*?controller\.player\s*=\s*player[\s\S]*?return\s+controller') {
-    $failures += 'native controller still binds player before ownership check'
+if ($videoPlayer -match 'DouyinPlayerViewController\(\)') {
+    $failures += 'player view still creates native player controllers'
+}
+if ($videoPlayer -match 'controller\.player\s*=\s*nil') {
+    $failures += 'persistent native player controller is still unbound during view lifecycle'
+}
+$swiftSources = Get-ChildItem -Path (Join-Path $root 'ios/TouchFishTV/TouchFishTV') -Filter '*.swift' -Recurse |
+    ForEach-Object { Get-Content -Raw -LiteralPath $_.FullName }
+$nativeControllerConstructionCount = ([regex]::Matches(($swiftSources -join "`n"), 'DouyinPlayerViewController\(\)')).Count
+if ($nativeControllerConstructionCount -ne 1) {
+    $failures += "expected one native player controller construction, found $nativeControllerConstructionCount"
 }
 if ($favorites -match 'Text\("\\\(store\.items\.count') {
     $failures += 'favorite count label remains'

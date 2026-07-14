@@ -22,6 +22,7 @@ struct VideoPlayerView: View {
     var body: some View {
         ZStack {
             NativePlayerController(
+                controller: coordinator.playerViewController,
                 player: coordinator.player,
                 aweme: aweme,
                 cookie: cookie,
@@ -164,6 +165,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
 }
 
 struct NativePlayerController: UIViewControllerRepresentable {
+    let controller: DouyinPlayerViewController
     let player: AVPlayer
     let aweme: Aweme
     let cookie: String
@@ -174,30 +176,33 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let onPrevious: () -> Void
     let onNext: () -> Void
 
-    func makeUIViewController(context: Context) -> DouyinPlayerViewController {
-        let controller = DouyinPlayerViewController()
-        configure(controller)
-        return controller
+    func makeUIViewController(context: Context) -> PlayerContainerViewController {
+        PlayerContainerViewController()
     }
 
-    func updateUIViewController(_ controller: DouyinPlayerViewController, context: Context) {
-        configure(controller)
+    func updateUIViewController(_ container: PlayerContainerViewController, context: Context) {
+        configure(controller, in: container)
     }
 
-    private func configure(_ controller: DouyinPlayerViewController) {
+    private func configure(
+        _ controller: DouyinPlayerViewController,
+        in container: PlayerContainerViewController
+    ) {
+        guard isPlaybackOwner else {
+            guard container.detach(controller) else { return }
+            controller.onPrevious = nil
+            controller.onNext = nil
+            controller.isPlaybackOwner = false
+            controller.danmakuController.stop()
+            return
+        }
+
+        container.embed(controller)
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.isTransitioning = isTransitioning
         controller.isPlaybackOwner = isPlaybackOwner
         controller.allowsNavigationWhileStopped = allowsNavigationWhileStopped
-
-        guard isPlaybackOwner else {
-            controller.danmakuController.stop()
-            controller.player = nil
-            return
-        }
-
-        if controller.player !== player { controller.player = player }
         controller.danmakuController.configure(
             aweme: aweme,
             player: player,
@@ -206,8 +211,68 @@ struct NativePlayerController: UIViewControllerRepresentable {
         )
     }
 
-    static func dismantleUIViewController(_ controller: DouyinPlayerViewController, coordinator: ()) {
+    static func dismantleUIViewController(
+        _ container: PlayerContainerViewController,
+        coordinator: ()
+    ) {
+        guard let controller = container.embeddedPlayerController,
+              container.detach(controller) else { return }
+        controller.onPrevious = nil
+        controller.onNext = nil
+        controller.isPlaybackOwner = false
         controller.danmakuController.stop()
-        controller.player = nil
+    }
+}
+
+final class PlayerContainerViewController: UIViewController {
+    private(set) weak var embeddedPlayerController: DouyinPlayerViewController?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+    }
+
+    func embed(_ controller: DouyinPlayerViewController) {
+        guard controller.parent !== self else {
+            embeddedPlayerController = controller
+            return
+        }
+
+        if let previousParent = controller.parent {
+            controller.willMove(toParent: nil)
+            controller.view.removeFromSuperview()
+            controller.removeFromParent()
+            if let previousContainer = previousParent as? PlayerContainerViewController {
+                previousContainer.embeddedPlayerController = nil
+            }
+        }
+
+        addChild(controller)
+        controller.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(controller.view)
+        NSLayoutConstraint.activate([
+            controller.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            controller.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            controller.view.topAnchor.constraint(equalTo: view.topAnchor),
+            controller.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        controller.didMove(toParent: self)
+        embeddedPlayerController = controller
+    }
+
+    @discardableResult
+    func detach(_ controller: DouyinPlayerViewController) -> Bool {
+        guard controller.parent === self else {
+            if embeddedPlayerController === controller {
+                embeddedPlayerController = nil
+            }
+            return false
+        }
+
+        controller.willMove(toParent: nil)
+        controller.view.removeFromSuperview()
+        controller.removeFromParent()
+        embeddedPlayerController = nil
+        return true
     }
 }

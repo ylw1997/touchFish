@@ -18,7 +18,8 @@ struct PlaybackOwner: Equatable {
 
 @MainActor
 final class PlaybackCoordinator: ObservableObject {
-    let player = AVPlayer()
+    let player: AVPlayer
+    let playerViewController: DouyinPlayerViewController
     @Published private(set) var isTransitioning = false
     @Published private(set) var presentationOpacity = 1.0
     @Published private(set) var playbackError: String?
@@ -34,6 +35,11 @@ final class PlaybackCoordinator: ObservableObject {
 #endif
 
     init() {
+        let player = AVPlayer()
+        let playerViewController = DouyinPlayerViewController()
+        playerViewController.player = player
+        self.player = player
+        self.playerViewController = playerViewController
 #if DEBUG
         print("[PlaybackDiagnostics] instance=\(instanceID) init")
 #endif
