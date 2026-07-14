@@ -118,12 +118,13 @@ final class DanmakuOverlayController {
             clearForSeek()
         }
         lastTime = seconds
+        guard isPlayingAtNormalRate(player) else { return }
         let start = DanmakuWindow.start(for: seconds)
         loadWindow(start: start)
         if Int(seconds * 1000) - start >= 16_000 {
             loadWindow(start: start + DanmakuWindow.lengthMilliseconds)
         }
-        if isActuallyPlaying(player) { displayDueItems(at: Int(seconds * 1000)) }
+        displayDueItems(at: Int(seconds * 1000))
     }
 
     private func loadWindow(start: Int) {
@@ -186,7 +187,7 @@ final class DanmakuOverlayController {
     }
 
     private func display(_ item: DanmakuItem, at milliseconds: Int) {
-        guard let player, isActuallyPlaying(player),
+        guard let player, isPlayingAtNormalRate(player),
               overlayView.bounds.width > 0, overlayView.bounds.height > 0 else { return }
         displayedIDs.insert(item.id)
         let font = UIFont.systemFont(ofSize: max(28, min(38, overlayView.bounds.height * 0.14)), weight: .semibold)
@@ -244,11 +245,11 @@ final class DanmakuOverlayController {
     }
 
     private func synchronizeAnimationState(with player: AVPlayer) {
-        setAnimationsPaused(!isActuallyPlaying(player))
+        setAnimationsPaused(!isPlayingAtNormalRate(player))
     }
 
-    private func isActuallyPlaying(_ player: AVPlayer) -> Bool {
-        player.rate > 0 && player.timeControlStatus == .playing
+    private func isPlayingAtNormalRate(_ player: AVPlayer) -> Bool {
+        player.timeControlStatus == .playing && abs(Double(player.rate) - 1) < 0.05
     }
 }
 

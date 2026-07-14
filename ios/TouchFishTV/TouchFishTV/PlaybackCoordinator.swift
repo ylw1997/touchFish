@@ -53,9 +53,50 @@ final class PlaybackSessionSlot: ObservableObject {
     }
 }
 
+private final class PlaybackPlayerLease {
+    let player = AVPlayer()
+    let id = String(UUID().uuidString.prefix(6))
+    private let source: PlaybackSource
+
+    init(source: PlaybackSource) {
+        self.source = source
+#if DEBUG
+        var fields: [String: CustomStringConvertible] = [
+            "player": id,
+            "source": source.rawValue
+        ]
+        if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
+            fields["memoryMB"] = String(format: "%.1f", memory)
+        }
+        PlaybackDiagnostics.shared.event(
+            "created",
+            category: "player-lease",
+            fields: fields
+        )
+#endif
+    }
+
+    deinit {
+#if DEBUG
+        var fields: [String: CustomStringConvertible] = [
+            "player": id,
+            "source": source.rawValue
+        ]
+        if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
+            fields["memoryMB"] = String(format: "%.1f", memory)
+        }
+        PlaybackDiagnostics.shared.event(
+            "released",
+            category: "player-lease",
+            fields: fields
+        )
+#endif
+    }
+}
+
 @MainActor
 final class PlaybackCoordinator: ObservableObject {
-    let player: AVPlayer
+    var player: AVPlayer { playerLease.player }
     let playerViewController: DouyinPlayerViewController
     @Published private(set) var isTransitioning = false
     @Published private(set) var presentationOpacity = 1.0
@@ -63,6 +104,7 @@ final class PlaybackCoordinator: ObservableObject {
 
     private let instanceID = String(UUID().uuidString.prefix(6))
     private let source: PlaybackSource
+    private var playerLease: PlaybackPlayerLease
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
     private var loadingAsset: AVURLAsset?
@@ -75,10 +117,10 @@ final class PlaybackCoordinator: ObservableObject {
 
     init(source: PlaybackSource) {
         self.source = source
-        let player = AVPlayer()
+        let playerLease = PlaybackPlayerLease(source: source)
         let playerViewController = DouyinPlayerViewController()
-        playerViewController.player = player
-        self.player = player
+        playerViewController.player = playerLease.player
+        self.playerLease = playerLease
         self.playerViewController = playerViewController
 #if DEBUG
         diagnosticsEvent("init", category: "session")
@@ -118,12 +160,22 @@ final class PlaybackCoordinator: ObservableObject {
         isTransitioning = true
         presentationOpacity = 0.82
         playbackError = nil
-        releaseCurrentItem()
+        if currentAwemeID == nil {
+            releaseCurrentItem()
+        } else {
+            rotatePlayerForNextVideo()
+        }
         if playerViewController.player !== player {
             playerViewController.player = player
         }
         currentPlaybackToken = playbackToken
         currentAwemeID = aweme.aweme_id
+        playerViewController.danmakuController.configure(
+            aweme: aweme,
+            player: player,
+            cookie: cookie,
+            playbackToken: playbackToken
+        )
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsEvent(
@@ -331,8 +383,8 @@ final class PlaybackCoordinator: ObservableObject {
         diagnosticsTask = nil
         diagnosticsEvent("stop", category: "session")
 #endif
-        releaseCurrentItem()
         playerViewController.danmakuController.stop()
+        releaseCurrentItem()
         playerViewController.onPrevious = nil
         playerViewController.onNext = nil
         playerViewController.player = nil
@@ -364,6 +416,7 @@ final class PlaybackCoordinator: ObservableObject {
 
     private func failPlayback(generation requestedGeneration: UInt, message: String) {
         guard requestedGeneration == generation else { return }
+        playerViewController.danmakuController.stop()
         isTransitioning = false
         presentationOpacity = 1
         playbackError = message
@@ -380,6 +433,7 @@ final class PlaybackCoordinator: ObservableObject {
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
         guard let item = player.currentItem else {
+            player.cancelPendingPrerolls()
             player.pause()
 #if DEBUG
             diagnosticsEvent("release-no-current-item", category: "item")
@@ -396,6 +450,7 @@ final class PlaybackCoordinator: ObservableObject {
             ]
         )
 #endif
+        player.cancelPendingPrerolls()
         player.pause()
 #if DEBUG
         diagnosticsEvent(
@@ -412,6 +467,30 @@ final class PlaybackCoordinator: ObservableObject {
             "release-current-item-end",
             category: "item",
             fields: ["hasCurrentItem": player.currentItem != nil]
+        )
+#endif
+    }
+
+    private func rotatePlayerForNextVideo() {
+        let previousLease = playerLease
+        let previousPlayerID = previousLease.id
+        playerViewController.danmakuController.stop()
+        releaseCurrentItem()
+        if playerViewController.player === previousLease.player {
+            playerViewController.player = nil
+        }
+
+        let nextLease = PlaybackPlayerLease(source: source)
+        playerLease = nextLease
+        playerViewController.player = nextLease.player
+#if DEBUG
+        diagnosticsEvent(
+            "rotated",
+            category: "player",
+            fields: [
+                "previousPlayer": previousPlayerID,
+                "nextPlayer": nextLease.id
+            ]
         )
 #endif
     }
@@ -541,6 +620,7 @@ final class PlaybackCoordinator: ObservableObject {
         var values = fields
         values["instance"] = instanceID
         values["controller"] = playerViewController.diagnosticsID
+        values["playerID"] = playerLease.id
         values["generation"] = generation
         values["source"] = source.rawValue
         values["aweme"] = currentAwemeID ?? "none"

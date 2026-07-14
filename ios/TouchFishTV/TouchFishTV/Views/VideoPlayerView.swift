@@ -32,10 +32,6 @@ struct VideoPlayerView: View {
         ZStack {
             NativePlayerController(
                 controller: coordinator.playerViewController,
-                player: coordinator.player,
-                aweme: aweme,
-                cookie: cookie,
-                playbackToken: playbackToken,
                 isTransitioning: coordinator.isTransitioning,
                 allowsNavigationWhileStopped: coordinator.playbackError != nil,
                 onPrevious: onPrevious,
@@ -205,10 +201,6 @@ final class DouyinPlayerViewController: AVPlayerViewController {
 
 struct NativePlayerController: UIViewControllerRepresentable {
     let controller: DouyinPlayerViewController
-    let player: AVPlayer
-    let aweme: Aweme
-    let cookie: String
-    let playbackToken: UInt64
     let isTransitioning: Bool
     let allowsNavigationWhileStopped: Bool
     let onPrevious: () -> Void
@@ -225,20 +217,11 @@ struct NativePlayerController: UIViewControllerRepresentable {
     }
 
     private func configure(_ controller: DouyinPlayerViewController) {
-        if controller.player !== player {
-            controller.player = player
-        }
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.onVisible = onVisible
         controller.isTransitioning = isTransitioning
         controller.allowsNavigationWhileStopped = allowsNavigationWhileStopped
-        controller.danmakuController.configure(
-            aweme: aweme,
-            player: player,
-            cookie: cookie,
-            playbackToken: playbackToken
-        )
     }
 
     static func dismantleUIViewController(
