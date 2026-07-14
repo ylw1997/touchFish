@@ -29,6 +29,7 @@ final class PlaybackCoordinator: ObservableObject {
     private var assetTask: Task<Void, Never>?
     private var loadingAsset: AVURLAsset?
     private var currentPlaybackToken: UInt64?
+    private var currentAwemeID: String?
     @Published private var currentOwner: PlaybackOwner?
 #if DEBUG
     private var diagnosticsTask: Task<Void, Never>?
@@ -41,20 +42,28 @@ final class PlaybackCoordinator: ObservableObject {
         self.player = player
         self.playerViewController = playerViewController
 #if DEBUG
-        print("[PlaybackDiagnostics] instance=\(instanceID) init")
+        diagnosticsEvent("init", category: "session")
 #endif
     }
 
     deinit {
 #if DEBUG
-        print("[PlaybackDiagnostics] instance=\(instanceID) deinit")
+        PlaybackDiagnostics.shared.event(
+            "deinit",
+            category: "session",
+            fields: ["instance": instanceID]
+        )
 #endif
     }
 
     func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64, owner: PlaybackOwner) {
         guard currentOwner != owner || currentPlaybackToken != playbackToken || player.currentItem == nil else {
 #if DEBUG
-            debugLog("忽略重复播放请求 owner=\(owner.debugLabel) token=\(playbackToken) id=\(aweme.aweme_id)")
+            diagnosticsEvent(
+                "duplicate-play-ignored",
+                category: "owner",
+                fields: ["requestedOwner": owner.debugLabel, "token": playbackToken, "aweme": aweme.aweme_id]
+            )
             debugSnapshot(label: "ignored-same-token")
 #endif
             return
@@ -69,9 +78,14 @@ final class PlaybackCoordinator: ObservableObject {
         releaseCurrentItem()
         currentOwner = owner
         currentPlaybackToken = playbackToken
+        currentAwemeID = aweme.aweme_id
 #if DEBUG
         diagnosticsTask?.cancel()
-        debugLog("开始切换 owner=\(owner.debugLabel) generation=\(requestedGeneration) token=\(playbackToken) id=\(aweme.aweme_id)")
+        diagnosticsEvent(
+            "play-request",
+            category: "owner",
+            fields: ["requestedOwner": owner.debugLabel, "token": playbackToken, "aweme": aweme.aweme_id]
+        )
 #endif
 
         let urls = preferredURLs(for: aweme)
@@ -85,8 +99,15 @@ final class PlaybackCoordinator: ObservableObject {
 
         assetTask = Task { [weak self] in
             guard let self else { return }
-            for url in urls {
+            for (candidateIndex, url) in urls.enumerated() {
                 guard !Task.isCancelled, requestedGeneration == generation else { return }
+#if DEBUG
+                diagnosticsEvent(
+                    "load-candidate",
+                    category: "asset",
+                    fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
+                )
+#endif
                 let asset = AVURLAsset(
                     url: url,
                     options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
@@ -95,7 +116,16 @@ final class PlaybackCoordinator: ObservableObject {
                 do {
                     let isPlayable = try await asset.load(.isPlayable)
                     clearLoadingAsset(ifMatching: asset)
-                    guard isPlayable else { continue }
+                    guard isPlayable else {
+#if DEBUG
+                        diagnosticsEvent(
+                            "candidate-not-playable",
+                            category: "asset",
+                            fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
+                        )
+#endif
+                        continue
+                    }
                     guard !Task.isCancelled, requestedGeneration == generation else { return }
 
                     let item = AVPlayerItem(asset: asset)
@@ -107,13 +137,29 @@ final class PlaybackCoordinator: ObservableObject {
                     player.playImmediately(atRate: 1)
                     assetTask = nil
 #if DEBUG
-                    debugLog("已设置 PlayerItem 并立即播放 generation=\(requestedGeneration) urlHost=\(url.host ?? "unknown")")
+                    diagnosticsEvent(
+                        "item-replaced-and-play-called",
+                        category: "item",
+                        fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
+                    )
                     startDiagnostics(generation: requestedGeneration)
 #endif
                     completeTransition(for: requestedGeneration)
                     return
                 } catch {
                     clearLoadingAsset(ifMatching: asset)
+#if DEBUG
+                    diagnosticsEvent(
+                        "candidate-load-failed",
+                        category: "asset",
+                        fields: [
+                            "candidate": candidateIndex,
+                            "host": url.host ?? "unknown",
+                            "errorType": String(describing: type(of: error)),
+                            "error": error.localizedDescription
+                        ]
+                    )
+#endif
                     continue
                 }
             }
@@ -137,7 +183,11 @@ final class PlaybackCoordinator: ObservableObject {
     func stop(owner: PlaybackOwner) {
         guard currentOwner == owner else {
 #if DEBUG
-            debugLog("忽略过期停止请求 owner=\(owner.debugLabel) current=\(currentOwner?.debugLabel ?? "none")")
+            diagnosticsEvent(
+                "stale-stop-ignored",
+                category: "owner",
+                fields: ["requestedOwner": owner.debugLabel]
+            )
 #endif
             return
         }
@@ -147,17 +197,27 @@ final class PlaybackCoordinator: ObservableObject {
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsTask = nil
-        debugLog("stop and release owner=\(owner.debugLabel)")
+        diagnosticsEvent(
+            "stop",
+            category: "owner",
+            fields: ["requestedOwner": owner.debugLabel]
+        )
 #endif
         releaseCurrentItem()
         currentPlaybackToken = nil
         currentOwner = nil
+        currentAwemeID = nil
         isTransitioning = false
         presentationOpacity = 1
         playbackError = nil
     }
 
     private func cancelPendingLoad() {
+#if DEBUG
+        if assetTask != nil || loadingAsset != nil {
+            diagnosticsEvent("cancel-pending-load", category: "asset")
+        }
+#endif
         assetTask?.cancel()
         assetTask = nil
         loadingAsset?.cancelLoading()
@@ -174,15 +234,44 @@ final class PlaybackCoordinator: ObservableObject {
         isTransitioning = false
         presentationOpacity = 1
         playbackError = message
+#if DEBUG
+        diagnosticsEvent(
+            "playback-failed",
+            category: "player",
+            fields: ["message": message]
+        )
+#endif
     }
 
     private func releaseCurrentItem() {
         player.pause()
         player.cancelPendingPrerolls()
-        guard let item = player.currentItem else { return }
+        guard let item = player.currentItem else {
+#if DEBUG
+            diagnosticsEvent("release-no-current-item", category: "item")
+#endif
+            return
+        }
+#if DEBUG
+        diagnosticsEvent(
+            "release-current-item-begin",
+            category: "item",
+            fields: [
+                "itemStatus": debugItemStatus(item.status),
+                "time": debugSeconds(player.currentTime().seconds)
+            ]
+        )
+#endif
         item.cancelPendingSeeks()
         item.asset.cancelLoading()
         player.replaceCurrentItem(with: nil)
+#if DEBUG
+        diagnosticsEvent(
+            "release-current-item-end",
+            category: "item",
+            fields: ["hasCurrentItem": player.currentItem != nil]
+        )
+#endif
     }
 
     private func preferredURLs(for aweme: Aweme) -> [URL] {
@@ -219,14 +308,47 @@ final class PlaybackCoordinator: ObservableObject {
         diagnosticsTask = Task { [weak self] in
             guard let self else { return }
             debugSnapshot(label: "play-called")
-            for step in 1...12 {
+            var step = 0
+            var previousTime = player.currentTime().seconds
+            var stalledSamples = 0
+            var previousStatus = player.timeControlStatus
+            while !Task.isCancelled {
+                step += 1
+                let delay: UInt64 = step <= 12 ? 500_000_000 : 2_000_000_000
                 do {
-                    try await Task.sleep(nanoseconds: 500_000_000)
+                    try await Task.sleep(nanoseconds: delay)
                 } catch {
                     return
                 }
                 guard !Task.isCancelled, requestedGeneration == generation else { return }
-                debugSnapshot(label: String(format: "after-%.1fs", Double(step) * 0.5))
+                let elapsed = step <= 12 ? Double(step) * 0.5 : 6 + Double(step - 12) * 2
+                debugSnapshot(label: String(format: "after-%.1fs", elapsed))
+
+                let currentTime = player.currentTime().seconds
+                let status = player.timeControlStatus
+                if status == .playing, player.rate > 0,
+                   currentTime.isFinite, previousTime.isFinite,
+                   currentTime - previousTime < 0.05 {
+                    stalledSamples += 1
+                    if stalledSamples == 2 {
+                        diagnosticsEvent(
+                            "stalled-progress",
+                            category: "player",
+                            fields: ["previousTime": debugSeconds(previousTime), "currentTime": debugSeconds(currentTime)]
+                        )
+                    }
+                } else {
+                    stalledSamples = 0
+                }
+                if status == .paused, previousStatus != .paused, player.currentItem != nil {
+                    diagnosticsEvent(
+                        "paused-observed",
+                        category: "player",
+                        fields: ["time": debugSeconds(currentTime)]
+                    )
+                }
+                previousTime = currentTime
+                previousStatus = status
             }
         }
     }
@@ -238,17 +360,38 @@ final class PlaybackCoordinator: ObservableObject {
         let bufferedEnd = item?.loadedTimeRanges.last?.timeRangeValue.end.seconds ?? 0
         let error = item?.error?.localizedDescription ?? "none"
         let waitingReason = player.reasonForWaitingToPlay?.rawValue ?? "none"
-        debugLog(
-            "\(label) player=\(debugTimeControlStatus(player.timeControlStatus)) " +
-            "rate=\(player.rate) item=\(debugItemStatus(item?.status)) " +
-            "time=\(debugSeconds(current))/\(debugSeconds(duration)) " +
-            "bufferedEnd=\(debugSeconds(bufferedEnd)) likelyToKeepUp=\(item?.isPlaybackLikelyToKeepUp ?? false) " +
-            "bufferEmpty=\(item?.isPlaybackBufferEmpty ?? false) waiting=\(waitingReason) error=\(error)"
+        diagnosticsEvent(
+            label,
+            category: "player",
+            fields: [
+                "player": debugTimeControlStatus(player.timeControlStatus),
+                "rate": player.rate,
+                "item": debugItemStatus(item?.status),
+                "time": debugSeconds(current),
+                "duration": debugSeconds(duration),
+                "bufferedEnd": debugSeconds(bufferedEnd),
+                "likelyToKeepUp": item?.isPlaybackLikelyToKeepUp ?? false,
+                "bufferEmpty": item?.isPlaybackBufferEmpty ?? false,
+                "waiting": waitingReason,
+                "error": error
+            ]
         )
     }
 
-    private func debugLog(_ message: String) {
-        print("[PlaybackDiagnostics] instance=\(instanceID) \(message)")
+    private func diagnosticsEvent(
+        _ name: String,
+        category: String,
+        fields: [String: CustomStringConvertible] = [:]
+    ) {
+        var values = fields
+        values["instance"] = instanceID
+        values["generation"] = generation
+        values["owner"] = currentOwner?.debugLabel ?? "none"
+        values["aweme"] = currentAwemeID ?? "none"
+        if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
+            values["memoryMB"] = String(format: "%.1f", memory)
+        }
+        PlaybackDiagnostics.shared.event(name, category: category, fields: values)
     }
 
     private func debugTimeControlStatus(_ status: AVPlayer.TimeControlStatus) -> String {
