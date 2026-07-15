@@ -23,10 +23,8 @@ final class DouyinFeedStore: ObservableObject {
     private var cursor = 0
     private var hasMore = true
     private var generation: UInt = 0
-    private var seenFollowingIDs = Set<String>()
     private let retainedPreviousItems = 5
     private let preloadRemainingItems = 3
-    private let maximumDuplicatePageRetries = 4
 
     init(feedType: FeedType, api: DouyinAPI = .shared) {
         self.feedType = feedType
@@ -42,7 +40,6 @@ final class DouyinFeedStore: ObservableObject {
         cursor = 0
         hasMore = true
         isLoading = false
-        seenFollowingIDs.removeAll(keepingCapacity: true)
         await load(isRefresh: true)
     }
 
@@ -84,23 +81,14 @@ final class DouyinFeedStore: ObservableObject {
 
         do {
             let result: ([Aweme], Int, Bool)
-            var updatedFollowingIDs: Set<String>?
             switch feedType {
             case .recommend:
                 result = (try await api.getFeed(), 0, true)
             case .following:
-                let following = try await loadFollowingPage(
-                    isRefresh: isRefresh,
-                    existingIDs: seenFollowingIDs
-                )
-                result = (following.items, following.cursor, following.hasMore)
-                updatedFollowingIDs = following.seenIDs
+                result = try await api.getFollowing(cursor: isRefresh ? 0 : cursor)
             }
 
             guard requestGeneration == generation else { return }
-            if let updatedFollowingIDs {
-                seenFollowingIDs = updatedFollowingIDs
-            }
             if isRefresh {
                 items = result.0
                 activeIndex = 0
@@ -117,50 +105,6 @@ final class DouyinFeedStore: ObservableObject {
             guard requestGeneration == generation else { return }
             errorMessage = error.localizedDescription
         }
-    }
-
-    /// 关注接口会在相邻分页重复返回相同 aweme。接近当前列表尾部时预取，
-    /// 若整页都已出现过，则立即沿新 cursor 再取下一页，不让用户刷到末尾才等待。
-    private func loadFollowingPage(
-        isRefresh: Bool,
-        existingIDs: Set<String>
-    ) async throws -> (items: [Aweme], cursor: Int, hasMore: Bool, seenIDs: Set<String>) {
-        var requestCursor = isRefresh ? 0 : cursor
-        var nextCursor = requestCursor
-        var pageHasMore = true
-        var uniqueItems: [Aweme] = []
-        var seenIDs = existingIDs
-        let attempts = isRefresh ? 1 : maximumDuplicatePageRetries
-
-        for _ in 0..<attempts {
-            let result = try await api.getFollowing(cursor: requestCursor)
-            nextCursor = result.1
-            pageHasMore = result.2
-
-            uniqueItems = result.0.filter { aweme in
-                seenIDs.insert(aweme.aweme_id).inserted
-            }
-#if DEBUG
-            PlaybackDiagnostics.shared.event(
-                "following-page-merged",
-                category: "feed-pagination",
-                fields: [
-                    "cursor": requestCursor,
-                    "nextCursor": nextCursor,
-                    "received": result.0.count,
-                    "unique": uniqueItems.count,
-                    "duplicates": result.0.count - uniqueItems.count,
-                    "hasMore": pageHasMore
-                ]
-            )
-#endif
-            if !uniqueItems.isEmpty || !pageHasMore || nextCursor == requestCursor {
-                break
-            }
-            requestCursor = nextCursor
-        }
-
-        return (uniqueItems, nextCursor, pageHasMore, seenIDs)
     }
 
     private func select(_ index: Int) {

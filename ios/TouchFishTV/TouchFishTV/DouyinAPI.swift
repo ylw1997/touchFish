@@ -225,6 +225,20 @@ final class DouyinAPI: ObservableObject {
         let awemes = (res.data ?? []).compactMap { $0.aweme }
         let nextCursor = res.cursor ?? requestCursor
         let hasMore = res.has_more ?? (res.has_more_int == 1)
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "following-response",
+            category: "api",
+            fields: [
+                "requestCursor": requestCursor,
+                "nextCursor": nextCursor,
+                "entries": res.data?.count ?? 0,
+                "videos": awemes.count,
+                "nonVideoEntries": (res.data?.count ?? 0) - awemes.count,
+                "hasMore": hasMore
+            ]
+        )
+#endif
         return (awemes, nextCursor, hasMore)
     }
 
