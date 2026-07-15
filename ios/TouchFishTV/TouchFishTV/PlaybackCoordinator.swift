@@ -11,8 +11,9 @@ enum PlaybackSource: String {
 ///
 /// `TabView` 会提前创建所有标签页。如果直接把 `PlaybackCoordinator` 放在
 /// 每个标签页的 `@StateObject` 中，会在启动时常驻多套 AVPlayerViewController。
-/// 这个容器让列表数据、AVPlayer 和 AVPlayerViewController 一起按 Tab 常驻。
-/// 离开 Tab 时只清空当前 AVPlayerItem，避免重建原生渲染链路。
+/// 这个容器让同一个 Tab 激活期间稳定复用 AVPlayer 和
+/// AVPlayerViewController。离开 Tab 时释放会话，避免隐藏的原生渲染层在
+/// 多次跨 Tab 切换后继续占用 VideoToolbox 资源。
 @MainActor
 final class PlaybackSessionSlot: ObservableObject {
     @Published private(set) var session: PlaybackCoordinator?
@@ -51,20 +52,6 @@ final class PlaybackSessionSlot: ObservableObject {
 #endif
     }
 
-    /// 暂停当前页面的播放，但保留该 Tab 的协调器和控制器实例。
-    ///
-    /// 清空当前视频源，但保留该 Tab 的播放器和原生控制器。
-    func suspend() {
-        guard let session else { return }
-        session.stop()
-#if DEBUG
-        PlaybackDiagnostics.shared.event(
-            "suspended",
-            category: "session-slot",
-            fields: ["source": source.rawValue]
-        )
-#endif
-    }
 }
 
 /// 全局播放仲裁器。
@@ -115,7 +102,7 @@ private final class PlaybackArbiter {
     }
 }
 
-/// 一个 Tab 生命周期内保持不变的原生播放器。
+/// 一个 Tab 的单次激活周期内保持不变的原生播放器。
 @MainActor
 private final class PlaybackPlayerLease {
     let player = AVPlayer()
@@ -160,8 +147,8 @@ final class PlaybackCoordinator: ObservableObject {
         let playerViewController = DouyinPlayerViewController()
         self.playerLease = playerLease
         self.playerViewController = playerViewController
-        // 播放器与原生控制器在该 Tab 生命周期内永久绑定。离开 Tab 只清空
-        // currentItem，不能把 player 设为 nil，否则 tvOS 会重建视频渲染层。
+        // 播放器与原生控制器在单次 Tab 激活期间固定绑定；上下切换视频只替换
+        // currentItem。跨 Tab 时由 PlaybackSessionSlot 一并释放二者。
         playerViewController.player = playerLease.player
 #if DEBUG
         diagnosticsEvent("init", category: "session")
@@ -442,6 +429,10 @@ final class PlaybackCoordinator: ObservableObject {
 #endif
         playerViewController.danmakuController.stop()
         releaseCurrentItem()
+        // 只清空 currentItem 不足以立即释放 AVPlayerViewController 内部的
+        // AVSampleBufferDisplayLayer。跨 Tab 时同时解绑 player，防止隐藏的
+        // 渲染层继续持有 VideoToolbox/解码资源；下次 play 会重新绑定。
+        playerViewController.player = nil
         playerViewController.onPrevious = nil
         playerViewController.onNext = nil
         playerViewController.onVisible = nil

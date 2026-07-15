@@ -27,9 +27,10 @@ struct DouyinFeedView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            // 首次激活后让原生播放器控制器一直留在视图层级中。切换 Tab 时
-            // 仅隐藏并禁用交互，避免 UIViewControllerRepresentable 被 dismantle。
-            if let aweme = store.activeItem,
+            // 同一个 Tab 内上下切换只替换视频源；离开 Tab 后不保留隐藏的
+            // AVPlayerViewController，避免多个原生渲染层长期占用解码资源。
+            if isActive,
+               let aweme = store.activeItem,
                let playbackSession = playbackSlot.session {
                 VideoPlayerView(
                     aweme: aweme,
@@ -40,8 +41,6 @@ struct DouyinFeedView: View {
                     onNext: { Task { await store.next() } }
                 )
                 .ignoresSafeArea()
-                .opacity(isActive ? 1 : 0)
-                .allowsHitTesting(isActive)
             }
 
             if !isActive {
@@ -69,10 +68,10 @@ struct DouyinFeedView: View {
             startPlaybackIfPossible()
         }
         .onChange(of: isActive) { _, active in
-            // 激活由上面的 task(id:) 统一处理，避免 Tab 切换时 task 与
-            // onChange 同时发起两次 play。这里只负责同步停止离开的 Tab。
+            // 激活由上面的 task(id:) 统一处理。离开时销毁该 Tab 的播放器和
+            // 原生控制器；同一 Tab 内的视频切换仍然复用同一个实例。
             if !active {
-                playbackSlot.suspend()
+                playbackSlot.deactivate()
             }
         }
     }
@@ -106,7 +105,7 @@ struct DouyinFeedView: View {
     private func startPlaybackIfPossible() {
         guard isActive else { return }
         guard let aweme = store.activeItem else {
-            playbackSlot.suspend()
+            playbackSlot.deactivate()
             return
         }
         playbackSlot.activate().play(
