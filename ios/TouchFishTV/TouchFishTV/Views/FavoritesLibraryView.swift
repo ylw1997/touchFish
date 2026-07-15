@@ -79,16 +79,23 @@ struct FavoritesLibraryView: View {
 
     var body: some View {
         ZStack {
+            libraryBackground
+
+            // 喜欢页在网格和播放之间切换时也保留同一个原生控制器。没有
+            // currentItem 时它不会解码，只是保持 tvOS 的渲染层不被拆除。
+            retainedPlayerContent
+
             if !isActive {
                 Color.black.ignoresSafeArea()
             } else if selectedIndex != nil {
-                playerContent
+                if playbackSlot.session == nil {
+                    ProgressView("正在载入视频")
+                        .controlSize(.large)
+                }
             } else if store.items.isEmpty {
-                libraryBackground
-                    .overlay { emptyState }
+                emptyState
             } else {
-                libraryBackground
-                    .overlay { libraryGrid }
+                libraryGrid
             }
         }
         .task(id: isActive) {
@@ -141,8 +148,8 @@ struct FavoritesLibraryView: View {
     }
 
     @ViewBuilder
-    private var playerContent: some View {
-        if let index = selectedIndex,
+    private var retainedPlayerContent: some View {
+        if let index = selectedIndex ?? lastSelectedIndex,
            store.items.indices.contains(index),
            let playbackSession = playbackSlot.session {
             VideoPlayerView(
@@ -154,14 +161,9 @@ struct FavoritesLibraryView: View {
                 onNext: playNext
             )
             .ignoresSafeArea()
+            .opacity(isActive && selectedIndex != nil ? 1 : 0)
+            .allowsHitTesting(isActive && selectedIndex != nil)
             .onExitCommand { selectedIndex = nil }
-        } else {
-            Color.black
-                .ignoresSafeArea()
-                .overlay {
-                    ProgressView("正在载入视频")
-                        .controlSize(.large)
-                }
         }
     }
 

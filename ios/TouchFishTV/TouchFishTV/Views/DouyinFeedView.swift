@@ -27,8 +27,9 @@ struct DouyinFeedView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            if isActive,
-               let aweme = store.activeItem,
+            // 首次激活后让原生播放器控制器一直留在视图层级中。切换 Tab 时
+            // 仅隐藏并禁用交互，避免 UIViewControllerRepresentable 被 dismantle。
+            if let aweme = store.activeItem,
                let playbackSession = playbackSlot.session {
                 VideoPlayerView(
                     aweme: aweme,
@@ -39,9 +40,15 @@ struct DouyinFeedView: View {
                     onNext: { Task { await store.next() } }
                 )
                 .ignoresSafeArea()
-            } else if isActive, store.activeItem != nil {
+                .opacity(isActive ? 1 : 0)
+                .allowsHitTesting(isActive)
+            }
+
+            if !isActive {
+                Color.black.ignoresSafeArea()
+            } else if store.activeItem != nil, playbackSlot.session == nil {
                 loadingView
-            } else if store.isLoading {
+            } else if store.isLoading, store.activeItem == nil {
                 loadingView
             } else if store.activeItem == nil {
                 emptyView

@@ -160,6 +160,9 @@ final class PlaybackCoordinator: ObservableObject {
         let playerViewController = DouyinPlayerViewController()
         self.playerLease = playerLease
         self.playerViewController = playerViewController
+        // 播放器与原生控制器在该 Tab 生命周期内永久绑定。离开 Tab 只清空
+        // currentItem，不能把 player 设为 nil，否则 tvOS 会重建视频渲染层。
+        playerViewController.player = playerLease.player
 #if DEBUG
         diagnosticsEvent("init", category: "session")
 #endif
@@ -418,7 +421,6 @@ final class PlaybackCoordinator: ObservableObject {
         playerViewController.onPrevious = nil
         playerViewController.onNext = nil
         playerViewController.onVisible = nil
-        playerViewController.player = nil
         currentPlaybackToken = nil
         currentAwemeID = nil
         isTransitioning = false
