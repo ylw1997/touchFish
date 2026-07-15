@@ -219,6 +219,16 @@ final class PlaybackCoordinator: ObservableObject {
 #endif
 
         let urls = preferredURLs(for: aweme)
+#if DEBUG
+        diagnosticsEvent(
+            "candidates-selected",
+            category: "asset",
+            fields: [
+                "count": urls.count,
+                "hosts": urls.map { $0.host ?? "unknown" }.joined(separator: ",")
+            ]
+        )
+#endif
         guard !urls.isEmpty else {
             releaseCurrentItem()
             failPlayback(generation: requestedGeneration, message: "该视频没有可用的播放地址")
@@ -281,7 +291,6 @@ final class PlaybackCoordinator: ObservableObject {
         )
         loadingAsset = asset
         let item = AVPlayerItem(asset: asset)
-        item.externalMetadata = metadata(for: aweme)
         // Feed 只需要少量前向缓存。旧值 8 秒在渐进式 MP4 上会被系统放大到
         // 一百多秒，当前 item 单独就会长期占用约 50 MB 解码/网络缓冲。
         item.preferredForwardBufferDuration = 2
@@ -358,6 +367,10 @@ final class PlaybackCoordinator: ObservableObject {
                         )
                         return
                     }
+                    // 只在资产已经确认含有可用视频轨道后再写入原生播放元数据。
+                    // 失败候选在 asset 尚未完成加载时绑定 metadata，会让
+                    // AVPlayerViewController 每次都打印“metadata has not yet been loaded”。
+                    item.externalMetadata = self.metadata(for: aweme)
 #if DEBUG
                     self.diagnosticsEvent(
                         "item-ready",
@@ -541,43 +554,42 @@ final class PlaybackCoordinator: ObservableObject {
 
     private func preferredURLs(for aweme: Aweme) -> [URL] {
         guard let video = aweme.video else { return [] }
-        let h264BitRates = (video.bit_rate ?? [])
+        let preferredH264 = (video.bit_rate ?? [])
             .filter { $0.is_h265 != 1 }
-            .sorted { ($0.bit_rate ?? 0) > ($1.bit_rate ?? 0) }
-        let remainingBitRates = (video.bit_rate ?? [])
+            .max { ($0.bit_rate ?? 0) < ($1.bit_rate ?? 0) }
+        let preferredH265 = (video.bit_rate ?? [])
             .filter { $0.is_h265 == 1 }
-            .sorted { ($0.bit_rate ?? 0) > ($1.bit_rate ?? 0) }
+            .max { ($0.bit_rate ?? 0) < ($1.bit_rate ?? 0) }
+
+        // 每个视频只保留服务端返回的主 H.264 地址、一组最高码率 H.264
+        // 和一组 H.265 回退。旧实现展开所有 bit_rate，一条推荐视频
+        // 可以生成 50 多个 AVPlayerItem，对 AVFoundation 是没有意义的资源风暴。
         let values = (video.play_addr_h264?.url_list ?? [])
-            + h264BitRates.flatMap { $0.play_addr?.url_list ?? [] }
+            + (preferredH264?.play_addr?.url_list ?? [])
             + (video.play_addr?.url_list ?? [])
-            + remainingBitRates.flatMap { $0.play_addr?.url_list ?? [] }
+            + (preferredH265?.play_addr?.url_list ?? [])
 
         var seen = Set<String>()
         let urls = values.compactMap(URL.init(string:))
-        // 推荐接口经常只给 `*-web-prime` 和 www 适配入口，而关注接口直接给
-        // `*-weba`。prime 在 AVFoundation 中会返回 Forbidden/耗时重定向；
-        // 同路径派生 weba 直连并放在原地址前，失败时仍会回退服务端原 URL。
-        let expandedURLs = urls.flatMap { url -> [URL] in
-            if let directURL = directWebURL(fromPrimeURL: url) {
-                return [directURL, url]
-            }
-            return [url]
-        }
-        return expandedURLs.filter {
+        let uniqueURLs = urls.filter {
             !isClearlyAudioOnlyURL($0) && seen.insert($0.absoluteString).inserted
-        }.sorted {
-            score($0.absoluteString) > score($1.absoluteString)
         }
-    }
 
-    private func directWebURL(fromPrimeURL url: URL) -> URL? {
-        guard let host = url.host?.lowercased(),
-              host.contains("-web-prime."),
-              var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
-            return nil
-        }
-        components.host = host.replacingOccurrences(of: "-web-prime.", with: "-weba.")
-        return components.url
+        let directURLs = uniqueURLs
+            .filter { !isDouyinPlaybackEndpoint($0) && !isPrimeCDN($0) }
+            .sorted { score($0) > score($1) }
+        let playbackEndpoints = uniqueURLs
+            .filter(isDouyinPlaybackEndpoint)
+            .sorted { score($0) > score($1) }
+        let primeFallbacks = uniqueURLs
+            .filter(isPrimeCDN)
+            .sorted { score($0) > score($1) }
+
+        // 直连与关注流使用同一选源策略。每类限额保证直连失败时
+        // www 适配入口仍一定留在候选中，不会被大量无效 CDN 变体挤掉。
+        return Array(directURLs.prefix(2))
+            + Array(playbackEndpoints.prefix(2))
+            + Array(primeFallbacks.prefix(1))
     }
 
     private func isClearlyAudioOnlyURL(_ url: URL) -> Bool {
@@ -587,21 +599,21 @@ final class PlaybackCoordinator: ObservableObject {
             || audioExtensions.contains(url.pathExtension.lowercased())
     }
 
-    private func score(_ value: String) -> Int {
-        guard let url = URL(string: value) else { return 0 }
+    private func isDouyinPlaybackEndpoint(_ url: URL) -> Bool {
         let host = url.host?.lowercased() ?? ""
-        let isDouyinPlaybackEndpoint = host == "www.douyin.com"
-            || value.contains("/aweme/v1/play/")
+        return host == "www.douyin.com" || url.path.contains("/aweme/v1/play/")
+    }
 
-        // 喜欢接口同时返回设备适配入口和直连文件。适配入口更适合 AVPlayer，
-        // 直连仍保留为失败回退；该排序只影响选源，不承担跨 Tab 掉帧修复。
-        if source == .favorites, isDouyinPlaybackEndpoint { return 5 }
-        // web-prime 地址在 tvOS AVFoundation 中会稳定返回无权限/无法打开，
-        // 放到最后，避免每次推荐视频都先触发两轮失败和禁止播放图标。
-        if host.contains("-prime.") { return 0 }
+    private func isPrimeCDN(_ url: URL) -> Bool {
+        url.host?.lowercased().contains("-prime.") == true
+    }
+
+    private func score(_ url: URL) -> Int {
+        let host = url.host?.lowercased() ?? ""
+        if isPrimeCDN(url) { return 0 }
         if host.hasSuffix("douyinvod.com") { return 4 }
         if host.contains("bytecdn") || host.contains("zjcdn") { return 3 }
-        if isDouyinPlaybackEndpoint { return 1 }
+        if isDouyinPlaybackEndpoint(url) { return 1 }
         return 2
     }
 
