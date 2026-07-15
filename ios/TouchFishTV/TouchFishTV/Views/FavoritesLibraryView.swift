@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 import SwiftUI
 
 @MainActor
@@ -353,16 +354,12 @@ private struct AuthorAvatar: View {
     }
 
     var body: some View {
-        AsyncImage(url: avatarURL) { phase in
-            if case .success(let image) = phase {
-                image.resizable().scaledToFill()
-            } else {
-                ZStack {
-                    Color.white.opacity(0.1)
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(.secondary)
-                }
+        FavoriteRemoteImage(url: avatarURL, maxPixelSize: 96) { _ in
+            ZStack {
+                Color.white.opacity(0.1)
+                Image(systemName: "person.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(width: 34, height: 34)
@@ -381,15 +378,10 @@ private struct FavoriteArtwork: View {
         Color.clear
             .aspectRatio(3.0 / 4.0, contentMode: .fit)
             .overlay {
-                AsyncImage(url: artworkURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
+                FavoriteRemoteImage(url: artworkURL, maxPixelSize: 720) { failed in
+                    if failed {
                         placeholder(systemImage: "photo.badge.exclamationmark")
-                    default:
+                    } else {
                         ProgressView()
                     }
                 }
@@ -406,5 +398,100 @@ private struct FavoriteArtwork: View {
                 .font(.system(size: 42, weight: .light))
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+/// 喜欢列表专用的轻量图片视图。使用无缓存会话，并在后台按展示尺寸降采样。
+/// 视图离开层级时 SwiftUI 会取消 task，同时立即释放已经解码的 CGImage。
+private struct FavoriteRemoteImage<Placeholder: View>: View {
+    let url: URL?
+    let maxPixelSize: Int
+    private let placeholder: (Bool) -> Placeholder
+
+    @State private var image: CGImage?
+    @State private var loadFailed = false
+
+    init(
+        url: URL?,
+        maxPixelSize: Int,
+        @ViewBuilder placeholder: @escaping (Bool) -> Placeholder
+    ) {
+        self.url = url
+        self.maxPixelSize = maxPixelSize
+        self.placeholder = placeholder
+    }
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(decorative: image, scale: 1)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                placeholder(loadFailed)
+            }
+        }
+        .task(id: url) {
+            image = nil
+            loadFailed = false
+            guard let url else {
+                loadFailed = true
+                return
+            }
+            let loaded = await FavoriteImagePipeline.load(
+                url: url,
+                maxPixelSize: maxPixelSize
+            )
+            guard !Task.isCancelled else { return }
+            image = loaded
+            loadFailed = loaded == nil
+        }
+        .onDisappear {
+            image = nil
+            loadFailed = false
+        }
+    }
+}
+
+private enum FavoriteImagePipeline {
+    static let session: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.urlCache = nil
+        configuration.httpMaximumConnectionsPerHost = 4
+        configuration.timeoutIntervalForRequest = 15
+        return URLSession(configuration: configuration)
+    }()
+
+    static func load(url: URL, maxPixelSize: Int) async -> CGImage? {
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await session.data(for: request)
+            try Task.checkCancellation()
+            if let response = response as? HTTPURLResponse,
+               !(200..<300).contains(response.statusCode) {
+                return nil
+            }
+            return await Task.detached(priority: .utility) {
+                downsample(data: data, maxPixelSize: maxPixelSize)
+            }.value
+        } catch {
+            return nil
+        }
+    }
+
+    private static func downsample(data: Data, maxPixelSize: Int) -> CGImage? {
+        let sourceOptions: [CFString: Any] = [kCGImageSourceShouldCache: false]
+        guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions as CFDictionary) else {
+            return nil
+        }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+            kCGImageSourceShouldCacheImmediately: true
+        ]
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 }
