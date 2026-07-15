@@ -7,13 +7,12 @@ enum PlaybackSource: String {
     case favorites
 }
 
-/// 保留页面自己的播放状态，但只在页面真正需要播放时持有原生播放器。
+/// 保留页面自己的播放状态，但只在页面真正需要播放时持有播放控制器。
 ///
 /// `TabView` 会提前创建所有标签页。如果直接把 `PlaybackCoordinator` 放在
-/// 每个标签页的 `@StateObject` 中，会在启动时常驻多套 AVPlayer 和
-/// AVPlayerViewController。即使清空 currentItem，原生解码/渲染缓存也可能继续
-/// 跟随播放器实例存活。这个容器让列表页可以常驻，同时在离开播放页面后释放
-/// 整个原生播放会话。
+/// 每个标签页的 `@StateObject` 中，会在启动时常驻多套 AVPlayerViewController。
+/// 这个容器让列表数据可以常驻，同时按需创建和释放页面自己的控制器会话；
+/// 底层 AVPlayer 则由 `PlaybackEngine` 全局唯一管理。
 @MainActor
 final class PlaybackSessionSlot: ObservableObject {
     @Published private(set) var session: PlaybackCoordinator?
@@ -52,11 +51,10 @@ final class PlaybackSessionSlot: ObservableObject {
 #endif
     }
 
-    /// 暂停当前页面的播放，但保留该 Tab 唯一的原生播放器实例。
+    /// 暂停当前页面的播放，但保留该 Tab 的协调器和控制器实例。
     ///
-    /// Favorites 会在网格和播放画面之间反复切换。如果每次返回网格都销毁
-    /// AVPlayer，VideoToolbox 的底层解码会话来不及同步回收，反复进入后会逐渐
-    /// 掉帧。只有真正离开 Favorites Tab 时才调用 deactivate()。
+    /// Favorites 会在网格和播放画面之间反复切换。返回网格时清空视频源，
+    /// 但不重建页面控制器；只有真正离开 Favorites Tab 时才调用 deactivate()。
     func suspend() {
         guard let session else { return }
         session.stop()
@@ -70,50 +68,138 @@ final class PlaybackSessionSlot: ObservableObject {
     }
 }
 
-private final class PlaybackPlayerLease {
+/// 全应用唯一的原生播放引擎。
+///
+/// 每个 Tab 仍然拥有独立的 `PlaybackCoordinator`，只共享底层 AVPlayer。
+/// tvOS 的 AVPlayer / VideoToolbox 资源不会随着 Swift 对象 deinit 同步释放；
+/// 如果切换 Tab 时反复创建播放器，旧解码会话和新解码会话会在一段时间内
+/// 并存，最终表现为视频画面掉帧，而 SwiftUI 弹幕仍然流畅。
+///
+/// owner 令牌保证 TabView 生命周期回调即使乱序，旧页面也不能停止或替换
+/// 新页面已经接管的播放源。
+@MainActor
+private final class PlaybackEngine {
+    static let shared = PlaybackEngine()
+
     let player = AVPlayer()
     let id = String(UUID().uuidString.prefix(6))
-    private let source: PlaybackSource
+    private var ownerID: String?
+    private var ownerSource: PlaybackSource?
+    private weak var activeController: DouyinPlayerViewController?
 
-    init(source: PlaybackSource) {
-        self.source = source
+    private init() {
 #if DEBUG
         var fields: [String: CustomStringConvertible] = [
-            "player": id,
-            "source": source.rawValue
+            "player": id
         ]
         if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
             fields["memoryMB"] = String(format: "%.1f", memory)
         }
         PlaybackDiagnostics.shared.event(
             "created",
-            category: "player-lease",
+            category: "playback-engine",
             fields: fields
         )
 #endif
     }
 
-    deinit {
+    func claim(
+        ownerID: String,
+        source: PlaybackSource,
+        controller: DouyinPlayerViewController
+    ) {
+        if self.ownerID != ownerID {
+            let previousOwner = self.ownerID
+            let previousSource = ownerSource
+
+            // 先从旧控制器移除渲染层，再清空旧 item。这样新旧 Tab 不会在
+            // 转场期间同时驱动同一条解码输出。
+            activeController?.player = nil
+            clearPlayerItem()
+
+            self.ownerID = ownerID
+            ownerSource = source
+#if DEBUG
+            var fields: [String: CustomStringConvertible] = [
+                "player": id,
+                "owner": ownerID,
+                "source": source.rawValue,
+                "previousOwner": previousOwner ?? "none",
+                "previousSource": previousSource?.rawValue ?? "none"
+            ]
+            if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
+                fields["memoryMB"] = String(format: "%.1f", memory)
+            }
+            PlaybackDiagnostics.shared.event(
+                "claimed",
+                category: "playback-engine",
+                fields: fields
+            )
+#endif
+        }
+
+        activeController = controller
+        if controller.player !== player {
+            controller.player = player
+        }
+    }
+
+    func isOwner(_ candidate: String) -> Bool {
+        ownerID == candidate
+    }
+
+    func clearCurrentItem(ownerID candidate: String) {
+        guard ownerID == candidate else { return }
+        clearPlayerItem()
+    }
+
+    func release(
+        ownerID candidate: String,
+        controller: DouyinPlayerViewController
+    ) {
+        guard ownerID == candidate else {
+            if controller.player === player {
+                controller.player = nil
+            }
+            return
+        }
+
+        clearPlayerItem()
+        if activeController === controller {
+            activeController = nil
+        }
+        controller.player = nil
+        ownerID = nil
+        ownerSource = nil
 #if DEBUG
         var fields: [String: CustomStringConvertible] = [
             "player": id,
-            "source": source.rawValue
+            "owner": candidate
         ]
         if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
             fields["memoryMB"] = String(format: "%.1f", memory)
         }
         PlaybackDiagnostics.shared.event(
-            "released",
-            category: "player-lease",
+            "owner-released",
+            category: "playback-engine",
             fields: fields
         )
 #endif
+    }
+
+    private func clearPlayerItem() {
+        player.cancelPendingPrerolls()
+        player.pause()
+        guard let item = player.currentItem else { return }
+        item.cancelPendingSeeks()
+        item.asset.cancelLoading()
+        player.replaceCurrentItem(with: nil)
     }
 }
 
 @MainActor
 final class PlaybackCoordinator: ObservableObject {
-    var player: AVPlayer { playerLease.player }
+    var player: AVPlayer { playbackEngine.player }
     let playerViewController: DouyinPlayerViewController
     @Published private(set) var isTransitioning = false
     @Published private(set) var presentationOpacity = 1.0
@@ -121,7 +207,7 @@ final class PlaybackCoordinator: ObservableObject {
 
     private let instanceID = String(UUID().uuidString.prefix(6))
     private let source: PlaybackSource
-    private let playerLease: PlaybackPlayerLease
+    private let playbackEngine: PlaybackEngine
     private(set) var generation: UInt = 0
     private var assetTask: Task<Void, Never>?
     private var loadingAsset: AVURLAsset?
@@ -134,10 +220,9 @@ final class PlaybackCoordinator: ObservableObject {
 
     init(source: PlaybackSource) {
         self.source = source
-        let playerLease = PlaybackPlayerLease(source: source)
+        let playbackEngine = PlaybackEngine.shared
         let playerViewController = DouyinPlayerViewController()
-        playerViewController.player = playerLease.player
-        self.playerLease = playerLease
+        self.playbackEngine = playbackEngine
         self.playerViewController = playerViewController
 #if DEBUG
         diagnosticsEvent("init", category: "session")
@@ -156,7 +241,8 @@ final class PlaybackCoordinator: ObservableObject {
 
     func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64) {
         if currentPlaybackToken == playbackToken,
-           currentAwemeID == aweme.aweme_id {
+           currentAwemeID == aweme.aweme_id,
+           playbackEngine.isOwner(instanceID) {
             if player.currentItem != nil {
                 resume()
 #if DEBUG
@@ -174,19 +260,18 @@ final class PlaybackCoordinator: ObservableObject {
         generation &+= 1
         let requestedGeneration = generation
         cancelPendingLoad()
+        playbackEngine.claim(
+            ownerID: instanceID,
+            source: source,
+            controller: playerViewController
+        )
         isTransitioning = true
         presentationOpacity = 0.82
         playbackError = nil
-        // 一个活动页面只持有一个 AVPlayer。AVPlayer 背后的 VideoToolbox /
-        // 网络缓冲资源并不会在 Swift 对象 deinit 时同步释放；按视频重建
-        // AVPlayer 会让多个底层缓冲池在短时间内并存，连续切换后内存持续抬升。
-        // 视频之间只替换 AVPlayerItem，离开页面时再由 PlaybackSessionSlot
-        // 销毁整个播放会话。
+        // 全应用只持有 PlaybackEngine 的一个 AVPlayer。视频和 Tab 切换都只
+        // 替换 AVPlayerItem，避免多个 VideoToolbox 解码会话短时间并存。
         playerViewController.danmakuController.stop()
         releaseCurrentItem()
-        if playerViewController.player !== player {
-            playerViewController.player = player
-        }
         currentPlaybackToken = playbackToken
         currentAwemeID = aweme.aweme_id
         playerViewController.danmakuController.configure(
@@ -223,7 +308,8 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     func resume() {
-        guard playbackError == nil,
+        guard playbackEngine.isOwner(instanceID),
+              playbackError == nil,
               let item = player.currentItem,
               item.status != .failed else { return }
         if playerViewController.player !== player {
@@ -245,7 +331,9 @@ final class PlaybackCoordinator: ObservableObject {
     ) {
         assetTask = Task { [weak self] in
             guard let self else { return }
-            guard !Task.isCancelled, requestedGeneration == generation else { return }
+            guard !Task.isCancelled,
+                  requestedGeneration == generation,
+                  playbackEngine.isOwner(instanceID) else { return }
             guard urls.indices.contains(startIndex) else {
                 assetTask = nil
                 failPlayback(generation: requestedGeneration, message: "该视频暂时无法播放，按上下键切换")
@@ -270,6 +358,12 @@ final class PlaybackCoordinator: ObservableObject {
             item.externalMetadata = metadata(for: aweme)
             item.preferredForwardBufferDuration = 8
             item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+            guard !Task.isCancelled,
+                  requestedGeneration == generation,
+                  playbackEngine.isOwner(instanceID) else {
+                asset.cancelLoading()
+                return
+            }
             player.replaceCurrentItem(with: item)
             clearLoadingAsset(ifMatching: asset)
             observeStatus(
@@ -305,6 +399,7 @@ final class PlaybackCoordinator: ObservableObject {
             Task { @MainActor [weak self, weak item] in
                 guard let self, let item,
                       requestedGeneration == self.generation,
+                      self.playbackEngine.isOwner(self.instanceID),
                       self.player.currentItem === item else { return }
 
                 switch item.status {
@@ -359,7 +454,8 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     func completeTransition(for requestedGeneration: UInt) {
-        guard requestedGeneration == generation else { return }
+        guard requestedGeneration == generation,
+              playbackEngine.isOwner(instanceID) else { return }
         isTransitioning = false
         presentationOpacity = 1
     }
@@ -376,7 +472,10 @@ final class PlaybackCoordinator: ObservableObject {
         releaseCurrentItem()
         playerViewController.onPrevious = nil
         playerViewController.onNext = nil
-        playerViewController.player = nil
+        playbackEngine.release(
+            ownerID: instanceID,
+            controller: playerViewController
+        )
         currentPlaybackToken = nil
         currentAwemeID = nil
         isTransitioning = false
@@ -404,7 +503,8 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func failPlayback(generation requestedGeneration: UInt, message: String) {
-        guard requestedGeneration == generation else { return }
+        guard requestedGeneration == generation,
+              playbackEngine.isOwner(instanceID) else { return }
         playerViewController.danmakuController.stop()
         isTransitioning = false
         presentationOpacity = 1
@@ -421,6 +521,12 @@ final class PlaybackCoordinator: ObservableObject {
     private func releaseCurrentItem() {
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
+        guard playbackEngine.isOwner(instanceID) else {
+#if DEBUG
+            diagnosticsEvent("release-skipped-not-owner", category: "item")
+#endif
+            return
+        }
         guard let item = player.currentItem else {
             player.cancelPendingPrerolls()
             player.pause()
@@ -448,9 +554,7 @@ final class PlaybackCoordinator: ObservableObject {
             fields: ["rate": player.rate]
         )
 #endif
-        item.cancelPendingSeeks()
-        item.asset.cancelLoading()
-        player.replaceCurrentItem(with: nil)
+        playbackEngine.clearCurrentItem(ownerID: instanceID)
 #if DEBUG
         diagnosticsEvent(
             "release-current-item-end",
@@ -588,7 +692,7 @@ final class PlaybackCoordinator: ObservableObject {
         var values = fields
         values["instance"] = instanceID
         values["controller"] = playerViewController.diagnosticsID
-        values["playerID"] = playerLease.id
+        values["playerID"] = playbackEngine.id
         values["generation"] = generation
         values["source"] = source.rawValue
         values["aweme"] = currentAwemeID ?? "none"
