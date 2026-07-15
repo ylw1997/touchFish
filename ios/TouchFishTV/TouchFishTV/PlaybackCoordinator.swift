@@ -102,38 +102,96 @@ private final class PlaybackArbiter {
     }
 }
 
-/// 一个 Tab 的单次激活周期内保持不变的原生播放器。
-@MainActor
-private final class PlaybackPlayerLease {
-    let player = AVPlayer()
-    let id = String(UUID().uuidString.prefix(6))
+/// 把推荐接口返回的 www 播放入口提前解析为最终 CDN 地址。
+///
+/// Range 请求只读取一个字节，不下载视频；系统仍执行正常的 TLS 校验。
+/// 关注/喜欢已经带真实直连地址，不经过这里。
+private actor PlaybackURLResolver {
+    static let shared = PlaybackURLResolver()
 
-    init(source: PlaybackSource) {
-        player.automaticallyWaitsToMinimizeStalling = false
-#if DEBUG
-        PlaybackDiagnostics.shared.event(
-            "created",
-            category: "tab-player",
-            fields: ["player": id, "source": source.rawValue]
-        )
-#endif
+    private var cache: [URL: URL] = [:]
+    private var cacheOrder: [URL] = []
+    private let maximumCacheCount = 64
+
+    func resolve(_ endpoints: [URL], headers: [String: String]) async -> [URL] {
+        var resolvedByEndpoint: [URL: URL] = [:]
+        var unresolved: [URL] = []
+
+        for endpoint in endpoints {
+            if let cached = cache[endpoint] {
+                resolvedByEndpoint[endpoint] = cached
+            } else {
+                unresolved.append(endpoint)
+            }
+        }
+
+        await withTaskGroup(of: (URL, URL?).self) { group in
+            for endpoint in unresolved {
+                group.addTask {
+                    (endpoint, await Self.resolve(endpoint, headers: headers))
+                }
+            }
+            for await (endpoint, resolvedURL) in group {
+                guard let resolvedURL else { continue }
+                resolvedByEndpoint[endpoint] = resolvedURL
+                store(resolvedURL, for: endpoint)
+            }
+        }
+
+        return endpoints.compactMap { resolvedByEndpoint[$0] }
+    }
+
+    private func store(_ resolvedURL: URL, for endpoint: URL) {
+        guard cache[endpoint] == nil else { return }
+        cache[endpoint] = resolvedURL
+        cacheOrder.append(endpoint)
+        if cacheOrder.count > maximumCacheCount {
+            cache.removeValue(forKey: cacheOrder.removeFirst())
+        }
+    }
+
+    private static func resolve(_ endpoint: URL, headers: [String: String]) async -> URL? {
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 5
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
+        for (name, value) in headers {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode),
+                  let finalURL = httpResponse.url,
+                  finalURL.host?.lowercased() != "www.douyin.com",
+                  finalURL.host?.lowercased().contains("-prime.") != true else {
+                return nil
+            }
+            return finalURL
+        } catch {
+            return nil
+        }
     }
 }
 
 @MainActor
 final class PlaybackCoordinator: ObservableObject {
-    var player: AVPlayer { playerLease.player }
+    private static let playbackUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+
+    let player = AVPlayer()
     let playerViewController: DouyinPlayerViewController
     @Published private(set) var isTransitioning = false
     @Published private(set) var presentationOpacity = 1.0
     @Published private(set) var playbackError: String?
 
     private let instanceID = String(UUID().uuidString.prefix(6))
+    private let playerID = String(UUID().uuidString.prefix(6))
     private let source: PlaybackSource
-    private let playerLease: PlaybackPlayerLease
     private let playbackArbiter = PlaybackArbiter.shared
     private(set) var generation: UInt = 0
-    private var loadingAsset: AVURLAsset?
+    private var candidateResolutionTask: Task<Void, Never>?
     private var itemStatusObservation: NSKeyValueObservation?
     private var currentPlaybackToken: UInt64?
     private var currentAwemeID: String?
@@ -143,14 +201,18 @@ final class PlaybackCoordinator: ObservableObject {
 
     init(source: PlaybackSource) {
         self.source = source
-        let playerLease = PlaybackPlayerLease(source: source)
         let playerViewController = DouyinPlayerViewController()
-        self.playerLease = playerLease
         self.playerViewController = playerViewController
+        player.automaticallyWaitsToMinimizeStalling = false
         // 播放器与原生控制器在单次 Tab 激活期间固定绑定；上下切换视频只替换
         // currentItem。跨 Tab 时由 PlaybackSessionSlot 一并释放二者。
-        playerViewController.player = playerLease.player
+        playerViewController.player = player
 #if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "created",
+            category: "tab-player",
+            fields: ["player": playerID, "source": source.rawValue]
+        )
         diagnosticsEvent("init", category: "session")
 #endif
     }
@@ -235,16 +297,58 @@ final class PlaybackCoordinator: ObservableObject {
             return
         }
 
-        var headers = ["User-Agent": "Mozilla/5.0", "Referer": "https://www.douyin.com/"]
+        var headers = [
+            "User-Agent": Self.playbackUserAgent,
+            "Referer": "https://www.douyin.com/"
+        ]
         if !cookie.isEmpty { headers["Cookie"] = cookie }
 
-        loadCandidates(
-            urls,
-            startingAt: 0,
-            aweme: aweme,
-            headers: headers,
-            requestedGeneration: requestedGeneration
-        )
+        let playbackEndpoints = urls.filter(isDouyinPlaybackEndpoint)
+        let hasDirectCandidate = urls.contains { !isDouyinPlaybackEndpoint($0) }
+        guard case .recommend = source,
+              !hasDirectCandidate,
+              !playbackEndpoints.isEmpty else {
+            loadCandidates(
+                urls,
+                startingAt: 0,
+                aweme: aweme,
+                headers: headers,
+                requestedGeneration: requestedGeneration
+            )
+            return
+        }
+
+        candidateResolutionTask = Task { [weak self] in
+            let resolved = await PlaybackURLResolver.shared.resolve(
+                playbackEndpoints,
+                headers: headers
+            )
+            guard let self, !Task.isCancelled,
+                  requestedGeneration == self.generation,
+                  self.playbackArbiter.isActive(self) else { return }
+            self.candidateResolutionTask = nil
+            var seen = Set<String>()
+            let candidates = (resolved + urls).filter {
+                seen.insert($0.absoluteString).inserted
+            }
+#if DEBUG
+            self.diagnosticsEvent(
+                "playback-endpoints-resolved",
+                category: "asset",
+                fields: [
+                    "resolved": resolved.count,
+                    "hosts": resolved.map { $0.host ?? "unknown" }.joined(separator: ",")
+                ]
+            )
+#endif
+            self.loadCandidates(
+                candidates,
+                startingAt: 0,
+                aweme: aweme,
+                headers: headers,
+                requestedGeneration: requestedGeneration
+            )
+        }
     }
 
     func resume() {
@@ -289,7 +393,6 @@ final class PlaybackCoordinator: ObservableObject {
             url: url,
             options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
         )
-        loadingAsset = asset
         let item = AVPlayerItem(asset: asset)
         // Feed 只需要少量前向缓存。旧值 8 秒在渐进式 MP4 上会被系统放大到
         // 一百多秒，当前 item 单独就会长期占用约 50 MB 解码/网络缓冲。
@@ -304,7 +407,6 @@ final class PlaybackCoordinator: ObservableObject {
         // 创建好新 item 后一次性替换，避免 currentItem=nil 时原生进度条
         // 短暂显示“禁止播放”图标，也避免把无 await 的工作推迟到下一轮 RunLoop。
         player.replaceCurrentItem(with: item)
-        clearLoadingAsset(ifMatching: asset)
         observeStatus(
             of: item,
             candidateIndex: candidateIndex,
@@ -457,20 +559,14 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func cancelPendingLoad() {
+        candidateResolutionTask?.cancel()
+        candidateResolutionTask = nil
 #if DEBUG
-        if loadingAsset != nil {
-            diagnosticsEvent("cancel-pending-load", category: "asset")
-        }
+        diagnosticsTask?.cancel()
+        diagnosticsTask = nil
 #endif
-        loadingAsset?.cancelLoading()
-        loadingAsset = nil
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
-    }
-
-    private func clearLoadingAsset(ifMatching asset: AVURLAsset?) {
-        guard let asset, loadingAsset === asset else { return }
-        loadingAsset = nil
     }
 
     private func failPlayback(generation requestedGeneration: UInt, message: String) {
@@ -581,15 +677,10 @@ final class PlaybackCoordinator: ObservableObject {
         let playbackEndpoints = uniqueURLs
             .filter(isDouyinPlaybackEndpoint)
             .sorted { score($0) > score($1) }
-        let primeFallbacks = uniqueURLs
-            .filter(isPrimeCDN)
-            .sorted { score($0) > score($1) }
-
-        // 直连与关注流使用同一选源策略。每类限额保证直连失败时
-        // www 适配入口仍一定留在候选中，不会被大量无效 CDN 变体挤掉。
+        // prime 地址在电视端稳定返回 403，不再创建无意义的 AVPlayerItem。
+        // 真实直连优先；推荐只有 www 入口时由轻量 Range 请求解析最终 CDN。
         return Array(directURLs.prefix(2))
             + Array(playbackEndpoints.prefix(2))
-            + Array(primeFallbacks.prefix(1))
     }
 
     private func isClearlyAudioOnlyURL(_ url: URL) -> Bool {
@@ -770,7 +861,7 @@ final class PlaybackCoordinator: ObservableObject {
         var values = fields
         values["instance"] = instanceID
         values["controller"] = playerViewController.diagnosticsID
-        values["playerID"] = playerLease.id
+        values["playerID"] = playerID
         values["generation"] = generation
         values["source"] = source.rawValue
         values["aweme"] = currentAwemeID ?? "none"

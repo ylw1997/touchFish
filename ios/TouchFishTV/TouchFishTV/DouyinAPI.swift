@@ -33,7 +33,7 @@ enum APIError: LocalizedError {
 final class DouyinAPI: ObservableObject {
     static let shared = DouyinAPI()
     
-    private let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+    private let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
     
     @Published var cookie: String = "" {
         didSet {
@@ -203,13 +203,85 @@ final class DouyinAPI: ObservableObject {
         }
     }
 
-    /// 获取推荐视频流
-    func getFeed() async throws -> [Aweme] {
-        let ts = Int(Date().timeIntervalSince1970 * 1000)
-        let url = "https://www.douyin.com/aweme/v1/web/channel/feed/?device_platform=webapp&aid=6383&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32&_t=\(ts)"
-        let res: FeedResponse = try await request(url: url)
+    /// 获取推荐视频流。
+    ///
+    /// 网页端当前使用 tab/feed，并通过 refresh_index + view_count 维持
+    /// 推荐上下文。count 仍按网页请求传 10，实际条数以服务端响应为准。
+    func getFeed(refreshIndex: Int, viewCount: Int) async throws -> ([Aweme], Bool) {
+        let recommendationContext = """
+        {"is_client":false,"ff_danmaku_status":1,"danmaku_switch_status":1,"is_dash_user":1,"is_auto_play":0,"is_full_screen":0,"is_full_webscreen":0,"is_mute":0,"is_speed":1,"is_visible":1,"related_recommend":1,"is_xigua_user":0}
+        """
+        var components = URLComponents(
+            string: "https://www.douyin.com/aweme/v1/web/tab/feed/"
+        )
+        components?.queryItems = [
+            URLQueryItem(name: "device_platform", value: "webapp"),
+            URLQueryItem(name: "aid", value: "6383"),
+            URLQueryItem(name: "channel", value: "channel_pc_web"),
+            URLQueryItem(name: "filterGids", value: ""),
+            URLQueryItem(name: "tag_id", value: ""),
+            URLQueryItem(name: "share_aweme_id", value: ""),
+            URLQueryItem(name: "live_insert_type", value: ""),
+            URLQueryItem(name: "count", value: "10"),
+            URLQueryItem(name: "refresh_index", value: String(refreshIndex)),
+            URLQueryItem(name: "video_type_select", value: "1"),
+            URLQueryItem(name: "aweme_pc_rec_raw_data", value: recommendationContext),
+            URLQueryItem(name: "globalwid", value: ""),
+            URLQueryItem(name: "pull_type", value: "2"),
+            URLQueryItem(name: "min_window", value: "0"),
+            URLQueryItem(name: "free_right", value: "0"),
+            URLQueryItem(name: "view_count", value: String(viewCount)),
+            URLQueryItem(name: "plug_block", value: "0"),
+            URLQueryItem(name: "ug_source", value: ""),
+            URLQueryItem(name: "creative_id", value: ""),
+            URLQueryItem(name: "pc_client_type", value: "1"),
+            URLQueryItem(name: "pc_libra_divert", value: "Windows"),
+            URLQueryItem(name: "support_h265", value: "1"),
+            URLQueryItem(name: "support_dash", value: "1"),
+            URLQueryItem(name: "webcast_sdk_version", value: "170400"),
+            URLQueryItem(name: "webcast_version_code", value: "170400"),
+            URLQueryItem(name: "version_code", value: "170400"),
+            URLQueryItem(name: "version_name", value: "17.4.0"),
+            URLQueryItem(name: "cookie_enabled", value: "true"),
+            URLQueryItem(name: "screen_width", value: "1920"),
+            URLQueryItem(name: "screen_height", value: "1080"),
+            URLQueryItem(name: "browser_language", value: "zh-CN"),
+            URLQueryItem(name: "browser_platform", value: "Win32"),
+            URLQueryItem(name: "browser_name", value: "Chrome"),
+            URLQueryItem(name: "browser_version", value: "150.0.0.0"),
+            URLQueryItem(name: "browser_online", value: "true"),
+            URLQueryItem(name: "engine_name", value: "Blink"),
+            URLQueryItem(name: "engine_version", value: "150.0.0.0"),
+            URLQueryItem(name: "os_name", value: "Windows"),
+            URLQueryItem(name: "os_version", value: "10"),
+            URLQueryItem(name: "platform", value: "PC"),
+            URLQueryItem(name: "timestamp", value: String(Int(Date().timeIntervalSince1970)))
+        ]
+        guard let url = components?.url?.absoluteString else {
+            throw APIError.invalidURL
+        }
+
+        let res: FeedResponse = try await request(
+            url: url,
+            extraHeaders: ["Referer": "https://www.douyin.com/?recommend=1"]
+        )
         try validateStatus(res.status_code, message: res.status_msg)
-        return res.aweme_list ?? []
+        let awemes = (res.aweme_list ?? []).filter { $0.video != nil }
+        let hasMore = (res.has_more ?? 1) != 0
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "recommend-response",
+            category: "api",
+            fields: [
+                "refreshIndex": refreshIndex,
+                "viewCount": viewCount,
+                "entries": res.aweme_list?.count ?? 0,
+                "videos": awemes.count,
+                "hasMore": hasMore
+            ]
+        )
+#endif
+        return (awemes, hasMore)
     }
     
     /// 获取关注视频流
@@ -222,7 +294,7 @@ final class DouyinAPI: ObservableObject {
         let url = "https://www.douyin.com/aweme/v1/web/follow/feed/?device_platform=webapp&aid=6383&channel=channel_pc_web&cursor=\(requestCursor)&level=1&count=20&pull_type=2&aweme_ids=&room_ids=&pc_client_type=1&pc_libra_divert=Windows&support_h265=1&support_dash=1&version_code=170400&version_name=17.4.0&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
         let res: FollowingResponse = try await request(url: url, extraHeaders: ["Referer": "https://www.douyin.com/follow"])
         try validateStatus(res.status_code, message: res.status_msg)
-        let awemes = (res.data ?? []).compactMap { $0.aweme }
+        let awemes = (res.data ?? []).compactMap { $0.aweme }.filter { $0.video != nil }
         let nextCursor = res.cursor ?? requestCursor
         let hasMore = res.has_more ?? (res.has_more_int == 1)
 #if DEBUG
@@ -258,6 +330,7 @@ struct FeedResponse: Decodable {
     let status_code: Int
     let status_msg: String?
     let aweme_list: [Aweme]?
+    let has_more: Int?
 }
 
 struct FollowingResponse: Decodable {

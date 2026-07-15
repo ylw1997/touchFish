@@ -22,6 +22,8 @@ final class DouyinFeedStore: ObservableObject {
     private let api: DouyinAPI
     private var cursor = 0
     private var hasMore = true
+    private var recommendRefreshIndex = 1
+    private var recommendViewCount = 0
     private var generation: UInt = 0
     private let retainedPreviousItems = 5
     private let preloadRemainingItems = 3
@@ -39,6 +41,8 @@ final class DouyinFeedStore: ObservableObject {
         generation &+= 1
         cursor = 0
         hasMore = true
+        recommendRefreshIndex = 1
+        recommendViewCount = 0
         isLoading = false
         await load(isRefresh: true)
     }
@@ -83,7 +87,11 @@ final class DouyinFeedStore: ObservableObject {
             let result: ([Aweme], Int, Bool)
             switch feedType {
             case .recommend:
-                result = (try await api.getFeed(), 0, true)
+                let page = try await api.getFeed(
+                    refreshIndex: recommendRefreshIndex,
+                    viewCount: recommendViewCount
+                )
+                result = (page.0, 0, page.1)
             case .following:
                 result = try await api.getFollowing(cursor: isRefresh ? 0 : cursor)
             }
@@ -98,6 +106,10 @@ final class DouyinFeedStore: ObservableObject {
             }
             cursor = result.1
             hasMore = result.2
+            if case .recommend = feedType {
+                recommendRefreshIndex += 1
+                recommendViewCount += result.0.count
+            }
             if items.isEmpty { errorMessage = "当前没有可播放的视频" }
         } catch is CancellationError {
             return
