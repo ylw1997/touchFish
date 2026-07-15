@@ -51,6 +51,23 @@ final class PlaybackSessionSlot: ObservableObject {
         )
 #endif
     }
+
+    /// 暂停当前页面的播放，但保留该 Tab 唯一的原生播放器实例。
+    ///
+    /// Favorites 会在网格和播放画面之间反复切换。如果每次返回网格都销毁
+    /// AVPlayer，VideoToolbox 的底层解码会话来不及同步回收，反复进入后会逐渐
+    /// 掉帧。只有真正离开 Favorites Tab 时才调用 deactivate()。
+    func suspend() {
+        guard let session else { return }
+        session.stop()
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "suspended",
+            category: "session-slot",
+            fields: ["source": source.rawValue]
+        )
+#endif
+    }
 }
 
 private final class PlaybackPlayerLease {

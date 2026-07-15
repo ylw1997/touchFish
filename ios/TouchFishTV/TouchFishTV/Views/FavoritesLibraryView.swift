@@ -124,7 +124,9 @@ struct FavoritesLibraryView: View {
             )
 #endif
             if previousIndex != nil, selectedIndex == nil {
-                playbackSlot.deactivate()
+                // 返回喜欢列表只释放当前视频，不销毁 AVPlayer。这样再次进入
+                // 播放时复用同一个解码会话；真正切换 Tab 时才完整 deactivate。
+                playbackSlot.suspend()
                 restoreFocus()
             }
         }
