@@ -641,6 +641,7 @@ final class PlaybackCoordinator: ObservableObject {
             var previousTime = player.currentTime().seconds
             var stalledSamples = 0
             var previousStatus = player.timeControlStatus
+            var previousDroppedFrames = 0
             while !Task.isCancelled {
                 step += 1
                 let delay: UInt64 = step <= 12 ? 500_000_000 : 2_000_000_000
@@ -676,8 +677,24 @@ final class PlaybackCoordinator: ObservableObject {
                         fields: ["time": debugSeconds(currentTime)]
                     )
                 }
+                let droppedFrames = player.currentItem?
+                    .accessLog()?
+                    .events
+                    .last?
+                    .numberOfDroppedVideoFrames ?? 0
+                if droppedFrames > previousDroppedFrames {
+                    diagnosticsEvent(
+                        "video-frames-dropped",
+                        category: "render",
+                        fields: [
+                            "droppedTotal": droppedFrames,
+                            "droppedDelta": droppedFrames - previousDroppedFrames
+                        ]
+                    )
+                }
                 previousTime = currentTime
                 previousStatus = status
+                previousDroppedFrames = droppedFrames
             }
         }
     }
@@ -689,22 +706,46 @@ final class PlaybackCoordinator: ObservableObject {
         let bufferedEnd = item?.loadedTimeRanges.last?.timeRangeValue.end.seconds ?? 0
         let error = item?.error?.localizedDescription ?? "none"
         let waitingReason = player.reasonForWaitingToPlay?.rawValue ?? "none"
+        let accessEvent = item?.accessLog()?.events.last
+        let size = item?.presentationSize ?? .zero
+        var fields: [String: CustomStringConvertible] = [
+            "player": debugTimeControlStatus(player.timeControlStatus),
+            "rate": player.rate,
+            "item": debugItemStatus(item?.status),
+            "time": debugSeconds(current),
+            "duration": debugSeconds(duration),
+            "bufferedEnd": debugSeconds(bufferedEnd),
+            "likelyToKeepUp": item?.isPlaybackLikelyToKeepUp ?? false,
+            "bufferEmpty": item?.isPlaybackBufferEmpty ?? false,
+            "waiting": waitingReason,
+            "error": error,
+            "videoWidth": Int(size.width),
+            "videoHeight": Int(size.height),
+            "thermal": debugThermalState(ProcessInfo.processInfo.thermalState)
+        ]
+        if let accessEvent {
+            fields["droppedFrames"] = accessEvent.numberOfDroppedVideoFrames
+            fields["stalls"] = accessEvent.numberOfStalls
+            fields["mediaRequests"] = accessEvent.numberOfMediaRequests
+            fields["observedMbps"] = String(format: "%.2f", accessEvent.observedBitrate / 1_000_000)
+            fields["indicatedMbps"] = String(format: "%.2f", accessEvent.indicatedBitrate / 1_000_000)
+            fields["averageVideoMbps"] = String(format: "%.2f", accessEvent.averageVideoBitrate / 1_000_000)
+        }
         diagnosticsEvent(
             label,
             category: "player",
-            fields: [
-                "player": debugTimeControlStatus(player.timeControlStatus),
-                "rate": player.rate,
-                "item": debugItemStatus(item?.status),
-                "time": debugSeconds(current),
-                "duration": debugSeconds(duration),
-                "bufferedEnd": debugSeconds(bufferedEnd),
-                "likelyToKeepUp": item?.isPlaybackLikelyToKeepUp ?? false,
-                "bufferEmpty": item?.isPlaybackBufferEmpty ?? false,
-                "waiting": waitingReason,
-                "error": error
-            ]
+            fields: fields
         )
+    }
+
+    private func debugThermalState(_ state: ProcessInfo.ThermalState) -> String {
+        switch state {
+        case .nominal: return "nominal"
+        case .fair: return "fair"
+        case .serious: return "serious"
+        case .critical: return "critical"
+        @unknown default: return "unknown"
+        }
     }
 
     private func diagnosticsEvent(
