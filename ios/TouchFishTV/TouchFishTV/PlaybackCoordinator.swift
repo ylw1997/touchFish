@@ -103,12 +103,14 @@ private final class PlaybackEngine {
 #endif
     }
 
+    @discardableResult
     func claim(
         ownerID: String,
         source: PlaybackSource,
         controller: DouyinPlayerViewController
-    ) {
-        if self.ownerID != ownerID {
+    ) -> Bool {
+        let changedOwner = self.ownerID != ownerID
+        if changedOwner {
             let previousOwner = self.ownerID
             let previousSource = ownerSource
 
@@ -142,6 +144,7 @@ private final class PlaybackEngine {
         if controller.player !== player {
             controller.player = player
         }
+        return changedOwner
     }
 
     func isOwner(_ candidate: String) -> Bool {
@@ -209,7 +212,6 @@ final class PlaybackCoordinator: ObservableObject {
     private let source: PlaybackSource
     private let playbackEngine: PlaybackEngine
     private(set) var generation: UInt = 0
-    private var assetTask: Task<Void, Never>?
     private var loadingAsset: AVURLAsset?
     private var itemStatusObservation: NSKeyValueObservation?
     private var currentPlaybackToken: UInt64?
@@ -260,7 +262,7 @@ final class PlaybackCoordinator: ObservableObject {
         generation &+= 1
         let requestedGeneration = generation
         cancelPendingLoad()
-        playbackEngine.claim(
+        let changedOwner = playbackEngine.claim(
             ownerID: instanceID,
             source: source,
             controller: playerViewController
@@ -271,7 +273,9 @@ final class PlaybackCoordinator: ObservableObject {
         // 全应用只持有 PlaybackEngine 的一个 AVPlayer。视频和 Tab 切换都只
         // 替换 AVPlayerItem，避免多个 VideoToolbox 解码会话短时间并存。
         playerViewController.danmakuController.stop()
-        releaseCurrentItem()
+        if !changedOwner {
+            prepareCurrentItemForReplacement()
+        }
         currentPlaybackToken = playbackToken
         currentAwemeID = aweme.aweme_id
         playerViewController.danmakuController.configure(
@@ -291,6 +295,7 @@ final class PlaybackCoordinator: ObservableObject {
 
         let urls = preferredURLs(for: aweme)
         guard !urls.isEmpty else {
+            releaseCurrentItem()
             failPlayback(generation: requestedGeneration, message: "该视频没有可用的播放地址")
             return
         }
@@ -329,61 +334,57 @@ final class PlaybackCoordinator: ObservableObject {
         headers: [String: String],
         requestedGeneration: UInt
     ) {
-        assetTask = Task { [weak self] in
-            guard let self else { return }
-            guard !Task.isCancelled,
-                  requestedGeneration == generation,
-                  playbackEngine.isOwner(instanceID) else { return }
-            guard urls.indices.contains(startIndex) else {
-                assetTask = nil
-                failPlayback(generation: requestedGeneration, message: "该视频暂时无法播放，按上下键切换")
-                return
-            }
-
-            let candidateIndex = startIndex
-            let url = urls[candidateIndex]
-#if DEBUG
-            diagnosticsEvent(
-                "load-candidate",
-                category: "asset",
-                fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
-            )
-#endif
-            let asset = AVURLAsset(
-                url: url,
-                options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
-            )
-            loadingAsset = asset
-            let item = AVPlayerItem(asset: asset)
-            item.externalMetadata = metadata(for: aweme)
-            item.preferredForwardBufferDuration = 8
-            item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
-            guard !Task.isCancelled,
-                  requestedGeneration == generation,
-                  playbackEngine.isOwner(instanceID) else {
-                asset.cancelLoading()
-                return
-            }
-            player.replaceCurrentItem(with: item)
-            clearLoadingAsset(ifMatching: asset)
-            observeStatus(
-                of: item,
-                candidateIndex: candidateIndex,
-                urls: urls,
-                aweme: aweme,
-                headers: headers,
-                requestedGeneration: requestedGeneration
-            )
-            player.play()
-            assetTask = nil
-#if DEBUG
-            diagnosticsEvent(
-                "item-replaced-and-play-called",
-                category: "item",
-                fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
-            )
-#endif
+        guard requestedGeneration == generation,
+              playbackEngine.isOwner(instanceID) else { return }
+        guard urls.indices.contains(startIndex) else {
+            failPlayback(generation: requestedGeneration, message: "该视频暂时无法播放，按上下键切换")
+            return
         }
+
+        let candidateIndex = startIndex
+        let url = urls[candidateIndex]
+#if DEBUG
+        diagnosticsEvent(
+            "load-candidate",
+            category: "asset",
+            fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
+        )
+#endif
+        let asset = AVURLAsset(
+            url: url,
+            options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
+        )
+        loadingAsset = asset
+        let item = AVPlayerItem(asset: asset)
+        item.externalMetadata = metadata(for: aweme)
+        item.preferredForwardBufferDuration = 8
+        item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+        guard requestedGeneration == generation,
+              playbackEngine.isOwner(instanceID) else {
+            asset.cancelLoading()
+            return
+        }
+
+        // 创建好新 item 后一次性替换，避免 currentItem=nil 时原生进度条
+        // 短暂显示“禁止播放”图标，也避免把无 await 的工作推迟到下一轮 RunLoop。
+        player.replaceCurrentItem(with: item)
+        clearLoadingAsset(ifMatching: asset)
+        observeStatus(
+            of: item,
+            candidateIndex: candidateIndex,
+            urls: urls,
+            aweme: aweme,
+            headers: headers,
+            requestedGeneration: requestedGeneration
+        )
+        player.play()
+#if DEBUG
+        diagnosticsEvent(
+            "item-replaced-and-play-called",
+            category: "item",
+            fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
+        )
+#endif
     }
 
     private func observeStatus(
@@ -485,12 +486,10 @@ final class PlaybackCoordinator: ObservableObject {
 
     private func cancelPendingLoad() {
 #if DEBUG
-        if assetTask != nil || loadingAsset != nil {
+        if loadingAsset != nil {
             diagnosticsEvent("cancel-pending-load", category: "asset")
         }
 #endif
-        assetTask?.cancel()
-        assetTask = nil
         loadingAsset?.cancelLoading()
         loadingAsset = nil
         itemStatusObservation?.invalidate()
@@ -564,6 +563,27 @@ final class PlaybackCoordinator: ObservableObject {
 #endif
     }
 
+    /// 为同一个 Tab 内的下一条视频让出资源，但不把 currentItem 先设为 nil。
+    /// 新 AVPlayerItem 会在同一轮主线程调用中直接替换它，原生播放器因此不会
+    /// 进入“无媒体”状态。
+    private func prepareCurrentItemForReplacement() {
+        itemStatusObservation?.invalidate()
+        itemStatusObservation = nil
+        guard playbackEngine.isOwner(instanceID),
+              let item = player.currentItem else { return }
+        player.cancelPendingPrerolls()
+        player.pause()
+        item.cancelPendingSeeks()
+        item.asset.cancelLoading()
+#if DEBUG
+        diagnosticsEvent(
+            "prepared-for-atomic-replacement",
+            category: "item",
+            fields: ["itemStatus": debugItemStatus(item.status)]
+        )
+#endif
+    }
+
     private func preferredURLs(for aweme: Aweme) -> [URL] {
         let urls = aweme.video?.play_addr?.url_list ?? []
         return urls.compactMap(URL.init(string:)).sorted {
@@ -574,6 +594,9 @@ final class PlaybackCoordinator: ObservableObject {
     private func score(_ value: String) -> Int {
         guard let url = URL(string: value) else { return 0 }
         let host = url.host?.lowercased() ?? ""
+        // web-prime 地址在 tvOS AVFoundation 中会稳定返回无权限/无法打开，
+        // 放到最后，避免每次推荐视频都先触发两轮失败和禁止播放图标。
+        if host.contains("-prime.") { return 0 }
         if host.hasSuffix("douyinvod.com") { return 4 }
         if host.contains("bytecdn") || host.contains("zjcdn") { return 3 }
         if host == "www.douyin.com" || value.contains("/aweme/v1/play/") { return 1 }
