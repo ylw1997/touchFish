@@ -337,6 +337,8 @@ struct AvatarUrl: Decodable {
 
 struct Video: Decodable {
     let play_addr: VideoAddr?
+    let play_addr_h264: VideoAddr?
+    let bit_rate: [VideoBitRate]?
     let cover: AvatarUrl?
     let duration: Int?
     let width: Int?
@@ -345,6 +347,31 @@ struct Video: Decodable {
 
 struct VideoAddr: Decodable {
     let url_list: [String]?
+}
+
+struct VideoBitRate: Decodable {
+    let bit_rate: Int?
+    let is_h265: Int?
+    let play_addr: VideoAddr?
+
+    private enum CodingKeys: String, CodingKey {
+        case bit_rate
+        case is_h265
+        case play_addr
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        bit_rate = try container.decodeIfPresent(Int.self, forKey: .bit_rate)
+        play_addr = try container.decodeIfPresent(VideoAddr.self, forKey: .play_addr)
+        if let value = try? container.decode(Int.self, forKey: .is_h265) {
+            is_h265 = value
+        } else if let value = try? container.decode(Bool.self, forKey: .is_h265) {
+            is_h265 = value ? 1 : 0
+        } else {
+            is_h265 = nil
+        }
+    }
 }
 
 struct FavoritesResponse: Decodable {

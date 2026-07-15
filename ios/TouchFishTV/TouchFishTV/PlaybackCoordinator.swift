@@ -549,9 +549,21 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func preferredURLs(for aweme: Aweme) -> [URL] {
-        let urls = aweme.video?.play_addr?.url_list ?? []
-        return urls.compactMap(URL.init(string:)).filter {
-            !isClearlyAudioOnlyURL($0)
+        guard let video = aweme.video else { return [] }
+        let h264BitRates = (video.bit_rate ?? [])
+            .filter { $0.is_h265 != 1 }
+            .sorted { ($0.bit_rate ?? 0) > ($1.bit_rate ?? 0) }
+        let remainingBitRates = (video.bit_rate ?? [])
+            .filter { $0.is_h265 == 1 }
+            .sorted { ($0.bit_rate ?? 0) > ($1.bit_rate ?? 0) }
+        let values = (video.play_addr_h264?.url_list ?? [])
+            + h264BitRates.flatMap { $0.play_addr?.url_list ?? [] }
+            + (video.play_addr?.url_list ?? [])
+            + remainingBitRates.flatMap { $0.play_addr?.url_list ?? [] }
+
+        var seen = Set<String>()
+        return values.compactMap(URL.init(string:)).filter {
+            !isClearlyAudioOnlyURL($0) && seen.insert($0.absoluteString).inserted
         }.sorted {
             score($0.absoluteString) > score($1.absoluteString)
         }

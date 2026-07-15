@@ -141,7 +141,6 @@ struct FavoritesLibraryView: View {
                 // 播放器退出后不能以透明 UIViewController 的形式留在网格后方，
                 // 否则它仍可能参与 tvOS 焦点查找并锁住列表操作。
                 playbackSlot.deactivate()
-                restoreFocus()
             }
         }
     }
@@ -177,37 +176,41 @@ struct FavoritesLibraryView: View {
     }
 
     private var libraryGrid: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 36) {
-                LazyVGrid(columns: columns, alignment: .leading, spacing: 42) {
-                    ForEach(Array(store.items.enumerated()), id: \.offset) { index, aweme in
-                        FavoriteVideoCard(
-                            aweme: aweme,
-                            isFocused: focusedIndex == index
-                        ) {
-                            selectedIndex = index
-                            lastSelectedIndex = index
-                            playbackToken &+= 1
-                        }
-                        .focused($focusedIndex, equals: index)
-                        .onAppear {
-                            Task { await store.loadMoreIfNeeded(currentIndex: index) }
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 36) {
+                    LazyVGrid(columns: columns, alignment: .leading, spacing: 42) {
+                        ForEach(Array(store.items.enumerated()), id: \.offset) { index, aweme in
+                            FavoriteVideoCard(
+                                aweme: aweme,
+                                isFocused: focusedIndex == index
+                            ) {
+                                selectedIndex = index
+                                lastSelectedIndex = index
+                                playbackToken &+= 1
+                            }
+                            .id(index)
+                            .focused($focusedIndex, equals: index)
+                            .onAppear {
+                                Task { await store.loadMoreIfNeeded(currentIndex: index) }
+                            }
                         }
                     }
-                }
 
-                if store.isLoading {
-                    HStack {
-                        Spacer()
-                        ProgressView("正在加载更多")
-                            .padding(.vertical, 28)
-                        Spacer()
+                    if store.isLoading {
+                        HStack {
+                            Spacer()
+                            ProgressView("正在加载更多")
+                                .padding(.vertical, 28)
+                            Spacer()
+                        }
                     }
                 }
+                .padding(.horizontal, 72)
+                .padding(.top, 44)
+                .padding(.bottom, 70)
             }
-            .padding(.horizontal, 72)
-            .padding(.top, 44)
-            .padding(.bottom, 70)
+            .onAppear { restoreFocus(using: proxy) }
         }
     }
 
@@ -259,9 +262,14 @@ struct FavoritesLibraryView: View {
         }
     }
 
-    private func restoreFocus() {
+    private func restoreFocus(using proxy: ScrollViewProxy) {
+        guard let index = lastSelectedIndex,
+              store.items.indices.contains(index) else { return }
         DispatchQueue.main.async {
-            focusedIndex = lastSelectedIndex
+            proxy.scrollTo(index, anchor: .center)
+            DispatchQueue.main.async {
+                focusedIndex = index
+            }
         }
     }
 
