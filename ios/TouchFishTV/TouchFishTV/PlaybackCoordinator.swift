@@ -88,6 +88,9 @@ private final class PlaybackEngine {
     private weak var activeController: DouyinPlayerViewController?
 
     private init() {
+        // 短视频 Feed 优先快速起播。默认 true 会为了“尽量不发生停顿”主动
+        // 等待并维持很大的前向缓存，长视频只播放几秒也可能缓存两分钟以上。
+        player.automaticallyWaitsToMinimizeStalling = false
 #if DEBUG
         var fields: [String: CustomStringConvertible] = [
             "player": id
@@ -357,7 +360,9 @@ final class PlaybackCoordinator: ObservableObject {
         loadingAsset = asset
         let item = AVPlayerItem(asset: asset)
         item.externalMetadata = metadata(for: aweme)
-        item.preferredForwardBufferDuration = 8
+        // Feed 只需要少量前向缓存。旧值 8 秒在渐进式 MP4 上会被系统放大到
+        // 一百多秒，当前 item 单独就会长期占用约 50 MB 解码/网络缓冲。
+        item.preferredForwardBufferDuration = 2
         item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
         guard requestedGeneration == generation,
               playbackEngine.isOwner(instanceID) else {
