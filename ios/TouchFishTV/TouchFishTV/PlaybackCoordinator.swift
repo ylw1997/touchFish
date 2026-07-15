@@ -228,80 +228,50 @@ final class PlaybackCoordinator: ObservableObject {
     ) {
         assetTask = Task { [weak self] in
             guard let self else { return }
-            for candidateIndex in startIndex..<urls.count {
-                let url = urls[candidateIndex]
-                guard !Task.isCancelled, requestedGeneration == generation else { return }
-#if DEBUG
-                diagnosticsEvent(
-                    "load-candidate",
-                    category: "asset",
-                    fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
-                )
-#endif
-                let asset = AVURLAsset(
-                    url: url,
-                    options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
-                )
-                loadingAsset = asset
-                do {
-                    let isPlayable = try await asset.load(.isPlayable)
-                    clearLoadingAsset(ifMatching: asset)
-                    guard isPlayable else {
-#if DEBUG
-                        diagnosticsEvent(
-                            "candidate-not-playable",
-                            category: "asset",
-                            fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
-                        )
-#endif
-                        continue
-                    }
-                    guard !Task.isCancelled, requestedGeneration == generation else { return }
-
-                    let item = AVPlayerItem(asset: asset)
-                    item.externalMetadata = metadata(for: aweme)
-                    item.preferredForwardBufferDuration = 8
-                    item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
-                    player.replaceCurrentItem(with: item)
-                    observeStatus(
-                        of: item,
-                        candidateIndex: candidateIndex,
-                        urls: urls,
-                        aweme: aweme,
-                        headers: headers,
-                        requestedGeneration: requestedGeneration
-                    )
-                    player.play()
-                    assetTask = nil
-#if DEBUG
-                    diagnosticsEvent(
-                        "item-replaced-and-play-called",
-                        category: "item",
-                        fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
-                    )
-#endif
-                    return
-                } catch {
-                    clearLoadingAsset(ifMatching: asset)
-#if DEBUG
-                    diagnosticsEvent(
-                        "candidate-load-failed",
-                        category: "asset",
-                        fields: [
-                            "candidate": candidateIndex,
-                            "host": url.host ?? "unknown",
-                            "errorType": String(describing: type(of: error)),
-                            "error": error.localizedDescription
-                        ]
-                    )
-#endif
-                    continue
-                }
+            guard !Task.isCancelled, requestedGeneration == generation else { return }
+            guard urls.indices.contains(startIndex) else {
+                assetTask = nil
+                failPlayback(generation: requestedGeneration, message: "该视频暂时无法播放，按上下键切换")
+                return
             }
 
-            guard requestedGeneration == generation else { return }
+            let candidateIndex = startIndex
+            let url = urls[candidateIndex]
+#if DEBUG
+            diagnosticsEvent(
+                "load-candidate",
+                category: "asset",
+                fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
+            )
+#endif
+            let asset = AVURLAsset(
+                url: url,
+                options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
+            )
+            loadingAsset = asset
+            let item = AVPlayerItem(asset: asset)
+            item.externalMetadata = metadata(for: aweme)
+            item.preferredForwardBufferDuration = 8
+            item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+            player.replaceCurrentItem(with: item)
+            clearLoadingAsset(ifMatching: asset)
+            observeStatus(
+                of: item,
+                candidateIndex: candidateIndex,
+                urls: urls,
+                aweme: aweme,
+                headers: headers,
+                requestedGeneration: requestedGeneration
+            )
+            player.play()
             assetTask = nil
-            failPlayback(generation: requestedGeneration, message: "该视频暂时无法播放，按上下键切换")
+#if DEBUG
+            diagnosticsEvent(
+                "item-replaced-and-play-called",
+                category: "item",
+                fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
+            )
+#endif
         }
     }
 
@@ -481,9 +451,12 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func score(_ value: String) -> Int {
-        if value.contains("/aweme/v1/play/") { return 3 }
-        if value.contains("douyinvod.com") { return 2 }
-        return value.contains("douyin.com") ? 1 : 0
+        guard let url = URL(string: value) else { return 0 }
+        let host = url.host?.lowercased() ?? ""
+        if host.hasSuffix("douyinvod.com") { return 4 }
+        if host.contains("bytecdn") || host.contains("zjcdn") { return 3 }
+        if host == "www.douyin.com" || value.contains("/aweme/v1/play/") { return 1 }
+        return 2
     }
 
     private func metadata(for aweme: Aweme) -> [AVMetadataItem] {
