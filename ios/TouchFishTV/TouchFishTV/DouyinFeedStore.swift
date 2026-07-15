@@ -133,7 +133,7 @@ final class DouyinFeedStore: ObservableObject {
         let attempts = isRefresh ? 1 : maximumDuplicatePageRetries
 
         for _ in 0..<attempts {
-            let result = try await api.getFollowing(maxCursor: requestCursor)
+            let result = try await api.getFollowing(cursor: requestCursor)
             nextCursor = result.1
             pageHasMore = result.2
 

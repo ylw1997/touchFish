@@ -213,12 +213,17 @@ final class DouyinAPI: ObservableObject {
     }
     
     /// 获取关注视频流
-    func getFollowing(maxCursor: Int = 0) async throws -> ([Aweme], Int, Bool) {
-        let url = "https://www.douyin.com/aweme/v1/web/follow/feed/?device_platform=webapp&aid=6383&channel=channel_pc_web&count=10&min_cursor=0&max_cursor=\(maxCursor)&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
+    func getFollowing(cursor: Int = 0) async throws -> ([Aweme], Int, Bool) {
+        // 关注流使用时间游标，不是收藏接口的 max_cursor。首屏网页会传当前
+        // 毫秒时间，后续严格使用响应中的 cursor 继续向前翻页。
+        let requestCursor = cursor > 0
+            ? cursor
+            : Int(Date().timeIntervalSince1970 * 1_000)
+        let url = "https://www.douyin.com/aweme/v1/web/follow/feed/?device_platform=webapp&aid=6383&channel=channel_pc_web&cursor=\(requestCursor)&level=1&count=20&pull_type=2&aweme_ids=&room_ids=&pc_client_type=1&pc_libra_divert=Windows&support_h265=1&support_dash=1&version_code=170400&version_name=17.4.0&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
         let res: FollowingResponse = try await request(url: url, extraHeaders: ["Referer": "https://www.douyin.com/follow"])
         try validateStatus(res.status_code, message: res.status_msg)
         let awemes = (res.data ?? []).compactMap { $0.aweme }
-        let nextCursor = res.cursor ?? maxCursor
+        let nextCursor = res.cursor ?? requestCursor
         let hasMore = res.has_more ?? (res.has_more_int == 1)
         return (awemes, nextCursor, hasMore)
     }
