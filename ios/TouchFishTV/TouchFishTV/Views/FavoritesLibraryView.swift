@@ -394,7 +394,7 @@ private struct FavoriteArtwork: View {
         Color.clear
             .aspectRatio(3.0 / 4.0, contentMode: .fit)
             .overlay {
-                FavoriteRemoteImage(url: artworkURL, maxPixelSize: 720) { failed in
+                FavoriteRemoteImage(url: artworkURL, maxPixelSize: 540) { failed in
                     if failed {
                         placeholder(systemImage: "photo.badge.exclamationmark")
                     } else {
@@ -474,7 +474,9 @@ private enum FavoriteImagePipeline {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.urlCache = nil
-        configuration.httpMaximumConnectionsPerHost = 4
+        // tvOS 同时解码多张封面会与 VideoToolbox 抢占 CPU/内存带宽。
+        // 两路下载足以填充 LazyVGrid，也能保证离开列表时快速取消。
+        configuration.httpMaximumConnectionsPerHost = 2
         configuration.timeoutIntervalForRequest = 15
         return URLSession(configuration: configuration)
     }()
@@ -489,9 +491,12 @@ private enum FavoriteImagePipeline {
                !(200..<300).contains(response.statusCode) {
                 return nil
             }
-            return await Task.detached(priority: .utility) {
-                downsample(data: data, maxPixelSize: maxPixelSize)
-            }.value
+            // 不使用 Task.detached：detached 任务不会随 SwiftUI `.task` 取消，
+            // 从喜欢列表离开后仍会继续 ImageIO 解码并影响视频渲染。
+            try Task.checkCancellation()
+            let image = downsample(data: data, maxPixelSize: maxPixelSize)
+            try Task.checkCancellation()
+            return image
         } catch {
             return nil
         }
