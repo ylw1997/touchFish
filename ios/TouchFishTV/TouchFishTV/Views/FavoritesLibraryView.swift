@@ -45,7 +45,10 @@ final class FavoritesLibraryStore: ObservableObject {
         do {
             let result = try await api.getFavorites(maxCursor: reset ? 0 : cursor)
             guard requestGeneration == generation else { return }
-            if reset { items = result.0 } else { items.append(contentsOf: result.0) }
+            // 喜欢接口会混入图文/相册条目，其 play_addr 实际指向背景音乐。
+            // 这类条目没有视频轨道，不能交给 AVPlayerViewController。
+            let videoItems = result.0.filter { Self.hasVideoPlaybackURL($0) }
+            if reset { items = videoItems } else { items.append(contentsOf: videoItems) }
             cursor = result.1
             hasMore = result.2
             if items.isEmpty { errorMessage = "还没有喜欢的视频" }
@@ -55,6 +58,16 @@ final class FavoritesLibraryStore: ObservableObject {
             guard requestGeneration == generation else { return }
             errorMessage = error.localizedDescription
         }
+    }
+
+    private static func hasVideoPlaybackURL(_ aweme: Aweme) -> Bool {
+        let audioExtensions = Set(["aac", "m4a", "mp3", "wav"])
+        return aweme.video?.play_addr?.url_list?.contains { value in
+            guard let url = URL(string: value) else { return false }
+            let host = url.host?.lowercased() ?? ""
+            return !host.contains("music")
+                && !audioExtensions.contains(url.pathExtension.lowercased())
+        } ?? false
     }
 }
 
@@ -82,17 +95,10 @@ struct FavoritesLibraryView: View {
         ZStack {
             libraryBackground
 
-            // 喜欢页在网格和播放之间切换时也保留同一个原生控制器。没有
-            // currentItem 时它不会解码，只是保持 tvOS 的渲染层不被拆除。
-            retainedPlayerContent
-
             if !isActive {
                 Color.black.ignoresSafeArea()
             } else if selectedIndex != nil {
-                if playbackSlot.session == nil {
-                    ProgressView("正在载入视频")
-                        .controlSize(.large)
-                }
+                playerContent
             } else if store.items.isEmpty {
                 emptyState
             } else {
@@ -110,7 +116,7 @@ struct FavoritesLibraryView: View {
         .onChange(of: isActive) { _, active in
             if !active {
                 selectedIndex = nil
-                playbackSlot.suspend()
+                playbackSlot.deactivate()
             }
         }
         .onChange(of: playbackToken) { _, _ in
@@ -132,8 +138,9 @@ struct FavoritesLibraryView: View {
             )
 #endif
             if previousIndex != nil, selectedIndex == nil {
-                // 返回喜欢列表只释放当前视频，不销毁该 Tab 的播放器与控制器。
-                playbackSlot.suspend()
+                // 播放器退出后不能以透明 UIViewController 的形式留在网格后方，
+                // 否则它仍可能参与 tvOS 焦点查找并锁住列表操作。
+                playbackSlot.deactivate()
                 restoreFocus()
             }
         }
@@ -149,8 +156,8 @@ struct FavoritesLibraryView: View {
     }
 
     @ViewBuilder
-    private var retainedPlayerContent: some View {
-        if let index = selectedIndex ?? lastSelectedIndex,
+    private var playerContent: some View {
+        if let index = selectedIndex,
            store.items.indices.contains(index),
            let playbackSession = playbackSlot.session {
             VideoPlayerView(
@@ -162,9 +169,10 @@ struct FavoritesLibraryView: View {
                 onNext: playNext
             )
             .ignoresSafeArea()
-            .opacity(isActive && selectedIndex != nil ? 1 : 0)
-            .allowsHitTesting(isActive && selectedIndex != nil)
             .onExitCommand { selectedIndex = nil }
+        } else {
+            ProgressView("正在载入视频")
+                .controlSize(.large)
         }
     }
 

@@ -347,6 +347,30 @@ final class PlaybackCoordinator: ObservableObject {
                 case .unknown:
                     break
                 case .readyToPlay:
+                    let size = item.presentationSize
+                    guard size.width > 0, size.height > 0 else {
+#if DEBUG
+                        self.diagnosticsEvent(
+                            "item-has-no-video-track",
+                            category: "item",
+                            fields: [
+                                "candidate": candidateIndex,
+                                "host": urls[candidateIndex].host ?? "unknown"
+                            ]
+                        )
+                        self.diagnosticsTask?.cancel()
+                        self.diagnosticsTask = nil
+#endif
+                        self.releaseCurrentItem()
+                        self.loadCandidates(
+                            urls,
+                            startingAt: candidateIndex + 1,
+                            aweme: aweme,
+                            headers: headers,
+                            requestedGeneration: requestedGeneration
+                        )
+                        return
+                    }
 #if DEBUG
                     self.diagnosticsEvent(
                         "item-ready",
@@ -526,9 +550,18 @@ final class PlaybackCoordinator: ObservableObject {
 
     private func preferredURLs(for aweme: Aweme) -> [URL] {
         let urls = aweme.video?.play_addr?.url_list ?? []
-        return urls.compactMap(URL.init(string:)).sorted {
+        return urls.compactMap(URL.init(string:)).filter {
+            !isClearlyAudioOnlyURL($0)
+        }.sorted {
             score($0.absoluteString) > score($1.absoluteString)
         }
+    }
+
+    private func isClearlyAudioOnlyURL(_ url: URL) -> Bool {
+        let host = url.host?.lowercased() ?? ""
+        let audioExtensions = Set(["aac", "m4a", "mp3", "wav"])
+        return host.contains("music")
+            || audioExtensions.contains(url.pathExtension.lowercased())
     }
 
     private func score(_ value: String) -> Int {
