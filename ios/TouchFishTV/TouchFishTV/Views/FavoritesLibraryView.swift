@@ -102,7 +102,7 @@ struct FavoritesLibraryView: View {
         .onChange(of: isActive) { _, active in
             if !active {
                 selectedIndex = nil
-                playbackSlot.deactivate()
+                playbackSlot.suspend()
             }
         }
         .onChange(of: playbackToken) { _, _ in
@@ -124,8 +124,7 @@ struct FavoritesLibraryView: View {
             )
 #endif
             if previousIndex != nil, selectedIndex == nil {
-                // 返回喜欢列表只释放当前视频，不销毁 AVPlayer。这样再次进入
-                // 播放时复用同一个解码会话；真正切换 Tab 时才完整 deactivate。
+                // 返回喜欢列表只释放当前视频，不销毁该 Tab 的播放器与控制器。
                 playbackSlot.suspend()
                 restoreFocus()
             }

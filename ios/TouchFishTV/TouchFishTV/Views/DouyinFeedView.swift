@@ -62,10 +62,10 @@ struct DouyinFeedView: View {
             startPlaybackIfPossible()
         }
         .onChange(of: isActive) { _, active in
-            if active {
-                startPlaybackIfPossible()
-            } else {
-                playbackSlot.deactivate()
+            // 激活由上面的 task(id:) 统一处理，避免 Tab 切换时 task 与
+            // onChange 同时发起两次 play。这里只负责同步停止离开的 Tab。
+            if !active {
+                playbackSlot.suspend()
             }
         }
     }
@@ -99,7 +99,7 @@ struct DouyinFeedView: View {
     private func startPlaybackIfPossible() {
         guard isActive else { return }
         guard let aweme = store.activeItem else {
-            playbackSlot.deactivate()
+            playbackSlot.suspend()
             return
         }
         playbackSlot.activate().play(
