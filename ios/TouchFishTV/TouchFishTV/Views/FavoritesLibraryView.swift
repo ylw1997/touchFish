@@ -1,6 +1,7 @@
 import Foundation
 import ImageIO
 import SwiftUI
+import UIKit
 
 @MainActor
 final class FavoritesLibraryStore: ObservableObject {
@@ -45,9 +46,7 @@ final class FavoritesLibraryStore: ObservableObject {
         do {
             let result = try await api.getFavorites(maxCursor: reset ? 0 : cursor)
             guard requestGeneration == generation else { return }
-            // 喜欢接口会混入图文/相册条目，其 play_addr 实际指向背景音乐。
-            // 这类条目没有视频轨道，不能交给 AVPlayerViewController。
-            let videoItems = result.0.filter { Self.hasVideoPlaybackURL($0) }
+            let videoItems = result.0.filter(Self.hasVideoPlaybackURL)
             if reset { items = videoItems } else { items.append(contentsOf: videoItems) }
             cursor = result.1
             hasMore = result.2
@@ -75,34 +74,37 @@ final class FavoritesLibraryStore: ObservableObject {
 struct FavoritesLibraryView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store = FavoritesLibraryStore()
-    @StateObject private var playbackSlot = PlaybackSessionSlot(source: .favorites)
-    private let isActive: Bool
     @State private var selectedIndex: Int?
-    @State private var playbackToken: UInt64 = 0
-    @State private var lastSelectedIndex: Int?
-    @FocusState private var focusedIndex: Int?
-
-    private let columns = Array(
-        repeating: GridItem(.flexible(), spacing: 34, alignment: .top),
-        count: 4
-    )
+    private let isActive: Bool
 
     init(isActive: Bool) {
         self.isActive = isActive
     }
 
     var body: some View {
-        ZStack {
-            libraryBackground
-
-            if !isActive {
+        NavigationStack {
+            ZStack {
                 Color.black.ignoresSafeArea()
-            } else if selectedIndex != nil {
-                playerContent
-            } else if store.items.isEmpty {
-                emptyState
-            } else {
-                libraryGrid
+
+                if !isActive {
+                    Color.black.ignoresSafeArea()
+                } else if store.items.isEmpty {
+                    emptyState
+                } else {
+                    FavoritesCollectionView(
+                        items: store.items,
+                        onSelect: { selectedIndex = $0 },
+                        onNearEnd: { index in
+                            Task { await store.loadMoreIfNeeded(currentIndex: index) }
+                        }
+                    )
+                    .ignoresSafeArea(edges: .bottom)
+                }
+            }
+            .navigationDestination(isPresented: playbackPresented) {
+                if let selectedIndex {
+                    FavoritePlaybackPage(store: store, initialIndex: selectedIndex)
+                }
             }
         }
         .task(id: isActive) {
@@ -114,104 +116,17 @@ struct FavoritesLibraryView: View {
             Task { await store.refresh() }
         }
         .onChange(of: isActive) { _, active in
-            if !active {
-                selectedIndex = nil
-                playbackSlot.deactivate()
-            }
-        }
-        .onChange(of: playbackToken) { _, _ in
-            startPlaybackIfPossible()
-        }
-        .onChange(of: selectedIndex) { previousIndex, selectedIndex in
-#if DEBUG
-            var fields: [String: CustomStringConvertible] = [
-                "items": store.items.count,
-                "mode": selectedIndex == nil ? "grid" : "player"
-            ]
-            if let memory = PlaybackDiagnostics.shared.residentMemoryMegabytes() {
-                fields["memoryMB"] = String(format: "%.1f", memory)
-            }
-            PlaybackDiagnostics.shared.event(
-                selectedIndex == nil ? "show-grid" : "show-player",
-                category: "favorites-ui",
-                fields: fields
-            )
-#endif
-            if previousIndex != nil, selectedIndex == nil {
-                // 播放器退出后不能以透明 UIViewController 的形式留在网格后方，
-                // 否则它仍可能参与 tvOS 焦点查找并锁住列表操作。
-                playbackSlot.deactivate()
-            }
+            if !active { selectedIndex = nil }
         }
     }
 
-    private var libraryBackground: some View {
-        LinearGradient(
-            colors: [Color.black, Color(red: 0.055, green: 0.06, blue: 0.075)],
-            startPoint: .top,
-            endPoint: .bottom
+    private var playbackPresented: Binding<Bool> {
+        Binding(
+            get: { selectedIndex != nil },
+            set: { presented in
+                if !presented { selectedIndex = nil }
+            }
         )
-        .ignoresSafeArea()
-    }
-
-    @ViewBuilder
-    private var playerContent: some View {
-        if let index = selectedIndex,
-           store.items.indices.contains(index),
-           let playbackSession = playbackSlot.session {
-            VideoPlayerView(
-                aweme: store.items[index],
-                cookie: api.cookie,
-                playbackToken: playbackToken,
-                coordinator: playbackSession,
-                onPrevious: playPrevious,
-                onNext: playNext
-            )
-            .ignoresSafeArea()
-            .onExitCommand { selectedIndex = nil }
-        } else {
-            ProgressView("正在载入视频")
-                .controlSize(.large)
-        }
-    }
-
-    private var libraryGrid: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 36) {
-                    LazyVGrid(columns: columns, alignment: .leading, spacing: 42) {
-                        ForEach(Array(store.items.enumerated()), id: \.offset) { index, aweme in
-                            FavoriteVideoCard(
-                                aweme: aweme,
-                                isFocused: focusedIndex == index
-                            ) {
-                                selectedIndex = index
-                                lastSelectedIndex = index
-                                playbackToken &+= 1
-                            }
-                            .id(index)
-                            .focused($focusedIndex, equals: index)
-                            .onAppear {
-                                Task { await store.loadMoreIfNeeded(currentIndex: index) }
-                            }
-                        }
-                    }
-
-                    if store.isLoading {
-                        HStack {
-                            Spacer()
-                            ProgressView("正在加载更多")
-                                .padding(.vertical, 28)
-                            Spacer()
-                        }
-                    }
-                }
-                .padding(.horizontal, 72)
-                .padding(.top, 44)
-                .padding(.bottom, 70)
-            }
-            .onAppear { restoreFocus(using: proxy) }
-        }
     }
 
     private var emptyState: some View {
@@ -230,276 +145,398 @@ struct FavoritesLibraryView: View {
             }
         }
     }
+}
 
-    private func playPrevious() {
-        guard let index = selectedIndex, index > 0 else { return }
-        selectedIndex = index - 1
-        lastSelectedIndex = index - 1
-        playbackToken &+= 1
+/// 独立播放页。列表控制器保留在 NavigationStack 下层，系统会在返回时恢复
+/// collection view 的滚动位置与焦点。
+@MainActor
+private struct FavoritePlaybackPage: View {
+    @EnvironmentObject private var api: DouyinAPI
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var store: FavoritesLibraryStore
+    @StateObject private var playbackSlot = PlaybackSessionSlot(source: .favorites)
+    @State private var currentIndex: Int
+    @State private var playbackToken: UInt64 = 1
+
+    init(store: FavoritesLibraryStore, initialIndex: Int) {
+        self.store = store
+        _currentIndex = State(initialValue: initialIndex)
     }
 
-    private func playNext() {
-        guard let index = selectedIndex else { return }
-        if index + 1 < store.items.count {
-            selectedIndex = index + 1
-            lastSelectedIndex = index + 1
-            playbackToken &+= 1
-            Task { await store.loadMoreIfNeeded(currentIndex: index + 1) }
-        } else {
-            let expectedIndex = index
-            let expectedToken = playbackToken
-            Task {
-                let oldCount = store.items.count
-                await store.loadNextPage()
-                guard selectedIndex == expectedIndex,
-                      playbackToken == expectedToken else { return }
-                if store.items.count > oldCount {
-                    selectedIndex = oldCount
-                    lastSelectedIndex = oldCount
-                    playbackToken &+= 1
-                }
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            if store.items.indices.contains(currentIndex),
+               let session = playbackSlot.session {
+                VideoPlayerView(
+                    aweme: store.items[currentIndex],
+                    cookie: api.cookie,
+                    playbackToken: playbackToken,
+                    coordinator: session,
+                    onPrevious: playPrevious,
+                    onNext: playNext
+                )
+                .ignoresSafeArea()
+            } else {
+                ProgressView("正在载入视频").controlSize(.large)
             }
         }
+        .task { startPlayback() }
+        .onChange(of: currentIndex) { _, _ in startPlayback() }
+        .onExitCommand { dismiss() }
+        .onDisappear { playbackSlot.deactivate() }
     }
 
-    private func restoreFocus(using proxy: ScrollViewProxy) {
-        guard let index = lastSelectedIndex,
-              store.items.indices.contains(index) else { return }
-        DispatchQueue.main.async {
-            proxy.scrollTo(index, anchor: .center)
-            DispatchQueue.main.async {
-                focusedIndex = index
-            }
-        }
-    }
-
-    private func startPlaybackIfPossible() {
-        guard isActive,
-              let index = selectedIndex,
-              store.items.indices.contains(index) else { return }
+    private func startPlayback() {
+        guard store.items.indices.contains(currentIndex) else { return }
         playbackSlot.activate().play(
-            store.items[index],
+            store.items[currentIndex],
             cookie: api.cookie,
             playbackToken: playbackToken
         )
     }
-}
 
-private struct FavoriteVideoCard: View {
-    let aweme: Aweme
-    let isFocused: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 13) {
-                FavoriteArtwork(aweme: aweme)
-
-                Text(aweme.desc?.isEmpty == false ? aweme.desc! : "无标题")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .frame(minHeight: 46, alignment: .topLeading)
-
-                HStack(spacing: 10) {
-                    AuthorAvatar(author: aweme.author)
-
-                    Text(aweme.author?.nickname?.isEmpty == false ? aweme.author!.nickname! : "未知作者")
-                        .font(.callout.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-
-                    Spacer(minLength: 8)
-
-                    Label(
-                        formattedCount(aweme.statistics?.digg_count ?? 0),
-                        systemImage: "heart"
-                    )
-                    .font(.callout.weight(.medium))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .layoutPriority(1)
-                }
-                .foregroundStyle(.secondary)
-            }
-            .contentShape(Rectangle())
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-            .scaleEffect(isFocused ? 1.03 : 1)
-            .shadow(
-                color: .black.opacity(isFocused ? 0.45 : 0),
-                radius: isFocused ? 18 : 0,
-                y: isFocused ? 10 : 0
-            )
-            .animation(.easeOut(duration: 0.16), value: isFocused)
-        }
-        .buttonStyle(FavoriteButtonStyle())
-        .focusEffectDisabled()
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .zIndex(isFocused ? 1 : 0)
+    private func playPrevious() {
+        guard currentIndex > 0 else { return }
+        playbackToken &+= 1
+        currentIndex -= 1
     }
 
-    private func formattedCount(_ count: Int) -> String {
-        if count >= 100_000_000 {
-            return formattedUnit(Double(count) / 100_000_000, suffix: "亿")
+    private func playNext() {
+        if currentIndex + 1 < store.items.count {
+            playbackToken &+= 1
+            currentIndex += 1
+            Task { await store.loadMoreIfNeeded(currentIndex: currentIndex) }
+            return
         }
-        if count >= 10_000 {
-            return formattedUnit(Double(count) / 10_000, suffix: "万")
+
+        let expectedIndex = currentIndex
+        Task {
+            let oldCount = store.items.count
+            await store.loadNextPage()
+            guard currentIndex == expectedIndex, store.items.count > oldCount else { return }
+            playbackToken &+= 1
+            currentIndex = oldCount
         }
+    }
+}
+
+@MainActor
+private struct FavoritesCollectionView: UIViewControllerRepresentable {
+    let items: [Aweme]
+    let onSelect: (Int) -> Void
+    let onNearEnd: (Int) -> Void
+
+    func makeUIViewController(context: Context) -> FavoritesCollectionViewController {
+        let controller = FavoritesCollectionViewController()
+        controller.onSelect = onSelect
+        controller.onNearEnd = onNearEnd
+        controller.update(items: items)
+        return controller
+    }
+
+    func updateUIViewController(
+        _ controller: FavoritesCollectionViewController,
+        context: Context
+    ) {
+        controller.onSelect = onSelect
+        controller.onNearEnd = onNearEnd
+        controller.update(items: items)
+    }
+}
+
+private final class FavoritesCollectionViewController: UICollectionViewController {
+    var onSelect: ((Int) -> Void)?
+    var onNearEnd: ((Int) -> Void)?
+    private var items: [Aweme] = []
+
+    init() {
+        super.init(collectionViewLayout: Self.makeLayout())
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        collectionView.backgroundColor = .black
+        collectionView.remembersLastFocusedIndexPath = true
+        collectionView.register(
+            FavoriteCollectionCell.self,
+            forCellWithReuseIdentifier: FavoriteCollectionCell.reuseIdentifier
+        )
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // 播放页入栈或切换 Tab 时，立即停止列表的所有图片网络/解码工作。
+        collectionView.visibleCells
+            .compactMap { $0 as? FavoriteCollectionCell }
+            .forEach { $0.cancelImageLoading() }
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        let visible = collectionView.indexPathsForVisibleItems
+        if !visible.isEmpty {
+            collectionView.reloadItems(at: visible)
+        }
+    }
+
+    func update(items: [Aweme]) {
+        guard self.items.map(\.aweme_id) != items.map(\.aweme_id) else { return }
+        self.items = items
+        guard isViewLoaded else { return }
+        collectionView.reloadData()
+    }
+
+    override func numberOfSections(in collectionView: UICollectionView) -> Int { 1 }
+
+    override func collectionView(
+        _ collectionView: UICollectionView,
+        numberOfItemsInSection section: Int
+    ) -> Int {
+        items.count
+    }
+
+    override func collectionView(
+        _ collectionView: UICollectionView,
+        cellForItemAt indexPath: IndexPath
+    ) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(
+            withReuseIdentifier: FavoriteCollectionCell.reuseIdentifier,
+            for: indexPath
+        ) as? FavoriteCollectionCell else {
+            return UICollectionViewCell()
+        }
+        cell.configure(with: items[indexPath.item])
+        return cell
+    }
+
+    override func collectionView(
+        _ collectionView: UICollectionView,
+        didSelectItemAt indexPath: IndexPath
+    ) {
+        onSelect?(indexPath.item)
+    }
+
+    override func collectionView(
+        _ collectionView: UICollectionView,
+        willDisplay cell: UICollectionViewCell,
+        forItemAt indexPath: IndexPath
+    ) {
+        onNearEnd?(indexPath.item)
+    }
+
+    private static func makeLayout() -> UICollectionViewLayout {
+        let item = NSCollectionLayoutItem(
+            layoutSize: NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(0.25),
+                heightDimension: .fractionalHeight(1)
+            )
+        )
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1),
+                heightDimension: .absolute(650)
+            ),
+            subitems: [item]
+        )
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 36
+        section.contentInsets = NSDirectionalEdgeInsets(top: 54, leading: 58, bottom: 80, trailing: 58)
+        return UICollectionViewCompositionalLayout(section: section)
+    }
+}
+
+private final class FavoriteCollectionCell: UICollectionViewCell {
+    static let reuseIdentifier = "FavoriteCollectionCell"
+
+    private let artworkView = UIImageView()
+    private let titleLabel = UILabel()
+    private let avatarView = UIImageView()
+    private let authorLabel = UILabel()
+    private let heartView = UIImageView(image: UIImage(systemName: "heart"))
+    private let countLabel = UILabel()
+    private var artworkTask: URLSessionDataTask?
+    private var avatarTask: URLSessionDataTask?
+    private var representedID: String?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configureViews()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        cancelImageLoading()
+        representedID = nil
+        artworkView.image = nil
+        avatarView.image = nil
+        titleLabel.text = nil
+        authorLabel.text = nil
+        countLabel.text = nil
+    }
+
+    func configure(with aweme: Aweme) {
+        cancelImageLoading()
+        representedID = aweme.aweme_id
+        titleLabel.text = aweme.desc?.isEmpty == false ? aweme.desc : "无标题"
+        authorLabel.text = aweme.author?.nickname?.isEmpty == false ? aweme.author?.nickname : "未知作者"
+        countLabel.text = Self.formattedCount(aweme.statistics?.digg_count ?? 0)
+
+        let artworkURL = aweme.video?.cover?.url_list?.compactMap(URL.init(string:)).first
+        artworkTask = FavoriteNativeImageLoader.load(url: artworkURL, maxPixelSize: 540) { [weak self] image in
+            guard let self, representedID == aweme.aweme_id else { return }
+            artworkView.image = image
+        }
+        let avatarURL = aweme.author?.avatar_thumb?.url_list?.compactMap(URL.init(string:)).first
+        avatarTask = FavoriteNativeImageLoader.load(url: avatarURL, maxPixelSize: 96) { [weak self] image in
+            guard let self, representedID == aweme.aweme_id else { return }
+            avatarView.image = image
+        }
+    }
+
+    func cancelImageLoading() {
+        artworkTask?.cancel()
+        avatarTask?.cancel()
+        artworkTask = nil
+        avatarTask = nil
+    }
+
+    override func didUpdateFocus(
+        in context: UIFocusUpdateContext,
+        with coordinator: UIFocusAnimationCoordinator
+    ) {
+        super.didUpdateFocus(in: context, with: coordinator)
+        coordinator.addCoordinatedAnimations({
+            self.transform = self.isFocused
+                ? CGAffineTransform(scaleX: 1.055, y: 1.055)
+                : .identity
+            self.layer.zPosition = self.isFocused ? 10 : 0
+        }, completion: nil)
+    }
+
+    private func configureViews() {
+        clipsToBounds = false
+        contentView.clipsToBounds = false
+
+        artworkView.translatesAutoresizingMaskIntoConstraints = false
+        artworkView.backgroundColor = UIColor.white.withAlphaComponent(0.06)
+        artworkView.contentMode = .scaleAspectFill
+        artworkView.clipsToBounds = true
+        artworkView.layer.cornerRadius = 18
+
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.font = .preferredFont(forTextStyle: .headline)
+        titleLabel.textColor = .white
+        titleLabel.numberOfLines = 2
+
+        avatarView.translatesAutoresizingMaskIntoConstraints = false
+        avatarView.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        avatarView.contentMode = .scaleAspectFill
+        avatarView.clipsToBounds = true
+        avatarView.layer.cornerRadius = 17
+
+        authorLabel.font = .preferredFont(forTextStyle: .subheadline)
+        authorLabel.textColor = .secondaryLabel
+        authorLabel.numberOfLines = 1
+
+        heartView.tintColor = .secondaryLabel
+        heartView.contentMode = .scaleAspectFit
+
+        countLabel.font = .preferredFont(forTextStyle: .subheadline)
+        countLabel.textColor = .secondaryLabel
+        countLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+        let footer = UIStackView(arrangedSubviews: [avatarView, authorLabel, UIView(), heartView, countLabel])
+        footer.translatesAutoresizingMaskIntoConstraints = false
+        footer.axis = .horizontal
+        footer.alignment = .center
+        footer.spacing = 10
+
+        contentView.addSubview(artworkView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(footer)
+
+        NSLayoutConstraint.activate([
+            artworkView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            artworkView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            artworkView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            artworkView.heightAnchor.constraint(equalTo: artworkView.widthAnchor, multiplier: 4.0 / 3.0),
+
+            titleLabel.topAnchor.constraint(equalTo: artworkView.bottomAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            footer.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
+            footer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            footer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            footer.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
+
+            avatarView.widthAnchor.constraint(equalToConstant: 34),
+            avatarView.heightAnchor.constraint(equalToConstant: 34),
+            heartView.widthAnchor.constraint(equalToConstant: 28),
+            heartView.heightAnchor.constraint(equalToConstant: 28)
+        ])
+    }
+
+    private static func formattedCount(_ count: Int) -> String {
+        if count >= 100_000_000 { return formattedUnit(Double(count) / 100_000_000, suffix: "亿") }
+        if count >= 10_000 { return formattedUnit(Double(count) / 10_000, suffix: "万") }
         return String(count)
     }
 
-    private func formattedUnit(_ value: Double, suffix: String) -> String {
+    private static func formattedUnit(_ value: Double, suffix: String) -> String {
         value.rounded() == value
             ? "\(Int(value))\(suffix)"
             : String(format: "%.1f", value) + suffix
     }
 }
 
-private struct FavoriteButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .opacity(configuration.isPressed ? 0.82 : 1)
-    }
-}
-
-private struct AuthorAvatar: View {
-    let author: Author?
-
-    private var avatarURL: URL? {
-        author?.avatar_thumb?.url_list?.compactMap(URL.init(string:)).first
-    }
-
-    var body: some View {
-        FavoriteRemoteImage(url: avatarURL, maxPixelSize: 96) { _ in
-            ZStack {
-                Color.white.opacity(0.1)
-                Image(systemName: "person.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(width: 34, height: 34)
-        .clipShape(Circle())
-    }
-}
-
-private struct FavoriteArtwork: View {
-    let aweme: Aweme
-
-    private var artworkURL: URL? {
-        aweme.video?.cover?.url_list?.compactMap(URL.init(string:)).first
-    }
-
-    var body: some View {
-        Color.clear
-            .aspectRatio(3.0 / 4.0, contentMode: .fit)
-            .overlay {
-                FavoriteRemoteImage(url: artworkURL, maxPixelSize: 540) { failed in
-                    if failed {
-                        placeholder(systemImage: "photo.badge.exclamationmark")
-                    } else {
-                        ProgressView()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
-
-    private func placeholder(systemImage: String) -> some View {
-        ZStack {
-            Color.white.opacity(0.055)
-            Image(systemName: systemImage)
-                .font(.system(size: 42, weight: .light))
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
-/// 喜欢列表专用的轻量图片视图。使用无缓存会话，并在后台按展示尺寸降采样。
-/// 视图离开层级时 SwiftUI 会取消 task，同时立即释放已经解码的 CGImage。
-private struct FavoriteRemoteImage<Placeholder: View>: View {
-    let url: URL?
-    let maxPixelSize: Int
-    private let placeholder: (Bool) -> Placeholder
-
-    @State private var image: CGImage?
-    @State private var loadFailed = false
-
-    init(
-        url: URL?,
-        maxPixelSize: Int,
-        @ViewBuilder placeholder: @escaping (Bool) -> Placeholder
-    ) {
-        self.url = url
-        self.maxPixelSize = maxPixelSize
-        self.placeholder = placeholder
-    }
-
-    var body: some View {
-        Group {
-            if let image {
-                Image(decorative: image, scale: 1)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                placeholder(loadFailed)
-            }
-        }
-        .task(id: url) {
-            image = nil
-            loadFailed = false
-            guard let url else {
-                loadFailed = true
-                return
-            }
-            let loaded = await FavoriteImagePipeline.load(
-                url: url,
-                maxPixelSize: maxPixelSize
-            )
-            guard !Task.isCancelled else { return }
-            image = loaded
-            loadFailed = loaded == nil
-        }
-        .onDisappear {
-            image = nil
-            loadFailed = false
-        }
-    }
-}
-
-private enum FavoriteImagePipeline {
-    static let session: URLSession = {
+private enum FavoriteNativeImageLoader {
+    private static let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.urlCache = nil
-        // tvOS 同时解码多张封面会与 VideoToolbox 抢占 CPU/内存带宽。
-        // 两路下载足以填充 LazyVGrid，也能保证离开列表时快速取消。
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.httpMaximumConnectionsPerHost = 2
         configuration.timeoutIntervalForRequest = 15
         return URLSession(configuration: configuration)
     }()
 
-    static func load(url: URL, maxPixelSize: Int) async -> CGImage? {
-        do {
-            var request = URLRequest(url: url)
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            let (data, response) = try await session.data(for: request)
-            try Task.checkCancellation()
-            if let response = response as? HTTPURLResponse,
-               !(200..<300).contains(response.statusCode) {
-                return nil
-            }
-            // 不使用 Task.detached：detached 任务不会随 SwiftUI `.task` 取消，
-            // 从喜欢列表离开后仍会继续 ImageIO 解码并影响视频渲染。
-            try Task.checkCancellation()
-            let image = downsample(data: data, maxPixelSize: maxPixelSize)
-            try Task.checkCancellation()
-            return image
-        } catch {
+    @discardableResult
+    static func load(
+        url: URL?,
+        maxPixelSize: Int,
+        completion: @escaping (UIImage?) -> Void
+    ) -> URLSessionDataTask? {
+        guard let url else {
+            completion(nil)
             return nil
         }
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        let task = session.dataTask(with: request) { data, response, _ in
+            guard let data,
+                  let response = response as? HTTPURLResponse,
+                  (200..<300).contains(response.statusCode),
+                  let image = downsample(data: data, maxPixelSize: maxPixelSize) else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            DispatchQueue.main.async { completion(UIImage(cgImage: image)) }
+        }
+        task.resume()
+        return task
     }
 
     private static func downsample(data: Data, maxPixelSize: Int) -> CGImage? {
