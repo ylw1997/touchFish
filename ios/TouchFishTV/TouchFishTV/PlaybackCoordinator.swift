@@ -599,12 +599,20 @@ final class PlaybackCoordinator: ObservableObject {
     private func score(_ value: String) -> Int {
         guard let url = URL(string: value) else { return 0 }
         let host = url.host?.lowercased() ?? ""
+        let isDouyinPlaybackEndpoint = host == "www.douyin.com"
+            || value.contains("/aweme/v1/play/")
+
+        // Favorites 接口返回的直连文件明显比设备适配入口负载更高：同一轮
+        // 实测直连 1080x1920 / 4.60 Mbps 在模拟器 5.5 秒丢 42 帧，而
+        // www.douyin.com 入口的推荐视频没有丢帧。喜欢页面优先走适配入口，
+        // 直连仍保留为失败回退；推荐和关注继续沿用原有优先级。
+        if source == .favorites, isDouyinPlaybackEndpoint { return 5 }
         // web-prime 地址在 tvOS AVFoundation 中会稳定返回无权限/无法打开，
         // 放到最后，避免每次推荐视频都先触发两轮失败和禁止播放图标。
         if host.contains("-prime.") { return 0 }
         if host.hasSuffix("douyinvod.com") { return 4 }
         if host.contains("bytecdn") || host.contains("zjcdn") { return 3 }
-        if host == "www.douyin.com" || value.contains("/aweme/v1/play/") { return 1 }
+        if isDouyinPlaybackEndpoint { return 1 }
         return 2
     }
 
