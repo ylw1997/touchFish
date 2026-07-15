@@ -553,11 +553,31 @@ final class PlaybackCoordinator: ObservableObject {
             + remainingBitRates.flatMap { $0.play_addr?.url_list ?? [] }
 
         var seen = Set<String>()
-        return values.compactMap(URL.init(string:)).filter {
+        let urls = values.compactMap(URL.init(string:))
+        // 推荐接口经常只给 `*-web-prime` 和 www 适配入口，而关注接口直接给
+        // `*-weba`。prime 在 AVFoundation 中会返回 Forbidden/耗时重定向；
+        // 同路径派生 weba 直连并放在原地址前，失败时仍会回退服务端原 URL。
+        let expandedURLs = urls.flatMap { url -> [URL] in
+            if let directURL = directWebURL(fromPrimeURL: url) {
+                return [directURL, url]
+            }
+            return [url]
+        }
+        return expandedURLs.filter {
             !isClearlyAudioOnlyURL($0) && seen.insert($0.absoluteString).inserted
         }.sorted {
             score($0.absoluteString) > score($1.absoluteString)
         }
+    }
+
+    private func directWebURL(fromPrimeURL url: URL) -> URL? {
+        guard let host = url.host?.lowercased(),
+              host.contains("-web-prime."),
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+        components.host = host.replacingOccurrences(of: "-web-prime.", with: "-weba.")
+        return components.url
     }
 
     private func isClearlyAudioOnlyURL(_ url: URL) -> Bool {
