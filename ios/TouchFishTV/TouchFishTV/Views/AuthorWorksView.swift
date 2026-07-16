@@ -6,6 +6,7 @@ final class AuthorWorksStore: ObservableObject, VideoLibraryStore {
     @Published private(set) var items: [Aweme] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
+    @Published private(set) var profile: Author?
 
     let author: Author
 
@@ -20,15 +21,24 @@ final class AuthorWorksStore: ObservableObject, VideoLibraryStore {
     }
 
     var displayAuthor: Author {
-        items.first?.author ?? author
+        profile ?? items.first?.author ?? author
     }
 
     func refresh() async {
         generation &+= 1
+        let requestGeneration = generation
         cursor = 0
         hasMore = true
         isLoading = false
-        await load(reset: true, requestGeneration: generation)
+        profile = nil
+        await load(reset: true, requestGeneration: requestGeneration)
+        guard requestGeneration == generation else { return }
+        await loadProfile(requestGeneration: requestGeneration)
+    }
+
+    func loadProfileIfNeeded() async {
+        guard profile == nil else { return }
+        await loadProfile(requestGeneration: generation)
     }
 
     func loadMoreIfNeeded(currentIndex: Int) async {
@@ -38,6 +48,12 @@ final class AuthorWorksStore: ObservableObject, VideoLibraryStore {
 
     func loadNextPage() async {
         await load(reset: false, requestGeneration: generation)
+    }
+
+    private func loadProfile(requestGeneration: UInt) async {
+        guard let loadedProfile = try? await api.getUserProfile(secUserID: author.uid),
+              requestGeneration == generation else { return }
+        profile = loadedProfile
     }
 
     private func load(reset: Bool, requestGeneration: UInt) async {
@@ -94,14 +110,20 @@ struct AuthorWorksView: View {
                         onSelect: { selectedIndex = $0 },
                         onNearEnd: { index in
                             Task { await store.loadMoreIfNeeded(currentIndex: index) }
-                        }
+                        },
+                        topContentInset: 88
                     )
                     .ignoresSafeArea(edges: .bottom)
                 }
             }
         }
         .task {
-            if store.items.isEmpty { await store.refresh() }
+            if store.items.isEmpty {
+                await store.refresh()
+            } else {
+                // 如果进入播放页时资料请求被系统取消，返回后继续补齐真实统计。
+                await store.loadProfileIfNeeded()
+            }
         }
         .onChange(of: api.cookieRevision) { _, _ in
             selectedIndex = nil
@@ -158,8 +180,10 @@ struct AuthorWorksView: View {
                 if let followerCount = store.displayAuthor.follower_count {
                     statistic(value: Self.formattedCount(followerCount), title: "粉丝")
                 }
-                let workCount = store.displayAuthor.aweme_count ?? store.items.count
-                statistic(value: Self.formattedCount(workCount), title: "作品")
+                statistic(
+                    value: store.displayAuthor.aweme_count.map { Self.formattedCount($0) } ?? "—",
+                    title: "作品"
+                )
             }
         }
         .padding(.horizontal, 72)

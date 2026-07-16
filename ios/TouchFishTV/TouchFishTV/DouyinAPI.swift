@@ -373,6 +373,46 @@ final class DouyinAPI: ObservableObject {
 #endif
         return (awemes, res.max_cursor ?? maxCursor, res.has_more == 1)
     }
+
+    /// 获取作者资料。作品总数等统计字段不会稳定出现在作品列表中，
+    /// 因此不能用当前已加载的列表条数代替。
+    func getUserProfile(secUserID: String) async throws -> Author {
+        guard !secUserID.isEmpty else { throw APIError.invalidURL }
+        var components = URLComponents(
+            string: "https://www.douyin.com/aweme/v1/web/user/profile/other/"
+        )
+        components?.queryItems = [
+            URLQueryItem(name: "device_platform", value: "webapp"),
+            URLQueryItem(name: "aid", value: "6383"),
+            URLQueryItem(name: "channel", value: "channel_pc_web"),
+            URLQueryItem(name: "sec_user_id", value: secUserID),
+            URLQueryItem(name: "publish_video_strategy_type", value: "2"),
+            URLQueryItem(name: "personal_center_strategy", value: "1"),
+            URLQueryItem(name: "pc_client_type", value: "1"),
+            URLQueryItem(name: "version_code", value: "170400"),
+            URLQueryItem(name: "version_name", value: "17.4.0"),
+            URLQueryItem(name: "cookie_enabled", value: "true"),
+            URLQueryItem(name: "browser_language", value: "zh-CN"),
+            URLQueryItem(name: "browser_platform", value: "Win32"),
+            URLQueryItem(name: "browser_name", value: "Chrome"),
+            URLQueryItem(name: "browser_version", value: "150.0.0.0"),
+            URLQueryItem(name: "browser_online", value: "true"),
+            URLQueryItem(name: "engine_name", value: "Blink"),
+            URLQueryItem(name: "engine_version", value: "150.0.0.0"),
+            URLQueryItem(name: "os_name", value: "Windows"),
+            URLQueryItem(name: "os_version", value: "10"),
+            URLQueryItem(name: "platform", value: "PC")
+        ]
+        guard let url = components?.url?.absoluteString else { throw APIError.invalidURL }
+
+        let res: UserProfileResponse = try await request(
+            url: url,
+            extraHeaders: ["Referer": "https://www.douyin.com/user/\(secUserID)"]
+        )
+        try validateStatus(res.status_code, message: res.status_msg)
+        guard let user = res.user else { throw APIError.emptyResponse }
+        return user
+    }
     
 }
 
@@ -561,4 +601,10 @@ struct FavoritesResponse: Decodable {
     let aweme_list: [Aweme]?
     let max_cursor: Int?
     let has_more: Int?
+}
+
+struct UserProfileResponse: Decodable {
+    let status_code: Int
+    let status_msg: String?
+    let user: Author?
 }

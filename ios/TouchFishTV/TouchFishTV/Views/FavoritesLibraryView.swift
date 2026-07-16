@@ -274,9 +274,10 @@ struct VideoLibraryCollectionView: UIViewControllerRepresentable {
     let items: [Aweme]
     let onSelect: (Int) -> Void
     let onNearEnd: (Int) -> Void
+    var topContentInset: CGFloat = 54
 
     func makeUIViewController(context: Context) -> VideoLibraryCollectionViewController {
-        let controller = VideoLibraryCollectionViewController()
+        let controller = VideoLibraryCollectionViewController(topContentInset: topContentInset)
         controller.onSelect = onSelect
         controller.onNearEnd = onNearEnd
         controller.update(items: items)
@@ -298,8 +299,8 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
     var onNearEnd: ((Int) -> Void)?
     private var items: [Aweme] = []
 
-    init() {
-        super.init(collectionViewLayout: Self.makeLayout())
+    init(topContentInset: CGFloat) {
+        super.init(collectionViewLayout: Self.makeLayout(topContentInset: topContentInset))
     }
 
     @available(*, unavailable)
@@ -327,9 +328,14 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        let visible = collectionView.indexPathsForVisibleItems
-        if !visible.isEmpty {
-            collectionView.reloadItems(at: visible)
+        // 返回列表时保留现有 cell 和焦点，只恢复被暂停的图片任务。
+        // reloadItems 会让封面、文字和焦点状态整体重建，产生明显的二次闪烁。
+        for indexPath in collectionView.indexPathsForVisibleItems {
+            guard items.indices.contains(indexPath.item),
+                  let cell = collectionView.cellForItem(at: indexPath) as? VideoLibraryCollectionCell else {
+                continue
+            }
+            cell.configure(with: items[indexPath.item])
         }
     }
 
@@ -378,7 +384,7 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
         onNearEnd?(indexPath.item)
     }
 
-    private static func makeLayout() -> UICollectionViewLayout {
+    private static func makeLayout(topContentInset: CGFloat) -> UICollectionViewLayout {
         let item = NSCollectionLayoutItem(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(0.25),
@@ -396,7 +402,12 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
         )
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = 36
-        section.contentInsets = NSDirectionalEdgeInsets(top: 54, leading: 58, bottom: 80, trailing: 58)
+        section.contentInsets = NSDirectionalEdgeInsets(
+            top: topContentInset,
+            leading: 58,
+            bottom: 80,
+            trailing: 58
+        )
         return UICollectionViewCompositionalLayout(section: section)
     }
 }
