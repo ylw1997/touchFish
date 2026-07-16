@@ -426,12 +426,12 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
         let group = NSCollectionLayoutGroup.horizontal(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1),
-                heightDimension: .absolute(458)
+                heightDimension: .absolute(444)
             ),
             subitems: [item]
         )
         let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 42
+        section.interGroupSpacing = 20
         section.contentInsets = NSDirectionalEdgeInsets(
             top: topContentInset,
             leading: 100,

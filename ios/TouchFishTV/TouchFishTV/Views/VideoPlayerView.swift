@@ -109,11 +109,6 @@ final class DouyinPlayerViewController: AVPlayerViewController {
         )
         showsPlaybackControls = true
         transportBarIncludesTitleView = true
-        // AVPlayerViewController 的标题字体不能单独设置；使用公开的动态字号
-        // trait 缩小原生信息区，同时继续保留系统进度条与控制栏。
-        traitOverrides.preferredContentSizeCategory = .extraSmall
-        view.traitOverrides.preferredContentSizeCategory = .extraSmall
-        updateTraitsIfNeeded()
         focusAnchor.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(focusAnchor)
         NSLayoutConstraint.activate([
