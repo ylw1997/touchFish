@@ -3,6 +3,7 @@ import UIKit
 
 @MainActor
 final class DanmakuOverlayController {
+    private static let enabledDefaultsKey = "douyin_danmaku_enabled"
     private let overlayView = UIView()
     private let service = DanmakuService()
     private weak var player: AVPlayer?
@@ -20,11 +21,17 @@ final class DanmakuOverlayController {
     private var lastTime = 0.0
     private var animationsPaused = false
 
+    var isEnabled: Bool {
+        if UserDefaults.standard.object(forKey: Self.enabledDefaultsKey) == nil { return true }
+        return UserDefaults.standard.bool(forKey: Self.enabledDefaultsKey)
+    }
+
     func install(in controller: AVPlayerViewController) {
         guard let host = controller.contentOverlayView, overlayView.superview == nil else { return }
         overlayView.translatesAutoresizingMaskIntoConstraints = false
         overlayView.isUserInteractionEnabled = false
         overlayView.clipsToBounds = true
+        overlayView.isHidden = !isEnabled
         host.addSubview(overlayView)
         NSLayoutConstraint.activate([
             overlayView.topAnchor.constraint(equalTo: host.topAnchor),
@@ -47,11 +54,43 @@ final class DanmakuOverlayController {
         self.aweme = aweme
         self.player = player
         self.playbackToken = playbackToken
+        overlayView.isHidden = !isEnabled
         PlaybackDiagnostics.shared.event(
             "configured",
             category: "danmaku",
             fields: ["aweme": aweme.aweme_id, "token": playbackToken]
         )
+        guard isEnabled else { return }
+        startRuntime()
+    }
+
+    func setEnabled(_ enabled: Bool) {
+        guard enabled != isEnabled else { return }
+        UserDefaults.standard.set(enabled, forKey: Self.enabledDefaultsKey)
+        overlayView.isHidden = !enabled
+        if enabled {
+            startRuntime()
+        } else {
+            stopRuntime()
+        }
+        PlaybackDiagnostics.shared.event(
+            enabled ? "enabled" : "disabled",
+            category: "danmaku",
+            fields: ["aweme": aweme?.aweme_id ?? "none"]
+        )
+    }
+
+    func synchronizePreference() {
+        overlayView.isHidden = !isEnabled
+        if isEnabled {
+            startRuntime()
+        } else {
+            stopRuntime()
+        }
+    }
+
+    private func startRuntime() {
+        guard isEnabled, timeObserver == nil, let player, aweme != nil, playbackToken != nil else { return }
         playbackObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
             Task { @MainActor in
                 self?.synchronizeAnimationState(with: player)
@@ -80,6 +119,14 @@ final class DanmakuOverlayController {
                 ]
             )
         }
+        stopRuntime()
+        aweme = nil
+        player = nil
+        playbackToken = nil
+        cookie = ""
+    }
+
+    private func stopRuntime() {
         if let observer = timeObserver, let player { player.removeTimeObserver(observer) }
         timeObserver = nil
         playbackObservation?.invalidate()
@@ -98,9 +145,6 @@ final class DanmakuOverlayController {
         overlayView.layer.beginTime = 0
         animationsPaused = false
         overlayView.subviews.forEach { $0.removeFromSuperview() }
-        aweme = nil
-        player = nil
-        playbackToken = nil
         lastTime = 0
     }
 

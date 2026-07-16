@@ -85,6 +85,8 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     private var prefersPlayerFocus = true
     private var navigationLocked = false
     private var configuredAuthorName: String?
+    private var configuredHasAuthorAction = false
+    private var configuredDanmakuEnabled: Bool?
 
     deinit {
         PlaybackDiagnostics.shared.event(
@@ -107,6 +109,9 @@ final class DouyinPlayerViewController: AVPlayerViewController {
         )
         showsPlaybackControls = true
         transportBarIncludesTitleView = true
+        // AVPlayerViewController 的标题字体不能单独设置；使用公开的动态字号
+        // trait 缩小原生信息区，同时继续保留系统进度条与控制栏。
+        traitOverrides.preferredContentSizeCategory = .medium
         focusAnchor.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(focusAnchor)
         NSLayoutConstraint.activate([
@@ -120,24 +125,47 @@ final class DouyinPlayerViewController: AVPlayerViewController {
 
     func configureAuthorAction(name: String?, action: (() -> Void)?) {
         onShowAuthor = action
+        danmakuController.synchronizePreference()
         let normalizedName = name?.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard action != nil else {
-            configuredAuthorName = nil
-            transportBarCustomMenuItems = []
-            return
-        }
-        guard configuredAuthorName != normalizedName || transportBarCustomMenuItems.isEmpty else {
+        let hasAuthorAction = action != nil
+        let danmakuEnabled = danmakuController.isEnabled
+        guard configuredAuthorName != normalizedName
+                || configuredHasAuthorAction != hasAuthorAction
+                || configuredDanmakuEnabled != danmakuEnabled
+                || transportBarCustomMenuItems.isEmpty else {
             return
         }
 
         configuredAuthorName = normalizedName
-        let userAction = UIAction(
-            title: "用户",
-            image: UIImage(systemName: "person.crop.circle")
-        ) { [weak self] _ in
-            self?.onShowAuthor?()
+        configuredHasAuthorAction = hasAuthorAction
+        configuredDanmakuEnabled = danmakuEnabled
+        rebuildTransportBarActions()
+    }
+
+    private func rebuildTransportBarActions() {
+        var actions: [UIMenuElement] = []
+        if onShowAuthor != nil {
+            let userAction = UIAction(
+                title: "用户",
+                image: UIImage(systemName: "person.crop.circle")
+            ) { [weak self] _ in
+                self?.onShowAuthor?()
+            }
+            actions.append(userAction)
         }
-        transportBarCustomMenuItems = [userAction]
+
+        let danmakuEnabled = danmakuController.isEnabled
+        configuredDanmakuEnabled = danmakuEnabled
+        let danmakuAction = UIAction(
+            title: danmakuEnabled ? "关闭弹幕" : "开启弹幕",
+            image: UIImage(systemName: danmakuEnabled ? "captions.bubble.fill" : "captions.bubble")
+        ) { [weak self] _ in
+            guard let self else { return }
+            danmakuController.setEnabled(!danmakuController.isEnabled)
+            rebuildTransportBarActions()
+        }
+        actions.append(danmakuAction)
+        transportBarCustomMenuItems = actions
     }
 
     override func viewDidAppear(_ animated: Bool) {

@@ -311,6 +311,7 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         collectionView.backgroundColor = .black
+        collectionView.clipsToBounds = true
         collectionView.remembersLastFocusedIndexPath = true
         collectionView.register(
             VideoLibraryCollectionCell.self,
@@ -384,29 +385,59 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
         onNearEnd?(indexPath.item)
     }
 
+    override func collectionView(
+        _ collectionView: UICollectionView,
+        didUpdateFocusIn context: UICollectionViewFocusUpdateContext,
+        with coordinator: UIFocusAnimationCoordinator
+    ) {
+        super.collectionView(collectionView, didUpdateFocusIn: context, with: coordinator)
+        guard let indexPath = context.nextFocusedIndexPath else { return }
+        coordinator.addCoordinatedAnimations(nil) { [weak self] in
+            DispatchQueue.main.async {
+                self?.keepFocusedItemBelowTopEdge(at: indexPath)
+            }
+        }
+    }
+
+    private func keepFocusedItemBelowTopEdge(at indexPath: IndexPath) {
+        guard let attributes = collectionView.layoutAttributesForItem(at: indexPath) else { return }
+        let focusExpansion: CGFloat = 14
+        let topSpacing: CGFloat = 24
+        let itemTop = attributes.frame.minY - focusExpansion
+        let visibleTop = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
+        guard itemTop < visibleTop + topSpacing else { return }
+
+        let minimumOffset = -collectionView.adjustedContentInset.top
+        let targetOffset = max(minimumOffset, itemTop - topSpacing)
+        collectionView.setContentOffset(
+            CGPoint(x: collectionView.contentOffset.x, y: targetOffset),
+            animated: true
+        )
+    }
+
     private static func makeLayout(topContentInset: CGFloat) -> UICollectionViewLayout {
         let item = NSCollectionLayoutItem(
             layoutSize: NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(0.25),
+                widthDimension: .fractionalWidth(1.0 / 6.0),
                 heightDimension: .fractionalHeight(1)
             )
         )
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
 
         let group = NSCollectionLayoutGroup.horizontal(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1),
-                heightDimension: .absolute(650)
+                heightDimension: .absolute(452)
             ),
             subitems: [item]
         )
         let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 36
+        section.interGroupSpacing = 24
         section.contentInsets = NSDirectionalEdgeInsets(
             top: topContentInset,
-            leading: 58,
-            bottom: 80,
-            trailing: 58
+            leading: 100,
+            bottom: 56,
+            trailing: 100
         )
         return UICollectionViewCompositionalLayout(section: section)
     }
@@ -454,12 +485,12 @@ private final class VideoLibraryCollectionCell: UICollectionViewCell {
         countLabel.text = Self.formattedCount(aweme.statistics?.digg_count ?? 0)
 
         let artworkURL = aweme.video?.cover?.url_list?.compactMap(URL.init(string:)).first
-        artworkTask = NativeThumbnailLoader.load(url: artworkURL, maxPixelSize: 540) { [weak self] image in
+        artworkTask = NativeThumbnailLoader.load(url: artworkURL, maxPixelSize: 460) { [weak self] image in
             guard let self, representedID == aweme.aweme_id else { return }
             artworkView.image = image
         }
         let avatarURL = aweme.author?.avatar_thumb?.url_list?.compactMap(URL.init(string:)).first
-        avatarTask = NativeThumbnailLoader.load(url: avatarURL, maxPixelSize: 96) { [weak self] image in
+        avatarTask = NativeThumbnailLoader.load(url: avatarURL, maxPixelSize: 72) { [weak self] image in
             guard let self, representedID == aweme.aweme_id else { return }
             avatarView.image = image
         }
@@ -479,7 +510,7 @@ private final class VideoLibraryCollectionCell: UICollectionViewCell {
         super.didUpdateFocus(in: context, with: coordinator)
         coordinator.addCoordinatedAnimations({
             self.transform = self.isFocused
-                ? CGAffineTransform(scaleX: 1.055, y: 1.055)
+                ? CGAffineTransform(scaleX: 1.04, y: 1.04)
                 : .identity
             self.layer.zPosition = self.isFocused ? 10 : 0
         }, completion: nil)
@@ -493,27 +524,28 @@ private final class VideoLibraryCollectionCell: UICollectionViewCell {
         artworkView.backgroundColor = UIColor.white.withAlphaComponent(0.06)
         artworkView.contentMode = .scaleAspectFill
         artworkView.clipsToBounds = true
-        artworkView.layer.cornerRadius = 18
+        artworkView.layer.cornerRadius = 14
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = .preferredFont(forTextStyle: .headline)
+        titleLabel.font = .systemFont(ofSize: 23, weight: .semibold)
         titleLabel.textColor = .white
         titleLabel.numberOfLines = 2
+        titleLabel.lineBreakMode = .byTruncatingTail
 
         avatarView.translatesAutoresizingMaskIntoConstraints = false
         avatarView.backgroundColor = UIColor.white.withAlphaComponent(0.08)
         avatarView.contentMode = .scaleAspectFill
         avatarView.clipsToBounds = true
-        avatarView.layer.cornerRadius = 17
+        avatarView.layer.cornerRadius = 14
 
-        authorLabel.font = .preferredFont(forTextStyle: .subheadline)
+        authorLabel.font = .systemFont(ofSize: 18, weight: .regular)
         authorLabel.textColor = .secondaryLabel
         authorLabel.numberOfLines = 1
 
         heartView.tintColor = .secondaryLabel
         heartView.contentMode = .scaleAspectFit
 
-        countLabel.font = .preferredFont(forTextStyle: .subheadline)
+        countLabel.font = .systemFont(ofSize: 18, weight: .regular)
         countLabel.textColor = .secondaryLabel
         countLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
 
@@ -521,7 +553,7 @@ private final class VideoLibraryCollectionCell: UICollectionViewCell {
         footer.translatesAutoresizingMaskIntoConstraints = false
         footer.axis = .horizontal
         footer.alignment = .center
-        footer.spacing = 10
+        footer.spacing = 7
 
         contentView.addSubview(artworkView)
         contentView.addSubview(titleLabel)
@@ -533,19 +565,19 @@ private final class VideoLibraryCollectionCell: UICollectionViewCell {
             artworkView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             artworkView.heightAnchor.constraint(equalTo: artworkView.widthAnchor, multiplier: 4.0 / 3.0),
 
-            titleLabel.topAnchor.constraint(equalTo: artworkView.bottomAnchor, constant: 16),
+            titleLabel.topAnchor.constraint(equalTo: artworkView.bottomAnchor, constant: 10),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
-            footer.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
+            footer.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
             footer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             footer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             footer.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
 
-            avatarView.widthAnchor.constraint(equalToConstant: 34),
-            avatarView.heightAnchor.constraint(equalToConstant: 34),
-            heartView.widthAnchor.constraint(equalToConstant: 28),
-            heartView.heightAnchor.constraint(equalToConstant: 28)
+            avatarView.widthAnchor.constraint(equalToConstant: 28),
+            avatarView.heightAnchor.constraint(equalToConstant: 28),
+            heartView.widthAnchor.constraint(equalToConstant: 21),
+            heartView.heightAnchor.constraint(equalToConstant: 21)
         ])
     }
 

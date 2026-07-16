@@ -111,7 +111,7 @@ struct AuthorWorksView: View {
                         onNearEnd: { index in
                             Task { await store.loadMoreIfNeeded(currentIndex: index) }
                         },
-                        topContentInset: 88
+                        topContentInset: 44
                     )
                     .ignoresSafeArea(edges: .bottom)
                 }
@@ -142,7 +142,7 @@ struct AuthorWorksView: View {
     }
 
     private var authorHeader: some View {
-        HStack(spacing: 28) {
+        HStack(spacing: 22) {
             AsyncImage(url: store.displayAuthor.avatar_thumb?.url_list?.compactMap(URL.init(string:)).first) { phase in
                 if let image = phase.image {
                     image.resizable().scaledToFill()
@@ -152,31 +152,31 @@ struct AuthorWorksView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 112, height: 112)
+            .frame(width: 84, height: 84)
             .clipShape(Circle())
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(store.displayAuthor.nickname?.isEmpty == false ? store.displayAuthor.nickname! : "未知用户")
-                    .font(.largeTitle.weight(.bold))
+                    .font(.title2.weight(.bold))
                     .lineLimit(1)
 
                 if let uniqueID = store.displayAuthor.unique_id, !uniqueID.isEmpty {
                     Text("抖音号：\(uniqueID)")
-                        .font(.body)
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                 }
 
                 if let signature = store.displayAuthor.signature, !signature.isEmpty {
                     Text(signature)
-                        .font(.body)
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
             }
 
-            Spacer(minLength: 30)
+            Spacer(minLength: 24)
 
-            HStack(spacing: 30) {
+            HStack(spacing: 24) {
                 if let followerCount = store.displayAuthor.follower_count {
                     statistic(value: Self.formattedCount(followerCount), title: "粉丝")
                 }
@@ -186,17 +186,17 @@ struct AuthorWorksView: View {
                 )
             }
         }
-        .padding(.horizontal, 72)
-        .padding(.top, 30)
-        .padding(.bottom, 18)
+        .padding(.horizontal, 100)
+        .padding(.top, 18)
+        .padding(.bottom, 8)
     }
 
     private func statistic(value: String, title: String) -> some View {
         VStack(spacing: 5) {
-            Text(value).font(.title2.weight(.semibold))
-            Text(title).font(.callout).foregroundStyle(.secondary)
+            Text(value).font(.title3.weight(.semibold))
+            Text(title).font(.caption).foregroundStyle(.secondary)
         }
-        .frame(minWidth: 96)
+        .frame(minWidth: 82)
     }
 
     private var playbackPresented: Binding<Bool> {
