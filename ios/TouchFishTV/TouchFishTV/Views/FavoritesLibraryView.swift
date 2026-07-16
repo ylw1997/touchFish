@@ -36,8 +36,8 @@ final class FavoritesLibraryStore: ObservableObject, VideoLibraryStore {
     private var hasMore = true
     private var generation: UInt = 0
 
-    init(api: DouyinAPI = .shared) {
-        self.api = api
+    init(api: DouyinAPI? = nil) {
+        self.api = api ?? .shared
     }
 
     func refresh() async {
@@ -293,7 +293,7 @@ struct VideoLibraryCollectionView: UIViewControllerRepresentable {
     }
 }
 
-private final class VideoLibraryCollectionViewController: UICollectionViewController {
+final class VideoLibraryCollectionViewController: UICollectionViewController {
     var onSelect: ((Int) -> Void)?
     var onNearEnd: ((Int) -> Void)?
     private var items: [Aweme] = []

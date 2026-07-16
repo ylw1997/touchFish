@@ -14,9 +14,9 @@ final class AuthorWorksStore: ObservableObject, VideoLibraryStore {
     private var hasMore = true
     private var generation: UInt = 0
 
-    init(author: Author, api: DouyinAPI = .shared) {
+    init(author: Author, api: DouyinAPI? = nil) {
         self.author = author
-        self.api = api
+        self.api = api ?? .shared
     }
 
     var displayAuthor: Author {

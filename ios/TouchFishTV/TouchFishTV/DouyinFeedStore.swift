@@ -28,9 +28,9 @@ final class DouyinFeedStore: ObservableObject {
     private let retainedPreviousItems = 5
     private let preloadRemainingItems = 3
 
-    init(feedType: FeedType, api: DouyinAPI = .shared) {
+    init(feedType: FeedType, api: DouyinAPI? = nil) {
         self.feedType = feedType
-        self.api = api
+        self.api = api ?? .shared
     }
 
     var activeItem: Aweme? {
