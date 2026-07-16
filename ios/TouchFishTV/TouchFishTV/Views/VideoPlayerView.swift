@@ -42,6 +42,7 @@ struct VideoPlayerView: View {
                 authorName: aweme.displayAuthor?.nickname,
                 onShowAuthor: aweme.displayAuthor?.uid.isEmpty == false ? onShowAuthor : nil,
                 danmakuAvailable: !aweme.isLive,
+                routesUpToPlaybackControls: aweme.isLive,
                 onVisible: { [weak coordinator] in coordinator?.resume() }
             )
 
@@ -80,6 +81,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     var onVisible: (() -> Void)?
     var isTransitioning = false
     var allowsNavigationWhileStopped = false
+    var routesUpToPlaybackControls = false
     let danmakuController = DanmakuOverlayController()
 
     private let focusAnchor = FocusAnchorView()
@@ -208,6 +210,9 @@ final class DouyinPlayerViewController: AVPlayerViewController {
         for press in presses {
             switch press.type {
             case .upArrow:
+                // 直播通常没有可暂停后再进入控制栏的交互。上键必须继续交给
+                // AVPlayerViewController，才能将焦点移到“用户”等原生按钮。
+                if routesUpToPlaybackControls { continue }
                 PlaybackDiagnostics.shared.event(
                     "navigate-previous",
                     category: "controller",
@@ -268,6 +273,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let authorName: String?
     let onShowAuthor: (() -> Void)?
     let danmakuAvailable: Bool
+    let routesUpToPlaybackControls: Bool
     let onVisible: () -> Void
 
     func makeUIViewController(context: Context) -> DouyinPlayerViewController {
@@ -283,6 +289,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.onVisible = onVisible
+        controller.routesUpToPlaybackControls = routesUpToPlaybackControls
         controller.configureAuthorAction(
             name: authorName,
             action: onShowAuthor,
