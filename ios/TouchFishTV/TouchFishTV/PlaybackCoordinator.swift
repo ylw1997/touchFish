@@ -182,7 +182,7 @@ final class PlaybackCoordinator: ObservableObject {
     private static let playbackUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
 
     let player = AVPlayer()
-    let playerViewController: DouyinPlayerViewController
+    let playerViewController: DouyinPlayerContainerViewController
     @Published private(set) var isTransitioning = false
     @Published private(set) var presentationOpacity = 1.0
     @Published private(set) var playbackError: String?
@@ -202,7 +202,7 @@ final class PlaybackCoordinator: ObservableObject {
 
     init(source: PlaybackSource) {
         self.source = source
-        let playerViewController = DouyinPlayerViewController()
+        let playerViewController = DouyinPlayerContainerViewController()
         self.playerViewController = playerViewController
         player.automaticallyWaitsToMinimizeStalling = false
         // 播放器与原生控制器在单次 Tab 激活期间固定绑定；上下切换视频只替换

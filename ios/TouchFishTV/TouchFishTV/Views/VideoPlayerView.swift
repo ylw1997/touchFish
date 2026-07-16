@@ -68,11 +68,7 @@ struct VideoPlayerView: View {
     }
 }
 
-private final class FocusAnchorView: UIView {
-    override var canBecomeFocused: Bool { true }
-}
-
-final class DouyinPlayerViewController: AVPlayerViewController {
+final class DouyinPlayerContainerViewController: UIViewController {
     let diagnosticsID = String(UUID().uuidString.prefix(6))
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
@@ -82,24 +78,36 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     var allowsNavigationWhileStopped = false
     let danmakuController = DanmakuOverlayController()
 
-    private let focusAnchor = FocusAnchorView()
-    private var prefersPlayerFocus = true
+    private let playbackController = AVPlayerViewController()
+
     private var navigationLocked = false
     private var configuredAuthorName: String?
     private var configuredHasAuthorAction = false
     private var configuredDanmakuEnabled: Bool?
     private var configuredDanmakuAvailable = true
+
     private enum NavigationDirection {
         case previous
         case next
     }
 
-    private struct PendingNavigation {
-        let direction: NavigationDirection
-        let focusedView: ObjectIdentifier?
+    var player: AVPlayer? {
+        get { playbackController.player }
+        set { playbackController.player = newValue }
+    }
+
+    var requiresLinearPlayback: Bool {
+        get { playbackController.requiresLinearPlayback }
+        set { playbackController.requiresLinearPlayback = newValue }
+    }
+
+    var transportBarCustomMenuItems: [UIMenuElement] {
+        get { playbackController.transportBarCustomMenuItems }
+        set { playbackController.transportBarCustomMenuItems = newValue }
     }
 
     deinit {
+        NotificationCenter.default.removeObserver(self)
         PlaybackDiagnostics.shared.event(
             "deinit",
             category: "controller",
@@ -108,7 +116,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     }
 
     override var preferredFocusEnvironments: [UIFocusEnvironment] {
-        prefersPlayerFocus ? [focusAnchor] : super.preferredFocusEnvironments
+        [playbackController]
     }
 
     override func viewDidLoad() {
@@ -118,17 +126,27 @@ final class DouyinPlayerViewController: AVPlayerViewController {
             category: "controller",
             fields: ["controller": diagnosticsID]
         )
-        showsPlaybackControls = true
-        transportBarIncludesTitleView = true
-        focusAnchor.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(focusAnchor)
+
+        addChild(playbackController)
+        playbackController.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(playbackController.view)
         NSLayoutConstraint.activate([
-            focusAnchor.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            focusAnchor.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            focusAnchor.widthAnchor.constraint(equalToConstant: 1),
-            focusAnchor.heightAnchor.constraint(equalToConstant: 1)
+            playbackController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            playbackController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            playbackController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            playbackController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        danmakuController.install(in: self)
+        playbackController.didMove(toParent: self)
+        playbackController.showsPlaybackControls = true
+        playbackController.transportBarIncludesTitleView = true
+
+        danmakuController.install(in: playbackController)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(focusMovementDidFail(_:)),
+            name: UIFocusSystem.movementDidFailNotification,
+            object: nil
+        )
     }
 
     func configureAuthorAction(name: String?, action: (() -> Void)?, danmakuAvailable: Bool) {
@@ -172,8 +190,8 @@ final class DouyinPlayerViewController: AVPlayerViewController {
                 image: UIImage(systemName: danmakuEnabled ? "captions.bubble.fill" : "captions.bubble")
             ) { [weak self] _ in
                 guard let self else { return }
-                danmakuController.setEnabled(!danmakuController.isEnabled)
-                rebuildTransportBarActions()
+                self.danmakuController.setEnabled(!self.danmakuController.isEnabled)
+                self.rebuildTransportBarActions()
             }
             actions.append(danmakuAction)
         }
@@ -201,39 +219,37 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     }
 
     func requestPlayerFocus() {
-        prefersPlayerFocus = true
         setNeedsFocusUpdate()
         updateFocusIfNeeded()
-        prefersPlayerFocus = false
     }
 
-    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        guard canEvaluateVideoNavigation else {
-            super.pressesBegan(presses, with: event)
-            return
-        }
+    @objc private func focusMovementDidFail(_ notification: Notification) {
+        guard let context = notification.userInfo?[UIFocusSystem.focusUpdateContextUserInfoKey]
+                as? UIFocusUpdateContext,
+              let focusedView = context.previouslyFocusedView,
+              isInsidePlayer(focusedView) else { return }
 
-        let focusedViewBeforePress = focusedViewIdentifier
-        let pending = presses.compactMap { press -> PendingNavigation? in
-            switch press.type {
-            case .upArrow:
-                return PendingNavigation(direction: .previous, focusedView: focusedViewBeforePress)
-            case .downArrow:
-                return PendingNavigation(direction: .next, focusedView: focusedViewBeforePress)
-            default:
-                return nil
-            }
-        }
-        // 先让 AVPlayerViewController 和 tvOS 焦点系统完整处理方向键。
-        // 下一轮主线程中焦点仍未移动，才把按键解释为视频切换。
-        super.pressesBegan(presses, with: event)
-        guard !pending.isEmpty else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            guard let self, self.canEvaluateVideoNavigation else { return }
-            for navigation in pending where navigation.focusedView == self.focusedViewIdentifier {
-                self.performNavigation(navigation.direction)
-                break
-            }
+        let isPlaybackSurface = isPlayerSurface(focusedView)
+
+        PlaybackDiagnostics.shared.event(
+            "focus-movement-failed",
+            category: "controller",
+            fields: [
+                "controller": diagnosticsID,
+                "heading": String(describing: context.focusHeading),
+                "surface": isPlaybackSurface,
+                "canNavigate": canNavigateVideos
+            ]
+        )
+        guard canNavigateVideos else { return }
+
+        if context.focusHeading.contains(.up) {
+            // 播放画面上的第一次上键应交给原生播放器显示控制栏；只有焦点
+            // 已经处于控制栏最上方时，再按上才切换上一条。
+            guard !isPlaybackSurface else { return }
+            performNavigation(.previous)
+        } else if context.focusHeading.contains(.down) {
+            performNavigation(.next)
         }
     }
 
@@ -262,23 +278,29 @@ final class DouyinPlayerViewController: AVPlayerViewController {
         }
     }
 
-    private var canEvaluateVideoNavigation: Bool {
+    private var canNavigateVideos: Bool {
         guard !isTransitioning, !navigationLocked,
               let player else { return false }
         guard player.timeControlStatus == .playing || allowsNavigationWhileStopped else { return false }
         return true
     }
 
-    private var focusedViewIdentifier: ObjectIdentifier? {
-        guard let focusedView = UIFocusSystem.focusSystem(for: view)?.focusedItem as? UIView else {
-            return nil
-        }
-        return ObjectIdentifier(focusedView)
+    private func isInsidePlayer(_ focusedView: UIView) -> Bool {
+        return focusedView === playbackController.view
+            || focusedView.isDescendant(of: playbackController.view)
+    }
+
+    private func isPlayerSurface(_ focusedView: UIView) -> Bool {
+        let frame = focusedView.convert(focusedView.bounds, to: playbackController.view)
+        let playerBounds = playbackController.view.bounds
+        guard playerBounds.width > 0, playerBounds.height > 0 else { return false }
+        return frame.width >= playerBounds.width * 0.75
+            && frame.height >= playerBounds.height * 0.5
     }
 }
 
 struct NativePlayerController: UIViewControllerRepresentable {
-    let controller: DouyinPlayerViewController
+    let controller: DouyinPlayerContainerViewController
     let isTransitioning: Bool
     let allowsNavigationWhileStopped: Bool
     let onPrevious: () -> Void
@@ -288,16 +310,16 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let danmakuAvailable: Bool
     let onVisible: () -> Void
 
-    func makeUIViewController(context: Context) -> DouyinPlayerViewController {
+    func makeUIViewController(context: Context) -> DouyinPlayerContainerViewController {
         configure(controller)
         return controller
     }
 
-    func updateUIViewController(_ controller: DouyinPlayerViewController, context: Context) {
+    func updateUIViewController(_ controller: DouyinPlayerContainerViewController, context: Context) {
         configure(controller)
     }
 
-    private func configure(_ controller: DouyinPlayerViewController) {
+    private func configure(_ controller: DouyinPlayerContainerViewController) {
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.onVisible = onVisible
@@ -311,7 +333,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
     }
 
     static func dismantleUIViewController(
-        _ controller: DouyinPlayerViewController,
+        _ controller: DouyinPlayerContainerViewController,
         coordinator: ()
     ) {
         controller.onPrevious = nil
