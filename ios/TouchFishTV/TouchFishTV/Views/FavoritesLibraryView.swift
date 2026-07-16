@@ -4,7 +4,29 @@ import SwiftUI
 import UIKit
 
 @MainActor
-final class FavoritesLibraryStore: ObservableObject {
+protocol VideoLibraryStore: ObservableObject {
+    var items: [Aweme] { get }
+    func loadMoreIfNeeded(currentIndex: Int) async
+    func loadNextPage() async
+}
+
+extension Aweme {
+    var hasVideoPlaybackURL: Bool {
+        let audioExtensions = Set(["aac", "m4a", "mp3", "wav"])
+        let candidates = (video?.play_addr_h264?.url_list ?? [])
+            + (video?.play_addr?.url_list ?? [])
+            + (video?.bit_rate ?? []).flatMap { $0.play_addr?.url_list ?? [] }
+        return candidates.contains { value in
+            guard let url = URL(string: value) else { return false }
+            let host = url.host?.lowercased() ?? ""
+            return !host.contains("music")
+                && !audioExtensions.contains(url.pathExtension.lowercased())
+        }
+    }
+}
+
+@MainActor
+final class FavoritesLibraryStore: ObservableObject, VideoLibraryStore {
     @Published private(set) var items: [Aweme] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
@@ -46,7 +68,7 @@ final class FavoritesLibraryStore: ObservableObject {
         do {
             let result = try await api.getFavorites(maxCursor: reset ? 0 : cursor)
             guard requestGeneration == generation else { return }
-            let videoItems = result.0.filter(Self.hasVideoPlaybackURL)
+            let videoItems = result.0.filter(\.hasVideoPlaybackURL)
             if reset { items = videoItems } else { items.append(contentsOf: videoItems) }
             cursor = result.1
             hasMore = result.2
@@ -59,15 +81,6 @@ final class FavoritesLibraryStore: ObservableObject {
         }
     }
 
-    private static func hasVideoPlaybackURL(_ aweme: Aweme) -> Bool {
-        let audioExtensions = Set(["aac", "m4a", "mp3", "wav"])
-        return aweme.video?.play_addr?.url_list?.contains { value in
-            guard let url = URL(string: value) else { return false }
-            let host = url.host?.lowercased() ?? ""
-            return !host.contains("music")
-                && !audioExtensions.contains(url.pathExtension.lowercased())
-        } ?? false
-    }
 }
 
 @MainActor
@@ -91,7 +104,7 @@ struct FavoritesLibraryView: View {
                 } else if store.items.isEmpty {
                     emptyState
                 } else {
-                    FavoritesCollectionView(
+                    VideoLibraryCollectionView(
                         items: store.items,
                         onSelect: { selectedIndex = $0 },
                         onNearEnd: { index in
@@ -103,7 +116,11 @@ struct FavoritesLibraryView: View {
             }
             .navigationDestination(isPresented: playbackPresented) {
                 if let selectedIndex {
-                    FavoritePlaybackPage(store: store, initialIndex: selectedIndex)
+                    VideoLibraryPlaybackPage(
+                        store: store,
+                        initialIndex: selectedIndex,
+                        source: .favorites
+                    )
                 }
             }
         }
@@ -150,17 +167,27 @@ struct FavoritesLibraryView: View {
 /// 独立播放页。列表控制器保留在 NavigationStack 下层，系统会在返回时恢复
 /// collection view 的滚动位置与焦点。
 @MainActor
-private struct FavoritePlaybackPage: View {
+struct VideoLibraryPlaybackPage<Store: VideoLibraryStore>: View {
     @EnvironmentObject private var api: DouyinAPI
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var store: FavoritesLibraryStore
-    @StateObject private var playbackSlot = PlaybackSessionSlot(source: .favorites)
+    @ObservedObject var store: Store
+    @StateObject private var playbackSlot: PlaybackSessionSlot
     @State private var currentIndex: Int
     @State private var playbackToken: UInt64 = 1
+    @State private var selectedAuthor: Author?
+    @State private var authorPresented = false
+    private let allowsAuthorNavigation: Bool
 
-    init(store: FavoritesLibraryStore, initialIndex: Int) {
+    init(
+        store: Store,
+        initialIndex: Int,
+        source: PlaybackSource,
+        allowsAuthorNavigation: Bool = true
+    ) {
         self.store = store
         _currentIndex = State(initialValue: initialIndex)
+        _playbackSlot = StateObject(wrappedValue: PlaybackSessionSlot(source: source))
+        self.allowsAuthorNavigation = allowsAuthorNavigation
     }
 
     var body: some View {
@@ -174,17 +201,28 @@ private struct FavoritePlaybackPage: View {
                     playbackToken: playbackToken,
                     coordinator: session,
                     onPrevious: playPrevious,
-                    onNext: playNext
+                    onNext: playNext,
+                    onShowAuthor: allowsAuthorNavigation ? { showCurrentAuthor() } : nil
                 )
                 .ignoresSafeArea()
             } else {
                 ProgressView("正在载入视频").controlSize(.large)
             }
         }
-        .task { startPlayback() }
+        .onAppear { startPlayback() }
         .onChange(of: currentIndex) { _, _ in startPlayback() }
+        .onChange(of: authorPresented) { _, presented in
+            guard !presented else { return }
+            selectedAuthor = nil
+            startPlayback()
+        }
         .onExitCommand { dismiss() }
         .onDisappear { playbackSlot.deactivate() }
+        .navigationDestination(isPresented: $authorPresented) {
+            if let selectedAuthor {
+                AuthorWorksView(author: selectedAuthor)
+            }
+        }
     }
 
     private func startPlayback() {
@@ -219,16 +257,26 @@ private struct FavoritePlaybackPage: View {
             currentIndex = oldCount
         }
     }
+
+    private func showCurrentAuthor() {
+        guard allowsAuthorNavigation,
+              store.items.indices.contains(currentIndex),
+              let author = store.items[currentIndex].author,
+              !author.uid.isEmpty else { return }
+        selectedAuthor = author
+        playbackSlot.deactivate()
+        authorPresented = true
+    }
 }
 
 @MainActor
-private struct FavoritesCollectionView: UIViewControllerRepresentable {
+struct VideoLibraryCollectionView: UIViewControllerRepresentable {
     let items: [Aweme]
     let onSelect: (Int) -> Void
     let onNearEnd: (Int) -> Void
 
-    func makeUIViewController(context: Context) -> FavoritesCollectionViewController {
-        let controller = FavoritesCollectionViewController()
+    func makeUIViewController(context: Context) -> VideoLibraryCollectionViewController {
+        let controller = VideoLibraryCollectionViewController()
         controller.onSelect = onSelect
         controller.onNearEnd = onNearEnd
         controller.update(items: items)
@@ -236,7 +284,7 @@ private struct FavoritesCollectionView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(
-        _ controller: FavoritesCollectionViewController,
+        _ controller: VideoLibraryCollectionViewController,
         context: Context
     ) {
         controller.onSelect = onSelect
@@ -245,7 +293,7 @@ private struct FavoritesCollectionView: UIViewControllerRepresentable {
     }
 }
 
-private final class FavoritesCollectionViewController: UICollectionViewController {
+private final class VideoLibraryCollectionViewController: UICollectionViewController {
     var onSelect: ((Int) -> Void)?
     var onNearEnd: ((Int) -> Void)?
     private var items: [Aweme] = []
@@ -264,8 +312,8 @@ private final class FavoritesCollectionViewController: UICollectionViewControlle
         collectionView.backgroundColor = .black
         collectionView.remembersLastFocusedIndexPath = true
         collectionView.register(
-            FavoriteCollectionCell.self,
-            forCellWithReuseIdentifier: FavoriteCollectionCell.reuseIdentifier
+            VideoLibraryCollectionCell.self,
+            forCellWithReuseIdentifier: VideoLibraryCollectionCell.reuseIdentifier
         )
     }
 
@@ -273,7 +321,7 @@ private final class FavoritesCollectionViewController: UICollectionViewControlle
         super.viewWillDisappear(animated)
         // 播放页入栈或切换 Tab 时，立即停止列表的所有图片网络/解码工作。
         collectionView.visibleCells
-            .compactMap { $0 as? FavoriteCollectionCell }
+            .compactMap { $0 as? VideoLibraryCollectionCell }
             .forEach { $0.cancelImageLoading() }
     }
 
@@ -306,9 +354,9 @@ private final class FavoritesCollectionViewController: UICollectionViewControlle
         cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(
-            withReuseIdentifier: FavoriteCollectionCell.reuseIdentifier,
+            withReuseIdentifier: VideoLibraryCollectionCell.reuseIdentifier,
             for: indexPath
-        ) as? FavoriteCollectionCell else {
+        ) as? VideoLibraryCollectionCell else {
             return UICollectionViewCell()
         }
         cell.configure(with: items[indexPath.item])
@@ -353,8 +401,8 @@ private final class FavoritesCollectionViewController: UICollectionViewControlle
     }
 }
 
-private final class FavoriteCollectionCell: UICollectionViewCell {
-    static let reuseIdentifier = "FavoriteCollectionCell"
+private final class VideoLibraryCollectionCell: UICollectionViewCell {
+    static let reuseIdentifier = "VideoLibraryCollectionCell"
 
     private let artworkView = UIImageView()
     private let titleLabel = UILabel()
@@ -395,12 +443,12 @@ private final class FavoriteCollectionCell: UICollectionViewCell {
         countLabel.text = Self.formattedCount(aweme.statistics?.digg_count ?? 0)
 
         let artworkURL = aweme.video?.cover?.url_list?.compactMap(URL.init(string:)).first
-        artworkTask = FavoriteNativeImageLoader.load(url: artworkURL, maxPixelSize: 540) { [weak self] image in
+        artworkTask = NativeThumbnailLoader.load(url: artworkURL, maxPixelSize: 540) { [weak self] image in
             guard let self, representedID == aweme.aweme_id else { return }
             artworkView.image = image
         }
         let avatarURL = aweme.author?.avatar_thumb?.url_list?.compactMap(URL.init(string:)).first
-        avatarTask = FavoriteNativeImageLoader.load(url: avatarURL, maxPixelSize: 96) { [weak self] image in
+        avatarTask = NativeThumbnailLoader.load(url: avatarURL, maxPixelSize: 96) { [weak self] image in
             guard let self, representedID == aweme.aweme_id else { return }
             avatarView.image = image
         }
@@ -503,7 +551,7 @@ private final class FavoriteCollectionCell: UICollectionViewCell {
     }
 }
 
-private enum FavoriteNativeImageLoader {
+private enum NativeThumbnailLoader {
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.urlCache = nil

@@ -5,6 +5,7 @@ enum PlaybackSource: String {
     case recommend
     case following
     case favorites
+    case author
 }
 
 /// 保留每个 Tab 自己稳定的播放器会话。

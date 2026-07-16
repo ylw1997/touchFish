@@ -321,6 +321,58 @@ final class DouyinAPI: ObservableObject {
         try validateStatus(res.status_code, message: res.status_msg)
         return (res.aweme_list ?? [], res.max_cursor ?? maxCursor, res.has_more == 1)
     }
+
+    /// 获取指定作者发布的作品。
+    func getUserPosts(secUserID: String, maxCursor: Int = 0) async throws -> ([Aweme], Int, Bool) {
+        guard !secUserID.isEmpty else { throw APIError.invalidURL }
+        var components = URLComponents(
+            string: "https://www.douyin.com/aweme/v1/web/aweme/post/"
+        )
+        components?.queryItems = [
+            URLQueryItem(name: "device_platform", value: "webapp"),
+            URLQueryItem(name: "aid", value: "6383"),
+            URLQueryItem(name: "channel", value: "channel_pc_web"),
+            URLQueryItem(name: "sec_user_id", value: secUserID),
+            URLQueryItem(name: "max_cursor", value: String(maxCursor)),
+            URLQueryItem(name: "count", value: "18"),
+            URLQueryItem(name: "publish_video_strategy_type", value: "2"),
+            URLQueryItem(name: "pc_client_type", value: "1"),
+            URLQueryItem(name: "version_code", value: "170400"),
+            URLQueryItem(name: "version_name", value: "17.4.0"),
+            URLQueryItem(name: "cookie_enabled", value: "true"),
+            URLQueryItem(name: "browser_language", value: "zh-CN"),
+            URLQueryItem(name: "browser_platform", value: "Win32"),
+            URLQueryItem(name: "browser_name", value: "Chrome"),
+            URLQueryItem(name: "browser_version", value: "150.0.0.0"),
+            URLQueryItem(name: "browser_online", value: "true"),
+            URLQueryItem(name: "engine_name", value: "Blink"),
+            URLQueryItem(name: "engine_version", value: "150.0.0.0"),
+            URLQueryItem(name: "os_name", value: "Windows"),
+            URLQueryItem(name: "os_version", value: "10"),
+            URLQueryItem(name: "platform", value: "PC")
+        ]
+        guard let url = components?.url?.absoluteString else { throw APIError.invalidURL }
+
+        let res: FavoritesResponse = try await request(
+            url: url,
+            extraHeaders: ["Referer": "https://www.douyin.com/user/\(secUserID)"]
+        )
+        try validateStatus(res.status_code, message: res.status_msg)
+        let awemes = (res.aweme_list ?? []).filter { $0.video != nil }
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "author-posts-response",
+            category: "api",
+            fields: [
+                "author": String(secUserID.prefix(12)),
+                "cursor": maxCursor,
+                "videos": awemes.count,
+                "hasMore": res.has_more == 1
+            ]
+        )
+#endif
+        return (awemes, res.max_cursor ?? maxCursor, res.has_more == 1)
+    }
     
 }
 
@@ -413,9 +465,46 @@ struct Author: Decodable {
     let sec_user_id: String?
     let nickname: String?
     let avatar_thumb: AvatarUrl?
+    let signature: String?
+    let unique_id: String?
+    let follower_count: Int?
+    let aweme_count: Int?
+
+    private enum CodingKeys: String, CodingKey {
+        case sec_uid
+        case sec_user_id
+        case nickname
+        case avatar_thumb
+        case signature
+        case unique_id
+        case follower_count
+        case aweme_count
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        sec_uid = try? container.decode(String.self, forKey: .sec_uid)
+        sec_user_id = try? container.decode(String.self, forKey: .sec_user_id)
+        nickname = try? container.decode(String.self, forKey: .nickname)
+        avatar_thumb = try? container.decode(AvatarUrl.self, forKey: .avatar_thumb)
+        signature = try? container.decode(String.self, forKey: .signature)
+        unique_id = try? container.decode(String.self, forKey: .unique_id)
+        follower_count = Self.decodeInt(from: container, forKey: .follower_count)
+        aweme_count = Self.decodeInt(from: container, forKey: .aweme_count)
+    }
+
+    private static func decodeInt(
+        from container: KeyedDecodingContainer<CodingKeys>,
+        forKey key: CodingKeys
+    ) -> Int? {
+        if let value = try? container.decode(Int.self, forKey: key) { return value }
+        if let value = try? container.decode(String.self, forKey: key) { return Int(value) }
+        return nil
+    }
     
     var uid: String {
-        return sec_uid ?? sec_user_id ?? ""
+        if let sec_uid, !sec_uid.isEmpty { return sec_uid }
+        return sec_user_id ?? ""
     }
 }
 

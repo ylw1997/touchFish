@@ -10,6 +10,8 @@ struct DouyinFeedView: View {
     @EnvironmentObject private var api: DouyinAPI
     @StateObject private var store: DouyinFeedStore
     @StateObject private var playbackSlot: PlaybackSessionSlot
+    @State private var selectedAuthor: Author?
+    @State private var authorPresented = false
     private let isActive: Bool
 
     init(feedType: FeedType, isActive: Bool) {
@@ -24,33 +26,42 @@ struct DouyinFeedView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-
-            // 同一个 Tab 内上下切换只替换视频源；离开 Tab 后不保留隐藏的
-            // AVPlayerViewController，避免多个原生渲染层长期占用解码资源。
-            if isActive,
-               let aweme = store.activeItem,
-               let playbackSession = playbackSlot.session {
-                VideoPlayerView(
-                    aweme: aweme,
-                    cookie: api.cookie,
-                    playbackToken: store.playbackToken,
-                    coordinator: playbackSession,
-                    onPrevious: store.previous,
-                    onNext: { Task { await store.next() } }
-                )
-                .ignoresSafeArea()
-            }
-
-            if !isActive {
+        NavigationStack {
+            ZStack {
                 Color.black.ignoresSafeArea()
-            } else if store.activeItem != nil, playbackSlot.session == nil {
-                loadingView
-            } else if store.isLoading, store.activeItem == nil {
-                loadingView
-            } else if store.activeItem == nil {
-                emptyView
+
+                // 同一个 Tab 内上下切换只替换视频源；离开 Tab 后不保留隐藏的
+                // AVPlayerViewController，避免多个原生渲染层长期占用解码资源。
+                if isActive,
+                   let aweme = store.activeItem,
+                   let playbackSession = playbackSlot.session {
+                    VideoPlayerView(
+                        aweme: aweme,
+                        cookie: api.cookie,
+                        playbackToken: store.playbackToken,
+                        coordinator: playbackSession,
+                        onPrevious: store.previous,
+                        onNext: { Task { await store.next() } },
+                        onShowAuthor: showCurrentAuthor
+                    )
+                    .ignoresSafeArea()
+                }
+
+                if !isActive {
+                    Color.black.ignoresSafeArea()
+                } else if store.activeItem != nil, playbackSlot.session == nil {
+                    loadingView
+                } else if store.isLoading, store.activeItem == nil {
+                    loadingView
+                } else if store.activeItem == nil {
+                    emptyView
+                }
+            }
+            .onAppear { startPlaybackIfPossible() }
+            .navigationDestination(isPresented: $authorPresented) {
+                if let selectedAuthor {
+                    AuthorWorksView(author: selectedAuthor)
+                }
             }
         }
         .task(id: isActive) {
@@ -67,10 +78,17 @@ struct DouyinFeedView: View {
         .onChange(of: store.playbackToken) { _, _ in
             startPlaybackIfPossible()
         }
+        .onChange(of: authorPresented) { _, presented in
+            guard !presented else { return }
+            selectedAuthor = nil
+            startPlaybackIfPossible()
+        }
         .onChange(of: isActive) { _, active in
             // 激活由上面的 task(id:) 统一处理。离开时销毁该 Tab 的播放器和
             // 原生控制器；同一 Tab 内的视频切换仍然复用同一个实例。
             if !active {
+                authorPresented = false
+                selectedAuthor = nil
                 playbackSlot.deactivate()
             }
         }
@@ -113,5 +131,12 @@ struct DouyinFeedView: View {
             cookie: api.cookie,
             playbackToken: store.playbackToken
         )
+    }
+
+    private func showCurrentAuthor() {
+        guard let author = store.activeItem?.author, !author.uid.isEmpty else { return }
+        selectedAuthor = author
+        playbackSlot.deactivate()
+        authorPresented = true
     }
 }

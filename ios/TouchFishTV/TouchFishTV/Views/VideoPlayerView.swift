@@ -11,6 +11,7 @@ struct VideoPlayerView: View {
     let playbackToken: UInt64
     let onPrevious: () -> Void
     let onNext: () -> Void
+    let onShowAuthor: (() -> Void)?
 
     init(
         aweme: Aweme,
@@ -18,7 +19,8 @@ struct VideoPlayerView: View {
         playbackToken: UInt64,
         coordinator: PlaybackCoordinator,
         onPrevious: @escaping () -> Void,
-        onNext: @escaping () -> Void
+        onNext: @escaping () -> Void,
+        onShowAuthor: (() -> Void)? = nil
     ) {
         self.aweme = aweme
         self.cookie = cookie
@@ -26,6 +28,7 @@ struct VideoPlayerView: View {
         self.coordinator = coordinator
         self.onPrevious = onPrevious
         self.onNext = onNext
+        self.onShowAuthor = onShowAuthor
     }
 
     var body: some View {
@@ -36,6 +39,8 @@ struct VideoPlayerView: View {
                 allowsNavigationWhileStopped: coordinator.playbackError != nil,
                 onPrevious: onPrevious,
                 onNext: onNext,
+                authorName: aweme.author?.nickname,
+                onShowAuthor: aweme.author?.uid.isEmpty == false ? onShowAuthor : nil,
                 onVisible: { [weak coordinator] in coordinator?.resume() }
             )
 
@@ -70,6 +75,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     let diagnosticsID = String(UUID().uuidString.prefix(6))
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
+    var onShowAuthor: (() -> Void)?
     var onVisible: (() -> Void)?
     var isTransitioning = false
     var allowsNavigationWhileStopped = false
@@ -78,6 +84,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     private let focusAnchor = FocusAnchorView()
     private var prefersPlayerFocus = true
     private var navigationLocked = false
+    private var configuredAuthorName: String?
 
     deinit {
         PlaybackDiagnostics.shared.event(
@@ -109,6 +116,28 @@ final class DouyinPlayerViewController: AVPlayerViewController {
             focusAnchor.heightAnchor.constraint(equalToConstant: 1)
         ])
         danmakuController.install(in: self)
+    }
+
+    func configureAuthorAction(name: String?, action: (() -> Void)?) {
+        onShowAuthor = action
+        let normalizedName = name?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard action != nil else {
+            configuredAuthorName = nil
+            transportBarCustomMenuItems = []
+            return
+        }
+        guard configuredAuthorName != normalizedName || transportBarCustomMenuItems.isEmpty else {
+            return
+        }
+
+        configuredAuthorName = normalizedName
+        let userAction = UIAction(
+            title: "用户",
+            image: UIImage(systemName: "person.crop.circle")
+        ) { [weak self] _ in
+            self?.onShowAuthor?()
+        }
+        transportBarCustomMenuItems = [userAction]
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -205,6 +234,8 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let allowsNavigationWhileStopped: Bool
     let onPrevious: () -> Void
     let onNext: () -> Void
+    let authorName: String?
+    let onShowAuthor: (() -> Void)?
     let onVisible: () -> Void
 
     func makeUIViewController(context: Context) -> DouyinPlayerViewController {
@@ -220,6 +251,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.onVisible = onVisible
+        controller.configureAuthorAction(name: authorName, action: onShowAuthor)
         controller.isTransitioning = isTransitioning
         controller.allowsNavigationWhileStopped = allowsNavigationWhileStopped
     }
@@ -230,7 +262,9 @@ struct NativePlayerController: UIViewControllerRepresentable {
     ) {
         controller.onPrevious = nil
         controller.onNext = nil
+        controller.onShowAuthor = nil
         controller.onVisible = nil
+        controller.transportBarCustomMenuItems = []
         controller.danmakuController.stop()
         PlaybackDiagnostics.shared.event(
             "dismantle",
