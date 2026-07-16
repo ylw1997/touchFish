@@ -89,8 +89,6 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     private var configuredHasAuthorAction = false
     private var configuredDanmakuEnabled: Bool?
     private var configuredDanmakuAvailable = true
-    private var pendingNavigationPresses: [ObjectIdentifier: PendingNavigation] = [:]
-
     private enum NavigationDirection {
         case previous
         case next
@@ -215,47 +213,28 @@ final class DouyinPlayerViewController: AVPlayerViewController {
             return
         }
 
-        for press in presses {
-            let direction: NavigationDirection
+        let focusedViewBeforePress = focusedViewIdentifier
+        let pending = presses.compactMap { press -> PendingNavigation? in
             switch press.type {
             case .upArrow:
-                direction = .previous
+                return PendingNavigation(direction: .previous, focusedView: focusedViewBeforePress)
             case .downArrow:
-                direction = .next
+                return PendingNavigation(direction: .next, focusedView: focusedViewBeforePress)
             default:
-                continue
+                return nil
             }
-            pendingNavigationPresses[ObjectIdentifier(press)] = PendingNavigation(
-                direction: direction,
-                focusedView: focusedViewIdentifier
-            )
         }
         // 先让 AVPlayerViewController 和 tvOS 焦点系统完整处理方向键。
-        // 只有焦点没有移动时，pressesEnded 才会把它解释为视频切换。
+        // 下一轮主线程中焦点仍未移动，才把按键解释为视频切换。
         super.pressesBegan(presses, with: event)
-    }
-
-    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        super.pressesEnded(presses, with: event)
-        let pending = presses.compactMap {
-            pendingNavigationPresses.removeValue(forKey: ObjectIdentifier($0))
-        }
         guard !pending.isEmpty else { return }
-
-        DispatchQueue.main.async { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
             guard let self, self.canEvaluateVideoNavigation else { return }
             for navigation in pending where navigation.focusedView == self.focusedViewIdentifier {
                 self.performNavigation(navigation.direction)
                 break
             }
         }
-    }
-
-    override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        for press in presses {
-            pendingNavigationPresses.removeValue(forKey: ObjectIdentifier(press))
-        }
-        super.pressesCancelled(presses, with: event)
     }
 
     private func performNavigation(_ direction: NavigationDirection) {
