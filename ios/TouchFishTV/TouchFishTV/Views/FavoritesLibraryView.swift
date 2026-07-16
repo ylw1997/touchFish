@@ -390,7 +390,6 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
         didUpdateFocusIn context: UICollectionViewFocusUpdateContext,
         with coordinator: UIFocusAnimationCoordinator
     ) {
-        super.collectionView(collectionView, didUpdateFocusIn: context, with: coordinator)
         guard let indexPath = context.nextFocusedIndexPath else { return }
         coordinator.addCoordinatedAnimations(nil) { [weak self] in
             DispatchQueue.main.async {
