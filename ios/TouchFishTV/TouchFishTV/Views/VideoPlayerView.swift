@@ -42,7 +42,6 @@ struct VideoPlayerView: View {
                 authorName: aweme.displayAuthor?.nickname,
                 onShowAuthor: aweme.displayAuthor?.uid.isEmpty == false ? onShowAuthor : nil,
                 danmakuAvailable: !aweme.isLive,
-                routesUpToPlaybackControls: aweme.isLive,
                 onVisible: { [weak coordinator] in coordinator?.resume() }
             )
 
@@ -81,7 +80,6 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     var onVisible: (() -> Void)?
     var isTransitioning = false
     var allowsNavigationWhileStopped = false
-    var routesUpToPlaybackControls = false
     let danmakuController = DanmakuOverlayController()
 
     private let focusAnchor = FocusAnchorView()
@@ -91,6 +89,17 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     private var configuredHasAuthorAction = false
     private var configuredDanmakuEnabled: Bool?
     private var configuredDanmakuAvailable = true
+    private var pendingNavigationPresses: [ObjectIdentifier: PendingNavigation] = [:]
+
+    private enum NavigationDirection {
+        case previous
+        case next
+    }
+
+    private struct PendingNavigation {
+        let direction: NavigationDirection
+        let focusedView: ObjectIdentifier?
+    }
 
     deinit {
         PlaybackDiagnostics.shared.event(
@@ -201,40 +210,70 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     }
 
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        guard canNavigateVideos else {
+        guard canEvaluateVideoNavigation else {
             super.pressesBegan(presses, with: event)
             return
         }
 
-        var remaining = presses
         for press in presses {
+            let direction: NavigationDirection
             switch press.type {
             case .upArrow:
-                // 直播通常没有可暂停后再进入控制栏的交互。上键必须继续交给
-                // AVPlayerViewController，才能将焦点移到“用户”等原生按钮。
-                if routesUpToPlaybackControls { continue }
-                PlaybackDiagnostics.shared.event(
-                    "navigate-previous",
-                    category: "controller",
-                    fields: ["controller": diagnosticsID]
-                )
-                lockNavigationBriefly()
-                onPrevious?()
-                remaining.remove(press)
+                direction = .previous
             case .downArrow:
-                PlaybackDiagnostics.shared.event(
-                    "navigate-next",
-                    category: "controller",
-                    fields: ["controller": diagnosticsID]
-                )
-                lockNavigationBriefly()
-                onNext?()
-                remaining.remove(press)
+                direction = .next
             default:
+                continue
+            }
+            pendingNavigationPresses[ObjectIdentifier(press)] = PendingNavigation(
+                direction: direction,
+                focusedView: focusedViewIdentifier
+            )
+        }
+        // 先让 AVPlayerViewController 和 tvOS 焦点系统完整处理方向键。
+        // 只有焦点没有移动时，pressesEnded 才会把它解释为视频切换。
+        super.pressesBegan(presses, with: event)
+    }
+
+    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        super.pressesEnded(presses, with: event)
+        let pending = presses.compactMap {
+            pendingNavigationPresses.removeValue(forKey: ObjectIdentifier($0))
+        }
+        guard !pending.isEmpty else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.canEvaluateVideoNavigation else { return }
+            for navigation in pending where navigation.focusedView == self.focusedViewIdentifier {
+                self.performNavigation(navigation.direction)
                 break
             }
         }
-        if !remaining.isEmpty { super.pressesBegan(remaining, with: event) }
+    }
+
+    override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        for press in presses {
+            pendingNavigationPresses.removeValue(forKey: ObjectIdentifier(press))
+        }
+        super.pressesCancelled(presses, with: event)
+    }
+
+    private func performNavigation(_ direction: NavigationDirection) {
+        let event: String
+        switch direction {
+        case .previous: event = "navigate-previous"
+        case .next: event = "navigate-next"
+        }
+        PlaybackDiagnostics.shared.event(
+            event,
+            category: "controller",
+            fields: ["controller": diagnosticsID, "focusStayed": true]
+        )
+        lockNavigationBriefly()
+        switch direction {
+        case .previous: onPrevious?()
+        case .next: onNext?()
+        }
     }
 
     private func lockNavigationBriefly() {
@@ -244,23 +283,18 @@ final class DouyinPlayerViewController: AVPlayerViewController {
         }
     }
 
-    private var canNavigateVideos: Bool {
+    private var canEvaluateVideoNavigation: Bool {
         guard !isTransitioning, !navigationLocked,
               let player else { return false }
         guard player.timeControlStatus == .playing || allowsNavigationWhileStopped else { return false }
-        return !isPlaybackControlFocused
+        return true
     }
 
-    private var isPlaybackControlFocused: Bool {
-        guard var focused = UIFocusSystem.focusSystem(for: view)?.focusedItem as? UIView else { return false }
-        while focused !== view {
-            if focused is UIControl || focused.accessibilityTraits.contains(.button) || focused.accessibilityTraits.contains(.adjustable) {
-                return true
-            }
-            guard let parent = focused.superview else { break }
-            focused = parent
+    private var focusedViewIdentifier: ObjectIdentifier? {
+        guard let focusedView = UIFocusSystem.focusSystem(for: view)?.focusedItem as? UIView else {
+            return nil
         }
-        return false
+        return ObjectIdentifier(focusedView)
     }
 }
 
@@ -273,7 +307,6 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let authorName: String?
     let onShowAuthor: (() -> Void)?
     let danmakuAvailable: Bool
-    let routesUpToPlaybackControls: Bool
     let onVisible: () -> Void
 
     func makeUIViewController(context: Context) -> DouyinPlayerViewController {
@@ -289,7 +322,6 @@ struct NativePlayerController: UIViewControllerRepresentable {
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.onVisible = onVisible
-        controller.routesUpToPlaybackControls = routesUpToPlaybackControls
         controller.configureAuthorAction(
             name: authorName,
             action: onShowAuthor,
