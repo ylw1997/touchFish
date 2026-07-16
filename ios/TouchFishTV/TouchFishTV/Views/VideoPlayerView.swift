@@ -39,8 +39,9 @@ struct VideoPlayerView: View {
                 allowsNavigationWhileStopped: coordinator.playbackError != nil,
                 onPrevious: onPrevious,
                 onNext: onNext,
-                authorName: aweme.author?.nickname,
-                onShowAuthor: aweme.author?.uid.isEmpty == false ? onShowAuthor : nil,
+                authorName: aweme.displayAuthor?.nickname,
+                onShowAuthor: aweme.displayAuthor?.uid.isEmpty == false ? onShowAuthor : nil,
+                danmakuAvailable: !aweme.isLive,
                 onVisible: { [weak coordinator] in coordinator?.resume() }
             )
 
@@ -87,6 +88,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
     private var configuredAuthorName: String?
     private var configuredHasAuthorAction = false
     private var configuredDanmakuEnabled: Bool?
+    private var configuredDanmakuAvailable = true
 
     deinit {
         PlaybackDiagnostics.shared.event(
@@ -120,15 +122,16 @@ final class DouyinPlayerViewController: AVPlayerViewController {
         danmakuController.install(in: self)
     }
 
-    func configureAuthorAction(name: String?, action: (() -> Void)?) {
+    func configureAuthorAction(name: String?, action: (() -> Void)?, danmakuAvailable: Bool) {
         onShowAuthor = action
-        danmakuController.synchronizePreference()
+        if danmakuAvailable { danmakuController.synchronizePreference() }
         let normalizedName = name?.trimmingCharacters(in: .whitespacesAndNewlines)
         let hasAuthorAction = action != nil
         let danmakuEnabled = danmakuController.isEnabled
         guard configuredAuthorName != normalizedName
                 || configuredHasAuthorAction != hasAuthorAction
                 || configuredDanmakuEnabled != danmakuEnabled
+                || configuredDanmakuAvailable != danmakuAvailable
                 || transportBarCustomMenuItems.isEmpty else {
             return
         }
@@ -136,6 +139,7 @@ final class DouyinPlayerViewController: AVPlayerViewController {
         configuredAuthorName = normalizedName
         configuredHasAuthorAction = hasAuthorAction
         configuredDanmakuEnabled = danmakuEnabled
+        configuredDanmakuAvailable = danmakuAvailable
         rebuildTransportBarActions()
     }
 
@@ -151,17 +155,19 @@ final class DouyinPlayerViewController: AVPlayerViewController {
             actions.append(userAction)
         }
 
-        let danmakuEnabled = danmakuController.isEnabled
-        configuredDanmakuEnabled = danmakuEnabled
-        let danmakuAction = UIAction(
-            title: danmakuEnabled ? "关闭弹幕" : "开启弹幕",
-            image: UIImage(systemName: danmakuEnabled ? "captions.bubble.fill" : "captions.bubble")
-        ) { [weak self] _ in
-            guard let self else { return }
-            danmakuController.setEnabled(!danmakuController.isEnabled)
-            rebuildTransportBarActions()
+        if configuredDanmakuAvailable {
+            let danmakuEnabled = danmakuController.isEnabled
+            configuredDanmakuEnabled = danmakuEnabled
+            let danmakuAction = UIAction(
+                title: danmakuEnabled ? "关闭弹幕" : "开启弹幕",
+                image: UIImage(systemName: danmakuEnabled ? "captions.bubble.fill" : "captions.bubble")
+            ) { [weak self] _ in
+                guard let self else { return }
+                danmakuController.setEnabled(!danmakuController.isEnabled)
+                rebuildTransportBarActions()
+            }
+            actions.append(danmakuAction)
         }
-        actions.append(danmakuAction)
         transportBarCustomMenuItems = actions
     }
 
@@ -261,6 +267,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let onNext: () -> Void
     let authorName: String?
     let onShowAuthor: (() -> Void)?
+    let danmakuAvailable: Bool
     let onVisible: () -> Void
 
     func makeUIViewController(context: Context) -> DouyinPlayerViewController {
@@ -276,7 +283,11 @@ struct NativePlayerController: UIViewControllerRepresentable {
         controller.onPrevious = onPrevious
         controller.onNext = onNext
         controller.onVisible = onVisible
-        controller.configureAuthorAction(name: authorName, action: onShowAuthor)
+        controller.configureAuthorAction(
+            name: authorName,
+            action: onShowAuthor,
+            danmakuAvailable: danmakuAvailable
+        )
         controller.isTransitioning = isTransitioning
         controller.allowsNavigationWhileStopped = allowsNavigationWhileStopped
     }

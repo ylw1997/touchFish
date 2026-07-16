@@ -134,7 +134,7 @@ struct DouyinFeedView: View {
     }
 
     private func showCurrentAuthor() {
-        guard let author = store.activeItem?.author, !author.uid.isEmpty else { return }
+        guard let author = store.activeItem?.displayAuthor, !author.uid.isEmpty else { return }
         selectedAuthor = author
         playbackSlot.deactivate()
         authorPresented = true

@@ -255,6 +255,8 @@ final class PlaybackCoordinator: ObservableObject {
         if playerViewController.player !== player {
             playerViewController.player = player
         }
+        playerViewController.requiresLinearPlayback = aweme.isLive
+        player.automaticallyWaitsToMinimizeStalling = aweme.isLive
         isTransitioning = true
         presentationOpacity = 0.82
         playbackError = nil
@@ -266,18 +268,20 @@ final class PlaybackCoordinator: ObservableObject {
         }
         currentPlaybackToken = playbackToken
         currentAwemeID = aweme.aweme_id
-        playerViewController.danmakuController.configure(
-            aweme: aweme,
-            player: player,
-            cookie: cookie,
-            playbackToken: playbackToken
-        )
+        if !aweme.isLive {
+            playerViewController.danmakuController.configure(
+                aweme: aweme,
+                player: player,
+                cookie: cookie,
+                playbackToken: playbackToken
+            )
+        }
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsEvent(
             "play-request",
             category: "session",
-            fields: ["token": playbackToken, "aweme": aweme.aweme_id]
+            fields: ["token": playbackToken, "aweme": aweme.aweme_id, "live": aweme.isLive]
         )
 #endif
 
@@ -288,20 +292,25 @@ final class PlaybackCoordinator: ObservableObject {
             category: "asset",
             fields: [
                 "count": urls.count,
+                "live": aweme.isLive,
                 "hosts": urls.map { $0.host ?? "unknown" }.joined(separator: ",")
             ]
         )
 #endif
         guard !urls.isEmpty else {
             releaseCurrentItem()
-            failPlayback(generation: requestedGeneration, message: "该视频没有可用的播放地址")
+            failPlayback(
+                generation: requestedGeneration,
+                message: aweme.isLive ? "该直播间当前没有可用的直播流" : "该视频没有可用的播放地址"
+            )
             return
         }
 
         var headers = [
             "User-Agent": Self.playbackUserAgent,
-            "Referer": "https://www.douyin.com/"
+            "Referer": aweme.isLive ? "https://live.douyin.com/" : "https://www.douyin.com/"
         ]
+        if aweme.isLive { headers["Origin"] = "https://live.douyin.com" }
         if !cookie.isEmpty { headers["Cookie"] = cookie }
 
         let playbackEndpoints = urls.filter(isDouyinPlaybackEndpoint)
@@ -377,7 +386,12 @@ final class PlaybackCoordinator: ObservableObject {
         guard requestedGeneration == generation,
               playbackArbiter.isActive(self) else { return }
         guard urls.indices.contains(startIndex) else {
-            failPlayback(generation: requestedGeneration, message: "该视频暂时无法播放，按上下键切换")
+            failPlayback(
+                generation: requestedGeneration,
+                message: aweme.isLive
+                    ? "该直播暂时无法播放，按上下键切换"
+                    : "该视频暂时无法播放，按上下键切换"
+            )
             return
         }
 
@@ -397,7 +411,7 @@ final class PlaybackCoordinator: ObservableObject {
         let item = AVPlayerItem(asset: asset)
         // Feed 只需要少量前向缓存。旧值 8 秒在渐进式 MP4 上会被系统放大到
         // 一百多秒，当前 item 单独就会长期占用约 50 MB 解码/网络缓冲。
-        item.preferredForwardBufferDuration = 2
+        item.preferredForwardBufferDuration = aweme.isLive ? 3 : 2
         item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
         guard requestedGeneration == generation,
               playbackArbiter.isActive(self) else {
@@ -447,7 +461,7 @@ final class PlaybackCoordinator: ObservableObject {
                     break
                 case .readyToPlay:
                     let size = item.presentationSize
-                    guard size.width > 0, size.height > 0 else {
+                    guard aweme.isLive || (size.width > 0 && size.height > 0) else {
 #if DEBUG
                         self.diagnosticsEvent(
                             "item-has-no-video-track",
@@ -544,6 +558,8 @@ final class PlaybackCoordinator: ObservableObject {
         diagnosticsEvent("stop", category: "session")
 #endif
         playerViewController.danmakuController.stop()
+        playerViewController.requiresLinearPlayback = false
+        player.automaticallyWaitsToMinimizeStalling = false
         releaseCurrentItem()
         // 只清空 currentItem 不足以立即释放 AVPlayerViewController 内部的
         // AVSampleBufferDisplayLayer。跨 Tab 时同时解绑 player，防止隐藏的
@@ -650,6 +666,9 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func preferredURLs(for aweme: Aweme) -> [URL] {
+        if let liveRoom = aweme.liveRoom, liveRoom.isOnline {
+            return liveRoom.preferredHLSURLs
+        }
         guard let video = aweme.video else { return [] }
         let preferredH264 = (video.bit_rate ?? [])
             .filter { $0.is_h265 != 1 }
@@ -710,9 +729,13 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func metadata(for aweme: Aweme) -> [AVMetadataItem] {
-        [
-            metadataItem(.commonIdentifierTitle, aweme.desc?.isEmpty == false ? aweme.desc! : "无标题"),
-            metadataItem(.iTunesMetadataTrackSubTitle, aweme.author?.nickname?.isEmpty == false ? aweme.author!.nickname! : "未知作者")
+        let authorName = aweme.displayAuthor?.nickname
+        return [
+            metadataItem(.commonIdentifierTitle, aweme.displayTitle),
+            metadataItem(
+                .iTunesMetadataTrackSubTitle,
+                authorName?.isEmpty == false ? authorName! : "未知作者"
+            )
         ]
     }
 

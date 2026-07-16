@@ -266,7 +266,7 @@ final class DouyinAPI: ObservableObject {
             extraHeaders: ["Referer": "https://www.douyin.com/?recommend=1"]
         )
         try validateStatus(res.status_code, message: res.status_msg)
-        let awemes = (res.aweme_list ?? []).filter { $0.video != nil }
+        let awemes = (res.aweme_list ?? []).filter(\.isPlayableFeedItem)
         let hasMore = (res.has_more ?? 1) != 0
 #if DEBUG
         PlaybackDiagnostics.shared.event(
@@ -276,7 +276,9 @@ final class DouyinAPI: ObservableObject {
                 "refreshIndex": refreshIndex,
                 "viewCount": viewCount,
                 "entries": res.aweme_list?.count ?? 0,
-                "videos": awemes.count,
+                "playable": awemes.count,
+                "videos": awemes.filter { !$0.isLive }.count,
+                "liveRooms": awemes.filter(\.isLive).count,
                 "hasMore": hasMore
             ]
         )
@@ -294,7 +296,7 @@ final class DouyinAPI: ObservableObject {
         let url = "https://www.douyin.com/aweme/v1/web/follow/feed/?device_platform=webapp&aid=6383&channel=channel_pc_web&cursor=\(requestCursor)&level=1&count=20&pull_type=2&aweme_ids=&room_ids=&pc_client_type=1&pc_libra_divert=Windows&support_h265=1&support_dash=1&version_code=170400&version_name=17.4.0&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
         let res: FollowingResponse = try await request(url: url, extraHeaders: ["Referer": "https://www.douyin.com/follow"])
         try validateStatus(res.status_code, message: res.status_msg)
-        let awemes = (res.data ?? []).compactMap { $0.aweme }.filter { $0.video != nil }
+        let awemes = (res.data ?? []).compactMap { $0.playableItem }
         let nextCursor = res.cursor ?? requestCursor
         let hasMore = res.has_more ?? (res.has_more_int == 1)
 #if DEBUG
@@ -305,8 +307,10 @@ final class DouyinAPI: ObservableObject {
                 "requestCursor": requestCursor,
                 "nextCursor": nextCursor,
                 "entries": res.data?.count ?? 0,
-                "videos": awemes.count,
-                "nonVideoEntries": (res.data?.count ?? 0) - awemes.count,
+                "playable": awemes.count,
+                "videos": awemes.filter { !$0.isLive }.count,
+                "liveRooms": awemes.filter(\.isLive).count,
+                "nonPlayableEntries": (res.data?.count ?? 0) - awemes.count,
                 "hasMore": hasMore
             ]
         )
@@ -463,6 +467,13 @@ struct FollowingResponse: Decodable {
 
 struct FollowingItem: Decodable {
     let aweme: Aweme?
+    let cell_room: CellRoomPayload?
+
+    var playableItem: Aweme? {
+        if let aweme, aweme.isPlayableFeedItem { return aweme }
+        guard let liveRoom = cell_room?.liveRoom, liveRoom.isOnline else { return nil }
+        return Aweme(liveRoom: liveRoom)
+    }
 }
 
 struct StatusResponse: Decodable {
@@ -477,6 +488,8 @@ struct Aweme: Decodable, Identifiable, Equatable {
     let author: Author?
     let video: Video?
     let statistics: Statistics?
+    let aweme_type: Int?
+    let liveRoom: LiveRoom?
     
     enum CodingKeys: String, CodingKey {
         case aweme_id
@@ -484,6 +497,8 @@ struct Aweme: Decodable, Identifiable, Equatable {
         case author
         case video
         case statistics
+        case aweme_type
+        case cell_room
     }
     
     init(from decoder: Decoder) throws {
@@ -493,11 +508,108 @@ struct Aweme: Decodable, Identifiable, Equatable {
         self.author = try container.decodeIfPresent(Author.self, forKey: .author)
         self.video = try container.decodeIfPresent(Video.self, forKey: .video)
         self.statistics = try container.decodeIfPresent(Statistics.self, forKey: .statistics)
+        self.aweme_type = try container.decodeIfPresent(Int.self, forKey: .aweme_type)
+        self.liveRoom = try container.decodeIfPresent(CellRoomPayload.self, forKey: .cell_room)?.liveRoom
+    }
+
+    init(liveRoom: LiveRoom) {
+        aweme_id = liveRoom.id_str
+        desc = liveRoom.title
+        author = liveRoom.owner
+        video = nil
+        statistics = nil
+        aweme_type = 101
+        self.liveRoom = liveRoom
     }
     
     static func == (lhs: Aweme, rhs: Aweme) -> Bool {
         return lhs.aweme_id == rhs.aweme_id
     }
+
+    var isLive: Bool { liveRoom != nil }
+
+    var isPlayableFeedItem: Bool {
+        video != nil || (liveRoom?.isOnline == true && liveRoom?.preferredHLSURLs.isEmpty == false)
+    }
+
+    var displayTitle: String {
+        if let title = liveRoom?.title, !title.isEmpty { return "直播 · \(title)" }
+        return desc?.isEmpty == false ? desc! : "无标题"
+    }
+
+    var displayAuthor: Author? { liveRoom?.owner ?? author }
+}
+
+struct CellRoomPayload: Decodable {
+    let rawdata: String?
+
+    var liveRoom: LiveRoom? {
+        guard let rawdata, let data = rawdata.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(LiveRoom.self, from: data)
+    }
+}
+
+struct LiveRoom: Decodable {
+    let id_str: String
+    let status: Int?
+    let title: String?
+    let user_count: Int?
+    let cover: AvatarUrl?
+    let stream_url: LiveStreamURL?
+    let owner: Author?
+
+    private enum CodingKeys: String, CodingKey {
+        case id_str
+        case id
+        case status
+        case title
+        case user_count
+        case cover
+        case stream_url
+        case owner
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let value = try? container.decode(String.self, forKey: .id_str) {
+            id_str = value
+        } else if let value = try? container.decode(Int64.self, forKey: .id) {
+            id_str = String(value)
+        } else if let value = try? container.decode(String.self, forKey: .id) {
+            id_str = value
+        } else {
+            throw DecodingError.keyNotFound(
+                CodingKeys.id_str,
+                DecodingError.Context(
+                    codingPath: container.codingPath,
+                    debugDescription: "直播间缺少 id_str/id"
+                )
+            )
+        }
+        status = try container.decodeIfPresent(Int.self, forKey: .status)
+        title = try container.decodeIfPresent(String.self, forKey: .title)
+        user_count = try container.decodeIfPresent(Int.self, forKey: .user_count)
+        cover = try container.decodeIfPresent(AvatarUrl.self, forKey: .cover)
+        stream_url = try container.decodeIfPresent(LiveStreamURL.self, forKey: .stream_url)
+        owner = try container.decodeIfPresent(Author.self, forKey: .owner)
+    }
+
+    var isOnline: Bool { status == 2 }
+
+    var preferredHLSURLs: [URL] {
+        let map = stream_url?.hls_pull_url_map ?? [:]
+        let orderedValues = ["HD1", "SD2", "SD1", "FULL_HD1"].compactMap { map[$0] }
+            + [stream_url?.hls_pull_url].compactMap { $0 }
+        var seen = Set<String>()
+        return orderedValues.compactMap(URL.init(string:)).filter {
+            seen.insert($0.absoluteString).inserted
+        }
+    }
+}
+
+struct LiveStreamURL: Decodable {
+    let hls_pull_url: String?
+    let hls_pull_url_map: [String: String]?
 }
 
 struct Author: Decodable {

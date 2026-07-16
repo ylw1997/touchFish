@@ -261,7 +261,7 @@ struct VideoLibraryPlaybackPage<Store: VideoLibraryStore>: View {
     private func showCurrentAuthor() {
         guard allowsAuthorNavigation,
               store.items.indices.contains(currentIndex),
-              let author = store.items[currentIndex].author,
+              let author = store.items[currentIndex].displayAuthor,
               !author.uid.isEmpty else { return }
         selectedAuthor = author
         playbackSlot.deactivate()
