@@ -421,17 +421,17 @@ final class VideoLibraryCollectionViewController: UICollectionViewController {
                 heightDimension: .fractionalHeight(1)
             )
         )
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 18, bottom: 0, trailing: 18)
 
         let group = NSCollectionLayoutGroup.horizontal(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1),
-                heightDimension: .absolute(452)
+                heightDimension: .absolute(458)
             ),
             subitems: [item]
         )
         let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 24
+        section.interGroupSpacing = 42
         section.contentInsets = NSDirectionalEdgeInsets(
             top: topContentInset,
             leading: 100,
@@ -564,11 +564,11 @@ private final class VideoLibraryCollectionCell: UICollectionViewCell {
             artworkView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             artworkView.heightAnchor.constraint(equalTo: artworkView.widthAnchor, multiplier: 4.0 / 3.0),
 
-            titleLabel.topAnchor.constraint(equalTo: artworkView.bottomAnchor, constant: 10),
+            titleLabel.topAnchor.constraint(equalTo: artworkView.bottomAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
-            footer.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            footer.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
             footer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             footer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             footer.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
