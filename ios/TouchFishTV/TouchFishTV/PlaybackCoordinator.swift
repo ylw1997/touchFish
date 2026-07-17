@@ -463,16 +463,18 @@ final class PlaybackCoordinator: ObservableObject {
         guard isTransitioning,
               requestedGeneration == generation,
               player.currentItem === item else { return }
-        // 普通视频确认轨道后即可结束启动检测；直播还要保留四秒检测，
-        // 防止 manifest 已解析但流始终没有进入播放状态。
-        if !aweme.isLive {
-            liveStartupValidationTask?.cancel()
-            liveStartupValidationTask = nil
-        }
+        // 轨道已经确认后，这个候选就是有效的。直播在 item 尚未 ready 时调用
+        // playImmediately 可能被 AVFoundation 留在 paused；在 ready 后再明确
+        // 启动一次。此时也必须终止候选回退计时，不能把有效直播主动销毁。
+        liveStartupValidationTask?.cancel()
+        liveStartupValidationTask = nil
         itemPresentationSizeObservation?.invalidate()
         itemPresentationSizeObservation = nil
         // 只在资产已经确认含有可用视频轨道后再写入原生播放元数据。
         item.externalMetadata = metadata(for: aweme)
+        if aweme.isLive {
+            player.playImmediately(atRate: 1)
+        }
 #if DEBUG
         diagnosticsEvent(
             "item-ready",
@@ -506,9 +508,25 @@ final class PlaybackCoordinator: ObservableObject {
 
             let size = item.presentationSize
             let hasVideo = size.width > 0 && size.height > 0
-            let isMakingProgress = self.player.timeControlStatus == .playing
-                && self.player.rate > 0
-            guard !hasVideo || !isMakingProgress else { return }
+            // 已经出现视频轨道就说明 HLS 候选有效。paused 只是启动命令没有
+            // 在 unknown -> ready 期间保留下来，重新播放即可，不能切走候选。
+            if hasVideo {
+                if self.player.timeControlStatus != .playing || self.player.rate == 0 {
+                    self.player.playImmediately(atRate: 1)
+#if DEBUG
+                    self.diagnosticsEvent(
+                        "live-ready-resumed",
+                        category: "item",
+                        fields: [
+                            "candidate": candidateIndex,
+                            "host": urls[candidateIndex].host ?? "unknown"
+                        ]
+                    )
+#endif
+                }
+                self.liveStartupValidationTask = nil
+                return
+            }
 #if DEBUG
             self.diagnosticsEvent(
                 "live-startup-timeout-try-next",
