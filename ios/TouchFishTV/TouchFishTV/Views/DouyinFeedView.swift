@@ -42,7 +42,7 @@ struct DouyinFeedView: View {
                         cookie: api.cookie,
                         playbackToken: store.playbackToken,
                         coordinator: playbackSession,
-                        onPrevious: store.previous,
+                        onPrevious: { Task { await store.previous() } },
                         onNext: { Task { await store.next() } },
                         onShowAuthor: showCurrentAuthor
                     )

@@ -436,8 +436,7 @@ final class DouyinAPI: ObservableObject {
         let awemes = (res.data ?? []).compactMap { entry -> Aweme? in
             guard entry.type == nil || entry.type == 1,
                   let room = entry.data,
-                  room.isOnline,
-                  !room.preferredHLSURLs.isEmpty else { return nil }
+                  room.owner?.web_rid?.isEmpty == false else { return nil }
             return Aweme(liveRoom: room)
         }
         let nextMaxTime = res.extra?.max_time ?? maxTime
@@ -503,8 +502,7 @@ final class DouyinAPI: ObservableObject {
         let awemes = (res.data ?? []).compactMap { entry -> Aweme? in
             guard entry.type == 2,
                   let room = entry.data,
-                  room.isOnline,
-                  !room.preferredHLSURLs.isEmpty else { return nil }
+                  room.owner?.web_rid?.isEmpty == false else { return nil }
             return Aweme(liveRoom: room)
         }
 #if DEBUG
@@ -519,6 +517,58 @@ final class DouyinAPI: ObservableObject {
         )
 #endif
         return awemes
+    }
+
+    /// 直播广场只返回用于列表发现的临时播放数据，其中经常优先提供
+    /// bytevc1/H.265。播放前按 web_rid 获取正式房间数据；该响应与
+    /// 推荐/关注中的 cell_room 一致，会给出完整的 H.264 清晰度 Map。
+    func getPlayableLiveRoom(webRID: String) async throws -> LiveRoom {
+        guard !webRID.isEmpty else { throw APIError.invalidURL }
+        var components = URLComponents(
+            string: "https://live.douyin.com/webcast/room/web/enter/"
+        )
+        components?.queryItems = [
+            URLQueryItem(name: "aid", value: "6383"),
+            URLQueryItem(name: "app_name", value: "douyin_web"),
+            URLQueryItem(name: "live_id", value: "1"),
+            URLQueryItem(name: "device_platform", value: "web"),
+            URLQueryItem(name: "language", value: "zh-CN"),
+            URLQueryItem(name: "browser_language", value: "zh-CN"),
+            URLQueryItem(name: "browser_platform", value: "Win32"),
+            URLQueryItem(name: "browser_name", value: "Chrome"),
+            URLQueryItem(name: "browser_version", value: "150.0.0.0"),
+            URLQueryItem(name: "web_rid", value: webRID),
+            URLQueryItem(name: "msToken", value: "")
+        ]
+        guard let url = components?.url?.absoluteString else {
+            throw APIError.invalidURL
+        }
+
+        let res: LiveRoomEnterResponse = try await request(
+            url: url,
+            extraHeaders: [
+                "Referer": "https://live.douyin.com/\(webRID)",
+                "Origin": "https://live.douyin.com"
+            ]
+        )
+        try validateStatus(res.status_code, message: res.status_msg)
+        guard let room = res.data?.data?.first,
+              room.status == 2,
+              !room.preferredHLSURLs.isEmpty else {
+            throw APIError.emptyResponse
+        }
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "live-room-resolved",
+            category: "api",
+            fields: [
+                "webRID": webRID,
+                "room": room.id_str,
+                "candidates": room.preferredHLSURLs.count
+            ]
+        )
+#endif
+        return room
     }
 
     /// 获取当前账号已喜欢的视频，只读展示，不执行点赞或取消点赞。
@@ -696,6 +746,16 @@ struct LiveFeedExtra: Decodable {
     let max_time: Int?
 }
 
+struct LiveRoomEnterResponse: Decodable {
+    let status_code: Int
+    let status_msg: String?
+    let data: LiveRoomEnterData?
+}
+
+struct LiveRoomEnterData: Decodable {
+    let data: [LiveRoom]?
+}
+
 struct StatusResponse: Decodable {
     let status_code: Int
     let status_msg: String?
@@ -814,15 +874,19 @@ struct LiveRoom: Decodable {
         owner = try container.decodeIfPresent(Author.self, forKey: .owner)
     }
 
-    // 推荐/关注的 cell_room 使用 status=2；直播广场接口使用 status=0，
-    // 但会返回当前有效的 HLS。两种来源统一以状态或实际播放地址判定。
+    // 推荐/关注及 room/web/enter 返回的正式房间使用 status=2。
+    // status=0 是直播广场的发现数据，只用于展示并在播放前换取正式房间。
     var isOnline: Bool {
         status == 2 || (status == 0 && !preferredHLSURLs.isEmpty)
     }
 
     var preferredHLSURLs: [URL] {
-        guard let streamURL = stream_url else { return [] }
-        let orderedValues = streamURL.preferredH264HLSURLs
+        let map = stream_url?.hls_pull_url_map ?? [:]
+        // 与推荐/关注原有逻辑保持一致：服务端默认原画优先，失败后再按
+        // SD1 -> SD2 -> HD1 -> FULL_HD1 回退。直播 Tab 的 status=0
+        // 数据不会走到这里播放，而会先通过 room/web/enter 换成 status=2。
+        let orderedValues = [stream_url?.hls_pull_url].compactMap { $0 }
+            + ["SD1", "SD2", "HD1", "FULL_HD1"].compactMap { map[$0] }
         var seen = Set<String>()
         return orderedValues.compactMap(URL.init(string:)).filter {
             seen.insert($0.absoluteString).inserted
@@ -833,120 +897,6 @@ struct LiveRoom: Decodable {
 struct LiveStreamURL: Decodable {
     let hls_pull_url: String?
     let hls_pull_url_map: [String: String]?
-    let hls_pull_url_params: String?
-    let live_core_sdk_data: LiveCoreSDKData?
-
-    private enum CodingKeys: String, CodingKey {
-        case hls_pull_url
-        case hls_pull_url_map
-        case hls_pull_url_params
-        case live_core_sdk_data
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        hls_pull_url = try? container.decode(String.self, forKey: .hls_pull_url)
-        hls_pull_url_map = try? container.decode([String: String].self, forKey: .hls_pull_url_map)
-        hls_pull_url_params = try? container.decode(String.self, forKey: .hls_pull_url_params)
-        live_core_sdk_data = try? container.decode(LiveCoreSDKData.self, forKey: .live_core_sdk_data)
-    }
-
-    /// 直播广场的顶层 HLS 经常是 bytevc1/HEVC。它在模拟器上会表现为
-    /// 音频正常但没有可输出的视频轨。真正的 H.264 兼容流藏在
-    /// live_core_sdk_data.pull_data.stream_data 中（通常是 md 清晰度）。
-    /// 关注直播本身是 H.264，也统一从同一份数据中选择 720p/低码率流。
-    var preferredH264HLSURLs: [String] {
-        let coreURLs = live_core_sdk_data?.pull_data?.h264HLSURLs ?? []
-        if !coreURLs.isEmpty {
-            return Array(coreURLs.prefix(4))
-        }
-
-        // 老接口没有 stream_data 时，仅在顶层参数明确标记 H.264 后使用
-        // 默认流和清晰度 Map。无法判断编码时保留旧回退，避免把本来可播
-        // 的少数直播间直接过滤掉。
-        let map = hls_pull_url_map ?? [:]
-        let fallback = [hls_pull_url].compactMap { $0 }
-            + ["SD2", "SD1", "HD1", "FULL_HD1"].compactMap { map[$0] }
-        guard let topCodec else { return fallback }
-        return topCodec.isH264 ? fallback : []
-    }
-
-    private var topCodec: String? {
-        if let hls_pull_url_params,
-           let data = hls_pull_url_params.data(using: .utf8),
-           let params = try? JSONDecoder().decode(LiveStreamSDKParams.self, from: data) {
-            return params.codec
-        }
-        return live_core_sdk_data?.pull_data?.codec
-    }
-}
-
-struct LiveCoreSDKData: Decodable {
-    let pull_data: LiveCorePullData?
-}
-
-struct LiveCorePullData: Decodable {
-    let codec: String?
-    let stream_data: String?
-
-    var h264HLSURLs: [String] {
-        guard let stream_data,
-              let data = stream_data.data(using: .utf8),
-              let payload = try? JSONDecoder().decode(LiveCoreStreamPayload.self, from: data) else {
-            return []
-        }
-
-        // sd/ld 优先保证首帧与解码稳定；直播广场的 H.264 通常只在 md。
-        let preferredQualities = ["sd", "ld", "md", "hd", "uhd", "origin"]
-        let remainingQualities = payload.data.keys
-            .filter { !preferredQualities.contains($0) }
-            .sorted()
-        return (preferredQualities + remainingQualities).flatMap { quality in
-            guard let lines = payload.data[quality] else { return [String]() }
-            return [lines.main, lines.backup].compactMap { line in
-                guard let line, line.isH264 else { return nil }
-                return line.hls
-            }
-        }
-    }
-}
-
-private struct LiveCoreStreamPayload: Decodable {
-    let data: [String: LiveCoreStreamLines]
-}
-
-private struct LiveCoreStreamLines: Decodable {
-    let main: LiveCoreStreamLine?
-    let backup: LiveCoreStreamLine?
-}
-
-private struct LiveCoreStreamLine: Decodable {
-    let hls: String?
-    let sdk_params: String?
-
-    var isH264: Bool {
-        guard let sdk_params,
-              let data = sdk_params.data(using: .utf8),
-              let params = try? JSONDecoder().decode(LiveStreamSDKParams.self, from: data) else {
-            return false
-        }
-        return params.codec?.isH264 == true
-    }
-}
-
-private struct LiveStreamSDKParams: Decodable {
-    let codec: String?
-
-    private enum CodingKeys: String, CodingKey {
-        case codec = "VCodec"
-    }
-}
-
-private extension String {
-    var isH264: Bool {
-        let value = lowercased()
-        return value == "264" || value == "h264" || value == "avc" || value == "avc1"
-    }
 }
 
 struct Author: Decodable {
@@ -958,6 +908,7 @@ struct Author: Decodable {
     let unique_id: String?
     let follower_count: Int?
     let aweme_count: Int?
+    let web_rid: String?
 
     private enum CodingKeys: String, CodingKey {
         case sec_uid
@@ -968,6 +919,7 @@ struct Author: Decodable {
         case unique_id
         case follower_count
         case aweme_count
+        case web_rid
     }
 
     init(from decoder: Decoder) throws {
@@ -980,6 +932,13 @@ struct Author: Decodable {
         unique_id = try? container.decode(String.self, forKey: .unique_id)
         follower_count = Self.decodeInt(from: container, forKey: .follower_count)
         aweme_count = Self.decodeInt(from: container, forKey: .aweme_count)
+        if let value = try? container.decode(String.self, forKey: .web_rid) {
+            web_rid = value
+        } else if let value = try? container.decode(Int64.self, forKey: .web_rid) {
+            web_rid = String(value)
+        } else {
+            web_rid = nil
+        }
     }
 
     private static func decodeInt(

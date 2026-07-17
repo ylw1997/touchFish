@@ -47,14 +47,14 @@ final class DouyinFeedStore: ObservableObject {
         await load(isRefresh: true)
     }
 
-    func previous() {
+    func previous() async {
         guard let index = FeedNavigation.previousIndex(current: activeIndex, count: items.count) else { return }
-        select(index)
+        await select(index, direction: -1)
     }
 
     func next() async {
         if let index = FeedNavigation.nextIndex(current: activeIndex, count: items.count) {
-            select(index)
+            await select(index, direction: 1)
             trimPlayedHistoryIfNeeded()
             await preloadIfNeeded()
             return
@@ -63,7 +63,7 @@ final class DouyinFeedStore: ObservableObject {
         let oldCount = items.count
         await load(isRefresh: false)
         if items.count > oldCount {
-            select(oldCount)
+            await select(oldCount, direction: 1)
             trimPlayedHistoryIfNeeded()
         }
     }
@@ -110,8 +110,25 @@ final class DouyinFeedStore: ObservableObject {
 
             guard requestGeneration == generation else { return }
             if isRefresh {
-                items = result.0
-                activeIndex = 0
+                var refreshedItems = result.0
+                var initialIndex = 0
+                if case .live = feedType {
+                    while refreshedItems.indices.contains(initialIndex) {
+                        guard requestGeneration == generation else { return }
+                        if let prepared = await prepareForPlayback(refreshedItems[initialIndex]) {
+                            refreshedItems[initialIndex] = prepared
+                            break
+                        }
+                        initialIndex += 1
+                    }
+                    if initialIndex >= refreshedItems.count {
+                        refreshedItems.removeAll()
+                        initialIndex = 0
+                    }
+                }
+                guard requestGeneration == generation else { return }
+                items = refreshedItems
+                activeIndex = initialIndex
                 playbackToken &+= 1
             } else {
                 items.append(contentsOf: result.0)
@@ -131,9 +148,51 @@ final class DouyinFeedStore: ObservableObject {
         }
     }
 
-    private func select(_ index: Int) {
-        activeIndex = index
-        playbackToken &+= 1
+    private func select(_ index: Int, direction: Int) async {
+        let selectionGeneration = generation
+        var candidateIndex = index
+        while items.indices.contains(candidateIndex) {
+            let candidate = items[candidateIndex]
+            if let prepared = await prepareForPlayback(candidate) {
+                guard selectionGeneration == generation,
+                      items.indices.contains(candidateIndex),
+                      items[candidateIndex].aweme_id == candidate.aweme_id else { return }
+                items[candidateIndex] = prepared
+                activeIndex = candidateIndex
+                playbackToken &+= 1
+                errorMessage = nil
+                return
+            }
+            candidateIndex += direction
+        }
+        guard selectionGeneration == generation else { return }
+        errorMessage = "直播间已结束或暂时无法播放"
+    }
+
+    private func prepareForPlayback(_ item: Aweme) async -> Aweme? {
+        guard case .live = feedType,
+              let room = item.liveRoom else { return item }
+        if room.status == 2, !room.preferredHLSURLs.isEmpty {
+            return item
+        }
+        guard let webRID = room.owner?.web_rid, !webRID.isEmpty else { return nil }
+
+        do {
+            return Aweme(liveRoom: try await api.getPlayableLiveRoom(webRID: webRID))
+        } catch {
+#if DEBUG
+            PlaybackDiagnostics.shared.event(
+                "live-room-resolution-failed",
+                category: "api",
+                fields: [
+                    "room": room.id_str,
+                    "webRID": webRID,
+                    "error": error.localizedDescription
+                ]
+            )
+#endif
+            return nil
+        }
     }
 
     private func trimPlayedHistoryIfNeeded() {
