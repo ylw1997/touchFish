@@ -138,6 +138,9 @@ final class DouyinPlayerContainerViewController: UIViewController {
         ])
         playbackController.didMove(toParent: self)
         playbackController.showsPlaybackControls = true
+        // 直播 HLS 带有 PROGRAM-DATE-TIME 时，AVKit 会把墙上时钟时间
+        // 叠在进度条上。关闭 timecode 展示，只保留原生播放控制和菜单。
+        playbackController.showsTimecodes = false
         playbackController.transportBarIncludesTitleView = true
 
         danmakuController.install(in: playbackController)
