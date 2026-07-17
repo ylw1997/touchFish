@@ -374,6 +374,90 @@ final class DouyinAPI: ObservableObject {
         return (awemes, nextCursor, hasMore)
     }
 
+    /// 获取网页版直播广场。
+    ///
+    /// 该接口中的房间 `status` 为 0，与推荐/关注 cell_room 的 2 不同；
+    /// 是否可播放以实际 HLS 地址为准。分页继续携带服务端返回的 max_time。
+    func getLiveFeed(maxTime: Int = 0) async throws -> ([Aweme], Int, Bool) {
+        var components = URLComponents(
+            string: "https://live-hj.douyin.com/webcast/feed/"
+        )
+        var queryItems = [
+            URLQueryItem(name: "aid", value: "6383"),
+            URLQueryItem(name: "app_name", value: "douyin_web"),
+            URLQueryItem(name: "live_id", value: "1"),
+            URLQueryItem(name: "device_platform", value: "web"),
+            URLQueryItem(name: "language", value: "zh-CN"),
+            URLQueryItem(name: "enter_from", value: "page_refresh"),
+            URLQueryItem(name: "cookie_enabled", value: "true"),
+            URLQueryItem(name: "screen_width", value: "1920"),
+            URLQueryItem(name: "screen_height", value: "1080"),
+            URLQueryItem(name: "browser_language", value: "zh-CN"),
+            URLQueryItem(name: "browser_platform", value: "Win32"),
+            URLQueryItem(name: "browser_name", value: "Chrome"),
+            URLQueryItem(name: "browser_version", value: "150.0.0.0"),
+            URLQueryItem(name: "os_name", value: "Windows"),
+            URLQueryItem(name: "os_version", value: "10"),
+            URLQueryItem(name: "channel", value: "channel_pc_web"),
+            URLQueryItem(name: "request_tag_from", value: "web"),
+            URLQueryItem(name: "need_map", value: "1"),
+            URLQueryItem(name: "liveid", value: "1"),
+            URLQueryItem(name: "is_draw", value: "1"),
+            URLQueryItem(name: "inner_from_drawer", value: "0"),
+            URLQueryItem(name: "custom_count", value: "50"),
+            URLQueryItem(name: "action", value: "load_more"),
+            URLQueryItem(name: "action_type", value: "loadmore"),
+            URLQueryItem(
+                name: "enter_source",
+                value: "web_homepage_hot_web_live_card"
+            ),
+            URLQueryItem(
+                name: "source_key",
+                value: "web_homepage_hot_web_live_card"
+            ),
+            URLQueryItem(name: "is_ssr", value: "true")
+        ]
+        if maxTime > 0 {
+            queryItems.append(URLQueryItem(name: "max_time", value: String(maxTime)))
+        }
+        components?.queryItems = queryItems
+        guard let url = components?.url?.absoluteString else {
+            throw APIError.invalidURL
+        }
+
+        let res: LiveFeedResponse = try await request(
+            url: url,
+            extraHeaders: [
+                "Referer": "https://live.douyin.com/",
+                "Origin": "https://live.douyin.com"
+            ]
+        )
+        try validateStatus(res.status_code, message: res.status_msg)
+        let awemes = (res.data ?? []).compactMap { entry -> Aweme? in
+            guard entry.type == nil || entry.type == 1,
+                  let room = entry.data,
+                  room.isOnline,
+                  !room.preferredHLSURLs.isEmpty else { return nil }
+            return Aweme(liveRoom: room)
+        }
+        let nextMaxTime = res.extra?.max_time ?? maxTime
+        let hasMore = res.extra?.has_more ?? true
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "live-feed-response",
+            category: "api",
+            fields: [
+                "requestMaxTime": maxTime,
+                "nextMaxTime": nextMaxTime,
+                "entries": res.data?.count ?? 0,
+                "playable": awemes.count,
+                "hasMore": hasMore
+            ]
+        )
+#endif
+        return (awemes, nextMaxTime, hasMore)
+    }
+
     /// 获取当前账号已喜欢的视频，只读展示，不执行点赞或取消点赞。
     func getFavorites(maxCursor: Int = 0) async throws -> ([Aweme], Int, Bool) {
         let url = "https://www.douyin.com/aweme/v1/web/aweme/favorite/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&max_cursor=\(maxCursor)&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
@@ -532,6 +616,23 @@ struct FollowingItem: Decodable {
     }
 }
 
+struct LiveFeedResponse: Decodable {
+    let status_code: Int
+    let status_msg: String?
+    let data: [LiveFeedItem]?
+    let extra: LiveFeedExtra?
+}
+
+struct LiveFeedItem: Decodable {
+    let type: Int?
+    let data: LiveRoom?
+}
+
+struct LiveFeedExtra: Decodable {
+    let has_more: Bool?
+    let max_time: Int?
+}
+
 struct StatusResponse: Decodable {
     let status_code: Int
     let status_msg: String?
@@ -650,7 +751,11 @@ struct LiveRoom: Decodable {
         owner = try container.decodeIfPresent(Author.self, forKey: .owner)
     }
 
-    var isOnline: Bool { status == 2 }
+    // 推荐/关注的 cell_room 使用 status=2；直播广场接口使用 status=0，
+    // 但会返回当前有效的 HLS。两种来源统一以状态或实际播放地址判定。
+    var isOnline: Bool {
+        status == 2 || (status == 0 && !preferredHLSURLs.isEmpty)
+    }
 
     var preferredHLSURLs: [URL] {
         let map = stream_url?.hls_pull_url_map ?? [:]

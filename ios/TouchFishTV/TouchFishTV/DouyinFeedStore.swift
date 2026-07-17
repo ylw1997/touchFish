@@ -94,6 +94,8 @@ final class DouyinFeedStore: ObservableObject {
                 result = (page.0, 0, page.1)
             case .following:
                 result = try await api.getFollowing(cursor: isRefresh ? 0 : cursor)
+            case .live:
+                result = try await api.getLiveFeed(maxTime: isRefresh ? 0 : cursor)
             }
 
             guard requestGeneration == generation else { return }

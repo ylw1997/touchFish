@@ -4,6 +4,7 @@ import Foundation
 enum PlaybackSource: String {
     case recommend
     case following
+    case live
     case favorites
     case author
 }
@@ -728,7 +729,7 @@ final class PlaybackCoordinator: ObservableObject {
             .filter(isDouyinPlaybackEndpoint)
             .sorted { score($0) > score($1) }
         // prime 地址在电视端稳定返回 403，不再创建无意义的 AVPlayerItem。
-        // 真实直连优先；推荐只有 www 入口时由轻量 Range 请求解析最终 CDN。
+        // 真实直连优先；推荐只有 www 入口时直接由 AVPlayer 处理 302。
         return Array(directURLs.prefix(2))
             + Array(playbackEndpoints.prefix(2))
     }

@@ -3,6 +3,7 @@ import SwiftUI
 enum FeedType {
     case recommend
     case following
+    case live
 }
 
 @MainActor
@@ -20,6 +21,7 @@ struct DouyinFeedView: View {
         switch feedType {
         case .recommend: source = .recommend
         case .following: source = .following
+        case .live: source = .live
         }
         _store = StateObject(wrappedValue: DouyinFeedStore(feedType: feedType))
         _playbackSlot = StateObject(wrappedValue: PlaybackSessionSlot(source: source))

@@ -3,6 +3,7 @@ import SwiftUI
 private enum DouyinTab: Hashable {
     case recommend
     case following
+    case live
     case favorites
     case settings
 }
@@ -23,6 +24,12 @@ struct ContentView: View {
                     Label("关注", systemImage: "person.2.fill")
                 }
                 .tag(DouyinTab.following)
+
+            DouyinFeedView(feedType: .live, isActive: selectedTab == .live)
+                .tabItem {
+                    Label("直播", systemImage: "dot.radiowaves.left.and.right")
+                }
+                .tag(DouyinTab.live)
 
             FavoritesLibraryView(isActive: selectedTab == .favorites)
                 .tabItem {
