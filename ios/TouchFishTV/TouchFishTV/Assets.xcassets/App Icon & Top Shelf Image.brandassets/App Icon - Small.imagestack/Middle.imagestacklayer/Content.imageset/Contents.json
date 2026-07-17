@@ -1,0 +1,7 @@
+{
+  "images" : [
+    { "filename" : "Middle.png", "idiom" : "tv", "scale" : "1x" },
+    { "filename" : "Middle@2x.png", "idiom" : "tv", "scale" : "2x" }
+  ],
+  "info" : { "author" : "com.touchfish.tv.app", "version" : 1 }
+}

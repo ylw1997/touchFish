@@ -13,6 +13,7 @@ targets:
         TARGETED_DEVICE_FAMILY: 3
         INFOPLIST_FILE: TouchFishTV/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.touchfish.tv.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: "App Icon & Top Shelf Image"
         MARKETING_VERSION: 1.0.0
         CURRENT_PROJECT_VERSION: 1
         CODE_SIGNING_REQUIRED: NO
