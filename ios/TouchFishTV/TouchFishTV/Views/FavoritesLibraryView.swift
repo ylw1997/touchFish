@@ -593,7 +593,7 @@ private final class VideoLibraryCollectionCell: UICollectionViewCell {
     }
 }
 
-private enum NativeThumbnailLoader {
+enum NativeThumbnailLoader {
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.urlCache = nil

@@ -25,7 +25,7 @@ struct ContentView: View {
                 }
                 .tag(DouyinTab.following)
 
-            DouyinFeedView(feedType: .live, isActive: selectedTab == .live)
+            LiveLibraryView(isActive: selectedTab == .live)
                 .tabItem {
                     Label("直播", systemImage: "dot.radiowaves.left.and.right")
                 }

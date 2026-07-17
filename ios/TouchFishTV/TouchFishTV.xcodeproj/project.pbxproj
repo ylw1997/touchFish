@@ -24,6 +24,7 @@
 		A10000000000000000000006 /* FavoritesLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* FavoritesLibraryView.swift */; };
 		A10000000000000000000007 /* PlaybackDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* PlaybackDiagnostics.swift */; };
 		A10000000000000000000008 /* AuthorWorksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* AuthorWorksView.swift */; };
+		A10000000000000000000009 /* LiveLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* LiveLibraryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 		B10000000000000000000006 /* FavoritesLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesLibraryView.swift; sourceTree = "<group>"; };
 		B10000000000000000000007 /* PlaybackDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackDiagnostics.swift; sourceTree = "<group>"; };
 		B10000000000000000000008 /* AuthorWorksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorWorksView.swift; sourceTree = "<group>"; };
+		B10000000000000000000009 /* LiveLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveLibraryView.swift; sourceTree = "<group>"; };
 		F750D7C19980FA685D78654E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -61,6 +63,7 @@
 			isa = PBXGroup;
 			children = (
 				B10000000000000000000008 /* AuthorWorksView.swift */,
+				B10000000000000000000009 /* LiveLibraryView.swift */,
 				81C84B0AC7662FB0C2D47FB8 /* DouyinFeedView.swift */,
 				B10000000000000000000006 /* FavoritesLibraryView.swift */,
 				F750D7C19980FA685D78654E /* SettingsView.swift */,
@@ -165,6 +168,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000008 /* AuthorWorksView.swift in Sources */,
+				A10000000000000000000009 /* LiveLibraryView.swift in Sources */,
 				A10000000000000000000003 /* DanmakuModels.swift in Sources */,
 				A10000000000000000000005 /* DanmakuOverlayController.swift in Sources */,
 				A10000000000000000000004 /* DanmakuService.swift in Sources */,

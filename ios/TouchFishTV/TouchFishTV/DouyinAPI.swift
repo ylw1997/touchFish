@@ -376,8 +376,8 @@ final class DouyinAPI: ObservableObject {
 
     /// 获取网页版直播广场。
     ///
-    /// 该接口中的房间 `status` 为 0，与推荐/关注 cell_room 的 2 不同；
-    /// 是否可播放以实际 HLS 地址为准。分页继续携带服务端返回的 max_time。
+    /// 该接口中的房间 `status` 为 0，只用于直播列表展示；用户点击后再按
+    /// web_rid 请求正式房间。分页继续携带服务端返回的 max_time。
     func getLiveFeed(maxTime: Int = 0) async throws -> ([Aweme], Int, Bool) {
         var components = URLComponents(
             string: "https://live-hj.douyin.com/webcast/feed/"

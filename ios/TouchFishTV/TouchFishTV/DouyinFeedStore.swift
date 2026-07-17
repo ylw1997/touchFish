@@ -47,14 +47,14 @@ final class DouyinFeedStore: ObservableObject {
         await load(isRefresh: true)
     }
 
-    func previous() async {
+    func previous() {
         guard let index = FeedNavigation.previousIndex(current: activeIndex, count: items.count) else { return }
-        await select(index, direction: -1)
+        select(index)
     }
 
     func next() async {
         if let index = FeedNavigation.nextIndex(current: activeIndex, count: items.count) {
-            await select(index, direction: 1)
+            select(index)
             trimPlayedHistoryIfNeeded()
             await preloadIfNeeded()
             return
@@ -63,7 +63,7 @@ final class DouyinFeedStore: ObservableObject {
         let oldCount = items.count
         await load(isRefresh: false)
         if items.count > oldCount {
-            await select(oldCount, direction: 1)
+            select(oldCount)
             trimPlayedHistoryIfNeeded()
         }
     }
@@ -94,41 +94,12 @@ final class DouyinFeedStore: ObservableObject {
                 result = (page.0, 0, page.1)
             case .following:
                 result = try await api.getFollowing(cursor: isRefresh ? 0 : cursor)
-            case .live:
-                if isRefresh {
-                    // 两个接口并行请求，首屏优先排列关注直播；关注接口偶发
-                    // 失败时仍展示热门直播，不让整个直播 Tab 变成错误页。
-                    async let followedRequest = api.getFollowedLiveRooms()
-                    async let popularRequest = api.getLiveFeed(maxTime: 0)
-                    let followed = (try? await followedRequest) ?? []
-                    let popular = try await popularRequest
-                    result = (followed + popular.0, popular.1, popular.2)
-                } else {
-                    result = try await api.getLiveFeed(maxTime: cursor)
-                }
             }
 
             guard requestGeneration == generation else { return }
             if isRefresh {
-                var refreshedItems = result.0
-                var initialIndex = 0
-                if case .live = feedType {
-                    while refreshedItems.indices.contains(initialIndex) {
-                        guard requestGeneration == generation else { return }
-                        if let prepared = await prepareForPlayback(refreshedItems[initialIndex]) {
-                            refreshedItems[initialIndex] = prepared
-                            break
-                        }
-                        initialIndex += 1
-                    }
-                    if initialIndex >= refreshedItems.count {
-                        refreshedItems.removeAll()
-                        initialIndex = 0
-                    }
-                }
-                guard requestGeneration == generation else { return }
-                items = refreshedItems
-                activeIndex = initialIndex
+                items = result.0
+                activeIndex = 0
                 playbackToken &+= 1
             } else {
                 items.append(contentsOf: result.0)
@@ -148,51 +119,9 @@ final class DouyinFeedStore: ObservableObject {
         }
     }
 
-    private func select(_ index: Int, direction: Int) async {
-        let selectionGeneration = generation
-        var candidateIndex = index
-        while items.indices.contains(candidateIndex) {
-            let candidate = items[candidateIndex]
-            if let prepared = await prepareForPlayback(candidate) {
-                guard selectionGeneration == generation,
-                      items.indices.contains(candidateIndex),
-                      items[candidateIndex].aweme_id == candidate.aweme_id else { return }
-                items[candidateIndex] = prepared
-                activeIndex = candidateIndex
-                playbackToken &+= 1
-                errorMessage = nil
-                return
-            }
-            candidateIndex += direction
-        }
-        guard selectionGeneration == generation else { return }
-        errorMessage = "直播间已结束或暂时无法播放"
-    }
-
-    private func prepareForPlayback(_ item: Aweme) async -> Aweme? {
-        guard case .live = feedType,
-              let room = item.liveRoom else { return item }
-        if room.status == 2, !room.preferredHLSURLs.isEmpty {
-            return item
-        }
-        guard let webRID = room.owner?.web_rid, !webRID.isEmpty else { return nil }
-
-        do {
-            return Aweme(liveRoom: try await api.getPlayableLiveRoom(webRID: webRID))
-        } catch {
-#if DEBUG
-            PlaybackDiagnostics.shared.event(
-                "live-room-resolution-failed",
-                category: "api",
-                fields: [
-                    "room": room.id_str,
-                    "webRID": webRID,
-                    "error": error.localizedDescription
-                ]
-            )
-#endif
-            return nil
-        }
+    private func select(_ index: Int) {
+        activeIndex = index
+        playbackToken &+= 1
     }
 
     private func trimPlayedHistoryIfNeeded() {
