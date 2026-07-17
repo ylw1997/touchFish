@@ -37,6 +37,15 @@ final class DouyinFeedStore: ObservableObject {
         items.indices.contains(activeIndex) ? items[activeIndex] : nil
     }
 
+    /// 只向播放器暴露紧邻当前项的少量候选，用于解析推荐重定向。
+    /// 不创建 AVPlayerItem，也不提前下载视频数据。
+    var upcomingItems: [Aweme] {
+        let start = activeIndex + 1
+        guard start < items.count else { return [] }
+        let end = min(items.count, start + 2)
+        return Array(items[start..<end])
+    }
+
     func refresh() async {
         generation &+= 1
         cursor = 0

@@ -193,7 +193,10 @@ final class PlaybackCoordinator: ObservableObject {
     private let playbackArbiter = PlaybackArbiter.shared
     private(set) var generation: UInt = 0
     private var candidateResolutionTask: Task<Void, Never>?
+    private var prewarmTasks: [String: Task<Void, Never>] = [:]
     private var itemStatusObservation: NSKeyValueObservation?
+    private var itemPresentationSizeObservation: NSKeyValueObservation?
+    private var liveStartupValidationTask: Task<Void, Never>?
     private var currentPlaybackToken: UInt64?
     private var currentAwemeID: String?
 #if DEBUG
@@ -256,7 +259,9 @@ final class PlaybackCoordinator: ObservableObject {
             playerViewController.player = player
         }
         playerViewController.requiresLinearPlayback = aweme.isLive
-        player.automaticallyWaitsToMinimizeStalling = aweme.isLive
+        // 直播优先尽快出首帧，候选流本身已有启动超时回退；让 AVPlayer
+        // 额外等待“足够不发生卡顿”的缓冲会表现为长时间纯黑。
+        player.automaticallyWaitsToMinimizeStalling = false
         isTransitioning = true
         presentationOpacity = 0.82
         playbackError = nil
@@ -293,7 +298,9 @@ final class PlaybackCoordinator: ObservableObject {
             fields: [
                 "count": urls.count,
                 "live": aweme.isLive,
-                "hosts": urls.map { $0.host ?? "unknown" }.joined(separator: ",")
+                "hosts": urls.map { $0.host ?? "unknown" }.joined(separator: ","),
+                "paths": urls.map { $0.pathComponents.suffix(2).joined(separator: "/") }
+                    .joined(separator: ",")
             ]
         )
 #endif
@@ -306,12 +313,7 @@ final class PlaybackCoordinator: ObservableObject {
             return
         }
 
-        var headers = [
-            "User-Agent": Self.playbackUserAgent,
-            "Referer": aweme.isLive ? "https://live.douyin.com/" : "https://www.douyin.com/"
-        ]
-        if aweme.isLive { headers["Origin"] = "https://live.douyin.com" }
-        if !cookie.isEmpty { headers["Cookie"] = cookie }
+        let headers = playbackHeaders(for: aweme, cookie: cookie)
 
         let playbackEndpoints = urls.filter(isDouyinPlaybackEndpoint)
         let hasDirectCandidate = urls.contains { !isDouyinPlaybackEndpoint($0) }
@@ -328,9 +330,12 @@ final class PlaybackCoordinator: ObservableObject {
             return
         }
 
+        let resolutionStartedAt = Date()
         candidateResolutionTask = Task { [weak self] in
+            // 主入口解析成功后即可开始播放；第二入口仍保留在 urls 中作为
+            // AVPlayer 失败回退，不让较慢的备用入口阻塞首帧。
             let resolved = await PlaybackURLResolver.shared.resolve(
-                playbackEndpoints,
+                Array(playbackEndpoints.prefix(1)),
                 headers: headers
             )
             guard let self, !Task.isCancelled,
@@ -347,6 +352,7 @@ final class PlaybackCoordinator: ObservableObject {
                 category: "asset",
                 fields: [
                     "resolved": resolved.count,
+                    "elapsedMs": Int(Date().timeIntervalSince(resolutionStartedAt) * 1_000),
                     "hosts": resolved.map { $0.host ?? "unknown" }.joined(separator: ",")
                 ]
             )
@@ -358,6 +364,53 @@ final class PlaybackCoordinator: ObservableObject {
                 headers: headers,
                 requestedGeneration: requestedGeneration
             )
+        }
+    }
+
+    /// 提前解析推荐列表中紧邻当前项的 www 播放入口。
+    ///
+    /// 这里只做一个字节的 Range 请求并缓存最终 CDN URL，不创建新的
+    /// AVPlayer/AVPlayerItem，因此不会重新引入之前的解码器和内存问题。
+    func prewarm(_ awemes: [Aweme], cookie: String) {
+        guard case .recommend = source else { return }
+
+        for aweme in awemes.prefix(2) where !aweme.isLive {
+            guard prewarmTasks[aweme.aweme_id] == nil else { continue }
+            let urls = preferredURLs(for: aweme)
+            let endpoints = urls.filter(isDouyinPlaybackEndpoint)
+            let hasDirectCandidate = urls.contains { !isDouyinPlaybackEndpoint($0) }
+            guard !hasDirectCandidate, !endpoints.isEmpty else { continue }
+            let primaryEndpoints = Array(endpoints.prefix(1))
+
+            let awemeID = aweme.aweme_id
+            let headers = playbackHeaders(for: aweme, cookie: cookie)
+#if DEBUG
+            diagnosticsEvent(
+                "prewarm-start",
+                category: "asset",
+                fields: ["aweme": awemeID, "endpoints": primaryEndpoints.count]
+            )
+#endif
+            prewarmTasks[awemeID] = Task { [weak self] in
+                let startedAt = Date()
+                let resolved = await PlaybackURLResolver.shared.resolve(
+                    primaryEndpoints,
+                    headers: headers
+                )
+                guard let self else { return }
+                self.prewarmTasks[awemeID] = nil
+#if DEBUG
+                self.diagnosticsEvent(
+                    "prewarm-finished",
+                    category: "asset",
+                    fields: [
+                        "aweme": awemeID,
+                        "resolved": resolved.count,
+                        "elapsedMs": Int(Date().timeIntervalSince(startedAt) * 1_000)
+                    ]
+                )
+#endif
+            }
         }
     }
 
@@ -401,7 +454,11 @@ final class PlaybackCoordinator: ObservableObject {
         diagnosticsEvent(
             "load-candidate",
             category: "asset",
-            fields: ["candidate": candidateIndex, "host": url.host ?? "unknown"]
+            fields: [
+                "candidate": candidateIndex,
+                "host": url.host ?? "unknown",
+                "path": url.pathComponents.suffix(2).joined(separator: "/")
+            ]
         )
 #endif
         let asset = AVURLAsset(
@@ -430,7 +487,21 @@ final class PlaybackCoordinator: ObservableObject {
             headers: headers,
             requestedGeneration: requestedGeneration
         )
-        player.play()
+        if aweme.isLive {
+            player.playImmediately(atRate: 1)
+        } else {
+            player.play()
+        }
+        if aweme.isLive {
+            scheduleLiveStartupValidation(
+                item: item,
+                candidateIndex: candidateIndex,
+                urls: urls,
+                aweme: aweme,
+                headers: headers,
+                requestedGeneration: requestedGeneration
+            )
+        }
 #if DEBUG
         diagnosticsEvent(
             "item-replaced-and-play-called",
@@ -449,6 +520,28 @@ final class PlaybackCoordinator: ObservableObject {
         requestedGeneration: UInt
     ) {
         itemStatusObservation?.invalidate()
+        itemPresentationSizeObservation?.invalidate()
+        itemPresentationSizeObservation = item.observe(
+            \.presentationSize,
+            options: [.initial, .new]
+        ) { [weak self, weak item] _, _ in
+            Task { @MainActor [weak self, weak item] in
+                guard let self, let item,
+                      requestedGeneration == self.generation,
+                      self.playbackArbiter.isActive(self),
+                      self.player.currentItem === item,
+                      item.status == .readyToPlay,
+                      item.presentationSize.width > 0,
+                      item.presentationSize.height > 0 else { return }
+                self.finishReadyItem(
+                    item,
+                    aweme: aweme,
+                    candidateIndex: candidateIndex,
+                    host: urls[candidateIndex].host,
+                    requestedGeneration: requestedGeneration
+                )
+            }
+        }
         itemStatusObservation = item.observe(\.status, options: [.initial, .new]) { [weak self, weak item] _, _ in
             Task { @MainActor [weak self, weak item] in
                 guard let self, let item,
@@ -461,7 +554,10 @@ final class PlaybackCoordinator: ObservableObject {
                     break
                 case .readyToPlay:
                     let size = item.presentationSize
-                    guard aweme.isLive || (size.width > 0 && size.height > 0) else {
+                    guard size.width > 0 && size.height > 0 else {
+                        // HLS 的视频轨道可能晚于 readyToPlay 出现，由上面的
+                        // presentationSize 观察和启动超时负责等待/回退。
+                        if aweme.isLive { return }
 #if DEBUG
                         self.diagnosticsEvent(
                             "item-has-no-video-track",
@@ -484,19 +580,13 @@ final class PlaybackCoordinator: ObservableObject {
                         )
                         return
                     }
-                    // 只在资产已经确认含有可用视频轨道后再写入原生播放元数据。
-                    // 失败候选在 asset 尚未完成加载时绑定 metadata，会让
-                    // AVPlayerViewController 每次都打印“metadata has not yet been loaded”。
-                    item.externalMetadata = self.metadata(for: aweme)
-#if DEBUG
-                    self.diagnosticsEvent(
-                        "item-ready",
-                        category: "item",
-                        fields: ["candidate": candidateIndex, "host": urls[candidateIndex].host ?? "unknown"]
+                    self.finishReadyItem(
+                        item,
+                        aweme: aweme,
+                        candidateIndex: candidateIndex,
+                        host: urls[candidateIndex].host,
+                        requestedGeneration: requestedGeneration
                     )
-                    self.startDiagnostics(generation: requestedGeneration)
-#endif
-                    self.completeTransition(for: requestedGeneration)
                 case .failed:
                     let error = item.error
 #if DEBUG
@@ -535,6 +625,90 @@ final class PlaybackCoordinator: ObservableObject {
         }
     }
 
+    private func finishReadyItem(
+        _ item: AVPlayerItem,
+        aweme: Aweme,
+        candidateIndex: Int,
+        host: String?,
+        requestedGeneration: UInt
+    ) {
+        guard isTransitioning,
+              requestedGeneration == generation,
+              player.currentItem === item else { return }
+        // 普通视频确认轨道后即可结束启动检测；直播还要保留四秒检测，
+        // 防止 manifest 已解析但流始终没有进入播放状态。
+        if !aweme.isLive {
+            liveStartupValidationTask?.cancel()
+            liveStartupValidationTask = nil
+        }
+        itemPresentationSizeObservation?.invalidate()
+        itemPresentationSizeObservation = nil
+        // 只在资产已经确认含有可用视频轨道后再写入原生播放元数据。
+        item.externalMetadata = metadata(for: aweme)
+#if DEBUG
+        diagnosticsEvent(
+            "item-ready",
+            category: "item",
+            fields: ["candidate": candidateIndex, "host": host ?? "unknown"]
+        )
+        startDiagnostics(generation: requestedGeneration)
+#endif
+        completeTransition(for: requestedGeneration)
+    }
+
+    private func scheduleLiveStartupValidation(
+        item: AVPlayerItem,
+        candidateIndex: Int,
+        urls: [URL],
+        aweme: Aweme,
+        headers: [String: String],
+        requestedGeneration: UInt
+    ) {
+        liveStartupValidationTask?.cancel()
+        liveStartupValidationTask = Task { [weak self, weak item] in
+            do {
+                try await Task.sleep(for: .seconds(4))
+            } catch {
+                return
+            }
+            guard let self, let item,
+                  requestedGeneration == self.generation,
+                  self.playbackArbiter.isActive(self),
+                  self.player.currentItem === item else { return }
+
+            let size = item.presentationSize
+            let hasVideo = size.width > 0 && size.height > 0
+            let isMakingProgress = self.player.timeControlStatus == .playing
+                && self.player.rate > 0
+            guard !hasVideo || !isMakingProgress else { return }
+#if DEBUG
+            self.diagnosticsEvent(
+                "live-startup-timeout-try-next",
+                category: "item",
+                fields: [
+                    "candidate": candidateIndex,
+                    "host": urls[candidateIndex].host ?? "unknown",
+                    "path": urls[candidateIndex].pathComponents.suffix(2).joined(separator: "/"),
+                    "videoWidth": Int(size.width),
+                    "videoHeight": Int(size.height),
+                    "timeControl": self.debugTimeControlStatus(self.player.timeControlStatus)
+                ]
+            )
+#endif
+            self.liveStartupValidationTask = nil
+            self.releaseCurrentItem()
+            self.isTransitioning = true
+            self.presentationOpacity = 0.82
+            self.loadCandidates(
+                urls,
+                startingAt: candidateIndex + 1,
+                aweme: aweme,
+                headers: headers,
+                requestedGeneration: requestedGeneration
+            )
+        }
+    }
+
     func completeTransition(for requestedGeneration: UInt) {
         guard requestedGeneration == generation,
               playbackArbiter.isActive(self) else { return }
@@ -558,6 +732,7 @@ final class PlaybackCoordinator: ObservableObject {
         diagnosticsEvent("stop", category: "session")
 #endif
         playerViewController.danmakuController.stop()
+        cancelPrewarming()
         playerViewController.requiresLinearPlayback = false
         player.automaticallyWaitsToMinimizeStalling = false
         releaseCurrentItem()
@@ -578,12 +753,21 @@ final class PlaybackCoordinator: ObservableObject {
     private func cancelPendingLoad() {
         candidateResolutionTask?.cancel()
         candidateResolutionTask = nil
+        liveStartupValidationTask?.cancel()
+        liveStartupValidationTask = nil
+        itemPresentationSizeObservation?.invalidate()
+        itemPresentationSizeObservation = nil
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsTask = nil
 #endif
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
+    }
+
+    private func cancelPrewarming() {
+        prewarmTasks.values.forEach { $0.cancel() }
+        prewarmTasks.removeAll()
     }
 
     private func failPlayback(generation requestedGeneration: UInt, message: String) {
@@ -603,6 +787,10 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func releaseCurrentItem() {
+        liveStartupValidationTask?.cancel()
+        liveStartupValidationTask = nil
+        itemPresentationSizeObservation?.invalidate()
+        itemPresentationSizeObservation = nil
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
         guard let item = player.currentItem else {
@@ -648,6 +836,10 @@ final class PlaybackCoordinator: ObservableObject {
     /// 新 AVPlayerItem 会在同一轮主线程调用中直接替换它，原生播放器因此不会
     /// 进入“无媒体”状态。
     private func prepareCurrentItemForReplacement() {
+        liveStartupValidationTask?.cancel()
+        liveStartupValidationTask = nil
+        itemPresentationSizeObservation?.invalidate()
+        itemPresentationSizeObservation = nil
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
         guard playbackArbiter.isActive(self),
@@ -701,6 +893,16 @@ final class PlaybackCoordinator: ObservableObject {
         // 真实直连优先；推荐只有 www 入口时由轻量 Range 请求解析最终 CDN。
         return Array(directURLs.prefix(2))
             + Array(playbackEndpoints.prefix(2))
+    }
+
+    private func playbackHeaders(for aweme: Aweme, cookie: String) -> [String: String] {
+        var headers = [
+            "User-Agent": Self.playbackUserAgent,
+            "Referer": aweme.isLive ? "https://live.douyin.com/" : "https://www.douyin.com/"
+        ]
+        if aweme.isLive { headers["Origin"] = "https://live.douyin.com" }
+        if !cookie.isEmpty { headers["Cookie"] = cookie }
+        return headers
     }
 
     private func isClearlyAudioOnlyURL(_ url: URL) -> Bool {

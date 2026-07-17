@@ -654,8 +654,11 @@ struct LiveRoom: Decodable {
 
     var preferredHLSURLs: [URL] {
         let map = stream_url?.hls_pull_url_map ?? [:]
-        let orderedValues = ["HD1", "SD2", "SD1", "FULL_HD1"].compactMap { map[$0] }
-            + [stream_url?.hls_pull_url].compactMap { $0 }
+        // hls_pull_url 是服务端按当前直播间选择的默认流，实测首包通常明显
+        // 快于遍历清晰度 Map。Map 回退优先选择 H.264 低码率 SD1，避免
+        // 高帧率/高码率流在电视端进入 ready 状态后迟迟没有首帧。
+        let orderedValues = [stream_url?.hls_pull_url].compactMap { $0 }
+            + ["SD1", "SD2", "HD1", "FULL_HD1"].compactMap { map[$0] }
         var seen = Set<String>()
         return orderedValues.compactMap(URL.init(string:)).filter {
             seen.insert($0.absoluteString).inserted
