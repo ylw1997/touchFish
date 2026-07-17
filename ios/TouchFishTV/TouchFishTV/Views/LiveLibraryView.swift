@@ -406,7 +406,7 @@ private final class LiveLibraryCollectionViewController: UICollectionViewControl
     }
 
     private static func makeLayout() -> UICollectionViewLayout {
-        UICollectionViewCompositionalLayout { sectionIndex, _ in
+        UICollectionViewCompositionalLayout { _, _ in
             let item = NSCollectionLayoutItem(
                 layoutSize: NSCollectionLayoutSize(
                     widthDimension: .fractionalWidth(1.0 / 4.0),
@@ -429,18 +429,19 @@ private final class LiveLibraryCollectionViewController: UICollectionViewControl
             )
 
             let section = NSCollectionLayoutSection(group: group)
-            section.orthogonalScrollingBehavior = .continuousGroupLeadingBoundary
+            // 两个分区都参与同一个纵向滚动，不再做横向货架。
+            section.interGroupSpacing = 8
             section.contentInsets = NSDirectionalEdgeInsets(
-                top: sectionIndex == 0 ? 54 : 0,
+                top: 0,
                 leading: 76,
-                bottom: 14,
+                bottom: 18,
                 trailing: 76
             )
             section.boundarySupplementaryItems = [
                 NSCollectionLayoutBoundarySupplementaryItem(
                     layoutSize: NSCollectionLayoutSize(
                         widthDimension: .fractionalWidth(1),
-                        heightDimension: .absolute(54)
+                        heightDimension: .absolute(40)
                     ),
                     elementKind: UICollectionView.elementKindSectionHeader,
                     alignment: .top
