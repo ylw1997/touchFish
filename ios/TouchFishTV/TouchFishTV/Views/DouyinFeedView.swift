@@ -78,9 +78,6 @@ struct DouyinFeedView: View {
         .onChange(of: store.playbackToken) { _, _ in
             startPlaybackIfPossible()
         }
-        .onChange(of: store.items.count) { _, _ in
-            prewarmUpcomingIfPossible()
-        }
         .onChange(of: authorPresented) { _, presented in
             guard !presented else { return }
             selectedAuthor = nil
@@ -135,12 +132,6 @@ struct DouyinFeedView: View {
             cookie: api.cookie,
             playbackToken: store.playbackToken
         )
-        session.prewarm(store.upcomingItems, cookie: api.cookie)
-    }
-
-    private func prewarmUpcomingIfPossible() {
-        guard isActive, let session = playbackSlot.session else { return }
-        session.prewarm(store.upcomingItems, cookie: api.cookie)
     }
 
     private func showCurrentAuthor() {

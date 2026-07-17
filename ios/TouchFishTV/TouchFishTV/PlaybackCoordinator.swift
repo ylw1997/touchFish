@@ -103,80 +103,6 @@ private final class PlaybackArbiter {
     }
 }
 
-/// 把推荐接口返回的 www 播放入口提前解析为最终 CDN 地址。
-///
-/// Range 请求只读取一个字节，不下载视频；系统仍执行正常的 TLS 校验。
-/// 关注/喜欢已经带真实直连地址，不经过这里。
-private actor PlaybackURLResolver {
-    static let shared = PlaybackURLResolver()
-
-    private var cache: [URL: URL] = [:]
-    private var cacheOrder: [URL] = []
-    private let maximumCacheCount = 64
-
-    func resolve(_ endpoints: [URL], headers: [String: String]) async -> [URL] {
-        var resolvedByEndpoint: [URL: URL] = [:]
-        var unresolved: [URL] = []
-
-        for endpoint in endpoints {
-            if let cached = cache[endpoint] {
-                resolvedByEndpoint[endpoint] = cached
-            } else {
-                unresolved.append(endpoint)
-            }
-        }
-
-        await withTaskGroup(of: (URL, URL?).self) { group in
-            for endpoint in unresolved {
-                group.addTask {
-                    (endpoint, await Self.resolve(endpoint, headers: headers))
-                }
-            }
-            for await (endpoint, resolvedURL) in group {
-                guard let resolvedURL else { continue }
-                resolvedByEndpoint[endpoint] = resolvedURL
-                store(resolvedURL, for: endpoint)
-            }
-        }
-
-        return endpoints.compactMap { resolvedByEndpoint[$0] }
-    }
-
-    private func store(_ resolvedURL: URL, for endpoint: URL) {
-        guard cache[endpoint] == nil else { return }
-        cache[endpoint] = resolvedURL
-        cacheOrder.append(endpoint)
-        if cacheOrder.count > maximumCacheCount {
-            cache.removeValue(forKey: cacheOrder.removeFirst())
-        }
-    }
-
-    private static func resolve(_ endpoint: URL, headers: [String: String]) async -> URL? {
-        var request = URLRequest(url: endpoint)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 5
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
-        for (name, value) in headers {
-            request.setValue(value, forHTTPHeaderField: name)
-        }
-
-        do {
-            let (_, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200...299).contains(httpResponse.statusCode),
-                  let finalURL = httpResponse.url,
-                  finalURL.host?.lowercased() != "www.douyin.com",
-                  finalURL.host?.lowercased().contains("-prime.") != true else {
-                return nil
-            }
-            return finalURL
-        } catch {
-            return nil
-        }
-    }
-}
-
 @MainActor
 final class PlaybackCoordinator: ObservableObject {
     private static let playbackUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
@@ -192,8 +118,6 @@ final class PlaybackCoordinator: ObservableObject {
     private let source: PlaybackSource
     private let playbackArbiter = PlaybackArbiter.shared
     private(set) var generation: UInt = 0
-    private var candidateResolutionTask: Task<Void, Never>?
-    private var prewarmTasks: [String: Task<Void, Never>] = [:]
     private var itemStatusObservation: NSKeyValueObservation?
     private var itemPresentationSizeObservation: NSKeyValueObservation?
     private var liveStartupValidationTask: Task<Void, Never>?
@@ -315,103 +239,17 @@ final class PlaybackCoordinator: ObservableObject {
 
         let headers = playbackHeaders(for: aweme, cookie: cookie)
 
-        let playbackEndpoints = urls.filter(isDouyinPlaybackEndpoint)
-        let hasDirectCandidate = urls.contains { !isDouyinPlaybackEndpoint($0) }
-        guard case .recommend = source,
-              !hasDirectCandidate,
-              !playbackEndpoints.isEmpty else {
-            loadCandidates(
-                urls,
-                startingAt: 0,
-                aweme: aweme,
-                headers: headers,
-                requestedGeneration: requestedGeneration
-            )
-            return
-        }
-
-        let resolutionStartedAt = Date()
-        candidateResolutionTask = Task { [weak self] in
-            // 主入口解析成功后即可开始播放；第二入口仍保留在 urls 中作为
-            // AVPlayer 失败回退，不让较慢的备用入口阻塞首帧。
-            let resolved = await PlaybackURLResolver.shared.resolve(
-                Array(playbackEndpoints.prefix(1)),
-                headers: headers
-            )
-            guard let self, !Task.isCancelled,
-                  requestedGeneration == self.generation,
-                  self.playbackArbiter.isActive(self) else { return }
-            self.candidateResolutionTask = nil
-            var seen = Set<String>()
-            let candidates = (resolved + urls).filter {
-                seen.insert($0.absoluteString).inserted
-            }
-#if DEBUG
-            self.diagnosticsEvent(
-                "playback-endpoints-resolved",
-                category: "asset",
-                fields: [
-                    "resolved": resolved.count,
-                    "elapsedMs": Int(Date().timeIntervalSince(resolutionStartedAt) * 1_000),
-                    "hosts": resolved.map { $0.host ?? "unknown" }.joined(separator: ",")
-                ]
-            )
-#endif
-            self.loadCandidates(
-                candidates,
-                startingAt: 0,
-                aweme: aweme,
-                headers: headers,
-                requestedGeneration: requestedGeneration
-            )
-        }
-    }
-
-    /// 提前解析推荐列表中紧邻当前项的 www 播放入口。
-    ///
-    /// 这里只做一个字节的 Range 请求并缓存最终 CDN URL，不创建新的
-    /// AVPlayer/AVPlayerItem，因此不会重新引入之前的解码器和内存问题。
-    func prewarm(_ awemes: [Aweme], cookie: String) {
-        guard case .recommend = source else { return }
-
-        for aweme in awemes.prefix(2) where !aweme.isLive {
-            guard prewarmTasks[aweme.aweme_id] == nil else { continue }
-            let urls = preferredURLs(for: aweme)
-            let endpoints = urls.filter(isDouyinPlaybackEndpoint)
-            let hasDirectCandidate = urls.contains { !isDouyinPlaybackEndpoint($0) }
-            guard !hasDirectCandidate, !endpoints.isEmpty else { continue }
-            let primaryEndpoints = Array(endpoints.prefix(1))
-
-            let awemeID = aweme.aweme_id
-            let headers = playbackHeaders(for: aweme, cookie: cookie)
-#if DEBUG
-            diagnosticsEvent(
-                "prewarm-start",
-                category: "asset",
-                fields: ["aweme": awemeID, "endpoints": primaryEndpoints.count]
-            )
-#endif
-            prewarmTasks[awemeID] = Task { [weak self] in
-                let startedAt = Date()
-                let resolved = await PlaybackURLResolver.shared.resolve(
-                    primaryEndpoints,
-                    headers: headers
-                )
-                guard let self else { return }
-                self.prewarmTasks[awemeID] = nil
-#if DEBUG
-                self.diagnosticsEvent(
-                    "prewarm-finished",
-                    category: "asset",
-                    fields: [
-                        "aweme": awemeID,
-                        "resolved": resolved.count,
-                        "elapsedMs": Int(Date().timeIntervalSince(startedAt) * 1_000)
-                    ]
-                )
-#endif
-            }
-        }
+        // 关注流优先使用接口给出的真实 CDN；推荐流过滤掉稳定返回 403 的
+        // prime 地址后，把 www 播放入口直接交给 AVPlayer。AVFoundation 会在
+        // 同一条资源加载链路中处理 302 并开始缓冲，避免先用 URLSession
+        // 解析一次、再由 AVPlayer 重新连接最终 CDN 的串行等待。
+        loadCandidates(
+            urls,
+            startingAt: 0,
+            aweme: aweme,
+            headers: headers,
+            requestedGeneration: requestedGeneration
+        )
     }
 
     func resume() {
@@ -555,29 +393,19 @@ final class PlaybackCoordinator: ObservableObject {
                 case .readyToPlay:
                     let size = item.presentationSize
                     guard size.width > 0 && size.height > 0 else {
-                        // HLS 的视频轨道可能晚于 readyToPlay 出现，由上面的
-                        // presentationSize 观察和启动超时负责等待/回退。
-                        if aweme.isLive { return }
+                        // 302 播放入口和 HLS 都可能先进入 readyToPlay，视频轨道
+                        // 尺寸稍后才到。此时不能把它当成坏地址立即切候选；等待
+                        // presentationSize 观察回调即可，真正的网络错误仍走 failed。
 #if DEBUG
                         self.diagnosticsEvent(
-                            "item-has-no-video-track",
+                            "item-ready-awaiting-video-track",
                             category: "item",
                             fields: [
                                 "candidate": candidateIndex,
                                 "host": urls[candidateIndex].host ?? "unknown"
                             ]
                         )
-                        self.diagnosticsTask?.cancel()
-                        self.diagnosticsTask = nil
 #endif
-                        self.releaseCurrentItem()
-                        self.loadCandidates(
-                            urls,
-                            startingAt: candidateIndex + 1,
-                            aweme: aweme,
-                            headers: headers,
-                            requestedGeneration: requestedGeneration
-                        )
                         return
                     }
                     self.finishReadyItem(
@@ -732,7 +560,6 @@ final class PlaybackCoordinator: ObservableObject {
         diagnosticsEvent("stop", category: "session")
 #endif
         playerViewController.danmakuController.stop()
-        cancelPrewarming()
         playerViewController.requiresLinearPlayback = false
         player.automaticallyWaitsToMinimizeStalling = false
         releaseCurrentItem()
@@ -751,8 +578,6 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     private func cancelPendingLoad() {
-        candidateResolutionTask?.cancel()
-        candidateResolutionTask = nil
         liveStartupValidationTask?.cancel()
         liveStartupValidationTask = nil
         itemPresentationSizeObservation?.invalidate()
@@ -763,11 +588,6 @@ final class PlaybackCoordinator: ObservableObject {
 #endif
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
-    }
-
-    private func cancelPrewarming() {
-        prewarmTasks.values.forEach { $0.cancel() }
-        prewarmTasks.removeAll()
     }
 
     private func failPlayback(generation requestedGeneration: UInt, message: String) {
