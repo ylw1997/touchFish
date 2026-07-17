@@ -259,51 +259,14 @@ final class DouyinAPI: ObservableObject {
         }
     }
 
-    private enum RecommendationMode {
-        case personalized
-        case anonymous
-
-        var context: String {
-            switch self {
-            case .personalized:
-                return """
-                {"is_client":false,"ff_danmaku_status":1,"danmaku_switch_status":1,"is_dash_user":1,"is_auto_play":0,"is_full_screen":0,"is_full_webscreen":0,"is_mute":0,"is_speed":1,"is_visible":1,"related_recommend":1,"is_xigua_user":0}
-                """
-            case .anonymous:
-                return """
-                {"videoPrefer":{"fsn":[],"like":[],"halfMin":[],"min":[]},"seo_info":"https://www.douyin.com/jingxuan","is_client":false,"ff_danmaku_status":1,"danmaku_switch_status":1,"is_dash_user":1,"is_auto_play":0,"is_full_screen":0,"is_full_webscreen":0,"is_mute":0,"is_speed":1,"is_visible":1,"related_recommend":1,"is_xigua_user":0}
-                """
-            }
-        }
-
-        var logName: String {
-            switch self {
-            case .personalized:
-                return "authenticated-tab"
-            case .anonymous:
-                return "anonymous-tab"
-            }
-        }
-    }
-
-    /// 推荐和未登录精选都使用 tab/feed。分页统一从 refresh_index=1 开始，
-    /// view_count 按服务端实际返回的可播放条数累计。
+    /// 获取推荐视频流。
+    ///
+    /// 登录与未登录都沿用同一套 tab/feed 请求，不根据 Cookie 改变推荐
+    /// 上下文。count 仍传 10，分页游标与 view_count 以实际响应为准。
     func getFeed(refreshIndex: Int, viewCount: Int) async throws -> ([Aweme], Bool) {
-        let mode: RecommendationMode = cookie
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .isEmpty ? .anonymous : .personalized
-        return try await getTabFeed(
-            refreshIndex: refreshIndex,
-            viewCount: viewCount,
-            mode: mode
-        )
-    }
-
-    private func getTabFeed(
-        refreshIndex: Int,
-        viewCount: Int,
-        mode: RecommendationMode
-    ) async throws -> ([Aweme], Bool) {
+        let recommendationContext = """
+        {"is_client":false,"ff_danmaku_status":1,"danmaku_switch_status":1,"is_dash_user":1,"is_auto_play":0,"is_full_screen":0,"is_full_webscreen":0,"is_mute":0,"is_speed":1,"is_visible":1,"related_recommend":1,"is_xigua_user":0}
+        """
         var components = URLComponents(
             string: "https://www.douyin.com/aweme/v1/web/tab/feed/"
         )
@@ -316,9 +279,9 @@ final class DouyinAPI: ObservableObject {
             URLQueryItem(name: "share_aweme_id", value: ""),
             URLQueryItem(name: "live_insert_type", value: ""),
             URLQueryItem(name: "count", value: "10"),
-            URLQueryItem(name: "refresh_index", value: String(max(1, refreshIndex))),
+            URLQueryItem(name: "refresh_index", value: String(refreshIndex)),
             URLQueryItem(name: "video_type_select", value: "1"),
-            URLQueryItem(name: "aweme_pc_rec_raw_data", value: mode.context),
+            URLQueryItem(name: "aweme_pc_rec_raw_data", value: recommendationContext),
             URLQueryItem(name: "globalwid", value: ""),
             URLQueryItem(name: "pull_type", value: "2"),
             URLQueryItem(name: "min_window", value: "0"),
@@ -368,7 +331,6 @@ final class DouyinAPI: ObservableObject {
             fields: [
                 "refreshIndex": refreshIndex,
                 "viewCount": viewCount,
-                "mode": mode.logName,
                 "entries": res.aweme_list?.count ?? 0,
                 "playable": awemes.count,
                 "videos": awemes.filter { !$0.isLive }.count,
