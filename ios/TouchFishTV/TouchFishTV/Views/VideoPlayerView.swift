@@ -41,6 +41,7 @@ struct VideoPlayerView: View {
                 onNext: onNext,
                 authorName: aweme.displayAuthor?.nickname,
                 onShowAuthor: aweme.displayAuthor?.uid.isEmpty == false ? onShowAuthor : nil,
+                isLive: aweme.isLive,
                 danmakuAvailable: !aweme.isLive,
                 onVisible: { [weak coordinator] in coordinator?.resume() }
             )
@@ -83,6 +84,7 @@ final class DouyinPlayerContainerViewController: UIViewController {
     private var navigationLocked = false
     private var configuredAuthorName: String?
     private var configuredHasAuthorAction = false
+    private var configuredIsLive: Bool?
     private var configuredDanmakuEnabled: Bool?
     private var configuredDanmakuAvailable = true
 
@@ -152,14 +154,28 @@ final class DouyinPlayerContainerViewController: UIViewController {
         )
     }
 
-    func configureAuthorAction(name: String?, action: (() -> Void)?, danmakuAvailable: Bool) {
+    func configureAuthorAction(
+        name: String?,
+        action: (() -> Void)?,
+        isLive: Bool,
+        danmakuAvailable: Bool
+    ) {
         onShowAuthor = action
-        if danmakuAvailable { danmakuController.synchronizePreference() }
+        if isLive {
+            danmakuController.stop()
+            // 部分直播 HLS 自带字幕轨，AVKit 会额外生成气泡按钮。
+            // 直播页不提供字幕或弹幕入口，只保留用户操作。
+            playbackController.allowedSubtitleOptionLanguages = []
+        } else {
+            playbackController.allowedSubtitleOptionLanguages = nil
+            if danmakuAvailable { danmakuController.synchronizePreference() }
+        }
         let normalizedName = name?.trimmingCharacters(in: .whitespacesAndNewlines)
         let hasAuthorAction = action != nil
         let danmakuEnabled = danmakuController.isEnabled
         guard configuredAuthorName != normalizedName
                 || configuredHasAuthorAction != hasAuthorAction
+                || configuredIsLive != isLive
                 || configuredDanmakuEnabled != danmakuEnabled
                 || configuredDanmakuAvailable != danmakuAvailable
                 || transportBarCustomMenuItems.isEmpty else {
@@ -168,6 +184,7 @@ final class DouyinPlayerContainerViewController: UIViewController {
 
         configuredAuthorName = normalizedName
         configuredHasAuthorAction = hasAuthorAction
+        configuredIsLive = isLive
         configuredDanmakuEnabled = danmakuEnabled
         configuredDanmakuAvailable = danmakuAvailable
         rebuildTransportBarActions()
@@ -185,7 +202,7 @@ final class DouyinPlayerContainerViewController: UIViewController {
             actions.append(userAction)
         }
 
-        if configuredDanmakuAvailable {
+        if configuredDanmakuAvailable, configuredIsLive != true {
             let danmakuEnabled = danmakuController.isEnabled
             configuredDanmakuEnabled = danmakuEnabled
             let danmakuAction = UIAction(
@@ -310,6 +327,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
     let onNext: () -> Void
     let authorName: String?
     let onShowAuthor: (() -> Void)?
+    let isLive: Bool
     let danmakuAvailable: Bool
     let onVisible: () -> Void
 
@@ -329,6 +347,7 @@ struct NativePlayerController: UIViewControllerRepresentable {
         controller.configureAuthorAction(
             name: authorName,
             action: onShowAuthor,
+            isLive: isLive,
             danmakuAvailable: danmakuAvailable
         )
         controller.isTransitioning = isTransitioning
