@@ -949,6 +949,7 @@
 		"build-publish": "pnpm build-webviews && pnpm package && pnpm changelog && pnpm run publish",
 		"dev": "concurrently -n ZHIHU,WEIBO,X,XHS,BILIBILI,QQMUSIC,NETEASE,XIAOYUZHOU,WEREAD,DOUYIN -c magenta,cyan,yellow,blue,green,red,red,white,blue,black \"pnpm --filter zhihu dev\" \"pnpm --filter weibo dev\" \"pnpm --filter xhs dev\" \"pnpm --filter bilibili dev\" \"pnpm --filter qqmusic dev\" \"pnpm --filter netease dev\" \"pnpm --filter xiaoyuzhou dev\" \"pnpm --filter x dev\" \"pnpm --filter weread dev\" \"pnpm --filter douyin dev\"",
 		"build-xhs": "pnpm --filter xhs build",
+		"tv-auth": "node tools/douyin-auth-service/server.mjs",
 		"update-x-ids": "node tools/update_x_ids.js"
 	},
 	"devDependencies": {

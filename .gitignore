@@ -2,6 +2,7 @@ out
 dist
 node_modules
 .vscode-test/
+.playwright-cli/
 *.vsix
 temp
 scratch/

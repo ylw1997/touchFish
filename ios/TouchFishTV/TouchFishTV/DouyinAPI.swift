@@ -1,4 +1,54 @@
 import Foundation
+import Security
+
+private enum DouyinCredentialStore {
+    private static let service = "com.touchfish.tv.douyin"
+    private static let account = "web-cookie"
+
+    static func load() -> String? {
+        var query = baseQuery
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+
+        var result: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let data = result as? Data,
+              let cookie = String(data: data, encoding: .utf8),
+              !cookie.isEmpty else {
+            return nil
+        }
+        return cookie
+    }
+
+    static func save(_ cookie: String) {
+        guard !cookie.isEmpty else {
+            SecItemDelete(baseQuery as CFDictionary)
+            return
+        }
+
+        let data = Data(cookie.utf8)
+        let attributes = [kSecValueData as String: data]
+        let status = SecItemUpdate(
+            baseQuery as CFDictionary,
+            attributes as CFDictionary
+        )
+
+        if status == errSecItemNotFound {
+            var item = baseQuery
+            item[kSecValueData as String] = data
+            item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            SecItemAdd(item as CFDictionary, nil)
+        }
+    }
+
+    private static var baseQuery: [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+    }
+}
 
 enum APIError: LocalizedError {
     case invalidURL
@@ -37,19 +87,25 @@ final class DouyinAPI: ObservableObject {
     
     @Published var cookie: String = "" {
         didSet {
-            UserDefaults.standard.set(cookie, forKey: "douyin_cookie")
+            DouyinCredentialStore.save(cookie)
+            UserDefaults.standard.removeObject(forKey: "douyin_cookie")
             cookieRevision &+= 1
         }
     }
     @Published private(set) var cookieRevision: UInt = 0
     
     private init() {
-        let savedCookie = UserDefaults.standard.string(forKey: "douyin_cookie") ?? ""
+        let legacyCookie = UserDefaults.standard.string(forKey: "douyin_cookie") ?? ""
+        let savedCookie = DouyinCredentialStore.load() ?? legacyCookie
 #if DEBUG
         self.cookie = savedCookie.isEmpty ? Self.loadDebugCookieFile() : savedCookie
 #else
         self.cookie = savedCookie
 #endif
+        if !self.cookie.isEmpty {
+            DouyinCredentialStore.save(self.cookie)
+        }
+        UserDefaults.standard.removeObject(forKey: "douyin_cookie")
     }
 
 #if DEBUG
