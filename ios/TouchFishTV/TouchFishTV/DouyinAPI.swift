@@ -458,6 +458,69 @@ final class DouyinAPI: ObservableObject {
         return (awemes, nextMaxTime, hasMore)
     }
 
+    /// 获取当前账号关注的正在直播房间。该接口当前一次返回完整列表，
+    /// `has_more=false`，因此只在直播 Tab 首次加载或刷新时请求。
+    func getFollowedLiveRooms() async throws -> [Aweme] {
+        var components = URLComponents(
+            string: "https://live.douyin.com/webcast/feed/follow_top/"
+        )
+        components?.queryItems = [
+            URLQueryItem(name: "aid", value: "6383"),
+            URLQueryItem(name: "app_name", value: "douyin_web"),
+            URLQueryItem(name: "live_id", value: "1"),
+            URLQueryItem(name: "device_platform", value: "web"),
+            URLQueryItem(name: "language", value: "zh-CN"),
+            URLQueryItem(name: "enter_from", value: "page_refresh"),
+            URLQueryItem(name: "cookie_enabled", value: "true"),
+            URLQueryItem(name: "screen_width", value: "1920"),
+            URLQueryItem(name: "screen_height", value: "1080"),
+            URLQueryItem(name: "browser_language", value: "zh-CN"),
+            URLQueryItem(name: "browser_platform", value: "Win32"),
+            URLQueryItem(name: "browser_name", value: "Chrome"),
+            URLQueryItem(name: "browser_version", value: "150.0.0.0"),
+            URLQueryItem(name: "os_name", value: "Windows"),
+            URLQueryItem(name: "os_version", value: "10"),
+            URLQueryItem(name: "enter_source", value: "homepage_pc_followtop"),
+            URLQueryItem(name: "need_pinned_info", value: "0"),
+            URLQueryItem(name: "follow_session_id", value: "0"),
+            URLQueryItem(name: "source_key", value: "web_homepage_follow_top"),
+            URLQueryItem(name: "webcast_version_code", value: "170400"),
+            URLQueryItem(name: "version_code", value: "170400"),
+            URLQueryItem(name: "need_map", value: "1")
+        ]
+        guard let url = components?.url?.absoluteString else {
+            throw APIError.invalidURL
+        }
+
+        let res: LiveFeedResponse = try await request(
+            url: url,
+            extraHeaders: [
+                "Referer": "https://live.douyin.com/",
+                "Origin": "https://live.douyin.com"
+            ]
+        )
+        try validateStatus(res.status_code, message: res.status_msg)
+        let awemes = (res.data ?? []).compactMap { entry -> Aweme? in
+            guard entry.type == 2,
+                  let room = entry.data,
+                  room.isOnline,
+                  !room.preferredHLSURLs.isEmpty else { return nil }
+            return Aweme(liveRoom: room)
+        }
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "followed-live-response",
+            category: "api",
+            fields: [
+                "entries": res.data?.count ?? 0,
+                "playable": awemes.count,
+                "hasMore": res.extra?.has_more ?? false
+            ]
+        )
+#endif
+        return awemes
+    }
+
     /// 获取当前账号已喜欢的视频，只读展示，不执行点赞或取消点赞。
     func getFavorites(maxCursor: Int = 0) async throws -> ([Aweme], Int, Bool) {
         let url = "https://www.douyin.com/aweme/v1/web/aweme/favorite/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&max_cursor=\(maxCursor)&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"

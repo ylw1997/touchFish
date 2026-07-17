@@ -95,7 +95,17 @@ final class DouyinFeedStore: ObservableObject {
             case .following:
                 result = try await api.getFollowing(cursor: isRefresh ? 0 : cursor)
             case .live:
-                result = try await api.getLiveFeed(maxTime: isRefresh ? 0 : cursor)
+                if isRefresh {
+                    // 两个接口并行请求，首屏优先排列关注直播；关注接口偶发
+                    // 失败时仍展示热门直播，不让整个直播 Tab 变成错误页。
+                    async let followedRequest = api.getFollowedLiveRooms()
+                    async let popularRequest = api.getLiveFeed(maxTime: 0)
+                    let followed = (try? await followedRequest) ?? []
+                    let popular = try await popularRequest
+                    result = (followed + popular.0, popular.1, popular.2)
+                } else {
+                    result = try await api.getLiveFeed(maxTime: cursor)
+                }
             }
 
             guard requestGeneration == generation else { return }
