@@ -84,6 +84,17 @@ final class DouyinAPI: ObservableObject {
     static let shared = DouyinAPI()
     
     private let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+
+    /// 精选流把 install_time 当作浏览器安装会话的一部分，不能随分页请求变化。
+    private var anonymousInstallTime: Int {
+        let key = "douyin_anonymous_install_time"
+        let savedValue = UserDefaults.standard.integer(forKey: key)
+        if savedValue > 0 { return savedValue }
+
+        let currentValue = Int(Date().timeIntervalSince1970)
+        UserDefaults.standard.set(currentValue, forKey: key)
+        return currentValue
+    }
     
     @Published var cookie: String = "" {
         didSet {
@@ -259,11 +270,24 @@ final class DouyinAPI: ObservableObject {
         }
     }
 
-    /// 获取推荐视频流。
-    ///
-    /// 网页端当前使用 tab/feed，并通过 refresh_index + view_count 维持
-    /// 推荐上下文。count 仍按网页请求传 10，实际条数以服务端响应为准。
+    /// 获取推荐视频流。登录用户沿用个性化推荐；未登录时改用精选模块，
+    /// 避免 tab/feed 在匿名状态下返回空列表。
     func getFeed(refreshIndex: Int, viewCount: Int) async throws -> ([Aweme], Bool) {
+        if cookie.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return try await getAnonymousFeed(refreshIndex: refreshIndex)
+        }
+        return try await getAuthenticatedFeed(
+            refreshIndex: refreshIndex,
+            viewCount: viewCount
+        )
+    }
+
+    /// 登录网页端使用 tab/feed，并通过 refresh_index + view_count 维持
+    /// 推荐上下文。count 仍按网页请求传 10，实际条数以服务端响应为准。
+    private func getAuthenticatedFeed(
+        refreshIndex: Int,
+        viewCount: Int
+    ) async throws -> ([Aweme], Bool) {
         let recommendationContext = """
         {"is_client":false,"ff_danmaku_status":1,"danmaku_switch_status":1,"is_dash_user":1,"is_auto_play":0,"is_full_screen":0,"is_full_webscreen":0,"is_mute":0,"is_speed":1,"is_visible":1,"related_recommend":1,"is_xigua_user":0}
         """
@@ -331,6 +355,114 @@ final class DouyinAPI: ObservableObject {
             fields: [
                 "refreshIndex": refreshIndex,
                 "viewCount": viewCount,
+                "mode": "authenticated-tab",
+                "entries": res.aweme_list?.count ?? 0,
+                "playable": awemes.count,
+                "videos": awemes.filter { !$0.isLive }.count,
+                "liveRooms": awemes.filter(\.isLive).count,
+                "hasMore": hasMore
+            ]
+        )
+#endif
+        return (awemes, hasMore)
+    }
+
+    /// 未登录精选流。首屏使用 pull_type=0/use_lite_type=2；后续页面固定
+    /// pull_type=2/use_lite_type=0，并只递增 refresh_index。
+    private func getAnonymousFeed(refreshIndex: Int) async throws -> ([Aweme], Bool) {
+        let isInitialPage = refreshIndex <= 1
+        let recommendationContext = """
+        {"is_xigua_user":0,"danmaku_switch_status":0,"is_client":false}
+        """
+        var components = URLComponents(
+            string: "https://www.douyin.com/aweme/v2/web/module/feed/"
+        )
+        var queryItems = [
+            URLQueryItem(name: "device_platform", value: "webapp"),
+            URLQueryItem(name: "aid", value: "6383"),
+            URLQueryItem(name: "channel", value: "channel_pc_web"),
+            URLQueryItem(name: "module_id", value: "3003101"),
+            URLQueryItem(name: "count", value: "20"),
+            URLQueryItem(name: "filterGids", value: ""),
+            URLQueryItem(name: "presented_ids", value: ""),
+            URLQueryItem(name: "refresh_index", value: String(max(1, refreshIndex))),
+            URLQueryItem(name: "refer_id", value: ""),
+            URLQueryItem(name: "refer_type", value: "10"),
+            URLQueryItem(name: "pull_type", value: isInitialPage ? "0" : "2"),
+            URLQueryItem(name: "awemePcRecRawData", value: recommendationContext),
+            URLQueryItem(name: "Seo-Flag", value: "0"),
+            URLQueryItem(name: "install_time", value: String(anonymousInstallTime)),
+            URLQueryItem(name: "tag_id", value: ""),
+            URLQueryItem(name: "use_lite_type", value: isInitialPage ? "2" : "0"),
+            URLQueryItem(name: "xigua_user", value: "0"),
+            URLQueryItem(name: "pc_client_type", value: "1"),
+            URLQueryItem(name: "pc_libra_divert", value: "Windows"),
+            URLQueryItem(name: "update_version_code", value: "170400"),
+            URLQueryItem(name: "support_h265", value: "1"),
+            URLQueryItem(name: "support_dash", value: "1"),
+            URLQueryItem(name: "version_code", value: "170400"),
+            URLQueryItem(name: "version_name", value: "17.4.0"),
+            URLQueryItem(name: "cookie_enabled", value: "true"),
+            URLQueryItem(name: "screen_width", value: "1920"),
+            URLQueryItem(name: "screen_height", value: "1080"),
+            URLQueryItem(name: "browser_language", value: "zh-CN"),
+            URLQueryItem(name: "browser_platform", value: "Win32"),
+            URLQueryItem(name: "browser_name", value: "Chrome"),
+            URLQueryItem(name: "browser_version", value: "150.0.0.0"),
+            URLQueryItem(name: "browser_online", value: "true"),
+            URLQueryItem(name: "engine_name", value: "Blink"),
+            URLQueryItem(name: "engine_version", value: "150.0.0.0"),
+            URLQueryItem(name: "os_name", value: "Windows"),
+            URLQueryItem(name: "os_version", value: "10"),
+            URLQueryItem(name: "cpu_core_num", value: "8"),
+            URLQueryItem(name: "device_memory", value: "8"),
+            URLQueryItem(name: "platform", value: "PC"),
+            URLQueryItem(name: "downlink", value: "10"),
+            URLQueryItem(name: "effective_type", value: "4g"),
+            URLQueryItem(name: "round_trip_time", value: "50")
+        ]
+        if isInitialPage {
+            queryItems.append(contentsOf: [
+                URLQueryItem(name: "pre_log_id", value: ""),
+                URLQueryItem(name: "pre_item_ids", value: ""),
+                URLQueryItem(name: "pre_room_ids", value: ""),
+                URLQueryItem(name: "pre_item_from", value: "sati")
+            ])
+        } else {
+            queryItems.append(contentsOf: [
+                URLQueryItem(name: "active_id", value: ""),
+                URLQueryItem(name: "is_active_tab", value: "false")
+            ])
+        }
+        components?.queryItems = queryItems
+        guard let url = components?.url?.absoluteString else {
+            throw APIError.invalidURL
+        }
+
+        let requestBody = isInitialPage
+            ? Data("encoded_pre_item_ids=&encoded_pre_room_ids=".utf8)
+            : nil
+        let res: FeedResponse = try await request(
+            url: url,
+            method: "POST",
+            body: requestBody,
+            extraHeaders: [
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "Referer": "https://www.douyin.com/jingxuan",
+                "x-secsdk-csrf-token": "DOWNGRADE"
+            ]
+        )
+        try validateStatus(res.status_code, message: res.status_msg)
+        let awemes = (res.aweme_list ?? []).filter(\.isPlayableFeedItem)
+        let hasMore = (res.has_more ?? 1) != 0
+#if DEBUG
+        PlaybackDiagnostics.shared.event(
+            "recommend-response",
+            category: "api",
+            fields: [
+                "refreshIndex": refreshIndex,
+                "mode": "anonymous-module",
+                "pullType": isInitialPage ? 0 : 2,
                 "entries": res.aweme_list?.count ?? 0,
                 "playable": awemes.count,
                 "videos": awemes.filter { !$0.isLive }.count,
