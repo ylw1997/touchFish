@@ -821,12 +821,8 @@ struct LiveRoom: Decodable {
     }
 
     var preferredHLSURLs: [URL] {
-        let map = stream_url?.hls_pull_url_map ?? [:]
-        // hls_pull_url 是服务端按当前直播间选择的默认流，实测首包通常明显
-        // 快于遍历清晰度 Map。Map 回退优先选择 H.264 低码率 SD1，避免
-        // 高帧率/高码率流在电视端进入 ready 状态后迟迟没有首帧。
-        let orderedValues = [stream_url?.hls_pull_url].compactMap { $0 }
-            + ["SD1", "SD2", "HD1", "FULL_HD1"].compactMap { map[$0] }
+        guard let streamURL = stream_url else { return [] }
+        let orderedValues = streamURL.preferredH264HLSURLs
         var seen = Set<String>()
         return orderedValues.compactMap(URL.init(string:)).filter {
             seen.insert($0.absoluteString).inserted
@@ -837,6 +833,120 @@ struct LiveRoom: Decodable {
 struct LiveStreamURL: Decodable {
     let hls_pull_url: String?
     let hls_pull_url_map: [String: String]?
+    let hls_pull_url_params: String?
+    let live_core_sdk_data: LiveCoreSDKData?
+
+    private enum CodingKeys: String, CodingKey {
+        case hls_pull_url
+        case hls_pull_url_map
+        case hls_pull_url_params
+        case live_core_sdk_data
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        hls_pull_url = try? container.decode(String.self, forKey: .hls_pull_url)
+        hls_pull_url_map = try? container.decode([String: String].self, forKey: .hls_pull_url_map)
+        hls_pull_url_params = try? container.decode(String.self, forKey: .hls_pull_url_params)
+        live_core_sdk_data = try? container.decode(LiveCoreSDKData.self, forKey: .live_core_sdk_data)
+    }
+
+    /// 直播广场的顶层 HLS 经常是 bytevc1/HEVC。它在模拟器上会表现为
+    /// 音频正常但没有可输出的视频轨。真正的 H.264 兼容流藏在
+    /// live_core_sdk_data.pull_data.stream_data 中（通常是 md 清晰度）。
+    /// 关注直播本身是 H.264，也统一从同一份数据中选择 720p/低码率流。
+    var preferredH264HLSURLs: [String] {
+        let coreURLs = live_core_sdk_data?.pull_data?.h264HLSURLs ?? []
+        if !coreURLs.isEmpty {
+            return Array(coreURLs.prefix(4))
+        }
+
+        // 老接口没有 stream_data 时，仅在顶层参数明确标记 H.264 后使用
+        // 默认流和清晰度 Map。无法判断编码时保留旧回退，避免把本来可播
+        // 的少数直播间直接过滤掉。
+        let map = hls_pull_url_map ?? [:]
+        let fallback = [hls_pull_url].compactMap { $0 }
+            + ["SD2", "SD1", "HD1", "FULL_HD1"].compactMap { map[$0] }
+        guard let topCodec else { return fallback }
+        return topCodec.isH264 ? fallback : []
+    }
+
+    private var topCodec: String? {
+        if let hls_pull_url_params,
+           let data = hls_pull_url_params.data(using: .utf8),
+           let params = try? JSONDecoder().decode(LiveStreamSDKParams.self, from: data) {
+            return params.codec
+        }
+        return live_core_sdk_data?.pull_data?.codec
+    }
+}
+
+struct LiveCoreSDKData: Decodable {
+    let pull_data: LiveCorePullData?
+}
+
+struct LiveCorePullData: Decodable {
+    let codec: String?
+    let stream_data: String?
+
+    var h264HLSURLs: [String] {
+        guard let stream_data,
+              let data = stream_data.data(using: .utf8),
+              let payload = try? JSONDecoder().decode(LiveCoreStreamPayload.self, from: data) else {
+            return []
+        }
+
+        // sd/ld 优先保证首帧与解码稳定；直播广场的 H.264 通常只在 md。
+        let preferredQualities = ["sd", "ld", "md", "hd", "uhd", "origin"]
+        let remainingQualities = payload.data.keys
+            .filter { !preferredQualities.contains($0) }
+            .sorted()
+        return (preferredQualities + remainingQualities).flatMap { quality in
+            guard let lines = payload.data[quality] else { return [String]() }
+            return [lines.main, lines.backup].compactMap { line in
+                guard let line, line.isH264 else { return nil }
+                return line.hls
+            }
+        }
+    }
+}
+
+private struct LiveCoreStreamPayload: Decodable {
+    let data: [String: LiveCoreStreamLines]
+}
+
+private struct LiveCoreStreamLines: Decodable {
+    let main: LiveCoreStreamLine?
+    let backup: LiveCoreStreamLine?
+}
+
+private struct LiveCoreStreamLine: Decodable {
+    let hls: String?
+    let sdk_params: String?
+
+    var isH264: Bool {
+        guard let sdk_params,
+              let data = sdk_params.data(using: .utf8),
+              let params = try? JSONDecoder().decode(LiveStreamSDKParams.self, from: data) else {
+            return false
+        }
+        return params.codec?.isH264 == true
+    }
+}
+
+private struct LiveStreamSDKParams: Decodable {
+    let codec: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case codec = "VCodec"
+    }
+}
+
+private extension String {
+    var isH264: Bool {
+        let value = lowercased()
+        return value == "264" || value == "h264" || value == "avc" || value == "avc1"
+    }
 }
 
 struct Author: Decodable {
