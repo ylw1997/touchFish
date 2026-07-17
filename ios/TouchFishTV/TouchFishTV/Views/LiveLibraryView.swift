@@ -113,7 +113,14 @@ struct LiveLibraryView: View {
             }
             .navigationDestination(isPresented: playbackPresented) {
                 if let selectedRoom {
-                    LiveRoomPlaybackPage(discoveryItem: selectedRoom)
+                    let rooms = store.followedItems + store.recommendedItems
+                    let initialIndex = rooms.firstIndex {
+                        $0.aweme_id == selectedRoom.aweme_id
+                    } ?? 0
+                    LiveRoomPlaybackPage(
+                        rooms: rooms,
+                        initialIndex: initialIndex
+                    )
                 }
             }
         }
@@ -170,8 +177,14 @@ private struct LiveRoomPlaybackPage: View {
     @State private var playbackToken: UInt64 = 1
     @State private var selectedAuthor: Author?
     @State private var authorPresented = false
+    @State private var currentIndex: Int
 
-    let discoveryItem: Aweme
+    let rooms: [Aweme]
+
+    init(rooms: [Aweme], initialIndex: Int) {
+        self.rooms = rooms
+        _currentIndex = State(initialValue: initialIndex)
+    }
 
     var body: some View {
         ZStack {
@@ -183,8 +196,8 @@ private struct LiveRoomPlaybackPage: View {
                     cookie: api.cookie,
                     playbackToken: playbackToken,
                     coordinator: session,
-                    onPrevious: {},
-                    onNext: {},
+                    onPrevious: playPrevious,
+                    onNext: playNext,
                     onShowAuthor: showCurrentAuthor
                 )
                 .ignoresSafeArea()
@@ -200,12 +213,18 @@ private struct LiveRoomPlaybackPage: View {
                         .foregroundStyle(.orange)
                     Text(errorMessage ?? "该直播间暂时无法播放")
                         .font(.title3.weight(.semibold))
-                    Button("重试") { Task { await resolveAndPlay() } }
-                        .buttonStyle(.borderedProminent)
+                    Button("重试") {
+                        guard let discoveryItem else { return }
+                        Task { await resolveAndPlay(discoveryItem) }
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
             }
         }
-        .task(id: discoveryItem.aweme_id) { await resolveAndPlay() }
+        .task(id: discoveryItem?.aweme_id) {
+            guard let discoveryItem else { return }
+            await resolveAndPlay(discoveryItem)
+        }
         .onChange(of: authorPresented) { _, presented in
             guard !presented, playbackItem != nil else { return }
             selectedAuthor = nil
@@ -220,7 +239,11 @@ private struct LiveRoomPlaybackPage: View {
         .onDisappear { playbackSlot.deactivate() }
     }
 
-    private func resolveAndPlay() async {
+    private var discoveryItem: Aweme? {
+        rooms.indices.contains(currentIndex) ? rooms[currentIndex] : nil
+    }
+
+    private func resolveAndPlay(_ discoveryItem: Aweme) async {
         guard let webRID = discoveryItem.liveRoom?.owner?.web_rid, !webRID.isEmpty else {
             errorMessage = "直播间缺少播放信息"
             return
@@ -230,11 +253,16 @@ private struct LiveRoomPlaybackPage: View {
         playbackItem = nil
         errorMessage = nil
         isLoading = true
-        defer { isLoading = false }
+        defer {
+            if self.discoveryItem?.aweme_id == discoveryItem.aweme_id {
+                isLoading = false
+            }
+        }
 
         do {
             let room = try await api.getPlayableLiveRoom(webRID: webRID)
             try Task.checkCancellation()
+            guard self.discoveryItem?.aweme_id == discoveryItem.aweme_id else { return }
             playbackItem = Aweme(liveRoom: room)
             playbackToken &+= 1
             startPlayback()
@@ -243,6 +271,16 @@ private struct LiveRoomPlaybackPage: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func playPrevious() {
+        guard currentIndex > 0 else { return }
+        currentIndex -= 1
+    }
+
+    private func playNext() {
+        guard currentIndex + 1 < rooms.count else { return }
+        currentIndex += 1
     }
 
     private func startPlayback() {
@@ -406,7 +444,7 @@ private final class LiveLibraryCollectionViewController: UICollectionViewControl
     }
 
     private static func makeLayout() -> UICollectionViewLayout {
-        UICollectionViewCompositionalLayout { _, _ in
+        UICollectionViewCompositionalLayout { sectionIndex, _ in
             let item = NSCollectionLayoutItem(
                 layoutSize: NSCollectionLayoutSize(
                     widthDimension: .fractionalWidth(1.0 / 4.0),
@@ -441,7 +479,9 @@ private final class LiveLibraryCollectionViewController: UICollectionViewControl
                 NSCollectionLayoutBoundarySupplementaryItem(
                     layoutSize: NSCollectionLayoutSize(
                         widthDimension: .fractionalWidth(1),
-                        heightDimension: .absolute(40)
+                        // 推荐分区的标题与首排卡片留出更明确的呼吸空间；
+                        // 关注分区保持现有紧凑布局。
+                        heightDimension: .absolute(sectionIndex == 1 ? 58 : 40)
                     ),
                     elementKind: UICollectionView.elementKindSectionHeader,
                     alignment: .top

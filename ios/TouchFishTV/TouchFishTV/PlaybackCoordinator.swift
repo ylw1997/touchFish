@@ -1,6 +1,5 @@
 import AVFoundation
 import Foundation
-import MediaPlayer
 
 enum PlaybackSource: String {
     case recommend
@@ -306,12 +305,6 @@ final class PlaybackCoordinator: ObservableObject {
             options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
         )
         let item = AVPlayerItem(asset: asset)
-        if aweme.isLive {
-            // tvOS 不支持 AVPlayerViewController.showsTimecodes。通过系统的
-            // Now Playing 直播标记让 AVKit 使用直播语义，而不是把
-            // EXT-X-PROGRAM-DATE-TIME 当成普通进度时间展示。
-            item.nowPlayingInfo = [MPNowPlayingInfoPropertyIsLiveStream: true]
-        }
         // Feed 只需要少量前向缓存。旧值 8 秒在渐进式 MP4 上会被系统放大到
         // 一百多秒，当前 item 单独就会长期占用约 50 MB 解码/网络缓冲。
         item.preferredForwardBufferDuration = aweme.isLive ? 3 : 2
