@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+## [17.7.0](https://github.com/ylw1997/touchFish/compare/v17.6.1...v17.7.0) (2026-07-21)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([cc5afb7](https://github.com/ylw1997/touchFish/commit/cc5afb721026eccc15f75a1fcd87db0251e1df41))
+
+
+### ✨ Features | 新功能
+
+* 抽离 CommentImages 组件，评论图片支持单独切换显示/隐藏 ([6b798a1](https://github.com/ylw1997/touchFish/commit/6b798a1326569ff875e6953bc46d3caec5850a03))
+* 评论图片展示支持 showImg 配置并增加 pic_num 校验 ([e70e0d4](https://github.com/ylw1997/touchFish/commit/e70e0d42bb5670f263c380569a7b99b541a828cc))
+
 ### [17.6.1](https://github.com/ylw1997/touchFish/compare/v17.6.0...v17.6.1) (2026-07-10)
 
 
