@@ -21,7 +21,8 @@ export const renderComments = (
   is_child = false,
   getUserByName: (username: string) => void,
   onUserClick: (userInfo: weiboUser) => void,
-  onTopicClick: (topic: string) => void
+  onTopicClick: (topic: string) => void,
+  showImg = true
 ) => {
   return (
     <div className="border-top-divider">
@@ -76,7 +77,10 @@ export const renderComments = (
                     <div className="content comment-content">
                       {parseWeiboText(item, getUserByName, onTopicClick)}
                     </div>
-                    {item.url_struct && item.url_struct.length > 0 && (
+                    {showImg &&
+                      (item.pic_num ?? 0) > 0 &&
+                      item.url_struct &&
+                      item.url_struct.length > 0 && (
                       <div
                         className="imglist"
                         style={{ marginBottom: "8px", padding: "0px" }}
@@ -130,7 +134,8 @@ export const renderComments = (
                           true,
                           getUserByName,
                           onUserClick,
-                          onTopicClick
+                          onTopicClick,
+                          showImg
                         )}
                     </div>
                   </>

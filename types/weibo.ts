@@ -75,6 +75,7 @@ export interface commentsItem extends baseWeiboField {
   user?: weiboUser;
   created_at: string;
   like_counts: number;
+  pic_num?: number;
   comments: commentsItem[];
   url_struct?: commentsPicItem[];
 }
