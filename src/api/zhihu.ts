@@ -330,47 +330,32 @@ export const searchZhihu = async (query: string): Promise<ZhihuItemData[]> => {
     .filter((item: ZhihuItemData) => item.type === "answer");
 };
 
-// 获取知乎问题详情 //https://www.zhihu.com/question/1932357580283437907
-
+// 获取知乎问题详情，走签名接口而非抓网页 HTML，避免被风控拦截
 export const getZhihuQuestionDetailFunc = async (
   questionId: string,
-): Promise<any> => {
-  const url = `https://www.zhihu.com/question/${questionId}`;
+): Promise<{ detail?: string; isFollowing?: boolean }> => {
+  const signPath = `/api/v4/questions/${questionId}?include=detail,excerpt,relationship`;
+  const xzse96 = await getZhihu96(signPath);
   const cookie = (await getOrSetZhihuCookie()) as string;
-  const headers = {
-    Cookie: cookie,
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-  };
 
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: headers,
+    const res = await axios.get(`https://www.zhihu.com${signPath}`, {
+      headers: {
+        Cookie: cookie,
+        "x-zse-96": xzse96,
+        "x-zse-93": xzse93,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+      },
     });
-
-    if (!response.ok) {
-      console.error(`Request failed with status code ${response.status}`);
-      return "";
-    }
-
-    const html = await response.text();
-    const match = html.match(
-      /<script id="js-initialData" type="text\/json">(.*?)<\/script>/,
-    );
-    if (match && match[1]) {
-      const json = JSON.parse(match[1]);
-      return {
-        detail: json.initialState.entities.questions[questionId].detail,
-        isFollowing:
-          json.initialState.entities.questions[questionId].relationship
-            .isFollowing,
-      };
-    }
-    return "";
+    // 分开取值，避免一个字段异常连累另一个
+    return {
+      detail: res.data?.detail,
+      isFollowing: res.data?.relationship?.is_following,
+    };
   } catch (error) {
-    console.error("An error occurred during fetch:", error);
-    return "";
+    console.error("获取知乎问题详情失败:", error);
+    return {};
   }
 };
 

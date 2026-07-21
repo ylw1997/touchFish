@@ -1,6 +1,39 @@
 # 更新历史 
 
 
+### [17.6.1](https://github.com/ylw1997/touchFish/compare/v17.6.0...v17.6.1) (2026-07-10)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复知乎搜索结果点击问题时详情弹窗被搜索弹窗遮挡的问题 ([3384805](https://github.com/ylw1997/touchFish/commit/338480580ab48f5fe473ee667681486e9e957889))
+* 修复知乎问题详情内容为空只显示标题的问题 ([1d6e550](https://github.com/ylw1997/touchFish/commit/1d6e550c74cf288522af739eab71ca0a1e25b9ab)), closes [#117](https://github.com/ylw1997/touchFish/issues/117)
+
+## [17.6.0](https://github.com/ylw1997/touchFish/compare/v17.5.0...v17.6.0) (2026-07-08)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([58f6fe3](https://github.com/ylw1997/touchFish/commit/58f6fe30e7ff06973566b8d91bc5aa5f8756ac12))
+
+
+### ✨ Features | 新功能
+
+* 优化排版 ([04d59f7](https://github.com/ylw1997/touchFish/commit/04d59f7fd616fe3a443b8a65b93f6c0252e6c605))
+* 优化播放体验 ([6a1961d](https://github.com/ylw1997/touchFish/commit/6a1961d6a745c0bbe512131574da72c243cc507d))
+* 优化知乎查看评论 ([1b2d40c](https://github.com/ylw1997/touchFish/commit/1b2d40cb208a778084dfe4749e2469a1f0b61ced))
+* 优化评论查看 ([0266728](https://github.com/ylw1997/touchFish/commit/02667284be287ceb06a6e1d851550fa7e89083da))
+* 修复抖音切回回到第一个视频问题 ([86baa01](https://github.com/ylw1997/touchFish/commit/86baa015291f5c1625737d7636b0a3a33b2e39ec))
+* 修复视频暂停闪烁问题 ([57a8a9f](https://github.com/ylw1997/touchFish/commit/57a8a9f35e39ca5286c67f05f4403dd14b1731ce))
+* 修复评论展示问题 ([bf9079f](https://github.com/ylw1997/touchFish/commit/bf9079fc299fef364195da3b938d5aef4729fae3))
+* 可以查看用户视频 ([62efb41](https://github.com/ylw1997/touchFish/commit/62efb41196a23253116ebee399c6c4809228ebab))
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 优化用户视频 ([9c5ec8e](https://github.com/ylw1997/touchFish/commit/9c5ec8e71792d01b80d2e1272f9df405ec4b28de))
+* 修复暂停要点击两次问题 ([969213e](https://github.com/ylw1997/touchFish/commit/969213eb12263d976f3b165720958fc7732fc389))
+
 ## [17.5.0](https://github.com/ylw1997/touchFish/compare/v17.4.1...v17.5.0) (2026-06-24)
 
 
