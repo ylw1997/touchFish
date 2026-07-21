@@ -167,7 +167,8 @@ const WeiboCard: React.FC<WeiboCardProps> = ({
               false,
               getUserByName,
               onUserClick,
-              onTopicClick
+              onTopicClick,
+              showImg
             )
           )}
         </>

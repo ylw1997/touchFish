@@ -7,10 +7,11 @@
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import { List, Avatar, Flex, Image } from "antd";
+import { List, Avatar, Flex } from "antd";
 import { motion } from "framer-motion";
 import { commentsItem, weiboUser } from "../../../types/weibo";
 import YImg from "./YImg";
+import CommentImages from "./CommentImages";
 import dayjs from "dayjs";
 import { parseWeiboText } from "../utils/textParser";
 import { HeartOutlined } from "@ant-design/icons";
@@ -21,7 +22,8 @@ export const renderComments = (
   is_child = false,
   getUserByName: (username: string) => void,
   onUserClick: (userInfo: weiboUser) => void,
-  onTopicClick: (topic: string) => void
+  onTopicClick: (topic: string) => void,
+  showImg = true
 ) => {
   return (
     <div className="border-top-divider">
@@ -76,31 +78,7 @@ export const renderComments = (
                     <div className="content comment-content">
                       {parseWeiboText(item, getUserByName, onTopicClick)}
                     </div>
-                    {item.url_struct && item.url_struct.length > 0 && (
-                      <div
-                        className="imglist"
-                        style={{ marginBottom: "8px", padding: "0px" }}
-                      >
-                        <Image.PreviewGroup preview={{ movable: false }}>
-                          {item.url_struct[0]?.pic_ids?.map((pic) => {
-                            const picInfo =
-                              item.url_struct?.[0]?.pic_infos?.[pic];
-                            if (!picInfo) return null;
-                            const imgProps = {
-                              className: "img-item",
-                              src: picInfo.large
-                                ? picInfo.large.url
-                                : picInfo.bmiddle.url,
-                            };
-                            return (
-                              <div key={pic}>
-                                <YImg {...imgProps} />
-                              </div>
-                            );
-                          })}
-                        </Image.PreviewGroup>
-                      </div>
-                    )}
+                    <CommentImages item={item} showImg={showImg} />
                     <Flex
                       justify="space-between"
                       style={{
@@ -130,7 +108,8 @@ export const renderComments = (
                           true,
                           getUserByName,
                           onUserClick,
-                          onTopicClick
+                          onTopicClick,
+                          showImg
                         )}
                     </div>
                   </>
