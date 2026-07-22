@@ -167,7 +167,7 @@ body {
       box-sizing: border-box;
 
       .chapter-header {
-        font-size: calc(var(--app-font-size) + 10px);
+        font-size: calc(var(--reader-font-size) + 8px);
         font-weight: 700;
         color: var(--vscode-foreground);
         margin-bottom: 40px;
@@ -178,17 +178,21 @@ body {
 
       .xhtml-content {
         line-height: 1.8;
-        font-size: calc(var(--app-font-size) + 2px);
+        font-size: var(--reader-font-size) !important;
         color: var(--vscode-editor-foreground);
 
         p {
           margin: 1.5em 0;
           text-align: justify;
-          font-size: calc(var(--app-font-size) + 1px);
+          font-size: inherit !important;
+
+          * {
+            font-size: inherit !important;
+          }
         }
         .qqreader-footnote {
           width: fit-content;
-          font-size: calc(var(--app-font-size) - 2px);
+          font-size: calc(var(--reader-font-size) - 3px) !important;
           background: var(--vscode-list-hoverBackground);
           padding: 10px;
           border-radius: 4px;

@@ -4,15 +4,19 @@ import { vscode } from "../utils/vscode";
 
 interface FontSizeState {
   fontSize: number;
+  readerFontSize: number;
   setFontSize: (size: number) => void;
   increase: () => void;
   decrease: () => void;
+  increaseReader: () => void;
+  decreaseReader: () => void;
 }
 
 export const useFontSizeStore = create<FontSizeState>()(
   persist(
     (set, get) => ({
       fontSize: 14,
+      readerFontSize: 18,
 
       setFontSize: (size: number) => {
         set({ fontSize: size });
@@ -35,10 +39,24 @@ export const useFontSizeStore = create<FontSizeState>()(
           payload: newSize,
         });
       },
+
+      increaseReader: () => {
+        set({ readerFontSize: Math.min(get().readerFontSize + 1, 32) });
+      },
+
+      decreaseReader: () => {
+        set({ readerFontSize: Math.max(get().readerFontSize - 1, 12) });
+      },
     }),
     {
       name: "weread-fontsize-storage",
       storage: createJSONStorage(() => localStorage),
-    }
+      version: 1,
+      migrate: (persistedState: any) => ({
+        ...persistedState,
+        readerFontSize:
+          persistedState?.readerFontSize ?? persistedState?.fontSize ?? 18,
+      }),
+    },
   )
 );

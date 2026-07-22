@@ -1,4 +1,8 @@
 import axios from "axios";
+import {
+  assertWeReadAuthenticated,
+  assertWeReadTextAuthenticated,
+} from "../auth";
 
 export const UserAgentForWeb = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36";
 
@@ -17,13 +21,18 @@ function stringifyQuery(
 class MockResponse {
   constructor(private data: any, public headers: any = {}) {}
   async json() {
-    return typeof this.data === 'string' ? JSON.parse(this.data) : this.data;
+    const data = typeof this.data === "string" ? JSON.parse(this.data) : this.data;
+    assertWeReadAuthenticated(data);
+    return data;
   }
   async text() {
-    return typeof this.data === 'string' ? this.data : JSON.stringify(this.data);
+    const text = typeof this.data === "string" ? this.data : JSON.stringify(this.data);
+    assertWeReadTextAuthenticated(text);
+    return text;
   }
   getSetCookie(): string[] {
-    const setCookie = this.headers["set-cookie"];
+    const setCookie =
+      this.headers["set-cookie"] ?? this.headers.get?.("set-cookie");
     if (Array.isArray(setCookie)) {
       return setCookie;
     }
