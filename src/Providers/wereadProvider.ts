@@ -30,15 +30,18 @@ export class WereadProvider extends BaseWebviewProvider {
     const cookie =
       workspace.getConfiguration("touchfish").get<string>("wereadCookie") || "";
 
-    this.client = new WeReadClient({ cookie }, (newCookie) => {
-      void setConfigByKey("wereadCookie", newCookie);
+    this.client = new WeReadClient({ cookie }, async (newCookie) => {
+      await setConfigByKey("wereadCookie", newCookie);
     });
-  }
 
-  private syncCookieFromConfig() {
-    const cookie =
-      workspace.getConfiguration("touchfish").get<string>("wereadCookie") || "";
-    this.client.setCookie(cookie);
+    context.subscriptions.push(
+      workspace.onDidChangeConfiguration((event) => {
+        if (!event.affectsConfiguration("touchfish.wereadCookie")) return;
+        const configuredCookie =
+          workspace.getConfiguration("touchfish").get<string>("wereadCookie") || "";
+        this.client.setCookie(configuredCookie);
+      }),
+    );
   }
 
   public override resolveWebviewView(webviewView: WebviewView) {
@@ -53,8 +56,6 @@ export class WereadProvider extends BaseWebviewProvider {
     const { command, payload } = message;
 
     try {
-      this.syncCookieFromConfig();
-
       switch (command) {
         case "WEREAD_GET_SHELF": {
           const result = await this.client.execute(web_shelf_sync, {});

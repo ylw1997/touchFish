@@ -76,7 +76,8 @@ export async function web_login_renewal(url: string, cookie: string = "") {
     return resp.getSetCookie().reduce(
       (entry: Record<string, string>, cookie: string) => {
         const item = cookie.split(";")[0];
-        const [name, value] = item.split("=");
+        const [name, ...valueParts] = item.split("=");
+        const value = valueParts.join("=");
         if (name === "wr_vid") {
           entry.vid = value;
         } else if (name === "wr_skey") {
@@ -92,9 +93,9 @@ export async function web_login_renewal(url: string, cookie: string = "") {
     // { errCode: -12013, errMsg: "微信登录授权已过期，继续购买需跳转到微信重新登录" }
     // { errCode: -2013, errLog: "C6LyBKI", errMsg: "鉴权失败" }
     if (data.errCode !== -12013) {
-      console.warn('/web/login/renewal接口失败', data, cookie)
+      console.warn("/web/login/renewal接口失败", data);
     }
-    throw Error(data.errMsg);
+    throw Error(data.errMsg || "微信读书 Cookie 续期失败");
   }
 }
 
