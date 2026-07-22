@@ -90,8 +90,13 @@ const App: React.FC = () => {
     top: number;
     left: number;
   } | null>(null);
-  const { increase, decrease } = useFontSizeStore();
-  const { fontSize } = useFontSizeStore();
+  const {
+    readerFontSize,
+    increase,
+    decrease,
+    increaseReader,
+    decreaseReader,
+  } = useFontSizeStore();
 
   const sortedBooks = useMemo(() => {
     return [...books].sort((a, b) => {
@@ -520,7 +525,11 @@ const App: React.FC = () => {
               chapterContent && (
                 <div
                   className="content-body"
-                  style={{ fontSize: `${fontSize}px` }}
+                  style={
+                    {
+                      "--reader-font-size": `${readerFontSize}px`,
+                    } as React.CSSProperties
+                  }
                 >
                   <style>{chapterContent.style || ""}</style>
                   <div className="chapter-header">
@@ -813,12 +822,12 @@ const App: React.FC = () => {
           <FloatButton
             icon={<MinusOutlined style={{ color: "#52c41a" }} />}
             tooltip={<div>减小字体</div>}
-            onClick={decrease}
+            onClick={view === "reader" ? decreaseReader : decrease}
           />
           <FloatButton
             icon={<PlusOutlined style={{ color: "#ff4d4f" }} />}
             tooltip={<div>增大字体</div>}
-            onClick={increase}
+            onClick={view === "reader" ? increaseReader : increase}
           />
 
           {view === "reader" && (
