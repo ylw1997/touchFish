@@ -66,21 +66,49 @@ function replaceQueryIdInContent(content, varName, queryId) {
     };
 }
 
+function extractQueryIdsFromSource(source) {
+    const results = [];
+    const patterns = [
+        /queryId\s*:\s*["']([^"']+)["']\s*,\s*operationName\s*:\s*["'](\w+)["']/g,
+        /operationName\s*:\s*["'](\w+)["']\s*,\s*queryId\s*:\s*["']([^"']+)["']/g,
+    ];
+
+    for (const [index, pattern] of patterns.entries()) {
+        for (const match of source.matchAll(pattern)) {
+            const operationName = index === 0 ? match[2] : match[1];
+            const queryId = index === 0 ? match[1] : match[2];
+            results.push([operationName, queryId]);
+        }
+    }
+
+    return results;
+}
+
 const INJECTION_SCRIPT = `
 (async () => {
-    if (typeof webpackChunk_twitter_responsive_web !== 'undefined') {
-        webpackChunk_twitter_responsive_web.push([[''], {}, e => {
-            window.moduleCache = [];
-            for (const c in e.c) {
-                window.moduleCache.push(e.c[c]);
+    const chunks = window.webpackChunk_twitter_responsive_web;
+    if (chunks) {
+        chunks.push([['touchfish-query-ids-' + Date.now()], {}, runtime => {
+            window.__touchfishModuleCache = [];
+            for (const moduleId in runtime.c) {
+                window.__touchfishModuleCache.push(runtime.c[moduleId]);
             }
         }]);
     }
 
-    if (window.moduleCache) {
-        return window.moduleCache
-            .filter(x => typeof x.exports === "object" && x.exports && "queryId" in x.exports)
-            .map(x => [x.exports.operationName, x.exports.queryId]);
+    if (window.__touchfishModuleCache) {
+        return window.__touchfishModuleCache
+            .filter(module => {
+                try {
+                    const exports = module && module.exports;
+                    return exports && typeof exports === 'object'
+                        && typeof exports.operationName === 'string'
+                        && typeof exports.queryId === 'string';
+                } catch {
+                    return false;
+                }
+            })
+            .map(module => [module.exports.operationName, module.exports.queryId]);
     }
 
     return [];
@@ -105,28 +133,79 @@ async function updateIds() {
     const browser = await chromium.launch(launchConfig);
 
     try {
-        const page = await browser.newPage();
+        const page = await browser.newPage({
+            locale: 'en-US',
+            viewport: { width: 1440, height: 900 },
+        });
+        const sourceResults = new Map();
+        const scriptTasks = [];
+
+        page.on('response', response => {
+            if (response.request().resourceType() !== 'script') {
+                return;
+            }
+
+            const task = response.text()
+                .then(source => {
+                    for (const [operationName, queryId] of extractQueryIdsFromSource(source)) {
+                        sourceResults.set(operationName, queryId);
+                    }
+                })
+                .catch(() => {
+                    // 第三方脚本可能无法读取响应体，不影响 X 主脚本提取。
+                });
+            scriptTasks.push(task);
+        });
+
         console.log('📗 正在导航至 X.com...');
-        await page.goto('https://x.com', { waitUntil: 'domcontentloaded', timeout: 90000 });
+        const response = await page.goto(
+            'https://x.com/i/flow/login',
+            { waitUntil: 'domcontentloaded', timeout: 90000 },
+        );
 
         console.log('📳 正在注入脚本提取 Query IDs...');
-        await page.waitForTimeout(10000);
+        await page.waitForFunction(
+            () => typeof window.webpackChunk_twitter_responsive_web !== 'undefined',
+            { timeout: 30000 },
+        ).catch(() => {
+            console.log('⚠️ webpack 运行时未出现，将尝试从已加载脚本源码提取。');
+        });
+        await page.waitForTimeout(5000);
 
-        const results = await page.evaluate(INJECTION_SCRIPT);
-        if (!results || results.length === 0) {
-            throw new Error('未能从页面提取到任何 Query ID，请检查 X.com 是否可访问或脚本是否失效。');
+        const runtimeResults = await page.evaluate(INJECTION_SCRIPT);
+        await Promise.allSettled([...scriptTasks]);
+
+        const resultMap = new Map(sourceResults);
+        for (const [operationName, queryId] of runtimeResults) {
+            resultMap.set(operationName, queryId);
+        }
+        const results = [...resultMap.entries()];
+
+        const missingOperations = Object.keys(idMapping)
+            .filter(operationName => !resultMap.has(operationName));
+        if (results.length === 0 || missingOperations.length > 0) {
+            const diagnostics = {
+                status: response ? response.status() : null,
+                url: page.url(),
+                title: await page.title(),
+                scripts: scriptTasks.length,
+                extracted: results.length,
+                missingOperations,
+            };
+            throw new Error(
+                `Query ID 提取不完整。页面状态: ${JSON.stringify(diagnostics)}`,
+            );
         }
 
-        console.log(`✅ 成功提取到 ${results.length} 个定义。`);
+        console.log(
+            `✅ 成功提取到 ${results.length} 个定义`
+            + `（运行时 ${runtimeResults.length} 个，脚本源码 ${sourceResults.size} 个）。`,
+        );
 
         let updatedCount = 0;
 
-        for (const [opName, queryId] of results) {
-            const varName = idMapping[opName];
-            if (!varName) {
-                console.log(`ℹ️ 跳过未知 Operation: ${opName} (x.ts 中未找到 @operation 注释)`);
-                continue;
-            }
+        for (const [opName, varName] of Object.entries(idMapping)) {
+            const queryId = resultMap.get(opName);
 
             const replaceResult = replaceQueryIdInContent(content, varName, queryId);
             if (replaceResult.currentValue === null) {
@@ -163,6 +242,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+    extractQueryIdsFromSource,
     parseOperationMappings,
     replaceQueryIdInContent,
     updateIds,
