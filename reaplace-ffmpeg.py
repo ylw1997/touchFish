@@ -17,6 +17,32 @@ except:
 
 shell = lambda command, cwd = None: subprocess.Popen(command, shell = True, stdout = subprocess.PIPE, cwd = cwd).stdout.read().decode(errors='ignore').strip()
 
+
+def resign_macos_app(application):
+    """Ad-hoc sign the whole app after replacing a signed dylib."""
+    print('re-signing Visual Studio Code for macOS...')
+    print('warning: this replaces the official app signature with an ad-hoc signature')
+
+    command = ['codesign', '--deep', '--force', '--sign', '-', application]
+    if hasattr(os, 'geteuid') and os.geteuid() != 0:
+        command.insert(0, 'sudo')
+
+    result = subprocess.run(command)
+    if result.returncode != 0:
+        raise RuntimeError(
+            'codesign failed; run manually: sudo codesign --deep --force '
+            '--sign - "{application}"'.format(application=application)
+        )
+
+    verify_result = subprocess.run(
+        ['codesign', '--verify', '--deep', '--strict', application]
+    )
+    if verify_result.returncode != 0:
+        raise RuntimeError('codesign verification failed')
+
+    print('codesign done')
+
+
 installation = ''
 possibilities = []
 electron_temp = 'electron.temp.zip'
@@ -105,8 +131,11 @@ try:
         with z.open(lib[system]) as src, open(local_lib, 'wb') as dst:
             shutil.copyfileobj(src, dst)
     print('replace done')
+    if system == 'darwin':
+        resign_macos_app(installation)
 except Exception as error:
     print(error)
+    exit(1)
 finally:
     if os.path.exists(electron_temp):
         os.remove(electron_temp)
