@@ -26,7 +26,12 @@ final class DouyinFeedStore: ObservableObject {
     private var recommendViewCount = 0
     private var generation: UInt = 0
     private let retainedPreviousItems = 5
-    private let preloadRemainingItems = 3
+    private var preloadRemainingItems: Int {
+        // 推荐接口偶尔需要数秒甚至一次重试。服务端通常每页只返回约 6 条，
+        // 因此从剩余 5 条时就补下一页，避免用户滑到页尾后才开始等待接口。
+        if case .recommend = feedType { return 5 }
+        return 3
+    }
 
     init(feedType: FeedType, api: DouyinAPI? = nil) {
         self.feedType = feedType
@@ -50,6 +55,9 @@ final class DouyinFeedStore: ObservableObject {
         recommendViewCount = 0
         isLoading = false
         await load(isRefresh: true)
+        if case .recommend = feedType {
+            await preloadIfNeeded()
+        }
     }
 
     func previous() {

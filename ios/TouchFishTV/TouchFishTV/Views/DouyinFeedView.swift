@@ -44,7 +44,7 @@ struct DouyinFeedView: View {
                         onNext: {
                             Task {
                                 await store.next()
-                                prewarmNextIfPossible()
+                                startPlaybackIfPossible()
                             }
                         },
                         onShowAuthor: showCurrentAuthor

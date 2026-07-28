@@ -178,14 +178,18 @@ final class PlaybackCoordinator: ObservableObject {
         guard source == .recommend,
               let aweme,
               !aweme.isLive,
-              aweme.aweme_id != currentAwemeID,
-              let url = preferredURLs(for: aweme).first else {
+              aweme.aweme_id != currentAwemeID else {
+            cancelPrewarm()
+            return
+        }
+        let urls = preferredURLs(for: aweme)
+        guard !urls.isEmpty else {
             cancelPrewarm()
             return
         }
         if let prepared = prewarmedAsset,
            prepared.awemeID == aweme.aweme_id,
-           prepared.url == url {
+           urls.contains(prepared.url) {
             return
         }
 
@@ -193,65 +197,90 @@ final class PlaybackCoordinator: ObservableObject {
         prewarmGeneration &+= 1
         let requestedPrewarmGeneration = prewarmGeneration
         let headers = playbackHeaders(for: aweme, cookie: cookie)
-        let asset = AVURLAsset(
-            url: url,
-            options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
-        )
-        prewarmedAsset = PrewarmedAsset(
-            awemeID: aweme.aweme_id,
-            url: url,
-            asset: asset,
-            isReady: false
-        )
-#if DEBUG
-        diagnosticsEvent(
-            "prewarm-started",
-            category: "asset",
-            fields: [
-                "targetAweme": aweme.aweme_id,
-                "host": url.host ?? "unknown"
-            ]
-        )
-#endif
         prewarmTask = Task { [weak self] in
-            do {
-                let isPlayable = try await asset.load(.isPlayable)
+            guard let self else { return }
+            for (candidateIndex, url) in urls.enumerated() {
                 guard !Task.isCancelled,
-                      let self,
-                      requestedPrewarmGeneration == self.prewarmGeneration,
-                      var prepared = self.prewarmedAsset,
-                      prepared.awemeID == aweme.aweme_id,
-                      prepared.asset === asset else { return }
-                prepared.isReady = isPlayable
-                self.prewarmedAsset = prepared
-#if DEBUG
-                self.diagnosticsEvent(
-                    "prewarm-finished",
-                    category: "asset",
-                    fields: [
-                        "targetAweme": aweme.aweme_id,
-                        "host": url.host ?? "unknown",
-                        "playable": isPlayable
-                    ]
-                )
-#endif
-            } catch is CancellationError {
-                return
-            } catch {
-                guard let self,
                       requestedPrewarmGeneration == self.prewarmGeneration else { return }
+                let asset = AVURLAsset(
+                    url: url,
+                    options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
+                )
+                self.prewarmedAsset = PrewarmedAsset(
+                    awemeID: aweme.aweme_id,
+                    url: url,
+                    asset: asset,
+                    isReady: false
+                )
 #if DEBUG
                 self.diagnosticsEvent(
-                    "prewarm-failed",
+                    "prewarm-started",
                     category: "asset",
                     fields: [
                         "targetAweme": aweme.aweme_id,
                         "host": url.host ?? "unknown",
-                        "error": error.localizedDescription
+                        "candidate": candidateIndex
                     ]
                 )
 #endif
-                self.prewarmedAsset = nil
+                do {
+                    let isPlayable = try await asset.load(.isPlayable)
+                    guard !Task.isCancelled,
+                          requestedPrewarmGeneration == self.prewarmGeneration,
+                          var prepared = self.prewarmedAsset,
+                          prepared.awemeID == aweme.aweme_id,
+                          prepared.asset === asset else { return }
+                    if isPlayable {
+                        prepared.isReady = true
+                        self.prewarmedAsset = prepared
+#if DEBUG
+                        self.diagnosticsEvent(
+                            "prewarm-finished",
+                            category: "asset",
+                            fields: [
+                                "targetAweme": aweme.aweme_id,
+                                "host": url.host ?? "unknown",
+                                "candidate": candidateIndex,
+                                "playable": true
+                            ]
+                        )
+#endif
+                        return
+                    }
+#if DEBUG
+                    self.diagnosticsEvent(
+                        "prewarm-failed",
+                        category: "asset",
+                        fields: [
+                            "targetAweme": aweme.aweme_id,
+                            "host": url.host ?? "unknown",
+                            "candidate": candidateIndex,
+                            "error": "asset-not-playable"
+                        ]
+                    )
+#endif
+                } catch is CancellationError {
+                    return
+                } catch {
+                    guard requestedPrewarmGeneration == self.prewarmGeneration else { return }
+#if DEBUG
+                    self.diagnosticsEvent(
+                        "prewarm-failed",
+                        category: "asset",
+                        fields: [
+                            "targetAweme": aweme.aweme_id,
+                            "host": url.host ?? "unknown",
+                            "candidate": candidateIndex,
+                            "error": error.localizedDescription
+                        ]
+                    )
+#endif
+                }
+                asset.cancelLoading()
+                if let prepared = self.prewarmedAsset,
+                   prepared.asset === asset {
+                    self.prewarmedAsset = nil
+                }
             }
         }
     }
@@ -313,7 +342,14 @@ final class PlaybackCoordinator: ObservableObject {
         )
 #endif
 
-        let urls = preferredURLs(for: aweme)
+        var urls = preferredURLs(for: aweme)
+        if let prepared = prewarmedAsset,
+           prepared.awemeID == aweme.aweme_id,
+           let preparedIndex = urls.firstIndex(of: prepared.url),
+           preparedIndex > 0 {
+            urls.remove(at: preparedIndex)
+            urls.insert(prepared.url, at: 0)
+        }
 #if DEBUG
         diagnosticsEvent(
             "candidates-selected",
