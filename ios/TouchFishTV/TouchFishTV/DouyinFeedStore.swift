@@ -27,9 +27,9 @@ final class DouyinFeedStore: ObservableObject {
     private var generation: UInt = 0
     private let retainedPreviousItems = 5
     private var preloadRemainingItems: Int {
-        // 推荐接口偶尔需要数秒甚至一次重试。服务端通常每页只返回约 6 条，
-        // 因此从剩余 5 条时就补下一页，避免用户滑到页尾后才开始等待接口。
-        if case .recommend = feedType { return 5 }
+        // 推荐接口偶尔会连续碰到 15 秒超时，而服务端通常每页只返回约 6 条。
+        // 始终在前方保留约三页，分页波动就不会暴露成切换视频时的冷加载。
+        if case .recommend = feedType { return 17 }
         return 3
     }
 
@@ -54,8 +54,8 @@ final class DouyinFeedStore: ObservableObject {
         recommendRefreshIndex = 1
         recommendViewCount = 0
         isLoading = false
-        await load(isRefresh: true)
-        if case .recommend = feedType {
+        let loaded = await load(isRefresh: true)
+        if loaded, case .recommend = feedType {
             await preloadIfNeeded()
         }
     }
@@ -74,7 +74,7 @@ final class DouyinFeedStore: ObservableObject {
         }
 
         let oldCount = items.count
-        await load(isRefresh: false)
+        _ = await load(isRefresh: false)
         if items.count > oldCount {
             select(oldCount)
             trimPlayedHistoryIfNeeded()
@@ -82,13 +82,33 @@ final class DouyinFeedStore: ObservableObject {
     }
 
     private func preloadIfNeeded() async {
-        let remainingItems = items.count - activeIndex - 1
-        guard remainingItems <= preloadRemainingItems else { return }
-        await load(isRefresh: false)
+        let maximumLoads: Int
+        if case .recommend = feedType {
+            // 一次补足三页，并给其中一页留一次后台重试；当前视频会在首屏
+            // 响应后立即播放，不会等待这些后续请求。
+            maximumLoads = 4
+        } else {
+            maximumLoads = 1
+        }
+
+        var attempts = 0
+        while items.count - activeIndex - 1 <= preloadRemainingItems,
+              hasMore,
+              attempts < maximumLoads {
+            attempts += 1
+            let previousCount = items.count
+            let loaded = await load(isRefresh: false)
+            if !loaded {
+                continue
+            }
+            // 服务端声称 has_more 但没有给新视频时，避免在一次调用中空转。
+            guard items.count > previousCount else { break }
+        }
     }
 
-    private func load(isRefresh: Bool) async {
-        guard !isLoading, isRefresh || hasMore else { return }
+    @discardableResult
+    private func load(isRefresh: Bool) async -> Bool {
+        guard !isLoading, isRefresh || hasMore else { return false }
         let requestGeneration = generation
         isLoading = true
         errorMessage = nil
@@ -109,7 +129,7 @@ final class DouyinFeedStore: ObservableObject {
                 result = try await api.getFollowing(cursor: isRefresh ? 0 : cursor)
             }
 
-            guard requestGeneration == generation else { return }
+            guard requestGeneration == generation else { return false }
             if isRefresh {
                 items = result.0
                 activeIndex = 0
@@ -124,11 +144,13 @@ final class DouyinFeedStore: ObservableObject {
                 recommendViewCount += result.0.count
             }
             if items.isEmpty { errorMessage = "当前没有可播放的视频" }
+            return true
         } catch is CancellationError {
-            return
+            return false
         } catch {
-            guard requestGeneration == generation else { return }
+            guard requestGeneration == generation else { return false }
             errorMessage = error.localizedDescription
+            return false
         }
     }
 

@@ -150,8 +150,9 @@ final class DouyinAPI: ObservableObject {
             "Referer": "https://www.douyin.com/",
             "Origin": "https://www.douyin.com",
             // tvOS 27 模拟器偶尔会把 Brotli 正文原样交给 JSONDecoder。
-            // 请求未压缩 JSON，避免响应以二进制 br 数据开头。
-            "Accept-Encoding": "identity",
+            // 明确只接受 gzip：既避开 br 解码问题，也避免推荐大 JSON 使用
+            // identity 后与视频流争抢大量带宽。
+            "Accept-Encoding": "gzip",
             "Accept": "application/json, text/plain, */*"
         ]
         let requestCookie = cookieOverride ?? cookie

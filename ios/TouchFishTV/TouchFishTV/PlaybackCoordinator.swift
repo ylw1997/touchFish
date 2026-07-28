@@ -110,12 +110,13 @@ final class PlaybackCoordinator: ObservableObject {
         let awemeID: String
         let url: URL
         let asset: AVURLAsset
+        let item: AVPlayerItem
         var isReady: Bool
     }
 
     private static let playbackUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
 
-    let player = AVPlayer()
+    let player = AVQueuePlayer()
     let playerViewController: DouyinPlayerContainerViewController
     @Published private(set) var isTransitioning = false
     @Published private(set) var presentationOpacity = 1.0
@@ -143,8 +144,11 @@ final class PlaybackCoordinator: ObservableObject {
         let playerViewController = DouyinPlayerContainerViewController()
         self.playerViewController = playerViewController
         player.automaticallyWaitsToMinimizeStalling = false
-        // 播放器与原生控制器在单次 Tab 激活期间固定绑定；上下切换视频只替换
-        // currentItem。跨 Tab 时由 PlaybackSessionSlot 一并释放二者。
+        // 播完后的索引切换仍由 FeedStore 统一处理。禁止 AVQueuePlayer 自行
+        // 推进到可能尚未完成视频轨道准备的 staging item。
+        player.actionAtItemEnd = .pause
+        // 播放器与原生控制器在单次 Tab 激活期间固定绑定；跨 Tab 时由
+        // PlaybackSessionSlot 一并释放二者。
         playerViewController.player = player
 #if DEBUG
         PlaybackDiagnostics.shared.event(
@@ -168,12 +172,13 @@ final class PlaybackCoordinator: ObservableObject {
 
     fileprivate var diagnosticsInstanceID: String { instanceID }
 
-    /// 只预热下一条推荐视频的 AVURLAsset，不创建额外 AVPlayerItem/解码器。
+    /// 在同一个 AVQueuePlayer 中只排队下一条推荐视频。
     ///
     /// 推荐接口经常只给出 `www.douyin.com/aweme/v1/play`，AVFoundation 首次
     /// 打开时还要经过重定向、CDN 建连和媒体信息读取；关注流通常直接给 CDN，
-    /// 因而明显更快。提前加载一个 asset 可以把这段网络等待移到当前视频播放
-    /// 期间，同时继续维持每个 Tab 只有一个播放器和一个 PlayerItem。
+    /// 因而明显更快。把下一条 item 放进同一个播放器的队列，才能在当前视频
+    /// 播放期间完成媒体轨道准备和少量缓冲；全程仍只有一个播放器，且最多只
+    /// 保留当前项和下一项。
     func prewarm(_ aweme: Aweme?, cookie: String) {
         guard source == .recommend,
               let aweme,
@@ -206,12 +211,19 @@ final class PlaybackCoordinator: ObservableObject {
                     url: url,
                     options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
                 )
+                let item = AVPlayerItem(asset: asset)
+                item.preferredForwardBufferDuration = 2
+                item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
                 self.prewarmedAsset = PrewarmedAsset(
                     awemeID: aweme.aweme_id,
                     url: url,
                     asset: asset,
+                    item: item,
                     isReady: false
                 )
+                if self.player.canInsert(item, after: self.player.currentItem) {
+                    self.player.insert(item, after: self.player.currentItem)
+                }
 #if DEBUG
                 self.diagnosticsEvent(
                     "prewarm-started",
@@ -276,6 +288,10 @@ final class PlaybackCoordinator: ObservableObject {
                     )
 #endif
                 }
+                if self.player.currentItem !== item,
+                   self.player.items().contains(where: { $0 === item }) {
+                    self.player.remove(item)
+                }
                 asset.cancelLoading()
                 if let prepared = self.prewarmedAsset,
                    prepared.asset === asset {
@@ -310,6 +326,14 @@ final class PlaybackCoordinator: ObservableObject {
         if playerViewController.player !== player {
             playerViewController.player = player
         }
+        let preparedTarget = prewarmedAsset?.awemeID == aweme.aweme_id
+        if !preparedTarget {
+            // 上一条、跨页跳转等并不一定命中已经排队的“下一条”。必须在
+            // 替换 currentItem 前移除旧队列项，避免稍后自动播放错误视频。
+            cancelPrewarm()
+        }
+        let playerAlreadyAdvancedToPreparedItem =
+            preparedTarget && player.currentItem === prewarmedAsset?.item
         playerViewController.requiresLinearPlayback = aweme.isLive
         // 直播优先尽快出首帧，候选流本身已有启动超时回退；让 AVPlayer
         // 额外等待“足够不发生卡顿”的缓冲会表现为长时间纯黑。
@@ -320,7 +344,7 @@ final class PlaybackCoordinator: ObservableObject {
         // 同一 Tab 始终复用自己的 AVPlayer；跨 Tab 由仲裁器先同步清空旧
         // AVPlayerItem，确保不会存在两个 VideoToolbox 解码会话。
         playerViewController.danmakuController.stop()
-        if !changedOwner {
+        if !changedOwner && !playerAlreadyAdvancedToPreparedItem {
             prepareCurrentItemForReplacement()
         }
         currentPlaybackToken = playbackToken
@@ -447,16 +471,36 @@ final class PlaybackCoordinator: ObservableObject {
                 fields: [
                     "targetAweme": aweme.aweme_id,
                     "host": url.host ?? "unknown",
-                    "ready": prepared.isReady
+                    "assetReady": prepared.isReady,
+                    "itemReady": prepared.item.status == .readyToPlay,
+                    "videoWidth": Int(prepared.item.presentationSize.width),
+                    "videoHeight": Int(prepared.item.presentationSize.height)
                 ]
             )
         }
 #endif
-        let item = AVPlayerItem(asset: asset)
-        // Feed 只需要少量前向缓存。旧值 8 秒在渐进式 MP4 上会被系统放大到
-        // 一百多秒，当前 item 单独就会长期占用约 50 MB 解码/网络缓冲。
-        item.preferredForwardBufferDuration = aweme.isLive ? 3 : 2
-        item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+        let preparedItemIsReady = prepared.map {
+            $0.item.status == .readyToPlay
+                && $0.item.presentationSize.width > 0
+                && $0.item.presentationSize.height > 0
+        } ?? false
+        let item: AVPlayerItem
+        if let prepared, preparedItemIsReady {
+            item = prepared.item
+        } else {
+            if let prepared,
+               player.currentItem !== prepared.item,
+               player.items().contains(where: { $0 === prepared.item }) {
+                // AVQueuePlayer 推进到尚无视频轨道的 item 后，时间可能继续走但
+                // 画面长期不更新。移除这个半成品，只复用已建连的 asset。
+                player.remove(prepared.item)
+            }
+            item = AVPlayerItem(asset: asset)
+            // Feed 只需要少量前向缓存。旧值 8 秒在渐进式 MP4 上会被系统放大到
+            // 一百多秒，当前 item 单独就会长期占用约 50 MB 解码/网络缓冲。
+            item.preferredForwardBufferDuration = aweme.isLive ? 3 : 2
+            item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+        }
         guard requestedGeneration == generation,
               playbackArbiter.isActive(self) else {
             asset.cancelLoading()
@@ -465,7 +509,15 @@ final class PlaybackCoordinator: ObservableObject {
 
         // 创建好新 item 后一次性替换，避免 currentItem=nil 时原生进度条
         // 短暂显示“禁止播放”图标，也避免把无 await 的工作推迟到下一轮 RunLoop。
-        player.replaceCurrentItem(with: item)
+        if player.currentItem === item {
+            // 当前视频自然结束时，AVQueuePlayer 可能已经自动推进到预载项；
+            // 此时只接管状态与元数据，不能再次 advance 而跳过它。
+        } else if preparedItemIsReady,
+                  player.items().contains(where: { $0 === item }) {
+            player.advanceToNextItem()
+        } else {
+            player.replaceCurrentItem(with: item)
+        }
         observeStatus(
             of: item,
             candidateIndex: candidateIndex,
@@ -774,6 +826,11 @@ final class PlaybackCoordinator: ObservableObject {
         prewarmGeneration &+= 1
         prewarmTask?.cancel()
         prewarmTask = nil
+        if let prepared = prewarmedAsset,
+           player.currentItem !== prepared.item,
+           player.items().contains(where: { $0 === prepared.item }) {
+            player.remove(prepared.item)
+        }
         prewarmedAsset?.asset.cancelLoading()
         prewarmedAsset = nil
     }
@@ -830,7 +887,7 @@ final class PlaybackCoordinator: ObservableObject {
 #endif
         item.cancelPendingSeeks()
         item.asset.cancelLoading()
-        player.replaceCurrentItem(with: nil)
+        player.removeAllItems()
 #if DEBUG
         diagnosticsEvent(
             "release-current-item-end",
