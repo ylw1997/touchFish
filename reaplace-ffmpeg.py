@@ -1,142 +1,305 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-@author: Nzix
-"""
+"""Replace VS Code's trimmed FFmpeg library with the matching Electron build."""
 
-import os, shutil, platform, subprocess, time
-import re, zipfile, json
-import ssl
+import argparse
+import hashlib
+import json
+import os
+import platform
+import re
+import shutil
+import subprocess
+import tempfile
+import urllib.request
+import zipfile
+from datetime import datetime
 
-ssl._create_default_https_context = ssl._create_unverified_context
 
-try:
-    import urllib.request as urllib
-except:
-    import urllib
+SYSTEM_NAMES = {"Windows": "win32", "Linux": "linux", "Darwin": "darwin"}
+ARCHIVE_LIBS = {
+    "win32": "ffmpeg.dll",
+    "linux": "libffmpeg.so",
+    "darwin": (
+        "Electron.app/Contents/Frameworks/Electron Framework.framework/"
+        "Versions/A/Libraries/libffmpeg.dylib"
+    ),
+}
+LOCAL_LIBS = {
+    "win32": "ffmpeg.dll",
+    "linux": "libffmpeg.so",
+    "darwin": (
+        "Contents/Frameworks/Electron Framework.framework/"
+        "Versions/A/Libraries/libffmpeg.dylib"
+    ),
+}
 
-shell = lambda command, cwd = None: subprocess.Popen(command, shell = True, stdout = subprocess.PIPE, cwd = cwd).stdout.read().decode(errors='ignore').strip()
+
+def sha256(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def unique_existing_paths(paths):
+    result = []
+    for path in paths:
+        if path and os.path.exists(path) and path not in result:
+            result.append(path)
+    return result
+
+
+def find_installation(system):
+    override = os.environ.get("VSCODE_INSTALLATION")
+    possibilities = [override] if override else []
+
+    if system == "win32":
+        roots = [
+            os.environ.get("PROGRAMW6432"),
+            os.environ.get("PROGRAMFILES(X86)"),
+            os.environ.get("PROGRAMFILES"),
+        ]
+        possibilities.extend(
+            os.path.join(root, "Microsoft VS Code") for root in roots if root
+        )
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if local_app_data:
+            possibilities.append(
+                os.path.join(local_app_data, "Programs", "Microsoft VS Code")
+            )
+    elif system == "linux":
+        code_path = shutil.which("code")
+        if code_path:
+            possibilities.append(
+                os.path.abspath(
+                    os.path.join(os.path.realpath(code_path), os.pardir, os.pardir)
+                )
+            )
+        possibilities.extend(["/usr/share/code", "/opt/visual-studio-code"])
+    else:
+        possibilities.extend(
+            [
+                "/Applications/Visual Studio Code.app",
+                os.path.expanduser("~/Applications/Visual Studio Code.app"),
+            ]
+        )
+
+    installations = unique_existing_paths(possibilities)
+    if not installations:
+        raise RuntimeError(
+            "Visual Studio Code installation was not found. Set "
+            "VSCODE_INSTALLATION to the editor installation path and retry."
+        )
+    return installations[0]
+
+
+def package_path(installation, system):
+    if system == "darwin":
+        return os.path.join(
+            installation, "Contents", "Resources", "app", "package.json"
+        )
+    return os.path.join(installation, "resources", "app", "package.json")
+
+
+def normalize_electron_version(value):
+    match = re.search(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?", str(value))
+    if not match:
+        raise RuntimeError("Could not determine the Electron version.")
+    return match.group(0)
+
+
+def detect_architecture(installation, system):
+    cli_paths = {
+        "win32": os.path.join(installation, "bin", "code.cmd"),
+        "linux": os.path.join(installation, "bin", "code"),
+        "darwin": os.path.join(
+            installation, "Contents", "Resources", "app", "bin", "code"
+        ),
+    }
+    cli_path = cli_paths[system]
+    if os.path.exists(cli_path):
+        command = (
+            ["cmd", "/c", cli_path, "--version"]
+            if system == "win32"
+            else [cli_path, "--version"]
+        )
+        result = subprocess.run(
+            command, capture_output=True, text=True, check=False, timeout=20
+        )
+        for line in reversed(result.stdout.splitlines()):
+            if line.strip() in ("arm64", "x64", "ia32"):
+                return line.strip()
+
+    machine = platform.machine().lower()
+    architecture_map = {
+        "aarch64": "arm64",
+        "arm64": "arm64",
+        "amd64": "x64",
+        "x86_64": "x64",
+        "i386": "ia32",
+        "i686": "ia32",
+    }
+    if machine not in architecture_map:
+        raise RuntimeError("Unsupported architecture: {0}".format(machine))
+    return architecture_map[machine]
+
+
+def editor_is_running(installation, system):
+    if system == "win32":
+        return False
+    executable_dir = (
+        os.path.join(installation, "Contents", "MacOS")
+        if system == "darwin"
+        else installation
+    )
+    result = subprocess.run(
+        ["pgrep", "-f", executable_dir],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def create_backup(local_lib, product_name, vscode_version):
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    safe_product = re.sub(r"[^0-9A-Za-z._-]+", "-", product_name).strip("-")
+    backup_dir = os.path.join(
+        os.path.expanduser("~"), ".touchfish", "ffmpeg-backups"
+    )
+    os.makedirs(backup_dir, exist_ok=True)
+    backup_path = os.path.join(
+        backup_dir,
+        "{0}-{1}-{2}-{3}".format(
+            safe_product or "vscode",
+            vscode_version,
+            timestamp,
+            os.path.basename(local_lib),
+        ),
+    )
+    shutil.copy2(local_lib, backup_path)
+    return backup_path
 
 
 def resign_macos_app(application):
-    """Ad-hoc sign the whole app after replacing a signed dylib."""
-    print('re-signing Visual Studio Code for macOS...')
-    print('warning: this replaces the official app signature with an ad-hoc signature')
-
-    command = ['codesign', '--deep', '--force', '--sign', '-', application]
-    if hasattr(os, 'geteuid') and os.geteuid() != 0:
-        command.insert(0, 'sudo')
-
-    result = subprocess.run(command)
+    print("Re-signing the macOS app with an ad-hoc signature...")
+    print("Warning: this replaces the editor's official application signature.")
+    result = subprocess.run(
+        ["codesign", "--deep", "--force", "--sign", "-", application],
+        check=False,
+    )
     if result.returncode != 0:
         raise RuntimeError(
-            'codesign failed; run manually: sudo codesign --deep --force '
-            '--sign - "{application}"'.format(application=application)
+            "codesign failed. Check that the editor is closed and that your "
+            "account can modify the application."
         )
-
-    verify_result = subprocess.run(
-        ['codesign', '--verify', '--deep', '--strict', application]
+    subprocess.run(
+        ["codesign", "--verify", "--deep", "--strict", application],
+        check=True,
     )
-    if verify_result.returncode != 0:
-        raise RuntimeError('codesign verification failed')
-
-    print('codesign done')
 
 
-installation = ''
-possibilities = []
-electron_temp = 'electron.temp.zip'
-system = {'Windows': 'win32', 'Linux': 'linux', 'Darwin': 'darwin'}[platform.system()]
-cli = {'win32': 'bin', 'linux': 'bin', 'darwin': 'Contents/Resources/app/bin'}
-lib = {'win32': 'ffmpeg.dll', 'linux': 'libffmpeg.so', 'darwin': 'Electron.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib'}
+def main():
+    parser = argparse.ArgumentParser(
+        description="Install the FFmpeg library matching VS Code's Electron version."
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="compare hashes without modifying the editor",
+    )
+    args = parser.parse_args()
 
-if system == 'win32':
-    if 'PROGRAMW6432' in os.environ:
-        possibilities.append(os.environ['PROGRAMW6432'])
-    if 'PROGRAMFILES(X86)' in os.environ:
-        possibilities.append(os.environ['PROGRAMFILES(X86)'])
-    if 'PROGRAMFILES' in os.environ:
-        possibilities.append(os.environ['PROGRAMFILES'])
-    if 'LOCALAPPDATA' in os.environ:
-        possibilities.append(os.path.join(os.environ['LOCALAPPDATA'], 'Programs'))
-    possibilities = [os.path.join(path, 'Microsoft VS Code') for path in possibilities]
-    where_code = shell('where code 2> nul').split('\r\n')[0]
-    if where_code:
-        possibilities.append(os.path.abspath(os.path.join(os.path.realpath(where_code), os.path.pardir, os.path.pardir)))
-elif system == 'linux':
-    which_code = shell('which code')
-    if which_code:
-        possibilities.append(os.path.abspath(os.path.join(os.path.realpath(which_code), os.path.pardir, os.path.pardir)))
-elif system == 'darwin':
-    application = '/Applications/Visual Studio Code.app'
-    if os.path.exists(application):
-        possibilities.append(application)
+    platform_name = platform.system()
+    if platform_name not in SYSTEM_NAMES:
+        raise RuntimeError("Unsupported operating system: {0}".format(platform_name))
+    system = SYSTEM_NAMES[platform_name]
+    installation = find_installation(system)
 
-if not installation:
-    possibilities = list(set(possibilities))
-    for path in possibilities:
-        if os.path.exists(path):
-            installation = path
-            break
-assert installation
+    metadata_path = package_path(installation, system)
+    if not os.path.exists(metadata_path):
+        raise RuntimeError("VS Code package.json was not found at " + metadata_path)
+    with open(metadata_path, "r", encoding="utf-8") as file:
+        package_json = json.load(file)
 
-vscode_version = shell(('./' if system != 'win32' else '') + 'code -v --user-data-dir="."', os.path.join(installation, cli[system])).split()
-print('vscode {version} {arch}'.format(version = vscode_version[0], arch = vscode_version[-1]))
+    vscode_version = package_json.get("version", "unknown")
+    product_name = package_json.get("productName") or package_json.get("name") or "Code"
+    electron_version = normalize_electron_version(
+        package_json.get("devDependencies", {}).get("electron", "")
+    )
+    architecture = detect_architecture(installation, system)
+    local_lib = os.path.join(installation, LOCAL_LIBS[system])
 
-package_path = os.path.join(installation, 'resources', 'app', 'package.json')
-if not os.path.exists(package_path):
-    for item in os.listdir(installation):
-        sub_path = os.path.join(installation, item, 'resources', 'app', 'package.json')
-        if os.path.exists(sub_path):
-            package_path = sub_path
-            if system == 'darwin':
-                installation = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(package_path))))
-            else:
-                installation = os.path.dirname(os.path.dirname(os.path.dirname(package_path)))
-            break
+    if not os.path.exists(local_lib):
+        raise RuntimeError("Installed FFmpeg library was not found at " + local_lib)
 
-try:
-    with open(package_path, 'r') as f: package_json = json.loads(f.read())
-    electron_version = package_json['devDependencies']['electron']
-except:
-    yarnrc = urllib.urlopen('https://raw.githubusercontent.com/Microsoft/vscode/{version}/.yarnrc'.format(version = vscode_version[0])).read().decode()
-    electron_version = re.search(r'target "([^"]+)"', yarnrc).group(1)
-print('electron {version}'.format(version = electron_version))
+    print("Editor: {0} {1}".format(product_name, vscode_version))
+    print("Electron: {0} ({1})".format(electron_version, architecture))
+    print("Installation: " + installation)
 
-urllib.urlretrieve('https://cdn.npmmirror.com/binaries/electron/v{version}/electron-v{version}-{system}-{arch}.zip'.format(version = electron_version, system = system, arch = vscode_version[-1]), electron_temp)
-print('download well')
+    download_url = (
+        "https://cdn.npmmirror.com/binaries/electron/v{version}/"
+        "electron-v{version}-{system}-{arch}.zip"
+    ).format(version=electron_version, system=system, arch=architecture)
 
-if system == 'win32':
-    shell('taskkill /f /im code.exe 2> nul')
-    print('killing code.exe processes...')
-    time.sleep(2)  # Wait for processes to release file handles
+    with tempfile.TemporaryDirectory(prefix="touchfish-ffmpeg-") as temp_dir:
+        archive_path = os.path.join(temp_dir, "electron.zip")
+        extracted_lib = os.path.join(temp_dir, os.path.basename(local_lib))
+        print("Downloading the matching Electron build...")
+        urllib.request.urlretrieve(download_url, archive_path)
 
-local_lib = os.path.join(installation, lib[system].replace('Electron.app', '.'))
+        with zipfile.ZipFile(archive_path) as archive:
+            with archive.open(ARCHIVE_LIBS[system]) as source, open(
+                extracted_lib, "wb"
+            ) as destination:
+                shutil.copyfileobj(source, destination)
 
-# Retry loop for file deletion
-for i in range(5):
+        installed_hash = sha256(local_lib)
+        expected_hash = sha256(extracted_lib)
+        print("Installed SHA-256: " + installed_hash)
+        print("Expected  SHA-256: " + expected_hash)
+
+        if installed_hash == expected_hash:
+            print("FFmpeg is already the matching Electron build; no change needed.")
+            return 0
+        if args.check:
+            print("FFmpeg does not match. Run the script without --check to replace it.")
+            return 2
+        if editor_is_running(installation, system):
+            raise RuntimeError(
+                "The editor is still running. Fully quit all editor windows and "
+                "background processes, then retry."
+            )
+
+        backup_path = create_backup(local_lib, product_name, vscode_version)
+        print("Backup: " + backup_path)
+
+        try:
+            shutil.copyfile(extracted_lib, local_lib)
+            if sha256(local_lib) != expected_hash:
+                raise RuntimeError("Post-installation hash verification failed.")
+            if system == "darwin":
+                resign_macos_app(installation)
+        except Exception:
+            print("Replacement failed; restoring the backup...")
+            shutil.copyfile(backup_path, local_lib)
+            if system == "darwin":
+                resign_macos_app(installation)
+            raise
+
+        print("Replacement and hash verification succeeded.")
+        print(
+            "Important: editor updates may restore the bundled FFmpeg. "
+            "Run this script again if audio disappears after an update."
+        )
+        return 0
+
+
+if __name__ == "__main__":
     try:
-        if os.path.exists(local_lib):
-            os.remove(local_lib)
-        break
-    except PermissionError:
-        print(f"File locked, retrying ({i+1}/5)...")
-        time.sleep(1)
-else:
-    print("Could not delete file after retries.")
-    exit(1)
-
-try:
-    with zipfile.ZipFile(electron_temp) as z:
-        with z.open(lib[system]) as src, open(local_lib, 'wb') as dst:
-            shutil.copyfileobj(src, dst)
-    print('replace done')
-    if system == 'darwin':
-        resign_macos_app(installation)
-except Exception as error:
-    print(error)
-    exit(1)
-finally:
-    if os.path.exists(electron_temp):
-        os.remove(electron_temp)
-        print('remove temp')
+        raise SystemExit(main())
+    except (OSError, RuntimeError, subprocess.SubprocessError, zipfile.BadZipFile) as error:
+        print("Error: {0}".format(error))
+        raise SystemExit(1)
