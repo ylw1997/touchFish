@@ -37,6 +37,11 @@ final class DouyinFeedStore: ObservableObject {
         items.indices.contains(activeIndex) ? items[activeIndex] : nil
     }
 
+    var nextItem: Aweme? {
+        let index = activeIndex + 1
+        return items.indices.contains(index) ? items[index] : nil
+    }
+
     func refresh() async {
         generation &+= 1
         cursor = 0

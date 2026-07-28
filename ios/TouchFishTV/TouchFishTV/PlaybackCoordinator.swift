@@ -106,6 +106,13 @@ private final class PlaybackArbiter {
 
 @MainActor
 final class PlaybackCoordinator: ObservableObject {
+    private struct PrewarmedAsset {
+        let awemeID: String
+        let url: URL
+        let asset: AVURLAsset
+        var isReady: Bool
+    }
+
     private static let playbackUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
 
     let player = AVPlayer()
@@ -122,6 +129,9 @@ final class PlaybackCoordinator: ObservableObject {
     private var itemStatusObservation: NSKeyValueObservation?
     private var itemPresentationSizeObservation: NSKeyValueObservation?
     private var liveStartupValidationTask: Task<Void, Never>?
+    private var prewarmTask: Task<Void, Never>?
+    private var prewarmedAsset: PrewarmedAsset?
+    private var prewarmGeneration: UInt = 0
     private var currentPlaybackToken: UInt64?
     private var currentAwemeID: String?
 #if DEBUG
@@ -157,6 +167,94 @@ final class PlaybackCoordinator: ObservableObject {
     }
 
     fileprivate var diagnosticsInstanceID: String { instanceID }
+
+    /// 只预热下一条推荐视频的 AVURLAsset，不创建额外 AVPlayerItem/解码器。
+    ///
+    /// 推荐接口经常只给出 `www.douyin.com/aweme/v1/play`，AVFoundation 首次
+    /// 打开时还要经过重定向、CDN 建连和媒体信息读取；关注流通常直接给 CDN，
+    /// 因而明显更快。提前加载一个 asset 可以把这段网络等待移到当前视频播放
+    /// 期间，同时继续维持每个 Tab 只有一个播放器和一个 PlayerItem。
+    func prewarm(_ aweme: Aweme?, cookie: String) {
+        guard source == .recommend,
+              let aweme,
+              !aweme.isLive,
+              aweme.aweme_id != currentAwemeID,
+              let url = preferredURLs(for: aweme).first else {
+            cancelPrewarm()
+            return
+        }
+        if let prepared = prewarmedAsset,
+           prepared.awemeID == aweme.aweme_id,
+           prepared.url == url {
+            return
+        }
+
+        cancelPrewarm()
+        prewarmGeneration &+= 1
+        let requestedPrewarmGeneration = prewarmGeneration
+        let headers = playbackHeaders(for: aweme, cookie: cookie)
+        let asset = AVURLAsset(
+            url: url,
+            options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
+        )
+        prewarmedAsset = PrewarmedAsset(
+            awemeID: aweme.aweme_id,
+            url: url,
+            asset: asset,
+            isReady: false
+        )
+#if DEBUG
+        diagnosticsEvent(
+            "prewarm-started",
+            category: "asset",
+            fields: [
+                "targetAweme": aweme.aweme_id,
+                "host": url.host ?? "unknown"
+            ]
+        )
+#endif
+        prewarmTask = Task { [weak self] in
+            do {
+                let isPlayable = try await asset.load(.isPlayable)
+                guard !Task.isCancelled,
+                      let self,
+                      requestedPrewarmGeneration == self.prewarmGeneration,
+                      var prepared = self.prewarmedAsset,
+                      prepared.awemeID == aweme.aweme_id,
+                      prepared.asset === asset else { return }
+                prepared.isReady = isPlayable
+                self.prewarmedAsset = prepared
+#if DEBUG
+                self.diagnosticsEvent(
+                    "prewarm-finished",
+                    category: "asset",
+                    fields: [
+                        "targetAweme": aweme.aweme_id,
+                        "host": url.host ?? "unknown",
+                        "playable": isPlayable
+                    ]
+                )
+#endif
+            } catch is CancellationError {
+                return
+            } catch {
+                guard let self,
+                      requestedPrewarmGeneration == self.prewarmGeneration else { return }
+#if DEBUG
+                self.diagnosticsEvent(
+                    "prewarm-failed",
+                    category: "asset",
+                    fields: [
+                        "targetAweme": aweme.aweme_id,
+                        "host": url.host ?? "unknown",
+                        "error": error.localizedDescription
+                    ]
+                )
+#endif
+                self.prewarmedAsset = nil
+            }
+        }
+    }
 
     func play(_ aweme: Aweme, cookie: String, playbackToken: UInt64) {
         if currentPlaybackToken == playbackToken,
@@ -300,10 +398,24 @@ final class PlaybackCoordinator: ObservableObject {
             ]
         )
 #endif
-        let asset = AVURLAsset(
+        let prepared = takePrewarmedAsset(for: aweme, url: url)
+        let asset = prepared?.asset ?? AVURLAsset(
             url: url,
             options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
         )
+#if DEBUG
+        if let prepared {
+            diagnosticsEvent(
+                "prewarmed-asset-used",
+                category: "asset",
+                fields: [
+                    "targetAweme": aweme.aweme_id,
+                    "host": url.host ?? "unknown",
+                    "ready": prepared.isReady
+                ]
+            )
+        }
+#endif
         let item = AVPlayerItem(asset: asset)
         // Feed 只需要少量前向缓存。旧值 8 秒在渐进式 MP4 上会被系统放大到
         // 一百多秒，当前 item 单独就会长期占用约 50 MB 解码/网络缓冲。
@@ -573,6 +685,7 @@ final class PlaybackCoordinator: ObservableObject {
     fileprivate func relinquishForArbiter() {
         generation &+= 1
         cancelPendingLoad()
+        cancelPrewarm()
 #if DEBUG
         diagnosticsTask?.cancel()
         diagnosticsTask = nil
@@ -607,6 +720,26 @@ final class PlaybackCoordinator: ObservableObject {
 #endif
         itemStatusObservation?.invalidate()
         itemStatusObservation = nil
+    }
+
+    private func takePrewarmedAsset(for aweme: Aweme, url: URL) -> PrewarmedAsset? {
+        guard let prepared = prewarmedAsset,
+              prepared.awemeID == aweme.aweme_id,
+              prepared.url == url else { return nil }
+        prewarmGeneration &+= 1
+        // 这个 asset 马上会交给 AVPlayerItem 使用。不要在此取消正在执行的
+        // load(.isPlayable)，否则会把已经完成的重定向/建连工作一并撤销。
+        prewarmTask = nil
+        prewarmedAsset = nil
+        return prepared
+    }
+
+    private func cancelPrewarm() {
+        prewarmGeneration &+= 1
+        prewarmTask?.cancel()
+        prewarmTask = nil
+        prewarmedAsset?.asset.cancelLoading()
+        prewarmedAsset = nil
     }
 
     private func failPlayback(generation requestedGeneration: UInt, message: String) {

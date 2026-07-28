@@ -41,7 +41,12 @@ struct DouyinFeedView: View {
                         playbackToken: store.playbackToken,
                         coordinator: playbackSession,
                         onPrevious: store.previous,
-                        onNext: { Task { await store.next() } },
+                        onNext: {
+                            Task {
+                                await store.next()
+                                prewarmNextIfPossible()
+                            }
+                        },
                         onShowAuthor: showCurrentAuthor
                     )
                     .ignoresSafeArea()
@@ -77,6 +82,9 @@ struct DouyinFeedView: View {
         }
         .onChange(of: store.playbackToken) { _, _ in
             startPlaybackIfPossible()
+        }
+        .onChange(of: store.items.count) { _, _ in
+            prewarmNextIfPossible()
         }
         .onChange(of: authorPresented) { _, presented in
             guard !presented else { return }
@@ -132,6 +140,12 @@ struct DouyinFeedView: View {
             cookie: api.cookie,
             playbackToken: store.playbackToken
         )
+        session.prewarm(store.nextItem, cookie: api.cookie)
+    }
+
+    private func prewarmNextIfPossible() {
+        guard isActive, let session = playbackSlot.session else { return }
+        session.prewarm(store.nextItem, cookie: api.cookie)
     }
 
     private func showCurrentAuthor() {
