@@ -43,6 +43,38 @@ class FindInstallationTests(unittest.TestCase):
                     installation,
                 )
 
+    def test_windows_version_subdirectory_is_resolved_as_installation(self):
+        with tempfile.TemporaryDirectory() as installation:
+            version_installation = os.path.join(installation, "1b6a188127")
+            metadata = os.path.join(
+                version_installation, "resources", "app", "package.json"
+            )
+            os.makedirs(os.path.dirname(metadata))
+            with open(metadata, "w", encoding="utf-8") as file:
+                file.write("{}")
+            local_lib = os.path.join(version_installation, "ffmpeg.dll")
+            with open(local_lib, "wb") as file:
+                file.write(b"ffmpeg")
+
+            with mock.patch.dict(
+                os.environ,
+                {"VSCODE_INSTALLATION": installation},
+                clear=True,
+            ):
+                resolved = reaplace_ffmpeg.find_installation("win32")
+
+            self.assertEqual(resolved, version_installation)
+            self.assertEqual(
+                reaplace_ffmpeg.package_path(resolved, "win32"),
+                metadata,
+            )
+            self.assertEqual(
+                os.path.join(
+                    resolved, reaplace_ffmpeg.LOCAL_LIBS["win32"]
+                ),
+                local_lib,
+            )
+
 
 class EditorRunningTests(unittest.TestCase):
     def test_windows_detects_running_editor(self):

@@ -65,7 +65,7 @@ def find_installation(system):
             raise RuntimeError(
                 "VSCODE_INSTALLATION does not exist: {0}".format(override)
             )
-        return override
+        return resolve_installation_layout(override, system)
 
     possibilities = []
 
@@ -106,7 +106,14 @@ def find_installation(system):
             "Visual Studio Code installation was not found. Set "
             "VSCODE_INSTALLATION to the editor installation path and retry."
         )
-    return installations[0]
+    resolved_installations = [
+        resolve_installation_layout(installation, system)
+        for installation in installations
+    ]
+    for installation in resolved_installations:
+        if os.path.isfile(package_path(installation, system)):
+            return installation
+    return resolved_installations[0]
 
 
 def package_path(installation, system):
@@ -115,6 +122,32 @@ def package_path(installation, system):
             installation, "Contents", "Resources", "app", "package.json"
         )
     return os.path.join(installation, "resources", "app", "package.json")
+
+
+def resolve_installation_layout(installation, system):
+    if system != "win32" or os.path.isfile(package_path(installation, system)):
+        return installation
+
+    try:
+        children = [
+            os.path.join(installation, name)
+            for name in os.listdir(installation)
+        ]
+    except OSError:
+        return installation
+
+    version_installations = [
+        child
+        for child in children
+        if os.path.isfile(package_path(child, system))
+        and os.path.isfile(os.path.join(child, LOCAL_LIBS[system]))
+    ]
+    if not version_installations:
+        return installation
+    return max(
+        version_installations,
+        key=lambda path: os.path.getmtime(package_path(path, system)),
+    )
 
 
 def normalize_electron_version(value):
