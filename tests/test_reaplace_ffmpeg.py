@@ -94,5 +94,108 @@ class EditorRunningTests(unittest.TestCase):
                 )
 
 
+class MacOSSigningTests(unittest.TestCase):
+    def test_non_root_signing_uses_sudo_and_verifies_signature(self):
+        success = mock.Mock(returncode=0)
+        with mock.patch.object(
+            reaplace_ffmpeg.os, "geteuid", return_value=501, create=True
+        ), mock.patch.object(
+            reaplace_ffmpeg.subprocess,
+            "run",
+            side_effect=[success, success],
+        ) as run:
+            reaplace_ffmpeg.resign_macos_app(
+                "/Applications/Visual Studio Code.app"
+            )
+
+        self.assertEqual(run.call_args_list[0].args[0][0], "sudo")
+        self.assertEqual(
+            run.call_args_list[1].args[0][:3],
+            ["codesign", "--verify", "--deep"],
+        )
+
+    def test_root_signing_does_not_use_sudo(self):
+        success = mock.Mock(returncode=0)
+        with mock.patch.object(
+            reaplace_ffmpeg.os, "geteuid", return_value=0, create=True
+        ), mock.patch.object(
+            reaplace_ffmpeg.subprocess,
+            "run",
+            side_effect=[success, success],
+        ) as run:
+            reaplace_ffmpeg.resign_macos_app(
+                "/Applications/Visual Studio Code.app"
+            )
+
+        self.assertEqual(run.call_args_list[0].args[0][0], "codesign")
+
+    def test_signature_verification_failure_is_reported(self):
+        success = mock.Mock(returncode=0)
+        failure = mock.Mock(returncode=1)
+        with mock.patch.object(
+            reaplace_ffmpeg.os, "geteuid", return_value=501, create=True
+        ), mock.patch.object(
+            reaplace_ffmpeg.subprocess,
+            "run",
+            side_effect=[success, failure],
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "codesign verification failed"
+            ):
+                reaplace_ffmpeg.resign_macos_app(
+                    "/Applications/Visual Studio Code.app"
+                )
+
+
+class RollbackTests(unittest.TestCase):
+    def test_rollback_restores_hash_and_resigns_macos_app(self):
+        with tempfile.TemporaryDirectory() as directory:
+            backup = os.path.join(directory, "backup.dylib")
+            installed = os.path.join(directory, "libffmpeg.dylib")
+            with open(backup, "wb") as file:
+                file.write(b"original")
+            with open(installed, "wb") as file:
+                file.write(b"replacement")
+
+            with mock.patch.object(
+                reaplace_ffmpeg, "resign_macos_app"
+            ) as resign:
+                reaplace_ffmpeg.restore_backup(
+                    backup,
+                    installed,
+                    reaplace_ffmpeg.sha256(backup),
+                    "darwin",
+                    "/Applications/Visual Studio Code.app",
+                )
+
+            self.assertEqual(
+                reaplace_ffmpeg.sha256(installed),
+                reaplace_ffmpeg.sha256(backup),
+            )
+            resign.assert_called_once_with(
+                "/Applications/Visual Studio Code.app"
+            )
+
+    def test_rollback_hash_mismatch_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            backup = os.path.join(directory, "backup.dll")
+            installed = os.path.join(directory, "ffmpeg.dll")
+            with open(backup, "wb") as file:
+                file.write(b"original")
+            with open(installed, "wb") as file:
+                file.write(b"replacement")
+
+            with self.assertRaisesRegex(
+                RuntimeError, "Rollback hash verification failed"
+            ):
+                reaplace_ffmpeg.restore_backup(
+                    backup,
+                    installed,
+                    "not-the-original-hash",
+                    "win32",
+                    r"C:\Program Files\Microsoft VS Code",
+                )
+
+
 if __name__ == "__main__":
     unittest.main()

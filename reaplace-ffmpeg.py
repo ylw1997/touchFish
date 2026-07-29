@@ -239,19 +239,33 @@ def create_backup(local_lib, product_name, vscode_version):
 def resign_macos_app(application):
     print("Re-signing the macOS app with an ad-hoc signature...")
     print("Warning: this replaces the editor's official application signature.")
-    result = subprocess.run(
-        ["codesign", "--deep", "--force", "--sign", "-", application],
-        check=False,
-    )
+    command = ["codesign", "--deep", "--force", "--sign", "-", application]
+    if hasattr(os, "geteuid") and os.geteuid() != 0:
+        command.insert(0, "sudo")
+
+    result = subprocess.run(command, check=False)
     if result.returncode != 0:
         raise RuntimeError(
-            "codesign failed. Check that the editor is closed and that your "
-            "account can modify the application."
+            "codesign failed. Check that the editor is closed and retry with "
+            "an account that can use sudo."
         )
-    subprocess.run(
+    verify_result = subprocess.run(
         ["codesign", "--verify", "--deep", "--strict", application],
-        check=True,
+        check=False,
     )
+    if verify_result.returncode != 0:
+        raise RuntimeError("codesign verification failed.")
+    print("Code signature verification succeeded.")
+
+
+def restore_backup(backup_path, local_lib, backup_hash, system, installation):
+    shutil.copyfile(backup_path, local_lib)
+    if sha256(local_lib) != backup_hash:
+        raise RuntimeError("Rollback hash verification failed.")
+    if system == "darwin":
+        resign_macos_app(installation)
+    if sha256(local_lib) != backup_hash:
+        raise RuntimeError("Rollback hash changed after signing.")
 
 
 def main():
@@ -335,11 +349,26 @@ def main():
                 raise RuntimeError("Post-installation hash verification failed.")
             if system == "darwin":
                 resign_macos_app(installation)
-        except Exception:
+        except Exception as replacement_error:
             print("Replacement failed; restoring the backup...")
-            shutil.copyfile(backup_path, local_lib)
-            if system == "darwin":
-                resign_macos_app(installation)
+            try:
+                restore_backup(
+                    backup_path,
+                    local_lib,
+                    installed_hash,
+                    system,
+                    installation,
+                )
+            except Exception as rollback_error:
+                raise RuntimeError(
+                    "Replacement failed ({0}); rollback also failed ({1}). "
+                    "The original backup remains at {2}".format(
+                        replacement_error,
+                        rollback_error,
+                        backup_path,
+                    )
+                ) from rollback_error
+            print("Backup restoration and verification succeeded.")
             raise
 
         print("Replacement and hash verification succeeded.")
