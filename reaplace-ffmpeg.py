@@ -3,6 +3,7 @@
 """Replace VS Code's trimmed FFmpeg library with the matching Electron build."""
 
 import argparse
+import csv
 import hashlib
 import json
 import os
@@ -52,8 +53,21 @@ def unique_existing_paths(paths):
 
 
 def find_installation(system):
-    override = os.environ.get("VSCODE_INSTALLATION")
-    possibilities = [override] if override else []
+    if "VSCODE_INSTALLATION" in os.environ:
+        override = os.path.abspath(
+            os.path.expandvars(
+                os.path.expanduser(os.environ["VSCODE_INSTALLATION"].strip())
+            )
+        )
+        if not os.environ["VSCODE_INSTALLATION"].strip():
+            raise RuntimeError("VSCODE_INSTALLATION is set but empty.")
+        if not os.path.exists(override):
+            raise RuntimeError(
+                "VSCODE_INSTALLATION does not exist: {0}".format(override)
+            )
+        return override
+
+    possibilities = []
 
     if system == "win32":
         roots = [
@@ -148,6 +162,45 @@ def detect_architecture(installation, system):
 
 def editor_is_running(installation, system):
     if system == "win32":
+        executable_names = []
+        try:
+            executable_names = [
+                name
+                for name in os.listdir(installation)
+                if name.lower().endswith(".exe")
+                and name.lower().startswith(("code", "cursor", "vscodium"))
+            ]
+        except OSError:
+            pass
+        if not executable_names:
+            executable_names = ["Code.exe"]
+
+        for executable_name in executable_names:
+            result = subprocess.run(
+                [
+                    "tasklist",
+                    "/FI",
+                    "IMAGENAME eq {0}".format(executable_name),
+                    "/FO",
+                    "CSV",
+                    "/NH",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(
+                    "Could not check whether the editor is running: {0}".format(
+                        result.stderr.strip() or "tasklist failed"
+                    )
+                )
+            rows = csv.reader(result.stdout.splitlines())
+            if any(
+                row and row[0].lower() == executable_name.lower()
+                for row in rows
+            ):
+                return True
         return False
     executable_dir = (
         os.path.join(installation, "Contents", "MacOS")
