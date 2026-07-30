@@ -143,20 +143,56 @@ https://github.com/user-attachments/assets/9e7ca4b3-e428-4ebf-abed-bbb6bb04530f
   - 小宇宙支持手机短信验证码登录，无需手动配置 Cookie。
   - **X (Twitter)** 需要科学上网，并需配置 Cookie 和 csrf-token 才能使用。
 - **标签页切换**: 支持 **Linux.do**（最新/热门/排行榜）、**V2EX**（全部/技术/创意等）、**虎扑**（步行街热帖/主干道等）、**NGA**（网事杂谈/晴风村等）多个平台的栏目切换。
-- **视频播放无声音**：编辑器 内置的 Electron/Chromium 精简版不含部分专利音频解码器，出现“有画面没声音”。
-  **一键脚本（替换 ffmpeg.dll）—使用前请确认 Electron 版本并自担风险**：
+- **视频有画面但没有声音**：编辑器内置的 Electron/Chromium 精简版可能不含视频所需的 AAC 等专利音频解码器。替换插件本身或调节播放器音量不能解决该问题，需要给**实际运行 TouchFish 的编辑器**安装与其 Electron 版本完全一致的 FFmpeg。
 
-  > Windows PowerShell
+  > [!WARNING]
+  > 操作前请完全退出编辑器（包括后台进程）。脚本会修改编辑器安装目录；macOS 还会用 ad-hoc 签名替换应用的官方签名。请确认你理解风险后再执行。重新安装编辑器可以恢复官方文件和签名。
+
+  **先检查，不修改文件**
+
+  Windows PowerShell：
+
+  ```powershell
+  Invoke-RestMethod https://raw.githubusercontent.com/ylw1997/touchFish/refs/heads/main/reaplace-ffmpeg.py | python - --check
+  ```
+
+  Linux / macOS：
+
+  ```bash
+  curl https://raw.githubusercontent.com/ylw1997/touchFish/refs/heads/main/reaplace-ffmpeg.py | python3 - --check
+  ```
+
+  检查结果中的 `Installed SHA-256` 和 `Expected SHA-256` 不一致，表示当前媒体库不是与 Electron 匹配的版本。
+
+  **执行替换**
+
+  Windows PowerShell：
 
   ```powershell
   Invoke-RestMethod https://raw.githubusercontent.com/ylw1997/touchFish/refs/heads/main/reaplace-ffmpeg.py | python
   ```
 
-  > Linux / macOS
+  Linux / macOS：
 
   ```bash
-  curl https://raw.githubusercontent.com/ylw1997/touchFish/refs/heads/main/reaplace-ffmpeg.py | python
+  curl https://raw.githubusercontent.com/ylw1997/touchFish/refs/heads/main/reaplace-ffmpeg.py | python3
   ```
+
+  脚本会自动读取编辑器和 Electron 版本、下载对应架构的官方 Electron 构建、备份原媒体库、替换并比较 SHA-256；macOS 会在替换后重新签名并验证应用。看到 `Replacement and hash verification succeeded.` 才表示替换完成。备份保存在用户目录下的 `.touchfish/ffmpeg-backups`。
+
+  **替换后仍然没有声音**
+
+  1. 确认脚本打印的 `Installation` 就是当前打开的编辑器。终端中的 `code` 命令可能指向 Cursor 或其他编辑器，不能据此判断。
+  2. 完全退出并重新启动编辑器，仅执行“重新加载窗口”不够。
+  3. 再运行一次 `--check`；如果两个哈希不同，说明替换没有成功或已失效。
+  4. **编辑器升级会重新写入自带的 FFmpeg**。如果声音在升级后再次消失，请针对新 Electron 版本重新运行脚本。
+  5. 非标准安装路径可在运行脚本时指定。例如 macOS：
+
+     ```bash
+     curl https://raw.githubusercontent.com/ylw1997/touchFish/refs/heads/main/reaplace-ffmpeg.py | VSCODE_INSTALLATION="/Applications/Visual Studio Code.app" python3
+     ```
+
+  如果替换或签名失败，脚本会自动恢复备份。无法启动编辑器时，建议重新安装官方版本以恢复原始签名，然后再重新执行上述步骤。
 
 - **问题反馈**: 如果遇到任何 Bug 或有功能建议，欢迎在 [GitHub Issues](https://github.com/ylw1997/touchFish/issues) 中提出。
 
