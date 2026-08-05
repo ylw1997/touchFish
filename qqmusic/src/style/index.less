@@ -1635,6 +1635,11 @@ a {
       mask-size: 100% 100%;
 
       .lyric-line {
+        --lyric-base-color: var(
+          --vscode-editor-foldPlaceholderForeground,
+          rgba(255, 255, 255, 0.5)
+        );
+        --lyric-highlight-color: var(--vscode-foreground, #fff);
         color: var(--vscode-editor-foldPlaceholderForeground);
         font-size: 13px;
         transition:
@@ -1644,14 +1649,43 @@ a {
           text-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         text-align: left;
         line-height: 1.4;
-        word-break: break-word;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+
+        .lyric-char {
+          color: var(--lyric-base-color);
+
+          &.is-highlighted {
+            color: var(--lyric-highlight-color);
+          }
+
+          &.is-partial {
+            color: transparent;
+            background-image: linear-gradient(
+              to right,
+              var(--lyric-highlight-color) 0%,
+              var(--lyric-highlight-color)
+                calc(var(--char-progress, 0) * 100%),
+              var(--lyric-base-color)
+                calc(var(--char-progress, 0) * 100%),
+              var(--lyric-base-color) 100%
+            );
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+          }
+        }
 
         .dark & {
-          color: rgba(255, 255, 255, 0.5);
+          --lyric-base-color: rgba(255, 255, 255, 0.5);
+          --lyric-highlight-color: #fff;
+          color: var(--lyric-base-color);
         }
 
         &:not(.dark) & {
-          color: rgba(0, 0, 0, 0.5);
+          --lyric-base-color: rgba(0, 0, 0, 0.5);
+          --lyric-highlight-color: #111;
+          color: var(--lyric-base-color);
         }
 
         &.active {

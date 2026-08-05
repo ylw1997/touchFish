@@ -692,11 +692,6 @@
 				"icon": "$(device-camera)"
 			},
 			{
-				"command": "touchfish.loginXhsPhone",
-				"title": "小红书手机号登录",
-				"icon": "$(device-mobile)"
-			},
-			{
 				"command": "touchfish.setBilibiliToken",
 				"title": "设置B站Cookie",
 				"icon": "$(settings-gear)"
