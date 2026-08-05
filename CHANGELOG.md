@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [17.9.1](https://github.com/ylw1997/touchFish/compare/v17.9.0...v17.9.1) (2026-08-05)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* make ffmpeg audio repair verifiable and recoverable ([#127](https://github.com/ylw1997/touchFish/issues/127)) ([8fb6fbd](https://github.com/ylw1997/touchFish/commit/8fb6fbd6f129e82b5c181a9c24e6429405dd6967))
+
 ## [17.9.0](https://github.com/ylw1997/touchFish/compare/v17.8.0...v17.9.0) (2026-07-27)
 
 
