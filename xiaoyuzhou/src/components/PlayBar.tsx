@@ -341,6 +341,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
           currentLyric={currentLyric}
           activeIdx={activeIdx}
           isPlaying={isPlaying}
+          trackDuration={Number(currentEpisode?.duration) || 0}
           getAlbumCover={getAlbumCover}
           audioRef={audioRef}
         />

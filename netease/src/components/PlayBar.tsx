@@ -546,6 +546,7 @@ const PlayBar: React.FC = () => {
           currentLyric={currentLyric}
           activeIdx={activeIdx}
           isPlaying={isPlaying}
+          trackDuration={currentSong?.interval ?? 0}
           getAlbumCover={getAlbumCover}
           audioRef={audioRef}
         />
