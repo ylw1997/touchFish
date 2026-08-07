@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [17.9.2](https://github.com/ylw1997/touchFish/compare/v17.9.1...v17.9.2) (2026-08-07)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([#132](https://github.com/ylw1997/touchFish/issues/132)) ([8f558af](https://github.com/ylw1997/touchFish/commit/8f558afef102259b454cfd8f063a849571719c91))
+
 ### [17.9.1](https://github.com/ylw1997/touchFish/compare/v17.9.0...v17.9.1) (2026-08-05)
 
 
