@@ -1,6 +1,41 @@
 # 更新历史 
 
 
+### [17.9.1](https://github.com/ylw1997/touchFish/compare/v17.9.0...v17.9.1) (2026-08-05)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* make ffmpeg audio repair verifiable and recoverable ([#127](https://github.com/ylw1997/touchFish/issues/127)) ([8fb6fbd](https://github.com/ylw1997/touchFish/commit/8fb6fbd6f129e82b5c181a9c24e6429405dd6967))
+
+## [17.9.0](https://github.com/ylw1997/touchFish/compare/v17.8.0...v17.9.0) (2026-07-27)
+
+
+### ✨ Features | 新功能
+
+* 修复macos环境下崩溃问题 ([fd91552](https://github.com/ylw1997/touchFish/commit/fd915527466fe99d645ad464e51b4009b44f1a8f))
+* 更新 Query ID 及提取功能，支持从压缩脚本源码提取操作名称和查询 ID ([1528db6](https://github.com/ylw1997/touchFish/commit/1528db6f38d28bbf986b8b4970b4cf2c9de3fe87))
+
+## [17.8.0](https://github.com/ylw1997/touchFish/compare/v17.7.0...v17.8.0) (2026-07-22)
+
+
+### ✨ Features | 新功能
+
+* 优化续期 2,阅读界面字体大小独立 ([e8bc3ea](https://github.com/ylw1997/touchFish/commit/e8bc3eaa4791e14f4c07bf0b9e566ed0b55188b7))
+
+## [17.7.0](https://github.com/ylw1997/touchFish/compare/v17.6.1...v17.7.0) (2026-07-21)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([cc5afb7](https://github.com/ylw1997/touchFish/commit/cc5afb721026eccc15f75a1fcd87db0251e1df41))
+
+
+### ✨ Features | 新功能
+
+* 抽离 CommentImages 组件，评论图片支持单独切换显示/隐藏 ([6b798a1](https://github.com/ylw1997/touchFish/commit/6b798a1326569ff875e6953bc46d3caec5850a03))
+* 评论图片展示支持 showImg 配置并增加 pic_num 校验 ([e70e0d4](https://github.com/ylw1997/touchFish/commit/e70e0d42bb5670f263c380569a7b99b541a828cc))
+
 ### [17.6.1](https://github.com/ylw1997/touchFish/compare/v17.6.0...v17.6.1) (2026-07-10)
 
 
