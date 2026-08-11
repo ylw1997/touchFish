@@ -102,7 +102,10 @@ export default function VideoCard({
   const playSeqRef = useRef(0);
 
   const coverUrl =
-    liveRoom?.cover?.url_list?.[0] || video?.cover?.url_list?.[0] || "";
+    liveRoom?.cover?.url_list?.[0] ||
+    video?.origin_cover?.url_list?.[0] ||
+    video?.cover?.url_list?.[0] ||
+    "";
 
   // 播放地址排序：同步计算，避免 useEffect 异步导致 currentPlayUrl 先空后有效
   const playUrlList = useMemo(() => {
