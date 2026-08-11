@@ -208,7 +208,7 @@ body {
 .bottom-info {
   position: absolute;
   left: 16px;
-  bottom: 76px;
+  bottom: 66px;
   right: 16px;
   z-index: 10;
   pointer-events: none; /* 防止遮挡双击手势 */
@@ -662,9 +662,9 @@ body {
 /* 参考网易云 PlayBar：弱进度、单行信息、统一圆形操作按钮。 */
 .progress-container {
   position: absolute;
-  bottom: 14px;
-  left: 16px;
-  right: 16px;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -672,7 +672,7 @@ body {
   pointer-events: auto; /* 必须支持点击和拖动 */
   min-height: 46px;
   box-sizing: border-box;
-  padding: 6px 8px 6px 16px;
+  padding: 6px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 26px;
   background: rgba(15, 15, 15, 0.72);
@@ -684,7 +684,7 @@ body {
   .live-playing-badge {
     flex: 1;
     min-width: 0;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--vscode-descriptionForeground, rgba(255, 255, 255, 0.68));
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -711,7 +711,9 @@ body {
     );
     cursor: pointer;
     overflow: hidden;
-    transition: height 0.15s ease, opacity 0.15s ease;
+    transition:
+      height 0.15s ease,
+      opacity 0.15s ease;
     opacity: 0.7;
 
     &:hover {
@@ -878,7 +880,9 @@ body {
   color: #fff;
   font-size: clamp(14px, 2.2vw, 20px);
   font-weight: 600;
-  text-shadow: -1px -1px 1px #000, 1px 1px 2px #000;
+  text-shadow:
+    -1px -1px 1px #000,
+    1px 1px 2px #000;
   animation-name: danmaku-move;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
@@ -886,8 +890,12 @@ body {
 }
 
 @keyframes danmaku-move {
-  from { transform: translateX(0); }
-  to { transform: translateX(calc(-100vw - 100%)); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100vw - 100%));
+  }
 }
 
 .dy-media-preloader {
@@ -926,8 +934,15 @@ body {
     white-space: nowrap;
   }
 
-  strong { margin-top: 8px; font-size: 13px; }
-  > span { margin-top: 4px; color: rgba(255, 255, 255, 0.55); font-size: 11px; }
+  strong {
+    margin-top: 8px;
+    font-size: 13px;
+  }
+  > span {
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 11px;
+  }
 }
 
 .live-grid-cover-wrap {
@@ -953,5 +968,10 @@ body {
   background: rgba(0, 0, 0, 0.6);
 }
 
-.live-grid-badge { left: 7px; background: #fe2c55; }
-.live-grid-viewers { right: 7px; }
+.live-grid-badge {
+  left: 7px;
+  background: #fe2c55;
+}
+.live-grid-viewers {
+  right: 7px;
+}
