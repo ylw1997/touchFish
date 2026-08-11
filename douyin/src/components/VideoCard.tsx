@@ -102,10 +102,7 @@ export default function VideoCard({
   const playSeqRef = useRef(0);
 
   const coverUrl =
-    liveRoom?.cover?.url_list?.[0] ||
-    video?.origin_cover?.url_list?.[0] ||
-    video?.cover?.url_list?.[0] ||
-    "";
+    liveRoom?.cover?.url_list?.[0] || video?.cover?.url_list?.[0] || "";
 
   // 播放地址排序：同步计算，避免 useEffect 异步导致 currentPlayUrl 先空后有效
   const playUrlList = useMemo(() => {
@@ -579,7 +576,7 @@ export default function VideoCard({
       {/* 视频播放器 */}
       <video
         ref={videoRef}
-        src={!isHlsSource && mediaPlayUrl ? mediaPlayUrl : undefined}
+        src={isHlsSource ? undefined : mediaPlayUrl}
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => {
@@ -638,7 +635,7 @@ export default function VideoCard({
             className="video-progress-bar"
             onMouseDown={handleProgressMouseDown}
           >
-            <div className="progress-fill" style={{ width: `${displayedProgress}%` }} />
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
         )}
 
@@ -658,9 +655,7 @@ export default function VideoCard({
         </Button>
 
         <span className={isLive ? "live-playing-badge" : "time-summary"}>
-          {isLive
-            ? "LIVE"
-            : `${formatTime(displayedCurrentTime)} / ${formatTime(displayedDuration)}`}
+          {isLive ? "LIVE" : `${formatTime(currentTime)} / ${formatTime(duration)}`}
         </span>
 
         <div className="playbar-action-btns">
