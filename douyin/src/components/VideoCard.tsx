@@ -10,7 +10,21 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import Hls from "hls.js";
 import { useRequest } from "../hooks/useRequest";
+import DanmakuOverlay from "./DanmakuOverlay";
+
+const parseLiveRoom = (aweme: any) => {
+  if (aweme?.liveRoom) return aweme.liveRoom;
+  const rawdata = aweme?.cell_room?.rawdata;
+  if (!rawdata) return null;
+  if (typeof rawdata === "object") return rawdata;
+  try {
+    return JSON.parse(rawdata);
+  } catch {
+    return null;
+  }
+};
 
 interface VideoCardProps {
   aweme: any;
@@ -41,7 +55,12 @@ export default function VideoCard({
   onScrollToNext,
   onAuthorClick,
 }: VideoCardProps) {
-  const { desc, author, video, statistics } = aweme;
+  const liveRoom = useMemo(() => parseLiveRoom(aweme), [aweme]);
+  const isLive = Boolean(liveRoom);
+  const desc = liveRoom?.title || aweme?.desc;
+  const author = liveRoom?.owner || aweme?.author;
+  const video = aweme?.video;
+  const statistics = aweme?.statistics;
   const [isPlaying, setIsPlaying] = useState(false);
   const isLiked = aweme?.user_digg === 1 || aweme?.user_digg === true;
   const likeCount = statistics?.digg_count || 0;
@@ -67,6 +86,12 @@ export default function VideoCard({
   const currentAwemeIdRef = useRef<string | number | undefined>(undefined);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
+  const requestPlayRef = useRef<(reason: string) => void>(() => undefined);
+  const activePlaybackRef = useRef({ isActive, shouldPlay });
+  const [danmakuEnabled, setDanmakuEnabled] = useState(
+    () => localStorage.getItem("douyin.danmaku.enabled") !== "false",
+  );
 
   const awemeId = aweme?.aweme_id || aweme?.id;
   const [playSource, setPlaySource] = useState<{
@@ -75,26 +100,70 @@ export default function VideoCard({
   }>({ awemeId, index: 0 });
   const playSeqRef = useRef(0);
 
-  const coverUrl = video?.cover?.url_list?.[0] || "";
+  const coverUrl =
+    liveRoom?.cover?.url_list?.[0] || video?.cover?.url_list?.[0] || "";
 
   // 播放地址排序：同步计算，避免 useEffect 异步导致 currentPlayUrl 先空后有效
   const playUrlList = useMemo(() => {
-    const list: string[] = video?.play_addr?.url_list || [];
+    if (liveRoom) {
+      const stream = liveRoom?.stream_url || {};
+      const map = stream?.hls_pull_url_map || {};
+      const qualities = ["SD1", "SD2", "HD1", "FULL_HD1"];
+      return [...new Set([
+        stream?.hls_pull_url,
+        ...qualities.map((quality) => map?.[quality]),
+      ])].filter((url): url is string => Boolean(url));
+    }
+
+    const bitRates = video?.bit_rate || [];
+    const highest = (items: any[]) => items.reduce(
+      (best: any, item: any) => (Number(item?.bit_rate || 0) > Number(best?.bit_rate || 0) ? item : best),
+      null,
+    );
+    const preferredH264 = highest(bitRates.filter((item: any) => item?.is_h265 !== 1 && item?.is_h265 !== true));
+    const preferredH265 = highest(bitRates.filter((item: any) => item?.is_h265 === 1 || item?.is_h265 === true));
+    const list: string[] = [
+      ...(video?.play_addr_h264?.url_list || []),
+      ...(preferredH264?.play_addr?.url_list || []),
+      ...(video?.play_addr?.url_list || []),
+      ...(preferredH265?.play_addr?.url_list || []),
+    ];
     const normalized = [...new Set(list)].filter(Boolean);
     return normalized.sort((a, b) => {
       const score = (url: string) => {
-        if (url.includes("/aweme/v1/play/")) return 3;
-        if (url.includes("douyinvod.com")) return 2;
-        if (url.includes("douyin.com")) return 1;
-        return 0;
+        // Windows Webview 中部分直连 douyinvod 会稳定 403；官方播放入口
+        // 能重定向到当前网络可用的 CDN，因此优先，并保留直连作回退。
+        if (url.includes("/aweme/v1/play/")) return 5;
+        if (url.includes("douyinvod.com") || url.includes("bytecdn")) return 2;
+        if (url.includes("douyin.com")) return 3;
+        return 4;
       };
       return score(b) - score(a);
     });
-  }, [video]);
+  }, [liveRoom, video]);
 
   const effectivePlayUrlIndex =
     playSource.awemeId === awemeId ? playSource.index : 0;
   const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
+  const isPlaybackEndpoint = currentPlayUrl.includes("/aweme/v1/play/");
+  const [resolvedPlaySource, setResolvedPlaySource] = useState({ source: "", url: "" });
+  const mediaPlayUrl = isPlaybackEndpoint
+    ? resolvedPlaySource.source === currentPlayUrl ? resolvedPlaySource.url : ""
+    : currentPlayUrl;
+  const isHlsSource = /\.m3u8(?:\?|$)/i.test(mediaPlayUrl);
+
+  useEffect(() => {
+    if (!isPlaybackEndpoint || !currentPlayUrl || resolvedPlaySource.source === currentPlayUrl) return;
+    let cancelled = false;
+    void request("DY_RESOLVE_PLAY_URL", { url: currentPlayUrl })
+      .then((response) => {
+        if (!cancelled) setResolvedPlaySource({ source: currentPlayUrl, url: response?.url || currentPlayUrl });
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedPlaySource({ source: currentPlayUrl, url: currentPlayUrl });
+      });
+    return () => { cancelled = true; };
+  }, [currentPlayUrl, isPlaybackEndpoint, request, resolvedPlaySource.source]);
 
   const stopCardClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -114,7 +183,7 @@ export default function VideoCard({
   // ===== 核心播放逻辑 =====
   const requestPlay = useCallback((reason: string) => {
     const el = videoRef.current;
-    if (!el || !currentPlayUrl || !isActive || !shouldPlay) return;
+    if (!el || !mediaPlayUrl || !isActive || !shouldPlay) return;
 
     const seq = ++playSeqRef.current;
     setIsVideoLoading(el.readyState < HTMLMediaElement.HAVE_CURRENT_DATA);
@@ -155,7 +224,59 @@ export default function VideoCard({
         setIsVideoLoading(false);
         setShowPlayOverlay(true);
       });
-  }, [currentPlayUrl, isActive, shouldPlay]);
+  }, [mediaPlayUrl, isActive, shouldPlay]);
+
+  useEffect(() => {
+    requestPlayRef.current = requestPlay;
+    activePlaybackRef.current = { isActive, shouldPlay };
+  }, [isActive, requestPlay, shouldPlay]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
+    if (!el || !mediaPlayUrl || !isHlsSource) return;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        lowLatencyMode: true,
+        capLevelToPlayerSize: true,
+        maxBufferLength: 12,
+        backBufferLength: 6,
+      });
+      hlsRef.current = hls;
+      hls.loadSource(mediaPlayUrl);
+      hls.attachMedia(el);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (activePlaybackRef.current.isActive && activePlaybackRef.current.shouldPlay) {
+          requestPlayRef.current("hls-manifest");
+        }
+      });
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (!data.fatal) return;
+        hls.destroy();
+        if (effectivePlayUrlIndex < playUrlList.length - 1) {
+          setPlaySource({ awemeId, index: effectivePlayUrlIndex + 1 });
+        } else {
+          setIsVideoLoading(false);
+          setShowPlayOverlay(true);
+        }
+      });
+    } else if (el.canPlayType("application/vnd.apple.mpegurl")) {
+      el.src = mediaPlayUrl;
+    }
+
+    return () => {
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
+  }, [
+    awemeId,
+    mediaPlayUrl,
+    effectivePlayUrlIndex,
+    isHlsSource,
+    playUrlList.length,
+  ]);
 
   useEffect(() => {
     if (playSource.awemeId !== awemeId) {
@@ -194,7 +315,7 @@ export default function VideoCard({
       requestPlay(playReason);
     }
   }, [
-    currentPlayUrl,
+    mediaPlayUrl,
     isActive,
     playReason,
     playSignal,
@@ -418,7 +539,7 @@ export default function VideoCard({
       {/* 视频播放器 */}
       <video
         ref={videoRef}
-        src={currentPlayUrl}
+        src={isHlsSource ? undefined : mediaPlayUrl}
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => {
@@ -454,17 +575,48 @@ export default function VideoCard({
         {...({ referrerPolicy: "no-referrer" } as any)}
       />
 
+      {!isLive && (
+        <DanmakuOverlay
+          awemeId={String(awemeId || "")}
+          durationSeconds={duration}
+          currentTime={currentTime}
+          isPlaying={isPlaying}
+          enabled={danmakuEnabled}
+          request={request}
+        />
+      )}
+
       {/* 播放进度条容器 */}
       <div className="progress-container" onClick={(e) => e.stopPropagation()}>
-        <span className="time-text">{formatTime(currentTime)}</span>
-        <div
-          ref={progressRef}
-          className="video-progress-bar"
-          onMouseDown={handleProgressMouseDown}
-        >
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-        <span className="time-text">{formatTime(duration)}</span>
+        {isLive ? (
+          <span className="live-playing-badge">LIVE</span>
+        ) : (
+          <>
+            <span className="time-text">{formatTime(currentTime)}</span>
+            <div
+              ref={progressRef}
+              className="video-progress-bar"
+              onMouseDown={handleProgressMouseDown}
+            >
+              <div className="progress-fill" style={{ width: `${progress}%` }} />
+            </div>
+            <span className="time-text">{formatTime(duration)}</span>
+            <button
+              type="button"
+              className={`danmaku-toggle-btn ${danmakuEnabled ? "enabled" : ""}`}
+              title={danmakuEnabled ? "关闭弹幕" : "开启弹幕"}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDanmakuEnabled((enabled) => {
+                  localStorage.setItem("douyin.danmaku.enabled", String(!enabled));
+                  return !enabled;
+                });
+              }}
+            >
+              弹
+            </button>
+          </>
+        )}
         <button
           type="button"
           className={`sound-toggle-btn ${isMuted ? "muted" : ""}`}
@@ -562,7 +714,7 @@ export default function VideoCard({
         </div>
 
         {/* 红心点赞 */}
-        <div className="action-item">
+        {!isLive && <div className="action-item">
           <FloatButton
             style={{ position: "static" }}
             icon={
@@ -578,10 +730,10 @@ export default function VideoCard({
             }}
           />
           <span className="action-count">{formatCount(likeCount)}</span>
-        </div>
+        </div>}
 
         {/* 评论数 */}
-        <div className="action-item">
+        {!isLive && <div className="action-item">
           <FloatButton
             style={{ position: "static" }}
             icon={<MessageOutlined />}
@@ -590,7 +742,7 @@ export default function VideoCard({
           <span className="action-count">
             {formatCount(statistics?.comment_count)}
           </span>
-        </div>
+        </div>}
 
       </div>
 

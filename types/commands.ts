@@ -217,8 +217,14 @@ export type CommandList =
   | "DY_SAVE_COOKIE"
   | "DY_OPEN_COOKIE_SETTING"
   | "DY_GET_COMMENTS"
+  | "DY_GET_DANMAKU"
+  | "DY_RESOLVE_PLAY_URL"
   | "DY_GET_FOLLOWING"
   | "DY_GET_USER_POSTS"
+  | "DY_GET_USER_PROFILE"
+  | "DY_GET_LIVE_FEED"
+  | "DY_GET_FOLLOWED_LIVE"
+  | "DY_GET_PLAYABLE_LIVE"
   | "DY_LIKE_VIDEO";
 
 export type ZhihuCommandList =

@@ -5,6 +5,29 @@ import { showError } from "../utils/errorMessage";
 
 axios.defaults.timeout = 10000;
 
+const DOUYIN_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36";
+
+const signedGet = async (
+  url: string,
+  extraHeaders: Record<string, string> = {},
+) => {
+  const signedUrl = signDouyinUrl(url, DOUYIN_UA);
+  const headers = await getDouyinHeaders({
+    "User-Agent": DOUYIN_UA,
+    ...extraHeaders,
+  });
+  return axios.get(signedUrl, { headers });
+};
+
+const liveRoomToAweme = (room: any) => ({
+  aweme_id: `live-${room?.id_str || room?.id || room?.owner?.web_rid || "unknown"}`,
+  aweme_type: 101,
+  author: room?.owner,
+  cell_room: { rawdata: JSON.stringify(room) },
+  statistics: {},
+});
+
 export const getOrSetDouyinCookie = async () => {
   return await getOrSetCookie("douyinCookie", "请输入抖音Cookie（可在浏览器登录douyin.com后通过控制台抓取）");
 };
@@ -20,20 +43,67 @@ export const getDouyinHeaders = async (extraHeaders = {}) => {
 
 /**
  * 获取抖音推荐视频流 (个性化推荐)
- * 接口: https://www.douyin.com/aweme/v1/web/channel/feed/
+ * 接口: https://www.douyin.com/aweme/v1/web/tab/feed/
  */
-export const getDouyinFeed = async () => {
+export const getDouyinFeed = async (
+  refreshIndex: number = 1,
+  viewCount: number = 0,
+) => {
   try {
-    const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
-    const apiPath = "https://www.douyin.com/aweme/v1/web/channel/feed/?device_platform=webapp&aid=6383&count=10&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32";
-    
-    // 生成签名 URL
-    const signedUrl = signDouyinUrl(apiPath, ua);
-    const headers = await getDouyinHeaders({
-      "User-Agent": ua,
+    const params = new URLSearchParams({
+      device_platform: "webapp",
+      aid: "6383",
+      channel: "channel_pc_web",
+      filterGids: "",
+      tag_id: "",
+      share_aweme_id: "",
+      live_insert_type: "",
+      count: "10",
+      refresh_index: String(refreshIndex),
+      video_type_select: "1",
+      aweme_pc_rec_raw_data: JSON.stringify({
+        is_client: false,
+        ff_danmaku_status: 1,
+        danmaku_switch_status: 1,
+        is_dash_user: 1,
+        related_recommend: 1,
+        is_xigua_user: 0,
+      }),
+      globalwid: "",
+      pull_type: "2",
+      min_window: "0",
+      free_right: "0",
+      view_count: String(viewCount),
+      plug_block: "0",
+      ug_source: "",
+      creative_id: "",
+      pc_client_type: "1",
+      pc_libra_divert: "Windows",
+      support_h265: "1",
+      support_dash: "1",
+      webcast_sdk_version: "170400",
+      webcast_version_code: "170400",
+      version_code: "170400",
+      version_name: "17.4.0",
+      cookie_enabled: "true",
+      screen_width: "1920",
+      screen_height: "1080",
+      browser_language: "zh-CN",
+      browser_platform: "Win32",
+      browser_name: "Chrome",
+      browser_version: "151.0.0.0",
+      browser_online: "true",
+      engine_name: "Blink",
+      engine_version: "151.0.0.0",
+      os_name: "Windows",
+      os_version: "10",
+      platform: "PC",
+      timestamp: String(Math.floor(Date.now() / 1000)),
     });
-
-    const response = await axios.get(signedUrl, { headers });
+    const apiPath = `https://www.douyin.com/aweme/v1/web/tab/feed/?${params.toString()}`;
+    const response = await signedGet(apiPath, {
+      Referer: "https://www.douyin.com/?recommend=1",
+    });
     return response.data;
   } catch (error: any) {
     showError(`获取抖音推荐流失败: ${error.message}`);
@@ -276,4 +346,228 @@ export const getDouyinFollowing = async (maxCursor: number = 0) => {
       has_more: false,
     };
   }
+};
+
+export const getDouyinDanmaku = async (
+  awemeId: string,
+  duration: number,
+  start: number,
+) => {
+  const end = Math.max(start, Math.min(start + 32_000, duration));
+  const params = new URLSearchParams({
+    device_platform: "webapp",
+    aid: "6383",
+    channel: "channel_pc_web",
+    app_name: "aweme",
+    format: "json",
+    group_id: awemeId,
+    item_id: awemeId,
+    start_time: String(start),
+    end_time: String(end),
+    duration: String(duration),
+    update_version_code: "170400",
+    pc_client_type: "1",
+    cookie_enabled: "true",
+    browser_language: "zh-CN",
+    browser_platform: "Win32",
+  });
+  const headers = await getDouyinHeaders({
+    "User-Agent": DOUYIN_UA,
+    Referer: "https://www.douyin.com/",
+    Accept: "application/json, text/plain, */*",
+    "Accept-Encoding": "identity",
+  });
+  const response = await axios.get(
+    `https://www-hj.douyin.com/aweme/v1/web/danmaku/get_v2/?${params.toString()}`,
+    { headers, timeout: 15_000 },
+  );
+  return response.data;
+};
+
+export const resolveDouyinPlayUrl = async (playUrl: string) => {
+  const parsed = new URL(playUrl);
+  const isDouyinHost = parsed.hostname === "douyin.com" || parsed.hostname.endsWith(".douyin.com");
+  if (!isDouyinHost || !parsed.pathname.includes("/aweme/v1/play/")) {
+    throw new Error("不允许解析非抖音播放入口");
+  }
+  const headers = await getDouyinHeaders({
+    "User-Agent": DOUYIN_UA,
+    Referer: "https://www.douyin.com/",
+    Range: "bytes=0-0",
+  });
+  const response = await axios.get(playUrl, {
+    headers,
+    maxRedirects: 0,
+    validateStatus: (status) => status >= 200 && status < 400,
+  });
+  const resolved = response.headers.location;
+  return { url: typeof resolved === "string" && resolved ? resolved : playUrl };
+};
+
+export const getDouyinLiveFeed = async (maxTime: number = 0) => {
+  const params = new URLSearchParams({
+    aid: "6383",
+    app_name: "douyin_web",
+    live_id: "1",
+    device_platform: "web",
+    language: "zh-CN",
+    enter_from: "page_refresh",
+    cookie_enabled: "true",
+    screen_width: "1920",
+    screen_height: "1080",
+    browser_language: "zh-CN",
+    browser_platform: "Win32",
+    browser_name: "Chrome",
+    browser_version: "151.0.0.0",
+    os_name: "Windows",
+    os_version: "10",
+    channel: "channel_pc_web",
+    request_tag_from: "web",
+    need_map: "1",
+    liveid: "1",
+    is_draw: "1",
+    inner_from_drawer: "0",
+    custom_count: "50",
+    action: "load_more",
+    action_type: "loadmore",
+    enter_source: "web_homepage_hot_web_live_card",
+    source_key: "web_homepage_hot_web_live_card",
+    is_ssr: "true",
+  });
+  if (maxTime > 0) params.set("max_time", String(maxTime));
+
+  const response = await signedGet(
+    `https://live-hj.douyin.com/webcast/feed/?${params.toString()}`,
+    {
+      Referer: "https://live.douyin.com/",
+      Origin: "https://live.douyin.com",
+    },
+  );
+  const payload = response.data;
+  const rooms = (payload.data || [])
+    .filter((entry: any) => (entry.type == null || entry.type === 1) && entry.data)
+    .map((entry: any) => entry.data)
+    .filter((room: any) => room?.owner?.web_rid)
+    .map(liveRoomToAweme);
+  return {
+    status_code: payload.status_code,
+    status_msg: payload.status_msg,
+    aweme_list: rooms,
+    max_time: payload.extra?.max_time || maxTime,
+    has_more: payload.extra?.has_more ?? true,
+  };
+};
+
+export const getDouyinFollowedLiveRooms = async () => {
+  const params = new URLSearchParams({
+    aid: "6383",
+    app_name: "douyin_web",
+    live_id: "1",
+    device_platform: "web",
+    language: "zh-CN",
+    enter_from: "page_refresh",
+    cookie_enabled: "true",
+    screen_width: "1920",
+    screen_height: "1080",
+    browser_language: "zh-CN",
+    browser_platform: "Win32",
+    browser_name: "Chrome",
+    browser_version: "151.0.0.0",
+    os_name: "Windows",
+    os_version: "10",
+    enter_source: "homepage_pc_followtop",
+    need_pinned_info: "0",
+    follow_session_id: "0",
+    source_key: "web_homepage_follow_top",
+    webcast_version_code: "170400",
+    version_code: "170400",
+    need_map: "1",
+  });
+  const response = await signedGet(
+    `https://live.douyin.com/webcast/feed/follow_top/?${params.toString()}`,
+    {
+      Referer: "https://live.douyin.com/",
+      Origin: "https://live.douyin.com",
+    },
+  );
+  const payload = response.data;
+  const rooms = (payload.data || [])
+    .filter((entry: any) => entry.type === 2 && entry.data)
+    .map((entry: any) => entry.data)
+    .filter((room: any) => room?.owner?.web_rid)
+    .map(liveRoomToAweme);
+  return {
+    status_code: payload.status_code,
+    status_msg: payload.status_msg,
+    aweme_list: rooms,
+    has_more: false,
+  };
+};
+
+export const getDouyinPlayableLiveRoom = async (webRid: string) => {
+  const params = new URLSearchParams({
+    aid: "6383",
+    app_name: "douyin_web",
+    live_id: "1",
+    device_platform: "web",
+    language: "zh-CN",
+    browser_language: "zh-CN",
+    browser_platform: "Win32",
+    browser_name: "Chrome",
+    browser_version: "151.0.0.0",
+    web_rid: webRid,
+    msToken: "",
+  });
+  const response = await signedGet(
+    `https://live.douyin.com/webcast/room/web/enter/?${params.toString()}`,
+    {
+      Referer: `https://live.douyin.com/${webRid}`,
+      Origin: "https://live.douyin.com",
+    },
+  );
+  const payload = response.data;
+  const room = payload.data?.data?.[0];
+  const hlsMap = room?.stream_url?.hls_pull_url_map || {};
+  const hasPlayableHls = Boolean(
+    room?.stream_url?.hls_pull_url || Object.values(hlsMap).some(Boolean),
+  );
+  if (payload.status_code !== 0 || room?.status !== 2 || !hasPlayableHls) {
+    throw new Error(payload.status_msg || "直播间已结束或暂无可播放线路");
+  }
+  return {
+    status_code: payload.status_code,
+    status_msg: payload.status_msg,
+    room,
+    aweme: room ? liveRoomToAweme(room) : null,
+  };
+};
+
+export const getDouyinUserProfile = async (secUserId: string) => {
+  const params = new URLSearchParams({
+    device_platform: "webapp",
+    aid: "6383",
+    channel: "channel_pc_web",
+    sec_user_id: secUserId,
+    publish_video_strategy_type: "2",
+    personal_center_strategy: "1",
+    pc_client_type: "1",
+    version_code: "170400",
+    version_name: "17.4.0",
+    cookie_enabled: "true",
+    browser_language: "zh-CN",
+    browser_platform: "Win32",
+    browser_name: "Chrome",
+    browser_version: "151.0.0.0",
+    browser_online: "true",
+    engine_name: "Blink",
+    engine_version: "151.0.0.0",
+    os_name: "Windows",
+    os_version: "10",
+    platform: "PC",
+  });
+  const response = await signedGet(
+    `https://www.douyin.com/aweme/v1/web/user/profile/other/?${params.toString()}`,
+    { Referer: `https://www.douyin.com/user/${secUserId}` },
+  );
+  return response.data;
 };
