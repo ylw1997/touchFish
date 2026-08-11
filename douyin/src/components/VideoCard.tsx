@@ -8,6 +8,7 @@ import {
   MutedOutlined,
   LoadingOutlined,
   CloseOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Hls from "hls.js";
@@ -92,6 +93,7 @@ export default function VideoCard({
   const [danmakuEnabled, setDanmakuEnabled] = useState(
     () => localStorage.getItem("douyin.danmaku.enabled") !== "false",
   );
+  const [isPictureInPicture, setIsPictureInPicture] = useState(false);
 
   const awemeId = aweme?.aweme_id || aweme?.id;
   const [playSource, setPlaySource] = useState<{
@@ -367,6 +369,38 @@ export default function VideoCard({
     }
   };
 
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    const handleEnter = () => setIsPictureInPicture(true);
+    const handleLeave = () => setIsPictureInPicture(false);
+    el.addEventListener("enterpictureinpicture", handleEnter);
+    el.addEventListener("leavepictureinpicture", handleLeave);
+    return () => {
+      el.removeEventListener("enterpictureinpicture", handleEnter);
+      el.removeEventListener("leavepictureinpicture", handleLeave);
+    };
+  }, []);
+
+  const togglePictureInPicture = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    const el = videoRef.current;
+    if (!el || !document.pictureInPictureEnabled || !("requestPictureInPicture" in el)) {
+      messageApi.warning("当前 VS Code 环境不支持画中画");
+      return;
+    }
+    try {
+      if (document.pictureInPictureElement === el) {
+        await document.exitPictureInPicture();
+      } else {
+        if (document.pictureInPictureElement) await document.exitPictureInPicture();
+        await el.requestPictureInPicture();
+      }
+    } catch (error: any) {
+      messageApi.warning(error?.message || "无法开启画中画");
+    }
+  };
+
   // 播放失败自动切源容错
   const handleVideoError = (e: any) => {
     console.warn(
@@ -617,6 +651,15 @@ export default function VideoCard({
             </button>
           </>
         )}
+        <button
+          type="button"
+          className={`picture-in-picture-btn ${isPictureInPicture ? "active" : ""}`}
+          aria-label={isPictureInPicture ? "退出画中画" : "进入画中画"}
+          title={isPictureInPicture ? "退出画中画" : "画中画"}
+          onClick={togglePictureInPicture}
+        >
+          <PictureOutlined />
+        </button>
         <button
           type="button"
           className={`sound-toggle-btn ${isMuted ? "muted" : ""}`}

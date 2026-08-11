@@ -22,7 +22,7 @@ interface DanmakuOverlayProps {
 }
 
 const WINDOW_MS = 32_000;
-const TRACK_COUNT = 8;
+const TRACK_COUNT = 2;
 
 export default function DanmakuOverlay({
   awemeId,
@@ -164,7 +164,7 @@ export default function DanmakuOverlay({
           className="danmaku-item"
           key={item.renderKey}
           style={{
-            top: `${6 + item.track * 8.5}%`,
+            top: `${8 + item.track * 38}px`,
             animationDuration: `${item.duration}s`,
           }}
         >

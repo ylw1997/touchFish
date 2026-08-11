@@ -845,7 +845,10 @@ body {
 
 .danmaku-overlay {
   position: absolute;
-  inset: 48px 0 112px;
+  top: 48px;
+  left: 0;
+  right: 0;
+  height: 96px;
   overflow: hidden;
   z-index: 18;
   pointer-events: none;
@@ -885,6 +888,29 @@ body {
       color: #fff;
       border-color: #fe2c55;
       background: rgba(254, 44, 85, 0.32);
+    }
+  }
+
+  .picture-in-picture-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    color: rgba(255, 255, 255, 0.78);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover,
+    &.active {
+      color: #fe2c55;
+    }
+
+    .anticon {
+      font-size: 17px;
     }
   }
 
