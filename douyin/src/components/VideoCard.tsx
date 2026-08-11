@@ -148,6 +148,10 @@ export default function VideoCard({
 
   const effectivePlayUrlIndex =
     playSource.awemeId === awemeId ? playSource.index : 0;
+  const isCurrentPlaybackState = playSource.awemeId === awemeId;
+  const displayedProgress = isCurrentPlaybackState ? progress : 0;
+  const displayedCurrentTime = isCurrentPlaybackState ? currentTime : 0;
+  const displayedDuration = isCurrentPlaybackState ? duration : 0;
   const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
   const isPlaybackEndpoint = currentPlayUrl.includes("/aweme/v1/play/");
   const [resolvedPlaySource, setResolvedPlaySource] = useState({ source: "", url: "" });
@@ -575,7 +579,7 @@ export default function VideoCard({
       {/* 视频播放器 */}
       <video
         ref={videoRef}
-        src={isHlsSource ? undefined : mediaPlayUrl}
+        src={!isHlsSource && mediaPlayUrl ? mediaPlayUrl : undefined}
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => {
@@ -607,7 +611,7 @@ export default function VideoCard({
         muted={isMuted}
         playsInline
         preload="auto"
-        poster={coverUrl}
+        poster={coverUrl || undefined}
         {...({ referrerPolicy: "no-referrer" } as any)}
       />
 
@@ -634,7 +638,7 @@ export default function VideoCard({
             className="video-progress-bar"
             onMouseDown={handleProgressMouseDown}
           >
-            <div className="progress-fill" style={{ width: `${progress}%` }} />
+            <div className="progress-fill" style={{ width: `${displayedProgress}%` }} />
           </div>
         )}
 
@@ -654,7 +658,9 @@ export default function VideoCard({
         </Button>
 
         <span className={isLive ? "live-playing-badge" : "time-summary"}>
-          {isLive ? "LIVE" : `${formatTime(currentTime)} / ${formatTime(duration)}`}
+          {isLive
+            ? "LIVE"
+            : `${formatTime(displayedCurrentTime)} / ${formatTime(displayedDuration)}`}
         </span>
 
         <div className="playbar-action-btns">

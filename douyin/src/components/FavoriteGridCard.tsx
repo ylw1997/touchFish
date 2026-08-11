@@ -19,13 +19,15 @@ export default function FavoriteGridCard({ aweme, onClick }: FavoriteGridCardPro
 
   return (
     <div className="dy-grid-card" onClick={onClick}>
-      <img
-        src={coverUrl}
-        alt="封面"
-        className="grid-cover"
-        referrerPolicy="no-referrer"
-        loading="lazy"
-      />
+      {coverUrl ? (
+        <img
+          src={coverUrl}
+          alt="封面"
+          className="grid-cover"
+          referrerPolicy="no-referrer"
+          loading="lazy"
+        />
+      ) : null}
       <div className="grid-info-bar">
         <div className="grid-title">{desc || "无描述"}</div>
         <div className="grid-stats">
