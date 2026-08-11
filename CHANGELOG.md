@@ -1,6 +1,32 @@
 # 更新历史 
 
 
+## [17.10.0](https://github.com/ylw1997/touchFish/compare/v17.9.3...v17.10.0) (2026-08-11)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([206236f](https://github.com/ylw1997/touchFish/commit/206236f6c3e1fdd2b1315c7a441e7886c522582b))
+* update x ids ([36c4c54](https://github.com/ylw1997/touchFish/commit/36c4c548bff3a667a20e5412dba472521936c66b))
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* **douyin:** 优化弹幕轨道与推荐流占位 ([2f8cf84](https://github.com/ylw1997/touchFish/commit/2f8cf84d75c47d307836d8fc7c7cf9287ba020f6))
+* **douyin:** 使用原始比例视频封面 ([84077fc](https://github.com/ylw1997/touchFish/commit/84077fc1f6aa62dbd7e32aab6ce766b539832efe))
+* **douyin:** 收拢操作按钮并隔离播放事件 ([0638453](https://github.com/ylw1997/touchFish/commit/0638453921bcf7573994d4d6e326781721f8448f))
+* **douyin:** 清理空资源地址与切换进度 ([66e12cb](https://github.com/ylw1997/touchFish/commit/66e12cb48db2a2a5ec9a3ea7245d3a99309f51a5))
+
+
+### ✨ Features | 新功能
+
+* **douyin:** 对齐 tvOS 播放与直播能力 ([c60bbe6](https://github.com/ylw1997/touchFish/commit/c60bbe6a747aa18ea8bb793bf5ae59a1b7e7b7bf))
+* **douyin:** 限制弹幕区域并支持画中画 ([a54cd30](https://github.com/ylw1997/touchFish/commit/a54cd3030dcc0ee32ef64a13f0f28384108d0604))
+* 去掉模糊 ([fb67aaf](https://github.com/ylw1997/touchFish/commit/fb67aaf2b94f3f58ebdb6830d4e15970441767a0))
+* 注释掉背景模糊效果，优化视觉表现 ([e48f43c](https://github.com/ylw1997/touchFish/commit/e48f43ccffe4619bbd26275865939dc02f93ff35))
+* 添加歌词高亮功能，支持歌词字符逐字高亮显示 ([ab19358](https://github.com/ylw1997/touchFish/commit/ab19358f1c4dd8b4d3d742b56a8beaf5d04004a4))
+* 移除小红书手机号登录功能 ([bd484fc](https://github.com/ylw1997/touchFish/commit/bd484fc9a1de886854b42779e2b093289833d025))
+
 ### [17.9.3](https://github.com/ylw1997/touchFish/compare/v17.9.2...v17.9.3) (2026-08-11)
 
 ### [17.9.2](https://github.com/ylw1997/touchFish/compare/v17.9.1...v17.9.2) (2026-08-07)
