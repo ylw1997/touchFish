@@ -208,14 +208,14 @@ body {
 .bottom-info {
   position: absolute;
   left: 16px;
-  bottom: 70px;
-  right: 92px;
+  bottom: 76px;
+  right: 16px;
   z-index: 10;
   pointer-events: none; /* 防止遮挡双击手势 */
   display: flex;
   flex-direction: column;
   gap: 7px;
-  max-width: min(520px, calc(100vw - 124px));
+  max-width: min(600px, calc(100vw - 32px));
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
 
   .author-name {
@@ -735,6 +735,21 @@ body {
       width: 34px;
       height: 34px;
       box-shadow: none;
+    }
+  }
+
+  .playbar-author-btn {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    padding: 0;
+    overflow: hidden;
+    flex: 0 0 auto;
+
+    .ant-avatar {
+      width: 100%;
+      height: 100%;
+      line-height: 36px;
     }
   }
 }

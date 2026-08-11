@@ -1,4 +1,4 @@
-import { Avatar, Button, FloatButton, Spin, Drawer, List, message } from "antd";
+import { Avatar, Button, Spin, Drawer, List, message } from "antd";
 import {
   HeartFilled,
   HeartOutlined,
@@ -386,7 +386,7 @@ export default function VideoCard({
   }, []);
 
   const togglePictureInPicture = async (event: React.MouseEvent) => {
-    event.stopPropagation();
+    stopCardClick(event);
     const el = videoRef.current;
     if (!el || !document.pictureInPictureEnabled || !("requestPictureInPicture" in el)) {
       messageApi.warning("当前 VS Code 环境不支持画中画");
@@ -624,7 +624,11 @@ export default function VideoCard({
       )}
 
       {/* 播放进度条容器 */}
-      <div className="progress-container" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="progress-container"
+        onClick={stopCardClick}
+        onPointerDown={stopCardPointer}
+      >
         {!isLive && (
           <div
             ref={progressRef}
@@ -635,11 +639,49 @@ export default function VideoCard({
           </div>
         )}
 
+        <Button
+          color="default"
+          shape="circle"
+          variant="filled"
+          className="playbar-author-btn"
+          title={`查看 @${author?.nickname || "未知作者"} 的作品`}
+          onClick={(event) => {
+            stopCardClick(event);
+            suppressPlaybackBriefly();
+            onAuthorClick?.(author, aweme);
+          }}
+        >
+          <Avatar src={author?.avatar_thumb?.url_list?.[0]} />
+        </Button>
+
         <span className={isLive ? "live-playing-badge" : "time-summary"}>
           {isLive ? "LIVE" : `${formatTime(currentTime)} / ${formatTime(duration)}`}
         </span>
 
         <div className="playbar-action-btns">
+          {!isLive && (
+            <Button
+              color={isLiked ? "primary" : "default"}
+              shape="circle"
+              variant="filled"
+              icon={isLiked ? <HeartFilled /> : <HeartOutlined />}
+              title={`${formatCount(likeCount)} 赞`}
+              onClick={(event) => {
+                stopCardClick(event);
+                messageApi.info("暂不支持");
+              }}
+            />
+          )}
+          {!isLive && (
+            <Button
+              color={isCommentsOpen ? "primary" : "default"}
+              shape="circle"
+              variant="filled"
+              icon={<MessageOutlined />}
+              title={`${formatCount(statistics?.comment_count)} 条评论`}
+              onClick={handleOpenComments}
+            />
+          )}
           <Button
             color="default"
             shape="circle"
@@ -647,7 +689,7 @@ export default function VideoCard({
             icon={isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
             title={isPlaying ? "暂停" : "播放"}
             onClick={(event) => {
-              event.stopPropagation();
+              stopCardClick(event);
               handlePlayToggle();
             }}
           />
@@ -659,7 +701,7 @@ export default function VideoCard({
               icon={<CommentOutlined />}
               title={danmakuEnabled ? "关闭弹幕" : "开启弹幕"}
               onClick={(event) => {
-                event.stopPropagation();
+                stopCardClick(event);
                 setDanmakuEnabled((enabled) => {
                   localStorage.setItem("douyin.danmaku.enabled", String(!enabled));
                   return !enabled;
@@ -684,7 +726,7 @@ export default function VideoCard({
             aria-label={isMuted ? "解除静音" : "静音"}
             title={isMuted ? "解除静音" : "静音"}
             onClick={(event) => {
-              event.stopPropagation();
+              stopCardClick(event);
               onToggleMute();
             }}
           />
@@ -742,68 +784,6 @@ export default function VideoCard({
       <div className="bottom-info">
         <div className="author-name">@{author?.nickname || "未知作者"}</div>
         <div className="video-desc">{desc || "无描述"}</div>
-      </div>
-
-      {/* 右侧浮动控制条 */}
-      <div
-        className="side-actions"
-        onClick={stopCardClick}
-        onPointerDown={stopCardPointer}
-      >
-        {/* 作者头像 */}
-        <div
-          className="action-item"
-          style={{ marginBottom: "10px" }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <FloatButton
-            className="avatar-float-btn"
-            style={{ position: "static", overflow: "hidden" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              suppressPlaybackBriefly();
-              onAuthorClick?.(author, aweme);
-            }}
-            icon={
-              <Avatar
-                src={author?.avatar_thumb?.url_list?.[0]}
-                style={{ border: "2px solid #fff" }}
-              />
-            }
-          />
-        </div>
-
-        {/* 红心点赞 */}
-        {!isLive && <div className="action-item">
-          <FloatButton
-            style={{ position: "static" }}
-            icon={
-              isLiked ? (
-                <HeartFilled style={{ color: "#fe2c55" }} />
-              ) : (
-                <HeartOutlined />
-              )
-            }
-            onClick={(e) => {
-              e.stopPropagation();
-              messageApi.info("暂不支持");
-            }}
-          />
-          <span className="action-count">{formatCount(likeCount)}</span>
-        </div>}
-
-        {/* 评论数 */}
-        {!isLive && <div className="action-item">
-          <FloatButton
-            style={{ position: "static" }}
-            icon={<MessageOutlined />}
-            onClick={handleOpenComments}
-          />
-          <span className="action-count">
-            {formatCount(statistics?.comment_count)}
-          </span>
-        </div>}
-
       </div>
 
       {/* 底部向上弹出的评论抽屉 */}
