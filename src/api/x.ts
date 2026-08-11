@@ -6,25 +6,25 @@ const X_BASE_URL = "https://x.com";
 
 // 默认 Query ID，会被 X 定期轮换。如果 404，需要从浏览器 DevTools 抓取最新值。
 // @operation: HomeTimeline
-export let X_HOME_TIMELINE_QUERY_ID = "psvmu2kIj08INJBBiZVgMw";
+export let X_HOME_TIMELINE_QUERY_ID = "wp06oo3fRGU4P1sK8rECqQ";
 // @operation: TweetDetail
-export let X_TWEET_DETAIL_QUERY_ID = "VmqMAqtSRNBt_8fGV3n5Cg";
+export let X_TWEET_DETAIL_QUERY_ID = "XMOz5h24KAZ86qKffKTLdQ";
 // @operation: SearchTimeline
-export let X_SEARCH_TIMELINE_QUERY_ID = "PusO6nN_nUSAsfJktZJd9w";
+export let X_SEARCH_TIMELINE_QUERY_ID = "hyPfJYJ_XAtDYoslQc-Rgg";
 // @operation: UserByScreenName
 export let X_USER_BY_SCREEN_NAME_QUERY_ID = "Gb-d6r0vxPOADdG62OEBpQ";
 // @operation: UserTweets
-export let X_USER_TWEETS_QUERY_ID = "T1x2zehUOKCWNpKwZCpnbg";
+export let X_USER_TWEETS_QUERY_ID = "SXVCYB8XHSS25nzIljNtZA";
 // @operation: CreateTweet
-export let X_CREATE_TWEET_QUERY_ID = "lYrkzD_-rtW5H3wDiwlcWA";
+export let X_CREATE_TWEET_QUERY_ID = "WXTdKnLddrQOunD6MhWi3g";
 // @operation: HomeLatestTimeline
-export const X_HOME_LATEST_TIMELINE_QUERY_ID = "CN1ceqddxq3bz_YPM3olEQ";
+export const X_HOME_LATEST_TIMELINE_QUERY_ID = "BLQWpfVqtgBqAqwRRJcJjA";
 // @operation: FavoriteTweet
 export const X_FAVORITE_TWEET_QUERY_ID = "lI07N6Otwv1PhnEgXILM7A";
 // @operation: UnfavoriteTweet
 export const X_UNFAVORITE_TWEET_QUERY_ID = "ZYKSe-w7KEslx3JhSIk5LA";
 // @operation: Following
-export let X_FOLLOWING_QUERY_ID = "6IJiAg6zPdS6WBldTIwdrQ";
+export let X_FOLLOWING_QUERY_ID = "qGZZDF3mp91q7X22s3HxpA";
 
 /**
  * 从 VS Code 配置中读取自定义 Query ID 以覆盖默认值。
@@ -294,7 +294,10 @@ class XClientTransaction {
   static async getTransactionId(path: string, method: string): Promise<string> {
     if (!this.instance) {
       try {
-        if (ClientTransaction.prototype && typeof (ClientTransaction.prototype as any).getIndices === "function") {
+        if (
+          ClientTransaction.prototype &&
+          typeof (ClientTransaction.prototype as any).getIndices === "function"
+        ) {
           (ClientTransaction.prototype as any).getIndices = async function () {
             return [5, [1, 2, 3, 4]];
           };
@@ -304,14 +307,20 @@ class XClientTransaction {
         try {
           document = await handleXMigration();
         } catch (migrationErr) {
-          console.warn("handleXMigration 失败，将使用 Mock DOM 进行降级初始化: ", migrationErr);
+          console.warn(
+            "handleXMigration 失败，将使用 Mock DOM 进行降级初始化: ",
+            migrationErr,
+          );
         }
 
         if (document) {
           try {
             this.instance = await ClientTransaction.create(document as any);
           } catch (createErr) {
-            console.warn("ClientTransaction.create 失败，将使用 Mock DOM 进行降级初始化: ", createErr);
+            console.warn(
+              "ClientTransaction.create 失败，将使用 Mock DOM 进行降级初始化: ",
+              createErr,
+            );
             document = null;
           }
         }
@@ -326,7 +335,7 @@ class XClientTransaction {
                       return "zc3AxXUu/gXGmzuiDSX4sWJrsCWDtsBi99lDeOwRkQ/XwzvE9zlRiIzLOd6Bgn9z";
                     }
                     return null;
-                  }
+                  },
                 };
               }
               return null;
@@ -341,18 +350,21 @@ class XClientTransaction {
                         {
                           getAttribute(name: string) {
                             if (name === "d") {
-                              return "M0,0" + " C1,2,3,4,5,6,7,8,9,10,11,12".repeat(20);
+                              return (
+                                "M0,0" +
+                                " C1,2,3,4,5,6,7,8,9,10,11,12".repeat(20)
+                              );
                             }
                             return null;
-                          }
-                        }
-                      ]
-                    }
-                  ]
+                          },
+                        },
+                      ],
+                    },
+                  ],
                 }));
               }
               return [];
-            }
+            },
           };
           this.instance = new ClientTransaction(mockDocument as any);
           (this.instance as any).getIndices = async () => [5, [1, 2, 3, 4]];
@@ -373,7 +385,8 @@ export function setXTransactionIdProviderForTest(
   provider?: (path: string, method: string) => Promise<string>,
 ) {
   xTransactionIdProvider =
-    provider ?? ((path, method) => XClientTransaction.getTransactionId(path, method));
+    provider ??
+    ((path, method) => XClientTransaction.getTransactionId(path, method));
 }
 
 export function buildXHeaders(
@@ -395,7 +408,8 @@ export function buildXHeaders(
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-origin",
-    "sec-ch-ua": '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+    "sec-ch-ua":
+      '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": '"Windows"',
     "User-Agent":
@@ -628,7 +642,10 @@ export async function getOrSetXCredential(): Promise<XCredential | null> {
   const csrfToken = extractCt0FromCookie(cookie);
   if (!csrfToken) return null;
 
-  const authorization = await askForCredentialField("xAuthorization", "请输入 X 的 Authorization");
+  const authorization = await askForCredentialField(
+    "xAuthorization",
+    "请输入 X 的 Authorization",
+  );
   if (!authorization) return null;
 
   return { cookie, authorization, csrfToken };
@@ -716,23 +733,20 @@ export async function getTweetDetail(
     const auth = ensureCredential(credential);
     const path = `/i/api/graphql/${X_TWEET_DETAIL_QUERY_ID}/TweetDetail`;
     const transactionId = await xTransactionIdProvider(path, "GET");
-    const response = await xHttp.get(
-      `${X_BASE_URL}${path}`,
-      {
-        headers: buildXHeaders(auth, {
-          Referer: `https://x.com/i/status/${focalTweetId}`,
-          "x-client-transaction-id": transactionId,
+    const response = await xHttp.get(`${X_BASE_URL}${path}`, {
+      headers: buildXHeaders(auth, {
+        Referer: `https://x.com/i/status/${focalTweetId}`,
+        "x-client-transaction-id": transactionId,
+      }),
+      params: {
+        variables: buildTweetDetailVariables({
+          focalTweetId,
+          ...params,
         }),
-        params: {
-          variables: buildTweetDetailVariables({
-            focalTweetId,
-            ...params,
-          }),
-          features: HOME_TIMELINE_FEATURES,
-          fieldToggles: TWEET_DETAIL_FIELD_TOGGLES,
-        },
+        features: HOME_TIMELINE_FEATURES,
+        fieldToggles: TWEET_DETAIL_FIELD_TOGGLES,
       },
-    );
+    });
 
     return {
       code: 0,
@@ -830,19 +844,16 @@ export async function getXUserTweets(
     const auth = ensureCredential(credential);
     const path = `/i/api/graphql/${X_USER_TWEETS_QUERY_ID}/UserTweets`;
     const transactionId = await xTransactionIdProvider(path, "GET");
-    const response = await xHttp.get(
-      `${X_BASE_URL}${path}`,
-      {
-        headers: buildXHeaders(auth, {
-          "x-client-transaction-id": transactionId,
-        }),
-        params: {
-          variables: buildUserTweetsVariables(params),
-          features: USER_TWEETS_FEATURES,
-          fieldToggles: USER_TWEETS_FIELD_TOGGLES,
-        },
+    const response = await xHttp.get(`${X_BASE_URL}${path}`, {
+      headers: buildXHeaders(auth, {
+        "x-client-transaction-id": transactionId,
+      }),
+      params: {
+        variables: buildUserTweetsVariables(params),
+        features: USER_TWEETS_FEATURES,
+        fieldToggles: USER_TWEETS_FIELD_TOGGLES,
       },
-    );
+    });
 
     return {
       code: 0,
@@ -1038,9 +1049,9 @@ export async function createXTweet(
         tweet_text: text,
         reply: options.replyToId
           ? {
-            in_reply_to_tweet_id: options.replyToId,
-            exclude_reply_user_ids: [],
-          }
+              in_reply_to_tweet_id: options.replyToId,
+              exclude_reply_user_ids: [],
+            }
           : undefined,
         attachment_url: options.attachmentUrl,
         media: {
@@ -1395,7 +1406,8 @@ function parseXUserResult(obj: any): any {
 
   // 关键：根据示例数据，关注列表接口中 name 和 screen_name 位于 core 对象下
   const name = legacy.name || core.name || result.name || "";
-  const screenName = legacy.screen_name || core.screen_name || result.screen_name || "";
+  const screenName =
+    legacy.screen_name || core.screen_name || result.screen_name || "";
 
   // 简介抓取
   const description = legacy.description || result.description || "";
