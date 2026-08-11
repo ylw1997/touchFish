@@ -1,14 +1,12 @@
 import { Avatar, Button, Spin, Drawer, List, message } from "antd";
 import {
-  HeartFilled,
-  HeartOutlined,
   MessageOutlined,
   SoundOutlined,
   PlayCircleFilled,
   MutedOutlined,
   LoadingOutlined,
   CloseOutlined,
-  PictureOutlined,
+  ImportOutlined,
   CommentOutlined,
   PauseOutlined,
   CaretRightOutlined,
@@ -66,8 +64,6 @@ export default function VideoCard({
   const video = aweme?.video;
   const statistics = aweme?.statistics;
   const [isPlaying, setIsPlaying] = useState(false);
-  const isLiked = aweme?.user_digg === 1 || aweme?.user_digg === true;
-  const likeCount = statistics?.digg_count || 0;
   const [messageApi, contextHolder] = message.useMessage();
   const [showPlayOverlay, setShowPlayOverlay] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -659,29 +655,6 @@ export default function VideoCard({
         </span>
 
         <div className="playbar-action-btns">
-          {!isLive && (
-            <Button
-              color={isLiked ? "primary" : "default"}
-              shape="circle"
-              variant="filled"
-              icon={isLiked ? <HeartFilled /> : <HeartOutlined />}
-              title={`${formatCount(likeCount)} 赞`}
-              onClick={(event) => {
-                stopCardClick(event);
-                messageApi.info("暂不支持");
-              }}
-            />
-          )}
-          {!isLive && (
-            <Button
-              color={isCommentsOpen ? "primary" : "default"}
-              shape="circle"
-              variant="filled"
-              icon={<MessageOutlined />}
-              title={`${formatCount(statistics?.comment_count)} 条评论`}
-              onClick={handleOpenComments}
-            />
-          )}
           <Button
             color="default"
             shape="circle"
@@ -693,6 +666,16 @@ export default function VideoCard({
               handlePlayToggle();
             }}
           />
+          {!isLive && (
+            <Button
+              color={isCommentsOpen ? "primary" : "default"}
+              shape="circle"
+              variant="filled"
+              icon={<MessageOutlined />}
+              title={`${formatCount(statistics?.comment_count)} 条评论`}
+              onClick={handleOpenComments}
+            />
+          )}
           {!isLive && (
             <Button
               color={danmakuEnabled ? "primary" : "default"}
@@ -713,13 +696,13 @@ export default function VideoCard({
             color={isPictureInPicture ? "primary" : "default"}
             shape="circle"
             variant="filled"
-            icon={<PictureOutlined />}
+            icon={<ImportOutlined />}
             aria-label={isPictureInPicture ? "退出画中画" : "进入画中画"}
             title={isPictureInPicture ? "退出画中画" : "画中画"}
             onClick={togglePictureInPicture}
           />
           <Button
-            color={isMuted ? "default" : "primary"}
+            color={isMuted ? "danger" : "default"}
             shape="circle"
             variant="filled"
             icon={isMuted ? <MutedOutlined /> : <SoundOutlined />}
