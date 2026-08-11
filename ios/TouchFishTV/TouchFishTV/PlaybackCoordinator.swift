@@ -114,6 +114,11 @@ final class PlaybackCoordinator: ObservableObject {
         var isReady: Bool
     }
 
+    private struct PlaybackEndpointProbe {
+        let url: URL
+        let elapsed: TimeInterval
+    }
+
     private static let playbackUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
 
     let player = AVQueuePlayer()
@@ -135,12 +140,21 @@ final class PlaybackCoordinator: ObservableObject {
     private var prewarmGeneration: UInt = 0
     private var currentPlaybackToken: UInt64?
     private var currentAwemeID: String?
+    private let prewarmProbeSession: URLSession
 #if DEBUG
     private var diagnosticsTask: Task<Void, Never>?
 #endif
 
     init(source: PlaybackSource) {
         self.source = source
+        let probeConfiguration = URLSessionConfiguration.ephemeral
+        probeConfiguration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        probeConfiguration.timeoutIntervalForRequest = 4
+        probeConfiguration.timeoutIntervalForResource = 4
+        probeConfiguration.urlCache = nil
+        probeConfiguration.httpCookieStorage = nil
+        probeConfiguration.httpShouldSetCookies = false
+        prewarmProbeSession = URLSession(configuration: probeConfiguration)
         let playerViewController = DouyinPlayerContainerViewController()
         self.playerViewController = playerViewController
         player.automaticallyWaitsToMinimizeStalling = false
@@ -187,29 +201,53 @@ final class PlaybackCoordinator: ObservableObject {
             cancelPrewarm()
             return
         }
-        let urls = preferredURLs(for: aweme)
-        guard !urls.isEmpty else {
+        let originalURLs = preferredURLs(for: aweme)
+        guard !originalURLs.isEmpty else {
             cancelPrewarm()
             return
         }
         if let prepared = prewarmedAsset,
-           prepared.awemeID == aweme.aweme_id,
-           urls.contains(prepared.url) {
+           prepared.awemeID == aweme.aweme_id {
             return
         }
 
         cancelPrewarm()
         prewarmGeneration &+= 1
         let requestedPrewarmGeneration = prewarmGeneration
-        let headers = playbackHeaders(for: aweme, cookie: cookie)
+        let endpointHeaders = playbackHeaders(for: aweme, cookie: cookie, url: nil)
         prewarmTask = Task { [weak self] in
             guard let self else { return }
+            var urls = originalURLs
+            if let resolved = await self.fastestResolvedPlaybackURL(
+                in: originalURLs,
+                headers: endpointHeaders
+            ) {
+                urls.removeAll { $0 == resolved.url }
+                urls.insert(resolved.url, at: 0)
+#if DEBUG
+                self.diagnosticsEvent(
+                    "prewarm-cdn-selected",
+                    category: "asset",
+                    fields: [
+                        "targetAweme": aweme.aweme_id,
+                        "host": resolved.url.host ?? "unknown",
+                        "probeMs": Int(resolved.elapsed * 1_000)
+                    ]
+                )
+#endif
+            }
             for (candidateIndex, url) in urls.enumerated() {
                 guard !Task.isCancelled,
                       requestedPrewarmGeneration == self.prewarmGeneration else { return }
                 let asset = AVURLAsset(
                     url: url,
-                    options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
+                    options: [
+                        "AVURLAssetHTTPHeaderFieldsKey": self.playbackHeaders(
+                            for: aweme,
+                            cookie: cookie,
+                            url: url
+                        )
+                    ]
                 )
                 let item = AVPlayerItem(asset: asset)
                 item.preferredForwardBufferDuration = 2
@@ -368,10 +406,8 @@ final class PlaybackCoordinator: ObservableObject {
 
         var urls = preferredURLs(for: aweme)
         if let prepared = prewarmedAsset,
-           prepared.awemeID == aweme.aweme_id,
-           let preparedIndex = urls.firstIndex(of: prepared.url),
-           preparedIndex > 0 {
-            urls.remove(at: preparedIndex)
+           prepared.awemeID == aweme.aweme_id {
+            urls.removeAll { $0 == prepared.url }
             urls.insert(prepared.url, at: 0)
         }
 #if DEBUG
@@ -396,17 +432,13 @@ final class PlaybackCoordinator: ObservableObject {
             return
         }
 
-        let headers = playbackHeaders(for: aweme, cookie: cookie)
-
-        // 关注流优先使用接口给出的真实 CDN；推荐流过滤掉稳定返回 403 的
-        // prime 地址后，把 www 播放入口直接交给 AVPlayer。AVFoundation 会在
-        // 同一条资源加载链路中处理 302 并开始缓冲，避免先用 URLSession
-        // 解析一次、再由 AVPlayer 重新连接最终 CDN 的串行等待。
+        // 推荐流预热命中时，首个候选是小流量探测选出的最终 CDN；未命中、
+        // 上一条或探测失败时仍从接口原地址开始并保留完整回退链。
         loadCandidates(
             urls,
             startingAt: 0,
             aweme: aweme,
-            headers: headers,
+            cookie: cookie,
             requestedGeneration: requestedGeneration
         )
     }
@@ -430,7 +462,7 @@ final class PlaybackCoordinator: ObservableObject {
         _ urls: [URL],
         startingAt startIndex: Int,
         aweme: Aweme,
-        headers: [String: String],
+        cookie: String,
         requestedGeneration: UInt
     ) {
         guard requestedGeneration == generation,
@@ -447,6 +479,7 @@ final class PlaybackCoordinator: ObservableObject {
 
         let candidateIndex = startIndex
         let url = urls[candidateIndex]
+        let headers = playbackHeaders(for: aweme, cookie: cookie, url: url)
 #if DEBUG
         diagnosticsEvent(
             "load-candidate",
@@ -523,7 +556,7 @@ final class PlaybackCoordinator: ObservableObject {
             candidateIndex: candidateIndex,
             urls: urls,
             aweme: aweme,
-            headers: headers,
+            cookie: cookie,
             requestedGeneration: requestedGeneration
         )
         if aweme.isLive {
@@ -537,7 +570,7 @@ final class PlaybackCoordinator: ObservableObject {
                 candidateIndex: candidateIndex,
                 urls: urls,
                 aweme: aweme,
-                headers: headers,
+                cookie: cookie,
                 requestedGeneration: requestedGeneration
             )
         }
@@ -555,7 +588,7 @@ final class PlaybackCoordinator: ObservableObject {
         candidateIndex: Int,
         urls: [URL],
         aweme: Aweme,
-        headers: [String: String],
+        cookie: String,
         requestedGeneration: UInt
     ) {
         itemStatusObservation?.invalidate()
@@ -644,7 +677,7 @@ final class PlaybackCoordinator: ObservableObject {
                         urls,
                         startingAt: candidateIndex + 1,
                         aweme: aweme,
-                        headers: headers,
+                        cookie: cookie,
                         requestedGeneration: requestedGeneration
                     )
                 @unknown default:
@@ -692,7 +725,7 @@ final class PlaybackCoordinator: ObservableObject {
         candidateIndex: Int,
         urls: [URL],
         aweme: Aweme,
-        headers: [String: String],
+        cookie: String,
         requestedGeneration: UInt
     ) {
         liveStartupValidationTask?.cancel()
@@ -750,7 +783,7 @@ final class PlaybackCoordinator: ObservableObject {
                 urls,
                 startingAt: candidateIndex + 1,
                 aweme: aweme,
-                headers: headers,
+                cookie: cookie,
                 requestedGeneration: requestedGeneration
             )
         }
@@ -924,6 +957,17 @@ final class PlaybackCoordinator: ObservableObject {
 
     private func preferredURLs(for aweme: Aweme) -> [URL] {
         if let liveRoom = aweme.liveRoom, liveRoom.isOnline {
+            if source == .recommend {
+                let map = liveRoom.stream_url?.hls_pull_url_map ?? [:]
+                // 网页推荐直播会优先使用 ld 自适应流。tvOS 不支持网页的 FLV/MSE，
+                // 因此以同档 SD1 HLS 尽快出首帧，再逐级回退到高清和默认原画。
+                let values = ["SD1", "HD1", "SD2", "FULL_HD1"].compactMap { map[$0] }
+                    + [liveRoom.stream_url?.hls_pull_url].compactMap { $0 }
+                var seen = Set<String>()
+                return values.compactMap(URL.init(string:)).filter {
+                    seen.insert($0.absoluteString).inserted
+                }
+            }
             return liveRoom.preferredHLSURLs
         }
         guard let video = aweme.video else { return [] }
@@ -960,14 +1004,80 @@ final class PlaybackCoordinator: ObservableObject {
             + Array(playbackEndpoints.prefix(2))
     }
 
-    private func playbackHeaders(for aweme: Aweme, cookie: String) -> [String: String] {
+    private func playbackHeaders(for aweme: Aweme, cookie: String, url: URL?) -> [String: String] {
         var headers = [
             "User-Agent": Self.playbackUserAgent,
             "Referer": aweme.isLive ? "https://live.douyin.com/" : "https://www.douyin.com/"
         ]
         if aweme.isLive { headers["Origin"] = "https://live.douyin.com" }
-        if !cookie.isEmpty { headers["Cookie"] = cookie }
+        // 网页只在同源播放入口携带登录态，重定向后的 VOD CDN 和直播 CDN
+        // 都使用 credentials=omit。直连仍附带 Cookie 会影响部分 CDN 调度。
+        let needsCookie = url.map(isDouyinPlaybackEndpoint) ?? true
+        if needsCookie, !cookie.isEmpty { headers["Cookie"] = cookie }
         return headers
+    }
+
+    private func fastestResolvedPlaybackURL(
+        in urls: [URL],
+        headers: [String: String]
+    ) async -> PlaybackEndpointProbe? {
+        guard source == .recommend,
+              let endpoint = urls.first(where: isDouyinPlaybackEndpoint) else { return nil }
+
+        let session = prewarmProbeSession
+        return await withTaskGroup(of: PlaybackEndpointProbe?.self) { group in
+            for _ in 0..<2 {
+                group.addTask {
+                    await Self.probePlaybackEndpoint(
+                        endpoint,
+                        headers: headers,
+                        session: session
+                    )
+                }
+            }
+
+            for await result in group {
+                if let result {
+                    group.cancelAll()
+                    return result
+                }
+            }
+            return nil
+        }
+    }
+
+    private nonisolated static func probePlaybackEndpoint(
+        _ endpoint: URL,
+        headers: [String: String],
+        session: URLSession
+    ) async -> PlaybackEndpointProbe? {
+        var request = URLRequest(url: endpoint)
+        request.timeoutInterval = 4
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue("bytes=0-65535", forHTTPHeaderField: "Range")
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        let startedAt = Date()
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard !Task.isCancelled,
+                  let httpResponse = response as? HTTPURLResponse,
+                  (httpResponse.statusCode == 200 || httpResponse.statusCode == 206),
+                  !data.isEmpty,
+                  let finalURL = httpResponse.url else { return nil }
+            let host = finalURL.host?.lowercased() ?? ""
+            guard host != "www.douyin.com",
+                  !finalURL.path.contains("/aweme/v1/play/"),
+                  !host.contains("-prime.") else { return nil }
+            return PlaybackEndpointProbe(
+                url: finalURL,
+                elapsed: Date().timeIntervalSince(startedAt)
+            )
+        } catch {
+            return nil
+        }
     }
 
     private func isClearlyAudioOnlyURL(_ url: URL) -> Bool {
