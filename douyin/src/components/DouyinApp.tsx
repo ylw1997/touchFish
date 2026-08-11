@@ -4,6 +4,7 @@ import { SyncOutlined, CloseOutlined } from "@ant-design/icons";
 import { useRequest } from "../hooks/useRequest";
 import VideoCard from "./VideoCard";
 import FavoriteGridCard from "./FavoriteGridCard";
+import LiveGridCard from "./LiveGridCard";
 import { vscode } from "../utils/vscode";
 
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -30,6 +31,27 @@ type PlaybackResumeReason =
   | "restore"
   | "user"
   | "tab";
+
+const mergeUniqueAwemes = (current: any[], incoming: any[]) => {
+  const seen = new Set(current.map((item) => String(item?.aweme_id || item?.id)));
+  return [
+    ...current,
+    ...incoming.filter((item) => {
+      const id = String(item?.aweme_id || item?.id || "");
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    }),
+  ];
+};
+
+const getPreloadUrl = (aweme: any) => {
+  const urls = [
+    ...(aweme?.video?.play_addr_h264?.url_list || []),
+    ...(aweme?.video?.play_addr?.url_list || []),
+  ];
+  return urls.find((url) => url.includes("/aweme/v1/play/")) || urls[0] || "";
+};
 
 export default function DouyinApp() {
   const { request, messageApi } = useRequest();
@@ -63,11 +85,17 @@ export default function DouyinApp() {
   // 喜欢列表分页
   const [hasMore, setHasMore] = useState(true);
   const [maxCursor, setMaxCursor] = useState(savedStateRef.current.maxCursor || 0);
+  const recommendRefreshIndexRef = useRef(1);
+  const recommendViewCountRef = useRef(0);
+  const liveMaxTimeRef = useRef(0);
+  const lastAutoPrefetchRef = useRef("");
+  const [liveHasMore, setLiveHasMore] = useState(true);
 
   // 全屏 Overlay 播放状态
   const [overlayVideo, setOverlayVideo] = useState<any>(null);
   const [authorWorks, setAuthorWorks] = useState<AuthorWorksState | null>(null);
   const authorPlayerScrollRef = useRef<HTMLDivElement>(null);
+
 
   // ===== 状态持久化 =====
   useEffect(() => {
@@ -188,18 +216,25 @@ export default function DouyinApp() {
     if (loading) return;
     setLoading(true);
     try {
-      const res = await request("DY_GET_HOME_FEED");
+      const refreshIndex = isRefresh ? 1 : recommendRefreshIndexRef.current;
+      const viewCount = isRefresh ? 0 : recommendViewCountRef.current;
+      const res = await request("DY_GET_HOME_FEED", {
+        refresh_index: refreshIndex,
+        view_count: viewCount,
+      });
       if (res && res.status_code === 0 && Array.isArray(res.aweme_list)) {
         if (isRefresh) {
-          setList(res.aweme_list);
+          setList(mergeUniqueAwemes([], res.aweme_list));
           setActiveIndex(0);
           activeIndexRef.current = 0;
           if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = 0;
           }
         } else {
-          setList((prev) => [...prev, ...res.aweme_list]);
+          setList((prev) => mergeUniqueAwemes(prev, res.aweme_list));
         }
+        recommendRefreshIndexRef.current = refreshIndex + 1;
+        recommendViewCountRef.current = viewCount + res.aweme_list.length;
         setHasMore(true);
       } else {
         messageApi.error(res?.msg || "获取推荐流失败，请检查 Cookie 是否有效");
@@ -212,6 +247,29 @@ export default function DouyinApp() {
       setLoading(false);
     }
   }, [request, loading, messageApi]);
+
+  const fetchLiveFeed = useCallback(async (isRefresh = false) => {
+    if (loading || (!isRefresh && !liveHasMore)) return;
+    setLoading(true);
+    try {
+      const maxTime = isRefresh ? 0 : liveMaxTimeRef.current;
+      const [followedRes, feedRes] = await Promise.all([
+        isRefresh ? request("DY_GET_FOLLOWED_LIVE") : Promise.resolve(null),
+        request("DY_GET_LIVE_FEED", { max_time: maxTime }),
+      ]);
+      const followed = followedRes?.aweme_list || [];
+      const recommended = feedRes?.aweme_list || [];
+      setList((prev) => mergeUniqueAwemes(isRefresh ? [] : prev, [...followed, ...recommended]));
+      liveMaxTimeRef.current = feedRes?.max_time || maxTime;
+      setLiveHasMore(feedRes?.has_more === 1 || feedRes?.has_more === true);
+    } catch (e: any) {
+      console.error(e);
+      messageApi.error(e.message || "获取直播列表失败");
+      if (isRefresh) setList([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [liveHasMore, loading, messageApi, request]);
 
   const fetchFavorites = useCallback(async (isRefresh = false) => {
     if (loading) return;
@@ -279,17 +337,23 @@ export default function DouyinApp() {
         fetchRecommendFeed(true);
       } else if (activeTab === "following") {
         fetchFollowingFeed(true);
+      } else if (activeTab === "live") {
+        fetchLiveFeed(true);
       } else {
         fetchFavorites(true);
       }
     }
   }, [activeTab, list.length]);
 
-  // 推荐流/关注流中：划到倒数第2个视频时，预加载下一批
+  // 提前一屏以上拉取下一页，避免滚到末尾才开始等待网络。
   useEffect(() => {
-    if (activeTab === "recommend" && list.length > 0 && activeIndex >= list.length - 2) {
+    const key = `${activeTab}:${list.length}:${activeIndex}`;
+    if (lastAutoPrefetchRef.current === key) return;
+    if (activeTab === "recommend" && list.length > 0 && activeIndex >= list.length - 6) {
+      lastAutoPrefetchRef.current = key;
       fetchRecommendFeed();
-    } else if (activeTab === "following" && list.length > 0 && activeIndex >= list.length - 2) {
+    } else if (activeTab === "following" && list.length > 0 && activeIndex >= list.length - 4) {
+      lastAutoPrefetchRef.current = key;
       fetchFollowingFeed();
     }
   }, [activeIndex, list.length, activeTab, fetchRecommendFeed, fetchFollowingFeed]);
@@ -300,12 +364,13 @@ export default function DouyinApp() {
       if (event.data?.command === "DY_FORCE_REFRESH") {
         if (activeTab === "recommend") fetchRecommendFeed(true);
         else if (activeTab === "following") fetchFollowingFeed(true);
+        else if (activeTab === "live") fetchLiveFeed(true);
         else fetchFavorites(true);
       }
     };
     window.addEventListener("message", handleEvent);
     return () => window.removeEventListener("message", handleEvent);
-  }, [activeTab, fetchRecommendFeed, fetchFollowingFeed, fetchFavorites]);
+  }, [activeTab, fetchRecommendFeed, fetchFollowingFeed, fetchFavorites, fetchLiveFeed]);
 
   // ===== 滚动处理 =====
   const handleRecommendScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -345,6 +410,24 @@ export default function DouyinApp() {
   const getAuthorSecUid = (author: any) =>
     author?.sec_uid || author?.sec_user_id || author?.secUid || "";
 
+  const openLiveRoom = async (aweme: any) => {
+    let playable = aweme;
+    try {
+      const rawdata = aweme?.cell_room?.rawdata;
+      const room = typeof rawdata === "string" ? JSON.parse(rawdata) : rawdata;
+      const webRid = room?.owner?.web_rid || room?.web_rid;
+      if (webRid) {
+        const response = await request("DY_GET_PLAYABLE_LIVE", { web_rid: webRid });
+        playable = response?.aweme || aweme;
+      }
+      pausePlayback(false);
+      setOverlayVideo(playable);
+      resumeFromUserGesture();
+    } catch (e: any) {
+      messageApi.error(e.message || "直播间暂时无法播放");
+    }
+  };
+
   const fetchAuthorWorks = useCallback(async (
     author: any,
     isRefresh = false,
@@ -369,6 +452,15 @@ export default function DouyinApp() {
     });
 
     try {
+      if (isRefresh) {
+        void request("DY_GET_USER_PROFILE", { sec_user_id: secUserId }).then((profile) => {
+          const user = profile?.user;
+          if (!user) return;
+          setAuthorWorks((prev) => prev && getAuthorSecUid(prev.author) === secUserId
+            ? { ...prev, author: { ...prev.author, ...user } }
+            : prev);
+        });
+      }
       const res = await request("DY_GET_USER_POSTS", {
         sec_user_id: secUserId,
         max_cursor: cursor,
@@ -463,6 +555,29 @@ export default function DouyinApp() {
     if (activeTab !== "recommend" && activeTab !== "following") return null;
     return list[activeIndex] || null;
   }, [activeIndex, activeTab, list]);
+  const preloadUrl = useMemo(
+    () => getPreloadUrl(list[activeIndex + 1]),
+    [activeIndex, list],
+  );
+  const [preloadedSource, setPreloadedSource] = useState({ source: "", url: "" });
+  useEffect(() => {
+    if (!preloadUrl) return;
+    if (!preloadUrl.includes("/aweme/v1/play/")) {
+      setPreloadedSource({ source: preloadUrl, url: preloadUrl });
+      return;
+    }
+    if (preloadedSource.source === preloadUrl) return;
+    let cancelled = false;
+    void request("DY_RESOLVE_PLAY_URL", { url: preloadUrl })
+      .then((response) => {
+        if (!cancelled) setPreloadedSource({ source: preloadUrl, url: response?.url || preloadUrl });
+      })
+      .catch(() => {
+        if (!cancelled) setPreloadedSource({ source: preloadUrl, url: preloadUrl });
+      });
+    return () => { cancelled = true; };
+  }, [preloadUrl, preloadedSource.source, request]);
+  const preloadedMediaUrl = preloadedSource.source === preloadUrl ? preloadedSource.url : "";
   const activeAuthorPlayIndex = authorWorks?.playIndex ?? null;
 
   return (
@@ -476,11 +591,15 @@ export default function DouyinApp() {
             setActiveIndex(0);
             activeIndexRef.current = 0;
             setMaxCursor(0);
+            lastAutoPrefetchRef.current = "";
+            liveMaxTimeRef.current = 0;
+            setLiveHasMore(true);
             setActiveTab(key);
           }}
           items={[
             { key: "recommend", label: "推荐" },
             { key: "following", label: "关注" },
+            { key: "live", label: "直播" },
             { key: "favorites", label: "我的" },
           ]}
           tabBarExtraContent={
@@ -492,6 +611,7 @@ export default function DouyinApp() {
                 onClick={() => {
                   if (activeTab === "recommend") fetchRecommendFeed(true);
                   else if (activeTab === "following") fetchFollowingFeed(true);
+                  else if (activeTab === "live") fetchLiveFeed(true);
                   else fetchFavorites(true);
                 }}
                 loading={loading}
@@ -523,15 +643,17 @@ export default function DouyinApp() {
             <>
               {list.map((item, index) => {
                 const coverUrl = item.video?.cover?.url_list?.[0] || "";
+                const shouldRenderCover = Math.abs(index - activeIndex) <= 1;
                 return (
                   <div
                     key={`${item.aweme_id || item.id}-${index}`}
-                    className="dy-video-item placeholder"
+                    className="dy-snap-page"
                   >
-                    {coverUrl && (
+                    {shouldRenderCover && coverUrl && (
                       <img
                         src={coverUrl}
                         alt="cover"
+                        className="dy-snap-cover"
                         style={{
                           width: "100%",
                           height: "100%",
@@ -565,7 +687,48 @@ export default function DouyinApp() {
                   />
                 </div>
               )}
+              {preloadedMediaUrl && (
+                <video
+                  key={preloadedMediaUrl}
+                  className="dy-media-preloader"
+                  src={preloadedMediaUrl}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  aria-hidden="true"
+                  {...({ referrerPolicy: "no-referrer" } as any)}
+                />
+              )}
             </>
+          )}
+        </div>
+      )}
+
+      {activeTab === "live" && (
+        <div id="liveScrollableDiv" className="dy-scroll-container grid-mode live-mode">
+          {list.length === 0 && !loading ? (
+            <div className="empty-wrapper">
+              <Empty description="暂无可播放直播，请配置 Cookie 后重试" />
+            </div>
+          ) : (
+            <InfiniteScroll
+              dataLength={list.length}
+              next={() => fetchLiveFeed(false)}
+              hasMore={liveHasMore && !loading}
+              loader={<div className="list-loading"><Spin size="small" /> 加载直播中...</div>}
+              endMessage={<div className="list-end-msg">直播列表已加载完</div>}
+              scrollableTarget="liveScrollableDiv"
+            >
+              <div className="dy-grid-container live-grid-container">
+                {list.map((item, index) => (
+                  <LiveGridCard
+                    key={`${item.aweme_id || item.id}-${index}`}
+                    aweme={item}
+                    onClick={() => void openLiveRoom(item)}
+                  />
+                ))}
+              </div>
+            </InfiniteScroll>
           )}
         </div>
       )}
@@ -649,9 +812,14 @@ export default function DouyinApp() {
                 @{authorWorks.author?.nickname || "未知作者"}
               </div>
               <div className="author-works-count">
-                {authorWorks.list.length > 0
-                  ? `${authorWorks.list.length} 个作品`
-                  : "作品"}
+                {authorWorks.author?.follower_count != null
+                  ? `${Number(authorWorks.author.follower_count).toLocaleString()} 粉丝 · `
+                  : ""}
+                {authorWorks.author?.aweme_count != null
+                  ? `${authorWorks.author.aweme_count} 个作品`
+                  : authorWorks.list.length > 0
+                    ? `${authorWorks.list.length} 个作品`
+                    : "作品"}
               </div>
             </div>
           </div>

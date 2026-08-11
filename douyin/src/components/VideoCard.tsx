@@ -1,16 +1,32 @@
-import { Avatar, FloatButton, Spin, Drawer, List, message } from "antd";
+import { Avatar, Button, Spin, Drawer, List, message } from "antd";
 import {
-  HeartFilled,
-  HeartOutlined,
   MessageOutlined,
   SoundOutlined,
   PlayCircleFilled,
   MutedOutlined,
   LoadingOutlined,
   CloseOutlined,
+  ImportOutlined,
+  CommentOutlined,
+  PauseOutlined,
+  CaretRightOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import Hls from "hls.js";
 import { useRequest } from "../hooks/useRequest";
+import DanmakuOverlay from "./DanmakuOverlay";
+
+const parseLiveRoom = (aweme: any) => {
+  if (aweme?.liveRoom) return aweme.liveRoom;
+  const rawdata = aweme?.cell_room?.rawdata;
+  if (!rawdata) return null;
+  if (typeof rawdata === "object") return rawdata;
+  try {
+    return JSON.parse(rawdata);
+  } catch {
+    return null;
+  }
+};
 
 interface VideoCardProps {
   aweme: any;
@@ -41,10 +57,13 @@ export default function VideoCard({
   onScrollToNext,
   onAuthorClick,
 }: VideoCardProps) {
-  const { desc, author, video, statistics } = aweme;
+  const liveRoom = useMemo(() => parseLiveRoom(aweme), [aweme]);
+  const isLive = Boolean(liveRoom);
+  const desc = liveRoom?.title || aweme?.desc;
+  const author = liveRoom?.owner || aweme?.author;
+  const video = aweme?.video;
+  const statistics = aweme?.statistics;
   const [isPlaying, setIsPlaying] = useState(false);
-  const isLiked = aweme?.user_digg === 1 || aweme?.user_digg === true;
-  const likeCount = statistics?.digg_count || 0;
   const [messageApi, contextHolder] = message.useMessage();
   const [showPlayOverlay, setShowPlayOverlay] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -67,6 +86,13 @@ export default function VideoCard({
   const currentAwemeIdRef = useRef<string | number | undefined>(undefined);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
+  const requestPlayRef = useRef<(reason: string) => void>(() => undefined);
+  const activePlaybackRef = useRef({ isActive, shouldPlay });
+  const [danmakuEnabled, setDanmakuEnabled] = useState(
+    () => localStorage.getItem("douyin.danmaku.enabled") !== "false",
+  );
+  const [isPictureInPicture, setIsPictureInPicture] = useState(false);
 
   const awemeId = aweme?.aweme_id || aweme?.id;
   const [playSource, setPlaySource] = useState<{
@@ -75,26 +101,70 @@ export default function VideoCard({
   }>({ awemeId, index: 0 });
   const playSeqRef = useRef(0);
 
-  const coverUrl = video?.cover?.url_list?.[0] || "";
+  const coverUrl =
+    liveRoom?.cover?.url_list?.[0] || video?.cover?.url_list?.[0] || "";
 
   // 播放地址排序：同步计算，避免 useEffect 异步导致 currentPlayUrl 先空后有效
   const playUrlList = useMemo(() => {
-    const list: string[] = video?.play_addr?.url_list || [];
+    if (liveRoom) {
+      const stream = liveRoom?.stream_url || {};
+      const map = stream?.hls_pull_url_map || {};
+      const qualities = ["SD1", "SD2", "HD1", "FULL_HD1"];
+      return [...new Set([
+        stream?.hls_pull_url,
+        ...qualities.map((quality) => map?.[quality]),
+      ])].filter((url): url is string => Boolean(url));
+    }
+
+    const bitRates = video?.bit_rate || [];
+    const highest = (items: any[]) => items.reduce(
+      (best: any, item: any) => (Number(item?.bit_rate || 0) > Number(best?.bit_rate || 0) ? item : best),
+      null,
+    );
+    const preferredH264 = highest(bitRates.filter((item: any) => item?.is_h265 !== 1 && item?.is_h265 !== true));
+    const preferredH265 = highest(bitRates.filter((item: any) => item?.is_h265 === 1 || item?.is_h265 === true));
+    const list: string[] = [
+      ...(video?.play_addr_h264?.url_list || []),
+      ...(preferredH264?.play_addr?.url_list || []),
+      ...(video?.play_addr?.url_list || []),
+      ...(preferredH265?.play_addr?.url_list || []),
+    ];
     const normalized = [...new Set(list)].filter(Boolean);
     return normalized.sort((a, b) => {
       const score = (url: string) => {
-        if (url.includes("/aweme/v1/play/")) return 3;
-        if (url.includes("douyinvod.com")) return 2;
-        if (url.includes("douyin.com")) return 1;
-        return 0;
+        // Windows Webview 中部分直连 douyinvod 会稳定 403；官方播放入口
+        // 能重定向到当前网络可用的 CDN，因此优先，并保留直连作回退。
+        if (url.includes("/aweme/v1/play/")) return 5;
+        if (url.includes("douyinvod.com") || url.includes("bytecdn")) return 2;
+        if (url.includes("douyin.com")) return 3;
+        return 4;
       };
       return score(b) - score(a);
     });
-  }, [video]);
+  }, [liveRoom, video]);
 
   const effectivePlayUrlIndex =
     playSource.awemeId === awemeId ? playSource.index : 0;
   const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
+  const isPlaybackEndpoint = currentPlayUrl.includes("/aweme/v1/play/");
+  const [resolvedPlaySource, setResolvedPlaySource] = useState({ source: "", url: "" });
+  const mediaPlayUrl = isPlaybackEndpoint
+    ? resolvedPlaySource.source === currentPlayUrl ? resolvedPlaySource.url : ""
+    : currentPlayUrl;
+  const isHlsSource = /\.m3u8(?:\?|$)/i.test(mediaPlayUrl);
+
+  useEffect(() => {
+    if (!isPlaybackEndpoint || !currentPlayUrl || resolvedPlaySource.source === currentPlayUrl) return;
+    let cancelled = false;
+    void request("DY_RESOLVE_PLAY_URL", { url: currentPlayUrl })
+      .then((response) => {
+        if (!cancelled) setResolvedPlaySource({ source: currentPlayUrl, url: response?.url || currentPlayUrl });
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedPlaySource({ source: currentPlayUrl, url: currentPlayUrl });
+      });
+    return () => { cancelled = true; };
+  }, [currentPlayUrl, isPlaybackEndpoint, request, resolvedPlaySource.source]);
 
   const stopCardClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -114,7 +184,7 @@ export default function VideoCard({
   // ===== 核心播放逻辑 =====
   const requestPlay = useCallback((reason: string) => {
     const el = videoRef.current;
-    if (!el || !currentPlayUrl || !isActive || !shouldPlay) return;
+    if (!el || !mediaPlayUrl || !isActive || !shouldPlay) return;
 
     const seq = ++playSeqRef.current;
     setIsVideoLoading(el.readyState < HTMLMediaElement.HAVE_CURRENT_DATA);
@@ -155,7 +225,59 @@ export default function VideoCard({
         setIsVideoLoading(false);
         setShowPlayOverlay(true);
       });
-  }, [currentPlayUrl, isActive, shouldPlay]);
+  }, [mediaPlayUrl, isActive, shouldPlay]);
+
+  useEffect(() => {
+    requestPlayRef.current = requestPlay;
+    activePlaybackRef.current = { isActive, shouldPlay };
+  }, [isActive, requestPlay, shouldPlay]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
+    if (!el || !mediaPlayUrl || !isHlsSource) return;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        lowLatencyMode: true,
+        capLevelToPlayerSize: true,
+        maxBufferLength: 12,
+        backBufferLength: 6,
+      });
+      hlsRef.current = hls;
+      hls.loadSource(mediaPlayUrl);
+      hls.attachMedia(el);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (activePlaybackRef.current.isActive && activePlaybackRef.current.shouldPlay) {
+          requestPlayRef.current("hls-manifest");
+        }
+      });
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (!data.fatal) return;
+        hls.destroy();
+        if (effectivePlayUrlIndex < playUrlList.length - 1) {
+          setPlaySource({ awemeId, index: effectivePlayUrlIndex + 1 });
+        } else {
+          setIsVideoLoading(false);
+          setShowPlayOverlay(true);
+        }
+      });
+    } else if (el.canPlayType("application/vnd.apple.mpegurl")) {
+      el.src = mediaPlayUrl;
+    }
+
+    return () => {
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
+  }, [
+    awemeId,
+    mediaPlayUrl,
+    effectivePlayUrlIndex,
+    isHlsSource,
+    playUrlList.length,
+  ]);
 
   useEffect(() => {
     if (playSource.awemeId !== awemeId) {
@@ -194,7 +316,7 @@ export default function VideoCard({
       requestPlay(playReason);
     }
   }, [
-    currentPlayUrl,
+    mediaPlayUrl,
     isActive,
     playReason,
     playSignal,
@@ -243,6 +365,38 @@ export default function VideoCard({
     } else {
       onUserPlayRequest?.();
       requestPlay("user-click");
+    }
+  };
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    const handleEnter = () => setIsPictureInPicture(true);
+    const handleLeave = () => setIsPictureInPicture(false);
+    el.addEventListener("enterpictureinpicture", handleEnter);
+    el.addEventListener("leavepictureinpicture", handleLeave);
+    return () => {
+      el.removeEventListener("enterpictureinpicture", handleEnter);
+      el.removeEventListener("leavepictureinpicture", handleLeave);
+    };
+  }, []);
+
+  const togglePictureInPicture = async (event: React.MouseEvent) => {
+    stopCardClick(event);
+    const el = videoRef.current;
+    if (!el || !document.pictureInPictureEnabled || !("requestPictureInPicture" in el)) {
+      messageApi.warning("当前 VS Code 环境不支持画中画");
+      return;
+    }
+    try {
+      if (document.pictureInPictureElement === el) {
+        await document.exitPictureInPicture();
+      } else {
+        if (document.pictureInPictureElement) await document.exitPictureInPicture();
+        await el.requestPictureInPicture();
+      }
+    } catch (error: any) {
+      messageApi.warning(error?.message || "无法开启画中画");
     }
   };
 
@@ -418,7 +572,7 @@ export default function VideoCard({
       {/* 视频播放器 */}
       <video
         ref={videoRef}
-        src={currentPlayUrl}
+        src={isHlsSource ? undefined : mediaPlayUrl}
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => {
@@ -454,29 +608,112 @@ export default function VideoCard({
         {...({ referrerPolicy: "no-referrer" } as any)}
       />
 
+      {!isLive && (
+        <DanmakuOverlay
+          awemeId={String(awemeId || "")}
+          durationSeconds={duration}
+          currentTime={currentTime}
+          isPlaying={isPlaying}
+          enabled={danmakuEnabled}
+          request={request}
+        />
+      )}
+
       {/* 播放进度条容器 */}
-      <div className="progress-container" onClick={(e) => e.stopPropagation()}>
-        <span className="time-text">{formatTime(currentTime)}</span>
-        <div
-          ref={progressRef}
-          className="video-progress-bar"
-          onMouseDown={handleProgressMouseDown}
-        >
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-        <span className="time-text">{formatTime(duration)}</span>
-        <button
-          type="button"
-          className={`sound-toggle-btn ${isMuted ? "muted" : ""}`}
-          aria-label={isMuted ? "解除静音" : "静音"}
-          title={isMuted ? "解除静音" : "静音"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleMute();
+      <div
+        className="progress-container"
+        onClick={stopCardClick}
+        onPointerDown={stopCardPointer}
+      >
+        {!isLive && (
+          <div
+            ref={progressRef}
+            className="video-progress-bar"
+            onMouseDown={handleProgressMouseDown}
+          >
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+        )}
+
+        <Button
+          color="default"
+          shape="circle"
+          variant="filled"
+          className="playbar-author-btn"
+          title={`查看 @${author?.nickname || "未知作者"} 的作品`}
+          onClick={(event) => {
+            stopCardClick(event);
+            suppressPlaybackBriefly();
+            onAuthorClick?.(author, aweme);
           }}
         >
-          {isMuted ? <MutedOutlined /> : <SoundOutlined />}
-        </button>
+          <Avatar src={author?.avatar_thumb?.url_list?.[0]} />
+        </Button>
+
+        <span className={isLive ? "live-playing-badge" : "time-summary"}>
+          {isLive ? "LIVE" : `${formatTime(currentTime)} / ${formatTime(duration)}`}
+        </span>
+
+        <div className="playbar-action-btns">
+          <Button
+            color="default"
+            shape="circle"
+            variant="filled"
+            icon={isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
+            title={isPlaying ? "暂停" : "播放"}
+            onClick={(event) => {
+              stopCardClick(event);
+              handlePlayToggle();
+            }}
+          />
+          {!isLive && (
+            <Button
+              color={isCommentsOpen ? "primary" : "default"}
+              shape="circle"
+              variant="filled"
+              icon={<MessageOutlined />}
+              title={`${formatCount(statistics?.comment_count)} 条评论`}
+              onClick={handleOpenComments}
+            />
+          )}
+          {!isLive && (
+            <Button
+              color={danmakuEnabled ? "primary" : "default"}
+              shape="circle"
+              variant="filled"
+              icon={<CommentOutlined />}
+              title={danmakuEnabled ? "关闭弹幕" : "开启弹幕"}
+              onClick={(event) => {
+                stopCardClick(event);
+                setDanmakuEnabled((enabled) => {
+                  localStorage.setItem("douyin.danmaku.enabled", String(!enabled));
+                  return !enabled;
+                });
+              }}
+            />
+          )}
+          <Button
+            color={isPictureInPicture ? "primary" : "default"}
+            shape="circle"
+            variant="filled"
+            icon={<ImportOutlined />}
+            aria-label={isPictureInPicture ? "退出画中画" : "进入画中画"}
+            title={isPictureInPicture ? "退出画中画" : "画中画"}
+            onClick={togglePictureInPicture}
+          />
+          <Button
+            color={isMuted ? "danger" : "default"}
+            shape="circle"
+            variant="filled"
+            icon={isMuted ? <MutedOutlined /> : <SoundOutlined />}
+            aria-label={isMuted ? "解除静音" : "静音"}
+            title={isMuted ? "解除静音" : "静音"}
+            onClick={(event) => {
+              stopCardClick(event);
+              onToggleMute();
+            }}
+          />
+        </div>
       </div>
 
       {/* 缓冲时垫底的封面（解决黑屏闪烁，优化卡顿感知） */}
@@ -530,68 +767,6 @@ export default function VideoCard({
       <div className="bottom-info">
         <div className="author-name">@{author?.nickname || "未知作者"}</div>
         <div className="video-desc">{desc || "无描述"}</div>
-      </div>
-
-      {/* 右侧浮动控制条 */}
-      <div
-        className="side-actions"
-        onClick={stopCardClick}
-        onPointerDown={stopCardPointer}
-      >
-        {/* 作者头像 */}
-        <div
-          className="action-item"
-          style={{ marginBottom: "10px" }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <FloatButton
-            className="avatar-float-btn"
-            style={{ position: "static", overflow: "hidden" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              suppressPlaybackBriefly();
-              onAuthorClick?.(author, aweme);
-            }}
-            icon={
-              <Avatar
-                src={author?.avatar_thumb?.url_list?.[0]}
-                style={{ border: "2px solid #fff" }}
-              />
-            }
-          />
-        </div>
-
-        {/* 红心点赞 */}
-        <div className="action-item">
-          <FloatButton
-            style={{ position: "static" }}
-            icon={
-              isLiked ? (
-                <HeartFilled style={{ color: "#fe2c55" }} />
-              ) : (
-                <HeartOutlined />
-              )
-            }
-            onClick={(e) => {
-              e.stopPropagation();
-              messageApi.info("暂不支持");
-            }}
-          />
-          <span className="action-count">{formatCount(likeCount)}</span>
-        </div>
-
-        {/* 评论数 */}
-        <div className="action-item">
-          <FloatButton
-            style={{ position: "static" }}
-            icon={<MessageOutlined />}
-            onClick={handleOpenComments}
-          />
-          <span className="action-count">
-            {formatCount(statistics?.comment_count)}
-          </span>
-        </div>
-
       </div>
 
       {/* 底部向上弹出的评论抽屉 */}

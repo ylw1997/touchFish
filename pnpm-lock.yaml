@@ -191,6 +191,9 @@ importers:
       dayjs:
         specifier: ^1.11.13
         version: 1.11.18
+      hls.js:
+        specifier: ^1.6.15
+        version: 1.6.15
       react:
         specifier: ^19.1.0
         version: 19.1.1
