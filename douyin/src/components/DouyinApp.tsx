@@ -642,10 +642,7 @@ export default function DouyinApp() {
           ) : (
             <>
               {list.map((item, index) => {
-                const coverUrl =
-                  item.video?.origin_cover?.url_list?.[0] ||
-                  item.video?.cover?.url_list?.[0] ||
-                  "";
+                const coverUrl = item.video?.cover?.url_list?.[0] || "";
                 const shouldRenderCover = Math.abs(index - activeIndex) <= 1;
                 return (
                   <div
