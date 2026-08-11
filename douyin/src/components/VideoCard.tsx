@@ -145,6 +145,10 @@ export default function VideoCard({
 
   const effectivePlayUrlIndex =
     playSource.awemeId === awemeId ? playSource.index : 0;
+  const isCurrentPlaybackState = playSource.awemeId === awemeId;
+  const displayedProgress = isCurrentPlaybackState ? progress : 0;
+  const displayedCurrentTime = isCurrentPlaybackState ? currentTime : 0;
+  const displayedDuration = isCurrentPlaybackState ? duration : 0;
   const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
   const isPlaybackEndpoint = currentPlayUrl.includes("/aweme/v1/play/");
   const [resolvedPlaySource, setResolvedPlaySource] = useState({ source: "", url: "" });
@@ -604,7 +608,7 @@ export default function VideoCard({
         muted={isMuted}
         playsInline
         preload="auto"
-        poster={coverUrl}
+        poster={coverUrl || undefined}
         {...({ referrerPolicy: "no-referrer" } as any)}
       />
 

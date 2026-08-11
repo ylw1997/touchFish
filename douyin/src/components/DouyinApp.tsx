@@ -878,7 +878,10 @@ export default function DouyinApp() {
             onWheel={(e) => e.stopPropagation()}
           >
             {authorWorks.list.map((item, index) => {
-              const coverUrl = item.video?.cover?.url_list?.[0] || "";
+              const coverUrl =
+                item.video?.origin_cover?.url_list?.[0] ||
+                item.video?.cover?.url_list?.[0] ||
+                "";
               const shouldMountPlayer = Math.abs(index - activeAuthorPlayIndex) <= 1;
               const isCurrentAuthorVideo = index === activeAuthorPlayIndex;
               if (shouldMountPlayer) {
