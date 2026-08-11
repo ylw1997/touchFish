@@ -826,6 +826,23 @@ body {
   }
 }
 
+/* 推荐流只有一个真实播放器；这些空页只提供原生 scroll-snap 锚点。 */
+.dy-snap-page {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  contain: strict;
+  overflow: hidden;
+  background: #000;
+}
+
+.dy-snap-cover {
+  display: block;
+  object-fit: contain;
+}
+
 .danmaku-overlay {
   position: absolute;
   inset: 48px 0 112px;

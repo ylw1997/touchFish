@@ -37,6 +37,7 @@ export default function DanmakuOverlay({
   const loadingWindowsRef = useRef(new Set<number>());
   const displayedIdsRef = useRef(new Set<string>());
   const trackAvailableAtRef = useRef(Array(TRACK_COUNT).fill(0));
+  const nextTrackRef = useRef(0);
   const previousTimeRef = useRef(0);
   const removalTimersRef = useRef(new Set<number>());
 
@@ -56,6 +57,7 @@ export default function DanmakuOverlay({
     loadingWindowsRef.current.clear();
     displayedIdsRef.current.clear();
     trackAvailableAtRef.current.fill(0);
+    nextTrackRef.current = 0;
     previousTimeRef.current = 0;
     setActiveItems([]);
     for (const timer of removalTimersRef.current) window.clearTimeout(timer);
@@ -104,6 +106,7 @@ export default function DanmakuOverlay({
     if (currentTime < previous || Math.abs(currentTime - previous) > 2.5) {
       displayedIdsRef.current.clear();
       trackAvailableAtRef.current.fill(0);
+      nextTrackRef.current = 0;
       setActiveItems([]);
     }
     previousTimeRef.current = currentTime;
@@ -122,12 +125,20 @@ export default function DanmakuOverlay({
     const wallNow = Date.now();
     const additions: ActiveDanmaku[] = [];
     for (const item of candidates) {
-      const track = trackAvailableAtRef.current.findIndex((availableAt) => availableAt <= wallNow);
+      let track = -1;
+      for (let offset = 0; offset < TRACK_COUNT; offset += 1) {
+        const candidateTrack = (nextTrackRef.current + offset) % TRACK_COUNT;
+        if (trackAvailableAtRef.current[candidateTrack] <= wallNow) {
+          track = candidateTrack;
+          break;
+        }
+      }
       if (track < 0) {
         // 轨道繁忙时不要提前写入 displayedIds，下一次 timeupdate 仍可尝试。
         continue;
       }
-      trackAvailableAtRef.current[track] = wallNow + 1_250;
+      nextTrackRef.current = (track + 1) % TRACK_COUNT;
+      trackAvailableAtRef.current[track] = wallNow + 2_200;
       displayedIdsRef.current.add(item.danmaku_id);
       const active: ActiveDanmaku = {
         ...item,

@@ -643,15 +643,17 @@ export default function DouyinApp() {
             <>
               {list.map((item, index) => {
                 const coverUrl = item.video?.cover?.url_list?.[0] || "";
+                const shouldRenderCover = Math.abs(index - activeIndex) <= 1;
                 return (
                   <div
                     key={`${item.aweme_id || item.id}-${index}`}
-                    className="dy-video-item placeholder"
+                    className="dy-snap-page"
                   >
-                    {coverUrl && (
+                    {shouldRenderCover && coverUrl && (
                       <img
                         src={coverUrl}
                         alt="cover"
+                        className="dy-snap-cover"
                         style={{
                           width: "100%",
                           height: "100%",
