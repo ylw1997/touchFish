@@ -659,7 +659,7 @@ body {
   }
 }
 
-/* 视频进度条容器 (包含两端时间显示) */
+/* 参考网易云 PlayBar：弱进度、单行信息、统一圆形操作按钮。 */
 .progress-container {
   position: absolute;
   bottom: 14px;
@@ -667,73 +667,74 @@ body {
   right: 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   z-index: 25;
   pointer-events: auto; /* 必须支持点击和拖动 */
-  background-color: rgba(8, 8, 8, 0.58);
-  // backdrop-filter: saturate(180%) blur(10px);
-  // -webkit-backdrop-filter: saturate(180%) blur(10px);
-  padding: 7px 8px 7px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 6px 8px 6px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 26px;
+  background: rgba(15, 15, 15, 0.72);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
 
-  .time-text {
+  .time-summary,
+  .live-playing-badge {
+    flex: 1;
+    min-width: 0;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--vscode-descriptionForeground, rgba(255, 255, 255, 0.68));
+    font-variant-numeric: tabular-nums;
     user-select: none;
-    flex-shrink: 0;
+  }
+
+  .live-playing-badge {
+    color: var(--vscode-tab-activeForeground, #fff);
+    font-weight: 600;
+    letter-spacing: 1px;
   }
 
   .video-progress-bar {
-    position: relative;
-    flex: 1;
-    height: 4px;
-    border-radius: 2px;
-    background-color: rgba(255, 255, 255, 0.2);
+    position: absolute;
+    top: 0;
+    left: 14px;
+    right: 14px;
+    height: 2px;
+    border-radius: 999px;
+    background: color-mix(
+      in srgb,
+      var(--vscode-descriptionForeground, #999) 22%,
+      transparent
+    );
     cursor: pointer;
     overflow: hidden;
-    transition: height 0.1s ease;
+    transition: height 0.15s ease, opacity 0.15s ease;
+    opacity: 0.7;
 
     &:hover {
-      height: 6px; /* 悬停时加粗，暗示可以点击交互 */
+      height: 4px;
+      opacity: 1;
     }
 
     .progress-fill {
       height: 100%;
-      background-color: #fe2c55; /* 抖音红 */
-      border-radius: 2px;
+      border-radius: inherit;
+      background: var(--vscode-progressBar-background, #0e639c);
     }
   }
 
-  .sound-toggle-btn {
-    width: 30px;
-    height: 30px;
-    border: 0;
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
-    padding: 0 0 0 8px;
-    margin-left: 2px;
-    color: rgba(255, 255, 255, 0.88);
-    background: transparent;
-    display: inline-flex;
+  .playbar-action-btns {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
+    gap: 8px;
 
-    &:hover {
-      color: #fff;
-    }
-
-    &.muted {
-      color: #fe2c55;
-
-      &:hover {
-        color: #ff496d;
-      }
-    }
-
-    .anticon {
-      font-size: 17px;
+    .ant-btn {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      box-shadow: none;
     }
   }
 }
@@ -871,56 +872,6 @@ body {
 @keyframes danmaku-move {
   from { transform: translateX(0); }
   to { transform: translateX(calc(-100vw - 100%)); }
-}
-
-.progress-container {
-  .danmaku-toggle-btn {
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 50%;
-    color: rgba(255, 255, 255, 0.65);
-    background: transparent;
-    cursor: pointer;
-
-    &.enabled {
-      color: #fff;
-      border-color: #fe2c55;
-      background: rgba(254, 44, 85, 0.32);
-    }
-  }
-
-  .picture-in-picture-btn {
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border: 0;
-    color: rgba(255, 255, 255, 0.78);
-    background: transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-
-    &:hover,
-    &.active {
-      color: #fe2c55;
-    }
-
-    .anticon {
-      font-size: 17px;
-    }
-  }
-
-  .live-playing-badge {
-    flex: 1;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  }
 }
 
 .dy-media-preloader {

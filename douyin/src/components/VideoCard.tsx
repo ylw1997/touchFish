@@ -1,4 +1,4 @@
-import { Avatar, FloatButton, Spin, Drawer, List, message } from "antd";
+import { Avatar, Button, FloatButton, Spin, Drawer, List, message } from "antd";
 import {
   HeartFilled,
   HeartOutlined,
@@ -9,6 +9,9 @@ import {
   LoadingOutlined,
   CloseOutlined,
   PictureOutlined,
+  CommentOutlined,
+  PauseOutlined,
+  CaretRightOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Hls from "hls.js";
@@ -622,56 +625,70 @@ export default function VideoCard({
 
       {/* 播放进度条容器 */}
       <div className="progress-container" onClick={(e) => e.stopPropagation()}>
-        {isLive ? (
-          <span className="live-playing-badge">LIVE</span>
-        ) : (
-          <>
-            <span className="time-text">{formatTime(currentTime)}</span>
-            <div
-              ref={progressRef}
-              className="video-progress-bar"
-              onMouseDown={handleProgressMouseDown}
-            >
-              <div className="progress-fill" style={{ width: `${progress}%` }} />
-            </div>
-            <span className="time-text">{formatTime(duration)}</span>
-            <button
-              type="button"
-              className={`danmaku-toggle-btn ${danmakuEnabled ? "enabled" : ""}`}
+        {!isLive && (
+          <div
+            ref={progressRef}
+            className="video-progress-bar"
+            onMouseDown={handleProgressMouseDown}
+          >
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+        )}
+
+        <span className={isLive ? "live-playing-badge" : "time-summary"}>
+          {isLive ? "LIVE" : `${formatTime(currentTime)} / ${formatTime(duration)}`}
+        </span>
+
+        <div className="playbar-action-btns">
+          <Button
+            color="default"
+            shape="circle"
+            variant="filled"
+            icon={isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
+            title={isPlaying ? "暂停" : "播放"}
+            onClick={(event) => {
+              event.stopPropagation();
+              handlePlayToggle();
+            }}
+          />
+          {!isLive && (
+            <Button
+              color={danmakuEnabled ? "primary" : "default"}
+              shape="circle"
+              variant="filled"
+              icon={<CommentOutlined />}
               title={danmakuEnabled ? "关闭弹幕" : "开启弹幕"}
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 setDanmakuEnabled((enabled) => {
                   localStorage.setItem("douyin.danmaku.enabled", String(!enabled));
                   return !enabled;
                 });
               }}
-            >
-              弹
-            </button>
-          </>
-        )}
-        <button
-          type="button"
-          className={`picture-in-picture-btn ${isPictureInPicture ? "active" : ""}`}
-          aria-label={isPictureInPicture ? "退出画中画" : "进入画中画"}
-          title={isPictureInPicture ? "退出画中画" : "画中画"}
-          onClick={togglePictureInPicture}
-        >
-          <PictureOutlined />
-        </button>
-        <button
-          type="button"
-          className={`sound-toggle-btn ${isMuted ? "muted" : ""}`}
-          aria-label={isMuted ? "解除静音" : "静音"}
-          title={isMuted ? "解除静音" : "静音"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleMute();
-          }}
-        >
-          {isMuted ? <MutedOutlined /> : <SoundOutlined />}
-        </button>
+            />
+          )}
+          <Button
+            color={isPictureInPicture ? "primary" : "default"}
+            shape="circle"
+            variant="filled"
+            icon={<PictureOutlined />}
+            aria-label={isPictureInPicture ? "退出画中画" : "进入画中画"}
+            title={isPictureInPicture ? "退出画中画" : "画中画"}
+            onClick={togglePictureInPicture}
+          />
+          <Button
+            color={isMuted ? "default" : "primary"}
+            shape="circle"
+            variant="filled"
+            icon={isMuted ? <MutedOutlined /> : <SoundOutlined />}
+            aria-label={isMuted ? "解除静音" : "静音"}
+            title={isMuted ? "解除静音" : "静音"}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleMute();
+            }}
+          />
+        </div>
       </div>
 
       {/* 缓冲时垫底的封面（解决黑屏闪烁，优化卡顿感知） */}
