@@ -84,6 +84,7 @@ final class DouyinAPI: ObservableObject {
     static let shared = DouyinAPI()
     
     private let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    private let urlSession: URLSession
 
     @Published var cookie: String = "" {
         didSet {
@@ -95,6 +96,17 @@ final class DouyinAPI: ObservableObject {
     @Published private(set) var cookieRevision: UInt = 0
     
     private init() {
+        // 不使用 URLSession.shared 的全局 Cookie 容器。用户重新粘贴 Cookie 后，
+        // 旧的 sessionid/uid_tt 若被系统自动合并，会让服务端优先读到过期登录态，
+        // 即使显式 Cookie 请求头本身有效也会返回“用户未登录”。
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        self.urlSession = URLSession(configuration: configuration)
+
         let legacyCookie = UserDefaults.standard.string(forKey: "douyin_cookie") ?? ""
         let savedCookie = DouyinCredentialStore.load() ?? legacyCookie
 #if DEBUG
@@ -189,7 +201,7 @@ final class DouyinAPI: ObservableObject {
             request.setValue(val, forHTTPHeaderField: key)
         }
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await urlSession.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.badResponse
@@ -245,6 +257,18 @@ final class DouyinAPI: ObservableObject {
     func validateCookie(_ input: String) async throws -> String {
         let normalized = Self.normalizedCookie(from: input)
         guard !normalized.isEmpty else { throw APIError.emptyCookie }
+
+#if DEBUG
+        let cookieFieldCount = normalized.split(separator: ";").count
+        let hasSession = normalized
+            .split(separator: ";")
+            .map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+            .contains { $0.hasPrefix("sessionid=") || $0.hasPrefix("sessionid_ss=") }
+        print(
+            "[DouyinAPI] validatingCookie length=\(normalized.utf8.count) "
+            + "fields=\(cookieFieldCount) hasSession=\(hasSession)"
+        )
+#endif
 
         // favorite 接口会忽略 count=1 并返回完整视频对象，响应可超过 1 MB。
         // Cookie 保存时只需验证登录态，使用 profile/self 能将响应缩小到约 20 KB，
