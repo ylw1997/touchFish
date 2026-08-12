@@ -246,9 +246,17 @@ final class DouyinAPI: ObservableObject {
         let normalized = Self.normalizedCookie(from: input)
         guard !normalized.isEmpty else { throw APIError.emptyCookie }
 
-        let url = "https://www.douyin.com/aweme/v1/web/aweme/favorite/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&max_cursor=0&count=1&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
-        let res: StatusResponse = try await request(url: url, cookieOverride: normalized)
+        // favorite 接口会忽略 count=1 并返回完整视频对象，响应可超过 1 MB。
+        // Cookie 保存时只需验证登录态，使用 profile/self 能将响应缩小到约 20 KB，
+        // 也避免 tvOS URLSession 偶发收到 HTTP 200 空正文后误报 Cookie 无效。
+        let url = "https://www.douyin.com/aweme/v1/web/user/profile/self/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32"
+        let res: UserProfileResponse = try await request(
+            url: url,
+            cookieOverride: normalized,
+            extraHeaders: ["Referer": "https://www.douyin.com/user/self"]
+        )
         try validateStatus(res.status_code, message: res.status_msg)
+        guard res.user != nil else { throw APIError.emptyResponse }
         return normalized
     }
 
@@ -755,11 +763,6 @@ struct LiveRoomEnterResponse: Decodable {
 
 struct LiveRoomEnterData: Decodable {
     let data: [LiveRoom]?
-}
-
-struct StatusResponse: Decodable {
-    let status_code: Int
-    let status_msg: String?
 }
 
 struct Aweme: Decodable, Identifiable, Equatable {
