@@ -1,41 +1,6 @@
 import SwiftUI
 import UIKit
 
-private final class FocusableCookieTextView: UITextView {
-    override var canBecomeFocused: Bool { true }
-
-    override func didUpdateFocus(
-        in context: UIFocusUpdateContext,
-        with coordinator: UIFocusAnimationCoordinator
-    ) {
-        super.didUpdateFocus(in: context, with: coordinator)
-        let isFocused = context.nextFocusedView === self
-        coordinator.addCoordinatedAnimations { [weak self] in
-            self?.layer.borderWidth = isFocused ? 4 : 0
-            self?.layer.borderColor = isFocused
-                ? UIColor.white.withAlphaComponent(0.9).cgColor
-                : UIColor.clear.cgColor
-            self?.transform = isFocused
-                ? CGAffineTransform(scaleX: 1.02, y: 1.02)
-                : .identity
-        }
-#if DEBUG
-        print("[Settings] cookieEditor focused=\(isFocused)")
-#endif
-    }
-
-    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        if presses.contains(where: { $0.type == .select }) {
-            becomeFirstResponder()
-#if DEBUG
-            print("[Settings] cookieEditor editing=true")
-#endif
-            return
-        }
-        super.pressesEnded(presses, with: event)
-    }
-}
-
 private struct LongCookieEditor: UIViewRepresentable {
     @Binding var text: String
 
@@ -43,38 +8,63 @@ private struct LongCookieEditor: UIViewRepresentable {
         Coordinator(text: $text)
     }
 
-    func makeUIView(context: Context) -> FocusableCookieTextView {
-        let textView = FocusableCookieTextView()
-        textView.delegate = context.coordinator
-        textView.backgroundColor = .clear
-        textView.textColor = .white
-        textView.font = .preferredFont(forTextStyle: .body)
-        textView.autocapitalizationType = .none
-        textView.autocorrectionType = .no
-        textView.spellCheckingType = .no
-        textView.keyboardType = .asciiCapable
-        textView.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
-        textView.text = text
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField()
+        textField.delegate = context.coordinator
+        textField.backgroundColor = .clear
+        textField.textColor = .white
+        textField.tintColor = .white
+        textField.font = .preferredFont(forTextStyle: .body)
+        textField.autocapitalizationType = .none
+        textField.autocorrectionType = .no
+        textField.spellCheckingType = .no
+        textField.keyboardType = .asciiCapable
+        textField.clearButtonMode = .whileEditing
+        textField.placeholder = "在 iPhone 上粘贴完整 Cookie"
+        textField.text = text
+        textField.addTarget(
+            context.coordinator,
+            action: #selector(Coordinator.textDidChange(_:)),
+            for: .editingChanged
+        )
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            textView.becomeFirstResponder()
+            textField.becomeFirstResponder()
         }
-        return textView
+        return textField
     }
 
-    func updateUIView(_ textView: FocusableCookieTextView, context: Context) {
-        guard textView.text != text else { return }
-        textView.text = text
+    func updateUIView(_ textField: UITextField, context: Context) {
+        guard textField.text != text else { return }
+        textField.text = text
     }
 
-    final class Coordinator: NSObject, UITextViewDelegate {
+    final class Coordinator: NSObject, UITextFieldDelegate {
         private var text: Binding<String>
 
         init(text: Binding<String>) {
             self.text = text
         }
 
-        func textViewDidChange(_ textView: UITextView) {
-            text.wrappedValue = textView.text
+        @objc func textDidChange(_ textField: UITextField) {
+            text.wrappedValue = textField.text ?? ""
+        }
+
+        func textField(
+            _ textField: UITextField,
+            shouldChangeCharactersIn range: NSRange,
+            replacementString string: String
+        ) -> Bool {
+            let current = textField.text ?? ""
+            guard let swiftRange = Range(range, in: current) else { return true }
+            let updated = current.replacingCharacters(in: swiftRange, with: string)
+            text.wrappedValue = updated
+#if DEBUG
+            print(
+                "[Settings] cookieInput replacementLength=\(string.count) "
+                + "resultLength=\(updated.count)"
+            )
+#endif
+            return true
         }
     }
 }
@@ -99,7 +89,7 @@ private struct CookieEditorSheet: View {
                         .stroke(Color.white.opacity(0.3), lineWidth: 2)
                 }
                 .cornerRadius(14)
-                .frame(height: 360)
+                .frame(height: 110)
 
             HStack {
                 let normalized = DouyinAPI.normalizedCookie(from: text)
