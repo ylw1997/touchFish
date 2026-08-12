@@ -61,6 +61,27 @@ function text(res, statusCode, value, contentType = 'text/plain; charset=utf-8')
   res.end(body);
 }
 
+function readJsonBody(req, limit = 4096) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(new Error('请求内容过大'));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')); }
+      catch { reject(new Error('请求格式无效')); }
+    });
+    req.on('error', reject);
+  });
+}
+
 function publicState(session) {
   return {
     id: session.id,
@@ -245,6 +266,54 @@ async function startFaceVerification(session) {
   return false;
 }
 
+async function startSmsVerification(session) {
+  if (!session.page || session.closed) throw new Error('登录会话已结束');
+  const otherMethod = session.page.getByText('选择其他验证方式', { exact: true }).first();
+  if (await otherMethod.count() && await otherMethod.isVisible().catch(() => false)) {
+    await otherMethod.click({ timeout: 5_000 });
+    await session.page.waitForTimeout(500);
+  }
+  const smsMethod = session.page.getByText('接收短信验证码', { exact: true }).first();
+  if (!await smsMethod.count() || !await smsMethod.isVisible().catch(() => false)) {
+    throw new Error('当前页面没有短信验证入口');
+  }
+  await smsMethod.click({ timeout: 5_000 });
+  await session.page.waitForTimeout(700);
+  const sendButton = session.page.getByText('获取验证码', { exact: true }).first();
+  if (await sendButton.count() && await sendButton.isVisible().catch(() => false)) {
+    await sendButton.click({ timeout: 5_000 });
+  }
+  session.identityVerificationStarted = true;
+  session.verificationMethod = 'sms';
+  session.state = 'sms_verification';
+  session.message = '短信验证码已发送，请输入验证码';
+  console.log(`[douyin-login] session=${session.id.slice(0, 8)} identityVerification=sms`);
+}
+
+async function submitSmsCode(session, code) {
+  if (!/^\d{4,8}$/.test(code)) throw new Error('请输入 4 至 8 位数字验证码');
+  const input = session.page.locator(
+    'input[placeholder*="验证码"]:visible, input[type="tel"]:visible, input[placeholder*="短信"]:visible'
+  ).first();
+  if (!await input.count() || !await input.isVisible().catch(() => false)) {
+    throw new Error('未找到验证码输入框');
+  }
+  await input.fill(code);
+  const submitTexts = ['确认', '验证', '登录', '提交'];
+  for (const label of submitTexts) {
+    const button = session.page.getByText(label, { exact: true }).first();
+    if (await button.count() && await button.isVisible().catch(() => false)) {
+      await button.click({ timeout: 5_000 });
+      session.state = 'verifying';
+      session.message = '验证码已提交，正在验证登录态';
+      return;
+    }
+  }
+  await input.press('Enter');
+  session.state = 'verifying';
+  session.message = '验证码已提交，正在验证登录态';
+}
+
 async function detectLogin(session) {
   if (!session.context || session.closed || session.cookie) return;
   const cookies = await session.context.cookies();
@@ -315,7 +384,8 @@ async function watchSession(session) {
       await detectLogin(session);
     } catch (error) {
       session.state = 'failed';
-      session.message = `登录验证失败：${error.message}`;
+      session.message = '登录验证暂时失败，请重新生成二维码';
+      console.log(`[douyin-login] session=${session.id.slice(0, 8)} verify failed=${error.name}`);
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -396,7 +466,7 @@ async function buildSession() {
           session.state = 'waiting';
           session.message = '二维码已扫描，请在手机上确认登录';
         }
-        if (status === 'expired') {
+        if (status === 'expired' && !session.identityVerificationStarted) {
           session.qrExpired = true;
           if (session.issued) {
             session.state = 'expired';
@@ -422,7 +492,7 @@ async function buildSession() {
     return session;
   } catch (error) {
     session.state = 'failed';
-    session.message = `二维码生成失败：${error.message}`;
+    session.message = '二维码生成失败，请稍后重试';
     await closeSession(session);
     throw error;
   }
@@ -467,6 +537,7 @@ async function createSession() {
     session = await buildSession();
   }
   session.issued = true;
+  session.expiresAt = Date.now() + SESSION_TTL_MS;
   sessions.set(session.id, session);
   void watchSession(session);
   void prepareStandbySession();
@@ -474,7 +545,7 @@ async function createSession() {
 }
 
 function parseSessionPath(pathname) {
-  const match = pathname.match(/^\/api\/sessions\/([A-Za-z0-9_-]+)(?:\/(qr|claim|screenshot))?$/);
+  const match = pathname.match(/^\/api\/sessions\/([A-Za-z0-9_-]+)(?:\/(qr|claim|screenshot|sms|sms-code))?$/);
   if (!match) return null;
   return { id: match[1], action: match[2] || 'status' };
 }
@@ -482,15 +553,18 @@ function parseSessionPath(pathname) {
 const appHtml = `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TouchFish 抖音扫码登录验证</title><style>
-body{margin:0;background:#101114;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:center;min-height:100vh}.card{width:min(520px,calc(100vw - 40px));padding:32px;border:1px solid #303238;border-radius:22px;background:#18191d;text-align:center;box-sizing:border-box}h1{font-size:25px;margin:0 0 10px}p{color:#aeb0b8;line-height:1.6}.qr{width:280px;height:280px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;margin:18px auto;display:none}button{border:0;border-radius:12px;background:#fe2c55;color:#fff;font-weight:700;font-size:17px;padding:13px 26px;cursor:pointer}button:disabled{opacity:.45}.ok{color:#56d68b}.error{color:#ff718d}.meta{font-size:13px;color:#777b85;word-break:break-all}</style></head>
-<body><main class="card"><h1>抖音扫码登录验证</h1><p id="status">点击按钮生成一次性二维码。服务不会在页面或日志中显示完整 Cookie。</p><img id="qr" class="qr" alt="抖音登录二维码"><div><button id="start">生成二维码</button></div><p id="meta" class="meta"></p></main>
+body{margin:0;background:#101114;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:center;min-height:100vh}.card{width:min(520px,calc(100vw - 40px));padding:32px;border:1px solid #303238;border-radius:22px;background:#18191d;text-align:center;box-sizing:border-box}h1{font-size:25px;margin:0 0 10px}p{color:#aeb0b8;line-height:1.6}.qr{width:280px;height:280px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;margin:18px auto;display:none}button{border:0;border-radius:12px;background:#fe2c55;color:#fff;font-weight:700;font-size:17px;padding:13px 26px;cursor:pointer}button:disabled{opacity:.45}.secondary{background:#303238;margin-top:12px;font-size:14px}.sms{display:none;margin-top:14px;gap:8px;justify-content:center}.sms input{width:160px;border:1px solid #454852;border-radius:10px;background:#101114;color:#fff;padding:12px;font-size:16px}.sms button{font-size:14px;padding:11px 16px}.ok{color:#56d68b}.error{color:#ff718d}.meta{font-size:13px;color:#777b85;word-break:break-all}</style></head>
+<body><main class="card"><h1>抖音扫码登录验证</h1><p id="status">点击按钮生成一次性二维码。服务不会在页面或日志中显示完整 Cookie。</p><img id="qr" class="qr" alt="抖音登录二维码"><div><button id="start">生成二维码</button></div><button id="smsSwitch" class="secondary" hidden>无法刷脸，改用短信验证</button><div id="smsForm" class="sms"><input id="smsCode" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="短信验证码"><button id="smsSubmit">提交验证码</button></div><p id="meta" class="meta"></p></main>
 <script>
-let id='',token='',timer=0,qrUrl='',qrVersion=0;const statusEl=document.querySelector('#status'),qr=document.querySelector('#qr'),button=document.querySelector('#start'),meta=document.querySelector('#meta');
+let id='',token='',timer=0,qrUrl='',qrVersion=0;const statusEl=document.querySelector('#status'),qr=document.querySelector('#qr'),button=document.querySelector('#start'),meta=document.querySelector('#meta'),smsSwitch=document.querySelector('#smsSwitch'),smsForm=document.querySelector('#smsForm'),smsCode=document.querySelector('#smsCode'),smsSubmit=document.querySelector('#smsSubmit');
 async function api(url,options={}){options.headers={...(options.headers||{}),...(token?{'X-Claim-Token':token}:{})};const response=await fetch(url,options);const data=await response.json();if(!response.ok)throw new Error(data.error||'请求失败');return data}
 async function loadQr(version){const response=await fetch('/api/sessions/'+id+'/qr',{headers:{'X-Claim-Token':token}});if(!response.ok)throw new Error((await response.json()).error);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl=URL.createObjectURL(await response.blob());qr.src=qrUrl;qr.style.display='block';qrVersion=version||qrVersion+1}
-function stopWaiting(message){clearInterval(timer);timer=0;if(qrUrl){URL.revokeObjectURL(qrUrl);qrUrl=''}qr.removeAttribute('src');qr.style.display='none';button.disabled=false;button.textContent='重新生成';statusEl.textContent=message;statusEl.className='error';id='';token=''}
-async function poll(){try{const s=await api('/api/sessions/'+id);if(s.qrVersion&&s.qrVersion!==qrVersion)await loadQr(s.qrVersion);statusEl.textContent=s.message;statusEl.className=s.state==='verified'?'ok':(s.state==='failed'||s.state==='expired'?'error':'');meta.textContent=s.cookieReady?'Cookie 已验证：'+s.cookieFieldCount+' 个字段，'+s.cookieLength+' 个字符'+(s.user?.nickname?'，账号：'+s.user.nickname:''):'';if(s.state==='verified'){clearInterval(timer);timer=0;button.disabled=false;button.textContent='重新生成';qr.style.display='none'}else if(s.state==='failed'||s.state==='expired'){stopWaiting(s.message)}}catch(e){stopWaiting(e.message+'，请重新生成二维码')}}
-button.onclick=async()=>{clearInterval(timer);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl='';qrVersion=0;button.disabled=true;statusEl.className='';statusEl.textContent='正在启动浏览器并获取二维码…';meta.textContent='';qr.removeAttribute('src');qr.style.display='none';try{const s=await api('/api/sessions',{method:'POST'});id=s.id;token=s.claimToken;await loadQr(s.qrVersion);statusEl.textContent=s.message;button.textContent='等待扫码';timer=setInterval(poll,1200)}catch(e){stopWaiting(e.message)}};
+function resetVerificationUi(){smsSwitch.hidden=true;smsForm.style.display='none';smsCode.value=''}
+function stopWaiting(message){clearInterval(timer);timer=0;if(qrUrl){URL.revokeObjectURL(qrUrl);qrUrl=''}qr.removeAttribute('src');qr.style.display='none';resetVerificationUi();button.disabled=false;button.textContent='重新生成';statusEl.textContent=message;statusEl.className='error';id='';token=''}
+async function poll(){try{const s=await api('/api/sessions/'+id);if(s.qrVersion&&s.qrVersion!==qrVersion)await loadQr(s.qrVersion);statusEl.textContent=s.message;statusEl.className=s.state==='verified'?'ok':(s.state==='failed'||s.state==='expired'?'error':'');smsSwitch.hidden=s.verificationMethod!=='face';smsForm.style.display=s.state==='sms_verification'?'flex':'none';meta.textContent=s.cookieReady?'Cookie 已验证：'+s.cookieFieldCount+' 个字段，'+s.cookieLength+' 个字符'+(s.user?.nickname?'，账号：'+s.user.nickname:''):'';if(s.state==='verified'){clearInterval(timer);timer=0;button.disabled=false;button.textContent='重新生成';qr.style.display='none';resetVerificationUi()}else if(s.state==='failed'||s.state==='expired'){stopWaiting(s.message)}}catch(e){stopWaiting(e.message+'，请重新生成二维码')}}
+smsSwitch.onclick=async()=>{smsSwitch.disabled=true;try{const s=await api('/api/sessions/'+id+'/sms',{method:'POST'});statusEl.textContent=s.message;smsForm.style.display='flex';smsSwitch.hidden=true}catch(e){statusEl.textContent=e.message;statusEl.className='error'}finally{smsSwitch.disabled=false}};
+smsSubmit.onclick=async()=>{const code=smsCode.value.trim();smsSubmit.disabled=true;try{const s=await api('/api/sessions/'+id+'/sms-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});statusEl.textContent=s.message;smsForm.style.display='none'}catch(e){statusEl.textContent=e.message;statusEl.className='error'}finally{smsSubmit.disabled=false}};
+button.onclick=async()=>{clearInterval(timer);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl='';qrVersion=0;resetVerificationUi();button.disabled=true;statusEl.className='';statusEl.textContent='正在启动浏览器并获取二维码…';meta.textContent='';qr.removeAttribute('src');qr.style.display='none';try{const s=await api('/api/sessions',{method:'POST'});id=s.id;token=s.claimToken;await loadQr(s.qrVersion);statusEl.textContent=s.message;button.textContent='等待扫码';timer=setInterval(poll,1200)}catch(e){stopWaiting(e.message)}};
 </script></body></html>`;
 
 const server = http.createServer(async (req, res) => {
@@ -501,8 +575,8 @@ const server = http.createServer(async (req, res) => {
     try {
       const session = await createSession();
       return json(res, 201, { ...publicState(session), claimToken: session.claimToken });
-    } catch (error) {
-      return json(res, 503, { error: error.message });
+    } catch {
+      return json(res, 503, { error: '二维码服务暂时不可用，请稍后重试' });
     }
   }
 
@@ -524,8 +598,8 @@ const server = http.createServer(async (req, res) => {
         'X-Content-Type-Options': 'nosniff',
       });
       return res.end(image);
-    } catch (error) {
-      return json(res, 500, { error: `读取二维码失败：${error.message}` });
+    } catch {
+      return json(res, 500, { error: '读取二维码失败，请重新生成' });
     }
   }
   if (req.method === 'GET' && parsed.action === 'screenshot') {
@@ -539,8 +613,32 @@ const server = http.createServer(async (req, res) => {
         'X-Content-Type-Options': 'nosniff',
       });
       return res.end(image);
+    } catch {
+      return json(res, 500, { error: '读取登录页面截图失败' });
+    }
+  }
+  if (req.method === 'POST' && parsed.action === 'sms') {
+    try {
+      await startSmsVerification(session);
+      return json(res, 200, publicState(session));
     } catch (error) {
-      return json(res, 500, { error: `读取登录页面截图失败：${error.message}` });
+      const safeMessage = ['当前页面没有短信验证入口', '登录会话已结束'].includes(error.message)
+        ? error.message
+        : '切换短信验证失败，请重试';
+      return json(res, 409, { error: safeMessage });
+    }
+  }
+  if (req.method === 'POST' && parsed.action === 'sms-code') {
+    try {
+      const body = await readJsonBody(req);
+      await submitSmsCode(session, String(body.code || ''));
+      return json(res, 200, publicState(session));
+    } catch (error) {
+      const safeErrors = new Set([
+        '请求内容过大', '请求格式无效', '请输入 4 至 8 位数字验证码',
+        '未找到验证码输入框', '当前页面没有短信验证入口', '登录会话已结束',
+      ]);
+      return json(res, 400, { error: safeErrors.has(error.message) ? error.message : '验证码提交失败，请重试' });
     }
   }
   if (req.method === 'POST' && parsed.action === 'claim') {
