@@ -15,6 +15,8 @@ const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/
 const sessions = new Map();
 
 let browserPromise;
+let standbySession = null;
+let standbyPreparation = null;
 
 function browser() {
   if (!browserPromise) {
@@ -87,6 +89,10 @@ function cookieHeader(cookies) {
     .join('; ');
 }
 
+function safeLoginResponse(url) {
+  return url.includes('check_qrconnect') || url.includes('passport') && url.includes('login');
+}
+
 async function findQr(page) {
   const selectors = [
     '#animate_qrcode_container img',
@@ -102,17 +108,21 @@ async function findQr(page) {
 }
 
 async function ensureLoginPanel(page) {
-  if (await findQr(page)) return;
-  const loginButtons = [
-    page.getByText('登录', { exact: true }).first(),
-    page.locator('p:has-text("登录")').first(),
-    page.locator('[data-e2e="login-button"]').first(),
-  ];
-  for (const button of loginButtons) {
-    if (await button.count() && await button.isVisible().catch(() => false)) {
-      await button.click({ timeout: 5000 }).catch(() => {});
-      break;
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    if (await findQr(page)) return;
+    const loginButtons = [
+      page.getByText('登录', { exact: true }).first(),
+      page.locator('p:has-text("登录")').first(),
+      page.locator('[data-e2e="login-button"]').first(),
+    ];
+    for (const button of loginButtons) {
+      if (await button.count() && await button.isVisible().catch(() => false)) {
+        await button.click({ timeout: 3000 }).catch(() => {});
+        return;
+      }
     }
+    await page.waitForTimeout(250);
   }
 }
 
@@ -211,9 +221,7 @@ async function closeSession(session) {
   session.qr = null;
 }
 
-async function createSession() {
-  const activeCount = [...sessions.values()].filter((item) => !item.closed && Date.now() < item.expiresAt).length;
-  if (activeCount >= MAX_SESSIONS) throw new Error('当前扫码会话过多，请稍后重试');
+async function buildSession() {
   const now = Date.now();
   const session = {
     id: randomToken(18),
@@ -225,12 +233,12 @@ async function createSession() {
     cookie: '',
     user: null,
     lastCookieFingerprint: '',
+    lastLoginResponseStatus: '',
     context: null,
     page: null,
     qr: null,
     closed: false,
   };
-  sessions.set(session.id, session);
 
   try {
     const instance = await browser();
@@ -240,13 +248,36 @@ async function createSession() {
       userAgent: USER_AGENT,
       viewport: { width: 1440, height: 1000 },
     });
+    await session.context.route('**/*', (route) => {
+      const resourceType = route.request().resourceType();
+      if (resourceType === 'media' || resourceType === 'font') return route.abort();
+      return route.continue();
+    });
     session.page = await session.context.newPage();
-    await session.page.goto(DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+    session.page.on('response', async (response) => {
+      if (!safeLoginResponse(response.url())) return;
+      try {
+        const payload = await response.json();
+        const data = payload?.data || {};
+        const status = data.status ?? payload?.status ?? payload?.error_code ?? 'unknown';
+        if (status === session.lastLoginResponseStatus) return;
+        session.lastLoginResponseStatus = status;
+        console.log(
+          `[douyin-login] session=${session.id.slice(0, 8)} loginResponse ` +
+          `status=${status} http=${response.status()} path=${new URL(response.url()).pathname}`
+        );
+      } catch {
+        console.log(
+          `[douyin-login] session=${session.id.slice(0, 8)} loginResponse ` +
+          `http=${response.status()} path=${new URL(response.url()).pathname}`
+        );
+      }
+    });
+    await session.page.goto(DOUYIN_URL, { waitUntil: 'commit', timeout: 45_000 });
     await ensureLoginPanel(session.page);
     await waitForQr(session);
     const initialCookies = cookieHeader(await session.context.cookies());
     session.lastCookieFingerprint = crypto.createHash('sha256').update(initialCookies).digest('hex');
-    void watchSession(session);
     return session;
   } catch (error) {
     session.state = 'failed';
@@ -254,6 +285,40 @@ async function createSession() {
     await closeSession(session);
     throw error;
   }
+}
+
+async function prepareStandbySession() {
+  if (standbySession) return;
+  if (standbyPreparation) return standbyPreparation;
+  standbyPreparation = buildSession()
+    .then((session) => {
+      standbySession = session;
+      console.log(`[douyin-login] standby ready in ${Date.now() - Date.parse(session.createdAt)}ms`);
+    })
+    .catch((error) => {
+      console.error(`[douyin-login] standby failed: ${error.message}`);
+    })
+    .finally(() => {
+      standbyPreparation = null;
+    });
+  await standbyPreparation;
+}
+
+async function createSession() {
+  const activeCount = [...sessions.values()].filter((item) => !item.closed && Date.now() < item.expiresAt).length;
+  if (activeCount >= MAX_SESSIONS) throw new Error('当前扫码会话过多，请稍后重试');
+
+  if (!standbySession) await prepareStandbySession();
+  let session = standbySession;
+  standbySession = null;
+  if (!session || session.closed || session.expiresAt - Date.now() < 60_000) {
+    if (session) await closeSession(session);
+    session = await buildSession();
+  }
+  sessions.set(session.id, session);
+  void watchSession(session);
+  void prepareStandbySession();
+  return session;
 }
 
 function parseSessionPath(pathname) {
@@ -331,12 +396,18 @@ const cleanupTimer = setInterval(() => {
       sessions.delete(id);
     }
   }
+  if (standbySession && standbySession.expiresAt - Date.now() < 60_000) {
+    void closeSession(standbySession);
+    standbySession = null;
+  }
+  void prepareStandbySession();
 }, 30_000);
 cleanupTimer.unref();
 
 async function shutdown() {
   server.close();
   for (const session of sessions.values()) await closeSession(session);
+  if (standbySession) await closeSession(standbySession);
   if (browserPromise) await (await browserPromise).close().catch(() => {});
   process.exit(0);
 }
@@ -347,4 +418,5 @@ process.on('SIGTERM', shutdown);
 server.listen(PORT, HOST, () => {
   console.log(`[douyin-login] listening on http://${HOST}:${PORT}`);
   console.log(`[douyin-login] headless=${HEADLESS}, sessionTTL=${SESSION_TTL_MS}ms, maxSessions=${MAX_SESSIONS}`);
+  void prepareStandbySession();
 });
