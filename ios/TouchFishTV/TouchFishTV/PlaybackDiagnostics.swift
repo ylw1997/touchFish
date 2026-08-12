@@ -13,8 +13,10 @@ final class PlaybackDiagnostics: @unchecked Sendable {
     private let formatter: ISO8601DateFormatter
 
     private init() {
-        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        fileURL = documents.appendingPathComponent("playback-diagnostics.log")
+        // tvOS 的 Documents 在部分模拟器/设备环境中不可写；诊断日志属于缓存，
+        // 放到 Caches 才符合平台目录语义，也不会触发反复的权限错误。
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        fileURL = caches.appendingPathComponent("playback-diagnostics.log")
         formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         event(

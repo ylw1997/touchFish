@@ -1,4 +1,45 @@
 import SwiftUI
+import UIKit
+
+private struct LongCookieEditor: UIViewRepresentable {
+    @Binding var text: String
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text)
+    }
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.delegate = context.coordinator
+        textView.backgroundColor = .clear
+        textView.textColor = .white
+        textView.font = .preferredFont(forTextStyle: .body)
+        textView.autocapitalizationType = .none
+        textView.autocorrectionType = .no
+        textView.spellCheckingType = .no
+        textView.keyboardType = .asciiCapable
+        textView.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
+        textView.text = text
+        return textView
+    }
+
+    func updateUIView(_ textView: UITextView, context: Context) {
+        guard textView.text != text else { return }
+        textView.text = text
+    }
+
+    final class Coordinator: NSObject, UITextViewDelegate {
+        private var text: Binding<String>
+
+        init(text: Binding<String>) {
+            self.text = text
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            text.wrappedValue = textView.text
+        }
+    }
+}
 
 struct SettingsView: View {
     @EnvironmentObject var api: DouyinAPI
@@ -57,13 +98,25 @@ struct SettingsView: View {
                 .font(.headline)
                 .foregroundStyle(api.cookie.isEmpty ? Color.orange : Color.green)
 
-                TextField("在此粘贴或输入您的 Cookie 字符串", text: $inputCookie)
-                    .font(.body)
-                    .foregroundColor(.white)
-                    .padding(15)
+                LongCookieEditor(text: $inputCookie)
                     .background(Color.white.opacity(0.08))
                     .cornerRadius(10)
+                    .frame(height: 180)
                     .focused($focusedField, equals: .cookieText)
+
+                let normalized = DouyinAPI.normalizedCookie(from: inputCookie)
+                let fieldCount = normalized.split(separator: ";").count
+                let hasSession = normalized
+                    .split(separator: ";")
+                    .map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+                    .contains { $0.hasPrefix("sessionid=") || $0.hasPrefix("sessionid_ss=") }
+                Label(
+                    "已接收 \(normalized.count) 个字符、\(fieldCount) 个字段"
+                        + (hasSession ? "，包含登录字段" : "，缺少 sessionid"),
+                    systemImage: hasSession ? "checkmark.shield.fill" : "exclamationmark.triangle.fill"
+                )
+                .font(.callout)
+                .foregroundStyle(hasSession ? Color.green : Color.orange)
                 
                 HStack(spacing: 25) {
                     Button(action: saveCookie) {

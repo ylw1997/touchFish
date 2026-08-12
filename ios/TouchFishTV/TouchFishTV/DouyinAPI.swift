@@ -56,6 +56,7 @@ enum APIError: LocalizedError {
     case httpError(statusCode: Int)
     case apiError(message: String)
     case emptyCookie
+    case incompleteCookie(receivedLength: Int, fieldCount: Int)
     case emptyResponse
     case invalidResponseData
 
@@ -71,6 +72,8 @@ enum APIError: LocalizedError {
             return message
         case .emptyCookie:
             return "Cookie 不能为空"
+        case .incompleteCookie(let receivedLength, let fieldCount):
+            return "Cookie 不完整：当前只接收到 \(receivedLength) 个字符、\(fieldCount) 个字段，缺少 sessionid 登录字段"
         case .emptyResponse:
             return "抖音接口返回了空数据，请稍后重试"
         case .invalidResponseData:
@@ -137,18 +140,31 @@ final class DouyinAPI: ObservableObject {
 #endif
     
     static func normalizedCookie(from input: String) -> String {
-        let lines = input
+        let normalizedNewlines = input
+            .replacingOccurrences(of: "\u{2028}", with: "\n")
+            .replacingOccurrences(of: "\u{2029}", with: "\n")
+        let lines = normalizedNewlines
             .components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
 
-        if let cookieLine = lines.first(where: { $0.lowercased().hasPrefix("cookie:") }),
-           let separator = cookieLine.firstIndex(of: ":") {
-            return String(cookieLine[cookieLine.index(after: separator)...])
+        if let cookieIndex = lines.firstIndex(where: { $0.lowercased().hasPrefix("cookie:") }),
+           let separator = lines[cookieIndex].firstIndex(of: ":") {
+            var cookieParts = [String(lines[cookieIndex][lines[cookieIndex].index(after: separator)...])]
+            for line in lines.dropFirst(cookieIndex + 1) {
+                // 兼容从开发者工具复制的多行 Headers；遇到下一个请求头后停止。
+                if line.range(of: #"^[A-Za-z0-9-]+\s*:"#, options: .regularExpression) != nil {
+                    break
+                }
+                cookieParts.append(line)
+            }
+            return cookieParts.joined()
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
-        let joined = lines.joined(separator: " ")
+        // Cookie 可能被 tvOS/iPhone 接力键盘按显示宽度拆成多行，换行本身
+        // 不属于 Cookie 值，因此直接拼回，避免在字段值中插入空格。
+        let joined = lines.joined()
         if joined.lowercased().hasPrefix("cookie:"), let separator = joined.firstIndex(of: ":") {
             return String(joined[joined.index(after: separator)...])
                 .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -258,15 +274,24 @@ final class DouyinAPI: ObservableObject {
         let normalized = Self.normalizedCookie(from: input)
         guard !normalized.isEmpty else { throw APIError.emptyCookie }
 
-#if DEBUG
-        let cookieFieldCount = normalized.split(separator: ";").count
-        let hasSession = normalized
+        let cookieFields = normalized
             .split(separator: ";")
-            .map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
-            .contains { $0.hasPrefix("sessionid=") || $0.hasPrefix("sessionid_ss=") }
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        let hasSession = cookieFields.contains {
+            let field = $0.lowercased()
+            return field.hasPrefix("sessionid=") || field.hasPrefix("sessionid_ss=")
+        }
+        guard hasSession else {
+            throw APIError.incompleteCookie(
+                receivedLength: normalized.count,
+                fieldCount: cookieFields.count
+            )
+        }
+
+#if DEBUG
         print(
             "[DouyinAPI] validatingCookie length=\(normalized.utf8.count) "
-            + "fields=\(cookieFieldCount) hasSession=\(hasSession)"
+            + "fields=\(cookieFields.count) hasSession=\(hasSession)"
         )
 #endif
 
