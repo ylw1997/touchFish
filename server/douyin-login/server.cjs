@@ -192,7 +192,7 @@ async function waitForQr(session) {
 }
 
 async function findLargeSquareVisual(page) {
-  const candidates = page.locator('img, canvas');
+  const candidates = page.locator('img');
   let best = null;
   let bestArea = 0;
   const count = await candidates.count();
@@ -200,7 +200,7 @@ async function findLargeSquareVisual(page) {
     const candidate = candidates.nth(index);
     if (!await candidate.isVisible().catch(() => false)) continue;
     const box = await candidate.boundingBox().catch(() => null);
-    if (!box || box.width < 160 || box.height < 160) continue;
+    if (!box || box.width < 100 || box.height < 100 || box.width > 300 || box.height > 300) continue;
     const ratio = box.width / box.height;
     if (ratio < 0.75 || ratio > 1.25) continue;
     const area = box.width * box.height;
