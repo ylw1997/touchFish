@@ -95,6 +95,51 @@ function safeLoginResponse(url) {
   return url.includes('check_qrconnect') || url.includes('passport') && url.includes('login');
 }
 
+function findNestedValue(value, keys, depth = 0) {
+  if (!value || depth > 5) return undefined;
+  if (typeof value === 'string') {
+    const candidate = value.trim();
+    if (candidate.length > 1 && candidate.length < 100_000 && (candidate[0] === '{' || candidate[0] === '[')) {
+      try { return findNestedValue(JSON.parse(candidate), keys, depth + 1); } catch { return undefined; }
+    }
+    return undefined;
+  }
+  if (typeof value !== 'object') return undefined;
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(value, key) && value[key] != null) return value[key];
+  }
+  for (const child of Object.values(value)) {
+    const found = findNestedValue(child, keys, depth + 1);
+    if (found != null) return found;
+  }
+  return undefined;
+}
+
+async function followLoginRedirect(session, redirectUrl) {
+  if (session.redirectFollowed || typeof redirectUrl !== 'string') return;
+  let target;
+  try { target = new URL(redirectUrl); } catch { return; }
+  const isDouyinHost = target.hostname === 'douyin.com' || target.hostname.endsWith('.douyin.com');
+  if (target.protocol !== 'https:' || !isDouyinHost) return;
+  session.redirectFollowed = true;
+  session.state = 'verifying';
+  session.message = '扫码已确认，正在完成登录跳转';
+  try {
+    const response = await session.context.request.get(target.toString(), {
+      headers: { Referer: 'https://www.douyin.com/', 'User-Agent': USER_AGENT },
+      maxRedirects: 20,
+      timeout: 20_000,
+    });
+    console.log(
+      `[douyin-login] session=${session.id.slice(0, 8)} redirect ` +
+      `status=${response.status()} host=${target.hostname}`
+    );
+  } catch (error) {
+    session.redirectFollowed = false;
+    console.log(`[douyin-login] session=${session.id.slice(0, 8)} redirect failed=${error.name}`);
+  }
+}
+
 async function findQr(page) {
   const selectors = [
     '#animate_qrcode_container img',
@@ -155,12 +200,20 @@ async function detectLogin(session) {
     hasUserLogin = await session.page.evaluate(() => localStorage.getItem('HasUserLogin') === '1');
   } catch {}
 
-  if (cookieFingerprint === session.lastCookieFingerprint && loginStatus !== '1' && !hasUserLogin) return;
+  const cookieChanged = cookieFingerprint !== session.lastCookieFingerprint;
+  const loginConfirmed = session.redirectFollowed ||
+    session.lastLoginResponseStatus.startsWith('confirmed:') ||
+    session.lastLoginResponseStatus.startsWith('3:');
+  if (!cookieChanged && loginStatus !== '1' && !hasUserLogin && !loginConfirmed) return;
+  if (!cookieChanged && Date.now() - session.lastProfileCheckAt < 2_000) return;
   session.lastCookieFingerprint = cookieFingerprint;
-  console.log(
-    `[douyin-login] session=${session.id.slice(0, 8)} cookieChanged fields=${cookies.length} ` +
-    `loginStatus=${loginStatus === '1'} localStorage=${hasUserLogin}`
-  );
+  session.lastProfileCheckAt = Date.now();
+  if (cookieChanged) {
+    console.log(
+      `[douyin-login] session=${session.id.slice(0, 8)} cookieChanged fields=${cookies.length} ` +
+      `loginStatus=${loginStatus === '1'} localStorage=${hasUserLogin}`
+    );
+  }
   session.state = 'verifying';
   session.message = '检测到登录凭证变化，正在验证登录态';
 
@@ -236,6 +289,8 @@ async function buildSession() {
     user: null,
     lastCookieFingerprint: '',
     lastLoginResponseStatus: '',
+    lastProfileCheckAt: 0,
+    redirectFollowed: false,
     qrExpired: false,
     issued: false,
     context: null,
@@ -262,10 +317,14 @@ async function buildSession() {
       if (!safeLoginResponse(response.url())) return;
       try {
         const payload = await response.json();
-        const data = payload?.data || {};
-        const status = data.status ?? payload?.status ?? payload?.error_code ?? 'unknown';
-        if (status === session.lastLoginResponseStatus) return;
-        session.lastLoginResponseStatus = status;
+        const status = findNestedValue(payload, ['status', 'scan_status']) ?? payload?.error_code ?? 'unknown';
+        const redirectUrl = findNestedValue(payload, ['redirect_url', 'redirectUrl']);
+        const responseKey = `${String(status)}:${Boolean(redirectUrl)}`;
+        if (status === 'confirmed' || status === '3' || redirectUrl) {
+          void followLoginRedirect(session, redirectUrl);
+        }
+        if (responseKey === session.lastLoginResponseStatus) return;
+        session.lastLoginResponseStatus = responseKey;
         console.log(
           `[douyin-login] session=${session.id.slice(0, 8)} loginResponse ` +
           `status=${status} http=${response.status()} path=${new URL(response.url()).pathname}`
