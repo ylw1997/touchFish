@@ -66,6 +66,8 @@ X-Claim-Token: <claimToken>
 | `HEADLESS` | `true` | 设置为 `false` 可显示 Chromium |
 | `SESSION_TTL_MS` | `300000` | 一次性会话有效期 |
 | `MAX_SESSIONS` | `3` | 最大并发浏览器会话数 |
+| `STANDBY_REFRESH_AGE_MS` | `30000` | 预热二维码后台换新时间 |
+| `STANDBY_MAX_AGE_MS` | `90000` | 允许发给客户端的预热二维码最大年龄 |
 
 ## 安全边界
 
