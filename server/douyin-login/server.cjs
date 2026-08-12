@@ -329,6 +329,10 @@ async function buildSession() {
           `[douyin-login] session=${session.id.slice(0, 8)} loginResponse ` +
           `status=${status} http=${response.status()} path=${new URL(response.url()).pathname}`
         );
+        if (status === 'scanned' || status === '2') {
+          session.state = 'waiting';
+          session.message = '二维码已扫描，请在手机上确认登录';
+        }
         if (status === 'expired') {
           session.qrExpired = true;
           if (session.issued) {
@@ -407,7 +411,7 @@ async function createSession() {
 }
 
 function parseSessionPath(pathname) {
-  const match = pathname.match(/^\/api\/sessions\/([A-Za-z0-9_-]+)(?:\/(qr|claim))?$/);
+  const match = pathname.match(/^\/api\/sessions\/([A-Za-z0-9_-]+)(?:\/(qr|claim|screenshot))?$/);
   if (!match) return null;
   return { id: match[1], action: match[2] || 'status' };
 }
@@ -458,6 +462,21 @@ const server = http.createServer(async (req, res) => {
       return res.end(image);
     } catch (error) {
       return json(res, 500, { error: `读取二维码失败：${error.message}` });
+    }
+  }
+  if (req.method === 'GET' && parsed.action === 'screenshot') {
+    if (!session.page || session.closed) return json(res, 409, { error: session.message });
+    try {
+      const image = await session.page.screenshot({ type: 'png', fullPage: false });
+      res.writeHead(200, {
+        'Content-Type': 'image/png',
+        'Content-Length': image.length,
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+      });
+      return res.end(image);
+    } catch (error) {
+      return json(res, 500, { error: `读取登录页面截图失败：${error.message}` });
     }
   }
   if (req.method === 'POST' && parsed.action === 'claim') {
