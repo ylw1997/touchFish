@@ -1,0 +1,17 @@
+{
+  "name": "touchfish-douyin-login-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TouchFish 抖音扫码登录中转服务",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "check": "node --check server.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright": "1.59.1"
+  }
+}

@@ -25,6 +25,10 @@ APIS/
 .claude/
 .worktrees/
 server/
+!server/
+server/*
+!server/douyin-login/
+!server/douyin-login/**
 
 # macOS / Xcode user state
 .DS_Store
