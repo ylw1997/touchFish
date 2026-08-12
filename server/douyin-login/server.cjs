@@ -71,6 +71,8 @@ function publicState(session) {
     cookieReady: Boolean(session.cookie),
     cookieLength: session.cookie?.length || 0,
     cookieFieldCount: session.cookie ? session.cookie.split(';').length : 0,
+    qrVersion: session.qrVersion,
+    verificationMethod: session.verificationMethod,
     user: session.user || null,
   };
 }
@@ -179,6 +181,7 @@ async function waitForQr(session) {
     const qr = await findQr(session.page);
     if (qr) {
       session.qr = qr;
+      session.qrVersion = 1;
       session.state = 'waiting';
       session.message = '请使用抖音 App 扫码并在手机上确认';
       return;
@@ -186,6 +189,60 @@ async function waitForQr(session) {
     await session.page.waitForTimeout(500);
   }
   throw new Error('未能从抖音登录页提取二维码');
+}
+
+async function findLargeSquareVisual(page) {
+  const candidates = page.locator('img, canvas');
+  let best = null;
+  let bestArea = 0;
+  const count = await candidates.count();
+  for (let index = 0; index < count; index += 1) {
+    const candidate = candidates.nth(index);
+    if (!await candidate.isVisible().catch(() => false)) continue;
+    const box = await candidate.boundingBox().catch(() => null);
+    if (!box || box.width < 160 || box.height < 160) continue;
+    const ratio = box.width / box.height;
+    if (ratio < 0.75 || ratio > 1.25) continue;
+    const area = box.width * box.height;
+    if (area > bestArea) {
+      best = candidate;
+      bestArea = area;
+    }
+  }
+  return best;
+}
+
+async function startFaceVerification(session) {
+  if (session.identityVerificationStarted || !session.page || session.closed) return false;
+  const faceButton = session.page.getByText('手机刷脸验证', { exact: true }).first();
+  if (!await faceButton.count() || !await faceButton.isVisible().catch(() => false)) return false;
+  session.identityVerificationStarted = true;
+  session.verificationMethod = 'face';
+  session.state = 'verifying';
+  session.message = '检测到身份验证，正在生成刷脸验证二维码';
+  console.log(`[douyin-login] session=${session.id.slice(0, 8)} identityVerification=face`);
+  try {
+    await faceButton.click({ timeout: 5_000 });
+    const deadline = Date.now() + 15_000;
+    while (Date.now() < deadline && !session.closed) {
+      const qr = await findLargeSquareVisual(session.page);
+      if (qr) {
+        session.qr = qr;
+        session.qrVersion += 1;
+        session.state = 'face_verification';
+        session.message = '请使用抖音 App 扫描新二维码并按提示完成刷脸验证';
+        return true;
+      }
+      await session.page.waitForTimeout(500);
+    }
+    session.state = 'waiting';
+    session.message = '已进入刷脸验证，请按抖音页面提示继续';
+  } catch (error) {
+    session.identityVerificationStarted = false;
+    session.verificationMethod = '';
+    console.log(`[douyin-login] session=${session.id.slice(0, 8)} faceVerification failed=${error.name}`);
+  }
+  return false;
 }
 
 async function detectLogin(session) {
@@ -201,7 +258,7 @@ async function detectLogin(session) {
   } catch {}
 
   const cookieChanged = cookieFingerprint !== session.lastCookieFingerprint;
-  const loginConfirmed = session.redirectFollowed ||
+  const loginConfirmed = session.identityVerificationStarted || session.redirectFollowed ||
     session.lastLoginResponseStatus.startsWith('confirmed:') ||
     session.lastLoginResponseStatus.startsWith('3:');
   if (!cookieChanged && loginStatus !== '1' && !hasUserLogin && !loginConfirmed) return;
@@ -235,8 +292,11 @@ async function detectLogin(session) {
     `statusCode=${payload?.status_code ?? 'unknown'} user=${Boolean(user)}`
   );
   if (!response.ok() || payload?.status_code !== 0 || !user) {
+    if (await startFaceVerification(session)) return;
     session.state = 'waiting';
-    session.message = '扫码已确认，但登录态尚未生效，正在继续等待';
+    session.message = session.identityVerificationStarted
+      ? '正在等待刷脸验证完成'
+      : '扫码已确认，但登录态尚未生效，正在继续等待';
     return;
   }
 
@@ -291,6 +351,9 @@ async function buildSession() {
     lastLoginResponseStatus: '',
     lastProfileCheckAt: 0,
     redirectFollowed: false,
+    identityVerificationStarted: false,
+    verificationMethod: '',
+    qrVersion: 0,
     qrExpired: false,
     issued: false,
     context: null,
@@ -422,11 +485,12 @@ const appHtml = `<!doctype html>
 body{margin:0;background:#101114;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:center;min-height:100vh}.card{width:min(520px,calc(100vw - 40px));padding:32px;border:1px solid #303238;border-radius:22px;background:#18191d;text-align:center;box-sizing:border-box}h1{font-size:25px;margin:0 0 10px}p{color:#aeb0b8;line-height:1.6}.qr{width:280px;height:280px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;margin:18px auto;display:none}button{border:0;border-radius:12px;background:#fe2c55;color:#fff;font-weight:700;font-size:17px;padding:13px 26px;cursor:pointer}button:disabled{opacity:.45}.ok{color:#56d68b}.error{color:#ff718d}.meta{font-size:13px;color:#777b85;word-break:break-all}</style></head>
 <body><main class="card"><h1>抖音扫码登录验证</h1><p id="status">点击按钮生成一次性二维码。服务不会在页面或日志中显示完整 Cookie。</p><img id="qr" class="qr" alt="抖音登录二维码"><div><button id="start">生成二维码</button></div><p id="meta" class="meta"></p></main>
 <script>
-let id='',token='',timer=0,qrUrl='';const statusEl=document.querySelector('#status'),qr=document.querySelector('#qr'),button=document.querySelector('#start'),meta=document.querySelector('#meta');
+let id='',token='',timer=0,qrUrl='',qrVersion=0;const statusEl=document.querySelector('#status'),qr=document.querySelector('#qr'),button=document.querySelector('#start'),meta=document.querySelector('#meta');
 async function api(url,options={}){options.headers={...(options.headers||{}),...(token?{'X-Claim-Token':token}:{})};const response=await fetch(url,options);const data=await response.json();if(!response.ok)throw new Error(data.error||'请求失败');return data}
+async function loadQr(version){const response=await fetch('/api/sessions/'+id+'/qr',{headers:{'X-Claim-Token':token}});if(!response.ok)throw new Error((await response.json()).error);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl=URL.createObjectURL(await response.blob());qr.src=qrUrl;qr.style.display='block';qrVersion=version||qrVersion+1}
 function stopWaiting(message){clearInterval(timer);timer=0;if(qrUrl){URL.revokeObjectURL(qrUrl);qrUrl=''}qr.removeAttribute('src');qr.style.display='none';button.disabled=false;button.textContent='重新生成';statusEl.textContent=message;statusEl.className='error';id='';token=''}
-async function poll(){try{const s=await api('/api/sessions/'+id);statusEl.textContent=s.message;statusEl.className=s.state==='verified'?'ok':(s.state==='failed'||s.state==='expired'?'error':'');meta.textContent=s.cookieReady?'Cookie 已验证：'+s.cookieFieldCount+' 个字段，'+s.cookieLength+' 个字符'+(s.user?.nickname?'，账号：'+s.user.nickname:''):'';if(s.state==='verified'){clearInterval(timer);timer=0;button.disabled=false;button.textContent='重新生成';qr.style.display='none'}else if(s.state==='failed'||s.state==='expired'){stopWaiting(s.message)}}catch(e){stopWaiting(e.message+'，请重新生成二维码')}}
-button.onclick=async()=>{clearInterval(timer);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl='';button.disabled=true;statusEl.className='';statusEl.textContent='正在启动浏览器并获取二维码…';meta.textContent='';qr.removeAttribute('src');qr.style.display='none';try{const s=await api('/api/sessions',{method:'POST'});id=s.id;token=s.claimToken;const response=await fetch('/api/sessions/'+id+'/qr',{headers:{'X-Claim-Token':token}});if(!response.ok)throw new Error((await response.json()).error);qrUrl=URL.createObjectURL(await response.blob());qr.src=qrUrl;qr.style.display='block';statusEl.textContent=s.message;button.textContent='等待扫码';timer=setInterval(poll,1200)}catch(e){stopWaiting(e.message)}};
+async function poll(){try{const s=await api('/api/sessions/'+id);if(s.qrVersion&&s.qrVersion!==qrVersion)await loadQr(s.qrVersion);statusEl.textContent=s.message;statusEl.className=s.state==='verified'?'ok':(s.state==='failed'||s.state==='expired'?'error':'');meta.textContent=s.cookieReady?'Cookie 已验证：'+s.cookieFieldCount+' 个字段，'+s.cookieLength+' 个字符'+(s.user?.nickname?'，账号：'+s.user.nickname:''):'';if(s.state==='verified'){clearInterval(timer);timer=0;button.disabled=false;button.textContent='重新生成';qr.style.display='none'}else if(s.state==='failed'||s.state==='expired'){stopWaiting(s.message)}}catch(e){stopWaiting(e.message+'，请重新生成二维码')}}
+button.onclick=async()=>{clearInterval(timer);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl='';qrVersion=0;button.disabled=true;statusEl.className='';statusEl.textContent='正在启动浏览器并获取二维码…';meta.textContent='';qr.removeAttribute('src');qr.style.display='none';try{const s=await api('/api/sessions',{method:'POST'});id=s.id;token=s.claimToken;await loadQr(s.qrVersion);statusEl.textContent=s.message;button.textContent='等待扫码';timer=setInterval(poll,1200)}catch(e){stopWaiting(e.message)}};
 </script></body></html>`;
 
 const server = http.createServer(async (req, res) => {
