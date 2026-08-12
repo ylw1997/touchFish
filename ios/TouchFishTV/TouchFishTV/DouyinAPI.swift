@@ -113,9 +113,11 @@ final class DouyinAPI: ObservableObject {
         let legacyCookie = UserDefaults.standard.string(forKey: "douyin_cookie") ?? ""
         let savedCookie = DouyinCredentialStore.load() ?? legacyCookie
 #if DEBUG
-        self.cookie = savedCookie.isEmpty ? Self.loadDebugCookieFile() : savedCookie
+        self.cookie = savedCookie.isEmpty
+            ? Self.loadDebugCookieFile()
+            : Self.compactLoginCookie(from: savedCookie)
 #else
-        self.cookie = savedCookie
+        self.cookie = Self.compactLoginCookie(from: savedCookie)
 #endif
         if !self.cookie.isEmpty {
             DouyinCredentialStore.save(self.cookie)
@@ -135,7 +137,7 @@ final class DouyinAPI: ObservableObject {
         guard let content = try? String(contentsOf: cookieURL, encoding: .utf8) else {
             return ""
         }
-        return normalizedCookie(from: content)
+        return compactLoginCookie(from: content)
     }
 #endif
     
@@ -170,6 +172,28 @@ final class DouyinAPI: ObservableObject {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         }
         return joined
+    }
+
+    /// 抖音网页 Cookie 包含大量风控和界面状态字段，完整内容通常超过 6 KB，
+    /// 但登录接口只需要会话身份字段。tvOS 接力键盘对超长文本不稳定，验证
+    /// 成功后仅持久化这些已实测足够访问个人资料和收藏接口的字段。
+    static func compactLoginCookie(from input: String) -> String {
+        let normalized = normalizedCookie(from: input)
+        let requiredOrder = [
+            "sessionid", "sessionid_ss", "sid_guard", "sid_tt", "uid_tt", "uid_tt_ss"
+        ]
+        var values: [String: String] = [:]
+        for component in normalized.split(separator: ";", omittingEmptySubsequences: true) {
+            let pair = component.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let separator = pair.firstIndex(of: "=") else { continue }
+            let name = String(pair[..<separator]).lowercased()
+            guard requiredOrder.contains(name), values[name] == nil else { continue }
+            values[name] = String(pair[pair.index(after: separator)...])
+        }
+        let compact = requiredOrder.compactMap { name in
+            values[name].map { "\(name)=\($0)" }
+        }.joined(separator: "; ")
+        return compact.isEmpty ? normalized : compact
     }
 
     private func getHeaders(cookieOverride: String? = nil, extra: [String: String] = [:]) -> [String: String] {
@@ -271,7 +295,7 @@ final class DouyinAPI: ObservableObject {
     // MARK: - API Methods
     
     func validateCookie(_ input: String) async throws -> String {
-        let normalized = Self.normalizedCookie(from: input)
+        let normalized = Self.compactLoginCookie(from: input)
         guard !normalized.isEmpty else { throw APIError.emptyCookie }
 
         let cookieFields = normalized

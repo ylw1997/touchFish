@@ -34,8 +34,11 @@ private struct LongCookieEditor: UIViewRepresentable {
     }
 
     func updateUIView(_ textField: UITextField, context: Context) {
-        guard textField.text != text else { return }
-        textField.text = text
+        // 长 Cookie 只保存在 SwiftUI 状态中。tvOS 的单行系统输入框可能只保留
+        // 一段展示文本，因此不要再用其内部值反向覆盖完整 Cookie。
+        let displayText = context.coordinator.displayText(for: text)
+        guard textField.text != displayText else { return }
+        textField.text = displayText
     }
 
     final class Coordinator: NSObject, UITextFieldDelegate {
@@ -45,8 +48,14 @@ private struct LongCookieEditor: UIViewRepresentable {
             self.text = text
         }
 
+        func displayText(for value: String) -> String {
+            value.count > 256 ? "已接收完整 Cookie（\(value.count) 个字符）" : value
+        }
+
         @objc func textDidChange(_ textField: UITextField) {
-            text.wrappedValue = textField.text ?? ""
+            let value = textField.text ?? ""
+            guard !value.hasPrefix("已接收完整 Cookie（") else { return }
+            text.wrappedValue = value
         }
 
         func textField(
@@ -55,8 +64,28 @@ private struct LongCookieEditor: UIViewRepresentable {
             replacementString string: String
         ) -> Bool {
             let current = textField.text ?? ""
-            guard let swiftRange = Range(range, in: current) else { return true }
-            let updated = current.replacingCharacters(in: swiftRange, with: string)
+            // iPhone 接力键盘会把一次粘贴作为完整 replacementString 送入。
+            // 在 delegate 中直接保存，避免 UITextField 随后只保留约 455 字符，
+            // editingChanged 再把完整 SwiftUI 状态覆盖掉。
+                if string.count > 256 {
+                let compact = DouyinAPI.compactLoginCookie(from: string)
+                text.wrappedValue = compact
+                textField.text = displayText(for: compact)
+#if DEBUG
+                print(
+                    "[Settings] cookieInput capturedBulkPaste length=\(string.count) "
+                    + "compactLength=\(compact.count)"
+                )
+#endif
+                return false
+            }
+
+            let effectiveCurrent = current.hasPrefix("已接收完整 Cookie（") ? "" : current
+            guard let effectiveRange = Range(range, in: effectiveCurrent) else {
+                text.wrappedValue = string
+                return false
+            }
+            let updated = effectiveCurrent.replacingCharacters(in: effectiveRange, with: string)
             text.wrappedValue = updated
 #if DEBUG
             print(
