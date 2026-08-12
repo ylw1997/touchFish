@@ -1,6 +1,41 @@
 import SwiftUI
 import UIKit
 
+private final class FocusableCookieTextView: UITextView {
+    override var canBecomeFocused: Bool { true }
+
+    override func didUpdateFocus(
+        in context: UIFocusUpdateContext,
+        with coordinator: UIFocusAnimationCoordinator
+    ) {
+        super.didUpdateFocus(in: context, with: coordinator)
+        let isFocused = context.nextFocusedView === self
+        coordinator.addCoordinatedAnimations { [weak self] in
+            self?.layer.borderWidth = isFocused ? 4 : 0
+            self?.layer.borderColor = isFocused
+                ? UIColor.white.withAlphaComponent(0.9).cgColor
+                : UIColor.clear.cgColor
+            self?.transform = isFocused
+                ? CGAffineTransform(scaleX: 1.02, y: 1.02)
+                : .identity
+        }
+#if DEBUG
+        print("[Settings] cookieEditor focused=\(isFocused)")
+#endif
+    }
+
+    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        if presses.contains(where: { $0.type == .select }) {
+            becomeFirstResponder()
+#if DEBUG
+            print("[Settings] cookieEditor editing=true")
+#endif
+            return
+        }
+        super.pressesEnded(presses, with: event)
+    }
+}
+
 private struct LongCookieEditor: UIViewRepresentable {
     @Binding var text: String
 
@@ -8,8 +43,8 @@ private struct LongCookieEditor: UIViewRepresentable {
         Coordinator(text: $text)
     }
 
-    func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
+    func makeUIView(context: Context) -> FocusableCookieTextView {
+        let textView = FocusableCookieTextView()
         textView.delegate = context.coordinator
         textView.backgroundColor = .clear
         textView.textColor = .white
@@ -20,10 +55,13 @@ private struct LongCookieEditor: UIViewRepresentable {
         textView.keyboardType = .asciiCapable
         textView.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
         textView.text = text
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            textView.becomeFirstResponder()
+        }
         return textView
     }
 
-    func updateUIView(_ textView: UITextView, context: Context) {
+    func updateUIView(_ textView: FocusableCookieTextView, context: Context) {
         guard textView.text != text else { return }
         textView.text = text
     }
@@ -41,16 +79,60 @@ private struct LongCookieEditor: UIViewRepresentable {
     }
 }
 
+private struct CookieEditorSheet: View {
+    @Binding var text: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            Text("粘贴抖音 Cookie")
+                .font(.largeTitle.bold())
+
+            Text("请使用 iPhone 接力键盘粘贴完整 Cookie。粘贴后按遥控器返回键收起键盘，再选择“完成输入”。")
+                .font(.title3)
+                .foregroundStyle(.secondary)
+
+            LongCookieEditor(text: $text)
+                .background(Color.white.opacity(0.08))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                }
+                .cornerRadius(14)
+                .frame(height: 360)
+
+            HStack {
+                let normalized = DouyinAPI.normalizedCookie(from: text)
+                Text("已接收 \(normalized.count) 个字符、\(normalized.split(separator: ";").count) 个字段")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                if !normalized.isEmpty {
+                    Button("完成输入") {
+                        dismiss()
+                    }
+                    .font(.headline)
+                }
+            }
+        }
+        .padding(70)
+        .background(Color.black.ignoresSafeArea())
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject var api: DouyinAPI
     @State private var inputCookie: String = ""
     @State private var showSaveAlert: Bool = false
     @State private var alertMessage: String = ""
     @State private var isValidating: Bool = false
+    @State private var showCookieEditor: Bool = false
     @FocusState private var focusedField: Field?
     
     enum Field: Hashable {
-        case cookieText
+        case editCookie
         case saveBtn
         case clearBtn
     }
@@ -98,11 +180,19 @@ struct SettingsView: View {
                 .font(.headline)
                 .foregroundStyle(api.cookie.isEmpty ? Color.orange : Color.green)
 
-                LongCookieEditor(text: $inputCookie)
-                    .background(Color.white.opacity(0.08))
-                    .cornerRadius(10)
-                    .frame(height: 180)
-                    .focused($focusedField, equals: .cookieText)
+                Button {
+                    showCookieEditor = true
+                } label: {
+                    Label(
+                        inputCookie.isEmpty ? "粘贴 Cookie" : "重新粘贴或编辑 Cookie",
+                        systemImage: "doc.on.clipboard.fill"
+                    )
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 16)
+                }
+                .buttonStyle(.borderedProminent)
+                .focused($focusedField, equals: .editCookie)
 
                 let normalized = DouyinAPI.normalizedCookie(from: inputCookie)
                 let fieldCount = normalized.split(separator: ";").count
@@ -150,10 +240,13 @@ struct SettingsView: View {
         .onAppear {
             self.inputCookie = api.cookie
             if self.inputCookie.isEmpty {
-                self.focusedField = .cookieText
+                self.focusedField = .editCookie
             } else {
                 self.focusedField = .saveBtn
             }
+        }
+        .sheet(isPresented: $showCookieEditor) {
+            CookieEditorSheet(text: $inputCookie)
         }
         .alert(isPresented: $showSaveAlert) {
             Alert(title: Text("提示"), message: Text(alertMessage), dismissButton: .default(Text("确定")))
