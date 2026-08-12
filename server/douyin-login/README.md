@@ -1,8 +1,10 @@
 # TouchFish 抖音扫码登录服务
 
-该服务使用真实 Chromium 打开抖音登录页，将二维码提供给 TouchFish 客户端，并在用户扫码确认后收集、验证登录 Cookie。
+该服务使用独立 Chromium 上下文打开 `https://www.douyin.com/user/self`，将登录二维码提供给 TouchFish 客户端，并在用户扫码确认后处理抖音的二次身份验证，最后收集并验证登录 Cookie。
 
-当前阶段用于验证扫码链路，尚未接入 Apple TV。
+登录二维码从 `#douyin_login_comp_scan_code` 中读取。若扫码后出现 `#uc-second-verify`，服务会自动选择“手机刷脸验证”，再从 `#uc_verification_animate_qrcode_container` 内的图片或 SVG `image` 节点提取新的二维码。
+
+当前阶段用于验证扫码和刷脸链路，尚未接入 Apple TV。
 
 ## 已验证结果
 
@@ -12,6 +14,8 @@
 - 扫码确认后成功收集 58 个 Cookie 字段；
 - 使用 `/aweme/v1/web/user/profile/self/` 验证登录态成功；
 - Cookie 一次性领取成功，重复领取返回 `404`。
+
+本地自动化测试还覆盖：未扫码时不提前显示“已扫描”、二次验证弹窗识别、刷脸二维码提取，以及验证成功后的 Cookie 校验。
 
 同一网络在 Windows 无头 Chromium 中会直接进入“验证码中间页”。因此普通云服务器的纯无头容器可能触发抖音风控；正式部署前必须在目标服务器重新扫码验证。遇到该情况时，使用 `HEADLESS=false` 配合桌面环境/VNC，或将服务运行在长期在线的 Mac mini 上。
 

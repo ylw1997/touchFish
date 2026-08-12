@@ -6,7 +6,8 @@
   "main": "server.cjs",
   "scripts": {
     "start": "node server.cjs",
-    "check": "node --check server.cjs"
+    "check": "node --check server.cjs",
+    "test:flow": "node flow-e2e.cjs"
   },
   "engines": {
     "node": ">=20"

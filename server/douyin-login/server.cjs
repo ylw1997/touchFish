@@ -11,9 +11,11 @@ const MAX_SESSIONS = Number(process.env.MAX_SESSIONS || 3);
 const STANDBY_REFRESH_AGE_MS = Number(process.env.STANDBY_REFRESH_AGE_MS || 30_000);
 const STANDBY_MAX_AGE_MS = Number(process.env.STANDBY_MAX_AGE_MS || 90_000);
 const HEADLESS = process.env.HEADLESS !== 'false';
-const DOUYIN_URL = 'https://www.douyin.com/?recommend=1';
-const PROFILE_URL = 'https://www.douyin.com/aweme/v1/web/user/profile/self/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32';
-const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+const ALLOW_LOCAL_TEST = process.env.ALLOW_LOCAL_TEST === 'true';
+const DOUYIN_URL = process.env.DOUYIN_URL || 'https://www.douyin.com/user/self';
+const PROFILE_URL = process.env.PROFILE_URL || 'https://www.douyin.com/aweme/v1/web/user/profile/self/?device_platform=webapp&aid=6383&channel=channel_pc_web&pc_client_type=1&cookie_enabled=true&browser_language=zh-CN&browser_platform=Win32';
+const USER_AGENT = process.env.USER_AGENT ||
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36';
 const sessions = new Map();
 
 let browserPromise;
@@ -107,8 +109,10 @@ function authorized(req, session) {
 }
 
 function cookieHeader(cookies) {
+  const loginHostname = new URL(DOUYIN_URL).hostname;
   return cookies
-    .filter((cookie) => cookie.domain === '.douyin.com' || cookie.domain.endsWith('.douyin.com') || cookie.domain === 'douyin.com')
+    .filter((cookie) => cookie.domain === '.douyin.com' || cookie.domain.endsWith('.douyin.com') ||
+      cookie.domain === 'douyin.com' || ALLOW_LOCAL_TEST && cookie.domain === loginHostname)
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join('; ');
@@ -138,6 +142,27 @@ function findNestedValue(value, keys, depth = 0) {
   return undefined;
 }
 
+function decodeDataImage(dataUrl) {
+  if (typeof dataUrl !== 'string') return null;
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/);
+  if (!match) return null;
+  try {
+    const image = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
+    if (!image.length) return null;
+    return { image, mimeType: match[1].toLowerCase() };
+  } catch {
+    return null;
+  }
+}
+
+async function imageDataFromLocator(locator) {
+  if (!await locator.count() || !await locator.isVisible().catch(() => false)) return null;
+  const dataUrl = await locator.evaluate((element) =>
+    element.getAttribute('src') || element.getAttribute('href') || element.getAttribute('xlink:href') || ''
+  ).catch(() => '');
+  return decodeDataImage(dataUrl);
+}
+
 async function followLoginRedirect(session, redirectUrl) {
   if (session.redirectFollowed || typeof redirectUrl !== 'string') return;
   let target;
@@ -165,14 +190,27 @@ async function followLoginRedirect(session, redirectUrl) {
 
 async function findQr(page) {
   const selectors = [
+    '#douyin_login_comp_scan_code img[src^="data:image"]',
+    '#douyin_login_comp_scan_code image[href^="data:image"]',
     '#animate_qrcode_container img',
+    'div[class*="animate_qrcode_container"] img[src^="data:image"]',
+    'div[class*="scan_qrcode_login_content"] img[src^="data:image"]',
+    'img[src^="data:image/png;base64"]',
     '#login-pannel img[src^="data:image"]',
     '#login-panel-new img[src^="data:image"]',
     'img[src*="qrcode"]',
   ];
   for (const selector of selectors) {
-    const locator = page.locator(selector).first();
-    if (await locator.count() && await locator.isVisible().catch(() => false)) return locator;
+    const matches = page.locator(selector);
+    const count = await matches.count();
+    for (let index = 0; index < count; index += 1) {
+      const locator = matches.nth(index);
+      if (!await locator.isVisible().catch(() => false)) continue;
+      const box = await locator.boundingBox().catch(() => null);
+      if (!box || box.width < 140 || box.height < 140 || box.width > 300 || box.height > 300) continue;
+      const ratio = box.width / box.height;
+      if (ratio >= 0.85 && ratio <= 1.15) return locator;
+    }
   }
   return null;
 }
@@ -201,7 +239,10 @@ async function waitForQr(session) {
   while (Date.now() < deadline && session.state === 'initializing') {
     const qr = await findQr(session.page);
     if (qr) {
-      session.qr = qr;
+      const decoded = await imageDataFromLocator(qr);
+      session.qr = decoded ? null : qr;
+      session.qrImage = decoded?.image || await qr.screenshot({ type: 'png' });
+      session.qrMimeType = decoded?.mimeType || 'image/png';
       session.qrVersion = 1;
       session.state = 'waiting';
       session.message = '请使用抖音 App 扫码并在手机上确认';
@@ -212,43 +253,42 @@ async function waitForQr(session) {
   throw new Error('未能从抖音登录页提取二维码');
 }
 
-async function findLargeSquareVisual(page) {
-  const candidates = page.locator('img');
-  let best = null;
-  let bestArea = 0;
+async function captureFaceQr(page) {
+  const container = page.locator('#uc_verification_animate_qrcode_container').first();
+  if (!await container.count() || !await container.isVisible().catch(() => false)) return null;
+  const candidates = container.locator(
+    'img[src^="data:image"], image[href^="data:image"], image[xlink\\:href^="data:image"]'
+  );
   const count = await candidates.count();
   for (let index = 0; index < count; index += 1) {
-    const candidate = candidates.nth(index);
-    if (!await candidate.isVisible().catch(() => false)) continue;
-    const box = await candidate.boundingBox().catch(() => null);
-    if (!box || box.width < 100 || box.height < 100 || box.width > 300 || box.height > 300) continue;
-    const ratio = box.width / box.height;
-    if (ratio < 0.75 || ratio > 1.25) continue;
-    const area = box.width * box.height;
-    if (area > bestArea) {
-      best = candidate;
-      bestArea = area;
-    }
+    const decoded = await imageDataFromLocator(candidates.nth(index));
+    if (decoded) return decoded;
   }
-  return best;
+  const canvas = container.locator('canvas').first();
+  if (await canvas.count() && await canvas.isVisible().catch(() => false)) {
+    return { image: await canvas.screenshot({ type: 'png' }), mimeType: 'image/png' };
+  }
+  return null;
 }
 
 async function startFaceVerification(session) {
   if (session.identityVerificationStarted || !session.page || session.closed) return false;
   const faceButton = session.page.getByText('手机刷脸验证', { exact: true }).first();
   if (!await faceButton.count() || !await faceButton.isVisible().catch(() => false)) return false;
-  session.identityVerificationStarted = true;
-  session.verificationMethod = 'face';
-  session.state = 'verifying';
+  session.state = 'verification_required';
   session.message = '检测到身份验证，正在生成刷脸验证二维码';
   console.log(`[douyin-login] session=${session.id.slice(0, 8)} identityVerification=face`);
   try {
     await faceButton.click({ timeout: 5_000 });
+    session.identityVerificationStarted = true;
+    session.verificationMethod = 'face';
     const deadline = Date.now() + 15_000;
     while (Date.now() < deadline && !session.closed) {
-      const qr = await findLargeSquareVisual(session.page);
+      const qr = await captureFaceQr(session.page);
       if (qr) {
-        session.qr = qr;
+        session.qr = null;
+        session.qrImage = qr.image;
+        session.qrMimeType = qr.mimeType;
         session.qrVersion += 1;
         session.state = 'face_verification';
         session.message = '请使用抖音 App 扫描新二维码并按提示完成刷脸验证';
@@ -256,8 +296,8 @@ async function startFaceVerification(session) {
       }
       await session.page.waitForTimeout(500);
     }
-    session.state = 'waiting';
-    session.message = '已进入刷脸验证，请按抖音页面提示继续';
+    session.state = 'failed';
+    session.message = '已进入刷脸验证，但未能提取验证二维码，请重新生成';
   } catch (error) {
     session.identityVerificationStarted = false;
     session.verificationMethod = '';
@@ -266,25 +306,23 @@ async function startFaceVerification(session) {
   return false;
 }
 
-async function startSmsVerification(session) {
+async function startSmsVerification(session, phone) {
   if (!session.page || session.closed) throw new Error('登录会话已结束');
-  const otherMethod = session.page.getByText('选择其他验证方式', { exact: true }).first();
-  if (await otherMethod.count() && await otherMethod.isVisible().catch(() => false)) {
-    await otherMethod.click({ timeout: 5_000 });
-    await session.page.waitForTimeout(500);
-  }
-  const smsMethod = session.page.getByText('接收短信验证码', { exact: true }).first();
-  if (!await smsMethod.count() || !await smsMethod.isVisible().catch(() => false)) {
-    throw new Error('当前页面没有短信验证入口');
-  }
-  await smsMethod.click({ timeout: 5_000 });
-  await session.page.waitForTimeout(700);
-  const sendButton = session.page.getByText('获取验证码', { exact: true }).first();
-  if (await sendButton.count() && await sendButton.isVisible().catch(() => false)) {
-    await sendButton.click({ timeout: 5_000 });
-  }
+  if (!/^1\d{10}$/.test(phone)) throw new Error('请输入正确的 11 位手机号');
   session.identityVerificationStarted = true;
   session.verificationMethod = 'sms';
+  session.state = 'sms_preparing';
+  session.message = '正在发送短信验证码';
+  const phoneInput = session.page.getByPlaceholder('请输入手机号', { exact: true }).first();
+  if (!await phoneInput.count() || !await phoneInput.isVisible().catch(() => false)) {
+    throw new Error('当前页面没有手机号登录入口');
+  }
+  await phoneInput.fill(phone);
+  const sendButton = session.page.getByText(/获取验证码|发送验证码|重新发送/, { exact: true }).first();
+  if (!await sendButton.count() || !await sendButton.isVisible().catch(() => false)) {
+    throw new Error('当前页面没有发送验证码按钮');
+  }
+  await sendButton.click({ timeout: 5_000 });
   session.state = 'sms_verification';
   session.message = '短信验证码已发送，请输入验证码';
   console.log(`[douyin-login] session=${session.id.slice(0, 8)} identityVerification=sms`);
@@ -299,7 +337,7 @@ async function submitSmsCode(session, code) {
     throw new Error('未找到验证码输入框');
   }
   await input.fill(code);
-  const submitTexts = ['确认', '验证', '登录', '提交'];
+  const submitTexts = ['确认', '确定', '验证', '登录', '提交'];
   for (const label of submitTexts) {
     const button = session.page.getByText(label, { exact: true }).first();
     if (await button.count() && await button.isVisible().catch(() => false)) {
@@ -316,6 +354,11 @@ async function submitSmsCode(session, code) {
 
 async function detectLogin(session) {
   if (!session.context || session.closed || session.cookie) return;
+  const secondVerify = session.page.locator('#uc-second-verify').first();
+  if (await secondVerify.count() && await secondVerify.isVisible().catch(() => false)) {
+    if (!session.identityVerificationStarted) await startFaceVerification(session);
+    return;
+  }
   const cookies = await session.context.cookies();
   const serialized = cookieHeader(cookies);
   if (!serialized) return;
@@ -361,11 +404,10 @@ async function detectLogin(session) {
     `statusCode=${payload?.status_code ?? 'unknown'} user=${Boolean(user)}`
   );
   if (!response.ok() || payload?.status_code !== 0 || !user) {
-    if (await startFaceVerification(session)) return;
     session.state = 'waiting';
-    session.message = session.identityVerificationStarted
-      ? '正在等待刷脸验证完成'
-      : '扫码已确认，但登录态尚未生效，正在继续等待';
+    session.message = session.verificationMethod === 'sms'
+      ? '短信验证码已提交，正在等待登录跳转'
+      : '扫码已确认，正在等待登录跳转';
     return;
   }
 
@@ -404,6 +446,7 @@ async function closeSession(session) {
   session.context = null;
   session.page = null;
   session.qr = null;
+  session.qrImage = null;
 }
 
 async function buildSession() {
@@ -429,6 +472,8 @@ async function buildSession() {
     context: null,
     page: null,
     qr: null,
+    qrImage: null,
+    qrMimeType: 'image/png',
     closed: false,
   };
 
@@ -462,10 +507,8 @@ async function buildSession() {
           `[douyin-login] session=${session.id.slice(0, 8)} loginResponse ` +
           `status=${status} http=${response.status()} path=${new URL(response.url()).pathname}`
         );
-        if (status === 'scanned' || status === '2') {
-          session.state = 'waiting';
-          session.message = '二维码已扫描，请在手机上确认登录';
-        }
+        // 扫码响应中的数字状态会随登录组件版本变化，不能据此提前显示“已扫描”。
+        // 页面出现二次验证 DOM 或最终登录态后再推进公开状态。
         if (status === 'expired' && !session.identityVerificationStarted) {
           session.qrExpired = true;
           if (session.issued) {
@@ -553,18 +596,18 @@ function parseSessionPath(pathname) {
 const appHtml = `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TouchFish 抖音扫码登录验证</title><style>
-body{margin:0;background:#101114;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:center;min-height:100vh}.card{width:min(520px,calc(100vw - 40px));padding:32px;border:1px solid #303238;border-radius:22px;background:#18191d;text-align:center;box-sizing:border-box}h1{font-size:25px;margin:0 0 10px}p{color:#aeb0b8;line-height:1.6}.qr{width:280px;height:280px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;margin:18px auto;display:none}button{border:0;border-radius:12px;background:#fe2c55;color:#fff;font-weight:700;font-size:17px;padding:13px 26px;cursor:pointer}button:disabled{opacity:.45}.secondary{background:#303238;margin-top:12px;font-size:14px}.sms{display:none;margin-top:14px;gap:8px;justify-content:center}.sms input{width:160px;border:1px solid #454852;border-radius:10px;background:#101114;color:#fff;padding:12px;font-size:16px}.sms button{font-size:14px;padding:11px 16px}.ok{color:#56d68b}.error{color:#ff718d}.meta{font-size:13px;color:#777b85;word-break:break-all}</style></head>
-<body><main class="card"><h1>抖音扫码登录验证</h1><p id="status">点击按钮生成一次性二维码。服务不会在页面或日志中显示完整 Cookie。</p><img id="qr" class="qr" alt="抖音登录二维码"><div><button id="start">生成二维码</button></div><button id="smsSwitch" class="secondary" hidden>无法刷脸，改用短信验证</button><div id="smsForm" class="sms"><input id="smsCode" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="短信验证码"><button id="smsSubmit">提交验证码</button></div><p id="meta" class="meta"></p></main>
+body{margin:0;background:#101114;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:center;min-height:100vh}.card{width:min(520px,calc(100vw - 40px));padding:32px;border:1px solid #303238;border-radius:22px;background:#18191d;text-align:center;box-sizing:border-box}h1{font-size:25px;margin:0 0 10px}p{color:#aeb0b8;line-height:1.6}.qr{width:260px;height:260px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;margin:18px auto;display:none}button{border:0;border-radius:12px;background:#fe2c55;color:#fff;font-weight:700;font-size:16px;padding:12px 22px;cursor:pointer}button:disabled{opacity:.45}.divider{display:none;color:#777b85;margin:18px 0 12px}.sms{display:none;margin-top:10px;gap:8px;justify-content:center;flex-wrap:wrap}.sms input{width:170px;border:1px solid #454852;border-radius:10px;background:#101114;color:#fff;padding:12px;font-size:16px;box-sizing:border-box}.sms button{font-size:14px;padding:11px 14px}.ok{color:#56d68b}.error{color:#ff718d}.meta{font-size:13px;color:#777b85;word-break:break-all}</style></head>
+<body><main class="card"><h1>抖音登录验证</h1><p id="status">可使用抖音 App 扫码，或直接使用手机号验证码登录。</p><img id="qr" class="qr" alt="抖音登录二维码"><div><button id="start">开始登录</button></div><div id="divider" class="divider">或者使用手机号验证码</div><div id="phoneForm" class="sms"><input id="phone" inputmode="tel" maxlength="11" autocomplete="tel" placeholder="手机号"><button id="smsSend">获取验证码</button></div><div id="smsForm" class="sms"><input id="smsCode" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="短信验证码"><button id="smsSubmit">登录</button></div><p id="meta" class="meta"></p></main>
 <script>
-let id='',token='',timer=0,qrUrl='',qrVersion=0;const statusEl=document.querySelector('#status'),qr=document.querySelector('#qr'),button=document.querySelector('#start'),meta=document.querySelector('#meta'),smsSwitch=document.querySelector('#smsSwitch'),smsForm=document.querySelector('#smsForm'),smsCode=document.querySelector('#smsCode'),smsSubmit=document.querySelector('#smsSubmit');
+let id='',token='',timer=0,qrUrl='',qrVersion=0;const statusEl=document.querySelector('#status'),qr=document.querySelector('#qr'),button=document.querySelector('#start'),meta=document.querySelector('#meta'),divider=document.querySelector('#divider'),phoneForm=document.querySelector('#phoneForm'),phone=document.querySelector('#phone'),smsSend=document.querySelector('#smsSend'),smsForm=document.querySelector('#smsForm'),smsCode=document.querySelector('#smsCode'),smsSubmit=document.querySelector('#smsSubmit');
 async function api(url,options={}){options.headers={...(options.headers||{}),...(token?{'X-Claim-Token':token}:{})};const response=await fetch(url,options);const data=await response.json();if(!response.ok)throw new Error(data.error||'请求失败');return data}
 async function loadQr(version){const response=await fetch('/api/sessions/'+id+'/qr',{headers:{'X-Claim-Token':token}});if(!response.ok)throw new Error((await response.json()).error);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl=URL.createObjectURL(await response.blob());qr.src=qrUrl;qr.style.display='block';qrVersion=version||qrVersion+1}
-function resetVerificationUi(){smsSwitch.hidden=true;smsForm.style.display='none';smsCode.value=''}
+function resetVerificationUi(){divider.style.display='none';phoneForm.style.display='none';smsForm.style.display='none';phone.value='';smsCode.value=''}
 function stopWaiting(message){clearInterval(timer);timer=0;if(qrUrl){URL.revokeObjectURL(qrUrl);qrUrl=''}qr.removeAttribute('src');qr.style.display='none';resetVerificationUi();button.disabled=false;button.textContent='重新生成';statusEl.textContent=message;statusEl.className='error';id='';token=''}
-async function poll(){try{const s=await api('/api/sessions/'+id);if(s.qrVersion&&s.qrVersion!==qrVersion)await loadQr(s.qrVersion);statusEl.textContent=s.message;statusEl.className=s.state==='verified'?'ok':(s.state==='failed'||s.state==='expired'?'error':'');smsSwitch.hidden=s.verificationMethod!=='face';smsForm.style.display=s.state==='sms_verification'?'flex':'none';meta.textContent=s.cookieReady?'Cookie 已验证：'+s.cookieFieldCount+' 个字段，'+s.cookieLength+' 个字符'+(s.user?.nickname?'，账号：'+s.user.nickname:''):'';if(s.state==='verified'){clearInterval(timer);timer=0;button.disabled=false;button.textContent='重新生成';qr.style.display='none';resetVerificationUi()}else if(s.state==='failed'||s.state==='expired'){stopWaiting(s.message)}}catch(e){stopWaiting(e.message+'，请重新生成二维码')}}
-smsSwitch.onclick=async()=>{smsSwitch.disabled=true;try{const s=await api('/api/sessions/'+id+'/sms',{method:'POST'});statusEl.textContent=s.message;smsForm.style.display='flex';smsSwitch.hidden=true}catch(e){statusEl.textContent=e.message;statusEl.className='error'}finally{smsSwitch.disabled=false}};
+async function poll(){try{const s=await api('/api/sessions/'+id);if(s.qrVersion&&s.qrVersion!==qrVersion)await loadQr(s.qrVersion);statusEl.textContent=s.message;statusEl.className=s.state==='verified'?'ok':(s.state==='failed'||s.state==='expired'?'error':'');smsForm.style.display=s.verificationMethod==='sms'?'flex':'none';meta.textContent=s.cookieReady?'Cookie 已验证：'+s.cookieFieldCount+' 个字段，'+s.cookieLength+' 个字符'+(s.user?.nickname?'，账号：'+s.user.nickname:''):'';if(s.state==='verified'){clearInterval(timer);timer=0;button.disabled=false;button.textContent='重新登录';qr.style.display='none';resetVerificationUi()}else if(s.state==='failed'||s.state==='expired'){stopWaiting(s.message)}}catch(e){stopWaiting(e.message+'，请重新生成二维码')}}
+smsSend.onclick=async()=>{smsSend.disabled=true;try{const s=await api('/api/sessions/'+id+'/sms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:phone.value.trim()})});statusEl.textContent=s.message;smsForm.style.display='flex';smsCode.focus()}catch(e){statusEl.textContent=e.message;statusEl.className='error'}finally{smsSend.disabled=false}};
 smsSubmit.onclick=async()=>{const code=smsCode.value.trim();smsSubmit.disabled=true;try{const s=await api('/api/sessions/'+id+'/sms-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});statusEl.textContent=s.message;smsForm.style.display='none'}catch(e){statusEl.textContent=e.message;statusEl.className='error'}finally{smsSubmit.disabled=false}};
-button.onclick=async()=>{clearInterval(timer);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl='';qrVersion=0;resetVerificationUi();button.disabled=true;statusEl.className='';statusEl.textContent='正在启动浏览器并获取二维码…';meta.textContent='';qr.removeAttribute('src');qr.style.display='none';try{const s=await api('/api/sessions',{method:'POST'});id=s.id;token=s.claimToken;await loadQr(s.qrVersion);statusEl.textContent=s.message;button.textContent='等待扫码';timer=setInterval(poll,1200)}catch(e){stopWaiting(e.message)}};
+button.onclick=async()=>{clearInterval(timer);if(qrUrl)URL.revokeObjectURL(qrUrl);qrUrl='';qrVersion=0;resetVerificationUi();button.disabled=true;statusEl.className='';statusEl.textContent='正在启动浏览器并获取登录二维码…';meta.textContent='';qr.removeAttribute('src');qr.style.display='none';try{const s=await api('/api/sessions',{method:'POST'});id=s.id;token=s.claimToken;await loadQr(s.qrVersion);statusEl.textContent=s.message;button.textContent='等待登录';divider.style.display='block';phoneForm.style.display='flex';timer=setInterval(poll,1200)}catch(e){stopWaiting(e.message)}};
 </script></body></html>`;
 
 const server = http.createServer(async (req, res) => {
@@ -588,11 +631,11 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && parsed.action === 'status') return json(res, 200, publicState(session));
   if (req.method === 'GET' && parsed.action === 'qr') {
-    if (!session.qr || session.closed) return json(res, 409, { error: session.message });
+    if ((!session.qrImage && !session.qr) || session.closed) return json(res, 409, { error: session.message });
     try {
-      const image = await session.qr.screenshot({ type: 'png' });
+      const image = session.qrImage || await session.qr.screenshot({ type: 'png' });
       res.writeHead(200, {
-        'Content-Type': 'image/png',
+        'Content-Type': session.qrMimeType || 'image/png',
         'Content-Length': image.length,
         'Cache-Control': 'no-store',
         'X-Content-Type-Options': 'nosniff',
@@ -619,10 +662,14 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === 'POST' && parsed.action === 'sms') {
     try {
-      await startSmsVerification(session);
+      const body = await readJsonBody(req);
+      await startSmsVerification(session, String(body.phone || ''));
       return json(res, 200, publicState(session));
     } catch (error) {
-      const safeMessage = ['当前页面没有短信验证入口', '登录会话已结束'].includes(error.message)
+      const safeMessage = [
+        '请输入正确的 11 位手机号', '当前页面没有手机号登录入口',
+        '当前页面没有发送验证码按钮', '登录会话已结束',
+      ].includes(error.message)
         ? error.message
         : '切换短信验证失败，请重试';
       return json(res, 409, { error: safeMessage });
