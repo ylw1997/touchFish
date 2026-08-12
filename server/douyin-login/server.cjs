@@ -134,17 +134,23 @@ async function waitForQr(session) {
 async function detectLogin(session) {
   if (!session.context || session.closed || session.cookie) return;
   const cookies = await session.context.cookies();
+  const serialized = cookieHeader(cookies);
+  if (!serialized) return;
+  const cookieFingerprint = crypto.createHash('sha256').update(serialized).digest('hex');
   const loginStatus = cookies.find((cookie) => cookie.name === 'LOGIN_STATUS')?.value;
   let hasUserLogin = false;
   try {
     hasUserLogin = await session.page.evaluate(() => localStorage.getItem('HasUserLogin') === '1');
   } catch {}
 
-  if (loginStatus !== '1' && !hasUserLogin) return;
+  if (cookieFingerprint === session.lastCookieFingerprint && loginStatus !== '1' && !hasUserLogin) return;
+  session.lastCookieFingerprint = cookieFingerprint;
+  console.log(
+    `[douyin-login] session=${session.id.slice(0, 8)} cookieChanged fields=${cookies.length} ` +
+    `loginStatus=${loginStatus === '1'} localStorage=${hasUserLogin}`
+  );
   session.state = 'verifying';
-  session.message = '已确认扫码，正在验证登录态';
-  const serialized = cookieHeader(cookies);
-  if (!serialized) throw new Error('扫码成功但未获取到 douyin.com Cookie');
+  session.message = '检测到登录凭证变化，正在验证登录态';
 
   const response = await session.context.request.get(PROFILE_URL, {
     headers: {
@@ -159,6 +165,10 @@ async function detectLogin(session) {
   let payload;
   try { payload = JSON.parse(body); } catch {}
   const user = payload?.user || payload?.user_info;
+  console.log(
+    `[douyin-login] session=${session.id.slice(0, 8)} profile status=${response.status()} ` +
+    `statusCode=${payload?.status_code ?? 'unknown'} user=${Boolean(user)}`
+  );
   if (!response.ok() || payload?.status_code !== 0 || !user) {
     session.state = 'waiting';
     session.message = '扫码已确认，但登录态尚未生效，正在继续等待';
@@ -214,6 +224,7 @@ async function createSession() {
     expiresAt: now + SESSION_TTL_MS,
     cookie: '',
     user: null,
+    lastCookieFingerprint: '',
     context: null,
     page: null,
     qr: null,
@@ -233,6 +244,8 @@ async function createSession() {
     await session.page.goto(DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     await ensureLoginPanel(session.page);
     await waitForQr(session);
+    const initialCookies = cookieHeader(await session.context.cookies());
+    session.lastCookieFingerprint = crypto.createHash('sha256').update(initialCookies).digest('hex');
     void watchSession(session);
     return session;
   } catch (error) {
