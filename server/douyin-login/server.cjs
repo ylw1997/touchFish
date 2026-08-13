@@ -7,6 +7,10 @@ const { chromium } = require('playwright');
 const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 8787);
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 5 * 60 * 1000);
+const BROWSER_SESSION_TTL_MS = Math.min(
+  SESSION_TTL_MS,
+  Number(process.env.BROWSER_SESSION_TTL_MS || 2 * 60 * 1000),
+);
 const MAX_SESSIONS = Number(process.env.MAX_SESSIONS || 3);
 const HEADLESS = process.env.HEADLESS !== 'false';
 const ALLOW_LOCAL_TEST = process.env.ALLOW_LOCAL_TEST === 'true';
@@ -17,8 +21,13 @@ const USER_AGENT = process.env.USER_AGENT ||
 const sessions = new Map();
 
 let browserPromise;
+let browserShutdownTimer;
 
 function browser() {
+  if (browserShutdownTimer) {
+    clearTimeout(browserShutdownTimer);
+    browserShutdownTimer = undefined;
+  }
   if (!browserPromise) {
     browserPromise = chromium.launch({
       headless: HEADLESS,
@@ -29,6 +38,20 @@ function browser() {
     });
   }
   return browserPromise;
+}
+
+function scheduleIdleBrowserShutdown() {
+  if (browserShutdownTimer) clearTimeout(browserShutdownTimer);
+  browserShutdownTimer = setTimeout(async () => {
+    browserShutdownTimer = undefined;
+    const hasActiveContext = [...sessions.values()].some((session) => session.context && !session.closed);
+    if (hasActiveContext || !browserPromise) return;
+    const idleBrowser = browserPromise;
+    browserPromise = undefined;
+    await idleBrowser.then((instance) => instance.close()).catch(() => {});
+    console.log('[douyin-login] Chromium closed after last session');
+  }, 1_000);
+  browserShutdownTimer.unref();
 }
 
 function randomToken(bytes = 24) {
@@ -450,7 +473,8 @@ async function watchSession(session) {
   }
   if (!session.closed && !session.cookie && Date.now() >= session.expiresAt) {
     session.state = 'expired';
-    session.message = '二维码会话已过期，请重新生成';
+    session.message = '登录会话已超过 2 分钟，浏览器已自动关闭，请重新生成二维码';
+    console.log(`[douyin-login] session=${session.id.slice(0, 8)} browserSession=expired closed=true`);
     await closeSession(session);
   }
 }
@@ -458,11 +482,16 @@ async function watchSession(session) {
 async function closeSession(session) {
   if (session.closed) return;
   session.closed = true;
+  if (session.expiryTimer) {
+    clearTimeout(session.expiryTimer);
+    session.expiryTimer = null;
+  }
   await session.context?.close().catch(() => {});
   session.context = null;
   session.page = null;
   session.qr = null;
   session.qrImage = null;
+  scheduleIdleBrowserShutdown();
 }
 
 async function buildSession() {
@@ -473,7 +502,7 @@ async function buildSession() {
     state: 'initializing',
     message: '正在打开抖音登录页',
     createdAt: new Date(now).toISOString(),
-    expiresAt: now + SESSION_TTL_MS,
+    expiresAt: now + BROWSER_SESSION_TTL_MS,
     cookie: '',
     user: null,
     lastCookieFingerprint: '',
@@ -490,6 +519,7 @@ async function buildSession() {
     qr: null,
     qrImage: null,
     qrMimeType: 'image/png',
+    expiryTimer: null,
     closed: false,
   };
 
@@ -559,8 +589,17 @@ async function createSession() {
 
   const session = await buildSession();
   session.issued = true;
-  session.expiresAt = Date.now() + SESSION_TTL_MS;
+  session.expiresAt = Date.now() + BROWSER_SESSION_TTL_MS;
   sessions.set(session.id, session);
+  session.expiryTimer = setTimeout(() => {
+    if (session.closed) return;
+    session.cookie = '';
+    session.state = 'expired';
+    session.message = '登录会话已超过 2 分钟，浏览器已自动关闭，请重新生成二维码';
+    console.log(`[douyin-login] session=${session.id.slice(0, 8)} browserSession=expired closed=true`);
+    void closeSession(session);
+  }, BROWSER_SESSION_TTL_MS);
+  session.expiryTimer.unref();
   void watchSession(session);
   return session;
 }
@@ -702,8 +741,9 @@ process.on('SIGTERM', shutdown);
 
 server.listen(PORT, HOST, () => {
   console.log(`[douyin-login] listening on http://${HOST}:${PORT}`);
-  console.log(`[douyin-login] headless=${HEADLESS}, sessionTTL=${SESSION_TTL_MS}ms, maxSessions=${MAX_SESSIONS}`);
-  void browser()
-    .then(() => console.log('[douyin-login] Chromium ready; pages are created on demand'))
-    .catch((error) => console.error(`[douyin-login] Chromium failed: ${error.message}`));
+  console.log(
+    `[douyin-login] headless=${HEADLESS}, sessionTTL=${SESSION_TTL_MS}ms, ` +
+    `browserSessionTTL=${BROWSER_SESSION_TTL_MS}ms, maxSessions=${MAX_SESSIONS}`
+  );
+  console.log('[douyin-login] Chromium starts on demand');
 });

@@ -2,7 +2,7 @@
 
 该服务使用独立 Chromium 上下文打开 `https://www.douyin.com/user/self`，将登录二维码提供给 TouchFish 客户端，并在用户扫码确认后处理抖音的二次身份验证，最后收集并验证登录 Cookie。
 
-服务启动时只保留一个空闲 Chromium 进程；收到用户创建登录会话的请求后才打开抖音页面并生成二维码。会话领取、失败或过期后会关闭对应页面，不在后台定时刷新二维码。
+服务启动时不启动 Chromium；收到用户创建登录会话的请求后才启动浏览器并生成二维码。会话领取、失败或过期后会关闭对应页面，最后一个会话关闭后同时退出空闲 Chromium 主进程，不在后台定时刷新二维码。
 
 登录二维码从 `#douyin_login_comp_scan_code` 中读取。若扫码后出现 `#uc-second-verify`，服务会自动选择“手机刷脸验证”，再从 `#uc_verification_animate_qrcode_container` 内的图片或 SVG `image` 节点提取新的二维码。
 
@@ -70,7 +70,8 @@ X-Claim-Token: <claimToken>
 | `HOST` | `127.0.0.1` | 监听地址，容器内设置为 `0.0.0.0` |
 | `PORT` | `8787` | 监听端口 |
 | `HEADLESS` | `true` | 设置为 `false` 可显示 Chromium |
-| `SESSION_TTL_MS` | `300000` | 一次性会话有效期 |
+| `SESSION_TTL_MS` | `300000` | 一次性会话有效期上限 |
+| `BROWSER_SESSION_TTL_MS` | `120000` | 单次登录浏览器最长存活时间，超时后强制关闭 |
 | `MAX_SESSIONS` | `3` | 最大并发浏览器会话数 |
 
 ## 安全边界
