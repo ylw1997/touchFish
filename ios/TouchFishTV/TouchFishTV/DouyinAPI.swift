@@ -180,7 +180,7 @@ final class DouyinAPI: ObservableObject {
     static func compactLoginCookie(from input: String) -> String {
         let normalized = normalizedCookie(from: input)
         let requiredOrder = [
-            "sessionid", "sessionid_ss", "sid_guard", "sid_tt", "uid_tt", "uid_tt_ss"
+            "sessionid", "sessionid_ss", "sid_guard", "sid_tt", "uid_tt", "uid_tt_ss", "ttwid"
         ]
         var values: [String: String] = [:]
         for component in normalized.split(separator: ";", omittingEmptySubsequences: true) {
