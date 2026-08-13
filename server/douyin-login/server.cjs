@@ -8,8 +8,6 @@ const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 8787);
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 5 * 60 * 1000);
 const MAX_SESSIONS = Number(process.env.MAX_SESSIONS || 3);
-const STANDBY_REFRESH_AGE_MS = Number(process.env.STANDBY_REFRESH_AGE_MS || 30_000);
-const STANDBY_MAX_AGE_MS = Number(process.env.STANDBY_MAX_AGE_MS || 90_000);
 const HEADLESS = process.env.HEADLESS !== 'false';
 const ALLOW_LOCAL_TEST = process.env.ALLOW_LOCAL_TEST === 'true';
 const DOUYIN_URL = process.env.DOUYIN_URL || 'https://www.douyin.com/user/self';
@@ -19,8 +17,6 @@ const USER_AGENT = process.env.USER_AGENT ||
 const sessions = new Map();
 
 let browserPromise;
-let standbySession = null;
-let standbyPreparation = null;
 
 function browser() {
   if (!browserPromise) {
@@ -515,9 +511,6 @@ async function buildSession() {
             session.state = 'expired';
             session.message = '二维码已过期，请重新生成';
             void closeSession(session);
-          } else if (standbySession === session) {
-            standbySession = null;
-            void closeSession(session).then(() => prepareStandbySession());
           }
         }
       } catch {
@@ -541,49 +534,15 @@ async function buildSession() {
   }
 }
 
-async function prepareStandbySession(force = false) {
-  if (standbySession && !force) return;
-  if (standbyPreparation) return standbyPreparation;
-  const previousStandby = standbySession;
-  standbyPreparation = buildSession()
-    .then((session) => {
-      if (previousStandby && standbySession === previousStandby) {
-        void closeSession(previousStandby);
-      }
-      standbySession = session;
-      console.log(`[douyin-login] standby ready in ${Date.now() - Date.parse(session.createdAt)}ms`);
-    })
-    .catch((error) => {
-      console.error(`[douyin-login] standby failed: ${error.message}`);
-    })
-    .finally(() => {
-      standbyPreparation = null;
-    });
-  await standbyPreparation;
-}
-
 async function createSession() {
   const activeCount = [...sessions.values()].filter((item) => !item.closed && Date.now() < item.expiresAt).length;
   if (activeCount >= MAX_SESSIONS) throw new Error('当前扫码会话过多，请稍后重试');
 
-  let standbyAge = standbySession ? Date.now() - Date.parse(standbySession.createdAt) : Number.POSITIVE_INFINITY;
-  if ((!standbySession || standbyAge > STANDBY_MAX_AGE_MS) && standbyPreparation) {
-    await standbyPreparation;
-  }
-  standbyAge = standbySession ? Date.now() - Date.parse(standbySession.createdAt) : Number.POSITIVE_INFINITY;
-  if (!standbySession || standbyAge > STANDBY_MAX_AGE_MS) await prepareStandbySession(true);
-  let session = standbySession;
-  standbySession = null;
-  standbyAge = session ? Date.now() - Date.parse(session.createdAt) : Number.POSITIVE_INFINITY;
-  if (!session || session.closed || session.qrExpired || standbyAge > STANDBY_MAX_AGE_MS) {
-    if (session) await closeSession(session);
-    session = await buildSession();
-  }
+  const session = await buildSession();
   session.issued = true;
   session.expiresAt = Date.now() + SESSION_TTL_MS;
   sessions.set(session.id, session);
   void watchSession(session);
-  void prepareStandbySession();
   return session;
 }
 
@@ -709,24 +668,12 @@ const cleanupTimer = setInterval(() => {
       sessions.delete(id);
     }
   }
-  if (standbySession && (
-    standbySession.qrExpired
-  )) {
-    void closeSession(standbySession);
-    standbySession = null;
-  }
-  if (standbySession && Date.now() - Date.parse(standbySession.createdAt) > STANDBY_REFRESH_AGE_MS) {
-    void prepareStandbySession(true);
-  } else {
-    void prepareStandbySession();
-  }
 }, 5_000);
 cleanupTimer.unref();
 
 async function shutdown() {
   server.close();
   for (const session of sessions.values()) await closeSession(session);
-  if (standbySession) await closeSession(standbySession);
   if (browserPromise) await (await browserPromise).close().catch(() => {});
   process.exit(0);
 }
@@ -737,9 +684,7 @@ process.on('SIGTERM', shutdown);
 server.listen(PORT, HOST, () => {
   console.log(`[douyin-login] listening on http://${HOST}:${PORT}`);
   console.log(`[douyin-login] headless=${HEADLESS}, sessionTTL=${SESSION_TTL_MS}ms, maxSessions=${MAX_SESSIONS}`);
-  console.log(
-    `[douyin-login] standbyRefreshAge=${STANDBY_REFRESH_AGE_MS}ms, ` +
-    `standbyMaxAge=${STANDBY_MAX_AGE_MS}ms`
-  );
-  void prepareStandbySession();
+  void browser()
+    .then(() => console.log('[douyin-login] Chromium ready; pages are created on demand'))
+    .catch((error) => console.error(`[douyin-login] Chromium failed: ${error.message}`));
 });

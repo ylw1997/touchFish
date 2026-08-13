@@ -56,8 +56,6 @@ async function waitForHealth() {
       DOUYIN_URL: `http://127.0.0.1:${MOCK_PORT}/user/self`,
       PROFILE_URL: `http://127.0.0.1:${MOCK_PORT}/profile`,
       ALLOW_LOCAL_TEST: 'true',
-      STANDBY_REFRESH_AGE_MS: '300000',
-      STANDBY_MAX_AGE_MS: '300000',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
