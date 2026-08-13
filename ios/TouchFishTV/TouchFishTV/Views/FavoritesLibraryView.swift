@@ -150,13 +150,14 @@ struct FavoritesLibraryView: View {
         VStack(spacing: 22) {
             if store.isLoading {
                 ProgressView().controlSize(.large)
-                Text("正在载入喜欢的视频").foregroundStyle(.secondary)
+                Text("正在载入喜欢的视频").foregroundStyle(Color.white.opacity(0.7))
             } else {
                 Image(systemName: store.errorMessage == nil ? "heart.slash" : "exclamationmark.triangle.fill")
                     .font(.system(size: 64, weight: .light))
                     .foregroundStyle(store.errorMessage == nil ? Color.secondary : Color.orange)
                 Text(store.errorMessage ?? "还没有喜欢的视频")
                     .font(.title2.weight(.semibold))
+                    .foregroundStyle(.white)
                 Button("重新加载") { Task { await store.refresh() } }
                     .buttonStyle(.borderedProminent)
             }

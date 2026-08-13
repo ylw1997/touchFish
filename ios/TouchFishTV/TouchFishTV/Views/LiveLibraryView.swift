@@ -150,7 +150,7 @@ struct LiveLibraryView: View {
         VStack(spacing: 22) {
             if store.isLoading {
                 ProgressView().controlSize(.large)
-                Text("正在载入直播列表").foregroundStyle(.secondary)
+                Text("正在载入直播列表").foregroundStyle(Color.white.opacity(0.7))
             } else {
                 Image(systemName: store.errorMessage == nil
                     ? "dot.radiowaves.left.and.right"
@@ -159,6 +159,7 @@ struct LiveLibraryView: View {
                     .foregroundStyle(store.errorMessage == nil ? Color.secondary : Color.orange)
                 Text(store.errorMessage ?? "当前没有正在直播的房间")
                     .font(.title2.weight(.semibold))
+                    .foregroundStyle(.white)
                 Button("重新加载") { Task { await store.refresh() } }
                     .buttonStyle(.borderedProminent)
             }
@@ -640,13 +641,13 @@ private final class LiveLibraryCollectionCell: UICollectionViewCell {
         avatarView.layer.cornerRadius = 14
 
         authorLabel.font = .systemFont(ofSize: 18, weight: .regular)
-        authorLabel.textColor = .secondaryLabel
+        authorLabel.textColor = UIColor.white.withAlphaComponent(0.78)
         authorLabel.numberOfLines = 1
 
-        viewerIcon.tintColor = .secondaryLabel
+        viewerIcon.tintColor = UIColor.white.withAlphaComponent(0.62)
         viewerIcon.contentMode = .scaleAspectFit
         viewerLabel.font = .systemFont(ofSize: 18, weight: .regular)
-        viewerLabel.textColor = .secondaryLabel
+        viewerLabel.textColor = UIColor.white.withAlphaComponent(0.62)
         viewerLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let footer = UIStackView(

@@ -118,10 +118,11 @@ struct DouyinFeedView: View {
                 .foregroundStyle(store.errorMessage == nil ? Color.secondary : Color.orange)
             Text(store.errorMessage ?? "当前没有可播放的视频")
                 .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
             Text("检查网络或 Cookie 后重试")
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.white.opacity(0.68))
             Button("重新加载") { Task { await store.refresh() } }
                 .buttonStyle(.borderedProminent)
         }
