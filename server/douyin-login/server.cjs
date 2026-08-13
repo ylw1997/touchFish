@@ -159,6 +159,22 @@ async function imageDataFromLocator(locator) {
   return decodeDataImage(dataUrl);
 }
 
+async function findVisibleLocator(page, selector) {
+  for (const frame of page.frames()) {
+    const locator = frame.locator(selector).first();
+    if (await locator.count() && await locator.isVisible().catch(() => false)) return locator;
+  }
+  return null;
+}
+
+async function findVisibleText(page, textValue) {
+  for (const frame of page.frames()) {
+    const locator = frame.getByText(textValue, { exact: true }).first();
+    if (await locator.count() && await locator.isVisible().catch(() => false)) return locator;
+  }
+  return null;
+}
+
 async function followLoginRedirect(session, redirectUrl) {
   if (session.redirectFollowed || typeof redirectUrl !== 'string') return;
   let target;
@@ -250,8 +266,8 @@ async function waitForQr(session) {
 }
 
 async function captureFaceQr(page) {
-  const container = page.locator('#uc_verification_animate_qrcode_container').first();
-  if (!await container.count() || !await container.isVisible().catch(() => false)) return null;
+  const container = await findVisibleLocator(page, '#uc_verification_animate_qrcode_container');
+  if (!container) return null;
   const candidates = container.locator(
     'img[src^="data:image"], image[href^="data:image"], image[xlink\\:href^="data:image"]'
   );
@@ -269,8 +285,8 @@ async function captureFaceQr(page) {
 
 async function startFaceVerification(session) {
   if (session.identityVerificationStarted || !session.page || session.closed) return false;
-  const faceButton = session.page.getByText('手机刷脸验证', { exact: true }).first();
-  if (!await faceButton.count() || !await faceButton.isVisible().catch(() => false)) return false;
+  const faceButton = await findVisibleText(session.page, '手机刷脸验证');
+  if (!faceButton) return false;
   session.state = 'verification_required';
   session.message = '检测到身份验证，正在生成刷脸验证二维码';
   console.log(`[douyin-login] session=${session.id.slice(0, 8)} identityVerification=face`);
@@ -350,8 +366,11 @@ async function submitSmsCode(session, code) {
 
 async function detectLogin(session) {
   if (!session.context || session.closed || session.cookie) return;
-  const secondVerify = session.page.locator('#uc-second-verify').first();
-  if (await secondVerify.count() && await secondVerify.isVisible().catch(() => false)) {
+  const secondVerify = await findVisibleLocator(session.page, '#uc-second-verify');
+  const faceVerificationButton = secondVerify
+    ? true
+    : Boolean(await findVisibleText(session.page, '手机刷脸验证'));
+  if (secondVerify || faceVerificationButton) {
     if (!session.identityVerificationStarted) await startFaceVerification(session);
     return;
   }
@@ -400,10 +419,11 @@ async function detectLogin(session) {
     `statusCode=${payload?.status_code ?? 'unknown'} user=${Boolean(user)}`
   );
   if (!response.ok() || payload?.status_code !== 0 || !user) {
+    if (!session.identityVerificationStarted && await startFaceVerification(session)) return;
     session.state = 'waiting';
     session.message = session.verificationMethod === 'sms'
       ? '短信验证码已提交，正在等待登录跳转'
-      : '扫码已确认，正在等待登录跳转';
+      : '请使用抖音 App 扫码并确认；如需身份验证将自动切换二维码';
     return;
   }
 
@@ -503,8 +523,7 @@ async function buildSession() {
           `[douyin-login] session=${session.id.slice(0, 8)} loginResponse ` +
           `status=${status} http=${response.status()} path=${new URL(response.url()).pathname}`
         );
-        // 扫码响应中的数字状态会随登录组件版本变化，不能据此提前显示“已扫描”。
-        // 页面出现二次验证 DOM 或最终登录态后再推进公开状态。
+        // 扫码状态会被登录组件提前返回，不能据此向用户显示“已扫描”。
         if (status === 'expired' && !session.identityVerificationStarted) {
           session.qrExpired = true;
           if (session.issued) {
