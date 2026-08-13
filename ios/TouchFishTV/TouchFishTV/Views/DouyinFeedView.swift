@@ -107,7 +107,7 @@ struct DouyinFeedView: View {
             ProgressView().controlSize(.large).tint(.white)
             Text("正在载入视频")
                 .font(.title3.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.white.opacity(0.7))
         }
     }
 

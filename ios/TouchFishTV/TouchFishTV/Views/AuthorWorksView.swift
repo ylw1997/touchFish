@@ -158,18 +158,19 @@ struct AuthorWorksView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(store.displayAuthor.nickname?.isEmpty == false ? store.displayAuthor.nickname! : "未知用户")
                     .font(.title2.weight(.bold))
+                    .foregroundStyle(.white)
                     .lineLimit(1)
 
                 if let uniqueID = store.displayAuthor.unique_id, !uniqueID.isEmpty {
                     Text("抖音号：\(uniqueID)")
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.white.opacity(0.68))
                 }
 
                 if let signature = store.displayAuthor.signature, !signature.isEmpty {
                     Text(signature)
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.white.opacity(0.68))
                         .lineLimit(2)
                 }
             }
@@ -193,8 +194,8 @@ struct AuthorWorksView: View {
 
     private func statistic(value: String, title: String) -> some View {
         VStack(spacing: 5) {
-            Text(value).font(.title3.weight(.semibold))
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(value).font(.title3.weight(.semibold)).foregroundStyle(.white)
+            Text(title).font(.caption).foregroundStyle(Color.white.opacity(0.68))
         }
         .frame(minWidth: 82)
     }
@@ -212,13 +213,14 @@ struct AuthorWorksView: View {
         VStack(spacing: 22) {
             if store.isLoading {
                 ProgressView().controlSize(.large)
-                Text("正在载入用户作品").foregroundStyle(.secondary)
+                Text("正在载入用户作品").foregroundStyle(Color.white.opacity(0.7))
             } else {
                 Image(systemName: store.errorMessage == nil ? "rectangle.stack.badge.person.crop" : "exclamationmark.triangle.fill")
                     .font(.system(size: 64, weight: .light))
                     .foregroundStyle(store.errorMessage == nil ? Color.secondary : Color.orange)
                 Text(store.errorMessage ?? "该用户暂时没有作品")
                     .font(.title2.weight(.semibold))
+                    .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
                 Button("重新加载") { Task { await store.refresh() } }
                     .buttonStyle(.borderedProminent)

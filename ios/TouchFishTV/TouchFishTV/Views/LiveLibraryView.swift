@@ -205,7 +205,7 @@ private struct LiveRoomPlaybackPage: View {
             } else if isLoading {
                 VStack(spacing: 20) {
                     ProgressView().controlSize(.large)
-                    Text("正在进入直播间").foregroundStyle(.secondary)
+                    Text("正在进入直播间").foregroundStyle(Color.white.opacity(0.7))
                 }
             } else {
                 VStack(spacing: 22) {
@@ -214,6 +214,7 @@ private struct LiveRoomPlaybackPage: View {
                         .foregroundStyle(.orange)
                     Text(errorMessage ?? "该直播间暂时无法播放")
                         .font(.title3.weight(.semibold))
+                        .foregroundStyle(.white)
                     Button("重试") {
                         guard let discoveryItem else { return }
                         Task { await resolveAndPlay(discoveryItem) }
@@ -504,7 +505,7 @@ private final class LiveLibrarySectionHeader: UICollectionReusableView {
         titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
         titleLabel.textColor = .white
         detailLabel.font = .systemFont(ofSize: 19, weight: .regular)
-        detailLabel.textColor = .secondaryLabel
+        detailLabel.textColor = UIColor.white.withAlphaComponent(0.68)
 
         let stack = UIStackView(arrangedSubviews: [titleLabel, detailLabel])
         stack.translatesAutoresizingMaskIntoConstraints = false

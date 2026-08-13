@@ -273,10 +273,11 @@ private struct CookieEditorSheet: View {
         VStack(alignment: .leading, spacing: 28) {
             Text("粘贴抖音 Cookie")
                 .font(.largeTitle.bold())
+                .foregroundStyle(.white)
 
             Text("请使用 iPhone 接力键盘粘贴完整 Cookie。粘贴后按遥控器返回键收起键盘，再选择“完成输入”。")
                 .font(.title3)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.white.opacity(0.7))
 
             LongCookieEditor(text: $text)
                 .background(Color.white.opacity(0.08))
@@ -291,7 +292,7 @@ private struct CookieEditorSheet: View {
                 let normalized = DouyinAPI.normalizedCookie(from: text)
                 Text("已接收 \(normalized.count) 个字符、\(normalized.split(separator: ";").count) 个字段")
                     .font(.headline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.white.opacity(0.7))
 
                 Spacer()
 
@@ -332,20 +333,20 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 30) {
                 Text("系统设置")
                     .font(.system(size: 55, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.primary)
 
                 Text("摸鱼抖音 Apple TV 原生版本")
                     .font(.title3)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(.secondary)
 
                 VStack(alignment: .leading, spacing: 15) {
                     Text("扫码登录")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.primary)
 
                     Text("1. 使用抖音 App 扫描右侧二维码\n2. 在手机上确认登录\n3. 如出现身份验证，请扫描自动更新的二维码并完成刷脸\n4. 验证成功后 Apple TV 会自动保存登录信息")
                         .font(.body)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.secondary)
                         .lineSpacing(8)
                 }
                 .padding(25)
@@ -359,7 +360,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 22) {
                 Text("使用抖音扫码登录")
                     .font(.title2)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.primary)
 
                 Label(
                     api.cookie.isEmpty ? "当前未登录" : "已登录（Cookie 已安全保存）",

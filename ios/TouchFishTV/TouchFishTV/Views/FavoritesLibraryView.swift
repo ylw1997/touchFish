@@ -539,14 +539,14 @@ private final class VideoLibraryCollectionCell: UICollectionViewCell {
         avatarView.layer.cornerRadius = 14
 
         authorLabel.font = .systemFont(ofSize: 18, weight: .regular)
-        authorLabel.textColor = .secondaryLabel
+        authorLabel.textColor = UIColor.white.withAlphaComponent(0.78)
         authorLabel.numberOfLines = 1
 
         heartView.tintColor = .secondaryLabel
         heartView.contentMode = .scaleAspectFit
 
         countLabel.font = .systemFont(ofSize: 18, weight: .regular)
-        countLabel.textColor = .secondaryLabel
+        countLabel.textColor = UIColor.white.withAlphaComponent(0.62)
         countLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let footer = UIStackView(arrangedSubviews: [avatarView, authorLabel, UIView(), heartView, countLabel])

@@ -53,8 +53,9 @@ struct VideoPlayerView: View {
                         .foregroundStyle(.orange)
                     Text(playbackError)
                         .font(.title3.weight(.semibold))
+                        .foregroundStyle(.white)
                     Text("使用遥控器上键或下键切换视频")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.white.opacity(0.7))
                 }
                 .allowsHitTesting(false)
             }
