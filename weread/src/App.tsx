@@ -90,13 +90,8 @@ const App: React.FC = () => {
     top: number;
     left: number;
   } | null>(null);
-  const {
-    readerFontSize,
-    increase,
-    decrease,
-    increaseReader,
-    decreaseReader,
-  } = useFontSizeStore();
+  const { readerFontSize, increase, decrease, increaseReader, decreaseReader } =
+    useFontSizeStore();
 
   const sortedBooks = useMemo(() => {
     return [...books].sort((a, b) => {
@@ -313,9 +308,11 @@ const App: React.FC = () => {
 
   const handleContentClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    
+
     // 优先：检查注释图标点击，防止被外层划线拦截
-    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    const footnoteEl = target.closest(
+      ".weread-footnote-wrapper",
+    ) as HTMLElement;
     if (footnoteEl) {
       const note = footnoteEl.getAttribute("data-note");
       if (note) {
@@ -359,9 +356,13 @@ const App: React.FC = () => {
 
   const handleContentMouseOver = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    const footnoteEl = target.closest(
+      ".weread-footnote-wrapper",
+    ) as HTMLElement;
     if (footnoteEl) {
-      const parentUnderline = footnoteEl.closest(".hot-underline") as HTMLElement;
+      const parentUnderline = footnoteEl.closest(
+        ".hot-underline",
+      ) as HTMLElement;
       if (parentUnderline) {
         parentUnderline.classList.add("weread-underline-active-footnote");
       }
@@ -370,9 +371,13 @@ const App: React.FC = () => {
 
   const handleContentMouseOut = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    const footnoteEl = target.closest(
+      ".weread-footnote-wrapper",
+    ) as HTMLElement;
     if (footnoteEl) {
-      const parentUnderline = footnoteEl.closest(".hot-underline") as HTMLElement;
+      const parentUnderline = footnoteEl.closest(
+        ".hot-underline",
+      ) as HTMLElement;
       if (parentUnderline) {
         parentUnderline.classList.remove("weread-underline-active-footnote");
       }
@@ -452,15 +457,16 @@ const App: React.FC = () => {
       const doc = new DOMParser().parseFromString(injected, "text/html");
       const imgFootnotes = doc.querySelectorAll("img.qqreader-footnote");
       imgFootnotes.forEach((img) => {
-        const noteText = img.getAttribute("alt") || img.getAttribute("title") || "";
+        const noteText =
+          img.getAttribute("alt") || img.getAttribute("title") || "";
         const span = doc.createElement("span");
         span.className = "weread-footnote-wrapper";
         span.setAttribute("data-note", noteText);
-        
+
         const iconSpan = doc.createElement("span");
         iconSpan.className = "weread-footnote-icon";
         span.appendChild(iconSpan);
-        
+
         img.parentNode?.replaceChild(span, img);
       });
       injected = doc.body.innerHTML;
@@ -635,7 +641,7 @@ const App: React.FC = () => {
                     />
                     <span
                       style={{
-                        fontSize: "calc(var(--app-font-size) - 1px)",
+                        fontSize: "calc(var(--app-font-size))",
                         fontWeight: 600,
                       }}
                     >
@@ -644,7 +650,7 @@ const App: React.FC = () => {
                   </div>
                   <div
                     style={{
-                      fontSize: "calc(var(--app-font-size) - 1px)",
+                      fontSize: "calc(var(--app-font-size))",
                       color: "var(--vscode-editor-foreground)",
                       marginBottom: "4px",
                     }}
@@ -657,7 +663,7 @@ const App: React.FC = () => {
                       alignItems: "center",
                       gap: "4px",
                       color: "var(--vscode-descriptionForeground)",
-                      fontSize: "11px",
+                      fontSize: "13px",
                     }}
                   >
                     <LikeOutlined /> {thought.likeCount}
