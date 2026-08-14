@@ -282,6 +282,15 @@ body {
           }
         }
       }
+
+      // 切换为编辑器默认文字颜色：覆盖书籍内联样式与注入的 <style> 颜色
+      .content-body.color-mode-editor {
+        .chapter-header,
+        .xhtml-content,
+        .xhtml-content * {
+          color: var(--vscode-editor-foreground) !important;
+        }
+      }
     }
 
     .reader-footer {

@@ -19,6 +19,7 @@ import {
   UnorderedListOutlined,
   LikeOutlined,
   AppstoreOutlined,
+  FontColorsOutlined,
 } from "@ant-design/icons";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
@@ -90,8 +91,15 @@ const App: React.FC = () => {
     top: number;
     left: number;
   } | null>(null);
-  const { readerFontSize, increase, decrease, increaseReader, decreaseReader } =
-    useFontSizeStore();
+  const {
+    readerFontSize,
+    readerColorMode,
+    increase,
+    decrease,
+    increaseReader,
+    decreaseReader,
+    toggleReaderColor,
+  } = useFontSizeStore();
 
   const sortedBooks = useMemo(() => {
     return [...books].sort((a, b) => {
@@ -530,7 +538,7 @@ const App: React.FC = () => {
             ) : (
               chapterContent && (
                 <div
-                  className="content-body"
+                  className={`content-body color-mode-${readerColorMode}`}
                   style={
                     {
                       "--reader-font-size": `${readerFontSize}px`,
@@ -854,6 +862,20 @@ const App: React.FC = () => {
                   }
                 }, 100);
               }}
+            />
+          )}
+
+          {view === "reader" && (
+            <FloatButton
+              icon={<FontColorsOutlined style={{ color: "#13c2c2" }} />}
+              tooltip={
+                <div>
+                  {readerColorMode === "book"
+                    ? "切换为编辑器默认文字颜色"
+                    : "切换为书籍文字颜色"}
+                </div>
+              }
+              onClick={toggleReaderColor}
             />
           )}
         </FloatButton.Group>
