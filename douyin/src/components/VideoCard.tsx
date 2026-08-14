@@ -10,6 +10,7 @@ import {
   CommentOutlined,
   PauseOutlined,
   CaretRightOutlined,
+  HeartOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Hls from "hls.js";
@@ -110,19 +111,33 @@ export default function VideoCard({
       const stream = liveRoom?.stream_url || {};
       const map = stream?.hls_pull_url_map || {};
       const qualities = ["SD1", "SD2", "HD1", "FULL_HD1"];
-      return [...new Set([
-        stream?.hls_pull_url,
-        ...qualities.map((quality) => map?.[quality]),
-      ])].filter((url): url is string => Boolean(url));
+      return [
+        ...new Set([
+          stream?.hls_pull_url,
+          ...qualities.map((quality) => map?.[quality]),
+        ]),
+      ].filter((url): url is string => Boolean(url));
     }
 
     const bitRates = video?.bit_rate || [];
-    const highest = (items: any[]) => items.reduce(
-      (best: any, item: any) => (Number(item?.bit_rate || 0) > Number(best?.bit_rate || 0) ? item : best),
-      null,
+    const highest = (items: any[]) =>
+      items.reduce(
+        (best: any, item: any) =>
+          Number(item?.bit_rate || 0) > Number(best?.bit_rate || 0)
+            ? item
+            : best,
+        null,
+      );
+    const preferredH264 = highest(
+      bitRates.filter(
+        (item: any) => item?.is_h265 !== 1 && item?.is_h265 !== true,
+      ),
     );
-    const preferredH264 = highest(bitRates.filter((item: any) => item?.is_h265 !== 1 && item?.is_h265 !== true));
-    const preferredH265 = highest(bitRates.filter((item: any) => item?.is_h265 === 1 || item?.is_h265 === true));
+    const preferredH265 = highest(
+      bitRates.filter(
+        (item: any) => item?.is_h265 === 1 || item?.is_h265 === true,
+      ),
+    );
     const list: string[] = [
       ...(video?.play_addr_h264?.url_list || []),
       ...(preferredH264?.play_addr?.url_list || []),
@@ -151,23 +166,43 @@ export default function VideoCard({
   const displayedDuration = isCurrentPlaybackState ? duration : 0;
   const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
   const isPlaybackEndpoint = currentPlayUrl.includes("/aweme/v1/play/");
-  const [resolvedPlaySource, setResolvedPlaySource] = useState({ source: "", url: "" });
+  const [resolvedPlaySource, setResolvedPlaySource] = useState({
+    source: "",
+    url: "",
+  });
   const mediaPlayUrl = isPlaybackEndpoint
-    ? resolvedPlaySource.source === currentPlayUrl ? resolvedPlaySource.url : ""
+    ? resolvedPlaySource.source === currentPlayUrl
+      ? resolvedPlaySource.url
+      : ""
     : currentPlayUrl;
   const isHlsSource = /\.m3u8(?:\?|$)/i.test(mediaPlayUrl);
 
   useEffect(() => {
-    if (!isPlaybackEndpoint || !currentPlayUrl || resolvedPlaySource.source === currentPlayUrl) return;
+    if (
+      !isPlaybackEndpoint ||
+      !currentPlayUrl ||
+      resolvedPlaySource.source === currentPlayUrl
+    )
+      return;
     let cancelled = false;
     void request("DY_RESOLVE_PLAY_URL", { url: currentPlayUrl })
       .then((response) => {
-        if (!cancelled) setResolvedPlaySource({ source: currentPlayUrl, url: response?.url || currentPlayUrl });
+        if (!cancelled)
+          setResolvedPlaySource({
+            source: currentPlayUrl,
+            url: response?.url || currentPlayUrl,
+          });
       })
       .catch(() => {
-        if (!cancelled) setResolvedPlaySource({ source: currentPlayUrl, url: currentPlayUrl });
+        if (!cancelled)
+          setResolvedPlaySource({
+            source: currentPlayUrl,
+            url: currentPlayUrl,
+          });
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [currentPlayUrl, isPlaybackEndpoint, request, resolvedPlaySource.source]);
 
   const stopCardClick = (event: React.MouseEvent) => {
@@ -186,50 +221,53 @@ export default function VideoCard({
   };
 
   // ===== 核心播放逻辑 =====
-  const requestPlay = useCallback((reason: string) => {
-    const el = videoRef.current;
-    if (!el || !mediaPlayUrl || !isActive || !shouldPlay) return;
+  const requestPlay = useCallback(
+    (reason: string) => {
+      const el = videoRef.current;
+      if (!el || !mediaPlayUrl || !isActive || !shouldPlay) return;
 
-    const seq = ++playSeqRef.current;
-    setIsVideoLoading(el.readyState < HTMLMediaElement.HAVE_CURRENT_DATA);
-    setShowPlayOverlay(false);
+      const seq = ++playSeqRef.current;
+      setIsVideoLoading(el.readyState < HTMLMediaElement.HAVE_CURRENT_DATA);
+      setShowPlayOverlay(false);
 
-    const playPromise = el.play();
-    if (!playPromise) {
-      setIsPlaying(!el.paused);
-      setIsVideoLoading(false);
-      return;
-    }
-
-    playPromise
-      .then(() => {
-        if (seq !== playSeqRef.current) return;
-        setIsPlaying(true);
-        setShowPlayOverlay(false);
+      const playPromise = el.play();
+      if (!playPromise) {
+        setIsPlaying(!el.paused);
         setIsVideoLoading(false);
-      })
-      .catch((err) => {
-        if (seq !== playSeqRef.current) return;
-        if (err?.name === "AbortError") return;
+        return;
+      }
 
-        if (
-          err?.name === "NotSupportedError" ||
-          String(err?.message || "").includes("no supported source")
-        ) {
+      playPromise
+        .then(() => {
+          if (seq !== playSeqRef.current) return;
+          setIsPlaying(true);
+          setShowPlayOverlay(false);
+          setIsVideoLoading(false);
+        })
+        .catch((err) => {
+          if (seq !== playSeqRef.current) return;
+          if (err?.name === "AbortError") return;
+
+          if (
+            err?.name === "NotSupportedError" ||
+            String(err?.message || "").includes("no supported source")
+          ) {
+            setIsPlaying(false);
+            setIsVideoLoading(false);
+            return;
+          }
+
+          console.warn(
+            `[VideoCard] 播放被浏览器拒绝(${reason})，需要一次用户点击:`,
+            err?.message || err,
+          );
           setIsPlaying(false);
           setIsVideoLoading(false);
-          return;
-        }
-
-        console.warn(
-          `[VideoCard] 播放被浏览器拒绝(${reason})，需要一次用户点击:`,
-          err?.message || err,
-        );
-        setIsPlaying(false);
-        setIsVideoLoading(false);
-        setShowPlayOverlay(true);
-      });
-  }, [mediaPlayUrl, isActive, shouldPlay]);
+          setShowPlayOverlay(true);
+        });
+    },
+    [mediaPlayUrl, isActive, shouldPlay],
+  );
 
   useEffect(() => {
     requestPlayRef.current = requestPlay;
@@ -253,7 +291,10 @@ export default function VideoCard({
       hls.loadSource(mediaPlayUrl);
       hls.attachMedia(el);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (activePlaybackRef.current.isActive && activePlaybackRef.current.shouldPlay) {
+        if (
+          activePlaybackRef.current.isActive &&
+          activePlaybackRef.current.shouldPlay
+        ) {
           requestPlayRef.current("hls-manifest");
         }
       });
@@ -388,7 +429,11 @@ export default function VideoCard({
   const togglePictureInPicture = async (event: React.MouseEvent) => {
     stopCardClick(event);
     const el = videoRef.current;
-    if (!el || !document.pictureInPictureEnabled || !("requestPictureInPicture" in el)) {
+    if (
+      !el ||
+      !document.pictureInPictureEnabled ||
+      !("requestPictureInPicture" in el)
+    ) {
       messageApi.warning("当前 VS Code 环境不支持画中画");
       return;
     }
@@ -396,7 +441,8 @@ export default function VideoCard({
       if (document.pictureInPictureElement === el) {
         await document.exitPictureInPicture();
       } else {
-        if (document.pictureInPictureElement) await document.exitPictureInPicture();
+        if (document.pictureInPictureElement)
+          await document.exitPictureInPicture();
         await el.requestPictureInPicture();
       }
     } catch (error: any) {
@@ -655,7 +701,9 @@ export default function VideoCard({
         </Button>
 
         <span className={isLive ? "live-playing-badge" : "time-summary"}>
-          {isLive ? "LIVE" : `${formatTime(currentTime)} / ${formatTime(duration)}`}
+          {isLive
+            ? "LIVE"
+            : `${formatTime(currentTime)} / ${formatTime(duration)}`}
         </span>
 
         <div className="playbar-action-btns">
@@ -690,7 +738,10 @@ export default function VideoCard({
               onClick={(event) => {
                 stopCardClick(event);
                 setDanmakuEnabled((enabled) => {
-                  localStorage.setItem("douyin.danmaku.enabled", String(!enabled));
+                  localStorage.setItem(
+                    "douyin.danmaku.enabled",
+                    String(!enabled),
+                  );
                   return !enabled;
                 });
               }}

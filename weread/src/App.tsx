@@ -19,6 +19,7 @@ import {
   UnorderedListOutlined,
   LikeOutlined,
   AppstoreOutlined,
+  FontColorsOutlined,
 } from "@ant-design/icons";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
@@ -92,10 +93,12 @@ const App: React.FC = () => {
   } | null>(null);
   const {
     readerFontSize,
+    readerColorMode,
     increase,
     decrease,
     increaseReader,
     decreaseReader,
+    toggleReaderColor,
   } = useFontSizeStore();
 
   const sortedBooks = useMemo(() => {
@@ -313,9 +316,11 @@ const App: React.FC = () => {
 
   const handleContentClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    
+
     // 优先：检查注释图标点击，防止被外层划线拦截
-    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    const footnoteEl = target.closest(
+      ".weread-footnote-wrapper",
+    ) as HTMLElement;
     if (footnoteEl) {
       const note = footnoteEl.getAttribute("data-note");
       if (note) {
@@ -359,9 +364,13 @@ const App: React.FC = () => {
 
   const handleContentMouseOver = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    const footnoteEl = target.closest(
+      ".weread-footnote-wrapper",
+    ) as HTMLElement;
     if (footnoteEl) {
-      const parentUnderline = footnoteEl.closest(".hot-underline") as HTMLElement;
+      const parentUnderline = footnoteEl.closest(
+        ".hot-underline",
+      ) as HTMLElement;
       if (parentUnderline) {
         parentUnderline.classList.add("weread-underline-active-footnote");
       }
@@ -370,9 +379,13 @@ const App: React.FC = () => {
 
   const handleContentMouseOut = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    const footnoteEl = target.closest(".weread-footnote-wrapper") as HTMLElement;
+    const footnoteEl = target.closest(
+      ".weread-footnote-wrapper",
+    ) as HTMLElement;
     if (footnoteEl) {
-      const parentUnderline = footnoteEl.closest(".hot-underline") as HTMLElement;
+      const parentUnderline = footnoteEl.closest(
+        ".hot-underline",
+      ) as HTMLElement;
       if (parentUnderline) {
         parentUnderline.classList.remove("weread-underline-active-footnote");
       }
@@ -452,15 +465,16 @@ const App: React.FC = () => {
       const doc = new DOMParser().parseFromString(injected, "text/html");
       const imgFootnotes = doc.querySelectorAll("img.qqreader-footnote");
       imgFootnotes.forEach((img) => {
-        const noteText = img.getAttribute("alt") || img.getAttribute("title") || "";
+        const noteText =
+          img.getAttribute("alt") || img.getAttribute("title") || "";
         const span = doc.createElement("span");
         span.className = "weread-footnote-wrapper";
         span.setAttribute("data-note", noteText);
-        
+
         const iconSpan = doc.createElement("span");
         iconSpan.className = "weread-footnote-icon";
         span.appendChild(iconSpan);
-        
+
         img.parentNode?.replaceChild(span, img);
       });
       injected = doc.body.innerHTML;
@@ -524,7 +538,7 @@ const App: React.FC = () => {
             ) : (
               chapterContent && (
                 <div
-                  className="content-body"
+                  className={`content-body color-mode-${readerColorMode}`}
                   style={
                     {
                       "--reader-font-size": `${readerFontSize}px`,
@@ -635,7 +649,7 @@ const App: React.FC = () => {
                     />
                     <span
                       style={{
-                        fontSize: "calc(var(--app-font-size) - 1px)",
+                        fontSize: "calc(var(--app-font-size))",
                         fontWeight: 600,
                       }}
                     >
@@ -644,7 +658,7 @@ const App: React.FC = () => {
                   </div>
                   <div
                     style={{
-                      fontSize: "calc(var(--app-font-size) - 1px)",
+                      fontSize: "calc(var(--app-font-size))",
                       color: "var(--vscode-editor-foreground)",
                       marginBottom: "4px",
                     }}
@@ -657,7 +671,7 @@ const App: React.FC = () => {
                       alignItems: "center",
                       gap: "4px",
                       color: "var(--vscode-descriptionForeground)",
-                      fontSize: "11px",
+                      fontSize: "13px",
                     }}
                   >
                     <LikeOutlined /> {thought.likeCount}
@@ -848,6 +862,20 @@ const App: React.FC = () => {
                   }
                 }, 100);
               }}
+            />
+          )}
+
+          {view === "reader" && (
+            <FloatButton
+              icon={<FontColorsOutlined style={{ color: "#13c2c2" }} />}
+              tooltip={
+                <div>
+                  {readerColorMode === "book"
+                    ? "切换为编辑器默认文字颜色"
+                    : "切换为书籍文字颜色"}
+                </div>
+              }
+              onClick={toggleReaderColor}
             />
           )}
         </FloatButton.Group>
