@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [17.11.0](https://github.com/ylw1997/touchFish/compare/v17.10.0...v17.11.0) (2026-08-14)
+
+
+### ✨ Features | 新功能
+
+* **weread:** 新增阅读器文字颜色模式切换功能 ([fa899ff](https://github.com/ylw1997/touchFish/commit/fa899ffd93a7d1022a11880805634b451b82d65b))
+
 ## [17.10.0](https://github.com/ylw1997/touchFish/compare/v17.9.3...v17.10.0) (2026-08-11)
 
 
