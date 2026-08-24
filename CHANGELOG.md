@@ -1,6 +1,20 @@
 # 更新历史 
 
 
+## [17.12.0](https://github.com/ylw1997/touchFish/compare/v17.11.0...v17.12.0) (2026-08-24)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* **qqmusic:** 处理登录凭证失效状态并清空播放列表 ([51b57aa](https://github.com/ylw1997/touchFish/commit/51b57aa5b27c674a86181dd8710428af171cbf5e))
+
+
+### ✨ Features | 新功能
+
+* **douyin:** 支持清晰度切换、直播弹幕及本地媒体代理 ([2650603](https://github.com/ylw1997/touchFish/commit/2650603d70139a287270b65bd1b0e712abc91c19))
+* **weread:** 支持二维码扫码登录并优化凭据续期机制 ([bb25bb6](https://github.com/ylw1997/touchFish/commit/bb25bb6cd790fab5f602848e668e946831d0a512))
+* **xiaoyuzhou:** 支持播客单集分页加载更多 ([c1eeeeb](https://github.com/ylw1997/touchFish/commit/c1eeeebcab16c97c449758664c4a9d34358624a1))
+
 ## [17.11.0](https://github.com/ylw1997/touchFish/compare/v17.10.0...v17.11.0) (2026-08-14)
 
 
