@@ -367,11 +367,8 @@ const postRequest = async (
       timeout: 30000,
     });
 
-    if (
-      !hasRetried &&
-      isLoginExpiredPayload(response.data) &&
-      hasRefreshMaterial(creds)
-    ) {
+    const loginExpired = isLoginExpiredPayload(response.data);
+    if (!hasRetried && loginExpired && hasRefreshMaterial(creds)) {
       const newCredential = await refreshCredentialForRequest(
         creds as QQMusicCredential,
         Boolean(credential),
@@ -379,6 +376,16 @@ const postRequest = async (
       if (newCredential) {
         return postRequest(data, enableSign, newCredential, true);
       }
+    }
+
+    if (loginExpired) {
+      const error = new Error(
+        extractModuleErrorMessage(response.data) ||
+          response.data?.msg ||
+          "QQ 音乐登录已失效",
+      ) as Error & { authExpired?: boolean };
+      error.authExpired = true;
+      throw error;
     }
 
     if (response.data?.code !== 0) {
@@ -587,6 +594,7 @@ export const getSongUrl = async (
       code: -1,
       data: "",
       message: error.message,
+      authExpired: Boolean(error.authExpired),
     };
   }
 };

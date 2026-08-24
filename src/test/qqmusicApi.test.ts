@@ -182,4 +182,32 @@ describe("qqmusic api credential refresh", () => {
       qqmusicApi.setGlobalCredential(null);
     }
   });
+
+  it("marks a song URL failure when the credential is expired", async () => {
+    const originalPost = axios.post;
+
+    (axios as any).post = async () => ({
+      data: {
+        code: 0,
+        "music.vkey.GetVkey.UrlGetVkey": {
+          code: 104401,
+          message: "expired",
+        },
+      },
+    });
+
+    try {
+      const result = await qqmusicApi.getSongUrl("test-mid", 128, {
+        musicid: "1152921504000000000",
+        musickey: "W_X_expired",
+        login_type: 1,
+      });
+
+      assert.equal(result.code, -1);
+      assert.equal(result.authExpired, true);
+    } finally {
+      (axios as any).post = originalPost;
+      qqmusicApi.setGlobalCredential(null);
+    }
+  });
 });

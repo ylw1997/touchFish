@@ -140,7 +140,11 @@ export class QQMusicProvider extends BaseWebviewProvider {
     if (!this.credential) {
       this.webviewView.webview.postMessage({
         command: "QQMUSIC_AUTH_SYNC",
-        payload: { isLoggedIn: false, userInfo: null },
+        payload: {
+          isLoggedIn: false,
+          userInfo: null,
+          credentialConfigured: false,
+        },
       });
       return;
     }
@@ -152,13 +156,18 @@ export class QQMusicProvider extends BaseWebviewProvider {
         payload: {
           isLoggedIn: result.code === 0,
           userInfo: result.code === 0 ? result.data : null,
+          credentialConfigured: true,
         },
       });
     } catch (error) {
       console.error("[QQMusic] 同步登录状态失败:", error);
       this.webviewView.webview.postMessage({
         command: "QQMUSIC_AUTH_SYNC",
-        payload: { isLoggedIn: false, userInfo: null },
+        payload: {
+          isLoggedIn: false,
+          userInfo: null,
+          credentialConfigured: true,
+        },
       });
     }
   }
@@ -308,6 +317,9 @@ export class QQMusicProvider extends BaseWebviewProvider {
         case "QQMUSIC_GET_SONG_URL": {
           const { mid, quality, credential } = payload || {};
           const result = await getSongUrl(mid, quality || 128, credential);
+          if (result.authExpired) {
+            await this.clearCredential();
+          }
           webviewView.webview.postMessage({
             command: "QQMUSIC_GET_SONG_URL_RESULT",
             payload: result,
@@ -479,7 +491,10 @@ export class QQMusicProvider extends BaseWebviewProvider {
           const result = await getUserInfo(credential || this.credential);
           webviewView.webview.postMessage({
             command: "QQMUSIC_GET_USER_INFO_RESULT",
-            payload: result,
+            payload: {
+              ...result,
+              credentialConfigured: Boolean(credential || this.credential),
+            },
             uuid,
           } as CommandsType<any>);
           break;

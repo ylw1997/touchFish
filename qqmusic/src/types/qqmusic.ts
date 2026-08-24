@@ -123,6 +123,7 @@ export interface ApiResponse<T = any> {
   code: number;
   data: T;
   message?: string;
+  authExpired?: boolean;
 }
 
 // 搜索类型

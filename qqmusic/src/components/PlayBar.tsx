@@ -200,6 +200,10 @@ const PlayBar: React.FC = () => {
         const url = typeof res.data === "string" ? res.data.trim() : "";
         if (res.code === 0 && url && url.startsWith("http")) {
           setCurrentSongUrl(url);
+        } else if (res.authExpired) {
+          useUserStore.getState().logout();
+          usePlayerStore.getState().clearPlaylist();
+          messageApi.error("QQ 音乐登录已失效，已清空播放列表，请重新登录");
         } else {
           messageApi.error(`无法播放《${currentSong.name}》: ${res.message || "获取播放链接为空，可能是VIP或版权限制"}`);
           setCurrentSongUrl(null);

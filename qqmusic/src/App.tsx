@@ -92,6 +92,7 @@ function App() {
       console.error("[Logout] QQMUSIC_LOGOUT error:", err.message);
     }
     logout();
+    usePlayerStore.getState().clearPlaylist();
     setMyPlaylists([]);
     console.log("[Logout] UI state cleared");
     messageApi.success("已退出登录");
@@ -171,6 +172,9 @@ function App() {
           login(result.data);
         } else {
           logout();
+          if (result.credentialConfigured) {
+            usePlayerStore.getState().clearPlaylist();
+          }
         }
       } catch {
         logout();
@@ -187,6 +191,9 @@ function App() {
           login(payload.payload.userInfo);
         } else {
           logout();
+          if (payload.payload?.credentialConfigured) {
+            usePlayerStore.getState().clearPlaylist();
+          }
         }
       } else if (payload?.command === "QQMUSIC_QUALITY_SYNC") {
         const { quality } = payload.payload || {};
