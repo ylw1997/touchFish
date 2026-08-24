@@ -44,6 +44,7 @@ describe("WeReadClient", () => {
           accessToken: "new",
           vid: "2",
           refreshToken: "new-refresh",
+          gid: "new-group",
         };
       },
     );
@@ -68,8 +69,26 @@ describe("WeReadClient", () => {
     assert.ok(persistedCookie.includes("wr_skey=new"));
     assert.ok(persistedCookie.includes("wr_vid=2"));
     assert.ok(persistedCookie.includes("wr_rt=new-refresh"));
+    assert.ok(persistedCookie.includes("wr_gid=new-group"));
     assert.equal(cookies.filter((cookie) => cookie.includes("wr_skey=old")).length, 3);
     assert.equal(cookies.filter((cookie) => cookie.includes("wr_skey=new")).length, 3);
+  });
+
+  it("renews proactively and does not repeat within the configured interval", async () => {
+    let renewalCount = 0;
+    const client = new WeReadClient(
+      { cookie: "wr_skey=old" },
+      undefined,
+      async () => {
+        renewalCount += 1;
+        return { accessToken: `new-${renewalCount}` };
+      },
+    );
+
+    await client.renewIfDue();
+    await client.renewIfDue();
+
+    assert.equal(renewalCount, 1);
   });
 
   it("renews when an API throws a structured auth error", async () => {

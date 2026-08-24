@@ -12,10 +12,22 @@ import {
   web_book_readReviews,
 } from "../api/weread/api/book";
 import { setConfigByKey } from "../core/config";
+import {
+  web_login_begin_qr,
+  web_login_poll_qr,
+} from "../api/weread/api/login";
+import {
+  parseCookie,
+  stringifyCookie,
+} from "../api/weread/utils/index";
 
 export class WereadProvider extends BaseWebviewProvider {
   private client: WeReadClient;
   private webviewView: WebviewView | null = null;
+  private qrLoginUid = "";
+  private qrLoginCookie = "";
+  private qrLoginGeneration = 0;
+  private qrPollInFlight = new Set<string>();
 
   constructor(context: ExtensionContext) {
     super(context, {
@@ -42,11 +54,93 @@ export class WereadProvider extends BaseWebviewProvider {
         this.client.setCookie(configuredCookie);
       }),
     );
+
+    const renewalTimer = setInterval(() => {
+      void this.client.renewIfDue().catch((error) => {
+        console.warn("[WeRead] 后台自动续期暂未成功:", error?.message || error);
+      });
+    }, 30 * 60 * 1000);
+    context.subscriptions.push({ dispose: () => clearInterval(renewalTimer) });
   }
 
   public override resolveWebviewView(webviewView: WebviewView) {
     this.webviewView = webviewView;
+    void this.client.renewIfDue().catch((error) => {
+      console.warn("[WeRead] 打开页面时自动续期暂未成功:", error?.message || error);
+    });
     return super.resolveWebviewView(webviewView);
+  }
+
+  public openQrLogin() {
+    this.webviewView?.webview.postMessage({
+      command: "WEREAD_OPEN_QR_LOGIN",
+    });
+  }
+
+  private postQrState(state: string, extra: Record<string, any> = {}) {
+    this.webviewView?.webview.postMessage({
+      command: "WEREAD_QR_LOGIN_STATE",
+      payload: { state, ...extra },
+    });
+  }
+
+  private async startQrLogin() {
+    const result = await web_login_begin_qr();
+    this.qrLoginGeneration += 1;
+    this.qrLoginUid = result.uid;
+    this.qrLoginCookie = stringifyCookie(result.cookies);
+    this.postQrState("waiting", { qrUrl: result.qrUrl });
+  }
+
+  private async pollQrLogin(otp = "") {
+    if (!this.qrLoginUid) throw new Error("请先获取微信读书登录二维码");
+    const uid = this.qrLoginUid;
+    const generation = this.qrLoginGeneration;
+    const result = await web_login_poll_qr(
+      uid,
+      otp,
+      this.qrLoginCookie,
+    );
+    if (generation !== this.qrLoginGeneration || uid !== this.qrLoginUid) return;
+    const cookieValues = {
+      ...parseCookie(this.qrLoginCookie),
+      ...result.cookies,
+    };
+    this.qrLoginCookie = stringifyCookie(cookieValues);
+    const data = result.data?.data || result.data || {};
+    if (data.succeed === true || data.succeed === 1) {
+      if (data.webLoginVid || data.vid) {
+        cookieValues.wr_vid = String(data.webLoginVid || data.vid);
+      }
+      if (data.accessToken) cookieValues.wr_skey = String(data.accessToken);
+      if (data.refreshToken) cookieValues.wr_rt = String(data.refreshToken);
+      const cookie = stringifyCookie(cookieValues);
+      if (!cookieValues.wr_vid || !cookieValues.wr_skey) {
+        throw new Error("扫码已确认，但微信读书登录凭据不完整");
+      }
+      await setConfigByKey("wereadCookie", cookie);
+      this.client.setCookie(cookie);
+      this.qrLoginUid = "";
+      this.qrLoginCookie = "";
+      this.qrLoginGeneration += 1;
+      await this.client.renewIfDue(0).catch(() => undefined);
+      this.postQrState("complete");
+      return;
+    }
+
+    const logicCode = String(data.logicCode || "");
+    if (logicCode === "NEED_OTP") this.postQrState("needOtp");
+    else if (logicCode === "OTP_NOT_MATCH") this.postQrState("otpMismatch");
+    else if (logicCode === "LOGIN_TIMEOUT" || logicCode === "OTP_EXPIRED") {
+      this.qrLoginUid = "";
+      this.qrLoginCookie = "";
+      this.qrLoginGeneration += 1;
+      this.postQrState("expired");
+    } else if (logicCode) {
+      throw new Error(`微信读书扫码登录失败: ${logicCode}`);
+    } else {
+      this.postQrState("waiting");
+    }
   }
 
   protected async handleCustomMessage(
@@ -57,6 +151,37 @@ export class WereadProvider extends BaseWebviewProvider {
 
     try {
       switch (command) {
+        case "WEREAD_QR_LOGIN_START": {
+          await this.startQrLogin();
+          break;
+        }
+
+        case "WEREAD_QR_LOGIN_POLL": {
+          const uid = this.qrLoginUid;
+          if (uid && !this.qrPollInFlight.has(uid)) {
+            this.qrPollInFlight.add(uid);
+            try {
+              await this.pollQrLogin();
+            } finally {
+              this.qrPollInFlight.delete(uid);
+            }
+          }
+          break;
+        }
+
+        case "WEREAD_QR_LOGIN_SUBMIT_OTP": {
+          await this.pollQrLogin(String(payload?.otp || ""));
+          break;
+        }
+
+        case "WEREAD_QR_LOGIN_CANCEL": {
+          this.qrLoginUid = "";
+          this.qrLoginCookie = "";
+          this.qrLoginGeneration += 1;
+          this.postQrState("cancelled");
+          break;
+        }
+
         case "WEREAD_GET_SHELF": {
           const result = await this.client.execute(web_shelf_sync, {});
           webviewView.webview.postMessage({
@@ -191,6 +316,11 @@ export class WereadProvider extends BaseWebviewProvider {
       }
     } catch (error: any) {
       console.error("[Weread] 处理消息失败:", error);
+      if (command.startsWith("WEREAD_QR_LOGIN")) {
+        this.postQrState("error", {
+          message: error.message || "微信读书扫码登录失败",
+        });
+      }
       webviewView.webview.postMessage({
         command: "WEREAD_ERROR",
         payload: { message: error.message || "请求失败" },

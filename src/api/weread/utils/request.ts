@@ -47,6 +47,7 @@ export async function get(
   url: string,
   query: Record<string, string | number> = {},
   header: Record<string, string> = {},
+  timeout = 0,
 ) {
   if (Object.keys(query).length) {
     url += "?" + new URLSearchParams(stringifyQuery(query)).toString();
@@ -55,7 +56,7 @@ export async function get(
     "User-Agent": UserAgentForWeb,
     ...header,
   };
-  const res = await axios.get(url, { headers, responseType: "text" });
+  const res = await axios.get(url, { headers, responseType: "text", timeout });
   return new MockResponse(res.data, res.headers as any);
 }
 

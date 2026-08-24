@@ -67,8 +67,10 @@ export async function web_login_session_init(info: Record<string, any> = {}) {
 export async function web_login_renewal(url: string, cookie: string = "") {
   const resp = await postJSON("https://weread.qq.com/web/login/renewal", {
     rq: encodeURIComponent(url),
+    ql: false,
   }, {
     cookie,
+    Referer: "https://weread.qq.com/web/",
   });
 
   const data = await resp.json();
@@ -84,6 +86,8 @@ export async function web_login_renewal(url: string, cookie: string = "") {
           entry.accessToken = value;
         } else if (name === "wr_rt") {
           entry.refreshToken = value;
+        } else if (name === "wr_gid") {
+          entry.gid = value;
         }
         return entry;
       },
@@ -97,6 +101,65 @@ export async function web_login_renewal(url: string, cookie: string = "") {
     }
     throw Error(data.errMsg || "微信读书 Cookie 续期失败");
   }
+}
+
+export interface WeReadQrLoginResult {
+  data: any;
+  cookies: Record<string, string>;
+}
+
+function extractSetCookies(setCookies: string[]) {
+  return setCookies.reduce((cookies: Record<string, string>, header) => {
+    const item = header.split(";", 1)[0];
+    const [name, ...valueParts] = item.split("=");
+    if (name) cookies[name.trim()] = valueParts.join("=");
+    return cookies;
+  }, {});
+}
+
+export async function web_login_begin_qr(): Promise<{
+  uid: string;
+  qrUrl: string;
+  cookies: Record<string, string>;
+}> {
+  const resp = await get("https://weread.qq.com/api/auth/getLoginUid");
+  const result = await resp.json();
+  const uid = String(result?.uid || result?.data?.uid || "");
+  if (!uid) throw new Error("微信读书登录接口未返回 uid");
+  return {
+    uid,
+    qrUrl: `https://weread.qq.com/web/confirm?uid=${encodeURIComponent(uid)}`,
+    cookies: extractSetCookies(resp.getSetCookie()),
+  };
+}
+
+export async function web_login_poll_qr(
+  uid: string,
+  otp = "",
+  cookie = "",
+): Promise<WeReadQrLoginResult> {
+  const query = otp
+    ? `uid=${encodeURIComponent(uid)}&otp=${encodeURIComponent(otp)}`
+    : `uid=${encodeURIComponent(uid)}&otp`;
+  let resp;
+  try {
+    resp = await get(
+      `https://weread.qq.com/api/auth/getLoginInfo?${query}`,
+      {},
+      cookie
+        ? { cookie, Referer: "https://weread.qq.com/web/" }
+        : { Referer: "https://weread.qq.com/web/" },
+      65_000,
+    );
+  } catch (error: any) {
+    // 未扫码时该接口会长轮询；超时视为仍在等待，由界面继续下一轮。
+    if (error?.code === "ECONNABORTED") return { data: {}, cookies: {} };
+    throw error;
+  }
+  return {
+    data: await resp.json(),
+    cookies: extractSetCookies(resp.getSetCookie()),
+  };
 }
 
 /**

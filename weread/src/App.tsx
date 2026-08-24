@@ -5,7 +5,10 @@ import {
   Button,
   FloatButton,
   Drawer,
+  Input,
+  Modal,
   Popover,
+  QRCode,
   App as AntdApp,
 } from "antd";
 import {
@@ -91,6 +94,18 @@ const App: React.FC = () => {
     top: number;
     left: number;
   } | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginState, setLoginState] = useState<
+    | "idle"
+    | "starting"
+    | "waiting"
+    | "needOtp"
+    | "otpMismatch"
+    | "expired"
+    | "error"
+  >("idle");
+  const [qrUrl, setQrUrl] = useState("");
+  const [loginOtp, setLoginOtp] = useState("");
   const {
     readerFontSize,
     readerColorMode,
@@ -126,6 +141,13 @@ const App: React.FC = () => {
     const handleMessage = (event: MessageEvent) => {
       const { command, payload } = event.data;
       switch (command) {
+        case "WEREAD_OPEN_QR_LOGIN":
+          setLoginOpen(true);
+          setLoginState("starting");
+          setQrUrl("");
+          setLoginOtp("");
+          vscode.postMessage({ command: "WEREAD_QR_LOGIN_START" });
+          break;
         case "WEREAD_SHELF_DATA":
           setBooks(payload.books || []);
           setLoading(false);
@@ -239,6 +261,32 @@ const App: React.FC = () => {
           message.success("进度已保存");
           break;
         }
+        case "WEREAD_QR_LOGIN_STATE": {
+          const state = payload?.state;
+          if (payload?.qrUrl) setQrUrl(payload.qrUrl);
+          if (state === "complete") {
+            message.success("微信读书登录成功");
+            setLoginOpen(false);
+            setLoginState("idle");
+            setLoginOtp("");
+            setLoading(true);
+            vscode.postMessage({ command: "WEREAD_GET_SHELF" });
+          } else if (state === "needOtp") {
+            setLoginState("needOtp");
+          } else if (state === "otpMismatch") {
+            setLoginState("otpMismatch");
+            message.error("验证码错误，请重新输入");
+          } else if (state === "expired") {
+            setLoginState("expired");
+            message.error("二维码或验证码已过期，请重新获取");
+          } else if (state === "error") {
+            setLoginState("error");
+            message.error(payload?.message || "微信读书扫码登录失败");
+          } else if (state === "waiting") {
+            setLoginState("waiting");
+          }
+          break;
+        }
         case "WEREAD_CHAPTER_DATA": {
           console.log(
             "[Weread] Chapter content received:",
@@ -265,6 +313,30 @@ const App: React.FC = () => {
 
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+
+  useEffect(() => {
+    if (!loginOpen || loginState !== "waiting") return;
+    const timer = window.setInterval(() => {
+      vscode.postMessage({ command: "WEREAD_QR_LOGIN_POLL" });
+    }, 2_000);
+    return () => window.clearInterval(timer);
+  }, [loginOpen, loginState]);
+
+  const startQrLogin = () => {
+    setLoginOpen(true);
+    setLoginState("starting");
+    setQrUrl("");
+    setLoginOtp("");
+    vscode.postMessage({ command: "WEREAD_QR_LOGIN_START" });
+  };
+
+  const closeQrLogin = () => {
+    setLoginOpen(false);
+    setLoginState("idle");
+    setQrUrl("");
+    setLoginOtp("");
+    vscode.postMessage({ command: "WEREAD_QR_LOGIN_CANCEL" });
+  };
 
   const openBook = (book: Book) => {
     setCurrentBook(book);
@@ -880,6 +952,72 @@ const App: React.FC = () => {
           )}
         </FloatButton.Group>
       </div>
+
+      <Modal
+        title="微信扫码登录"
+        open={loginOpen}
+        footer={null}
+        onCancel={closeQrLogin}
+        destroyOnHidden
+        centered
+      >
+        <div className="weread-login-panel">
+          {loginState === "starting" ? (
+            <Spin tip="正在获取二维码" />
+          ) : qrUrl ? (
+            <QRCode
+              value={qrUrl}
+              size={220}
+              color="#000000"
+              bgColor="#ffffff"
+              bordered={false}
+              className="weread-login-qr"
+            />
+          ) : null}
+          {loginState === "waiting" && (
+            <p>请使用微信扫描二维码，并在手机上确认登录。</p>
+          )}
+          {(loginState === "needOtp" || loginState === "otpMismatch") && (
+            <div className="weread-login-otp">
+              <p>请输入手机上显示的四位验证码</p>
+              <Input
+                value={loginOtp}
+                maxLength={4}
+                inputMode="numeric"
+                placeholder="四位验证码"
+                onChange={(event) =>
+                  setLoginOtp(event.target.value.replace(/\D/g, "").slice(0, 4))
+                }
+                onPressEnter={() => {
+                  if (loginOtp.length === 4) {
+                    vscode.postMessage({
+                      command: "WEREAD_QR_LOGIN_SUBMIT_OTP",
+                      payload: { otp: loginOtp },
+                    });
+                  }
+                }}
+              />
+              <Button
+                type="primary"
+                disabled={loginOtp.length !== 4}
+                onClick={() =>
+                  vscode.postMessage({
+                    command: "WEREAD_QR_LOGIN_SUBMIT_OTP",
+                    payload: { otp: loginOtp },
+                  })
+                }
+              >
+                提交验证码
+              </Button>
+            </div>
+          )}
+          {(loginState === "expired" || loginState === "error") && (
+            <Button type="primary" onClick={startQrLogin}>
+              重新获取二维码
+            </Button>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

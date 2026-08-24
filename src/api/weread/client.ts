@@ -10,12 +10,14 @@ type RenewalResult = {
   accessToken?: string;
   vid?: string;
   refreshToken?: string;
+  gid?: string;
 };
 
 type RenewalFunction = (url: string, cookie: string) => Promise<RenewalResult>;
 
 export class WeReadClient {
   private refreshPromise: Promise<void> | null = null;
+  private lastRefreshAt = 0;
 
   constructor(
     private auth: WeReadAuth,
@@ -25,6 +27,12 @@ export class WeReadClient {
 
   setCookie(cookie: string) {
     this.auth.cookie = cookie;
+    this.lastRefreshAt = 0;
+  }
+
+  async renewIfDue(maxAgeMs = 6 * 60 * 60 * 1000) {
+    if (!this.auth.cookie || Date.now() - this.lastRefreshAt < maxAgeMs) return;
+    await this.refresh();
   }
 
   /**
@@ -75,7 +83,7 @@ export class WeReadClient {
     try {
       const cookieAtStart = this.auth.cookie;
       const renewalData = await this.renewCookie(
-        "https://weread.qq.com/",
+        "/web/book/read",
         cookieAtStart,
       );
       if (!renewalData?.accessToken) {
@@ -90,11 +98,13 @@ export class WeReadClient {
       };
       if (renewalData.vid) newValues.wr_vid = renewalData.vid;
       if (renewalData.refreshToken) newValues.wr_rt = renewalData.refreshToken;
+      if (renewalData.gid) newValues.wr_gid = renewalData.gid;
 
       this.auth.cookie = updateCookie(cookieAtStart, newValues);
       if (this.onCookieUpdate) {
         await this.onCookieUpdate(this.auth.cookie);
       }
+      this.lastRefreshAt = Date.now();
       console.log("[WeRead] Cookie 续期成功");
     } catch (error: any) {
       console.error("[WeRead] Cookie 续期失败:", error.message);
