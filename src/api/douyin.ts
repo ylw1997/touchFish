@@ -5,8 +5,53 @@ import { showError } from "../utils/errorMessage";
 
 axios.defaults.timeout = 10000;
 
-const DOUYIN_UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36";
+export const DOUYIN_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36";
+
+const isPlayableDouyinFeedItem = (aweme: any) => {
+  if (aweme?.video) return true;
+  const rawdata = aweme?.cell_room?.rawdata;
+  if (!rawdata) return false;
+  try {
+    const room = typeof rawdata === "string" ? JSON.parse(rawdata) : rawdata;
+    const stream = room?.stream_url || {};
+    const hlsMap = stream?.hls_pull_url_map || {};
+    return (
+      room?.status === 2 &&
+      Boolean(
+        hasSdkH264Hls(stream) ||
+          stream?.hls_pull_url ||
+          Object.values(hlsMap).some(Boolean),
+      )
+    );
+  } catch {
+    return false;
+  }
+};
+
+const hasSdkH264Hls = (stream: any) => {
+  const raw = stream?.live_core_sdk_data?.pull_data?.stream_data;
+  if (!raw) return false;
+  try {
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return Object.values(parsed?.data || {}).some((value: any) => {
+      const main = value?.main;
+      if (!main?.hls) return false;
+      let params: any = {};
+      try {
+        params = typeof main.sdk_params === "string"
+          ? JSON.parse(main.sdk_params)
+          : main.sdk_params || {};
+      } catch {
+        return false;
+      }
+      const codec = String(params?.VCodec || params?.vcodec || "").toLowerCase();
+      return !codec || codec === "h264" || codec === "avc";
+    });
+  } catch {
+    return false;
+  }
+};
 
 const signedGet = async (
   url: string,
@@ -66,6 +111,12 @@ export const getDouyinFeed = async (
         ff_danmaku_status: 1,
         danmaku_switch_status: 1,
         is_dash_user: 1,
+        is_auto_play: 0,
+        is_full_screen: 0,
+        is_full_webscreen: 0,
+        is_mute: 0,
+        is_speed: 1,
+        is_visible: 1,
         related_recommend: 1,
         is_xigua_user: 0,
       }),
@@ -91,10 +142,10 @@ export const getDouyinFeed = async (
       browser_language: "zh-CN",
       browser_platform: "Win32",
       browser_name: "Chrome",
-      browser_version: "151.0.0.0",
+      browser_version: "150.0.0.0",
       browser_online: "true",
       engine_name: "Blink",
-      engine_version: "151.0.0.0",
+      engine_version: "150.0.0.0",
       os_name: "Windows",
       os_version: "10",
       platform: "PC",
@@ -104,7 +155,13 @@ export const getDouyinFeed = async (
     const response = await signedGet(apiPath, {
       Referer: "https://www.douyin.com/?recommend=1",
     });
-    return response.data;
+    const payload = response.data;
+    return {
+      ...payload,
+      aweme_list: Array.isArray(payload?.aweme_list)
+        ? payload.aweme_list.filter(isPlayableDouyinFeedItem)
+        : [],
+    };
   } catch (error: any) {
     showError(`获取抖音推荐流失败: ${error.message}`);
     return {
@@ -390,18 +447,7 @@ export const resolveDouyinPlayUrl = async (playUrl: string) => {
   if (!isDouyinHost || !parsed.pathname.includes("/aweme/v1/play/")) {
     throw new Error("不允许解析非抖音播放入口");
   }
-  const headers = await getDouyinHeaders({
-    "User-Agent": DOUYIN_UA,
-    Referer: "https://www.douyin.com/",
-    Range: "bytes=0-0",
-  });
-  const response = await axios.get(playUrl, {
-    headers,
-    maxRedirects: 0,
-    validateStatus: (status) => status >= 200 && status < 400,
-  });
-  const resolved = response.headers.location;
-  return { url: typeof resolved === "string" && resolved ? resolved : playUrl };
+  return { url: playUrl };
 };
 
 export const getDouyinLiveFeed = async (maxTime: number = 0) => {
@@ -526,10 +572,22 @@ export const getDouyinPlayableLiveRoom = async (webRid: string) => {
     },
   );
   const payload = response.data;
-  const room = payload.data?.data?.[0];
+  const rawRoom = payload.data?.data?.[0];
+  const room = rawRoom
+    ? {
+        ...rawRoom,
+        web_rid: rawRoom.web_rid || webRid,
+        owner: {
+          ...rawRoom.owner,
+          web_rid: rawRoom.owner?.web_rid || webRid,
+        },
+      }
+    : null;
   const hlsMap = room?.stream_url?.hls_pull_url_map || {};
   const hasPlayableHls = Boolean(
-    room?.stream_url?.hls_pull_url || Object.values(hlsMap).some(Boolean),
+    hasSdkH264Hls(room?.stream_url) ||
+      room?.stream_url?.hls_pull_url ||
+      Object.values(hlsMap).some(Boolean),
   );
   if (payload.status_code !== 0 || room?.status !== 2 || !hasPlayableHls) {
     throw new Error(payload.status_msg || "直播间已结束或暂无可播放线路");
