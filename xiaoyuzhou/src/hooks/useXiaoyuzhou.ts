@@ -193,6 +193,7 @@ export function useXiaoyuzhou() {
           return {
             podcast: detail.data.data,
             episodes: episodes.data?.data || [],
+            loadMoreKey: episodes.data?.loadMoreKey || null,
           };
         }
 
@@ -201,6 +202,26 @@ export function useXiaoyuzhou() {
         return null;
       } finally {
         setLoading(false);
+      }
+    },
+    [request],
+  );
+
+  const getEpisodeList = useCallback(
+    async (pid: string, loadMoreKey?: unknown) => {
+      try {
+        const result = await request<any>("XIAOYUZHOU_GET_EPISODE_LIST", {
+          pid,
+          order: "desc",
+          loadMoreKey,
+        });
+        if (result.code !== 0 || !result.data) return null;
+        return {
+          episodes: Array.isArray(result.data.data) ? result.data.data : [],
+          loadMoreKey: result.data.loadMoreKey || null,
+        };
+      } catch {
+        return null;
       }
     },
     [request],
@@ -274,6 +295,7 @@ export function useXiaoyuzhou() {
     getTopList,
     doSearch,
     getEpisodeDetail,
+    getEpisodeList,
     getPodcastDetail,
     getSubscriptions,
     updateSubscription,

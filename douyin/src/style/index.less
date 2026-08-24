@@ -695,6 +695,56 @@ body {
     letter-spacing: 1px;
   }
 
+  .playbar-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+
+    .time-summary,
+    .live-playing-badge {
+      flex: none;
+    }
+  }
+
+  .quality-selector-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 14px;
+    color: var(--vscode-descriptionForeground, rgba(255, 255, 255, 0.68));
+    cursor: pointer;
+
+    .anticon {
+      flex: none;
+      font-size: 9px;
+      pointer-events: none;
+    }
+  }
+
+  .quality-selector {
+    width: auto;
+    max-width: 76px;
+    height: 14px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: var(--vscode-descriptionForeground, rgba(255, 255, 255, 0.68));
+    background: transparent;
+    cursor: inherit;
+    outline: none;
+    font-size: 12px;
+    line-height: 14px;
+    appearance: none;
+
+    option {
+      color: var(--vscode-dropdown-foreground, #fff);
+      background: var(--vscode-dropdown-background, #252526);
+    }
+  }
+
   .video-progress-bar {
     position: absolute;
     top: 0;
@@ -737,6 +787,7 @@ body {
       height: 34px;
       box-shadow: none;
     }
+
   }
 
   .playbar-author-btn {
@@ -881,6 +932,17 @@ body {
   animation-timing-function: linear;
   animation-fill-mode: forwards;
   will-change: transform;
+}
+
+.live-danmaku-overlay {
+  height: 134px;
+}
+
+.live-danmaku-item {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.32);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 @keyframes danmaku-move {

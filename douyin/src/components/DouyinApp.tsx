@@ -56,6 +56,23 @@ const getPreloadUrl = (aweme: any) => {
 export default function DouyinApp() {
   const { request, messageApi } = useRequest();
 
+  useEffect(() => {
+    const supports = (mimeType: string) =>
+      typeof MediaSource !== "undefined" &&
+      MediaSource.isTypeSupported(mimeType);
+    vscode.postMessage({
+      command: "DY_REPORT_MEDIA_CAPABILITY",
+      payload: {
+        h264:
+          supports('video/mp4; codecs="avc1.42E01E"') &&
+          supports('video/mp4; codecs="avc1.640028"'),
+        aac:
+          supports('audio/mp4; codecs="mp4a.40.2"') &&
+          supports('audio/mp4; codecs="mp4a.40.5"'),
+      },
+    });
+  }, []);
+
   // 从 vscode state 恢复（仅组件初始化时读一次）
   const savedStateRef = useRef((vscode.getState() as SavedState) || {});
 

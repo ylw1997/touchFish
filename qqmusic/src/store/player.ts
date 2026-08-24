@@ -270,7 +270,10 @@ export const usePlayerStore = create<PlayerState>()(
           playlist: [],
           currentIndex: -1,
           currentSong: null,
+          currentSongUrl: null,
           isPlaying: false,
+          currentTime: 0,
+          duration: 0,
           isRadioMode: false,
           playSource: "normal",
         });

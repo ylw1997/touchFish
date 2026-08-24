@@ -11,11 +11,13 @@ import {
   PauseOutlined,
   CaretRightOutlined,
   HeartOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Hls from "hls.js";
 import { useRequest } from "../hooks/useRequest";
 import DanmakuOverlay from "./DanmakuOverlay";
+import LiveDanmakuOverlay from "./LiveDanmakuOverlay";
 
 const parseLiveRoom = (aweme: any) => {
   if (aweme?.liveRoom) return aweme.liveRoom;
@@ -26,6 +28,84 @@ const parseLiveRoom = (aweme: any) => {
     return JSON.parse(rawdata);
   } catch {
     return null;
+  }
+};
+
+const qualityTitle = (rate: any) => {
+  const gear = String(rate?.gear_name || "").toLowerCase();
+  if (gear.includes("4k") || gear.includes("2160")) return "4K";
+  if (gear.includes("2k") || gear.includes("1440")) return "2K";
+  for (const height of [1080, 720, 540, 480, 360]) {
+    if (gear.includes(String(height))) return `${height}P`;
+  }
+  return "";
+};
+
+interface QualityOption {
+  id: string;
+  title: string;
+  urls: string[];
+}
+
+interface LiveStream {
+  id: string;
+  title: string;
+  hlsUrl: string;
+  bitrate: number;
+}
+
+const normalizeLiveUrl = (value: unknown) => {
+  if (typeof value !== "string" || !value) return "";
+  try {
+    const url = new URL(value);
+    if (url.protocol === "http:") url.protocol = "https:";
+    return url.toString();
+  } catch {
+    return value;
+  }
+};
+
+const getLiveStreams = (stream: any): LiveStream[] => {
+  const raw = stream?.live_core_sdk_data?.pull_data?.stream_data;
+  if (!raw) return [];
+  try {
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const entries = Object.entries(parsed?.data || {}) as [string, any][];
+    return entries
+      .map(([id, value]) => {
+        const main = value?.main || {};
+        const hlsUrl = normalizeLiveUrl(main.hls);
+        if (!hlsUrl) return null;
+        let sdkParams: any = {};
+        try {
+          sdkParams = typeof main.sdk_params === "string"
+            ? JSON.parse(main.sdk_params)
+            : main.sdk_params || {};
+        } catch {
+          sdkParams = {};
+        }
+        const isAudioOnly =
+          id.toLowerCase() === "ao" ||
+          hlsUrl.includes("only_audio=1") ||
+          sdkParams?.only_audio === 1 ||
+          sdkParams?.only_audio === true;
+        if (isAudioOnly) return null;
+        const codec = String(sdkParams?.VCodec || sdkParams?.vcodec || "").toLowerCase();
+        if (codec && codec !== "h264" && codec !== "avc") return null;
+        const resolution = String(sdkParams?.resolution || "");
+        const height = Number(resolution.split("x")[1] || 0);
+        if (!height) return null;
+        return {
+          id,
+          title: id === "origin" ? "原画" : height ? `${height}P` : id.toUpperCase(),
+          hlsUrl,
+          bitrate: Number(sdkParams?.vbitrate || 0),
+        };
+      })
+      .filter((item): item is LiveStream => Boolean(item))
+      .sort((a, b) => a.bitrate - b.bitrate);
+  } catch {
+    return [];
   }
 };
 
@@ -101,20 +181,25 @@ export default function VideoCard({
     index: number;
   }>({ awemeId, index: 0 });
   const playSeqRef = useRef(0);
+  const pendingSeekRef = useRef<number | null>(null);
+  const [selectedQualityId, setSelectedQualityId] = useState("auto");
 
   const coverUrl =
     liveRoom?.cover?.url_list?.[0] || video?.cover?.url_list?.[0] || "";
 
   // 播放地址排序：同步计算，避免 useEffect 异步导致 currentPlayUrl 先空后有效
-  const playUrlList = useMemo(() => {
+  const automaticPlayUrlList = useMemo(() => {
     if (liveRoom) {
       const stream = liveRoom?.stream_url || {};
-      const map = stream?.hls_pull_url_map || {};
-      const qualities = ["SD1", "SD2", "HD1", "FULL_HD1"];
+      const hlsMap = stream?.hls_pull_url_map || {};
+      // 直播统一使用 HLS；媒体解码能力由模块启动时检测。
+      const sdkStreams = getLiveStreams(stream);
+      const qualities = ["SD1", "HD1", "SD2", "FULL_HD1"];
       return [
         ...new Set([
-          stream?.hls_pull_url,
-          ...qualities.map((quality) => map?.[quality]),
+          ...qualities.map((quality) => normalizeLiveUrl(hlsMap?.[quality])),
+          normalizeLiveUrl(stream?.hls_pull_url),
+          ...sdkStreams.map((item) => item.hlsUrl),
         ]),
       ].filter((url): url is string => Boolean(url));
     }
@@ -158,12 +243,84 @@ export default function VideoCard({
     });
   }, [liveRoom, video]);
 
+  const qualityOptions = useMemo<QualityOption[]>(() => {
+    const options: QualityOption[] = [
+      { id: "auto", title: "自动", urls: automaticPlayUrlList },
+    ];
+    if (liveRoom) {
+      const stream = liveRoom?.stream_url || {};
+      const hlsMap = stream?.hls_pull_url_map || {};
+      const seen = new Set<string>();
+      const sdkStreams = [...getLiveStreams(stream)].sort(
+        (a, b) => b.bitrate - a.bitrate,
+      );
+      const sdkByTitle = new Map<string, string[]>();
+      for (const item of sdkStreams) {
+        const urls = [item.hlsUrl].filter(Boolean);
+        sdkByTitle.set(item.title, [
+          ...new Set([...(sdkByTitle.get(item.title) || []), ...urls]),
+        ]);
+        urls.forEach((url) => seen.add(url));
+      }
+      for (const [title, urls] of sdkByTitle) {
+        options.push({ id: `live-sdk-${title}`, title, urls });
+      }
+      for (const [key, title] of [
+        ["FULL_HD1", "原画"],
+        ["HD1", "超清"],
+        ["SD2", "高清"],
+        ["SD1", "标清"],
+      ]) {
+        const urls = [normalizeLiveUrl(hlsMap?.[key])].filter(
+          (url) => url && !seen.has(url),
+        );
+        if (!urls.length || options.some((option) => option.title === title)) continue;
+        urls.forEach((url) => seen.add(url));
+        options.push({ id: `live-${key}`, title, urls });
+      }
+      const defaultUrls = [normalizeLiveUrl(stream?.hls_pull_url)].filter(Boolean);
+      if (!options.some((option) => option.title === "原画") && defaultUrls.length) {
+        options.splice(1, 0, {
+          id: "live-original",
+          title: "原画",
+          urls: defaultUrls,
+        });
+      }
+      return options;
+    }
+
+    const allRates = Array.isArray(video?.bit_rate) ? video.bit_rate : [];
+    const h264Rates = allRates.filter(
+      (rate: any) => rate?.is_h265 !== 1 && rate?.is_h265 !== true,
+    );
+    const rates = [...(h264Rates.length ? h264Rates : allRates)].sort(
+      (a: any, b: any) => Number(b?.bit_rate || 0) - Number(a?.bit_rate || 0),
+    );
+    const hasResolution = rates.some((rate: any) => qualityTitle(rate));
+    const fallbackTitles = rates.map((_rate: any, index: number) =>
+      index === 0 ? "最高" : index === rates.length - 1 ? "流畅" : "标准",
+    );
+    const byTitle = new Map<string, string[]>();
+    rates.forEach((rate: any, index: number) => {
+      const title = hasResolution ? qualityTitle(rate) : fallbackTitles[index];
+      if (!title) return;
+      const urls = (rate?.play_addr?.url_list || []).filter(Boolean);
+      if (!urls.length) return;
+      byTitle.set(title, [...new Set([...(byTitle.get(title) || []), ...urls])]);
+    });
+    let index = 0;
+    for (const [title, urls] of byTitle) {
+      options.push({ id: `vod-${index++}`, title, urls });
+    }
+    return options;
+  }, [automaticPlayUrlList, liveRoom, video]);
+
+  const playUrlList =
+    qualityOptions.find((option) => option.id === selectedQualityId)?.urls ||
+    automaticPlayUrlList;
+
   const effectivePlayUrlIndex =
     playSource.awemeId === awemeId ? playSource.index : 0;
-  const isCurrentPlaybackState = playSource.awemeId === awemeId;
-  const displayedProgress = isCurrentPlaybackState ? progress : 0;
-  const displayedCurrentTime = isCurrentPlaybackState ? currentTime : 0;
-  const displayedDuration = isCurrentPlaybackState ? duration : 0;
   const currentPlayUrl = playUrlList[effectivePlayUrlIndex] || "";
   const isPlaybackEndpoint = currentPlayUrl.includes("/aweme/v1/play/");
   const [resolvedPlaySource, setResolvedPlaySource] = useState({
@@ -280,6 +437,19 @@ export default function VideoCard({
     hlsRef.current = null;
     if (!el || !mediaPlayUrl || !isHlsSource) return;
 
+    let switchingSource = false;
+
+    const useNextSource = () => {
+      if (switchingSource) return;
+      switchingSource = true;
+      if (effectivePlayUrlIndex < playUrlList.length - 1) {
+        setPlaySource({ awemeId, index: effectivePlayUrlIndex + 1 });
+      } else {
+        setIsVideoLoading(false);
+        setShowPlayOverlay(true);
+      }
+    };
+
     if (Hls.isSupported()) {
       const hls = new Hls({
         lowLatencyMode: true,
@@ -300,13 +470,13 @@ export default function VideoCard({
       });
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (!data.fatal) return;
+        console.warn("[VideoCard] HLS 直播线路失效，尝试下一条:", {
+          type: data.type,
+          details: data.details,
+          url: currentPlayUrl,
+        });
         hls.destroy();
-        if (effectivePlayUrlIndex < playUrlList.length - 1) {
-          setPlaySource({ awemeId, index: effectivePlayUrlIndex + 1 });
-        } else {
-          setIsVideoLoading(false);
-          setShowPlayOverlay(true);
-        }
+        useNextSource();
       });
     } else if (el.canPlayType("application/vnd.apple.mpegurl")) {
       el.src = mediaPlayUrl;
@@ -327,6 +497,7 @@ export default function VideoCard({
   useEffect(() => {
     if (playSource.awemeId !== awemeId) {
       setPlaySource({ awemeId, index: 0 });
+      setSelectedQualityId("auto");
       setProgress(0);
       setCurrentTime(0);
       setDuration(0);
@@ -334,6 +505,18 @@ export default function VideoCard({
       setShowPlayOverlay(false);
     }
   }, [awemeId, playSource.awemeId]);
+
+  const handleQualityChange = (qualityId: string) => {
+    if (qualityId === selectedQualityId) return;
+    const el = videoRef.current;
+    pendingSeekRef.current = !isLive && el && Number.isFinite(el.currentTime)
+      ? el.currentTime
+      : null;
+    playSeqRef.current += 1;
+    setSelectedQualityId(qualityId);
+    setPlaySource({ awemeId, index: 0 });
+    setIsVideoLoading(true);
+  };
 
   useEffect(() => {
     currentAwemeIdRef.current = awemeId;
@@ -452,6 +635,9 @@ export default function VideoCard({
 
   // 播放失败自动切源容错
   const handleVideoError = (e: any) => {
+    // Hls.js 会在 fatal ERROR 中切换线路；同时处理 video error
+    // 会连续跳过两条候选源。
+    if (isHlsSource && Hls.isSupported()) return;
     console.warn(
       "[VideoCard] 当前播放源出错，尝试切换备用源:",
       currentPlayUrl,
@@ -622,7 +808,7 @@ export default function VideoCard({
       {/* 视频播放器 */}
       <video
         ref={videoRef}
-        src={isHlsSource ? undefined : mediaPlayUrl}
+        src={isHlsSource ? undefined : mediaPlayUrl || undefined}
         onError={handleVideoError}
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => {
@@ -648,6 +834,16 @@ export default function VideoCard({
         onLoadedMetadata={() => {
           if (videoRef.current) {
             setDuration(videoRef.current.duration);
+            if (
+              pendingSeekRef.current != null &&
+              Number.isFinite(videoRef.current.duration)
+            ) {
+              videoRef.current.currentTime = Math.min(
+                pendingSeekRef.current,
+                Math.max(0, videoRef.current.duration - 0.1),
+              );
+              pendingSeekRef.current = null;
+            }
           }
         }}
         className="video-player"
@@ -665,6 +861,15 @@ export default function VideoCard({
           currentTime={currentTime}
           isPlaying={isPlaying}
           enabled={danmakuEnabled}
+          request={request}
+        />
+      )}
+      {isLive && (
+        <LiveDanmakuOverlay
+          roomId={String(liveRoom?.id_str || liveRoom?.id || "")}
+          webRid={String(liveRoom?.owner?.web_rid || liveRoom?.web_rid || "")}
+          enabled={danmakuEnabled}
+          isActive={isActive && shouldPlay}
           request={request}
         />
       )}
@@ -700,11 +905,34 @@ export default function VideoCard({
           <Avatar src={author?.avatar_thumb?.url_list?.[0]} />
         </Button>
 
-        <span className={isLive ? "live-playing-badge" : "time-summary"}>
-          {isLive
-            ? "LIVE"
-            : `${formatTime(currentTime)} / ${formatTime(duration)}`}
-        </span>
+        <div className="playbar-meta">
+          <span className={isLive ? "live-playing-badge" : "time-summary"}>
+            {isLive
+              ? "LIVE"
+              : `${formatTime(currentTime)} / ${formatTime(duration)}`}
+          </span>
+
+          {qualityOptions.length > 1 && (
+            <span className="quality-selector-wrap">
+              <select
+                className="quality-selector"
+                value={selectedQualityId}
+                title="选择视频清晰度"
+                aria-label="选择视频清晰度"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+                onChange={(event) => handleQualityChange(event.target.value)}
+              >
+                {qualityOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.title}
+                  </option>
+                ))}
+              </select>
+              <DownOutlined aria-hidden="true" />
+            </span>
+          )}
+        </div>
 
         <div className="playbar-action-btns">
           <Button
@@ -728,25 +956,23 @@ export default function VideoCard({
               onClick={handleOpenComments}
             />
           )}
-          {!isLive && (
-            <Button
-              color={danmakuEnabled ? "primary" : "default"}
-              shape="circle"
-              variant="filled"
-              icon={<CommentOutlined />}
-              title={danmakuEnabled ? "关闭弹幕" : "开启弹幕"}
-              onClick={(event) => {
-                stopCardClick(event);
-                setDanmakuEnabled((enabled) => {
-                  localStorage.setItem(
-                    "douyin.danmaku.enabled",
-                    String(!enabled),
-                  );
-                  return !enabled;
-                });
-              }}
-            />
-          )}
+          <Button
+            color={danmakuEnabled ? "primary" : "default"}
+            shape="circle"
+            variant="filled"
+            icon={<CommentOutlined />}
+            title={danmakuEnabled ? "关闭弹幕" : "开启弹幕"}
+            onClick={(event) => {
+              stopCardClick(event);
+              setDanmakuEnabled((enabled) => {
+                localStorage.setItem(
+                  "douyin.danmaku.enabled",
+                  String(!enabled),
+                );
+                return !enabled;
+              });
+            }}
+          />
           <Button
             color={isPictureInPicture ? "primary" : "default"}
             shape="circle"

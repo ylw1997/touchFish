@@ -364,6 +364,12 @@ export function activate(context: vscode.ExtensionContext) {
     }),
   );
   context.subscriptions.push(
+    vscode.commands.registerCommand("touchfish.loginWereadQrCode", async () => {
+      await vscode.commands.executeCommand("weread.focus");
+      wereadProvider.getInstance().openQrLogin();
+    }),
+  );
+  context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.setWereadCookie", async () => {
       const cookie = await vscode.window.showInputBox({
         prompt: "请输入微信读书 Cookie",

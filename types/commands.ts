@@ -225,6 +225,9 @@ export type CommandList =
   | "DY_GET_LIVE_FEED"
   | "DY_GET_FOLLOWED_LIVE"
   | "DY_GET_PLAYABLE_LIVE"
+  | "DY_REPORT_MEDIA_CAPABILITY"
+  | "DY_START_LIVE_DANMAKU"
+  | "DY_STOP_LIVE_DANMAKU"
   | "DY_LIKE_VIDEO";
 
 export type ZhihuCommandList =

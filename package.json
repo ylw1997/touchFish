@@ -757,6 +757,11 @@
 				"icon": "$(settings-gear)"
 			},
 			{
+				"command": "touchfish.loginWereadQrCode",
+				"title": "微信读书扫码登录",
+				"icon": "$(account)"
+			},
+			{
 				"command": "touchfish.setWereadCookie",
 				"title": "设置微信读书Cookie",
 				"icon": "$(settings-gear)"
@@ -907,9 +912,14 @@
 					"group": "navigation"
 				},
 				{
+					"command": "touchfish.loginWereadQrCode",
+					"when": "view == weread",
+					"group": "navigation@1"
+				},
+				{
 					"command": "touchfish.setWereadCookie",
 					"when": "view == weread",
-					"group": "navigation"
+					"group": "navigation@2"
 				},
 				{
 					"command": "touchfish.setNeteaseCookie",
@@ -953,6 +963,7 @@
 		"@types/mocha": "^10.0.9",
 		"@types/node": "24.0.13",
 		"@types/vscode": "1.80.0",
+		"@types/ws": "8.18.1",
 		"@typescript-eslint/eslint-plugin": "8.36.0",
 		"@typescript-eslint/parser": "8.36.0",
 		"@vscode/test-electron": "2.5.2",
@@ -976,6 +987,7 @@
 		"crypto-js": "^4.2.0",
 		"iconv-lite": "^0.7.2",
 		"utf-8-validate": "^6.0.5",
+		"ws": "8.18.3",
 		"x-client-transaction-id": "^0.2.3",
 		"xbogus": "^1.0.2"
 	},
