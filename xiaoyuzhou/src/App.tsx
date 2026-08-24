@@ -71,6 +71,7 @@ function App() {
     getTopList,
     doSearch,
     getPodcastDetail,
+    getEpisodeList,
     getEpisodeDetail,
     getSubscriptions,
     updateSubscription,
@@ -90,6 +91,8 @@ function App() {
   const [podcastLoading, setPodcastLoading] = useState(false);
   const [podcastDetail, setPodcastDetail] = useState<any | null>(null);
   const [podcastEpisodes, setPodcastEpisodes] = useState<any[]>([]);
+  const [podcastLoadMoreKey, setPodcastLoadMoreKey] = useState<unknown>(null);
+  const [podcastLoadingMore, setPodcastLoadingMore] = useState(false);
   const [episodeOpen, setEpisodeOpen] = useState(false);
   const [episodeDetail, setEpisodeDetail] = useState<any | null>(null);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -263,16 +266,50 @@ function App() {
 
       setPodcastOpen(true);
       setPodcastLoading(true);
+      setPodcastLoadMoreKey(null);
       try {
         const detail = await getPodcastDetail(pid);
         setPodcastDetail(detail?.podcast || null);
         setPodcastEpisodes(detail?.episodes || []);
+        setPodcastLoadMoreKey(detail?.loadMoreKey || null);
       } finally {
         setPodcastLoading(false);
       }
     },
     [getPodcastDetail],
   );
+
+  const loadMorePodcastEpisodes = useCallback(async () => {
+    const pid = podcastDetail?.pid || podcastDetail?.id;
+    if (!pid || !podcastLoadMoreKey || podcastLoadingMore) return;
+    setPodcastLoadingMore(true);
+    try {
+      const page = await getEpisodeList(pid, podcastLoadMoreKey);
+      if (!page) {
+        messageApi.error("加载更多单集失败");
+        return;
+      }
+      setPodcastEpisodes((current) => {
+        const seen = new Set(current.map((episode) => episode?.eid || episode?.id));
+        return [
+          ...current,
+          ...page.episodes.filter((episode: any) => {
+            const id = episode?.eid || episode?.id;
+            return id && !seen.has(id) && seen.add(id);
+          }),
+        ];
+      });
+      setPodcastLoadMoreKey(page.loadMoreKey);
+    } finally {
+      setPodcastLoadingMore(false);
+    }
+  }, [
+    getEpisodeList,
+    messageApi,
+    podcastDetail,
+    podcastLoadMoreKey,
+    podcastLoadingMore,
+  ]);
 
   const openEpisode = useCallback(
     async (episode: any) => {
@@ -769,6 +806,18 @@ function App() {
               )}
               <List
                 dataSource={podcastEpisodes}
+                loadMore={
+                  podcastLoadMoreKey ? (
+                    <div style={{ textAlign: "center", padding: "16px 0" }}>
+                      <Button
+                        loading={podcastLoadingMore}
+                        onClick={() => void loadMorePodcastEpisodes()}
+                      >
+                        加载更多单集
+                      </Button>
+                    </div>
+                  ) : null
+                }
                 header={
                   <div style={{ fontWeight: 600 }}>
                     单集列表 ({podcastEpisodes.length})

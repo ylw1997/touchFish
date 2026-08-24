@@ -547,6 +547,7 @@ export async function getEpisodeList(
       {
         pid,
         order,
+        limit: 20,
         ...(loadMoreKey ? { loadMoreKey } : {}),
       },
       {
