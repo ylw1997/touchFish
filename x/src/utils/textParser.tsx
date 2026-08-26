@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { Tag } from "antd";
 import emojiData from "../data/emoji.json";
-import { baseXField } from "../../../types/x";
+import { baseXField, xUrlEntity } from "../../../types/x";
 import { openNewWindow } from ".";
 
 // 使用 Map 进行高效的表情查找。它仅在模块加载时创建一次。
@@ -38,15 +38,26 @@ const renderTextWithLineBreaks = (text: string, baseKey: string | number) => {
 };
 
 /**
- * 渲染链接标签，直接显示链接地址。
+ * 渲染链接标签，显示链接地址。
  */
-const renderLinkTag = (url: string, key: string) => {
-  // 尝试从 URL 中提取域名作为显示文本
-  let linkText = "链接";
-  try {
-    linkText = new URL(url).hostname;
-  } catch {
-    // ignore
+const renderLinkTag = (
+  url: string,
+  key: string,
+  urlEntities?: xUrlEntity[],
+) => {
+  const entity = urlEntities?.find(
+    (u) => u.url === url || u.expanded_url === url,
+  );
+  const targetUrl = entity?.expanded_url || url;
+
+  // 尝试从 display_url 或 URL 中提取域名作为显示文本
+  let linkText = entity?.display_url;
+  if (!linkText || linkText.startsWith("t.co")) {
+    try {
+      linkText = new URL(targetUrl).hostname;
+    } catch {
+      linkText = "链接";
+    }
   }
 
   return (
@@ -54,9 +65,13 @@ const renderLinkTag = (url: string, key: string) => {
       key={key}
       color="blue"
       className="link-tag"
-      onClick={() => openNewWindow(url)}
+      onClick={(e) => {
+        e.stopPropagation();
+        openNewWindow(targetUrl);
+      }}
       bordered={false}
       icon={<PaperClipOutlined />}
+      title={targetUrl}
     >
       {linkText}
     </Tag>
@@ -141,7 +156,7 @@ export const parseXText = (
         </Tag>,
       );
     } else if (part.startsWith("http")) {
-      nodes.push(renderLinkTag(part, key));
+      nodes.push(renderLinkTag(part, key, xItem.url_entities));
     }
 
     lastIndex = index + part.length;
@@ -214,6 +229,11 @@ export const parseH5XText = (
               </Tag>,
             );
           }
+        } else if (
+          href &&
+          (href.startsWith("http://") || href.startsWith("https://"))
+        ) {
+          nodes.push(renderLinkTag(href, key));
         } else {
           nodes.push(
             <React.Fragment key={key}>{element.textContent}</React.Fragment>,

@@ -1,6 +1,12 @@
 // X 相关类型
+export interface xUrlEntity {
+  url: string;
+  expanded_url: string;
+  display_url: string;
+}
+
 export interface baseXField {
-  id: number;
+  id: number | string;
   text: string;
   text_raw: string;
   page_info?: {
@@ -20,6 +26,7 @@ export interface baseXField {
     short_url: string;
   };
   isTranslating?: boolean;
+  url_entities?: xUrlEntity[];
 }
 
 // 原文件未定义 Page_pic

@@ -9,6 +9,7 @@
  */
 
 import { SearchType } from "../../../types/x";
+import { vscode } from "./vscode";
 
 // file转baase64
 export const fileToBase64 = (file: File): Promise<string> => {
@@ -21,13 +22,23 @@ export const fileToBase64 = (file: File): Promise<string> => {
 };
 
 export const openNewWindow = (url: string) => {
-  const a = document.createElement("a");
-  a.href = url;
-  a.target = "_blank";
-  a.rel = "noopener noreferrer";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  if (!url) return;
+  vscode.postMessage({
+    command: "OPEN_EXTERNAL",
+    payload: url,
+  });
+  if (
+    typeof acquireVsCodeApi === "undefined" &&
+    !(window as any).acquireVsCodeApi
+  ) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 };
 
 export const debounce = (func: (...args: any[]) => void, delay: number) => {

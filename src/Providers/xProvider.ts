@@ -1,5 +1,5 @@
-import { WebviewView, ExtensionContext, workspace } from "vscode";
-import { showInfo } from "../utils/errorMessage";
+import { WebviewView, ExtensionContext, workspace, env, Uri } from "vscode";
+import { showInfo, showError } from "../utils/errorMessage";
 import {
   getHomeTimeline,
   getHomeTimelineRefresh,
@@ -190,6 +190,28 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     autoTranslatedText = grokTranslated.data.translation || undefined;
   }
 
+  // 提取 url entities
+  const url_entities: {
+    url: string;
+    expanded_url: string;
+    display_url: string;
+  }[] = [];
+  const rawUrls = [
+    ...(legacy.entities?.urls || []),
+    ...(t.note_tweet?.note_tweet_results?.result?.entity_set?.urls || []),
+  ];
+  const seenUrls = new Set<string>();
+  rawUrls.forEach((u: any) => {
+    if (u?.url && !seenUrls.has(u.url)) {
+      seenUrls.add(u.url);
+      url_entities.push({
+        url: u.url,
+        expanded_url: u.expanded_url || u.url,
+        display_url: u.display_url || u.url,
+      });
+    }
+  });
+
   return {
     id: legacy.id_str || legacy.conversation_id_str,
     text: previewText,
@@ -216,6 +238,7 @@ function mapXTweetToXItem(tweet: any): xItem | null {
     is_quote,
     translatedText: autoTranslatedText,
     autoTranslatedText: autoTranslatedText,
+    url_entities,
   };
 }
 
@@ -946,6 +969,22 @@ export class XProvider extends BaseWebviewProvider {
           referer: "https://x.com/",
           successLabel: "X 图片",
         });
+        break;
+      }
+
+      case "OPEN_EXTERNAL": {
+        let url =
+          typeof payload === "string" ? payload.trim() : payload?.url?.trim();
+        if (url) {
+          if (!/^https?:\/\//i.test(url)) {
+            url = "https://" + url;
+          }
+          try {
+            await env.openExternal(Uri.parse(url));
+          } catch (err: any) {
+            showError(`无法打开链接: ${err?.message || url}`);
+          }
+        }
         break;
       }
       // Fallback handlers to avoid errors
