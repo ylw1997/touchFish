@@ -1,5 +1,6 @@
 // 命令相关类型拆分
 export type CommandList =
+  | "OPEN_EXTERNAL"
   | "GETDATA"
   | "SENDDATA"
   | "GETIMG"
