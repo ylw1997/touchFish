@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [17.12.1](https://github.com/ylw1997/touchFish/compare/v17.12.0...v17.12.1) (2026-08-26)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* **x:** 修复链接点击与文章阅读全文无法打开的问题 ([665424e](https://github.com/ylw1997/touchFish/commit/665424e6cbaf397dcf706a8935b82d49d502f101))
+
 ## [17.12.0](https://github.com/ylw1997/touchFish/compare/v17.11.0...v17.12.0) (2026-08-24)
 
 
