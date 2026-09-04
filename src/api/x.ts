@@ -14,7 +14,7 @@ export let X_SEARCH_TIMELINE_QUERY_ID = "hyPfJYJ_XAtDYoslQc-Rgg";
 // @operation: UserByScreenName
 export let X_USER_BY_SCREEN_NAME_QUERY_ID = "Gb-d6r0vxPOADdG62OEBpQ";
 // @operation: UserTweets
-export let X_USER_TWEETS_QUERY_ID = "SXVCYB8XHSS25nzIljNtZA";
+export let X_USER_TWEETS_QUERY_ID = "eviprbEPLvNG88V3smUngQ";
 // @operation: CreateTweet
 export let X_CREATE_TWEET_QUERY_ID = "WXTdKnLddrQOunD6MhWi3g";
 // @operation: HomeLatestTimeline
