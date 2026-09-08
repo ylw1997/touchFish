@@ -32,6 +32,8 @@ export function getWebviewHtml(options: WebviewHtmlOptions): string {
       <!doctype html>
       <html lang="en">
         <head>
+          <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; media-src * data: blob: https://*.xhscdn.com http://*.xhscdn.com; img-src * data: blob:; connect-src *;" />
+          <meta name="referrer" content="no-referrer" />
           <script>
             ${configScript}
           </script>
@@ -69,14 +71,23 @@ export function getWebviewHtml(options: WebviewHtmlOptions): string {
       return `<html><body><h3>未找到构建资源，请先执行 build</h3><pre>${e?.message}</pre></body></html>`;
     }
 
-    // Replace resource paths
+    // Replace resource paths with cache-busting timestamp
+    const cacheBuster = Date.now();
     html = html.replace(
       /(href|src)="\/([^"]*)"/g,
       (_, attr, path) =>
         `${attr}="${webviewView.webview.asWebviewUri(
           vscode.Uri.joinPath(distUri, path)
-        )}"`
+        )}?v=${cacheBuster}"`
     );
+
+    // Inject CSP meta tag to allow external media (XHS video CDN)
+    const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; media-src * data: blob: https://*.xhscdn.com http://*.xhscdn.com; img-src * data: blob:; connect-src *;" />`;
+    if (html.includes("http-equiv=\"Content-Security-Policy\"")) {
+      html = html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/i, cspMeta);
+    } else {
+      html = html.replace("<head>", `<head>\n${cspMeta}`);
+    }
 
     // Inject config script
     html = html.replace("</head>", `<script>${configScript}</script></head>`);

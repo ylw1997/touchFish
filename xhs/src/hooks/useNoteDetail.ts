@@ -49,8 +49,8 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
   const user = useMemo(() => note?.user || {}, [note?.user]);
 
   const images = useMemo(
-    () => (note?.image_list || []).map(extractXhsImageUrl).filter(Boolean),
-    [note?.image_list]
+    () => (note?.image_list || note?.imageList || []).map(extractXhsImageUrl).filter(Boolean),
+    [note?.image_list, note?.imageList]
   );
 
   const videoUrl = useMemo(() => extractVideoUrl(note), [note]);
@@ -65,22 +65,24 @@ export function useNoteDetail(options: UseNoteDetailOptions) {
   const [collectedCountState, setCollectedCountState] = useState<number>(0);
 
   const noteData = useMemo(() => {
-    const interactInfo = note?.interact_info || {};
+    const interactInfo = note?.interact_info || note?.interactInfo || {};
+    const thumbId = note?.video?.image?.thumbnailFileid || note?.video?.image?.thumbnail_fileid;
+    const fallbackPoster = thumbId ? `https://sns-img-bd.xhscdn.com/${thumbId}` : undefined;
     return {
-      title: note?.title || note?.display_title || "",
+      title: note?.title || note?.display_title || note?.displayTitle || note?.desc || "",
       desc: note?.desc || "",
       user,
       images,
       videoUrl,
-      videoPoster: videoUrl && images.length === 1 ? images[0] : undefined,
+      videoPoster: (videoUrl && images.length >= 1 ? images[0] : undefined) || fallbackPoster,
       liked: likedState,
       likedCount: likedCountState,
       collected: collectedState,
       collectedCount: collectedCountState,
-      commentCount: interactInfo?.comment_count || 0,
-      shareCount: interactInfo?.share_count || 0,
-      publishTime: note?.time || note?.last_update_time || 0,
-      ipLocation: note?.ip_location || "",
+      commentCount: interactInfo?.comment_count || interactInfo?.commentCount || 0,
+      shareCount: interactInfo?.share_count || interactInfo?.shareCount || 0,
+      publishTime: note?.time || note?.last_update_time || note?.lastUpdateTime || 0,
+      ipLocation: note?.ip_location || note?.ipLocation || "",
       followed: !!interactInfo?.followed ||
                 note?.extraInfo_info?.fstatus === 'follows' ||
                 note?.extraInfo_info?.fstatus === 'each_other',
