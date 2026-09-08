@@ -5,7 +5,15 @@ class VSCodeAPIWrapper {
 
   constructor() {
     if (typeof acquireVsCodeApi === "function") {
-      this.vsCodeApi = acquireVsCodeApi();
+      const g = window as any;
+      if (!g.__touchfish_vscode_api__) {
+        try {
+          g.__touchfish_vscode_api__ = acquireVsCodeApi();
+        } catch (e) {
+          console.warn("acquireVsCodeApi failed or already acquired:", e);
+        }
+      }
+      this.vsCodeApi = g.__touchfish_vscode_api__;
     }
   }
 

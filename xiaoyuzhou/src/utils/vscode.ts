@@ -25,8 +25,16 @@ class VSCodeAPIWrapper {
     // Check if the acquireVsCodeApi function exists in the current development
     // context (i.e. VS Code development window or web browser)
     if (typeof acquireVsCodeApi === "function") {
-      this.vsCodeApi = acquireVsCodeApi();
-      console.log("[xiaoyuzhou] VS Code API acquired successfully");
+      const g = window as any;
+      if (!g.__touchfish_vscode_api__) {
+        try {
+          g.__touchfish_vscode_api__ = acquireVsCodeApi();
+          console.log("[xiaoyuzhou] VS Code API acquired successfully");
+        } catch (e) {
+          console.warn("acquireVsCodeApi failed or already acquired:", e);
+        }
+      }
+      this.vsCodeApi = g.__touchfish_vscode_api__;
     } else {
       console.warn("[xiaoyuzhou] acquireVsCodeApi is not available - running outside VS Code webview?");
     }
