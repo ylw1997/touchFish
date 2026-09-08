@@ -39,7 +39,7 @@ export class DsFetcher {
           this.fetchedAt = Date.now();
           return this.value;
         }
-      } catch (err) {
+      } catch {
         // 网络失败降级
       } finally {
         this.fetchingPromise = null;

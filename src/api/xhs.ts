@@ -205,7 +205,9 @@ export const getXhsFeedDetail = async (payload: {
   let cookie: string | undefined;
   try {
     cookie = await getOrSetXhsCookie();
-  } catch (_) {}
+  } catch {
+    // 忽略未配置 Cookie 的异常，后续降级到网页 SSR 解析
+  }
 
   // 1. 优先尝试通过 API 获取
   if (cookie) {
