@@ -71,10 +71,10 @@ export function getWebviewHtml(options: WebviewHtmlOptions): string {
       return `<html><body><h3>未找到构建资源，请先执行 build</h3><pre>${e?.message}</pre></body></html>`;
     }
 
-    // Replace resource paths with cache-busting timestamp
+    // Replace resource paths with cache-busting timestamp (supports /path and ./path)
     const cacheBuster = Date.now();
     html = html.replace(
-      /(href|src)="\/([^"]*)"/g,
+      /(href|src)="(?:\.\/|\/)([^"]*)"/g,
       (_, attr, path) =>
         `${attr}="${webviewView.webview.asWebviewUri(
           vscode.Uri.joinPath(distUri, path)
