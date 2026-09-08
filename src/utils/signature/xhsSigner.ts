@@ -1,10 +1,6 @@
-import { XhsClient } from "./xhsClient";
+import { XhsClient, XhsSignature } from "./xhsClient";
 
-export interface XhsSignature {
-  xs: string;
-  xt: string;
-  xs_common: string;
-}
+export type { XhsSignature };
 
 const xhsClient = new XhsClient();
 
@@ -12,15 +8,25 @@ export async function getXhsSignature(
   apiPath: string,
   payload: any,
   cookie: string,
-  method: "GET" | "POST" = "POST"
+  method: "GET" | "POST" = "POST",
+  userId?: string
 ): Promise<XhsSignature> {
   try {
-    const signature = xhsClient.sign(apiPath, payload, cookie, method);
-    return {
-      xs: signature.xs,
-      xt: String(signature.xt),
-      xs_common: signature.xs_common,
-    };
+    return await xhsClient.signAsync(apiPath, payload, cookie, method, userId);
+  } catch (e: any) {
+    throw new Error(`Failed to execute xhs signature: ${e.message}`);
+  }
+}
+
+export function getXhsSignatureSync(
+  apiPath: string,
+  payload: any,
+  cookie: string,
+  method: "GET" | "POST" = "POST",
+  userId?: string
+): XhsSignature {
+  try {
+    return xhsClient.sign(apiPath, payload, cookie, method, userId);
   } catch (e: any) {
     throw new Error(`Failed to execute xhs signature: ${e.message}`);
   }

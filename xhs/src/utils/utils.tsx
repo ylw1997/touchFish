@@ -187,18 +187,86 @@ export function parseTopicTags(
  * @returns 视频播放URL或null
  */
 export function extractVideoUrl(note: any): string | null {
-  const streams = note?.video?.media?.stream;
-  if (!streams) return null;
+  if (!note) return null;
 
-  const candidates: any[] = [
-    ...(Array.isArray(streams.h265) ? streams.h265 : []),
-    ...(Array.isArray(streams.h264) ? streams.h264 : []),
-    ...(Array.isArray(streams.h266) ? streams.h266 : []),
-    ...(Array.isArray(streams.av1) ? streams.av1 : []),
-  ];
+  // 1. 拆包以支持外部传进来的 item、note_card 或 note
+  const card = note?.note_card || note?.note || note;
+  const videoObj = card?.video || card?.mediaV2?.video || card?.media?.video || card;
 
-  const first = candidates[0];
-  if (!first) return null;
+  // 2. 尝试从 video.media.stream 获取流数据
+  let streams = videoObj?.media?.stream || card?.media?.stream;
 
-  return first.master_url || first.backup_urls?.[0] || null;
+  // 3. 兼容 mediaV2 / media_v2 为 JSON 字符串的情况
+  let mediaV2Obj: any = null;
+  const rawMediaV2 = videoObj?.mediaV2 || videoObj?.media_v2 || card?.mediaV2 || card?.media_v2;
+  if (typeof rawMediaV2 === "string") {
+    try {
+      mediaV2Obj = JSON.parse(rawMediaV2);
+    } catch (_) {}
+  } else if (rawMediaV2 && typeof rawMediaV2 === "object") {
+    mediaV2Obj = rawMediaV2;
+  }
+
+  if (!streams && mediaV2Obj?.stream) {
+    streams = mediaV2Obj.stream;
+  }
+
+  const toHttps = (url?: string | null): string | null => {
+    if (!url || typeof url !== "string") return null;
+    return url.replace(/^http:\/\//i, "https://");
+  };
+
+  if (streams) {
+    const candidates: any[] = [];
+    if (Array.isArray(streams)) {
+      candidates.push(...streams);
+    } else if (typeof streams === "object") {
+      for (const val of Object.values(streams)) {
+        if (Array.isArray(val)) {
+          candidates.push(...val);
+        } else if (val && typeof val === "object") {
+          candidates.push(val);
+        }
+      }
+    }
+
+    // 优先 mp4 且有 masterUrl 的流
+    candidates.sort((a, b) => {
+      const aIsMp4 = (a.format === "mp4" || (a.masterUrl && a.masterUrl.includes(".mp4")) || (a.master_url && a.master_url.includes(".mp4"))) ? 1 : 0;
+      const bIsMp4 = (b.format === "mp4" || (b.masterUrl && b.masterUrl.includes(".mp4")) || (b.master_url && b.master_url.includes(".mp4"))) ? 1 : 0;
+      return bIsMp4 - aIsMp4;
+    });
+
+    for (const item of candidates) {
+      if (!item) continue;
+      const url =
+        item.masterUrl ||
+        item.master_url ||
+        item.backupUrls?.[0] ||
+        item.backup_urls?.[0] ||
+        item.url;
+      if (url) return toHttps(url);
+    }
+  }
+
+  // 4. 尝试从 mediaV2 投屏流中提取
+  if (mediaV2Obj?.opaque1) {
+    const screenCast =
+      mediaV2Obj.opaque1.default_screencast_stream ||
+      mediaV2Obj.opaque1.hd_screencast_stream;
+    if (screenCast) return toHttps(screenCast);
+  }
+
+  // 5. 兜底直接字段
+  if (card?.video_url) return toHttps(card.video_url);
+  if (videoObj?.url) return toHttps(videoObj.url);
+  if (card?.url && card?.type === "video") return toHttps(card.url);
+
+  const originKey =
+    videoObj?.consumer?.origin_video_key ||
+    videoObj?.consumer?.originVideoKey ||
+    card?.consumer?.origin_video_key;
+  if (originKey) return `https://sns-video-bd.xhscdn.com/${originKey}`;
+
+  return null;
 }

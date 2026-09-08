@@ -73,10 +73,10 @@ function buildXhsHeaders(params: {
   host?: string;
 }): Record<string, string> {
   const { cookie, signObj, host = "edith.xiaohongshu.com" } = params;
-  return {
+  const headers: Record<string, string> = {
     Cookie: cookie,
     "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
     "Content-Type": "application/json;charset=UTF-8",
     "x-s": signObj.xs,
     "x-t": signObj.xt.toString(),
@@ -87,6 +87,19 @@ function buildXhsHeaders(params: {
     accept: "application/json, text/plain, */*",
     origin: "https://www.xiaohongshu.com",
   };
+  if (signObj.x_b3_traceid) {
+    headers["x-b3-traceid"] = signObj.x_b3_traceid;
+  }
+  if (signObj.x_xray_traceid) {
+    headers["x-xray-traceid"] = signObj.x_xray_traceid;
+  }
+  if (signObj.x_rap_param) {
+    headers["x-rap-param"] = signObj.x_rap_param;
+  }
+  if (signObj.xy_direction) {
+    headers["xy-direction"] = signObj.xy_direction;
+  }
+  return headers;
 }
 // 推荐
 export const getXhsFeed = async (cursor: string = "") => {
@@ -124,6 +137,63 @@ export const getXhsFeed = async (cursor: string = "") => {
   return resp.data?.data;
 };
 
+// 从小红书网页端 explore SSR 数据中提取笔记详情（降级方案）
+export const getXhsHtmlNoteDetail = async (
+  noteId: string,
+  xsecToken?: string
+) => {
+  const token = xsecToken ? encodeURIComponent(xsecToken) : "";
+  const url = `https://www.xiaohongshu.com/explore/${noteId}${token ? `?xsec_token=${token}&xsec_source=pc_feed` : ""}`;
+  const config = vscode.workspace.getConfiguration("touchfish");
+  const cookie = (config.get("xhsCookie") as string | undefined) || "";
+
+  const resp = await axios.get(url, {
+    headers: {
+      Cookie: cookie,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      Referer: "https://www.xiaohongshu.com/",
+    },
+    timeout: 10000,
+  });
+
+  const html = String(resp.data || "");
+  const match = html.match(/window\.__INITIAL_STATE__\s*=\s*(\{.+?\})<\/script>/);
+  if (!match || !match[1]) {
+    throw new Error("无法从网页提取笔记详情");
+  }
+
+  const state = JSON.parse(match[1].replace(/undefined/g, "null"));
+  const noteDetailMap = state?.note?.noteDetailMap || {};
+  const noteEntry = noteDetailMap[noteId] || Object.values(noteDetailMap)[0] as any;
+  const note = noteEntry?.note;
+  if (!note) {
+    throw new Error("未找到笔记详情数据");
+  }
+
+  return {
+    id: note.noteId || noteId,
+    note_id: note.noteId || noteId,
+    model_type: "note",
+    note_card: {
+      ...note,
+      title: note.title || note.displayTitle || note.desc || "",
+      display_title: note.displayTitle || note.title || note.desc || "",
+      desc: note.desc || "",
+      type: note.type || (note.video ? "video" : "normal"),
+      user: note.user || {},
+      image_list: (note.imageList || note.image_list || []).map((img: any) => ({
+        ...img,
+        url: img.url || img.urlDefault || img.url_default,
+        info_list: img.infoList || img.info_list || [],
+      })),
+      video: note.video || {},
+      interact_info: note.interactInfo || note.interact_info || {},
+    },
+  };
+};
+
 // 获取笔记详情（feed detail）
 export const getXhsFeedDetail = async (payload: {
   source_note_id: string;
@@ -132,29 +202,41 @@ export const getXhsFeedDetail = async (payload: {
   xsec_source?: string;
   xsec_token: string;
 }) => {
-  const cookie = await getOrSetXhsCookie();
-  if (!cookie) throw new Error("请先设置小红书 Cookie");
-  const apiPath = "/api/sns/web/v1/feed";
-  const body = {
-    extra: { need_body_topic: "1" },
-    image_formats: ["jpg", "webp", "avif"],
-    source_note_id: payload.source_note_id,
-    xsec_source: "pc_feed",
-    xsec_token: payload.xsec_token,
-  };
-  const { bodyString, bodyObj } = buildRequestBody(body);
-  let signObj: XhsSignature;
+  let cookie: string | undefined;
   try {
-    signObj = await getXhsSignature(apiPath, bodyObj, cookie);
-  } catch (e: any) {
-    console.error("[xhs signature error]", e?.message || e);
-    throw new Error("小红书签名生成失败，请检查 Cookie 或稍后再试");
+    cookie = await getOrSetXhsCookie();
+  } catch (_) {}
+
+  // 1. 优先尝试通过 API 获取
+  if (cookie) {
+    const apiPath = "/api/sns/web/v1/feed";
+    const body = {
+      extra: { need_body_topic: "1" },
+      image_formats: ["jpg", "webp", "avif"],
+      source_note_id: payload.source_note_id,
+      xsec_source: payload.xsec_source || "pc_feed",
+      xsec_token: payload.xsec_token,
+    };
+    const { bodyString, bodyObj } = buildRequestBody(body);
+    try {
+      const signObj = await getXhsSignature(apiPath, bodyObj, cookie);
+      const url = "https://edith.xiaohongshu.com" + apiPath;
+      const headers = buildXhsHeaders({ cookie, signObj });
+      const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
+      if (resp.data?.data?.items?.[0]) {
+        return resp.data.data.items[0];
+      }
+    } catch (e: any) {
+      console.warn("[getXhsFeedDetail] API 请求异常，将尝试网页降级方案:", e?.message || e);
+    }
   }
-  const url = "https://edith.xiaohongshu.com" + apiPath;
-  const headers = buildXhsHeaders({ cookie, signObj });
-  const resp = await xhsHttp.post(url, bodyString, { headers, timeout: 10000 });
-  // 直接返回原始 items[0] 给前端，由前端弹窗负责渲染（不在后端转换）
-  return resp.data?.data?.items?.[0];
+
+  // 2. 降级方案：从 explore 网页 SSR 数据中提取笔记详情
+  try {
+    return await getXhsHtmlNoteDetail(payload.source_note_id, payload.xsec_token);
+  } catch (e: any) {
+    throw new Error(`获取笔记详情失败: ${e.message}`);
+  }
 };
 
 // 获取评论列表

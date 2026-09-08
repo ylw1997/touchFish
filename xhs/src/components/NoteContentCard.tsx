@@ -4,7 +4,7 @@
  * @Description: 笔记内容展示组件（图片/视频/文本/互动数据）
  */
 import React, { useRef, useEffect, useState } from "react";
-import { Image, Typography, Card, Carousel, Space, Tag } from "antd";
+import { Image, Typography, Card, Carousel, Space, Tag, Spin, Button } from "antd";
 import type { CarouselRef } from "antd/es/carousel";
 import {
   LeftCircleOutlined,
@@ -18,6 +18,9 @@ import {
   EnvironmentOutlined,
   ClockCircleOutlined,
   PictureOutlined,
+  PlayCircleFilled,
+  RedoOutlined,
+  VideoCameraOutlined,
 } from "@ant-design/icons";
 import { formatTimestamp, formatCount, parseTopicTags } from "../utils/utils";
 import ImagePreviewToolbar from "./ImagePreviewToolbar";
@@ -114,9 +117,48 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
     return () => container.removeEventListener("wheel", handleWheel);
   }, [images.length]);
 
-  if (loading) {
-    return null; // 由父组件显示 loader
-  }
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isVideoBuffering, setIsVideoBuffering] = useState(false);
+  const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
+
+  // 视频 URL 切换时重置播放器状态
+  useEffect(() => {
+    setIsPlaying(false);
+    setIsVideoBuffering(false);
+    setVideoLoadError(null);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      videoRef.current.load();
+    }
+  }, [videoUrl]);
+
+  const handleTogglePlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const vid = videoRef.current;
+    if (!vid) return;
+    if (vid.paused) {
+      setVideoLoadError(null);
+      vid.play().catch((err) => {
+        console.error("视频播放失败:", err);
+        setVideoLoadError(err?.message || "视频无法直接播放，请检查网络或点击重新加载");
+      });
+    } else {
+      vid.pause();
+    }
+  };
+
+  const handleRetryVideo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setVideoLoadError(null);
+    setIsVideoBuffering(true);
+    const vid = videoRef.current;
+    if (vid) {
+      vid.load();
+      vid.play().catch((err) => setVideoLoadError(err?.message || "重试播放失败"));
+    }
+  };
 
   return (
     <>
@@ -127,14 +169,146 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
             borderRadius: "12px",
             overflow: "hidden",
             marginBottom: 12,
+            backgroundColor: "#000",
+            position: "relative",
+            minHeight: 200,
           }}
         >
+          {/* 视频标签标记 */}
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              zIndex: 3,
+              pointerEvents: "none",
+            }}
+          >
+            <Tag color="#ff2442" icon={<VideoCameraOutlined />}>
+              小红书视频
+            </Tag>
+          </div>
+
+          {/* 视频元素 */}
           <video
+            ref={videoRef}
             controls
+            playsInline
+            preload="metadata"
             src={videoUrl}
-            style={{ display: "block", width: "100%" }}
+            style={{
+              display: "block",
+              width: "100%",
+              maxHeight: "75vh",
+              objectFit: "contain",
+              backgroundColor: "#000",
+            }}
             poster={videoPoster}
+            onPlay={() => {
+              setIsPlaying(true);
+              setIsVideoBuffering(false);
+              setVideoLoadError(null);
+            }}
+            onPause={() => setIsPlaying(false)}
+            onWaiting={() => setIsVideoBuffering(true)}
+            onPlaying={() => setIsVideoBuffering(false)}
+            onError={(e) => {
+              console.error("Video load error", e);
+              setIsVideoBuffering(false);
+              setVideoLoadError("视频加载失败，可尝试点击重试");
+            }}
+            {...({ referrerPolicy: "no-referrer" } as any)}
           />
+
+          {/* 居中大播放按钮遮罩（暂停状态且无错误时显示） */}
+          {!isPlaying && !videoLoadError && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(0,0,0,0.25)",
+                transition: "background-color 0.2s",
+                zIndex: 2,
+                cursor: "pointer",
+              }}
+              onClick={handleTogglePlay}
+            >
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(0, 0, 0, 0.65)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+                }}
+              >
+                <PlayCircleFilled style={{ fontSize: 44, color: "#fff" }} />
+              </div>
+            </div>
+          )}
+
+          {/* 缓冲中 Loading 提示 */}
+          {isVideoBuffering && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(0,0,0,0.4)",
+                zIndex: 2,
+              }}
+            >
+              <Spin tip="缓冲中..." size="large" />
+            </div>
+          )}
+
+          {/* 错误提示与重试 */}
+          {videoLoadError && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(0,0,0,0.75)",
+                color: "#ff4d4f",
+                padding: 16,
+                zIndex: 4,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ marginBottom: 12, textAlign: "center", fontSize: 14 }}>
+                {videoLoadError}
+              </div>
+              <Button
+                type="primary"
+                danger
+                icon={<RedoOutlined />}
+                onClick={handleRetryVideo}
+              >
+                重新加载
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -211,6 +385,7 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
                     <img
                       src={url}
                       alt={title}
+                      referrerPolicy="no-referrer"
                       style={{
                         display: "block",
                         width: "100%",
