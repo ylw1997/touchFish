@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [17.13.2](https://github.com/ylw1997/touchFish/compare/v17.13.1...v17.13.2) (2026-09-08)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 优化 Webview 资源路径匹配正则并统一构建配置 ([bd8511f](https://github.com/ylw1997/touchFish/commit/bd8511f123382092118fb4af3ea5a47475a8ac71))
+
+
+### 📝 Chores | 其他更新
+
+* 优化 release 工作流 permissions 写入权限 ([415ebd4](https://github.com/ylw1997/touchFish/commit/415ebd42fa2e512db4883f93dff3cad267ffd757))
+
 ### [17.13.1](https://github.com/ylw1997/touchFish/compare/v17.13.0...v17.13.1) (2026-09-08)
 
 
