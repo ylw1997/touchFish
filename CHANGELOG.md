@@ -1,6 +1,23 @@
 # 更新历史 
 
 
+## [17.13.0](https://github.com/ylw1997/touchFish/compare/v17.12.1...v17.13.0) (2026-09-08)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([9d33150](https://github.com/ylw1997/touchFish/commit/9d3315023f29257ae15d7bdbeb85ab70ab609269))
+
+
+### ✨ Features | 新功能
+
+* Refactor XHS signature handling and enhance video playback features ([b58ccd5](https://github.com/ylw1997/touchFish/commit/b58ccd534d1809c0c1b718bf55d9051f4f1f2c46))
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 忽略未配置 Cookie 的异常并降级到网页 SSR 解析 ([4e9d05d](https://github.com/ylw1997/touchFish/commit/4e9d05d947076deb599a1be12a4e2742eda3ed39))
+
 ### [17.12.1](https://github.com/ylw1997/touchFish/compare/v17.12.0...v17.12.1) (2026-08-26)
 
 
