@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [17.13.1](https://github.com/ylw1997/touchFish/compare/v17.13.0...v17.13.1) (2026-09-08)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复知乎、微博和X模块代码分割引起的403及VSCode API重复获取报错 ([34427f0](https://github.com/ylw1997/touchFish/commit/34427f0c98401c3dfaeb1eb8454d0654b22df153))
+
 ## [17.13.0](https://github.com/ylw1997/touchFish/compare/v17.12.1...v17.13.0) (2026-09-08)
 
 
