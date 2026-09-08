@@ -113,6 +113,7 @@ export class XhsClient {
     method: "GET" | "POST" = "POST",
     userId?: string
   ): Promise<XhsSignature> {
+    void method;
     const cookies = this.parseCookies(a1OrCookies);
     const a1Value = cookies["a1"] || (typeof a1OrCookies === "string" && a1OrCookies.includes("=") ? "" : String(a1OrCookies || ""));
 
@@ -158,6 +159,7 @@ export class XhsClient {
     method: "GET" | "POST" = "POST",
     userId?: string
   ): XhsSignature {
+    void method;
     const cookies = this.parseCookies(a1OrCookies);
     const a1Value = cookies["a1"] || (typeof a1OrCookies === "string" && !a1OrCookies.includes("=") ? String(a1OrCookies) : "");
 
