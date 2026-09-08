@@ -34,10 +34,7 @@ import SearchDrawer from "./components/SearchDrawer";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
-import { Suspense, lazy } from "react";
-const QuestionDetailDrawer = lazy(
-  () => import("./components/QuestionDetailDrawer"),
-);
+import QuestionDetailDrawer from "./components/QuestionDetailDrawer";
 import type { ZhihuItemData } from "../../types/zhihu";
 import useZhihuAction from "./hooks/useZhihuAction";
 import { debounce } from "./utils";
@@ -318,25 +315,23 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      <Suspense fallback={<div>Loading...</div>}>
-        <QuestionDetailDrawer
-          open={questionDetailDrawerOpen}
-          onClose={closeQuestionDetailDrawer}
-          questionData={questionData}
-          title={questionTitle}
-          handleVote={handleQuestionVote}
-          questionDetail={questionDetail}
-          isFollowing={isFollowing}
-          followHandler={followHandler}
-          unfollowHandler={unfollowHandler}
-          fetchNext={fetchQuestionNext}
-          questionId={currentQuestionId}
-          hasMore={hasMoreQuestion(currentQuestionId as string)}
-          showImg={showImg}
-          questionOrder={questionOrder}
-          changeQuestionOrder={changeQuestionOrder}
-        />
-      </Suspense>
+      <QuestionDetailDrawer
+        open={questionDetailDrawerOpen}
+        onClose={closeQuestionDetailDrawer}
+        questionData={questionData}
+        title={questionTitle}
+        handleVote={handleQuestionVote}
+        questionDetail={questionDetail}
+        isFollowing={isFollowing}
+        followHandler={followHandler}
+        unfollowHandler={unfollowHandler}
+        fetchNext={fetchQuestionNext}
+        questionId={currentQuestionId}
+        hasMore={hasMoreQuestion(currentQuestionId as string)}
+        showImg={showImg}
+        questionOrder={questionOrder}
+        changeQuestionOrder={changeQuestionOrder}
+      />
       <SearchDrawer
         open={searchDrawerOpen}
         onClose={() => setSearchDrawerOpen(false)}

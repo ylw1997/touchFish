@@ -12,8 +12,6 @@ import {
   useEffect,
   useState,
   useCallback,
-  lazy,
-  Suspense,
   useRef,
 } from "react";
 import { Divider, FloatButton, Tabs, TabsProps } from "antd";
@@ -42,9 +40,9 @@ import useXAction from "./hooks/useXAction";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
 import { debounce } from "./utils";
-const SendXDrawer = lazy(() => import("./components/SendXDrawer"));
-const UserDetailDrawer = lazy(() => import("./components/UserDetailDrawer"));
-const SearchDrawer = lazy(() => import("./components/SearchDrawer"));
+import SendXDrawer from "./components/SendXDrawer";
+import UserDetailDrawer from "./components/UserDetailDrawer";
+import SearchDrawer from "./components/SearchDrawer";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -304,48 +302,42 @@ function App() {
           />
         </FloatButton.Group>
       </div>
-      <Suspense fallback={null}>
-        <SearchDrawer
-          open={searchDrawerOpen}
-          onClose={() => {
-            setSearchDrawerOpen(false);
-            setSearchKeyword(undefined);
-          }}
-          getUserBlog={getUserBlog}
-          showImg={showImg}
-          initialKeyword={searchKeyword}
-          onTopicClick={handleTopicClick}
-          getUserByName={getUserByName}
-          onTranslate={handleTranslate}
-          onClearTranslation={handleClearTranslation}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <SendXDrawer
-          loading={sendLoading}
-          open={sendDrawerOpen}
-          onClose={() => {
-            setSendDrawerOpen(false);
-            setSendLoading(false);
-          }}
-          onSend={handleSendX}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <UserDetailDrawer
-          visible={userDetailVisible}
-          userDetail={userDetail}
-          onClose={() => {
-            setUserDetailVisible(false);
-            setUserDetail(undefined);
-          }}
-          setUserDetail={setUserDetail}
-          showImg={showImg}
-          onTopicClick={handleTopicClick}
-          onTranslate={handleTranslate}
-          onClearTranslation={handleClearTranslation}
-        />
-      </Suspense>
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={() => {
+          setSearchDrawerOpen(false);
+          setSearchKeyword(undefined);
+        }}
+        getUserBlog={getUserBlog}
+        showImg={showImg}
+        initialKeyword={searchKeyword}
+        onTopicClick={handleTopicClick}
+        getUserByName={getUserByName}
+        onTranslate={handleTranslate}
+        onClearTranslation={handleClearTranslation}
+      />
+      <SendXDrawer
+        loading={sendLoading}
+        open={sendDrawerOpen}
+        onClose={() => {
+          setSendDrawerOpen(false);
+          setSendLoading(false);
+        }}
+        onSend={handleSendX}
+      />
+      <UserDetailDrawer
+        visible={userDetailVisible}
+        userDetail={userDetail}
+        onClose={() => {
+          setUserDetailVisible(false);
+          setUserDetail(undefined);
+        }}
+        setUserDetail={setUserDetail}
+        showImg={showImg}
+        onTopicClick={handleTopicClick}
+        onTranslate={handleTranslate}
+        onClearTranslation={handleClearTranslation}
+      />
     </>
   );
 }

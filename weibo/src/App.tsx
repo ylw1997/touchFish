@@ -13,8 +13,6 @@ import {
   useState,
   useCallback,
   useMemo,
-  lazy,
-  Suspense,
   useRef,
 } from "react";
 import { Divider, FloatButton, Tabs, TabsProps } from "antd";
@@ -49,9 +47,9 @@ import useWeiboAction from "./hooks/useWeiboAction";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
 import { debounce } from "./utils";
-const SendWeiboDrawer = lazy(() => import("./components/SendWeiboDrawer"));
-const UserDetailDrawer = lazy(() => import("./components/UserDetailDrawer"));
-const SearchDrawer = lazy(() => import("./components/SearchDrawer"));
+import SendWeiboDrawer from "./components/SendWeiboDrawer";
+import UserDetailDrawer from "./components/UserDetailDrawer";
+import SearchDrawer from "./components/SearchDrawer";
 dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
@@ -216,19 +214,17 @@ function App() {
 
   return (
     <>
-      <Suspense fallback={null}>
-        <UserDetailDrawer
-          visible={userDetailVisible}
-          userDetail={userDetail}
-          onClose={() => {
-            setUserDetailVisible(false);
-            setUserDetail(undefined);
-          }}
-          setUserDetail={setUserDetail}
-          showImg={showImg}
-          onTopicClick={handleTopicClick}
-        />
-      </Suspense>
+      <UserDetailDrawer
+        visible={userDetailVisible}
+        userDetail={userDetail}
+        onClose={() => {
+          setUserDetailVisible(false);
+          setUserDetail(undefined);
+        }}
+        setUserDetail={setUserDetail}
+        showImg={showImg}
+        onTopicClick={handleTopicClick}
+      />
       <Tabs
         className="tabs"
         items={tabs as TabsProps["items"]}
@@ -402,31 +398,27 @@ function App() {
           />
         </FloatButton.Group>
       </div>
-      <Suspense fallback={null}>
-        <SearchDrawer
-          open={searchDrawerOpen}
-          onClose={() => {
-            setSearchDrawerOpen(false);
-            setSearchKeyword(undefined);
-          }}
-          getUserBlog={getUserBlog}
-          showImg={showImg}
-          initialKeyword={searchKeyword}
-          onTopicClick={handleTopicClick}
-          getUserByName={getUserByName}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <SendWeiboDrawer
-          loading={sendLoading}
-          open={sendDrawerOpen}
-          onClose={() => {
-            setSendDrawerOpen(false);
-            setSendLoading(false);
-          }}
-          onSend={handleSendWeibo}
-        />
-      </Suspense>
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={() => {
+          setSearchDrawerOpen(false);
+          setSearchKeyword(undefined);
+        }}
+        getUserBlog={getUserBlog}
+        showImg={showImg}
+        initialKeyword={searchKeyword}
+        onTopicClick={handleTopicClick}
+        getUserByName={getUserByName}
+      />
+      <SendWeiboDrawer
+        loading={sendLoading}
+        open={sendDrawerOpen}
+        onClose={() => {
+          setSendDrawerOpen(false);
+          setSendLoading(false);
+        }}
+        onSend={handleSendWeibo}
+      />
     </>
   );
 }
