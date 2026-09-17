@@ -39,15 +39,11 @@ function parseBilibiliDanmakuXml(xmlString: string): Danmu[] {
         .replace(/&amp;/g, "&");
       if (!text) continue;
       const colorNum = Number(attr[3]) || 16777215;
-      const fontSize = Number(attr[2]) || 25;
       result.push({
         text,
         time: Number(attr[0]) || 0,
         mode: getDanmakuMode(Number(attr[1])),
         color: `#${colorNum.toString(16).padStart(6, "0")}`,
-        style: {
-          fontSize: `${fontSize}px`,
-        },
       });
     }
   }
@@ -232,7 +228,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
               danmuku: [],
               speed: 10,
               opacity: 1,
-              fontSize: 16,
+              fontSize: 14,
               color: "#FFFFFF",
               mode: 0,
               emitter: false,
