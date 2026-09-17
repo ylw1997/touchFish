@@ -1,7 +1,59 @@
 import React, { useEffect, useRef } from "react";
 import Artplayer from "artplayer";
-import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
+import artplayerPluginDanmuku, { type Danmu } from "artplayer-plugin-danmuku";
 import Hls from "hls.js";
+
+function getDanmakuMode(key: number): 0 | 1 | 2 {
+  switch (key) {
+    case 1:
+    case 2:
+    case 3:
+      return 0;
+    case 4:
+      return 2;
+    case 5:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function parseBilibiliDanmakuXml(xmlString: string): Danmu[] {
+  if (typeof xmlString !== "string" || !xmlString.trim()) return [];
+  const reg = /<d[^>]*?p="(?<p>[^"]+)"[^>]*>(?<text>.*?)<\/d>/gs;
+  const matches = xmlString.matchAll(reg);
+  const result: Danmu[] = [];
+
+  for (const match of matches) {
+    const pAttr = match.groups?.p;
+    const rawText = match.groups?.text;
+    if (!pAttr || rawText === undefined) continue;
+    const attr = pAttr.split(",");
+    if (attr.length >= 8) {
+      const text = rawText
+        .trim()
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;/g, "&");
+      if (!text) continue;
+      const colorNum = Number(attr[3]) || 16777215;
+      const fontSize = Number(attr[2]) || 25;
+      result.push({
+        text,
+        time: Number(attr[0]) || 0,
+        mode: getDanmakuMode(Number(attr[1])),
+        color: `#${colorNum.toString(16).padStart(6, "0")}`,
+        style: {
+          fontSize: `${fontSize}px`,
+        },
+      });
+    }
+  }
+
+  return result;
+}
 
 interface ArtPlayerComponentProps {
   url: string;
@@ -303,27 +355,42 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   }, [url, isLive, autoSize]);
 
   useEffect(() => {
-    if (isLive || !danmakuData || !playerRef.current) return;
+    if (isLive || !playerRef.current) return;
 
     const instance = playerRef.current;
-    const blob = new Blob([danmakuData], { type: "text/xml" });
-    const danmakuUrl = URL.createObjectURL(blob);
-    const danmukuPlugin = (instance.plugins as any).artplayerPluginDanmuku;
+    const danmukuPlugin = (instance.plugins as any)?.artplayerPluginDanmuku;
+    if (!danmukuPlugin?.config) return;
 
-    if (danmukuPlugin?.config) {
-      danmukuPlugin.config({ danmuku: danmakuUrl });
-      danmukuPlugin.load();
-      if (!isDanmakuOpen) {
-        danmukuPlugin.hide();
-      } else {
-        danmukuPlugin.show();
-      }
+    if (!danmakuData) {
+      danmukuPlugin.config({ danmuku: [] });
+      danmukuPlugin.load().catch(() => {});
+      return;
     }
 
-    return () => {
-      URL.revokeObjectURL(danmakuUrl);
-    };
-  }, [danmakuData, isLive, url, isDanmakuOpen]);
+    const danmus = parseBilibiliDanmakuXml(danmakuData);
+    danmukuPlugin.config({ danmuku: danmus });
+    danmukuPlugin.load().catch((err: unknown) => {
+      console.error("加载弹幕失败:", err);
+    });
+
+    if (!isDanmakuOpen) {
+      danmukuPlugin.hide();
+    } else {
+      danmukuPlugin.show();
+    }
+  }, [danmakuData, isLive, url]);
+
+  useEffect(() => {
+    const instance = playerRef.current;
+    const danmukuPlugin = (instance?.plugins as any)?.artplayerPluginDanmuku;
+    if (!danmukuPlugin) return;
+
+    if (!isDanmakuOpen) {
+      danmukuPlugin.hide();
+    } else {
+      danmukuPlugin.show();
+    }
+  }, [isDanmakuOpen]);
 
   useEffect(() => {
     return () => {
