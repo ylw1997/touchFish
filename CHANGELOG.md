@@ -1,6 +1,8 @@
 # 更新历史 
 
 
+### [17.14.2](https://github.com/ylw1997/touchFish/compare/v17.14.1...v17.14.2) (2026-09-17)
+
 ### [17.14.1](https://github.com/ylw1997/touchFish/compare/v17.14.0...v17.14.1) (2026-09-17)
 
 ## [17.14.0](https://github.com/ylw1997/touchFish/compare/v17.13.2...v17.14.0) (2026-09-17)
