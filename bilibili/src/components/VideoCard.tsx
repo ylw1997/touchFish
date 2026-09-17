@@ -17,6 +17,7 @@ import type {
   BilibiliListItem,
   BilibiliPlayUrlResponse,
   BilibiliDanmakuResponse,
+  BilibiliVideoPage,
 } from "../types/bilibili";
 import { usePlayerStore } from "../store/player";
 import dayjs from "dayjs";
@@ -84,7 +85,44 @@ const VideoCard: React.FC<VideoCardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isPagesExpanded, setIsPagesExpanded] = useState(false);
   const [selectedCid, setSelectedCid] = useState<number>(item.cid || 0);
+  const [pages, setPages] = useState<BilibiliVideoPage[]>(item.pages || []);
+  const [isLoadingPages, setIsLoadingPages] = useState(false);
   const artRef = useRef<Artplayer | null>(null);
+
+  const totalPagesCount = pages.length > 0 ? pages.length : item.videos || (item.pages ? item.pages.length : 1);
+  const isMultiP = !item.is_folder && (totalPagesCount > 1 || (item.pages && item.pages.length > 1));
+
+  React.useEffect(() => {
+    if (item.pages && item.pages.length > 0) {
+      setPages(item.pages);
+    }
+  }, [item.pages]);
+
+  const loadPages = async () => {
+    if (pages.length > 0 || isLoadingPages) return pages;
+    setIsLoadingPages(true);
+    try {
+      const res = await apiClient.getVideoInfo(item.bvid);
+      if (res.data?.code === 0 && res.data?.data?.pages) {
+        const fetchedPages = res.data.data.pages as BilibiliVideoPage[];
+        setPages(fetchedPages);
+        return fetchedPages;
+      }
+    } catch (err) {
+      console.error("加载分P列表失败:", err);
+    } finally {
+      setIsLoadingPages(false);
+    }
+    return [];
+  };
+
+  const handleTogglePages = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isPagesExpanded && pages.length === 0) {
+      await loadPages();
+    }
+    setIsPagesExpanded(!isPagesExpanded);
+  };
 
   const videoInfo = React.useMemo(
     () =>
@@ -117,9 +155,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
     // 在VSCode扩展中不能打开网页，仅用于阻止事件
   };
 
-  const handlePlayClick = async (e: React.MouseEvent, targetCid?: number) => {
-    e.stopPropagation();
-
+  const playByCid = async (targetCid?: number) => {
     // 直播：获取直播流地址并播放
     if (item.duration === 0 && onGetLivePlayUrl) {
       setIsLoading(true);
@@ -172,6 +208,14 @@ const VideoCard: React.FC<VideoCardProps> = ({
     }
   };
 
+  const handlePlayClick = (e: React.MouseEvent, targetCid?: number) => {
+    e.stopPropagation();
+    void playByCid(targetCid);
+    if (isMultiP && pages.length === 0) {
+      void loadPages();
+    }
+  };
+
   const handleArtInstance = (art: Artplayer) => {
     artRef.current = art;
   };
@@ -200,6 +244,14 @@ const VideoCard: React.FC<VideoCardProps> = ({
 
   const handleArtEnded = () => {
     reportEnded();
+    if (pages.length > 1) {
+      const currentIdx = pages.findIndex((p) => p.cid === selectedCid);
+      if (currentIdx >= 0 && currentIdx < pages.length - 1) {
+        const nextP = pages[currentIdx + 1];
+        setSelectedCid(nextP.cid);
+        void playByCid(nextP.cid);
+      }
+    }
   };
 
   const handleAddToWatchLater = (e: React.MouseEvent) => {
@@ -215,6 +267,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
     addToPlaylist({
       ...item,
       cid: selectedCid,
+      pages: pages.length > 0 ? pages : item.pages,
     });
     message.success("已加入播放列表");
   };
@@ -369,45 +422,53 @@ const VideoCard: React.FC<VideoCardProps> = ({
       </div>
 
       {/* 集合视频选集展开按钮 */}
-      {!is_folder && item.pages && item.pages.length > 1 && (
+      {/* 集合视频选集展开按钮 */}
+      {isMultiP && (
         <div
           className="video-pages-toggle"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsPagesExpanded(!isPagesExpanded);
-          }}
+          onClick={handleTogglePages}
         >
-          <span>分P选集 ({item.pages.length})</span>
-          <span className={`toggle-icon ${isPagesExpanded ? "expanded" : ""}`}>
-            ▼
-          </span>
+          <span>分P选集 ({totalPagesCount})</span>
+          {isLoadingPages ? (
+            <LoadingOutlined spin style={{ fontSize: 12, marginLeft: 4 }} />
+          ) : (
+            <span className={`toggle-icon ${isPagesExpanded ? "expanded" : ""}`}>
+              ▼
+            </span>
+          )}
         </div>
       )}
 
       {/* 展开的分P列表 */}
-      {!is_folder && isPagesExpanded && item.pages && item.pages.length > 1 && (
+      {isMultiP && isPagesExpanded && (
         <div className="video-card-pages-list">
-          {item.pages.map((page) => (
-            <div
-              key={page.cid}
-              className={`video-card-page-item ${selectedCid === page.cid ? "active" : ""}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedCid(page.cid);
-                handlePlayClick(e, page.cid);
-              }}
-            >
-              <div className="page-item-left">
-                <span className="page-index">P{page.page}</span>
-                <span className="page-part-title" title={page.part}>
-                  {page.part}
+          {pages.length > 0 ? (
+            pages.map((page) => (
+              <div
+                key={page.cid}
+                className={`video-card-page-item ${selectedCid === page.cid ? "active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedCid(page.cid);
+                  handlePlayClick(e, page.cid);
+                }}
+              >
+                <div className="page-item-left">
+                  <span className="page-index">P{page.page}</span>
+                  <span className="page-part-title" title={page.part}>
+                    {page.part}
+                  </span>
+                </div>
+                <span className="page-item-duration">
+                  {formatDuration(page.duration)}
                 </span>
               </div>
-              <span className="page-item-duration">
-                {formatDuration(page.duration)}
-              </span>
+            ))
+          ) : (
+            <div style={{ padding: "8px 12px", color: "#999", fontSize: 12 }}>
+              {isLoadingPages ? "正在加载分P列表..." : "暂无分P信息"}
             </div>
-          ))}
+          )}
         </div>
       )}
 

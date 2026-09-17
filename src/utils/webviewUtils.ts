@@ -32,7 +32,7 @@ export function getWebviewHtml(options: WebviewHtmlOptions): string {
       <!doctype html>
       <html lang="en">
         <head>
-          <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; media-src * data: blob: https://*.xhscdn.com http://*.xhscdn.com; img-src * data: blob:; connect-src *;" />
+          <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; media-src * data: blob: https://*.xhscdn.com http://*.xhscdn.com; img-src * data: blob:; connect-src * blob: data:; worker-src * blob: data:;" />
           <meta name="referrer" content="no-referrer" />
           <script>
             ${configScript}
@@ -82,7 +82,7 @@ export function getWebviewHtml(options: WebviewHtmlOptions): string {
     );
 
     // Inject CSP meta tag to allow external media (XHS video CDN)
-    const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; media-src * data: blob: https://*.xhscdn.com http://*.xhscdn.com; img-src * data: blob:; connect-src *;" />`;
+    const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; media-src * data: blob: https://*.xhscdn.com http://*.xhscdn.com; img-src * data: blob:; connect-src * blob: data:; worker-src * blob: data:;" />`;
     if (html.includes("http-equiv=\"Content-Security-Policy\"")) {
       html = html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/i, cspMeta);
     } else {

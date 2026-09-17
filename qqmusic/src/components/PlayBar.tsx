@@ -51,6 +51,7 @@ const PlayBar: React.FC = () => {
   const toggleLyricOpen = usePlayerStore((state) => state.toggleLyricOpen);
   const togglePlay = usePlayerStore((state) => state.togglePlay);
   const playNext = usePlayerStore((state) => state.playNext);
+  const playPrev = usePlayerStore((state) => state.playPrev);
   const removeFromPlaylist = usePlayerStore(
     (state) => state.removeFromPlaylist,
   );
@@ -343,6 +344,81 @@ const PlayBar: React.FC = () => {
     }
   };
 
+  // 监听原生 audio 的 play/pause 事件，确保通过系统 Fn 键、SMTC 快速设置面板或耳机按键暂停/恢复时，状态栏与播放器状态实时同步
+  const handleNativePlay = () => {
+    if (!usePlayerStore.getState().isPlaying) {
+      usePlayerStore.getState().setIsPlaying(true);
+    }
+  };
+
+  const handleNativePause = () => {
+    if (usePlayerStore.getState().isPlaying) {
+      usePlayerStore.getState().setIsPlaying(false);
+    }
+  };
+
+  // MediaSession 系统多媒体中心适配 (Windows 快速设置面板、键盘 Fn 多媒体键)
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    if (currentSong) {
+      const title = currentSong.name;
+      const artist = getSingerName(currentSong);
+      const album = currentSong.album?.name || "";
+      const artworkSrc = getAlbumCover(currentSong);
+
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title,
+          artist,
+          album,
+          artwork: artworkSrc ? [{ src: artworkSrc, sizes: "300x300", type: "image/jpeg" }] : [],
+        });
+      } catch (e) {
+        console.warn("[QQMusic] 设置 mediaSession metadata 失败:", e);
+      }
+    } else {
+      navigator.mediaSession.metadata = null;
+    }
+  }, [currentSong]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    try {
+      navigator.mediaSession.setActionHandler("play", () => {
+        usePlayerStore.getState().setIsPlaying(true);
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        usePlayerStore.getState().setIsPlaying(false);
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        playPrev();
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        playNext();
+      });
+    } catch (e) {
+      console.warn("[QQMusic] 注册 mediaSession action 失败:", e);
+    }
+
+    return () => {
+      try {
+        navigator.mediaSession.setActionHandler("play", null);
+        navigator.mediaSession.setActionHandler("pause", null);
+        navigator.mediaSession.setActionHandler("previoustrack", null);
+        navigator.mediaSession.setActionHandler("nexttrack", null);
+      } catch {
+        // ignore
+      }
+    };
+  }, [playPrev, playNext]);
+
   return (
     <>
       <audio
@@ -352,6 +428,8 @@ const PlayBar: React.FC = () => {
         loop={playMode === "single"}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onPlay={handleNativePlay}
+        onPause={handleNativePause}
         onEnded={() => playNext()}
         onError={() => {
           if (currentSongUrl) {

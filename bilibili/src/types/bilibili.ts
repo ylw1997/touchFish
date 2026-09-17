@@ -221,6 +221,7 @@ export interface BilibiliListItem {
   is_folder?: boolean;
   media_count?: number;
   // 多P分集相关
+  videos?: number;
   pages?: BilibiliVideoPage[];
   // 播放进度
   progress?: number;

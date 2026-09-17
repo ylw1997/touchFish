@@ -4,6 +4,7 @@
 import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import {
   UnorderedListOutlined,
+  OrderedListOutlined,
   CloseOutlined,
   DeleteOutlined,
   LoadingOutlined,
@@ -43,6 +44,18 @@ const PlayBar: React.FC = () => {
     clearPlaylist,
     playNext,
   } = usePlayerStore();
+
+  const [isPagesOpen, setIsPagesOpen] = React.useState(false);
+
+  const currentP = useMemo(() => {
+    if (!currentVideo?.pages || currentVideo.pages.length <= 1) return null;
+    return (
+      currentVideo.pages.find((p) => p.cid === currentVideo.cid) ||
+      currentVideo.pages[0]
+    );
+  }, [currentVideo?.pages, currentVideo?.cid]);
+
+  const hasPages = Boolean(currentVideo?.pages && currentVideo.pages.length > 1);
 
   const videoRef = useRef<Artplayer | null>(null);
   const requestSeqRef = useRef(0);
@@ -307,6 +320,26 @@ const PlayBar: React.FC = () => {
 
     reportEnded();
 
+    // 如果当前视频有多P且未到最后一P，优先续播下一分P
+    if (playingVideo.pages && playingVideo.pages.length > 1) {
+      const currentCidIndex = playingVideo.pages.findIndex(
+        (page) => page.cid === playingVideo.cid
+      );
+      if (
+        currentCidIndex >= 0 &&
+        currentCidIndex < playingVideo.pages.length - 1
+      ) {
+        const nextP = playingVideo.pages[currentCidIndex + 1];
+        setIgnorePause(true);
+        setCurrentVideo({
+          ...playingVideo,
+          cid: nextP.cid,
+          progress: 0,
+        });
+        return;
+      }
+    }
+
     const currentIndex = queue.findIndex((video) => video.id === playingVideo.id);
     if (currentIndex === -1 || currentIndex >= queue.length - 1) {
       setIsPlaying(false);
@@ -316,7 +349,7 @@ const PlayBar: React.FC = () => {
 
     setIgnorePause(true);
     playNext();
-  }, [playNext, setIsPlaying, reportEnded, setIgnorePause]);
+  }, [playNext, setIsPlaying, reportEnded, setIgnorePause, setCurrentVideo]);
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -501,10 +534,20 @@ const PlayBar: React.FC = () => {
         </AnimatePresence>
 
         {/* 选集面板 */}
-        {isPlaylistOpen && currentVideo && currentVideo.pages && currentVideo.pages.length > 1 && (
+        {(isPagesOpen || isPlaylistOpen) && currentVideo && currentVideo.pages && currentVideo.pages.length > 1 && (
           <div className="playbar-pages-panel">
             <div className="playbar-pages-header">
-              <span className="playbar-pages-title">选集 ({currentVideo.pages.length})</span>
+              <span className="playbar-pages-title">
+                选集 ({currentVideo.pages.length})
+                {currentP && ` · 当前 P${currentP.page}`}
+              </span>
+              <span
+                style={{ cursor: "pointer", marginLeft: "auto", padding: "0 4px" }}
+                onClick={() => setIsPagesOpen(false)}
+                title="关闭选集面板"
+              >
+                <CloseOutlined />
+              </span>
             </div>
             <div className="playbar-pages-content">
               {currentVideo.pages.map((page) => (
@@ -612,6 +655,18 @@ const PlayBar: React.FC = () => {
               <div className="playbar-text-info">
                 <div className="playbar-title" title={currentVideo.title}>
                   {currentVideo.title}
+                  {currentP && (
+                    <span
+                      style={{
+                        marginLeft: 6,
+                        fontSize: 12,
+                        color: "#fb7299",
+                        fontWeight: "normal",
+                      }}
+                    >
+                      P{currentP.page} {currentP.part}
+                    </span>
+                  )}
                 </div>
                 <div className="playbar-author" title={currentVideo.owner.name}>
                   {currentVideo.owner.name}
@@ -644,7 +699,17 @@ const PlayBar: React.FC = () => {
             {isPlaying ? <PauseOutlined /> : <CaretRightOutlined />}
           </Button>
 
-
+          {hasPages && (
+            <Button
+              color={isPagesOpen ? "primary" : "default"}
+              variant="filled"
+              onClick={() => setIsPagesOpen(!isPagesOpen)}
+              title={`分P选集 (${currentP ? `P${currentP.page}` : ""}/${currentVideo?.pages?.length || 0})`}
+              shape="circle"
+            >
+              <OrderedListOutlined />
+            </Button>
+          )}
 
           <Button
             color={isPlaylistOpen ? "primary" : "default"}
