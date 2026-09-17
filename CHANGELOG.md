@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [17.14.0](https://github.com/ylw1997/touchFish/compare/v17.13.2...v17.14.0) (2026-09-17)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([f134abc](https://github.com/ylw1997/touchFish/commit/f134abc60e5df0230caf94bf1847d5c8221096cd))
+
+
+### ✨ Features | 新功能
+
+* 添加多P视频支持和优化播放条功能 ([668a0a3](https://github.com/ylw1997/touchFish/commit/668a0a3d495e25a8c777932ccedd002114eb9e82))
+
 ### [17.13.2](https://github.com/ylw1997/touchFish/compare/v17.13.1...v17.13.2) (2026-09-08)
 
 
