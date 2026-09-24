@@ -133,12 +133,30 @@ export const FeedDetailDrawer: React.FC<FeedDetailDrawerProps> = ({
     await toggleFollow(noteData.user.user_id);
   }, [noteData.user?.user_id, toggleFollow]);
 
+  const drawerTitle = noteData.title || "笔记详情";
+
   return (
     <>
       <BaseDrawer
         open={open}
         onClose={onClose}
-        title={noteData.title || "笔记详情"}
+        title={
+          <div
+            title={typeof drawerTitle === "string" ? drawerTitle : undefined}
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              wordBreak: "break-all",
+              lineHeight: 1.4,
+              maxHeight: "2.8em",
+            }}
+          >
+            {drawerTitle}
+          </div>
+        }
         scrollableId="xhsFeedDetailScrollableDiv"
       >
         {/* 用户信息 */}

@@ -35,29 +35,6 @@ export async function getOrSetCookie(
 }
 
 /**
- * 从 Cookie 字符串中提取指定字段的值
- * @param cookie - Cookie 字符串
- * @param field - 要提取的字段名
- * @returns 字段值，如果不存在则返回 undefined
- */
-export function getCookieField(
-  cookie: string,
-  field: string
-): string | undefined {
-  if (!cookie) return undefined;
-
-  const cookieParts = cookie.split(";");
-  for (const part of cookieParts) {
-    const [key, ...value] = part.split("=");
-    if (key.trim() === field) {
-      return value.join("=");
-    }
-  }
-
-  return undefined;
-}
-
-/**
  * 构建通用的请求头
  * @param cookie - Cookie 字符串
  * @param extraHeaders - 额外的请求头
@@ -74,3 +51,6 @@ export function buildCommonHeaders(
     ...extraHeaders,
   };
 }
+
+export * from "./cookieUtils";
+
