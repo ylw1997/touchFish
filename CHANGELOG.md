@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [17.15.0](https://github.com/ylw1997/touchFish/compare/v17.14.3...v17.15.0) (2026-09-24)
+
+
+### ✨ Features | 新功能
+
+* 支持微博Cookie自动续期持久化并优化小红书长标题样式 ([a982104](https://github.com/ylw1997/touchFish/commit/a9821040d7f2ea092c67e9db73cb31d3c9108a03))
+
 ### [17.14.3](https://github.com/ylw1997/touchFish/compare/v17.14.2...v17.14.3) (2026-09-18)
 
 
