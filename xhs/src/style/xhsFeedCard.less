@@ -45,7 +45,12 @@
   font-weight: 500;
   margin-bottom: 8px;
   color: var(--vscode-foreground);
-  word-break: break-word;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
   &:hover {
     color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);

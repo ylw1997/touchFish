@@ -7,24 +7,103 @@
  * Copyright (c) 2024 by yangliwei, All Rights Reserved.
  * @Description:
  */
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 import * as vscode from "vscode";
 import { showError } from "../utils/errorMessage";
-import { getOrSetCookie, buildCommonHeaders } from "../utils/apiUtils";
+import {
+  getOrSetCookie,
+  buildCommonHeaders,
+  getCookieField,
+  mergeCookies,
+} from "../utils/apiUtils";
+import { setConfigByKey } from "../core/config";
 import { weiboCommentParams, weiboRepostParams } from "../../types/weibo";
 import ContextManager from "../utils/extensionContext";
 import * as fs from "fs";
 import { Uri } from "vscode";
 
-axios.defaults.timeout = 10000;
+export const weiboHttp: AxiosInstance = axios.create({
+  timeout: 10000,
+});
 
-axios.interceptors.response.use(
-  (value) => value,
-  (error) => {
-    if (error.response && error.response.status === 432) {
-      return Promise.reject(error);
+let cachedWeiboCookie: string | undefined = undefined;
+
+// 监听配置变更，保持内存缓存最新
+vscode.workspace.onDidChangeConfiguration((e) => {
+  if (e.affectsConfiguration("touchfish.weiboCookie")) {
+    const config = vscode.workspace.getConfiguration("touchfish");
+    cachedWeiboCookie = config.get("weiboCookie") as string | undefined;
+  }
+});
+
+export const getOrSetWeiboCookie = async (): Promise<string> => {
+  const config = vscode.workspace.getConfiguration("touchfish");
+  const configCookie = config.get("weiboCookie") as string | undefined;
+
+  if (cachedWeiboCookie) {
+    return cachedWeiboCookie;
+  }
+
+  if (configCookie) {
+    cachedWeiboCookie = configCookie;
+    return cachedWeiboCookie;
+  }
+
+  const cookie = (await getOrSetCookie(
+    "weiboCookie",
+    "请输入微博的cookie"
+  )) as string;
+  cachedWeiboCookie = cookie;
+  return cookie || "";
+};
+
+export const updateWeiboCookie = async (newCookie: string) => {
+  cachedWeiboCookie = newCookie;
+  await setConfigByKey("weiboCookie", newCookie);
+};
+
+/**
+ * 拦截并自动合并响应头中的 Set-Cookie，实现自动续期与持久化
+ */
+const handleSetCookie = async (response: any) => {
+  try {
+    const rawSetCookies =
+      response?.headers?.["set-cookie"] || response?.headers?.["Set-Cookie"];
+    if (!rawSetCookies) return;
+
+    const cookie = await getOrSetWeiboCookie();
+    if (!cookie) return;
+
+    const { updatedCookie, hasChanged, updatedKeys } = mergeCookies(
+      cookie,
+      rawSetCookies
+    );
+
+    if (hasChanged) {
+      cachedWeiboCookie = updatedCookie;
+      console.log(
+        `[weibo] 检测到 Cookie 自动续期更新 (${updatedKeys.join(", ")})，正在持久化...`
+      );
+      await setConfigByKey("weiboCookie", updatedCookie);
     }
-    showError(`请求失败:${error.message} -------&gt; ${error.config.url}`);
+  } catch (err) {
+    console.error("[weibo] 自动合并持久化 Set-Cookie 异常:", err);
+  }
+};
+
+weiboHttp.interceptors.response.use(
+  async (response) => {
+    await handleSetCookie(response);
+    return response;
+  },
+  async (error) => {
+    if (error.response) {
+      await handleSetCookie(error.response);
+      if (error.response.status === 432) {
+        return Promise.reject(error);
+      }
+    }
+    showError(`请求失败:${error.message} -------> ${error.config?.url}`);
     return Promise.resolve({
       data: {
         ok: 0,
@@ -34,13 +113,9 @@ axios.interceptors.response.use(
   }
 );
 
-export const getOrSetWeiboCookie = async () => {
-  return await getOrSetCookie("weiboCookie", "请输入微博的cookie");
-};
-
 const getWeiboHeaders = async (extraHeaders = {}) => {
   const cookie = (await getOrSetWeiboCookie()) as string;
-  const xsrf = cookie.match(/XSRF-TOKEN=(.*?);/)?.[1] ?? "";
+  const xsrf = getCookieField(cookie, "XSRF-TOKEN") ?? "";
   return buildCommonHeaders(cookie, {
     "X-Xsrf-Token": xsrf,
     Referer: "https://weibo.com/",
@@ -50,13 +125,13 @@ const getWeiboHeaders = async (extraHeaders = {}) => {
 };
 
 export const getWeiboData = async (url: string) => {
-  return await axios.get(`https://weibo.com/ajax/feed${url}`, {
+  return await weiboHttp.get(`https://weibo.com/ajax/feed${url}`, {
     headers: await getWeiboHeaders(),
   });
 };
 
 export const getWeiboGroups = async () => {
-  return await axios.get("https://weibo.com/ajax/feed/allGroups", {
+  return await weiboHttp.get("https://weibo.com/ajax/feed/allGroups", {
     headers: await getWeiboHeaders({
       "client-version": "3.0.0",
       "x-requested-with": "XMLHttpRequest",
@@ -143,14 +218,14 @@ export const downloadVideoAsFile = async (url: string): Promise<string> => {
 
 // 获取微博评论
 export const getWeiboComment = async (url: string) => {
-  return await axios.get(`https://weibo.com/ajax${url}`, {
+  return await weiboHttp.get(`https://weibo.com/ajax${url}`, {
     headers: await getWeiboHeaders(),
   });
 };
 
 // 获取长微博
 export const getLongText = async (id: string) => {
-  return await axios.get(`https://weibo.com/ajax/statuses/longtext?id=${id}`, {
+  return await weiboHttp.get(`https://weibo.com/ajax/statuses/longtext?id=${id}`, {
     headers: await getWeiboHeaders(),
   });
 };
@@ -158,7 +233,7 @@ export const getLongText = async (id: string) => {
 // 查看博主 https://weibo.com/ajax/statuses/mymblog?uid=5766179244&page=1&feature=0
 export const getUserWeibo = async (params: string) => {
   const parsedParams = JSON.parse(params);
-  return await axios.get(
+  return await weiboHttp.get(
     `https://weibo.com/ajax/statuses/mymblog?uid=${parsedParams.uid}&page=${parsedParams.page}&feature=0`,
     {
       headers: await getWeiboHeaders(),
@@ -168,7 +243,7 @@ export const getUserWeibo = async (params: string) => {
 
 // 关注博主 https://weibo.com/ajax/friendships/create friend_uid
 export const followUser = async (friend_uid: string) => {
-  return await axios.post(
+  return await weiboHttp.post(
     `https://weibo.com/ajax/friendships/create`,
     {
       friend_uid: friend_uid + "",
@@ -197,7 +272,7 @@ type weiboSendParams = {
 
 export const sendWeibo = async (params: string) => {
   const parsedParams = JSON.parse(params) as weiboSendParams;
-  return await axios.post(
+  return await weiboHttp.post(
     `https://weibo.com/ajax/statuses/update`,
     parsedParams,
     {
@@ -217,7 +292,7 @@ export const uploadImage = async (file: string) => {
         file.replace(/^data:image\/(png|jpeg|jpg);base64,/, ""),
         "base64"
       );
-  return await axios.request({
+  return await weiboHttp.request({
     url: `https://picupload.weibo.com/interface/pic_upload.php?app=miniblog&p=1&data=1`,
     method: "POST",
     headers: await getWeiboHeaders({
@@ -229,7 +304,7 @@ export const uploadImage = async (file: string) => {
 
 // 取消关注博主 https://weibo.com/ajax/friendships/destory
 export const cancelfollowUser = async (uid: string) => {
-  return await axios.post(
+  return await weiboHttp.post(
     `https://weibo.com/ajax/friendships/destory`,
     { uid },
     {
@@ -240,7 +315,7 @@ export const cancelfollowUser = async (uid: string) => {
 
 // like https://weibo.com/ajax/statuses/setLike {"id":"5181037522454301"}
 export const setLike = async (id: string) => {
-  return await axios.post(
+  return await weiboHttp.post(
     `https://weibo.com/ajax/statuses/setLike`,
     { id },
     {
@@ -250,7 +325,7 @@ export const setLike = async (id: string) => {
 };
 // cancelLike https://weibo.com/ajax/statuses/cancelLike {"id":"5181037522454301"}
 export const cancelLike = async (id: string) => {
-  return await axios.post(
+  return await weiboHttp.post(
     `https://weibo.com/ajax/statuses/cancelLike`,
     { id },
     {
@@ -261,7 +336,7 @@ export const cancelLike = async (id: string) => {
 
 // 评论
 export const createComments = async (params: weiboCommentParams) => {
-  return await axios.post(`https://weibo.com/ajax/comments/create`, params, {
+  return await weiboHttp.post(`https://weibo.com/ajax/comments/create`, params, {
     headers: await getWeiboHeaders({
       "Content-Type": "application/x-www-form-urlencoded",
     }),
@@ -270,7 +345,7 @@ export const createComments = async (params: weiboCommentParams) => {
 
 // 转发
 export const createRepost = async (params: weiboRepostParams) => {
-  return await axios.post(
+  return await weiboHttp.post(
     `https://weibo.com/ajax/statuses/normal_repost`,
     params,
     {
@@ -289,14 +364,14 @@ export const getUserByName = async (screen_name_or_id: string) => {
   } else {
     params = `screen_name=${screen_name_or_id}`;
   }
-  return await axios.get(`https://weibo.com/ajax/user/popcard/get?${params}`, {
+  return await weiboHttp.get(`https://weibo.com/ajax/user/popcard/get?${params}`, {
     headers: await getWeiboHeaders(),
   });
 };
 
 // 获取热搜
 export const getHotSearch = async () => {
-  return await axios.get(`https://weibo.com/ajax/side/hotSearch`, {
+  return await weiboHttp.get(`https://weibo.com/ajax/side/hotSearch`, {
     headers: await getWeiboHeaders(),
   });
 };
@@ -314,7 +389,7 @@ export const getWeiboSearch = async (
   )}`;
   // console.log("Fetching Weibo Search Data:", url);
   try {
-    return await axios.get(url, {
+    return await weiboHttp.get(url, {
       headers: await getWeiboHeaders({
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",

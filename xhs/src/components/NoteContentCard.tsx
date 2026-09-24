@@ -504,7 +504,20 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
           </Space>,
         ]}
       >
-        <Title level={4} style={{ marginTop: 0 }}>
+        <Title
+          level={4}
+          style={{
+            marginTop: 0,
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: 2,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            wordBreak: "break-all",
+            lineHeight: 1.4,
+          }}
+          title={title}
+        >
           {title}
         </Title>
         {desc ? (

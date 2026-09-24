@@ -51,6 +51,21 @@ a {
   backdrop-filter: saturate(180%) blur(15px);
 }
 
+.ant-drawer {
+  .ant-drawer-header {
+    .ant-drawer-title {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-all;
+      line-height: 1.4;
+      max-height: 2.8em;
+    }
+  }
+}
+
 .touchfish-float-backtop,
 .ant-float-btn {
   .backdrop-style();
