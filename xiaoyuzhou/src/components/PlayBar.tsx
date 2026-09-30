@@ -213,6 +213,15 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
         preload="metadata"
         onEnded={() => playNext()}
         onTimeUpdate={handleTimeUpdate}
+        onError={() => {
+          const err = audioRef.current?.error;
+          const canAAC =
+            audioRef.current?.canPlayType('audio/mp4; codecs="mp4a.40.2"') !==
+            "";
+          if ((err && (err.code === 4 || err.code === 3)) || !canAAC) {
+            vscode.postMessage({ command: "REPORT_FFMPEG_MISSING" });
+          }
+        }}
       />
 
       <div

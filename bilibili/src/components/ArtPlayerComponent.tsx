@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import Artplayer from "artplayer";
 import artplayerPluginDanmuku, { type Danmu } from "artplayer-plugin-danmuku";
 import Hls from "hls.js";
+import { checkFFmpegSupport, reportFFmpegMissing } from "../utils/mediaCodec";
 
 function getDanmakuMode(key: number): 0 | 1 | 2 {
   switch (key) {
@@ -258,6 +259,12 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
     });
     instance.on("video:ended", () => {
       callbacksRef.current.onEnded?.();
+    });
+    instance.on("video:error", () => {
+      const codec = checkFFmpegSupport();
+      if (!codec.isSupported) {
+        reportFFmpegMissing();
+      }
     });
 
     instance.on("ready", () => {

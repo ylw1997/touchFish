@@ -8,10 +8,10 @@
  */
 // 注册命令
 import { commands } from "vscode";
-import { setConfigByKey } from "../core/config";
 import * as vscode from "vscode";
+import { setConfigByKey } from "../core/config";
 import { showInfo } from "../utils/errorMessage";
-import { getXhsLoginQrCode, checkXhsQrCodeStatus, sendXhsPhoneCode, loginXhsByPhone } from "../api/xhs";
+import { getXhsLoginQrCode, checkXhsQrCodeStatus } from "../api/xhs";
 
 type TabProvider = {
   getData(tabOverride?: string): Promise<void>;
@@ -565,51 +565,6 @@ export const loginXhsQrCodeCommand = () => {
       }
     } catch (e: any) {
       vscode.window.showErrorMessage("扫码登录失败：" + e.message);
-    }
-  });
-};
-
-// 小红书手机号登录
-export const loginXhsPhoneCommand = () => {
-  return vscode.commands.registerCommand("touchfish.loginXhsPhone", async () => {
-    try {
-      const phone = await vscode.window.showInputBox({
-        prompt: "请输入小红书手机号 (中国大陆 11 位)",
-        placeHolder: "13800138000",
-        ignoreFocusOut: true,
-        validateInput: (text) => {
-          return /^\d{11}$/.test(text) ? null : "手机号必须为 11 位数字";
-        }
-      });
-      if (!phone) return;
-
-      // 发送验证码（用 withProgress 显示进度）
-      const sendResult = await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: "正在发送验证码..." },
-        () => sendXhsPhoneCode(phone)
-      );
-
-      const code = await vscode.window.showInputBox({
-        prompt: `验证码已发送到 ${phone}，请输入 6 位验证码`,
-        placeHolder: "123456",
-        ignoreFocusOut: true,
-        validateInput: (text) => {
-          return /^\d{6}$/.test(text) ? null : "验证码必须为 6 位数字";
-        }
-      });
-      if (!code) return;
-
-      // 验证登录（用 withProgress 显示进度）
-      const finalCookies = await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: "正在验证登录..." },
-        () => loginXhsByPhone(phone, code, sendResult.cookies)
-      );
-
-      await setConfigByKey("xhsCookie", finalCookies.cookies);
-      vscode.window.showInformationMessage("小红书手机号登录成功！");
-      vscode.commands.executeCommand("touchfish.xhsRefresh");
-    } catch (e: any) {
-      vscode.window.showErrorMessage("手机号登录失败：" + e.message);
     }
   });
 };

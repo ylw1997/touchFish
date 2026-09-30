@@ -37,6 +37,8 @@ const PlayBar: React.FC = () => {
   const [currentLyric, setCurrentLyric] = useState<string>("");
   const [activeIdx, setActiveIdx] = useState<number>(-1);
   const activeIdxRef = useRef<number>(-1);
+  const isSwitchingTrackRef = useRef<boolean>(false);
+  const wasPlayingRef = useRef<boolean>(false);
 
   const currentSong = usePlayerStore((state) => state.currentSong);
   const currentSongUrl = usePlayerStore((state) => state.currentSongUrl);
@@ -185,9 +187,14 @@ const PlayBar: React.FC = () => {
     let active = true;
     const fetchUrl = async () => {
       if (!currentSong) {
+        isSwitchingTrackRef.current = false;
         setCurrentSongUrl(null);
         return;
       }
+
+      // 标记当前处于切歌过渡阶段，记录切换前的播放意向
+      isSwitchingTrackRef.current = true;
+      wasPlayingRef.current = wasPlayingRef.current || usePlayerStore.getState().isPlaying;
 
       // 切歌时立刻暂停上一首并清除旧 URL
       if (audioRef.current) {
@@ -201,11 +208,17 @@ const PlayBar: React.FC = () => {
         const url = typeof res.data === "string" ? res.data.trim() : "";
         if (res.code === 0 && url && url.startsWith("http")) {
           setCurrentSongUrl(url);
+          // 若切换前处于播放中，确保保持播放状态以继续自动播放
+          if (wasPlayingRef.current || usePlayerStore.getState().isPlaying) {
+            usePlayerStore.getState().setIsPlaying(true);
+          }
         } else if (res.authExpired) {
+          isSwitchingTrackRef.current = false;
           useUserStore.getState().logout();
           usePlayerStore.getState().clearPlaylist();
           messageApi.error("QQ 音乐登录已失效，已清空播放列表，请重新登录");
         } else {
+          isSwitchingTrackRef.current = false;
           messageApi.error(`无法播放《${currentSong.name}》: ${res.message || "获取播放链接为空，可能是VIP或版权限制"}`);
           setCurrentSongUrl(null);
           // 加载失败自动跳下一首
@@ -213,6 +226,7 @@ const PlayBar: React.FC = () => {
         }
       } catch {
         if (!active) return;
+        isSwitchingTrackRef.current = false;
         messageApi.error(`获取播放链接失败`);
         setCurrentSongUrl(null);
         // 加载失败自动跳下一首
@@ -346,12 +360,17 @@ const PlayBar: React.FC = () => {
 
   // 监听原生 audio 的 play/pause 事件，确保通过系统 Fn 键、SMTC 快速设置面板或耳机按键暂停/恢复时，状态栏与播放器状态实时同步
   const handleNativePlay = () => {
+    isSwitchingTrackRef.current = false;
     if (!usePlayerStore.getState().isPlaying) {
       usePlayerStore.getState().setIsPlaying(true);
     }
   };
 
   const handleNativePause = () => {
+    // 正在切歌过渡、或音频自然结束时派发的 pause 事件，不能当作用户主动暂停
+    if (isSwitchingTrackRef.current || audioRef.current?.ended) {
+      return;
+    }
     if (usePlayerStore.getState().isPlaying) {
       usePlayerStore.getState().setIsPlaying(false);
     }
@@ -392,15 +411,21 @@ const PlayBar: React.FC = () => {
 
     try {
       navigator.mediaSession.setActionHandler("play", () => {
+        isSwitchingTrackRef.current = false;
         usePlayerStore.getState().setIsPlaying(true);
       });
       navigator.mediaSession.setActionHandler("pause", () => {
+        isSwitchingTrackRef.current = false;
         usePlayerStore.getState().setIsPlaying(false);
       });
       navigator.mediaSession.setActionHandler("previoustrack", () => {
+        isSwitchingTrackRef.current = true;
+        wasPlayingRef.current = true;
         playPrev();
       });
       navigator.mediaSession.setActionHandler("nexttrack", () => {
+        isSwitchingTrackRef.current = true;
+        wasPlayingRef.current = true;
         playNext();
       });
     } catch (e) {
@@ -430,9 +455,22 @@ const PlayBar: React.FC = () => {
         onLoadedMetadata={handleLoadedMetadata}
         onPlay={handleNativePlay}
         onPause={handleNativePause}
-        onEnded={() => playNext()}
+        onEnded={() => {
+          isSwitchingTrackRef.current = true;
+          wasPlayingRef.current = true;
+          playNext();
+        }}
         onError={() => {
           if (currentSongUrl) {
+            const err = audioRef.current?.error;
+            const canAAC =
+              audioRef.current?.canPlayType('audio/mp4; codecs="mp4a.40.2"') !==
+              "";
+            if ((err && (err.code === 4 || err.code === 3)) || !canAAC) {
+              vscode.postMessage({ command: "REPORT_FFMPEG_MISSING" });
+            }
+            isSwitchingTrackRef.current = true;
+            wasPlayingRef.current = true;
             messageApi.error(`播放失败，自动跳到下一首`);
             setTimeout(() => playNext(), 1500);
           }

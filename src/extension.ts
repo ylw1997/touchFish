@@ -39,7 +39,6 @@ import {
   setXiaoyuzhouTokenCommand,
   setXTokenCommand,
   loginXhsQrCodeCommand,
-  loginXhsPhoneCommand,
 } from "./commands/commands";
 import { ChipHellProvider } from "./Providers/chipHellProvider";
 import { V2exProvider } from "./Providers/v2exProvider";
@@ -355,7 +354,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(setXiaoyuzhouTokenCommand());
   context.subscriptions.push(setXTokenCommand());
   context.subscriptions.push(loginXhsQrCodeCommand());
-  context.subscriptions.push(loginXhsPhoneCommand());
   // 登录成功后刷新 XHS Webview
   context.subscriptions.push(
     vscode.commands.registerCommand("touchfish.xhsRefresh", () => {

@@ -22,6 +22,7 @@ import ArtPlayerComponent from "./ArtPlayerComponent";
 import Artplayer from "artplayer";
 import { App, Button } from "antd";
 import { useBilibiliHeartbeat } from "../hooks/useBilibiliHeartbeat";
+import { checkFFmpegSupport, reportFFmpegMissing } from "../utils/mediaCodec";
 
 const PlayBar: React.FC = () => {
   const { message } = App.useApp();
@@ -116,6 +117,12 @@ const PlayBar: React.FC = () => {
 
       if (video.duration === 0 && options?.removeFailedLive) {
         removeFromPlaylist(video.id);
+      }
+
+      const codec = checkFFmpegSupport();
+      if (!codec.isSupported) {
+        reportFFmpegMissing();
+        return;
       }
 
       if (options?.messageText) {
@@ -364,6 +371,13 @@ const PlayBar: React.FC = () => {
     (art: Artplayer) => {
       videoRef.current = art;
 
+      art.on("video:error", () => {
+        const codec = checkFFmpegSupport();
+        if (!codec.isSupported) {
+          reportFFmpegMissing();
+        }
+      });
+
       if (usePlayerStore.getState().isPlaying) {
         const handlePlayError = (err: any) => {
           console.warn("Artplayer 初始化自动播放失败（可能受浏览器策略限制）:", err);
@@ -376,8 +390,6 @@ const PlayBar: React.FC = () => {
           art.play().then(() => setIsPlaying(true)).catch(handlePlayError);
         });
       }
-
-
     },
     [setIsPlaying, message],
   );
@@ -405,6 +417,12 @@ const PlayBar: React.FC = () => {
         isLive: boolean;
       },
     ) => {
+      const codec = checkFFmpegSupport();
+      if (!codec.isSupported) {
+        reportFFmpegMissing();
+        return;
+      }
+
       if (!context.isLive || !context.mediaId) {
         return;
       }

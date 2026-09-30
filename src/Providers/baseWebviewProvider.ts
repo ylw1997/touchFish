@@ -8,6 +8,7 @@
 import * as vscode from "vscode";
 import { showInfo, showError } from "../utils/errorMessage";
 import { getWebviewHtml } from "../utils/webviewUtils";
+import { showFFmpegReplaceNotice } from "../utils/ffmpegNotice";
 
 export interface BaseWebviewOptions {
   distPath: string; // 生产构建输出目录 (相对 extension 根)
@@ -91,6 +92,19 @@ export abstract class BaseWebviewProvider
         if (command === "SAVE_FONT_SIZE") {
           const config = vscode.workspace.getConfiguration("touchfish");
           await config.update("fontSize", payload, true); // true for global/workspace setting
+          return;
+        }
+        // 缺少 FFmpeg 模块统一弹窗
+        if (command === "REPORT_FFMPEG_MISSING") {
+          await showFFmpegReplaceNotice(this.context);
+          return;
+        }
+        // 剪贴板复制命令支持
+        if (command === "COPY_TO_CLIPBOARD") {
+          const text = payload?.text || "";
+          if (text) {
+            await vscode.env.clipboard.writeText(text);
+          }
           return;
         }
         await this.handleCustomMessage(msg, webviewView);
