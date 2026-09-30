@@ -892,11 +892,6 @@
 					"group": "navigation"
 				},
 				{
-					"command": "touchfish.loginXhsPhone",
-					"when": "view == xhs",
-					"group": "navigation"
-				},
-				{
 					"command": "touchfish.setBilibiliToken",
 					"when": "view == bilibili",
 					"group": "navigation"

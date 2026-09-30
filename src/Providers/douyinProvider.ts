@@ -19,6 +19,7 @@ import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { DouyinLiveDanmakuSession } from "../api/douyinLiveDanmaku";
 import { DouyinMediaProxy } from "../api/douyinMediaProxy";
 import { DouyinBrowserFavorites } from "../api/douyinBrowserFavorites";
+import { showFFmpegReplaceNotice } from "../utils/ffmpegNotice";
 
 interface DouyinMessage<T = any> {
   command: string;
@@ -43,16 +44,7 @@ export class DouyinProvider extends BaseWebviewProvider {
     if (this.context.globalState.get<string>(warningKey) === vscode.version) return;
     await this.context.globalState.update(warningKey, vscode.version);
 
-    const action = await vscode.window.showWarningMessage(
-      `检测到 VS Code ${vscode.version} 缺少 H.264/AAC 媒体解码支持，抖音视频和直播可能无法播放。VS Code 升级后会重新覆盖 ffmpeg.dll。`,
-      "查看解决方法",
-    );
-    if (action !== "查看解决方法") return;
-    await vscode.env.openExternal(
-      vscode.Uri.parse(
-        "https://github.com/ylw1997/touchFish#%EF%B8%8F-%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9",
-      ),
-    );
+    await showFFmpegReplaceNotice(this.context);
   }
 
   constructor(context: ExtensionContext) {

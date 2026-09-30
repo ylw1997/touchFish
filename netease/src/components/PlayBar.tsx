@@ -361,6 +361,13 @@ const PlayBar: React.FC = () => {
         onEnded={() => playNext()}
         onError={() => {
           if (currentSongUrl) {
+            const err = audioRef.current?.error;
+            const canAAC =
+              audioRef.current?.canPlayType('audio/mp4; codecs="mp4a.40.2"') !==
+              "";
+            if ((err && (err.code === 4 || err.code === 3)) || !canAAC) {
+              vscode.postMessage({ command: "REPORT_FFMPEG_MISSING" });
+            }
             messageApi.error(`播放失败，自动跳到下一首`);
             setTimeout(() => playNext(), 1500);
           }

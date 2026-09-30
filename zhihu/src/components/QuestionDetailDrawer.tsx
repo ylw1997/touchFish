@@ -7,10 +7,16 @@
  * Copyright (c) 2025 by YangLiwei, All Rights Reserved.
  * @Description:
  */
-import { Drawer, List, Card, Button, Divider, Segmented } from "antd";
+import { Drawer, List, Card, Button, Divider, Segmented, FloatButton } from "antd";
+import {
+  CompressOutlined,
+  VerticalAlignTopOutlined,
+  DownOutlined,
+  UpOutlined,
+} from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { motion } from "framer-motion";
-import React from "react";
+import React, { useState } from "react";
 import { useHasExpanded, useExpandedStore } from "../store/expanded";
 import ZhihuItem from "./ZhihuItem";
 import type { ZhihuItemData } from "../../../types/zhihu";
@@ -54,6 +60,9 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
 }) => {
   const hasExpanded = useHasExpanded();
   const collapseAll = useExpandedStore((state) => state.collapseAll);
+  const isLongDetail = Boolean(questionDetail && questionDetail.length > 200);
+  const [detailExpanded, setDetailExpanded] = useState(false);
+
   return (
     <Drawer
       getContainer={false}
@@ -88,6 +97,19 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
           <Card
             title="问题详情"
             size="small"
+            extra={
+              isLongDetail ? (
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => setDetailExpanded(!detailExpanded)}
+                  icon={detailExpanded ? <UpOutlined /> : <DownOutlined />}
+                  style={{ padding: 0 }}
+                >
+                  {detailExpanded ? "收起描述" : "展开描述"}
+                </Button>
+              ) : null
+            }
             actions={
               isFollowing === undefined
                 ? undefined
@@ -109,20 +131,29 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
                         关注问题
                       </Button>
                     ),
-                    hasExpanded ? (
-                      <Button
-                        variant="filled"
-                        color="default"
-                        onClick={() => collapseAll()}
-                      >
-                        折叠全部
-                      </Button>
-                    ) : null,
+                    <Button
+                      variant="filled"
+                      color="default"
+                      onClick={() => collapseAll()}
+                    >
+                      折叠回答
+                    </Button>,
                   ]
             }
           >
             <div
               className="question-detail-content"
+              style={
+                isLongDetail && !detailExpanded
+                  ? {
+                      maxHeight: "90px",
+                      overflow: "hidden",
+                      position: "relative",
+                      maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)",
+                      WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)",
+                    }
+                  : undefined
+              }
               dangerouslySetInnerHTML={{
                 __html: questionDetail ? questionDetail : title,
               }}
@@ -181,6 +212,39 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
             />
           </InfiniteScroll>
         </div>
+      )}
+
+      {/* 详情页高层级悬浮操作按钮，防止被详情页弹窗/抽屉内容挡住 */}
+      {open && (
+        <>
+          <FloatButton
+            className="touchfish-detail-collapse-btn"
+            style={{
+              position: "fixed",
+              right: 24,
+              bottom: 84,
+              zIndex: 1200,
+            }}
+            onClick={() => collapseAll()}
+            icon={<CompressOutlined style={{ color: hasExpanded ? "#a0d911" : undefined }} />}
+            tooltip={{ title: "折叠回答", placement: "left" }}
+          />
+          <FloatButton.BackTop
+            style={{
+              position: "fixed",
+              right: 24,
+              bottom: 24,
+              zIndex: 1200,
+            }}
+            visibilityHeight={300}
+            duration={500}
+            icon={<VerticalAlignTopOutlined />}
+            tooltip={{ title: "回到顶部", placement: "left" }}
+            target={() =>
+              document.getElementById("questionDetailScroll") || window
+            }
+          />
+        </>
       )}
     </Drawer>
   );
