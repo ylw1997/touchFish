@@ -1,6 +1,14 @@
 # 更新历史 
 
 
+## [17.16.0](https://github.com/ylw1997/touchFish/compare/v17.15.0...v17.16.0) (2026-09-30)
+
+
+### ✨ Features | 新功能
+
+* 更新 X Query IDs 和 FFmpeg 替换脚本，优化媒体编解码支持 ([0598f89](https://github.com/ylw1997/touchFish/commit/0598f894f20293b89db0db14902400e32a0ed754))
+* 添加 FFmpeg 媒体编解码能力检测与替换提示，优化音视频播放体验 ([cf5f582](https://github.com/ylw1997/touchFish/commit/cf5f58227383eb315471da1e624d937b27185040))
+
 ## [17.15.0](https://github.com/ylw1997/touchFish/compare/v17.14.3...v17.15.0) (2026-09-24)
 
 
