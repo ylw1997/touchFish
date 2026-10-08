@@ -31,6 +31,7 @@ import {
   AppstoreOutlined,
 } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
+import Masonry from "react-masonry-css";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import _relativeTime from "dayjs/plugin/relativeTime";
@@ -268,6 +269,7 @@ function App() {
             scrollThreshold={0.95}
             scrollableTarget="scrollableDiv"
           >
+            <Masonry breakpointCols={{ default: 3, 1799: 2, 999: 1 }} className="touchfish-feed-masonry" columnClassName="touchfish-feed-column">
             {list?.map((item) => (
               <motion.div
                 key={item.id}
@@ -293,6 +295,7 @@ function App() {
                 />
               </motion.div>
             ))}
+            </Masonry>
           </InfiniteScroll>
         )}
       </div>

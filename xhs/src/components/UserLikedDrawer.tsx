@@ -124,7 +124,7 @@ export const UserLikedDrawer: React.FC<UserLikedDrawerProps> = ({
           >
             <Masonry
               breakpointCols={{
-                default: 2,
+                default: 5,
                 1500: 5,
                 1200: 4,
                 900: 3,

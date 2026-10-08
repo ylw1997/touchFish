@@ -1,0 +1,41 @@
+/* Shared large-webview layout; narrow VS Code sidebars keep their single column. */
+.content { word-break: normal; overflow-wrap: anywhere; }
+.touchfish-feed-masonry { display: flex; gap: 12px; }
+.touchfish-feed-column { min-width: 0; }
+.touchfish-feed-column > div { margin-bottom: 12px; }
+.imglist {
+  > div { max-width: 100%; min-width: 0; }
+  .ant-image { max-width: 100%; }
+  .img-item, .img-only-item, .video-item { max-width: 100%; }
+}
+.ant-drawer-header-title { min-width: 0; }
+.ant-drawer-title { overflow-wrap: anywhere; min-width: 0; }
+
+@media (min-width: 1000px) {
+  .imglist {
+    > div { flex: 1 1 30%; }
+    > div:only-child { flex-basis: 100%; }
+    .ant-image { width: 100%; }
+    .img-item { width: 100%; height: auto; aspect-ratio: 1; }
+    .img-only-item, .video-item { width: 100%; height: auto; max-height: 480px; object-fit: contain; }
+    .video-cover { width: 100%; }
+  }
+  .ant-drawer-bottom > .ant-drawer-content-wrapper {
+    width: min(960px, calc(100% - 48px));
+    left: 0; right: 0;
+    margin-left: auto; margin-right: auto;
+    max-height: calc(100dvh - 48px);
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+  }
+  .ant-drawer-body {
+    .content, .question-detail-content { line-height: 1.8; }
+    img:not(.ant-avatar-img) { max-width: 100%; }
+  }
+  #xhsFeedDetailScrollableDiv {
+    .ant-image { width: 100%; }
+    .ant-image-img, .ant-carousel img, video {
+      width: 100%; max-height: 55dvh; object-fit: contain;
+    }
+  }
+}
