@@ -64,13 +64,15 @@ const handleCommonMessages = (message: any) => {
 };
 
 const BASE_CSS = `
-  .news_detail { width: 75%; margin-left: 12.5%; padding-bottom: 60px; }
+  .news_detail { width: min(100% - 32px, 1100px); margin: 0 auto; padding-bottom: 100px; overflow-wrap: anywhere; }
   * { color: var(--vscode-editor-foreground); font-family: 'Microsoft YaHei'; line-height: 1.8; }
   a { color: var(--vscode-textLink-foreground); }
   img,video { max-width: 100%; }
   pre,code { font-family: var(--vscode-editor-font-family, monospace); }
   .bottom-toolbar { position: fixed; bottom: 15px; right: 15px; display: flex; gap: 8px; z-index: 9999; background: var(--vscode-editor-background); padding: 6px 10px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.3); align-items: center; border: 1px solid var(--vscode-panel-border); }
   .toolbar-btn { background-color: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border,transparent); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; line-height: 1.2; }
+  .bottom-toolbar { max-width: calc(100% - 30px); box-sizing: border-box; flex-wrap: wrap; }
+  .toolbar-btn, .toolbar-label { white-space: nowrap; flex-shrink: 0; }
   .toolbar-btn:hover { background-color: var(--vscode-button-hoverBackground); }
   .toolbar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .toolbar-label { color: var(--vscode-editor-foreground); font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }

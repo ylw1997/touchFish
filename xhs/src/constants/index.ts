@@ -9,7 +9,7 @@
  * 根据不同屏幕宽度显示不同列数
  */
 export const MASONRY_BREAKPOINTS = {
-  default: 2,
+  default: 6,
   1500: 5,
   1200: 4,
   900: 3,

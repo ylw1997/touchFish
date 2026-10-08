@@ -107,7 +107,7 @@ const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         onClose={closeFunc}
         title={userDetail?.screen_name}
         placement="bottom"
-        height={userWeiboList.length === 0 ? "auto" : "calc(100vh - 200px)"}
+        height="90dvh"
         styles={{
           body: {
             padding: 0,

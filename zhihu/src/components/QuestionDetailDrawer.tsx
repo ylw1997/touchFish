@@ -72,7 +72,7 @@ const QuestionDetailDrawer: React.FC<QuestionDetailDrawerProps> = ({
       destroyOnHidden
       placement="bottom"
       zIndex={1001}
-      height={questionData.length === 0 ? "auto" : "calc(100vh - 150px)"}
+      height="90dvh"
       styles={{
         wrapper: {
           borderTopLeftRadius: "10px",
