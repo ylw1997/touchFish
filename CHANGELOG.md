@@ -1,6 +1,16 @@
 # 更新历史 
 
 
+## [17.17.0](https://github.com/ylw1997/touchFish/compare/v17.16.0...v17.17.0) (2026-10-08)
+
+
+### ✨ Features | 新功能
+
+* 增强 X Query IDs 更新流程，添加代理可用性检测与 Cloudflare 质询智能等待 ([d9a0be7](https://github.com/ylw1997/touchFish/commit/d9a0be7e2a822425af1ae3caf588f2420c316110))
+* 更新 X Query IDs 更新流程，支持直接输入 JSON 映射并优化 Cookie 处理 ([a7a4964](https://github.com/ylw1997/touchFish/commit/a7a49646d1b916ae31c4677711cd850ef45e7e3c))
+* 替换脚本更新 ([c27a56b](https://github.com/ylw1997/touchFish/commit/c27a56b43121d8065ac365a81aba430a113089cb))
+* 添加 Cookie 支持以优化 X Query IDs 更新流程 ([319a5e9](https://github.com/ylw1997/touchFish/commit/319a5e9e16ee9349692a9cd64c3c665628c4eca7))
+
 ## [17.16.0](https://github.com/ylw1997/touchFish/compare/v17.15.0...v17.16.0) (2026-09-30)
 
 
