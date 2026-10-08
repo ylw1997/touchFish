@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [17.18.0](https://github.com/ylw1997/touchFish/compare/v17.17.0...v17.18.0) (2026-10-08)
+
+
+### ✨ Features | 新功能
+
+* 适配大屏 ([5a3b38c](https://github.com/ylw1997/touchFish/commit/5a3b38c67c5c87c9636ad1eac23b133adafa5b00))
+
 ## [17.17.0](https://github.com/ylw1997/touchFish/compare/v17.16.0...v17.17.0) (2026-10-08)
 
 
