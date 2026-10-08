@@ -4,8 +4,37 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const net = require('net');
 
 const X_TS_PATH = path.resolve(__dirname, '../src/api/x.ts');
+
+/**
+ * 检测代理服务端口是否可用
+ */
+async function isProxyAlive(proxyUrl) {
+    if (!proxyUrl) return false;
+    try {
+        const urlStr = proxyUrl.startsWith('http://') || proxyUrl.startsWith('https://') || proxyUrl.startsWith('socks5://') || proxyUrl.startsWith('socks://')
+            ? proxyUrl
+            : `http://${proxyUrl}`;
+        const parsed = new URL(urlStr);
+        const host = parsed.hostname || '127.0.0.1';
+        const port = parseInt(parsed.port || (parsed.protocol.startsWith('socks') ? '1080' : '80'), 10);
+        return await new Promise(resolve => {
+            const socket = net.createConnection({ host, port, timeout: 2000 }, () => {
+                socket.destroy();
+                resolve(true);
+            });
+            socket.on('error', () => resolve(false));
+            socket.on('timeout', () => {
+                socket.destroy();
+                resolve(false);
+            });
+        });
+    } catch {
+        return false;
+    }
+}
 
 /**
  * 尝试从输入文本中解析出 Query IDs 的 JSON 映射
@@ -219,6 +248,63 @@ function applyUpdatesToContent(content, idMapping, resultMap) {
     }
 }
 
+/**
+ * 智能等待 Cloudflare 质询通过
+ */
+async function waitForCloudflareChallenge(page, timeoutMs = 30000) {
+    const startTime = Date.now();
+    let hasLogged = false;
+
+    while (Date.now() - startTime < timeoutMs) {
+        const currentUrl = page.url();
+        const title = await page.title().catch(() => '');
+
+        const isChallenge =
+            currentUrl.includes('__cf_chl_rt_tk') ||
+            title.includes('Just a moment') ||
+            title.includes('Cloudflare') ||
+            title.includes('Attention Required');
+
+        if (!isChallenge) {
+            if (hasLogged) {
+                console.log('🎉 Cloudflare 质询已顺利通过！进入页面:', currentUrl);
+            }
+            return true;
+        }
+
+        if (!hasLogged) {
+            console.log('🛡️ 检测到 Cloudflare 质询页面 (__cf_chl_rt_tk)，正在等待计算并自动重定向...');
+            hasLogged = true;
+        }
+
+        // 尝试检测是否存在 Turnstile checkbox iframe 并进行交互辅助
+        try {
+            const cfIframes = await page.$$('iframe[src*="cloudflare"], iframe[src*="turnstile"], iframe[title*="Widget containing a Cloudflare security challenge"]');
+            for (const iframe of cfIframes) {
+                const box = await iframe.boundingBox();
+                if (box && box.width > 0 && box.height > 0) {
+                    await page.mouse.click(box.x + Math.min(30, box.width / 4), box.y + box.height / 2).catch(() => {});
+                }
+            }
+
+            const frames = page.frames();
+            for (const frame of frames) {
+                const box = await frame.$('input[type="checkbox"], #challenge-stage, .cf-turnstile, .ctp-checkbox-label');
+                if (box) {
+                    await box.click().catch(() => {});
+                }
+            }
+        } catch {
+            console.warn('⚠️ 尝试与 Cloudflare Turnstile 交互失败，可能需要手动完成验证。');
+        }
+
+        await page.waitForTimeout(1500);
+    }
+
+    console.warn('⚠️ Cloudflare 质询等待超时，将继续尝试解析已加载的脚本。');
+    return false;
+}
+
 async function updateIds() {
     console.log('🚀 正在启动 X Query IDs 更新流程...');
 
@@ -236,7 +322,7 @@ async function updateIds() {
         return;
     }
 
-    // 2. 否则通过 Playwright 携带 Cookie 模拟正常浏览器访问抓取
+    // 2. 否则通过 Playwright 携带 Cookie 模拟浏览器访问抓取
     const playwrightCookies = parseCookieStringToPlaywrightCookies(rawInput);
     const hasAuthCookie = playwrightCookies.length > 0;
 
@@ -246,21 +332,48 @@ async function updateIds() {
         console.log('⚠️ 未提供有效 Cookie，将尝试未登录访问');
     }
 
-    const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.ALL_PROXY ||
+    const rawProxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.ALL_PROXY ||
         process.env.https_proxy || process.env.http_proxy || process.env.all_proxy;
 
+    const isLinux = process.platform === 'linux';
+    const userAgent = isLinux
+        ? 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+        : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+
+    const launchArgs = [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-infobars',
+        '--disable-dev-shm-usage',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--window-size=1920,1080',
+    ];
+
+    let headless = true;
+    if (process.env.HEADLESS === 'false') {
+        headless = false;
+    } else if (process.env.HEADLESS === 'true') {
+        headless = true;
+    } else if (process.env.DISPLAY) {
+        // 在 Linux 环境中如果有虚拟桌面 DISPLAY (如 xvfb)，使用真实桌面有头模式提升 Cloudflare 通过率
+        headless = false;
+    }
+
     const launchConfig = {
-        headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-blink-features=AutomationControlled',
-            '--disable-infobars',
-        ],
+        headless,
+        args: launchArgs,
     };
-    if (proxyUrl) {
-        launchConfig.proxy = { server: proxyUrl };
-        console.log(`🌐 使用代理: ${proxyUrl}`);
+
+    if (rawProxyUrl) {
+        const alive = await isProxyAlive(rawProxyUrl);
+        if (alive) {
+            launchConfig.proxy = { server: rawProxyUrl };
+            console.log(`🌐 使用代理: ${rawProxyUrl}`);
+        } else {
+            console.log(`⚠️ 环境变量配置的代理 (${rawProxyUrl}) 连通性测试未通过，自动回退到直连访问`);
+        }
     }
 
     const browser = await chromium.launch(launchConfig);
@@ -268,7 +381,7 @@ async function updateIds() {
 
     try {
         const context = await browser.newContext({
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+            userAgent,
             locale: 'en-US',
             viewport: { width: 1440, height: 900 },
         });
@@ -280,6 +393,14 @@ async function updateIds() {
         const page = await context.newPage();
         await page.addInitScript(() => {
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.chrome = {
+                runtime: {},
+                loadTimes: () => {},
+                csi: () => {},
+                app: {},
+            };
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
         });
 
         const sourceResults = new Map();
@@ -299,20 +420,38 @@ async function updateIds() {
             }
         });
 
-        const targetUrl = hasAuthCookie ? 'https://x.com/home' : 'https://x.com/explore';
-        console.log(`📗 正在访问 ${targetUrl}...`);
+        const candidateUrls = hasAuthCookie
+            ? ['https://x.com/home', 'https://twitter.com/home', 'https://x.com/explore']
+            : ['https://x.com/explore', 'https://twitter.com/explore', 'https://x.com/?lang=en'];
 
-        const response = await page.goto(targetUrl, {
-            waitUntil: 'domcontentloaded',
-            timeout: 45000,
-        });
+        let lastStatus = 0;
+        let lastUrl = '';
 
-        const status = response ? response.status() : 0;
-        console.log(`✅ 页面加载状态码: ${status}，当前URL: ${page.url()}`);
+        for (const targetUrl of candidateUrls) {
+            console.log(`📗 正在访问 ${targetUrl}...`);
+            try {
+                const response = await page.goto(targetUrl, {
+                    waitUntil: 'domcontentloaded',
+                    timeout: 45000,
+                });
+                lastStatus = response ? response.status() : 0;
+                lastUrl = page.url();
 
-        if (status === 403) {
-            console.error('❌ 页面返回 403 Forbidden，说明当前 IP 被 Cloudflare 拦截。');
-            throw new Error(`当前网络 IP 被 X.com 拦截 (403 Forbidden)`);
+                console.log(`📄 页面响应状态码: ${lastStatus}，当前URL: ${lastUrl}`);
+
+                // 遇到 Cloudflare 质询时，智能等待质询完成，切勿直接抛错自杀
+                await waitForCloudflareChallenge(page, 30000);
+
+                const currentUrl = page.url();
+                const title = await page.title().catch(() => '');
+
+                if (!currentUrl.includes('__cf_chl_rt_tk') && !title.includes('Just a moment')) {
+                    console.log(`✅ 成功建立会话，已就绪: ${currentUrl}`);
+                    break;
+                }
+            } catch (navErr) {
+                console.warn(`⚠️ 访问 ${targetUrl} 异常:`, navErr.message);
+            }
         }
 
         console.log('⏳ 正在等待前端脚本及 Webpack chunks 加载...');
@@ -346,8 +485,8 @@ async function updateIds() {
 
         if (results.length === 0 || missingOperations.length > 0) {
             const diagnostics = {
-                status,
-                url: page.url(),
+                lastStatus,
+                lastUrl: page.url(),
                 title: await page.title().catch(() => ''),
                 scripts: scriptTasks.length,
                 extracted: results.length,
