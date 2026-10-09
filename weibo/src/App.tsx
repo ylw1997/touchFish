@@ -56,6 +56,16 @@ dayjs.extend(_relativeTime);
 
 function App() {
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
+  const [feedColumns, setFeedColumns] = useState(1);
+  useEffect(() => {
+    const container = scrollableNodeRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setFeedColumns(Math.max(1, Math.floor((entry.contentRect.width + 12) / 352)));
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
   const [groupOpen, setGroupOpen] = useState(false);
   const groupRef = useRef<HTMLDivElement>(null);
   const {
@@ -269,7 +279,7 @@ function App() {
             scrollThreshold={0.95}
             scrollableTarget="scrollableDiv"
           >
-            <Masonry breakpointCols={{ default: 3, 1799: 2, 999: 1 }} className="touchfish-feed-masonry" columnClassName="touchfish-feed-column">
+            <Masonry breakpointCols={feedColumns} className="touchfish-feed-masonry" columnClassName="touchfish-feed-column">
             {list?.map((item) => (
               <motion.div
                 key={item.id}
