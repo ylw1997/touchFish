@@ -7,6 +7,7 @@ import {
 
 const CREATOR_BASE_URL = "https://podcaster-api.xiaoyuzhoufm.com";
 const APP_BASE_URL = "https://api.xiaoyuzhoufm.com";
+const TRANSCRIPT_USER_AGENT = "Xiaoyuzhou/2.99.1(android 28)";
 export const xiaoyuzhouHttp = axios.create({
   timeout: 30000,
 });
@@ -897,13 +898,17 @@ export async function getEpisodeTranscript(
         mediaId,
       },
       {
-        headers: buildXiaoyuzhouHeaders({
-          accessToken: auth?.accessToken,
-          refreshToken: auth?.refreshToken,
-          contentType: "application/json",
-          localTime: getNowIsoString(),
-          deviceId,
-        }),
+        headers: {
+          ...buildXiaoyuzhouHeaders({
+            accessToken: auth?.accessToken,
+            refreshToken: auth?.refreshToken,
+            contentType: "application/json",
+            localTime: getNowIsoString(),
+            deviceId,
+          }),
+          // 旧版 iOS UA 会让此接口返回与当前节目无关的占位文稿。
+          "User-Agent": TRANSCRIPT_USER_AGENT,
+        },
         timeout: 15000,
       },
     );
@@ -911,7 +916,8 @@ export async function getEpisodeTranscript(
     if (response.data?.data?.transcriptUrl) {
       try {
         const cdnRes = await axios.get(response.data.data.transcriptUrl, {
-          headers: { 'User-Agent': 'Xiaoyuzhou/2.99.1(android 28)' }
+          headers: { "User-Agent": TRANSCRIPT_USER_AGENT },
+          timeout: 15000,
         });
         return { code: 0, data: { transcripts: cdnRes.data } };
       } catch (e) {
