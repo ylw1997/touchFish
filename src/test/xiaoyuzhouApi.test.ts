@@ -13,6 +13,10 @@ import {
   getTopList,
   getSubscriptions,
   loginWithSms,
+  createLoginQrCode,
+  checkLoginQrCodeStatus,
+  sendSmsCode,
+  getMyProfile,
   refreshXiaoyuzhouToken,
   setGlobalCredential,
   xiaoyuzhouHttp,
@@ -401,5 +405,139 @@ describe("xiaoyuzhou shared api helpers", () => {
     assert.equal(blocks[2].type, "EDITOR_PICK");
     assert.equal(blocks[2].title, "编辑精选");
     assert.equal(blocks[2].items[0].eid, "ep-2");
+  });
+
+  it("creates login qrcode successfully", async () => {
+    const originalPost = xiaoyuzhouHttp.post;
+    xiaoyuzhouHttp.post = (async (url: string) => {
+      assert.ok(String(url).includes("/v1/auth/qrcode/create"));
+      return {
+        data: {
+          id: "mock-qr-id",
+          url: "https://www.xiaoyuzhoufm.com/qr/mock",
+        },
+      };
+    }) as typeof xiaoyuzhouHttp.post;
+
+    try {
+      const result = await createLoginQrCode();
+      assert.equal(result.code, 0);
+      assert.equal(result.data?.id, "mock-qr-id");
+      assert.equal(result.data?.url, "https://www.xiaoyuzhoufm.com/qr/mock");
+    } finally {
+      xiaoyuzhouHttp.post = originalPost;
+    }
+  });
+
+  it("checks qrcode status and returns confirmed credentials with user info", async () => {
+    const originalPost = xiaoyuzhouHttp.post;
+    const originalGet = xiaoyuzhouHttp.get;
+
+    xiaoyuzhouHttp.post = (async (url: string) => {
+      if (String(url).includes("/v1/auth/qrcode/login")) {
+        return {
+          headers: {
+            "x-jike-access-token": "qr-access-token",
+            "x-jike-refresh-token": "qr-refresh-token",
+          },
+          data: {
+            status: "CONFIRMED",
+          },
+        };
+      }
+      if (String(url).includes("/app_auth_tokens.refresh")) {
+        return {
+          headers: {
+            "x-jike-access-token": "stable-qr-access",
+            "x-jike-refresh-token": "stable-qr-refresh",
+          },
+        };
+      }
+      throw new Error(`Unexpected POST: ${url}`);
+    }) as typeof xiaoyuzhouHttp.post;
+
+    xiaoyuzhouHttp.get = (async (url: string) => {
+      if (String(url).includes("/v1/profile/get")) {
+        return {
+          data: {
+            data: {
+              user: {
+                uid: "qr-user-1",
+                nickname: "扫码用户",
+              },
+            },
+          },
+        };
+      }
+      throw new Error(`Unexpected GET: ${url}`);
+    }) as typeof xiaoyuzhouHttp.get;
+
+    try {
+      const result = await checkLoginQrCodeStatus("mock-qr-id");
+      assert.equal(result.code, 0);
+      assert.equal(result.data.status, "CONFIRMED");
+      assert.equal(result.data.credential?.accessToken, "stable-qr-access");
+      assert.equal(result.data.userInfo?.nickname, "扫码用户");
+    } finally {
+      xiaoyuzhouHttp.post = originalPost;
+      xiaoyuzhouHttp.get = originalGet;
+      setGlobalCredential(null);
+    }
+  });
+
+  it("gets my profile and normalizes user info", async () => {
+    const originalGet = xiaoyuzhouHttp.get;
+    xiaoyuzhouHttp.get = (async (url: string) => {
+      assert.ok(String(url).includes("/v1/profile/get"));
+      return {
+        data: {
+          data: {
+            user: {
+              id: "profile-uid",
+              name: "个人主页用户",
+              avatarUrl: "https://avatar.url",
+            },
+          },
+        },
+      };
+    }) as typeof xiaoyuzhouHttp.get;
+
+    try {
+      const result = await getMyProfile({
+        accessToken: "test-token",
+        refreshToken: "test-refresh",
+      });
+      assert.equal(result.code, 0);
+      assert.equal(result.data?.uid, "profile-uid");
+      assert.equal(result.data?.nickname, "个人主页用户");
+      assert.equal(result.data?.avatar, "https://avatar.url");
+    } finally {
+      xiaoyuzhouHttp.get = originalGet;
+    }
+  });
+
+  it("returns user-friendly error message when send-code requires captcha", async () => {
+    const originalPost = xiaoyuzhouHttp.post;
+    xiaoyuzhouHttp.post = (async () => {
+      const error: any = new Error("Request failed with status code 400");
+      error.isAxiosError = true;
+      error.response = {
+        status: 400,
+        data: {
+          code: 1,
+          message: "body/captcha Invalid input: expected object, received undefined",
+        },
+      };
+      throw error;
+    }) as typeof xiaoyuzhouHttp.post;
+
+    try {
+      const result = await sendSmsCode("13800000000");
+      assert.equal(result.code, 400);
+      assert.equal(result.data, false);
+      assert.ok(result.message?.includes("人机安全验证"));
+    } finally {
+      xiaoyuzhouHttp.post = originalPost;
+    }
   });
 });

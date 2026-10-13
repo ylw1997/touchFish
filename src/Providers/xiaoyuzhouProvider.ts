@@ -1,6 +1,9 @@
 import { ExtensionContext, WebviewView, workspace } from "vscode";
 import { MusicStatusBar } from "../core/musicStatusBar";
 import {
+  checkLoginQrCodeStatus,
+  createLoginQrCode,
+  getMyProfile,
   getGlobalCredential,
   getDiscoveryFeed,
   getEpisodeDetail,
@@ -237,9 +240,43 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
           const result = await sendSmsCode(
             String(payload?.phoneNumber || ""),
             String(payload?.areaCode || "+86"),
+            payload?.verifyParam ? String(payload.verifyParam) : undefined,
           );
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_SEND_CODE_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "XIAOYUZHOU_GET_LOGIN_QR": {
+          const result = await createLoginQrCode();
+          webviewView.webview.postMessage({
+            command: "XIAOYUZHOU_GET_LOGIN_QR_RESULT",
+            payload: result,
+            uuid,
+          } as CommandsType<any>);
+          break;
+        }
+
+        case "XIAOYUZHOU_CHECK_QR_STATUS": {
+          const id = String(payload?.id || "");
+          const result = await checkLoginQrCodeStatus(id);
+          if (
+            result.code === 0 &&
+            result.data?.status === "CONFIRMED" &&
+            result.data?.credential
+          ) {
+            await this.saveAuthState(
+              result.data.credential,
+              result.data.userInfo || null,
+            );
+            await this.notifyAuthState();
+          }
+
+          webviewView.webview.postMessage({
+            command: "XIAOYUZHOU_CHECK_QR_STATUS_RESULT",
             payload: result,
             uuid,
           } as CommandsType<any>);
@@ -283,22 +320,51 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
 
         case "XIAOYUZHOU_SET_CREDENTIAL": {
           const credential = payload?.credential || payload;
-          const userInfo = payload?.userInfo || null;
+          let userInfo = payload?.userInfo || null;
 
           if (credential?.accessToken && credential?.refreshToken) {
-            await this.saveAuthState(
-              {
-                accessToken: String(credential.accessToken),
-                refreshToken: String(credential.refreshToken),
-              },
-              userInfo,
-            );
+            const newCred = {
+              accessToken: String(credential.accessToken).trim(),
+              refreshToken: String(credential.refreshToken).trim(),
+            };
+
+            if (!userInfo?.uid || !userInfo?.nickname) {
+              try {
+                const profileRes = await getMyProfile(newCred);
+                if (profileRes.code === 0 && profileRes.data) {
+                  userInfo = profileRes.data;
+                }
+              } catch (e) {
+                console.warn(
+                  "[xiaoyuzhou] Failed to fetch profile in SET_CREDENTIAL",
+                  e,
+                );
+              }
+            }
+
+            await this.saveAuthState(newCred, userInfo);
             await this.notifyAuthState();
+
+            webviewView.webview.postMessage({
+              command: "XIAOYUZHOU_SET_CREDENTIAL_RESULT",
+              payload: {
+                code: 0,
+                data: {
+                  userInfo: userInfo || { uid: "", nickname: "小宇宙用户" },
+                  credential: newCred,
+                },
+              },
+              uuid,
+            } as CommandsType<any>);
+            break;
           }
 
           webviewView.webview.postMessage({
             command: "XIAOYUZHOU_SET_CREDENTIAL_RESULT",
-            payload: { code: 0, data: true },
+            payload: {
+              code: -1,
+              message: "AccessToken 与 RefreshToken 均不能为空",
+            },
             uuid,
           } as CommandsType<any>);
           break;

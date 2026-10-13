@@ -217,12 +217,20 @@ function normalizeError(error: unknown, shouldClearCredential: boolean = true) {
     if (axiosError.response?.status === 401 && shouldClearCredential) {
       setGlobalCredential(null);
     }
-    const message =
-      axiosError.response?.data?.message ||
-      axiosError.response?.data?.msg ||
-      axiosError.response?.data?.error ||
+    const resData = axiosError.response?.data;
+    let message =
+      resData?.toast ||
+      resData?.message ||
+      resData?.msg ||
+      resData?.error ||
       `接口报错 ${axiosError.response?.status}: ${JSON.stringify(axiosError.response?.data)}` ||
       axiosError.message;
+
+    if (typeof message === "string" && message.includes("body/captcha")) {
+      message =
+        "小宇宙接口启用了人机安全验证，请在弹出的滑块中完成验证后重试";
+    }
+
     return {
       code: axiosError.response?.status ?? -1,
       message,
@@ -235,11 +243,29 @@ function normalizeError(error: unknown, shouldClearCredential: boolean = true) {
   };
 }
 
+export interface XiaoyuzhouQrCodeInfo {
+  id: string;
+  url: string;
+}
+
+export interface XiaoyuzhouQrCodeStatusResult {
+  status: "WAITTING" | "SCANNED" | "CONFIRMED" | "EXPIRED";
+  credential?: XiaoyuzhouCredential;
+  userInfo?: XiaoyuzhouUserInfo;
+}
+
 function normalizeUserInfo(user: any): XiaoyuzhouUserInfo {
   return {
-    uid: String(user?.uid ?? ""),
-    nickname: String(user?.nickname ?? ""),
-    avatar: user?.avatar?.picture?.smallPicUrl || user?.avatar?.picture?.picUrl,
+    uid: String(user?.uid ?? user?.id ?? ""),
+    nickname: String(
+      user?.nickname ?? user?.username ?? user?.name ?? "小宇宙用户",
+    ),
+    avatar:
+      user?.avatar?.picture?.smallPicUrl ||
+      user?.avatar?.picture?.picUrl ||
+      user?.avatar?.picture?.thumbnailUrl ||
+      user?.avatarUrl ||
+      (typeof user?.avatar === "string" ? user?.avatar : undefined),
   };
 }
 
@@ -303,20 +329,45 @@ async function withAutoRefresh<T>(
 export async function sendSmsCode(
   phoneNumber: string,
   areaCode: string = "+86",
+  verifyParam?: string,
 ): Promise<XiaoyuzhouApiResult<boolean>> {
   try {
-    await xiaoyuzhouHttp.post(
-      `${CREATOR_BASE_URL}/v1/auth/send-code`,
-      {
-        areaCode,
-        mobilePhoneNumber: phoneNumber,
+    const payload: Record<string, any> = {
+      areaCode,
+      mobilePhoneNumber: phoneNumber,
+      captcha: {
+        scene: "web",
+        verifyParam: verifyParam || "",
       },
-      { headers: getCreatorHeaders(), timeout: 15000 },
-    );
+    };
+
+    const headers = {
+      ...getCreatorHeaders(),
+      origin: "https://accounts.xiaoyuzhoufm.com",
+      referer: "https://accounts.xiaoyuzhoufm.com/",
+    };
+
+    try {
+      await xiaoyuzhouHttp.post(
+        "https://web-api.xiaoyuzhoufm.com/v1/auth/send-code",
+        payload,
+        { headers, timeout: 15000 },
+      );
+    } catch (e: any) {
+      if (e.response?.status === 404 || !e.response) {
+        await xiaoyuzhouHttp.post(
+          `${CREATOR_BASE_URL}/v1/auth/send-code`,
+          payload,
+          { headers, timeout: 15000 },
+        );
+      } else {
+        throw e;
+      }
+    }
 
     return { code: 0, data: true };
   } catch (error) {
-    const normalized = normalizeError(error);
+    const normalized = normalizeError(error, false);
     return { code: normalized.code, message: normalized.message, data: false };
   }
 }
@@ -332,15 +383,35 @@ export async function loginWithSms(
   } | null>
 > {
   try {
-    const response = await xiaoyuzhouHttp.post(
-      `${CREATOR_BASE_URL}/v1/auth/login-with-sms`,
-      {
-        areaCode,
-        mobilePhoneNumber: phoneNumber,
-        verifyCode,
-      },
-      { headers: getCreatorHeaders(), timeout: 15000 },
-    );
+    const payload = {
+      areaCode,
+      mobilePhoneNumber: phoneNumber,
+      verifyCode,
+    };
+    const headers = {
+      ...getCreatorHeaders(),
+      origin: "https://accounts.xiaoyuzhoufm.com",
+      referer: "https://accounts.xiaoyuzhoufm.com/",
+    };
+
+    let response;
+    try {
+      response = await xiaoyuzhouHttp.post(
+        "https://web-api.xiaoyuzhoufm.com/v1/auth/login-with-sms",
+        payload,
+        { headers, timeout: 15000 },
+      );
+    } catch (e: any) {
+      if (e.response?.status === 404 || !e.response) {
+        response = await xiaoyuzhouHttp.post(
+          `${CREATOR_BASE_URL}/v1/auth/login-with-sms`,
+          payload,
+          { headers, timeout: 15000 },
+        );
+      } else {
+        throw e;
+      }
+    }
 
     const auth = extractXiaoyuzhouAuth(
       response.headers as Record<string, string | string[] | undefined>,
@@ -357,9 +428,28 @@ export async function loginWithSms(
     // The login endpoint returns a short-lived access token in practice.
     // Immediately exchange it for a stable app token via refresh.
     const refreshedCredential = (await doRefreshToken(auth)) ?? auth;
+
+    const userRaw =
+      response.data?.data?.user ||
+      response.data?.user ||
+      response.data?.data ||
+      response.data;
+
+    let userInfo = normalizeUserInfo(userRaw);
+    if (!userInfo?.uid) {
+      try {
+        const profileRes = await getMyProfile(refreshedCredential);
+        if (profileRes.code === 0 && profileRes.data) {
+          userInfo = profileRes.data;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     const result = {
       credential: refreshedCredential,
-      userInfo: normalizeUserInfo(response.data?.data?.user),
+      userInfo,
     };
 
     setGlobalCredential(result.credential);
@@ -371,6 +461,212 @@ export async function loginWithSms(
   } catch (error) {
     const normalized = normalizeError(error);
     return { code: normalized.code, message: normalized.message, data: null };
+  }
+}
+
+export async function getMyProfile(
+  credential?: XiaoyuzhouCredential | null,
+): Promise<XiaoyuzhouApiResult<XiaoyuzhouUserInfo | null>> {
+  const deviceId = getDeviceId(
+    credential?.refreshToken || credential?.accessToken,
+  );
+  return withAutoRefresh(async (auth) => {
+    const response = await xiaoyuzhouHttp.get(
+      `${APP_BASE_URL}/v1/profile/get`,
+      {
+        headers: buildXiaoyuzhouHeaders({
+          accessToken: auth?.accessToken,
+          refreshToken: auth?.refreshToken,
+          localTime: getNowIsoString(),
+          deviceId,
+        }),
+        timeout: 15000,
+      },
+    );
+    const user =
+      response.data?.data?.user ||
+      response.data?.user ||
+      response.data?.data ||
+      response.data;
+    return normalizeUserInfo(user);
+  }, credential);
+}
+
+export async function createLoginQrCode(): Promise<
+  XiaoyuzhouApiResult<XiaoyuzhouQrCodeInfo | null>
+> {
+  try {
+    const response = await xiaoyuzhouHttp.post(
+      "https://web-api.xiaoyuzhoufm.com/v1/auth/qrcode/create",
+      { clientId: "podcaster-platform" },
+      {
+        headers: {
+          "content-type": "application/json",
+          origin: "https://accounts.xiaoyuzhoufm.com",
+          referer: "https://accounts.xiaoyuzhoufm.com/",
+          "x-midway-app-id": "v6worU4NnWyL",
+        },
+        timeout: 15000,
+      },
+    );
+
+    return {
+      code: 0,
+      data: {
+        id: String(response.data?.id || ""),
+        url: String(response.data?.url || ""),
+      },
+    };
+  } catch (error) {
+    const normalized = normalizeError(error, false);
+    return { code: normalized.code, message: normalized.message, data: null };
+  }
+}
+
+// 缓存扫码成功后拿到的凭证，防止后续请求或竞态请求覆盖成功状态
+const qrSuccessCredentials = new Map<string, XiaoyuzhouCredential>();
+
+export async function checkLoginQrCodeStatus(
+  id: string,
+): Promise<XiaoyuzhouApiResult<XiaoyuzhouQrCodeStatusResult>> {
+  // 如果当前 qrId 已经确认成功，直接返回成功状态
+  if (qrSuccessCredentials.has(id)) {
+    const cred = qrSuccessCredentials.get(id)!;
+    return {
+      code: 0,
+      data: {
+        status: "CONFIRMED",
+        credential: cred,
+        userInfo: { uid: "", nickname: "小宇宙用户" },
+      },
+    };
+  }
+
+  try {
+    const response = await xiaoyuzhouHttp.post(
+      "https://web-api.xiaoyuzhoufm.com/v1/auth/qrcode/login",
+      { id },
+      {
+        headers: {
+          "content-type": "application/json",
+          origin: "https://accounts.xiaoyuzhoufm.com",
+          referer: "https://accounts.xiaoyuzhoufm.com/",
+        },
+        timeout: 15000,
+      },
+    );
+
+    const status = response.data?.status;
+
+    // 尝试从多种途径提取 Token：headers、Set-Cookie、response.data
+    let accessToken = "";
+    let refreshToken = "";
+
+    const headers = (response.headers || {}) as Record<string, any>;
+
+    // 1. 从标准响应头提取
+    for (const [k, v] of Object.entries(headers)) {
+      const lk = k.toLowerCase();
+      const valStr = Array.isArray(v) ? v[0] : String(v || "");
+      if (lk === "x-jike-access-token" && !accessToken) accessToken = valStr;
+      if (lk === "x-jike-refresh-token" && !refreshToken) refreshToken = valStr;
+    }
+
+    // 2. 从 Set-Cookie 提取
+    const setCookie = headers["set-cookie"] || headers["Set-Cookie"];
+    if (setCookie) {
+      const list = Array.isArray(setCookie) ? setCookie : [setCookie];
+      for (const item of list) {
+        const str = String(item);
+        const matchAcc = str.match(/(?:x-jike-access-token|accessToken)=([^;]+)/i);
+        const matchRef = str.match(/(?:x-jike-refresh-token|refreshToken)=([^;]+)/i);
+        if (matchAcc && !accessToken) accessToken = decodeURIComponent(matchAcc[1].trim());
+        if (matchRef && !refreshToken) refreshToken = decodeURIComponent(matchRef[1].trim());
+      }
+    }
+
+    // 3. 从 response.data 提取
+    const resData = response.data;
+    if (resData && typeof resData === "object") {
+      if (!accessToken) {
+        accessToken = resData.accessToken || resData.data?.accessToken || resData.token || "";
+      }
+      if (!refreshToken) {
+        refreshToken = resData.refreshToken || resData.data?.refreshToken || "";
+      }
+    }
+
+    // 小宇宙官方前端定义：CONFIRMED 和 USED 均代表扫码确认登录成功！
+    if (status === "CONFIRMED" || status === "USED") {
+      if (accessToken && refreshToken) {
+        const auth = { accessToken, refreshToken };
+        const refreshedCredential = (await doRefreshToken(auth)) ?? auth;
+        setGlobalCredential(refreshedCredential);
+        qrSuccessCredentials.set(id, refreshedCredential);
+
+        let userInfo: XiaoyuzhouUserInfo | null = null;
+        try {
+          const profileRes = await getMyProfile(refreshedCredential);
+          if (profileRes.code === 0 && profileRes.data) {
+            userInfo = profileRes.data;
+          }
+        } catch (e) {
+          console.warn("[xiaoyuzhou] Failed to fetch profile after QR login", e);
+        }
+
+        return {
+          code: 0,
+          data: {
+            status: "CONFIRMED",
+            credential: refreshedCredential,
+            userInfo: userInfo || { uid: "", nickname: "小宇宙用户" },
+          },
+        };
+      }
+
+      // 如果状态是 CONFIRMED/USED 但单次请求未收到 Token，可能是已在上一秒消费或等待服务端落库
+      // 如果全局已经有有效凭证，直接使用
+      const currentGlobal = getGlobalCredential();
+      if (currentGlobal?.accessToken && currentGlobal?.refreshToken) {
+        return {
+          code: 0,
+          data: {
+            status: "CONFIRMED",
+            credential: currentGlobal,
+            userInfo: { uid: "", nickname: "小宇宙用户" },
+          },
+        };
+      }
+    }
+
+    if (status === "SCANNED") {
+      return {
+        code: 0,
+        data: { status: "SCANNED" },
+      };
+    }
+
+    return {
+      code: 0,
+      data: { status: "WAITTING" },
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errData = error.response?.data;
+      // 官方规则：只有 HTTP 401 且 code === 21 时才代表二维码真正失效
+      if (error.response?.status === 401 && errData?.code === 21) {
+        return {
+          code: 0,
+          data: { status: "EXPIRED" },
+        };
+      }
+    }
+    const normalized = normalizeError(error, false);
+    return {
+      code: normalized.code,
+      message: normalized.message,
+      data: { status: "WAITTING" },
+    };
   }
 }
 
