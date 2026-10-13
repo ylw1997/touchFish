@@ -657,11 +657,12 @@ a {
 
 .playlist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 105px), 1fr));
+  gap: 14px 10px;
 }
 
 .playlist-card {
+  min-width: 0;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -677,7 +678,7 @@ a {
     width: 100%;
     padding-top: 100%; // 1:1 比例
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: 10px;
 
     &:hover .playlist-play-overlay {
       opacity: 1;
@@ -712,8 +713,8 @@ a {
     transition: opacity 0.3s ease;
 
     .play-icon {
-      font-size: 38px;
-      color: rgba(255, 255, 255, 0.8);
+      font-size: 26px;
+      color: rgba(255, 255, 255, 0.85);
     }
   }
 
@@ -748,6 +749,7 @@ a {
 
   .playlist-meta {
     display: flex;
+    gap: 4px;
     justify-content: space-between;
     align-items: center;
     font-size: calc(var(--app-font-size) - 3px);
@@ -755,7 +757,15 @@ a {
   }
 
   .playlist-song-count {
+    flex-shrink: 0;
     color: var(--vscode-descriptionForeground);
+  }
+
+  .playlist-creator {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

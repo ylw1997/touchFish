@@ -115,16 +115,16 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
   // Fetch and parse transcript
   useEffect(() => {
     let active = true;
+    setLyrics([]);
+    setCurrentLyric("");
+    activeIdxRef.current = -1;
+    setActiveIdx(-1);
     if (!currentEpisode) {
-      setLyrics([]);
-      setCurrentLyric("");
-      activeIdxRef.current = -1;
-      setActiveIdx(-1);
       return;
     }
 
     const eid = currentEpisode.eid || currentEpisode.id;
-    const mediaId = currentEpisode.mediaKey;
+    const mediaId = currentEpisode.transcriptMediaId || currentEpisode.transcript?.mediaId || currentEpisode.mediaKey || currentEpisode.media?.id;
 
     if (eid && mediaId) {
       getEpisodeTranscript(eid, mediaId).then((data) => {
