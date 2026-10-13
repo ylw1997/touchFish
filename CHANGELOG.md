@@ -1,6 +1,23 @@
 # 更新历史 
 
 
+## [17.20.0](https://github.com/ylw1997/touchFish/compare/v17.19.0...v17.20.0) (2026-10-13)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([105a419](https://github.com/ylw1997/touchFish/commit/105a419b342d1faf1b6ec8aac882e95b15a9110a))
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复小宇宙扫码确认状态识别问题并移除手机号登录 ([1e4629e](https://github.com/ylw1997/touchFish/commit/1e4629e2bc6126081d7db574a6921a0f42953d03))
+
+
+### ✨ Features | 新功能
+
+* 优化样式和修复字幕错误问题 ([40838bc](https://github.com/ylw1997/touchFish/commit/40838bc6faaa65abd53e6f530f42143620e42cda))
+
 ## [17.19.0](https://github.com/ylw1997/touchFish/compare/v17.18.0...v17.19.0) (2026-10-09)
 
 
