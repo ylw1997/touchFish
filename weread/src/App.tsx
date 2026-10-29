@@ -66,6 +66,127 @@ interface Underline {
   type: number;
 }
 
+const escapeHtml = (str: string) =>
+  str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+/**
+ * 在 DOM 元素中安全注入划线标签
+ * 遍历正文的文本节点（TextNode），根据纯文本字符偏移量准确定位
+ * 绝不切断或破坏任何 HTML 标签，彻底避免标签损坏和乱码
+ */
+const applyUnderlinesToElement = (
+  container: HTMLElement,
+  underlines: Underline[],
+) => {
+  if (!underlines || underlines.length === 0) return;
+
+  // 1. 收集容器内所有的 Text 节点并计算纯文本偏移
+  const textNodes: { node: Text; start: number; end: number }[] = [];
+  let totalLength = 0;
+
+  const walk = (node: Node) => {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = (node as Element).tagName.toLowerCase();
+      if (tag === "script" || tag === "style" || tag === "title") return;
+    }
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.nodeValue || "";
+      if (text.length > 0) {
+        textNodes.push({
+          node: node as Text,
+          start: totalLength,
+          end: totalLength + text.length,
+        });
+        totalLength += text.length;
+      }
+    } else {
+      for (let child = node.firstChild; child; child = child.nextSibling) {
+        walk(child);
+      }
+    }
+  };
+
+  walk(container);
+  if (totalLength === 0) return;
+
+  // 2. 规范化并过滤有效的 underline ranges
+  const validUnderlines: { start: number; end: number; range: string }[] = [];
+  for (const u of underlines) {
+    if (!u.range) continue;
+    const parts = u.range.split("-").map(Number);
+    if (parts.length !== 2) continue;
+    const [start, end] = parts;
+    if (isNaN(start) || isNaN(end) || start < 0 || end <= start) continue;
+    if (start >= totalLength) continue; // 超出全文长度直接忽略，绝不会在末尾追加乱码！
+    const safeEnd = Math.min(end, totalLength);
+    validUnderlines.push({ start, end: safeEnd, range: u.range });
+  }
+
+  // 按照 start 升序排序
+  validUnderlines.sort((a, b) => a.start - b.start || a.end - b.end);
+
+  // 剔除冲突重叠的区间
+  const nonOverlapping: typeof validUnderlines = [];
+  let lastEnd = -1;
+  for (const item of validUnderlines) {
+    if (item.start >= lastEnd) {
+      nonOverlapping.push(item);
+      lastEnd = item.end;
+    }
+  }
+
+  // 3. 对每个文本节点进行安全拆分替换
+  for (const info of textNodes) {
+    const nodeStart = info.start;
+    const nodeEnd = info.end;
+    const nodeText = info.node.nodeValue || "";
+
+    // 找到所有落在此节点范围内的划线片段
+    const rangesInNode: { start: number; end: number; range: string }[] = [];
+    for (const u of nonOverlapping) {
+      if (u.end <= nodeStart || u.start >= nodeEnd) continue;
+      const spanStart = Math.max(0, u.start - nodeStart);
+      const spanEnd = Math.min(nodeEnd - nodeStart, u.end - nodeStart);
+      if (spanStart < spanEnd) {
+        rangesInNode.push({ start: spanStart, end: spanEnd, range: u.range });
+      }
+    }
+
+    if (rangesInNode.length === 0) continue;
+
+    const parent = info.node.parentNode;
+    if (!parent) continue;
+
+    const fragment = document.createDocumentFragment();
+    let cursor = 0;
+    for (const sub of rangesInNode) {
+      if (sub.start > cursor) {
+        fragment.appendChild(
+          document.createTextNode(nodeText.slice(cursor, sub.start)),
+        );
+      }
+      const span = document.createElement("span");
+      span.className = "hot-underline";
+      span.setAttribute("data-range", sub.range);
+      span.appendChild(
+        document.createTextNode(nodeText.slice(sub.start, sub.end)),
+      );
+      fragment.appendChild(span);
+      cursor = sub.end;
+    }
+    if (cursor < nodeText.length) {
+      fragment.appendChild(document.createTextNode(nodeText.slice(cursor)));
+    }
+
+    parent.replaceChild(fragment, info.node);
+  }
+};
+
 const App: React.FC = () => {
   const [groupOpen, setGroupOpen] = useState(false);
   const groupRef = useRef<HTMLDivElement>(null);
@@ -339,6 +460,7 @@ const App: React.FC = () => {
   };
 
   const openBook = (book: Book) => {
+    setUnderlines([]);
     setCurrentBook(book);
     setView("reader");
     setLoading(true);
@@ -467,6 +589,7 @@ const App: React.FC = () => {
   const backToShelf = () => {
     setView("shelf");
     setChapterContent(null);
+    setUnderlines([]);
   };
 
   const handleRefresh = () => {
@@ -487,54 +610,24 @@ const App: React.FC = () => {
       html = doc.documentElement.textContent || html;
     }
 
-    const injectUnderlines = (rawHtml: string, underlines: Underline[]) => {
-      if (!underlines.length) return rawHtml;
-
-      const sorted = [...underlines].sort((a, b) => {
-        const startA = parseInt(a.range.split("-")[0]);
-        const startB = parseInt(b.range.split("-")[0]);
-        return startB - startA;
-      });
-
-      let result = rawHtml;
-      sorted.forEach((u) => {
-        const [start, end] = u.range.split("-").map(Number);
-        if (isNaN(start) || isNaN(end)) return;
-
-        const before = result.slice(0, start);
-        const middle = result.slice(start, end);
-        const after = result.slice(end);
-
-        result = `${before}<span class="hot-underline" data-range="${u.range}">${middle}</span>${after}`;
-      });
-
-      return result;
-    };
-
     if (chapterContent.format === "txt") {
       const paragraphs = html.split(/\r?\n/).filter((p) => p.trim() !== "");
-      return injectUnderlines(paragraphs.join("\n"), underlines)
-        .split("\n")
-        .map((p) => `<p>${p}</p>`)
-        .join("");
+      const wrapped = paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("");
+      try {
+        const doc = new DOMParser().parseFromString(wrapped, "text/html");
+        applyUnderlinesToElement(doc.body, underlines);
+        return doc.body.innerHTML;
+      } catch (e) {
+        console.error("[Weread] Failed to parse txt chapter:", e);
+        return wrapped;
+      }
     }
 
-    console.log("[Weread] Injecting to HTML source index mode...");
-    let injected = injectUnderlines(html, underlines);
-
-    // 注入完成后，必须剥离所有外部包装标签，否则 dangerouslySetInnerHTML 会因为包含 html/body 而失效
-    injected = injected
-      .replace(/<\?xml.*\?>/gi, "")
-      .replace(/<!DOCTYPE.*?>/gi, "")
-      .replace(/<html[^>]*>/gi, "")
-      .replace(/<\/html>/gi, "")
-      .replace(/<head[^>]*>[\s\S]*<\/head>/gi, "")
-      .replace(/<body[^>]*>/gi, "")
-      .replace(/<\/body>/gi, "");
-
-    // 用 DOMParser 统一解析，并将 img.qqreader-footnote 转换为行内小图标形式
+    // EPUB / PDF 等富文本格式
     try {
-      const doc = new DOMParser().parseFromString(injected, "text/html");
+      const doc = new DOMParser().parseFromString(html, "text/html");
+
+      // 统一解析并将 img.qqreader-footnote 转换为行内小图标形式
       const imgFootnotes = doc.querySelectorAll("img.qqreader-footnote");
       imgFootnotes.forEach((img) => {
         const noteText =
@@ -549,12 +642,15 @@ const App: React.FC = () => {
 
         img.parentNode?.replaceChild(span, img);
       });
-      injected = doc.body.innerHTML;
-    } catch (e) {
-      console.error("[Weread] Failed to parse and replace footnotes:", e);
-    }
 
-    return injected;
+      // 在 DOM 树中安全注入划线，绝不切断或破坏 HTML 标签
+      applyUnderlinesToElement(doc.body, underlines);
+
+      return doc.body.innerHTML;
+    } catch (e) {
+      console.error("[Weread] Failed to parse chapter html:", e);
+      return html;
+    }
   }, [chapterContent, underlines]);
 
   return (

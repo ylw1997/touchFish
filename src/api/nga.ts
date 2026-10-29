@@ -731,6 +731,9 @@ const processNgaContent = (content: string): string => {
 
   let processed = content;
 
+  // 替换残留的已失效旧域名 (img.nga.178.com / img4.nga.178.com 等)
+  processed = processed.replace(/img(\d*)\.nga\.178\.com/gi, "img$1.nga.cn");
+
   // 处理 [img] 标签 - 支持多种格式
   // 格式1: [img]./mon_2023/01/01/xxx.jpg[/img] - 附件图片
   // 格式2: [img].u/xxx.png[/img] - 用户上传图片
@@ -740,11 +743,11 @@ const processNgaContent = (content: string): string => {
   // 使用更宽松的正则来匹配图片路径
   processed = processed.replace(
     /\[img\]\.\/(.+?)\[\/img\]/gi,
-    '<img src="https://img.nga.178.com/attachments/$1" style="max-width:100%;height:auto;display:block;margin:10px 0;" referrerpolicy="no-referrer" />'
+    '<img src="https://img.nga.cn/attachments/$1" style="max-width:100%;height:auto;display:block;margin:10px 0;" referrerpolicy="no-referrer" />'
   );
   processed = processed.replace(
     /\[img\]\.u\/(.+?)\[\/img\]/gi,
-    '<img src="https://img.nga.178.com/attachments/u/$1" style="max-width:100%;height:auto;display:block;margin:10px 0;" referrerpolicy="no-referrer" />'
+    '<img src="https://img.nga.cn/attachments/u/$1" style="max-width:100%;height:auto;display:block;margin:10px 0;" referrerpolicy="no-referrer" />'
   );
   processed = processed.replace(
     /\[img\](https?:\/\/.+?)\[\/img\]/gi,
@@ -791,13 +794,13 @@ const processNgaContent = (content: string): string => {
   );
 
   // 处理表情 [s:xxx] - NGA 表情
-  // 格式: [s:ac:怒] -> https://img4.nga.178.com/ngabbs/post/smile/ac25.png
+  // 格式: [s:ac:怒] -> https://img4.nga.cn/ngabbs/post/smile/ac25.png
   processed = processed.replace(
     /\[s:([a-zA-Z0-9]+):([^\]]+)\]/gi,
     (match, type, name) => {
       const smileyMap = NGA_SMILEY_MAP[type.toLowerCase()];
       if (smileyMap && smileyMap[name]) {
-        return `<img src="https://img4.nga.178.com/ngabbs/post/smile/${smileyMap[name]}" class="nga-smiley" referrerpolicy="no-referrer" />`;
+        return `<img src="https://img4.nga.cn/ngabbs/post/smile/${smileyMap[name]}" class="nga-smiley" referrerpolicy="no-referrer" />`;
       }
       // 如果找不到映射，返回原始文本
       return match;
@@ -807,7 +810,7 @@ const processNgaContent = (content: string): string => {
   // 处理数字表情 [s:数字]
   processed = processed.replace(
     /\[s:(\d+)\]/gi,
-    '<img src="https://img4.nga.178.com/ngabbs/post/smile/$1.gif" class="nga-smiley" referrerpolicy="no-referrer" />'
+    '<img src="https://img4.nga.cn/ngabbs/post/smile/$1.gif" class="nga-smiley" referrerpolicy="no-referrer" />'
   );
 
   // 处理 [pid] 引用
@@ -829,6 +832,9 @@ const processNgaContent = (content: string): string => {
     '<details style="margin:10px 0;"><summary style="cursor:pointer;color:var(--vscode-textLink-foreground);">$1</summary><div style="padding:10px;background:var(--vscode-textBlockQuote-background);">$2</div></details>'
   );
   processed = processed.replace(/\[collapse\](.*?)\[\/collapse\]/gi, '<details style="margin:10px 0;"><summary style="cursor:pointer;color:var(--vscode-textLink-foreground);">展开</summary><div style="padding:10px;background:var(--vscode-textBlockQuote-background);">$1</div></details>');
+
+  // 再次确保输出中不残留任何已失效的旧图床域名
+  processed = processed.replace(/img(\d*)\.nga\.178\.com/gi, "img$1.nga.cn");
 
   return processed;
 };
