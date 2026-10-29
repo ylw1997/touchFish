@@ -55,7 +55,16 @@ const ZhihuItem: React.FC<ZhihuItemProps> = ({
   const [voting, setVoting] = useState(false);
   const imagesVisible = globalShowImg || overrideShow;
   const hasImages = useMemo(
-    () => (item.content && item.content.includes("<img")) || item.image_area,
+    () =>
+      Boolean(
+        (item.content &&
+          (item.content.includes("<img") ||
+            item.content.includes("zhihu.com/video") ||
+            item.content.includes("zhihu.com/zvideo") ||
+            item.content.includes("video-box") ||
+            item.content.includes("data-lens-id"))) ||
+          item.image_area,
+      ),
     [item.content, item.image_area],
   );
 

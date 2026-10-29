@@ -20,6 +20,7 @@ import {
   unfollowQuestion,
   readZhihuItems,
   likeZhihuComment,
+  getZhihuVideoInfo,
 } from "../api/zhihu";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { ZhihuCommandsType } from "../../types/commands";
@@ -146,6 +147,12 @@ export class ZhihuWebProvider extends BaseWebviewProvider {
         const { commentId, isLike } = payload as { commentId: string | number; isLike: boolean };
         const res = await likeZhihuComment(commentId, isLike);
         webviewView.webview.postMessage({ payload: res?.data || {}, uuid });
+        break;
+      }
+      case "ZHIHU_GET_VIDEO_URL": {
+        const { videoId } = (payload || {}) as { videoId: string };
+        const result = videoId ? await getZhihuVideoInfo(videoId) : null;
+        webviewView.webview.postMessage({ payload: result, uuid });
         break;
       }
     }
