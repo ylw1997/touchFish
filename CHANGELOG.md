@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [17.20.1](https://github.com/ylw1997/touchFish/compare/v17.20.0...v17.20.1) (2026-10-29)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([daea3f3](https://github.com/ylw1997/touchFish/commit/daea3f3b94ba224ede8fe06e5e3827bba635c4c1))
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 修复 NGA 图床失效与微信读书划线解析异常问题 ([fd250b6](https://github.com/ylw1997/touchFish/commit/fd250b6b4e2fa6d0869ecb9a987cd95d544370ed)), closes [#177](https://github.com/ylw1997/touchFish/issues/177) [#174](https://github.com/ylw1997/touchFish/issues/174)
+
 ## [17.20.0](https://github.com/ylw1997/touchFish/compare/v17.19.0...v17.20.0) (2026-10-13)
 
 
