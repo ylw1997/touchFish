@@ -253,7 +253,8 @@ export type ZhihuCommandList =
   | "ZHIHU_DOWNLOAD_IMAGE"
   | "ZHIHU_LIKE_COMMENT"
   | "ZHIHU_RESTORE_SCROLL_POSITION"
-  | "TOGGLE_SHOW_IMG";
+  | "TOGGLE_SHOW_IMG"
+  | "ZHIHU_GET_VIDEO_URL";
 
 export type ZhihuCommandsType<T> = {
   command: ZhihuCommandList;

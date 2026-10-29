@@ -63,4 +63,11 @@ export class ZhihuApi {
   likeZhihuComment(commentId: string | number, isLike: boolean) {
     return this.request<any>("ZHIHU_LIKE_COMMENT", { commentId, isLike }, "操作中...");
   }
+  getVideoUrl(videoId: string) {
+    return this.request<{ playUrl: string; coverUrl?: string } | null>(
+      "ZHIHU_GET_VIDEO_URL",
+      { videoId },
+      "获取视频中..."
+    );
+  }
 }

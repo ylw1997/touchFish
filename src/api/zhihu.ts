@@ -443,3 +443,48 @@ export const readZhihuItems = async (items: { type: string; id: string }[]) => {
     console.error("Zhihu touch api error:", error);
   }
 };
+
+
+export interface ZhihuVideoInfo {
+  playUrl: string;
+  coverUrl?: string;
+}
+
+// 获取知乎视频播放直链与封面（通过 Lens API）
+export const getZhihuVideoInfo = async (
+  videoId: string
+): Promise<ZhihuVideoInfo | null> => {
+  if (!videoId) return null;
+  try {
+    const cookie = (await getOrSetZhihuCookie()) as string;
+    const res = await axios.get(`https://lens.zhihu.com/api/v4/videos/${videoId}`, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        Referer: "https://www.zhihu.com/",
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
+      timeout: 10000,
+    });
+
+    const data = res.data;
+    if (!data) return null;
+
+    const playlist = data.playlist || {};
+    // 优先选择 FHD (1080p) -> HD (720p) -> SD (480p) -> LD (标清)
+    const playUrl =
+      playlist.FHD?.play_url ||
+      playlist.HD?.play_url ||
+      playlist.SD?.play_url ||
+      playlist.LD?.play_url ||
+      (Object.values(playlist) as any[]).find((item) => item?.play_url)?.play_url;
+
+    return {
+      playUrl: playUrl || "",
+      coverUrl: data.cover_url || "",
+    };
+  } catch (error) {
+    console.error(`[Zhihu] Failed to fetch video info for ${videoId}:`, error);
+    return null;
+  }
+};
