@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+## [17.21.0](https://github.com/ylw1997/touchFish/compare/v17.20.1...v17.21.0) (2026-10-29)
+
+
+### ✨ Features | 新功能
+
+* 知乎模块支持视频直接播放 ([777f4be](https://github.com/ylw1997/touchFish/commit/777f4be830c46493956df0264af8b40e4749975c))
+
 ### [17.20.1](https://github.com/ylw1997/touchFish/compare/v17.20.0...v17.20.1) (2026-10-29)
 
 
