@@ -65,6 +65,7 @@ async function post(
   data: Record<string, any> = {},
   format = "json",
   header: Record<string, string> = {},
+  timeout = 0,
 ) {
   const headers: Record<string, string> = {
     "User-Agent": UserAgentForWeb,
@@ -82,7 +83,7 @@ async function post(
     headers["Content-Type"] = "application/x-www-form-urlencoded";
   }
   
-  const res = await axios.post(url, body, { headers, responseType: "text" });
+  const res = await axios.post(url, body, { headers, responseType: "text", timeout });
   return new MockResponse(res.data, res.headers as any);
 }
 
@@ -90,8 +91,9 @@ export function postJSON(
   url: string,
   data: Record<string, any> = {},
   headers: Record<string, string> = {},
+  timeout = 0,
 ) {
-  return post(url, data, "json", headers);
+  return post(url, data, "json", headers, timeout);
 }
 
 export function postQuery(

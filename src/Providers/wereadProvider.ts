@@ -1,6 +1,9 @@
 import { ExtensionContext, WebviewView, workspace, window } from "vscode";
 import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { WeReadClient } from "../api/weread/client";
+import { NoteWriter } from "../api/weread/noteWriter";
+import { web_note_create, web_personal_notes } from "../api/weread/api/notes";
+import { parseNoteRange, validateNoteWrite, type NoteWrite } from "../api/weread/noteTypes";
 import { web_shelf_sync } from "../api/weread/api/shelf";
 import {
   web_book_chapter_e,
@@ -23,6 +26,8 @@ import {
 
 export class WereadProvider extends BaseWebviewProvider {
   private client: WeReadClient;
+  private noteWriter: NoteWriter;
+  private loadedChapters = new Map<string, { length: number; bookVersion?: number }>();
   private webviewView: WebviewView | null = null;
   private qrLoginUid = "";
   private qrLoginCookie = "";
@@ -44,6 +49,10 @@ export class WereadProvider extends BaseWebviewProvider {
 
     this.client = new WeReadClient({ cookie }, async (newCookie) => {
       await setConfigByKey("wereadCookie", newCookie);
+    });
+    this.noteWriter = new NoteWriter({
+      load: (bookId, chapterUid) => this.client.execute(web_personal_notes, bookId, chapterUid),
+      create: (input) => this.client.execute(web_note_create, input),
     });
 
     context.subscriptions.push(
@@ -147,7 +156,8 @@ export class WereadProvider extends BaseWebviewProvider {
     message: IncomingMessage,
     webviewView: WebviewView,
   ) {
-    const { command, payload } = message;
+    const { command, payload, uuid } = message;
+    const frame = { uuid, bookId: payload?.bookId, chapterUid: payload?.chapterUid };
 
     try {
       switch (command) {
@@ -204,6 +214,11 @@ export class WereadProvider extends BaseWebviewProvider {
             bookId,
             chapterUid,
           );
+          const chapterKey = `${bookId}:${chapterUid}`;
+          if (this.loadedChapters.size >= 20 && !this.loadedChapters.has(chapterKey)) {
+            this.loadedChapters.delete(this.loadedChapters.keys().next().value!);
+          }
+          this.loadedChapters.set(chapterKey, { length: result.html.length, bookVersion: result.bookVersion });
 
           // 只有非静默加载（即用户手动切章）时才上报进度并提醒
           if (!silent) {
@@ -251,6 +266,7 @@ export class WereadProvider extends BaseWebviewProvider {
 
           webviewView.webview.postMessage({
             command: "WEREAD_CHAPTER_DATA",
+            ...frame,
             payload: result,
           });
           break;
@@ -264,6 +280,7 @@ export class WereadProvider extends BaseWebviewProvider {
           ]);
           webviewView.webview.postMessage({
             command: "WEREAD_CATALOG_DATA",
+            ...frame,
             payload: result,
           });
           break;
@@ -277,6 +294,7 @@ export class WereadProvider extends BaseWebviewProvider {
           );
           webviewView.webview.postMessage({
             command: "WEREAD_PROGRESS_DATA",
+            ...frame,
             payload: result,
           });
           break;
@@ -291,6 +309,7 @@ export class WereadProvider extends BaseWebviewProvider {
           );
           webviewView.webview.postMessage({
             command: "WEREAD_UNDERLINES_DATA",
+            ...frame,
             payload: result,
           });
           break;
@@ -306,8 +325,35 @@ export class WereadProvider extends BaseWebviewProvider {
           );
           webviewView.webview.postMessage({
             command: "WEREAD_BEST_THOUGHTS_DATA",
+            ...frame,
             payload: result,
           });
+          break;
+        }
+
+        case "WEREAD_GET_MY_NOTES": {
+          const notes = await this.noteWriter.load(payload.bookId, payload.chapterUid);
+          webviewView.webview.postMessage({ command: "WEREAD_MY_NOTES_DATA", ...frame, payload: { notes } });
+          break;
+        }
+
+        case "WEREAD_ADD_BOOKMARK":
+        case "WEREAD_ADD_THOUGHT": {
+          const input: NoteWrite = { ...payload, kind: command === "WEREAD_ADD_BOOKMARK" ? "bookmark" : "thought" };
+          validateNoteWrite(input);
+          const chapter = this.loadedChapters.get(`${input.bookId}:${input.chapterUid}`);
+          const range = parseNoteRange(input.range)!;
+          if (!chapter || range[1] > chapter.length || chapter.bookVersion !== input.bookVersion) {
+            throw new Error("正文或书籍版本已变化，请重新加载本章后选文");
+          }
+          const result = await this.noteWriter.write(uuid || "", input);
+          webviewView.webview.postMessage({ command: "WEREAD_NOTE_RESULT", ...frame, payload: result });
+          break;
+        }
+
+        case "WEREAD_RECHECK_NOTE": {
+          const result = await this.noteWriter.recheck(uuid || "", payload.bookId, payload.chapterUid);
+          webviewView.webview.postMessage({ command: "WEREAD_NOTE_RESULT", ...frame, payload: result });
           break;
         }
 
@@ -321,8 +367,18 @@ export class WereadProvider extends BaseWebviewProvider {
           message: error.message || "微信读书扫码登录失败",
         });
       }
+      if (["WEREAD_ADD_BOOKMARK", "WEREAD_ADD_THOUGHT", "WEREAD_RECHECK_NOTE"].includes(command)) {
+        webviewView.webview.postMessage({ command: "WEREAD_NOTE_RESULT", ...frame,
+          payload: { status: command === "WEREAD_RECHECK_NOTE" ? "uncertain" : "failed", message: error.message || "保存失败" } });
+        return;
+      }
+      if (command === "WEREAD_GET_MY_NOTES") {
+        webviewView.webview.postMessage({ command: "WEREAD_MY_NOTES_ERROR", ...frame, payload: { message: error.message || "个人笔记加载失败" } });
+        return;
+      }
       webviewView.webview.postMessage({
         command: "WEREAD_ERROR",
+        ...frame,
         payload: { message: error.message || "请求失败" },
       });
     }

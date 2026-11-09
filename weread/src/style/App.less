@@ -281,6 +281,16 @@ body {
               ) !important;
           }
         }
+
+        .personal-underline {
+          background: color-mix(in srgb, var(--vscode-textLink-foreground, #1890ff) 15%, transparent);
+          text-decoration: underline;
+          text-decoration-color: var(--vscode-textLink-foreground, #1890ff);
+          text-underline-offset: 3px;
+          cursor: pointer;
+        }
+
+        &.chapter-txt p { white-space: pre-wrap; }
       }
 
       // 切换为编辑器默认文字颜色：覆盖书籍内联样式与注入的 <style> 颜色
@@ -322,6 +332,29 @@ body {
     }
   }
 }
+
+.weread-selection-toolbar {
+  position: fixed;
+  z-index: 1100;
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--vscode-widget-border, #888);
+  border-radius: 7px;
+  background: var(--vscode-editorWidget-background, #fff);
+  box-shadow: 0 3px 12px #0003;
+}
+.weread-note-quote {
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow: auto;
+  margin: 12px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--vscode-textLink-foreground, #1890ff);
+  background: var(--vscode-textBlockQuote-background, #8881);
+}
+.weread-note-visibility { margin: 16px 0; }
+.weread-note-status { position: fixed; left: 12px; right: 12px; bottom: 16px; z-index: 1100; }
 
 .catalog-list {
   background-color: var(--vscode-editor-background);

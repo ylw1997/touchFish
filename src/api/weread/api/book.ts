@@ -347,8 +347,9 @@ export async function web_book_chapter_e(
   bookId: string,
   chapterUid: number,
   cookie = "",
-): Promise<{ html: string; style: string; format: string }> {
-  const { format } = await web_book_info(bookId, cookie);
+): Promise<{ html: string; style: string; format: string; bookVersion?: number }> {
+  const { format, version } = await web_book_info(bookId, cookie);
+  const bookVersion = Number.isSafeInteger(version) ? version : undefined;
   if (format === "epub" || format === "pdf") {
     const results = await Promise.all([
       web_book_chapter_e0(bookId, chapterUid, cookie),
@@ -360,7 +361,7 @@ export async function web_book_chapter_e(
     if (results[0] && results[1] && results[3]) {
         const style = dS(results[2]);
         const html = dH(results[0] + results[1] + results[3]);
-        return { html, style, format };
+        return { html, style, format, bookVersion };
     }
     throw Error(`解密失败(${bookId})`);
   } else if (format === "txt") {
@@ -370,7 +371,7 @@ export async function web_book_chapter_e(
     ]);
     if (results[0] && results[1]) {
         const html = dT(results[0] + results[1]);
-        return { html, style: "", format };
+        return { html, style: "", format, bookVersion };
     }
     throw Error(`解密失败(${bookId})`);
   } else {
