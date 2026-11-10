@@ -16,7 +16,7 @@ export let X_USER_BY_SCREEN_NAME_QUERY_ID = "AMIBMjtxEEATh4z8V9GtRg";
 // @operation: UserTweets
 export let X_USER_TWEETS_QUERY_ID = "YHYMZsaMvzJvb5D2UVVjgw";
 // @operation: CreateTweet
-export let X_CREATE_TWEET_QUERY_ID = "5CVj-J0FZWyGgJpcjeBJEA";
+export let X_CREATE_TWEET_QUERY_ID = "l4hk8uVGvR-a8kzQ4nOhPA";
 // @operation: HomeLatestTimeline
 export const X_HOME_LATEST_TIMELINE_QUERY_ID = "KQPfcqQJJqF6M0D77p3JKw";
 // @operation: FavoriteTweet
