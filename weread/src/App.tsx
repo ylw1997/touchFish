@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Spin,
   Empty,
@@ -26,6 +26,7 @@ import {
 } from "@ant-design/icons";
 import { vscode } from "./utils/vscode";
 import { useFontSizeStore } from "./store/fontSize";
+import { ReaderAnnotations, type NavigationGuard } from "./reader/ReaderAnnotations";
 import "./style/App.less";
 
 interface Book {
@@ -37,6 +38,7 @@ interface Book {
 
 interface Chapter {
   chapterUid: number;
+  chapterIdx?: number;
   title: string;
   level: number;
 }
@@ -45,6 +47,7 @@ interface ChapterContent {
   html: string;
   style: string;
   format: string;
+  bookVersion?: number;
 }
 
 interface Thought {
@@ -65,127 +68,6 @@ interface Underline {
   count: number;
   type: number;
 }
-
-const escapeHtml = (str: string) =>
-  str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
-/**
- * 在 DOM 元素中安全注入划线标签
- * 遍历正文的文本节点（TextNode），根据纯文本字符偏移量准确定位
- * 绝不切断或破坏任何 HTML 标签，彻底避免标签损坏和乱码
- */
-const applyUnderlinesToElement = (
-  container: HTMLElement,
-  underlines: Underline[],
-) => {
-  if (!underlines || underlines.length === 0) return;
-
-  // 1. 收集容器内所有的 Text 节点并计算纯文本偏移
-  const textNodes: { node: Text; start: number; end: number }[] = [];
-  let totalLength = 0;
-
-  const walk = (node: Node) => {
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const tag = (node as Element).tagName.toLowerCase();
-      if (tag === "script" || tag === "style" || tag === "title") return;
-    }
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.nodeValue || "";
-      if (text.length > 0) {
-        textNodes.push({
-          node: node as Text,
-          start: totalLength,
-          end: totalLength + text.length,
-        });
-        totalLength += text.length;
-      }
-    } else {
-      for (let child = node.firstChild; child; child = child.nextSibling) {
-        walk(child);
-      }
-    }
-  };
-
-  walk(container);
-  if (totalLength === 0) return;
-
-  // 2. 规范化并过滤有效的 underline ranges
-  const validUnderlines: { start: number; end: number; range: string }[] = [];
-  for (const u of underlines) {
-    if (!u.range) continue;
-    const parts = u.range.split("-").map(Number);
-    if (parts.length !== 2) continue;
-    const [start, end] = parts;
-    if (isNaN(start) || isNaN(end) || start < 0 || end <= start) continue;
-    if (start >= totalLength) continue; // 超出全文长度直接忽略，绝不会在末尾追加乱码！
-    const safeEnd = Math.min(end, totalLength);
-    validUnderlines.push({ start, end: safeEnd, range: u.range });
-  }
-
-  // 按照 start 升序排序
-  validUnderlines.sort((a, b) => a.start - b.start || a.end - b.end);
-
-  // 剔除冲突重叠的区间
-  const nonOverlapping: typeof validUnderlines = [];
-  let lastEnd = -1;
-  for (const item of validUnderlines) {
-    if (item.start >= lastEnd) {
-      nonOverlapping.push(item);
-      lastEnd = item.end;
-    }
-  }
-
-  // 3. 对每个文本节点进行安全拆分替换
-  for (const info of textNodes) {
-    const nodeStart = info.start;
-    const nodeEnd = info.end;
-    const nodeText = info.node.nodeValue || "";
-
-    // 找到所有落在此节点范围内的划线片段
-    const rangesInNode: { start: number; end: number; range: string }[] = [];
-    for (const u of nonOverlapping) {
-      if (u.end <= nodeStart || u.start >= nodeEnd) continue;
-      const spanStart = Math.max(0, u.start - nodeStart);
-      const spanEnd = Math.min(nodeEnd - nodeStart, u.end - nodeStart);
-      if (spanStart < spanEnd) {
-        rangesInNode.push({ start: spanStart, end: spanEnd, range: u.range });
-      }
-    }
-
-    if (rangesInNode.length === 0) continue;
-
-    const parent = info.node.parentNode;
-    if (!parent) continue;
-
-    const fragment = document.createDocumentFragment();
-    let cursor = 0;
-    for (const sub of rangesInNode) {
-      if (sub.start > cursor) {
-        fragment.appendChild(
-          document.createTextNode(nodeText.slice(cursor, sub.start)),
-        );
-      }
-      const span = document.createElement("span");
-      span.className = "hot-underline";
-      span.setAttribute("data-range", sub.range);
-      span.appendChild(
-        document.createTextNode(nodeText.slice(sub.start, sub.end)),
-      );
-      fragment.appendChild(span);
-      cursor = sub.end;
-    }
-    if (cursor < nodeText.length) {
-      fragment.appendChild(document.createTextNode(nodeText.slice(cursor)));
-    }
-
-    parent.replaceChild(fragment, info.node);
-  }
-};
 
 const App: React.FC = () => {
   const [groupOpen, setGroupOpen] = useState(false);
@@ -249,6 +131,15 @@ const App: React.FC = () => {
   const currentBookRef = useRef<Book | null>(null);
   const pendingUidRef = useRef<number | null>(null);
   const hasReceivedProgressRef = useRef<boolean>(false);
+  const chapterRequestRef = useRef<{ uuid: string; bookId: string; chapterUid: number } | null>(null);
+  const bookRequestRef = useRef<string | null>(null);
+  const thoughtsRequestRef = useRef<string | null>(null);
+  const notesGuardRef = useRef<NavigationGuard | null>(null);
+  const registerNotesGuard = useCallback((guard: NavigationGuard | null) => { notesGuardRef.current = guard; }, []);
+  const navigate = (next: () => void) => {
+    if (notesGuardRef.current) notesGuardRef.current(next);
+    else next();
+  };
 
   useEffect(() => {
     catalogRef.current = catalog;
@@ -260,7 +151,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      const { command, payload } = event.data;
+      const { command, payload, uuid, bookId } = event.data;
+      if (bookId && bookId !== currentBookRef.current?.bookId) return;
+      if (["WEREAD_CHAPTER_DATA", "WEREAD_UNDERLINES_DATA"].includes(command) && uuid !== chapterRequestRef.current?.uuid) return;
+      if (["WEREAD_CATALOG_DATA", "WEREAD_PROGRESS_DATA"].includes(command) && uuid !== bookRequestRef.current) return;
+      if (command === "WEREAD_BEST_THOUGHTS_DATA" && uuid !== thoughtsRequestRef.current) return;
+      if (command === "WEREAD_ERROR" && uuid && uuid !== chapterRequestRef.current?.uuid &&
+          uuid !== bookRequestRef.current && uuid !== thoughtsRequestRef.current) return;
       switch (command) {
         case "WEREAD_OPEN_QR_LOGIN":
           setLoginOpen(true);
@@ -311,6 +208,7 @@ const App: React.FC = () => {
               "chapters",
             );
             setCatalog(chapters);
+            catalogRef.current = chapters;
 
             // 如果没进度或进度匹配失败
             if (chapters.length > 0) {
@@ -365,10 +263,10 @@ const App: React.FC = () => {
             const idx = currentCatalog.findIndex(
               (c) => String(c.chapterUid) === String(chapterUid),
             );
-            if (idx !== -1) {
+            if (currentCatalog.length) {
               loadChapterWithBookId(
-                payload.bookId || payload.book?.bookId,
-                idx,
+                bookId || payload.bookId || payload.book?.bookId,
+                idx === -1 ? 0 : idx,
                 currentCatalog,
                 true,
               );
@@ -462,6 +360,11 @@ const App: React.FC = () => {
   const openBook = (book: Book) => {
     setUnderlines([]);
     setCurrentBook(book);
+    currentBookRef.current = book;
+    catalogRef.current = [];
+    setChapterContent(null);
+    chapterRequestRef.current = null;
+    bookRequestRef.current = crypto.randomUUID();
     setView("reader");
     setLoading(true);
     setCatalog([]);
@@ -471,18 +374,20 @@ const App: React.FC = () => {
 
     vscode.postMessage({
       command: "WEREAD_GET_PROGRESS",
+      uuid: bookRequestRef.current,
       payload: { bookId: book.bookId },
     });
 
     vscode.postMessage({
       command: "WEREAD_GET_CATALOG",
+      uuid: bookRequestRef.current,
       payload: { bookId: book.bookId },
     });
   };
 
   const loadChapter = (idx: number) => {
     if (!currentBook || !catalog[idx]) return;
-    loadChapterWithBookId(currentBook.bookId, idx, catalog);
+    navigate(() => loadChapterWithBookId(currentBook.bookId, idx, catalog));
   };
 
   const loadChapterWithBookId = (
@@ -491,24 +396,43 @@ const App: React.FC = () => {
     chapters: Chapter[],
     silent = false,
   ) => {
+    if (!chapters[idx] || currentBookRef.current?.bookId !== bookId) return;
     setLoading(true);
     setCurrentChapterIdx(idx);
     const chapter = chapters[idx];
+    const uuid = crypto.randomUUID();
+    chapterRequestRef.current = { uuid, bookId, chapterUid: chapter.chapterUid };
+    setUnderlines([]);
+    setBestThoughtsVisible(false);
+    setFootnoteVisible(false);
+    thoughtsRequestRef.current = null;
 
     vscode.postMessage({
       command: "WEREAD_GET_CHAPTER",
+      uuid,
       payload: { bookId, chapterUid: chapter.chapterUid, silent },
     });
 
     vscode.postMessage({
       command: "WEREAD_GET_UNDERLINES",
+      uuid,
       payload: { bookId, chapterUid: chapter.chapterUid },
     });
 
     setCatalogVisible(false);
   };
 
+  const readPopular = (range: string, rect: { top: number; height: number; left: number }) => {
+    if (!currentBook || !catalog[currentChapterIdx]) return;
+    setPopoverPos({ top: rect.top + rect.height, left: rect.left });
+    setBestThoughtsLoading(true); setBestThoughtsVisible(true); setBestThoughts([]);
+    thoughtsRequestRef.current = crypto.randomUUID();
+    vscode.postMessage({ command: "WEREAD_GET_BEST_THOUGHTS", uuid: thoughtsRequestRef.current,
+      payload: { bookId: currentBook.bookId, chapterUid: catalog[currentChapterIdx].chapterUid, range } });
+  };
+
   const handleContentClick = (e: React.MouseEvent) => {
+    if (window.getSelection()?.toString()) return;
     const target = e.target as HTMLElement;
 
     // 优先：检查注释图标点击，防止被外层划线拦截
@@ -543,8 +467,10 @@ const App: React.FC = () => {
 
       const range = underlineEl.getAttribute("data-range");
       if (range && currentBook && currentChapterIdx !== -1) {
+        thoughtsRequestRef.current = crypto.randomUUID();
         vscode.postMessage({
           command: "WEREAD_GET_BEST_THOUGHTS",
+          uuid: thoughtsRequestRef.current,
           payload: {
             bookId: currentBook.bookId,
             chapterUid: catalog[currentChapterIdx].chapterUid,
@@ -587,9 +513,14 @@ const App: React.FC = () => {
   };
 
   const backToShelf = () => {
-    setView("shelf");
-    setChapterContent(null);
-    setUnderlines([]);
+    navigate(() => {
+      currentBookRef.current = null;
+      chapterRequestRef.current = null;
+      bookRequestRef.current = null;
+      setView("shelf");
+      setChapterContent(null);
+      setUnderlines([]);
+    });
   };
 
   const handleRefresh = () => {
@@ -600,58 +531,6 @@ const App: React.FC = () => {
       loadChapter(currentChapterIdx);
     }
   };
-
-  const cleanedHtml = useMemo(() => {
-    if (!chapterContent?.html) return "";
-    let html = chapterContent.html;
-
-    if (html.includes("&lt;")) {
-      const doc = new DOMParser().parseFromString(html, "text/html");
-      html = doc.documentElement.textContent || html;
-    }
-
-    if (chapterContent.format === "txt") {
-      const paragraphs = html.split(/\r?\n/).filter((p) => p.trim() !== "");
-      const wrapped = paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("");
-      try {
-        const doc = new DOMParser().parseFromString(wrapped, "text/html");
-        applyUnderlinesToElement(doc.body, underlines);
-        return doc.body.innerHTML;
-      } catch (e) {
-        console.error("[Weread] Failed to parse txt chapter:", e);
-        return wrapped;
-      }
-    }
-
-    // EPUB / PDF 等富文本格式
-    try {
-      const doc = new DOMParser().parseFromString(html, "text/html");
-
-      // 统一解析并将 img.qqreader-footnote 转换为行内小图标形式
-      const imgFootnotes = doc.querySelectorAll("img.qqreader-footnote");
-      imgFootnotes.forEach((img) => {
-        const noteText =
-          img.getAttribute("alt") || img.getAttribute("title") || "";
-        const span = doc.createElement("span");
-        span.className = "weread-footnote-wrapper";
-        span.setAttribute("data-note", noteText);
-
-        const iconSpan = doc.createElement("span");
-        iconSpan.className = "weread-footnote-icon";
-        span.appendChild(iconSpan);
-
-        img.parentNode?.replaceChild(span, img);
-      });
-
-      // 在 DOM 树中安全注入划线，绝不切断或破坏 HTML 标签
-      applyUnderlinesToElement(doc.body, underlines);
-
-      return doc.body.innerHTML;
-    } catch (e) {
-      console.error("[Weread] Failed to parse chapter html:", e);
-      return html;
-    }
-  }, [chapterContent, underlines]);
 
   return (
     <div className={`weread-app ${view}`}>
@@ -717,10 +596,16 @@ const App: React.FC = () => {
                   <div className="chapter-header">
                     {catalog[currentChapterIdx]?.title}
                   </div>
-                  <div
-                    className="xhtml-content"
-                    dangerouslySetInnerHTML={{ __html: cleanedHtml }}
-                  />
+                  {currentBook && catalog[currentChapterIdx] && <ReaderAnnotations
+                    key={chapterRequestRef.current?.uuid}
+                    bookId={currentBook.bookId}
+                    chapterUid={catalog[currentChapterIdx].chapterUid}
+                    chapterIdx={catalog[currentChapterIdx].chapterIdx}
+                    bookVersion={chapterContent.bookVersion}
+                    html={chapterContent.html} format={chapterContent.format}
+                    underlines={underlines} onGuardChange={registerNotesGuard}
+                    onReadPopular={(range) => readPopular(range, { top: 70, height: 0, left: 20 })}
+                  />}
                   <div className="reader-footer">
                     <Button
                       disabled={currentChapterIdx <= 0}
