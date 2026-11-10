@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+## [17.22.0](https://github.com/ylw1997/touchFish/compare/v17.21.0...v17.22.0) (2026-11-10)
+
+
+### ✨ Features | 新功能
+
+* **weread:** add selection highlights and synced thoughts ([5a047c6](https://github.com/ylw1997/touchFish/commit/5a047c6885e7d70823ec2bc23044183421790be1))
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([66d4fb2](https://github.com/ylw1997/touchFish/commit/66d4fb2c5822d0216ce22b105b1347cb1e2e9437))
+
 ## [17.21.0](https://github.com/ylw1997/touchFish/compare/v17.20.1...v17.21.0) (2026-10-29)
 
 
