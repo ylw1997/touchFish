@@ -17,13 +17,16 @@ import { ShownotesDrawer } from "./playbar/ShownotesDrawer";
 import { LyricOverlay } from "./playbar/LyricOverlay";
 import { useXiaoyuzhou } from "../hooks/useXiaoyuzhou";
 import { vscode } from "../utils/vscode";
+import { SoftAudioPlayer, type PlayableAudio } from "../services/softAudioPlayer";
 
 interface PlayBarProps {
   onOpenPodcast?: (podcast: any) => void;
 }
 
 const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [player, setPlayer] = React.useState<SoftAudioPlayer | null>(null);
+  const playerRef = useRef<SoftAudioPlayer | null>(null);
+  const audioRef = useRef<PlayableAudio | null>(null);
 
   const currentEpisode = usePlayerStore((state) => state.currentEpisode);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
@@ -91,24 +94,80 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
       togglePlaylistOpen();
     }
 
-    // 调用父组件传入的打开函数
     if (onOpenPodcast) {
       onOpenPodcast({ pid });
     }
   }, [currentEpisode, isPlaylistOpen, togglePlaylistOpen, onOpenPodcast]);
 
-  useEffect(() => {
+  const handleTimeUpdate = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio || !currentEpisode) return;
+    if (!audio || lyrics.length === 0) return;
+    const currTime = audio.currentTime;
+    if (lyrics[0].time > currTime) {
+      setCurrentLyric("");
+      if (activeIdxRef.current !== -1) {
+        activeIdxRef.current = -1;
+        setActiveIdx(-1);
+      }
+      return;
+    }
+    let idx = Math.min(Math.max(activeIdxRef.current, 0), lyrics.length - 1);
+    while (idx < lyrics.length - 1 && lyrics[idx + 1].time <= currTime) idx++;
+    while (idx > 0 && lyrics[idx].time > currTime) idx--;
+    if (idx >= 0) {
+      const lineText = lyrics[idx].text;
+      setCurrentLyric((prev) => (prev !== lineText ? lineText : prev));
+      if (activeIdxRef.current !== idx) {
+        activeIdxRef.current = idx;
+        setActiveIdx(idx);
+      }
+    }
+  }, [lyrics]);
+
+  // 初始化 SoftAudioPlayer
+  useEffect(() => {
+    const p = new SoftAudioPlayer();
+    playerRef.current = p;
+    audioRef.current = p;
+    setPlayer(p);
+
+    const onEnded = () => playNext();
+    const onTime = () => handleTimeUpdate();
+
+    p.addEventListener("ended", onEnded);
+    p.addEventListener("timeupdate", onTime);
+
+    return () => {
+      p.removeEventListener("ended", onEnded);
+      p.removeEventListener("timeupdate", onTime);
+      p.destroy();
+      playerRef.current = null;
+      audioRef.current = null;
+      setPlayer(null);
+    };
+  }, [playNext, handleTimeUpdate]);
+
+  // 当单集改变时更新播放地址
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player || !currentEpisode) return;
+
+    const url = getPlayableUrl(currentEpisode);
+    console.log("[PlayBar] Episode changed, setting url:", url);
+    void player.setSource(url);
+  }, [currentEpisode]);
+
+  // 控制播放 / 暂停
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player || !currentEpisode) return;
 
     if (isPlaying) {
-      audio.play().catch((err) => {
-        if (err && err.name !== "AbortError") {
-          console.error("播放失败:", err);
-        }
-      });
+      console.log("[PlayBar] isPlaying is true, calling play()");
+      void player.play();
     } else {
-      audio.pause();
+      console.log("[PlayBar] isPlaying is false, calling pause()");
+      player.pause();
     }
   }, [isPlaying, currentEpisode]);
 
@@ -124,20 +183,29 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
     }
 
     const eid = currentEpisode.eid || currentEpisode.id;
-    const mediaId = currentEpisode.transcriptMediaId || currentEpisode.transcript?.mediaId || currentEpisode.mediaKey || currentEpisode.media?.id;
+    const mediaId =
+      currentEpisode.transcriptMediaId ||
+      currentEpisode.transcript?.mediaId ||
+      currentEpisode.mediaKey ||
+      currentEpisode.media?.id;
 
     if (eid && mediaId) {
       getEpisodeTranscript(eid, mediaId).then((data) => {
         if (!active) return;
         try {
-          // Assume data is an array of transcript segments or has a transcripts property
-          const transcripts = Array.isArray(data) ? data : data?.data?.transcripts || data?.transcripts || data?.items || [];
+          const transcripts = Array.isArray(data)
+            ? data
+            : data?.data?.transcripts ||
+              data?.transcripts ||
+              data?.items ||
+              [];
           if (Array.isArray(transcripts) && transcripts.length > 0) {
             const parsed = transcripts.map((t: any) => {
               let val = 0;
               if (t.startTime !== undefined) val = parseFloat(t.startTime);
               else if (t.start !== undefined) val = parseFloat(t.start);
-              else if (t.startMs !== undefined) val = Number(t.startMs) / 1000;
+              else if (t.startMs !== undefined)
+                val = Number(t.startMs) / 1000;
               return {
                 time: isNaN(val) ? 0 : val,
                 text: String(t.text || t.content || ""),
@@ -180,50 +248,8 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
     });
   }, [currentEpisode, currentLyric, isPlaying]);
 
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
-    const audio = e.target as HTMLAudioElement;
-    if (lyrics.length === 0) return;
-    const currTime = audio.currentTime;
-    if (lyrics[0].time > currTime) {
-      setCurrentLyric("");
-      if (activeIdxRef.current !== -1) {
-        activeIdxRef.current = -1;
-        setActiveIdx(-1);
-      }
-      return;
-    }
-    let idx = Math.min(Math.max(activeIdxRef.current, 0), lyrics.length - 1);
-    while (idx < lyrics.length - 1 && lyrics[idx + 1].time <= currTime) idx++;
-    while (idx > 0 && lyrics[idx].time > currTime) idx--;
-    if (idx >= 0) {
-      const lineText = lyrics[idx].text;
-      setCurrentLyric((prev) => (prev !== lineText ? lineText : prev));
-      if (activeIdxRef.current !== idx) {
-        activeIdxRef.current = idx;
-        setActiveIdx(idx);
-      }
-    }
-  };
-
   return (
     <>
-      <audio
-        ref={audioRef}
-        src={getPlayableUrl(currentEpisode)}
-        preload="metadata"
-        onEnded={() => playNext()}
-        onTimeUpdate={handleTimeUpdate}
-        onError={() => {
-          const err = audioRef.current?.error;
-          const canAAC =
-            audioRef.current?.canPlayType('audio/mp4; codecs="mp4a.40.2"') !==
-            "";
-          if ((err && (err.code === 4 || err.code === 3)) || !canAAC) {
-            vscode.postMessage({ command: "REPORT_FFMPEG_MISSING" });
-          }
-        }}
-      />
-
       <div
         className={`playbar ${isLyricOpen ? "playbar-expanded" : ""} ${isPlaylistOpen ? "playbar-playlist-open" : ""} ${isPlaying ? "" : "paused"}`}
       >
@@ -239,7 +265,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
         />
 
         <div className="playbar-bottom">
-          <ProgressBar audioRef={audioRef} variant="background" />
+          <ProgressBar audioRef={audioRef} player={player} variant="background" />
 
           <div
             className={`playbar-video-wrapper ${isLyricOpen ? "expanded-mode" : ""}`}
@@ -320,6 +346,11 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
               variant="filled"
               onClick={(event) => {
                 event.stopPropagation();
+                if (!isPlaying) {
+                  void player?.play();
+                } else {
+                  player?.pause();
+                }
                 togglePlay();
               }}
               title={isPlaying ? "暂停" : "播放"}
@@ -353,6 +384,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
           trackDuration={Number(currentEpisode?.duration) || 0}
           getAlbumCover={getAlbumCover}
           audioRef={audioRef}
+          player={player}
         />
       </div>
 

@@ -568,6 +568,34 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
           break;
         }
 
+        case "XIAOYUZHOU_FETCH_AUDIO_CHUNK": {
+          const { url, start, end } = payload || {};
+          console.log(`[xiaoyuzhouProvider] Fetching chunk: ${start}-${end} of ${url}`);
+          try {
+            const buf = await fetchAudioChunk(String(url || ""), Number(start || 0), Number(end || 0));
+            console.log(`[xiaoyuzhouProvider] Fetch chunk success, size: ${buf.length} bytes`);
+            webviewView.webview.postMessage({
+              command: "XIAOYUZHOU_FETCH_AUDIO_CHUNK_RESULT",
+              payload: {
+                code: 0,
+                data: buf.toString("base64"),
+              },
+              uuid,
+            } as CommandsType<any>);
+          } catch (err: any) {
+            console.error(`[xiaoyuzhouProvider] Fetch chunk failed:`, err);
+            webviewView.webview.postMessage({
+              command: "XIAOYUZHOU_FETCH_AUDIO_CHUNK_RESULT",
+              payload: {
+                code: -1,
+                message: err?.message || "拉取音频失败",
+              },
+              uuid,
+            } as CommandsType<any>);
+          }
+          break;
+        }
+
         default:
           break;
       }
@@ -581,5 +609,36 @@ export class XiaoyuzhouProvider extends BaseWebviewProvider {
         uuid,
       } as CommandsType<any>);
     }
+  }
+}
+
+async function fetchAudioChunk(url: string, start: number, end: number): Promise<Buffer> {
+  const headers: Record<string, string> = {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    Referer: "https://www.xiaoyuzhoufm.com/",
+  };
+
+  if (end > start) {
+    headers.Range = `bytes=${start}-${end}`;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  try {
+    const res = await fetch(url, {
+      headers,
+      signal: controller.signal,
+    });
+
+    if (!res.ok && res.status !== 206) {
+      throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
