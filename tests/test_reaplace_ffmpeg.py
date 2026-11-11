@@ -134,15 +134,16 @@ class MacOSSigningTests(unittest.TestCase):
         ), mock.patch.object(
             reaplace_ffmpeg.subprocess,
             "run",
-            side_effect=[success, success],
+            side_effect=[success, success, success],
         ) as run:
             reaplace_ffmpeg.resign_macos_app(
                 "/Applications/Visual Studio Code.app"
             )
 
-        self.assertEqual(run.call_args_list[0].args[0][0], "sudo")
+        self.assertEqual(run.call_args_list[0].args[0], ["xattr", "-cr", "/Applications/Visual Studio Code.app"])
+        self.assertEqual(run.call_args_list[1].args[0][0], "sudo")
         self.assertEqual(
-            run.call_args_list[1].args[0][:3],
+            run.call_args_list[2].args[0][:3],
             ["codesign", "--verify", "--deep"],
         )
 
@@ -153,15 +154,15 @@ class MacOSSigningTests(unittest.TestCase):
         ), mock.patch.object(
             reaplace_ffmpeg.subprocess,
             "run",
-            side_effect=[success, success],
+            side_effect=[success, success, success],
         ) as run:
             reaplace_ffmpeg.resign_macos_app(
                 "/Applications/Visual Studio Code.app"
             )
 
-        self.assertEqual(run.call_args_list[0].args[0][0], "codesign")
+        self.assertEqual(run.call_args_list[1].args[0][0], "codesign")
 
-    def test_signature_verification_failure_is_reported(self):
+    def test_codesign_failure_is_reported(self):
         success = mock.Mock(returncode=0)
         failure = mock.Mock(returncode=1)
         with mock.patch.object(
@@ -172,7 +173,7 @@ class MacOSSigningTests(unittest.TestCase):
             side_effect=[success, failure],
         ):
             with self.assertRaisesRegex(
-                RuntimeError, "codesign verification failed"
+                RuntimeError, "codesign failed"
             ):
                 reaplace_ffmpeg.resign_macos_app(
                     "/Applications/Visual Studio Code.app"
