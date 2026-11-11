@@ -10,12 +10,20 @@ import os
 import platform
 import re
 import shutil
+import ssl
+import struct
 import subprocess
 import tempfile
 import urllib.request
 import zipfile
+import zlib
 from datetime import datetime
 
+ssl_context = None
+try:
+    ssl_context = ssl._create_unverified_context()
+except Exception:
+    pass
 
 SYSTEM_NAMES = {"Windows": "win32", "Linux": "linux", "Darwin": "darwin"}
 ARCHIVE_LIBS = {
@@ -174,12 +182,10 @@ def normalize_electron_version(value):
 
 
 def find_electron_version(installation, package_json):
-    # 1. 允许通过环境变量直接指定
     env_ver = os.environ.get("ELECTRON_VERSION", "").strip()
     if env_ver:
         return normalize_electron_version(env_ver)
 
-    # 2. 检查安装目录及各子目录下的 version 文件（新版 VS Code 标配，Windows/macOS/Linux 均有）
     version_candidates = [
         installation,
         os.path.dirname(installation),
@@ -199,14 +205,12 @@ def find_electron_version(installation, package_json):
             except OSError:
                 pass
 
-    # 3. 检查 package.json 中的 devDependencies.electron
     dev_deps = package_json.get("devDependencies", {})
     if isinstance(dev_deps, dict) and "electron" in dev_deps:
         m = re.search(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?", str(dev_deps["electron"]))
         if m:
             return m.group(0)
 
-    # 4. 远程兜底从 GitHub Microsoft/vscode 的 tag 查询
     vscode_version = package_json.get("version", "")
     if vscode_version:
         urls = [
@@ -346,7 +350,6 @@ def resign_macos_app(application):
     print("Re-signing the macOS app with an ad-hoc signature...")
     print("Warning: this replaces the editor's official application signature.")
 
-    # 清除可能的 quarantine 隔离属性，防止被 macOS Gatekeeper 拦截
     subprocess.run(
         ["xattr", "-cr", application],
         check=False,
@@ -385,6 +388,174 @@ def restore_backup(backup_path, local_lib, backup_hash, system, installation):
         raise RuntimeError("Rollback hash changed after signing.")
 
 
+def try_range_extract(url, member_path, dest_path):
+    headers = {"User-Agent": "Mozilla/5.0", "Accept": "*/*"}
+    req_probe = urllib.request.Request(url, headers={**headers, "Range": "bytes=0-0"})
+    try:
+        with urllib.request.urlopen(req_probe, context=ssl_context, timeout=12) as resp:
+            if resp.status != 206:
+                return False
+            cr = resp.headers.get("Content-Range", "")
+            if "/" not in cr:
+                return False
+            total_size = int(cr.split("/")[-1])
+    except Exception:
+        return False
+
+    def fetch_range(start, end):
+        req = urllib.request.Request(url, headers={**headers, "Range": "bytes={0}-{1}".format(start, end)})
+        with urllib.request.urlopen(req, context=ssl_context, timeout=30) as r:
+            return r.read()
+
+    try:
+        tail_size = min(65536, total_size)
+        tail = fetch_range(total_size - tail_size, total_size - 1)
+        eocd_pos = tail.rfind(b"\x50\x4b\x05\x06")
+        if eocd_pos == -1:
+            return False
+
+        eocd = tail[eocd_pos:eocd_pos + 20]
+        disk_num, cd_disk, disk_entries, total_entries, cd_size, cd_offset = struct.unpack("<HHHHII", eocd[4:20])
+
+        cd_data = fetch_range(cd_offset, cd_offset + cd_size - 1)
+
+        offset = 0
+        target_entry = None
+        norm_target = member_path.replace("\\", "/")
+        while offset < len(cd_data):
+            if cd_data[offset:offset + 4] != b"\x50\x4b\x01\x02":
+                break
+            header = cd_data[offset:offset + 46]
+            (sig, v_made, v_needed, flags, comp_method, mod_time, mod_date,
+             crc32, comp_size, uncomp_size, name_len, extra_len, comment_len,
+             disk_start, int_attr, ext_attr, local_header_offset) = struct.unpack("<IHHHHHHIIIHHHHHII", header)
+
+            entry_name = cd_data[offset + 46:offset + 46 + name_len].decode("utf-8", errors="ignore").replace("\\", "/")
+            if entry_name == norm_target:
+                target_entry = {
+                    "comp_method": comp_method,
+                    "comp_size": comp_size,
+                    "uncomp_size": uncomp_size,
+                    "crc32": crc32,
+                    "local_header_offset": local_header_offset,
+                }
+                break
+            offset += 46 + name_len + extra_len + comment_len
+
+        if not target_entry:
+            return False
+
+        lh_off = target_entry["local_header_offset"]
+        lh_header = fetch_range(lh_off, lh_off + 29)
+        sig, v_needed, flags, comp_method, mod_time, mod_date, crc32, comp_size, uncomp_size, lh_name_len, lh_extra_len = struct.unpack("<IHHHHHIIIHH", lh_header)
+
+        data_start = lh_off + 30 + lh_name_len + lh_extra_len
+        data_end = data_start + target_entry["comp_size"] - 1
+
+        compressed_data = fetch_range(data_start, data_end)
+
+        if target_entry["comp_method"] == 0:
+            raw_data = compressed_data
+        elif target_entry["comp_method"] == 8:
+            raw_data = zlib.decompressobj(-15).decompress(compressed_data)
+        else:
+            return False
+
+        if len(raw_data) != target_entry["uncomp_size"]:
+            return False
+        if (zlib.crc32(raw_data) & 0xFFFFFFFF) != target_entry["crc32"]:
+            return False
+
+        with open(dest_path, "wb") as f:
+            f.write(raw_data)
+        return True
+    except Exception:
+        return False
+
+
+def get_candidate_urls(electron_version, system, architecture):
+    tag_wvcus = "v{0}%2Bwvcus".format(electron_version)
+    file_wvcus = "electron-v{0}%2Bwvcus-{1}-{2}.zip".format(
+        electron_version, system, architecture
+    )
+    castlabs_direct = (
+        "https://github.com/castlabs/electron-releases/releases/download/"
+        "{0}/{1}".format(tag_wvcus, file_wvcus)
+    )
+
+    official_file = "electron-v{0}-{1}-{2}.zip".format(
+        electron_version, system, architecture
+    )
+
+    return [
+        (castlabs_direct, True),
+        ("https://ghfast.top/" + castlabs_direct, True),
+        ("https://ghproxy.net/" + castlabs_direct, True),
+        (
+            "https://cdn.npmmirror.com/binaries/electron/v{0}/{1}".format(
+                electron_version, official_file
+            ),
+            False,
+        ),
+        (
+            "https://github.com/electron/electron/releases/download/v{0}/{1}".format(
+                electron_version, official_file
+            ),
+            False,
+        ),
+    ]
+
+
+def download_library(candidate_urls, archive_lib_path, destination_path):
+    for url, has_proprietary_codecs in candidate_urls:
+        source_label = (
+            "Castlabs EVS (supports AAC / H.264)"
+            if has_proprietary_codecs
+            else "Official Electron (Open Codecs)"
+        )
+        print("Checking build from {0}...".format(source_label))
+
+        # 优先尝试 HTTP Range 快速单文件解压 (1-2MB，秒级下载)
+        try:
+            if try_range_extract(url, archive_lib_path, destination_path):
+                print("Fast-extracted {0} directly via HTTP Range.".format(os.path.basename(destination_path)))
+                return True, has_proprietary_codecs
+        except Exception:
+            pass
+
+        # 回退至整包下载
+        tmp_zip_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp_zip:
+                tmp_zip_path = tmp_zip.name
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, context=ssl_context, timeout=60) as resp, open(tmp_zip_path, "wb") as out_f:
+                shutil.copyfileobj(resp, out_f)
+
+            with zipfile.ZipFile(tmp_zip_path) as archive:
+                norm_target = archive_lib_path.replace("\\", "/")
+                matched_name = None
+                for name in archive.namelist():
+                    if name.replace("\\", "/") == norm_target:
+                        matched_name = name
+                        break
+                if matched_name:
+                    with archive.open(matched_name) as src, open(destination_path, "wb") as dst:
+                        shutil.copyfileobj(src, dst)
+                    print("Downloaded and extracted {0} successfully.".format(os.path.basename(destination_path)))
+                    return True, has_proprietary_codecs
+        except Exception:
+            continue
+        finally:
+            if tmp_zip_path and os.path.exists(tmp_zip_path):
+                try:
+                    os.remove(tmp_zip_path)
+                except Exception:
+                    pass
+
+    return False, False
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Install the FFmpeg library matching VS Code's Electron version."
@@ -421,22 +592,19 @@ def main():
     print("Electron: {0} ({1})".format(electron_version, architecture))
     print("Installation: " + installation)
 
-    download_url = (
-        "https://cdn.npmmirror.com/binaries/electron/v{version}/"
-        "electron-v{version}-{system}-{arch}.zip"
-    ).format(version=electron_version, system=system, arch=architecture)
+    candidates = get_candidate_urls(electron_version, system, architecture)
 
     with tempfile.TemporaryDirectory(prefix="touchfish-ffmpeg-") as temp_dir:
-        archive_path = os.path.join(temp_dir, "electron.zip")
         extracted_lib = os.path.join(temp_dir, os.path.basename(local_lib))
-        print("Downloading the matching Electron build...")
-        urllib.request.urlretrieve(download_url, archive_path)
-
-        with zipfile.ZipFile(archive_path) as archive:
-            with archive.open(ARCHIVE_LIBS[system]) as source, open(
-                extracted_lib, "wb"
-            ) as destination:
-                shutil.copyfileobj(source, destination)
+        success, has_proprietary = download_library(
+            candidates, ARCHIVE_LIBS[system], extracted_lib
+        )
+        if not success or not os.path.exists(extracted_lib):
+            raise RuntimeError(
+                "Could not download a matching FFmpeg library for Electron {0} ({1}).".format(
+                    electron_version, architecture
+                )
+            )
 
         installed_hash = sha256(local_lib)
         expected_hash = sha256(extracted_lib)
@@ -444,22 +612,36 @@ def main():
         print("Expected  SHA-256: " + expected_hash)
 
         if installed_hash == expected_hash:
-            print("FFmpeg is already the matching Electron build; no change needed.")
+            print("FFmpeg is already the matching build; no change needed.")
             return 0
         if args.check:
             print("FFmpeg does not match. Run the script without --check to replace it.")
             return 2
-        if editor_is_running(installation, system):
-            raise RuntimeError(
-                "The editor is still running. Fully quit all editor windows and "
-                "background processes, then retry."
-            )
+
+        is_running = editor_is_running(installation, system)
+        if is_running:
+            print("Notice: The editor is running. Attempting hot-replacement...")
 
         backup_path = create_backup(local_lib, product_name, vscode_version)
         print("Backup: " + backup_path)
 
+        renamed_target = None
         try:
-            shutil.copyfile(extracted_lib, local_lib)
+            try:
+                shutil.copyfile(extracted_lib, local_lib)
+            except PermissionError:
+                if system == "win32":
+                    renamed_target = local_lib + ".bak"
+                    if os.path.exists(renamed_target):
+                        try:
+                            os.remove(renamed_target)
+                        except Exception:
+                            pass
+                    os.rename(local_lib, renamed_target)
+                    shutil.copyfile(extracted_lib, local_lib)
+                else:
+                    raise
+
             if sha256(local_lib) != expected_hash:
                 raise RuntimeError("Post-installation hash verification failed.")
             if system == "darwin":
@@ -467,13 +649,18 @@ def main():
         except Exception as replacement_error:
             print("Replacement failed; restoring the backup...")
             try:
-                restore_backup(
-                    backup_path,
-                    local_lib,
-                    installed_hash,
-                    system,
-                    installation,
-                )
+                if renamed_target and os.path.exists(renamed_target):
+                    if os.path.exists(local_lib):
+                        os.remove(local_lib)
+                    os.rename(renamed_target, local_lib)
+                else:
+                    restore_backup(
+                        backup_path,
+                        local_lib,
+                        installed_hash,
+                        system,
+                        installation,
+                    )
             except Exception as rollback_error:
                 raise RuntimeError(
                     "Replacement failed ({0}); rollback also failed ({1}). "
@@ -487,10 +674,16 @@ def main():
             raise
 
         print("Replacement and hash verification succeeded.")
-        print(
-            "Important: editor updates may restore the bundled FFmpeg. "
-            "Run this script again if audio disappears after an update."
-        )
+        if is_running:
+            print(
+                "Important: The editor was running during replacement. "
+                "Please restart VS Code for the new media library to take effect."
+            )
+        else:
+            print(
+                "Important: editor updates may restore the bundled FFmpeg. "
+                "Run this script again if audio disappears after an update."
+            )
         return 0
 
 
