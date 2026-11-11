@@ -1,6 +1,18 @@
 # 更新历史 
 
 
+### [17.22.1](https://github.com/ylw1997/touchFish/compare/v17.22.0...v17.22.1) (2026-11-11)
+
+
+### 📝 Chores | 其他更新
+
+* update x ids ([8f13276](https://github.com/ylw1997/touchFish/commit/8f13276b4bf360d705ee631241cae21c5f5e8ff4))
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* 优化 FFmpeg 替换脚本，支持 Castlabs EVS 专利编解码器与按需下载 ([1e94926](https://github.com/ylw1997/touchFish/commit/1e94926aed54316a5e64a1313e69bac99e791b40))
+
 ## [17.22.0](https://github.com/ylw1997/touchFish/compare/v17.21.0...v17.22.0) (2026-11-10)
 
 
