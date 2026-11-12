@@ -1,6 +1,19 @@
 # 更新历史 
 
 
+### [17.22.2](https://github.com/ylw1997/touchFish/compare/v17.22.1...v17.22.2) (2026-11-12)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* **xiaoyuzhou:** 修复软解进度条事件未绑定及分片代理拉取问题 ([f360fa5](https://github.com/ylw1997/touchFish/commit/f360fa52fef742f71af03d9af368b8d245067923))
+* 修复媒体播放的音频软解兼容性 ([da49808](https://github.com/ylw1997/touchFish/commit/da49808df27a37bde79a50031d6d12e0aa31634e))
+
+
+### 📝 Chores | 其他更新
+
+* 移除 FFmpeg 替换说明和脚本 ([e1af00b](https://github.com/ylw1997/touchFish/commit/e1af00b0c377111934d873e82da94a07af716340))
+
 ### [17.22.1](https://github.com/ylw1997/touchFish/compare/v17.22.0...v17.22.1) (2026-11-11)
 
 
