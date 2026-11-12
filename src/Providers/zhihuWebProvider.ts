@@ -29,6 +29,8 @@ export class ZhihuWebProvider extends BaseWebviewProvider {
   constructor(context: ExtensionContext) {
     super(context, {
       distPath: "zhihu/dist",
+      videoCdns: ["zhimg.com", "vzuu.com"],
+      videoReferer: "https://www.zhihu.com/",
       devPort: 5174,
       title: "知乎",
       scrollKey: "zhihuScrollPosition",

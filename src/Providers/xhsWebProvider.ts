@@ -83,6 +83,8 @@ export class XhsWebProvider extends BaseWebviewProvider {
   constructor(context: ExtensionContext) {
     super(context, {
       distPath: "xhs/dist",
+      videoCdns: ["xhscdn.com"],
+      videoReferer: "https://www.xiaohongshu.com/",
       devPort: 5175,
       title: "小红书",
       scrollKey: "xhsScrollPosition",

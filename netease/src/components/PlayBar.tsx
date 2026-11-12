@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useLayoutEffect, useState } from "react";
 import {
   UnorderedListOutlined,
   PauseOutlined,
@@ -15,6 +15,8 @@ import { usePlayerStore } from "../store/player";
 import { useUserStore } from "../store/user";
 import { useQQMusic } from "../hooks/useQQMusic";
 import { vscode } from "../utils/vscode";
+import { useRequest } from "../hooks/useRequest";
+import { enableSoftwareMusic } from "../../../webview/softMusic";
 import type { Song } from "../types/qqmusic";
 
 import { ProgressBar } from "./playbar/ProgressBar";
@@ -23,6 +25,7 @@ import { PlaylistDrawer } from "./playbar/PlaylistDrawer";
 
 const PlayBar: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const { request } = useRequest();
   const {
     playSong,
     getSongUrl,
@@ -152,6 +155,20 @@ const PlayBar: React.FC = () => {
       messageApi.error("操作异常: " + err.message);
     }
   };
+
+  useLayoutEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentSongUrl) return;
+    return enableSoftwareMusic(audio, currentSongUrl, {
+      fetchAudio: (url) => request("FETCH_MUSIC_AUDIO", { url }),
+      shouldPlay: () => usePlayerStore.getState().isPlaying,
+      restorePosition: (time) => {
+        if (time > 0) restoreTimeRef.current = time;
+      },
+      onFailure: () => messageApi.error("播放失败，自动跳到下一首"),
+      skipTrack: playNext,
+    });
+  }, [currentSongUrl, messageApi, playNext, request]);
 
   // 播放/暂停控制
   useEffect(() => {
@@ -359,19 +376,6 @@ const PlayBar: React.FC = () => {
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => playNext()}
-        onError={() => {
-          if (currentSongUrl) {
-            const err = audioRef.current?.error;
-            const canAAC =
-              audioRef.current?.canPlayType('audio/mp4; codecs="mp4a.40.2"') !==
-              "";
-            if ((err && (err.code === 4 || err.code === 3)) || !canAAC) {
-              vscode.postMessage({ command: "REPORT_FFMPEG_MISSING" });
-            }
-            messageApi.error(`播放失败，自动跳到下一首`);
-            setTimeout(() => playNext(), 1500);
-          }
-        }}
       />
 
       <div

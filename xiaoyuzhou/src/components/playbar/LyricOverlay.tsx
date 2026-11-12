@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProgressBar } from "./ProgressBar";
+import type { PlayableAudio } from "../../services/softAudioPlayer";
 
 interface LyricOverlayProps {
   isLyricOpen: boolean;
@@ -11,7 +12,8 @@ interface LyricOverlayProps {
   isPlaying: boolean;
   trackDuration: number;
   getAlbumCover: (episode: any) => string;
-  audioRef: React.RefObject<HTMLAudioElement | null>;
+  audioRef?: React.RefObject<HTMLAudioElement | PlayableAudio | null>;
+  player?: PlayableAudio | null;
 }
 
 function resetLyricHighlight(line: HTMLElement) {
@@ -42,11 +44,14 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
   trackDuration,
   getAlbumCover,
   audioRef,
+  player,
 }) => {
   const lyricContainerRef = useRef<HTMLDivElement>(null);
 
+  const getAudio = () => player || audioRef?.current || null;
+
   useEffect(() => {
-    const audio = audioRef.current;
+    const audio = getAudio();
     if (!isLyricOpen || !audio || activeIdx < 0 || activeIdx >= lyrics.length) {
       return;
     }
@@ -152,7 +157,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
       audio.removeEventListener("seeked", updateWhenPaused);
       if (activeLine) resetLyricHighlight(activeLine);
     };
-  }, [activeIdx, audioRef, isLyricOpen, isPlaying, lyrics, trackDuration]);
+  }, [activeIdx, player, audioRef?.current, isLyricOpen, isPlaying, lyrics, trackDuration]);
 
   // Handle auto-scroll for lyrics when expanded
   useEffect(() => {
@@ -214,7 +219,7 @@ export const LyricOverlay: React.FC<LyricOverlayProps> = ({
               )}
             </div>
           </div>
-          <ProgressBar audioRef={audioRef} variant="expanded" />
+          <ProgressBar audioRef={audioRef} player={player} variant="expanded" />
         </motion.div>
       )}
     </AnimatePresence>

@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from "react";
+import type { PlayableAudio } from "../../services/softAudioPlayer";
 
 interface ProgressBarProps {
-  audioRef: React.RefObject<HTMLAudioElement | null>;
+  audioRef?: React.RefObject<HTMLAudioElement | PlayableAudio | null>;
+  player?: PlayableAudio | null;
   variant?: "background" | "expanded";
 }
 
@@ -19,6 +21,7 @@ function formatTime(seconds: number): string {
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({
   audioRef,
+  player,
   variant = "background",
 }) => {
   const bgRef = useRef<HTMLDivElement>(null);
@@ -31,11 +34,13 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   const lastSecRef = useRef(-1);
   const lastDurationRef = useRef(0);
 
+  const getAudio = () => player || audioRef?.current || null;
+
   useEffect(() => {
-    const audio = audioRef.current;
+    const audio = getAudio();
 
     const renderProgress = () => {
-      const currentAudio = audioRef.current;
+      const currentAudio = getAudio();
       const isSeeking = isSeekingRef.current;
 
       if (currentAudio) {
@@ -111,6 +116,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       "play",
       "pause",
       "seeked",
+      "canplay",
       "emptied",
     ] as const;
     events.forEach((eventName) =>
@@ -122,7 +128,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
         audio.removeEventListener(eventName, renderProgress),
       );
     };
-  }, [audioRef]);
+  }, [player, audioRef?.current]);
 
   const handleMouseDown = () => {
     isSeekingRef.current = true;
@@ -152,8 +158,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       trackFillRef.current.style.width = `${percent}%`;
     }
 
-    if (audioRef.current) {
-      audioRef.current.currentTime = nextTime;
+    const currentAudio = getAudio();
+    if (currentAudio) {
+      currentAudio.currentTime = nextTime;
     }
   };
 

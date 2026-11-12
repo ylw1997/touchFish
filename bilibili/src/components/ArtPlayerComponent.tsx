@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from "react";
 import Artplayer from "artplayer";
 import artplayerPluginDanmuku, { type Danmu } from "artplayer-plugin-danmuku";
 import Hls from "hls.js";
-import { checkFFmpegSupport, reportFFmpegMissing } from "../utils/mediaCodec";
+import { useRequest } from "../hooks/useRequest";
+import { syncSoftwareAudio } from "../../../webview/softVideoAudio";
 
 function getDanmakuMode(key: number): 0 | 1 | 2 {
   switch (key) {
@@ -55,6 +56,8 @@ function parseBilibiliDanmakuXml(xmlString: string): Danmu[] {
 interface ArtPlayerComponentProps {
   url: string;
   mediaId?: number;
+  bvid?: string;
+  cid?: number;
   danmakuData?: string;
   isLive?: boolean;
   getInstance?: (art: Artplayer) => void;
@@ -79,6 +82,8 @@ interface ArtPlayerComponentProps {
 const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   url,
   mediaId,
+  bvid,
+  cid,
   danmakuData,
   isLive = false,
   getInstance,
@@ -92,6 +97,7 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
   progress,
   isDanmakuOpen = true,
 }) => {
+  const { request } = useRequest();
   const artRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Artplayer | null>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -260,12 +266,6 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
     instance.on("video:ended", () => {
       callbacksRef.current.onEnded?.();
     });
-    instance.on("video:error", () => {
-      const codec = checkFFmpegSupport();
-      if (!codec.isSupported) {
-        reportFFmpegMissing();
-      }
-    });
 
     instance.on("ready", () => {
       if (progress && progress > 0) {
@@ -356,6 +356,15 @@ const ArtPlayerComponent: React.FC<ArtPlayerComponentProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, isLive, autoSize]);
+
+  useEffect(() => {
+    const video = playerRef.current?.video;
+    if (!video || !url || !bvid || !cid || isLive || url.includes(".m3u8")) return;
+    return syncSoftwareAudio(video, url, {
+      getIndex: () => request("BILIBILI_VIDEO_AUDIO", { bvid, cid }),
+      getRange: (urls, start, end) => request("BILIBILI_VIDEO_AUDIO_RANGE", { urls, start, end }),
+    });
+  }, [url, bvid, cid, isLive, autoSize, request]);
 
   useEffect(() => {
     if (isLive || !playerRef.current) return;

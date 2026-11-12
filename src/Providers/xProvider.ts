@@ -335,6 +335,7 @@ export class XProvider extends BaseWebviewProvider {
   constructor(context: ExtensionContext) {
     super(context, {
       distPath: "x/dist",
+      videoCdns: ["video.twimg.com"],
       devPort: 5179,
       title: "X",
       scrollKey: "xScrollPosition",

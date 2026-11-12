@@ -15,6 +15,8 @@ import {
   getFavoriteDetail,
   addToWatchLater,
   getPlayUrl,
+  getVideoAudio,
+  getVideoAudioRange,
   getVideoInfo,
   reportHeartbeat,
   delWatchLater,
@@ -654,6 +656,19 @@ export class BilibiliProvider extends BaseWebviewProvider {
           payload: res.data,
           uuid,
         } as CommandsType<any>);
+        break;
+      }
+      case "BILIBILI_VIDEO_AUDIO":
+      case "BILIBILI_VIDEO_AUDIO_RANGE": {
+        try {
+          const data = command === "BILIBILI_VIDEO_AUDIO"
+            ? await getVideoAudio(payload?.bvid, payload?.cid)
+            : (await getVideoAudioRange(payload?.urls, payload?.start, payload?.end)).toString("base64");
+          await webviewView.webview.postMessage({ payload: { code: 0, data }, uuid });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "获取 B 站音轨失败";
+          await webviewView.webview.postMessage({ payload: { code: -1, message }, uuid });
+        }
         break;
       }
       case "BILIBILI_VIDEO_INFO": {

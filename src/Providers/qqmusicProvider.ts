@@ -45,6 +45,7 @@ export class QQMusicProvider extends BaseWebviewProvider {
   constructor(context: ExtensionContext) {
     super(context, {
       distPath: "qqmusic/dist",
+      musicCdn: "stream.qqmusic.qq.com",
       devPort: 5177,
       title: "QQ音乐",
       scrollKey: "qqmusicScrollPosition",

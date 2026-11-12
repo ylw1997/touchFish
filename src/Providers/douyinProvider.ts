@@ -19,7 +19,6 @@ import { BaseWebviewProvider, IncomingMessage } from "./baseWebviewProvider";
 import { DouyinLiveDanmakuSession } from "../api/douyinLiveDanmaku";
 import { DouyinMediaProxy } from "../api/douyinMediaProxy";
 import { DouyinBrowserFavorites } from "../api/douyinBrowserFavorites";
-import { showFFmpegReplaceNotice } from "../utils/ffmpegNotice";
 
 interface DouyinMessage<T = any> {
   command: string;
@@ -33,23 +32,11 @@ export class DouyinProvider extends BaseWebviewProvider {
   private readonly mediaProxy: DouyinMediaProxy;
   private readonly browserFavorites = new DouyinBrowserFavorites();
 
-  private async reportMediaCapability(payload: unknown) {
-    const { h264, aac } = (payload || {}) as { h264?: boolean; aac?: boolean };
-    const warningKey = "touchfish.douyinCodecWarningVersion";
-    if (h264 && aac) {
-      await this.context.globalState.update(warningKey, undefined);
-      return;
-    }
-
-    if (this.context.globalState.get<string>(warningKey) === vscode.version) return;
-    await this.context.globalState.update(warningKey, vscode.version);
-
-    await showFFmpegReplaceNotice(this.context);
-  }
-
   constructor(context: ExtensionContext) {
     super(context, {
       distPath: "douyin/dist",
+      videoCdns: ["douyinvod.com", "douyincdn.com"],
+      videoReferer: "https://www.douyin.com/",
       devPort: 5188,
       title: "抖音",
       scrollKey: "douyinScrollPosition",
@@ -86,10 +73,6 @@ export class DouyinProvider extends BaseWebviewProvider {
   ) {
     const { command, payload, uuid } = message as DouyinMessage;
     switch (command) {
-      case "DY_REPORT_MEDIA_CAPABILITY": {
-        await this.reportMediaCapability(payload);
-        break;
-      }
       case "DY_GET_HOME_FEED": {
         const { refresh_index, view_count } = (payload || {}) as {
           refresh_index?: number;

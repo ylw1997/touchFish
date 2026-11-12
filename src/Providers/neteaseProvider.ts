@@ -40,6 +40,7 @@ export class NeteaseProvider extends BaseWebviewProvider {
   constructor(context: ExtensionContext) {
     super(context, {
       distPath: "netease/dist",
+      musicCdn: "music.126.net",
       devPort: 5200,
       title: "网易云音乐",
       scrollKey: "neteaseScrollPosition",

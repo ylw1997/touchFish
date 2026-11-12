@@ -25,6 +25,8 @@ import {
 import { formatTimestamp, formatCount, parseTopicTags } from "../utils/utils";
 import ImagePreviewToolbar from "./ImagePreviewToolbar";
 import { useConfigStore } from "../store/config";
+import { useRequest } from "../hooks/useRequest";
+import { readProgressiveAudioReply, syncProgressiveAudio } from "../../../webview/softVideoAudio";
 
 const { Title, Paragraph } = Typography;
 
@@ -118,9 +120,17 @@ export const NoteContentCard: React.FC<NoteContentCardProps> = ({
   }, [images.length]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { request } = useRequest();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isVideoBuffering, setIsVideoBuffering] = useState(false);
   const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoUrl) return;
+    return syncProgressiveAudio(video, videoUrl, () =>
+      readProgressiveAudioReply(request("FETCH_VIDEO_AUDIO", { url: videoUrl })));
+  }, [videoUrl, request, showImg, forceShow, loading]);
 
   // 视频 URL 切换时重置播放器状态
   useEffect(() => {
