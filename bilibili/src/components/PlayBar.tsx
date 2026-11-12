@@ -119,12 +119,6 @@ const PlayBar: React.FC = () => {
         removeFromPlaylist(video.id);
       }
 
-      const codec = checkFFmpegSupport();
-      if (!codec.isSupported) {
-        reportFFmpegMissing();
-        return;
-      }
-
       if (options?.messageText) {
         message.error(options.messageText);
       }
@@ -370,13 +364,6 @@ const PlayBar: React.FC = () => {
   const handleArtInstance = useCallback(
     (art: Artplayer) => {
       videoRef.current = art;
-
-      art.on("video:error", () => {
-        const codec = checkFFmpegSupport();
-        if (!codec.isSupported) {
-          reportFFmpegMissing();
-        }
-      });
 
       if (usePlayerStore.getState().isPlaying) {
         const handlePlayError = (err: any) => {
@@ -626,6 +613,8 @@ const PlayBar: React.FC = () => {
                   <ArtPlayerComponent
                     url={videoUrl}
                     mediaId={currentVideo.id}
+                    bvid={currentVideo.bvid}
+                    cid={currentVideo.cid}
                     danmakuData={danmakuData}
                     isLive={currentVideo.duration === 0}
                     progress={currentVideo.progress}

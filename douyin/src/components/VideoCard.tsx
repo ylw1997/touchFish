@@ -16,6 +16,7 @@ import {
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Hls from "hls.js";
 import { useRequest } from "../hooks/useRequest";
+import { readProgressiveAudioReply, syncProgressiveAudio } from "../../../webview/softVideoAudio";
 import DanmakuOverlay from "./DanmakuOverlay";
 import LiveDanmakuOverlay from "./LiveDanmakuOverlay";
 
@@ -333,6 +334,15 @@ export default function VideoCard({
       : ""
     : currentPlayUrl;
   const isHlsSource = /\.m3u8(?:\?|$)/i.test(mediaPlayUrl);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !mediaPlayUrl || !isActive || liveRoom || isHlsSource) return;
+    const fetchMedia = mediaPlayUrl.startsWith("http://127.0.0.1:")
+      ? undefined
+      : () => readProgressiveAudioReply(request("FETCH_VIDEO_AUDIO", { url: mediaPlayUrl }));
+    return syncProgressiveAudio(video, mediaPlayUrl, fetchMedia);
+  }, [mediaPlayUrl, isActive, liveRoom, isHlsSource, request]);
 
   useEffect(() => {
     if (

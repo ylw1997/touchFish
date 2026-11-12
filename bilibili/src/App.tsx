@@ -40,6 +40,7 @@ import useBilibiliAction from "./hooks/useBilibiliAction";
 import { usePlayerStore } from "./store/player";
 import { useFavoriteTabs } from "./hooks/useFavoriteTabs";
 import { vscode } from "./utils/vscode";
+import { unlockSoftwareAudioOnInteraction } from "../../webview/softVideoAudio";
 import { useFontSizeStore } from "./store/fontSize";
 import { useUserStore } from "./store/user";
 import { debounce } from "./utils";
@@ -53,6 +54,8 @@ dayjs.locale("zh-cn");
 dayjs.extend(_relativeTime);
 
 function App() {
+  useEffect(unlockSoftwareAudioOnInteraction, []);
+
   const scrollableNodeRef = useRef<HTMLDivElement>(null);
   const [groupOpen, setGroupOpen] = useState(false);
   const groupRef = useRef<HTMLDivElement>(null);

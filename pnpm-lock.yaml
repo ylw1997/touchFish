@@ -36,6 +36,15 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
     devDependencies:
+      '@audio/decode-flac':
+        specifier: 1.3.5
+        version: 1.3.5
+      '@audio/decode-mp3':
+        specifier: 1.3.1
+        version: 1.3.1
+      '@audio/decode-mp4':
+        specifier: 1.3.1
+        version: 1.3.1
       '@eslint/js':
         specifier: 9.30.1
         version: 9.30.1

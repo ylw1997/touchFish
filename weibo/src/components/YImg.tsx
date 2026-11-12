@@ -11,6 +11,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Image } from "antd";
 import back from "../../public/back.svg";
 import { useRequest } from "../hooks/useRequest";
+import { syncProgressiveAudio } from "../../../webview/softVideoAudio";
 // import { LoadingOutlined } from "@ant-design/icons";
 
 interface YImgProps {
@@ -29,10 +30,17 @@ const YImg: React.FC<YImgProps> = ({
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
   const elementRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { request } = useRequest();
 
   // Use a ref to track loading state inside the effect without adding it as a dependency
   const isLoadingRef = useRef(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoSrc || mediaType !== "video") return;
+    return syncProgressiveAudio(video, videoSrc);
+  }, [videoSrc, mediaType]);
 
   useEffect(() => {
     if (!src) return;
@@ -102,7 +110,7 @@ const YImg: React.FC<YImgProps> = ({
       ref={elementRef}
     >
       {mediaType === "video" ? (
-        <video src={videoSrc} controls {...props} />
+        <video src={videoSrc} controls {...props} ref={videoRef} />
       ) : (
         <Image
           src={imgSrc}

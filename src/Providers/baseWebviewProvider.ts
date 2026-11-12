@@ -9,6 +9,7 @@ import * as vscode from "vscode";
 import { showInfo, showError } from "../utils/errorMessage";
 import { getWebviewHtml } from "../utils/webviewUtils";
 import { showFFmpegReplaceNotice } from "../utils/ffmpegNotice";
+import { fetchMediaAudio } from "../utils/fetchMediaAudio";
 
 export interface BaseWebviewOptions {
   distPath: string; // 生产构建输出目录 (相对 extension 根)
@@ -18,6 +19,9 @@ export interface BaseWebviewOptions {
   restoreCommand: string; // 前端用于恢复滚动的命令名
   saveCommand: string; // 前端用于保存滚动的命令名
   imgToggledCommand?: string; // 可选: 图片开关后要再通知前端的命令
+  musicCdn?: string;
+  videoCdns?: readonly string[];
+  videoReferer?: string;
 }
 
 export interface IncomingMessage<T = any> {
@@ -97,6 +101,23 @@ export abstract class BaseWebviewProvider
         // 缺少 FFmpeg 模块统一弹窗
         if (command === "REPORT_FFMPEG_MISSING") {
           await showFFmpegReplaceNotice(this.context);
+          return;
+        }
+        const audioCdns = command === "FETCH_MUSIC_AUDIO" && this.options.musicCdn
+          ? [this.options.musicCdn]
+          : command === "FETCH_VIDEO_AUDIO" ? this.options.videoCdns : undefined;
+        if (audioCdns && msg.uuid) {
+          let result: { code: number; data?: string; message?: string };
+          try {
+            const referer = this.options.videoReferer;
+            const audio = await fetchMediaAudio(payload?.url, audioCdns, {
+              headers: referer ? { Referer: referer } : undefined,
+            });
+            result = { code: 0, data: audio.toString("base64") };
+          } catch (error) {
+            result = { code: -1, message: error instanceof Error ? error.message : "音频下载失败" };
+          }
+          await webviewView.webview.postMessage({ payload: result, uuid: msg.uuid });
           return;
         }
         // 剪贴板复制命令支持

@@ -65,6 +65,7 @@ export class SoftAudioPlayer {
 
   private dec: any = null;
   private url: string = "";
+  private loadId = 0;
 
   // PCM 缓存与时间对齐
   private pcmChannels: Float32Array[] = [];
@@ -132,9 +133,10 @@ export class SoftAudioPlayer {
   }
 
   public async setSource(url: string) {
-    if (this.url === url && this.dec) return;
+    if (this.url === url && (this.dec || this.isBuffering)) return;
     console.log("[SoftAudioPlayer] setSource:", url);
     this.stopPlayback();
+    this.resetDecoder();
     this.url = url;
     this._currentTime = 0;
     this.duration = 0;
@@ -145,6 +147,13 @@ export class SoftAudioPlayer {
 
     if (!url) return;
     await this.loadInitialMetadata();
+  }
+
+  private resetDecoder() {
+    this.loadId++;
+    this.isBuffering = false;
+    this.dec?.free();
+    this.dec = null;
   }
 
   /** 通过 Extension Host 安全拉取指定范围的音频切片，不受浏览器 CORS 限制 */
@@ -169,17 +178,24 @@ export class SoftAudioPlayer {
   }
 
   private async loadInitialMetadata() {
+    const loadId = ++this.loadId;
+    this.isBuffering = true;
     try {
-      this.isBuffering = true;
-      if (this.dec) {
-        this.dec.free();
-        this.dec = null;
+      const dec = await decoder();
+      if (loadId !== this.loadId) {
+        dec.free();
+        return;
       }
-      this.dec = await decoder();
+      this.dec = dec;
 
       // 拉取前 2MB 数据（包含 Fast-Start moov 索引与前段音频）
       const headChunk = await this.fetchRange(0, 2 * 1024 * 1024 - 1);
-      const decoded = await this.dec.decode(headChunk);
+      if (loadId !== this.loadId) return;
+      const decoded = await dec.decode(headChunk);
+      if (loadId !== this.loadId) return;
+      if (!decoded.channelData?.[0]?.length) {
+        throw new Error("No audio samples decoded from the initial MP4 range");
+      }
 
       if (this.dec.st) {
         this.pcmSampleRate = decoded.sampleRate || 44100;
@@ -191,12 +207,10 @@ export class SoftAudioPlayer {
       this.dispatchEvent("loadedmetadata");
       this.dispatchEvent("durationchange");
 
-      if (decoded.channelData?.length && decoded.channelData[0]?.length) {
-        this.pcmChannels = decoded.channelData;
-        this.pcmStartSec = 0;
-        this.pcmDurationSec = decoded.channelData[0].length / this.pcmSampleRate;
-        console.log(`[SoftAudioPlayer] Initial buffer ready: ${this.pcmDurationSec.toFixed(1)}s`);
-      }
+      this.pcmChannels = decoded.channelData;
+      this.pcmStartSec = 0;
+      this.pcmDurationSec = decoded.channelData[0].length / this.pcmSampleRate;
+      console.log(`[SoftAudioPlayer] Initial buffer ready: ${this.pcmDurationSec.toFixed(1)}s`);
 
       this.dispatchEvent("canplay");
 
@@ -205,10 +219,12 @@ export class SoftAudioPlayer {
         this.startBufferPlayback(this._currentTime);
       }
     } catch (err: any) {
+      if (loadId !== this.loadId) return;
+      this.resetDecoder();
       console.error("[SoftAudioPlayer] load metadata error:", err);
       this.dispatchEvent("error");
     } finally {
-      this.isBuffering = false;
+      if (loadId === this.loadId) this.isBuffering = false;
     }
   }
 
@@ -234,11 +250,11 @@ export class SoftAudioPlayer {
     const channels = this.pcmChannels.length;
 
     const relSec = Math.max(0, startSec - this.pcmStartSec);
-    const startSample = Math.floor(relSec * sampleRate);
+    const startSample = Math.round(relSec * sampleRate);
     const totalSamplesInBuf = this.pcmChannels[0].length;
 
     if (startSample >= totalSamplesInBuf) {
-      void this.seek(startSec);
+      if (!this.isBuffering) void this.loadAndPlayFrom(startSec);
       return;
     }
 
@@ -257,15 +273,28 @@ export class SoftAudioPlayer {
     this.playContextStartTime = this.audioCtx.currentTime;
     this.playInitialOffset = startSec;
 
+    const endSec = this.pcmStartSec + totalSamplesInBuf / sampleRate;
     source.onended = () => {
       if (this.currentSource === source) {
         this.currentSource = null;
-        if (!this.paused && !this.isBuffering) {
-          if (this._currentTime >= this.duration - 1) {
+        source.disconnect();
+        this.stopProgressTimer();
+        if (!this.paused) {
+          this._currentTime = Math.min(endSec, this.duration);
+          this.dispatchEvent("timeupdate");
+          const table = this.dec?.st;
+          const bufferedEnd = this.pcmStartSec + this.pcmDurationSec;
+          if (endSec >= bufferedEnd && table?.idx >= table?.sizes.length) {
             this.pause();
             this.dispatchEvent("ended");
+          } else if (endSec < bufferedEnd) {
+            const consumed = Math.round((endSec - this.pcmStartSec) * sampleRate);
+            this.pcmChannels = this.pcmChannels.map((channel) => channel.subarray(consumed));
+            this.pcmStartSec = endSec;
+            this.pcmDurationSec = this.pcmChannels[0].length / sampleRate;
+            this.startBufferPlayback(endSec);
           } else {
-            void this.loadAndPlayFrom(this._currentTime);
+            void this.preloadAndAppendNextChunk();
           }
         }
       }
@@ -278,13 +307,15 @@ export class SoftAudioPlayer {
 
   public async play(): Promise<void> {
     console.log("[SoftAudioPlayer] play() called");
+    if (!this.url || (!this.paused && this.currentSource)) return;
+    this.paused = false;
+    this.dispatchEvent("play");
+
     if (!this.audioCtx) this.initAudioContext();
     if (this.audioCtx && this.audioCtx.state === "suspended") {
       await this.audioCtx.resume();
     }
-
-    this.paused = false;
-    this.dispatchEvent("play");
+    if (this.paused || this.currentSource) return;
 
     if (this.pcmChannels.length > 0) {
       this.startBufferPlayback(this._currentTime);
@@ -319,6 +350,10 @@ export class SoftAudioPlayer {
 
     this.stopPlayback();
 
+    if (!this.dec?.st) return;
+    this.loadId++;
+    this.isBuffering = false;
+
     const inRange =
       this.pcmChannels.length > 0 &&
       targetSec >= this.pcmStartSec &&
@@ -334,35 +369,38 @@ export class SoftAudioPlayer {
   }
 
   private async loadAndPlayFrom(targetSec: number) {
-    if (!this.dec || !this.dec.st) {
-      await this.loadInitialMetadata();
-    }
-    if (!this.dec || !this.dec.st) return;
+    const dec = this.dec;
+    if (!dec?.st) return;
+    const loadId = ++this.loadId;
 
     try {
       this.isBuffering = true;
       const targetSampleIdx = Math.floor(
         (targetSec * this.pcmSampleRate) / 1024
       );
-      const targetState = seekSampleTable(this.dec.st, targetSampleIdx);
-
-      this.dec.st.idx = targetState.idx;
-      this.dec.st.ci = targetState.ci;
-      this.dec.st.sInC = targetState.sInC;
-      this.dec.st.spc = targetState.spc;
-      this.dec.st.nextOff = targetState.nextOff;
-      this.dec.fileOff = targetState.nextOff;
-      this.dec.skip = 0;
-      this.dec.left = null;
+      if (targetSampleIdx >= dec.st.sizes.length) {
+        if (!this.paused) {
+          this.pause();
+          this.dispatchEvent("ended");
+        }
+        return;
+      }
+      const targetState = seekSampleTable(dec.st, targetSampleIdx);
 
       const fetchStart = targetState.nextOff;
       const fetchEnd = fetchStart + 2 * 1024 * 1024 - 1;
       const chunk = await this.fetchRange(fetchStart, fetchEnd);
-      const decoded = await this.dec.decode(chunk);
+      if (loadId !== this.loadId) return;
+      Object.assign(dec.st, targetState);
+      dec.fileOff = fetchStart;
+      dec.skip = 0;
+      dec.left = null;
+      const decoded = await dec.decode(chunk);
+      if (loadId !== this.loadId) return;
 
       if (decoded.channelData?.length && decoded.channelData[0]?.length) {
         this.pcmChannels = decoded.channelData;
-        this.pcmStartSec = targetSec;
+        this.pcmStartSec = (targetSampleIdx * 1024) / this.pcmSampleRate;
         this.pcmDurationSec = decoded.channelData[0].length / this.pcmSampleRate;
 
         if (!this.paused) {
@@ -370,9 +408,10 @@ export class SoftAudioPlayer {
         }
       }
     } catch (err: any) {
+      if (loadId !== this.loadId) return;
       console.error("[SoftAudioPlayer] seek error:", err);
     } finally {
-      this.isBuffering = false;
+      if (loadId === this.loadId) this.isBuffering = false;
     }
   }
 
@@ -399,14 +438,18 @@ export class SoftAudioPlayer {
   }
 
   private async preloadAndAppendNextChunk() {
-    if (!this.dec || !this.dec.st || this.isBuffering) return;
+    const dec = this.dec;
+    if (!dec?.st || this.isBuffering || dec.st.idx >= dec.st.sizes.length) return;
+    const loadId = this.loadId;
     try {
       this.isBuffering = true;
-      const nextOff = this.dec.st.nextOff;
-      if (!nextOff) return;
+      // The streaming decoder already retains any incomplete sample from the previous range.
+      const nextOff = dec.fileOff + (dec.left?.length ?? 0);
 
       const chunk = await this.fetchRange(nextOff, nextOff + 1024 * 1024 - 1);
-      const decoded = await this.dec.decode(chunk);
+      if (loadId !== this.loadId) return;
+      const decoded = await dec.decode(chunk);
+      if (loadId !== this.loadId) return;
       if (decoded.channelData?.length && decoded.channelData[0]?.length) {
         const addLen = decoded.channelData[0].length;
         const oldLen = this.pcmChannels[0].length;
@@ -420,11 +463,15 @@ export class SoftAudioPlayer {
         this.pcmChannels = newChannels;
         this.pcmDurationSec = newChannels[0].length / this.pcmSampleRate;
         console.log(`[SoftAudioPlayer] Buffer extended to ${this.pcmDurationSec.toFixed(1)}s`);
+        if (!this.paused && !this.currentSource) {
+          this.startBufferPlayback(this._currentTime);
+        }
       }
     } catch (err) {
+      if (loadId !== this.loadId) return;
       console.warn("[SoftAudioPlayer] Preload chunk error:", err);
     } finally {
-      this.isBuffering = false;
+      if (loadId === this.loadId) this.isBuffering = false;
     }
   }
 
@@ -450,9 +497,10 @@ export class SoftAudioPlayer {
   }
 
   public destroy() {
+    this.paused = true;
+    this.url = "";
     this.stopPlayback();
-    this.dec?.free();
-    this.dec = null;
+    this.resetDecoder();
     this.audioCtx?.close();
     this.audioCtx = null;
     this.listeners.clear();

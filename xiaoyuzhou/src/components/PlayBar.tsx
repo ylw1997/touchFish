@@ -132,20 +132,23 @@ const PlayBar: React.FC<PlayBarProps> = ({ onOpenPodcast }) => {
     setPlayer(p);
 
     const onEnded = () => playNext();
-    const onTime = () => handleTimeUpdate();
 
     p.addEventListener("ended", onEnded);
-    p.addEventListener("timeupdate", onTime);
 
     return () => {
       p.removeEventListener("ended", onEnded);
-      p.removeEventListener("timeupdate", onTime);
       p.destroy();
       playerRef.current = null;
       audioRef.current = null;
       setPlayer(null);
     };
-  }, [playNext, handleTimeUpdate]);
+  }, [playNext]);
+
+  useEffect(() => {
+    if (!player) return;
+    player.addEventListener("timeupdate", handleTimeUpdate);
+    return () => player.removeEventListener("timeupdate", handleTimeUpdate);
+  }, [player, handleTimeUpdate]);
 
   // 当单集改变时更新播放地址
   useEffect(() => {

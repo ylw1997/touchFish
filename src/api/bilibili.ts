@@ -5,6 +5,9 @@ import axios from "axios";
 import { getOrSetCookie, buildCommonHeaders } from "../utils/apiUtils";
 import { getConfigByKey } from "../core/config";
 import { showError } from "../utils/errorMessage";
+import { fetchMediaAudio, isAllowedMediaAudioUrl } from "../utils/fetchMediaAudio";
+import { parseDashAudioIndex } from "../utils/dashAudioIndex";
+import type { DashAudioIndex } from "../../types/bilibiliAudio";
 // import * as cheerio from "cheerio";
 
 axios.defaults.timeout = 10000;
@@ -665,6 +668,89 @@ export const getPlayUrl = async (bvid: string, cid: number) => {
     };
   }
 };
+
+interface DashAudio {
+  codecs: string;
+  bandwidth: number;
+  baseUrl?: string;
+  base_url?: string;
+  backupUrl?: string[];
+  backup_url?: string[];
+  SegmentBase?: { Initialization: string; indexRange: string };
+  segment_base?: { initialization: string; index_range: string };
+}
+
+const BILIBILI_AUDIO_CDNS = ["bilivideo.com", "bilivideo.cn"];
+
+function filterAudioUrls(candidates: unknown[]): string[] {
+  const urls = candidates.filter((candidate): candidate is string => {
+    if (typeof candidate !== "string") return false;
+    try {
+      return isAllowedMediaAudioUrl(new URL(candidate), BILIBILI_AUDIO_CDNS);
+    } catch {
+      return false;
+    }
+  });
+  return [...new Set(urls)].slice(0, 2);
+}
+
+export async function getVideoAudio(bvid: string, cid: number): Promise<DashAudioIndex> {
+  if (!/^BV[\da-z]{10}$/i.test(bvid) || !Number.isSafeInteger(cid) || cid <= 0) {
+    throw new Error("缺少有效的 B 站视频分 P 信息");
+  }
+
+  const headers = await getBilibiliHeaders();
+  const { data } = await axios.get<{
+    code: number;
+    data?: { dash?: { audio?: DashAudio[] } };
+  }>("https://api.bilibili.com/x/player/playurl", {
+    params: { bvid, cid, qn: 16, fnval: 16 },
+    headers,
+  });
+  const tracks = data.data?.dash?.audio?.filter((item) => item.codecs?.startsWith("mp4a."));
+  if (data.code !== 0 || !tracks?.length) throw new Error("B 站没有返回可用的 AAC 音轨");
+  const playable = tracks.sort((a, b) => b.bandwidth - a.bandwidth)
+    .map((track) => ({ track, urls: filterAudioUrls([
+      track.baseUrl, track.base_url, ...(track.backupUrl ?? []), ...(track.backup_url ?? []),
+    ]) }))
+    .find(({ urls }) => urls.length > 0);
+  if (!playable) throw new Error("B 站没有返回可用的音轨 CDN 地址");
+  const { track, urls } = playable;
+
+  const init = (track.SegmentBase?.Initialization ?? track.segment_base?.initialization ?? "").split("-").map(Number);
+  const index = (track.SegmentBase?.indexRange ?? track.segment_base?.index_range ?? "").split("-").map(Number);
+  if (init.length !== 2 || index.length !== 2 || init[0] !== 0 ||
+      ![...init, ...index].every(Number.isSafeInteger) || init[1] <= 0 || index[0] <= init[1] || index[1] < index[0]) {
+    throw new Error("B 站音轨没有可用的初始化或索引范围");
+  }
+
+  const header = await getVideoAudioRange(urls, 0, index[1]);
+  return {
+    urls,
+    initialization: header.subarray(0, init[1] + 1).toString("base64"),
+    segments: parseDashAudioIndex(header.subarray(index[0]), index[0]),
+  };
+}
+
+export async function getVideoAudioRange(urls: string[], start: number, end: number): Promise<Buffer> {
+  if (!Array.isArray(urls) || !Number.isSafeInteger(start) || !Number.isSafeInteger(end) ||
+      start < 0 || end < start || end - start >= 2 * 1024 * 1024) {
+    throw new Error("B 站音轨请求范围无效");
+  }
+  let failure: unknown;
+  for (const url of filterAudioUrls(urls)) {
+    try {
+      return await fetchMediaAudio(url, BILIBILI_AUDIO_CDNS, {
+        headers: { Referer: "https://www.bilibili.com/" },
+        signal: AbortSignal.timeout(9_000),
+        range: { start, end },
+      });
+    } catch (error) {
+      failure = error;
+    }
+  }
+  throw failure ?? new Error("B 站没有返回有效的音轨地址");
+}
 
 /**
  * 移除稍后再看

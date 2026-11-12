@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  base: "./",
   plugins: [react()],
   server: {
     cors: true,
@@ -16,7 +17,8 @@ export default defineConfig({
         chunkFileNames: '[name].js',
         assetFileNames: '[name].[ext]',
         manualChunks(id) {
-          if (id.includes('node_modules')) {
+          if (id.includes("/node_modules/@audio/")) return "audio-codecs";
+          if (id.includes('node_modules') || id.includes("vite/preload-helper")) {
             return 'vendor';
           }
         }

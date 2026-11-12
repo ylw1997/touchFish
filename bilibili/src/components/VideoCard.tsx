@@ -26,7 +26,6 @@ import { useRequest } from "../hooks/useRequest";
 import { BilibiliApi } from "../api";
 import { useBilibiliHeartbeat } from "../hooks/useBilibiliHeartbeat";
 import Artplayer from "artplayer";
-import { checkFFmpegSupport, reportFFmpegMissing } from "../utils/mediaCodec";
 
 export interface VideoCardProps {
   item: BilibiliListItem;
@@ -82,6 +81,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [audioCid, setAudioCid] = useState<number | undefined>(undefined);
   const [danmakuData, setDanmakuData] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isPagesExpanded, setIsPagesExpanded] = useState(false);
@@ -157,17 +157,13 @@ const VideoCard: React.FC<VideoCardProps> = ({
   };
 
   const playByCid = async (targetCid?: number) => {
-    const codec = checkFFmpegSupport();
-    if (!codec.isSupported) {
-      reportFFmpegMissing();
-    }
-
     // 直播：获取直播流地址并播放
     if (item.duration === 0 && onGetLivePlayUrl) {
       setIsLoading(true);
       try {
         const result = await onGetLivePlayUrl(item.id);
         if (result.code === 0 && result.data?.durl?.[0]?.url) {
+          setAudioCid(undefined);
           setVideoUrl(result.data.durl[0].url);
           setIsPlaying(true);
         } else {
@@ -192,6 +188,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
     try {
       const result = await onGetPlayUrl(item.bvid, playCid);
       if (result.code === 0 && result.data?.durl?.[0]?.url) {
+        setAudioCid(result.data.cid || playCid);
         setVideoUrl(result.data.durl[0].url);
 
         // 获取弹幕
@@ -298,6 +295,8 @@ const VideoCard: React.FC<VideoCardProps> = ({
               <ArtPlayerComponent
                 key={videoUrl}
                 url={videoUrl}
+                bvid={item.bvid}
+                cid={audioCid}
                 danmakuData={danmakuData}
                 isLive={item.duration === 0}
                 autoSize={false}

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Spin } from "antd";
 import { PlayCircleFilled, ReloadOutlined } from "@ant-design/icons";
 import { useRequest } from "../hooks/useRequest";
 import { ZhihuApi } from "../api";
+import { readProgressiveAudioReply, syncProgressiveAudio } from "../../../webview/softVideoAudio";
 
 interface ZhihuVideoProps {
   videoId: string;
@@ -23,6 +24,14 @@ const ZhihuVideo: React.FC<ZhihuVideoProps> = ({ videoId, initialPoster }) => {
     () => videoCache.get(videoId)?.coverUrl || initialPoster || "",
   );
   const [error, setError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !playUrl || !isPlaying) return;
+    return syncProgressiveAudio(video, playUrl, () =>
+      readProgressiveAudioReply(request("FETCH_VIDEO_AUDIO", { url: playUrl })));
+  }, [playUrl, isPlaying, request]);
 
   // 如果没有初始封面，尝试静默获取一次视频元信息（包含 cover_url 和 play_url）
   useEffect(() => {
@@ -96,6 +105,7 @@ const ZhihuVideo: React.FC<ZhihuVideoProps> = ({ videoId, initialPoster }) => {
       {isPlaying && playUrl ? (
         <div className="zhihu-video-player-wrapper">
           <video
+            ref={videoRef}
             src={playUrl}
             controls
             autoPlay
