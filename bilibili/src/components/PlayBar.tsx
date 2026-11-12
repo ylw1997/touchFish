@@ -22,7 +22,6 @@ import ArtPlayerComponent from "./ArtPlayerComponent";
 import Artplayer from "artplayer";
 import { App, Button } from "antd";
 import { useBilibiliHeartbeat } from "../hooks/useBilibiliHeartbeat";
-import { checkFFmpegSupport, reportFFmpegMissing } from "../utils/mediaCodec";
 
 const PlayBar: React.FC = () => {
   const { message } = App.useApp();
@@ -404,12 +403,6 @@ const PlayBar: React.FC = () => {
         isLive: boolean;
       },
     ) => {
-      const codec = checkFFmpegSupport();
-      if (!codec.isSupported) {
-        reportFFmpegMissing();
-        return;
-      }
-
       if (!context.isLive || !context.mediaId) {
         return;
       }

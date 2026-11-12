@@ -8,7 +8,6 @@
 import * as vscode from "vscode";
 import { showInfo, showError } from "../utils/errorMessage";
 import { getWebviewHtml } from "../utils/webviewUtils";
-import { showFFmpegReplaceNotice } from "../utils/ffmpegNotice";
 import { fetchMediaAudio } from "../utils/fetchMediaAudio";
 
 export interface BaseWebviewOptions {
@@ -96,11 +95,6 @@ export abstract class BaseWebviewProvider
         if (command === "SAVE_FONT_SIZE") {
           const config = vscode.workspace.getConfiguration("touchfish");
           await config.update("fontSize", payload, true); // true for global/workspace setting
-          return;
-        }
-        // 缺少 FFmpeg 模块统一弹窗
-        if (command === "REPORT_FFMPEG_MISSING") {
-          await showFFmpegReplaceNotice(this.context);
           return;
         }
         const audioCdns = command === "FETCH_MUSIC_AUDIO" && this.options.musicCdn
