@@ -1,6 +1,13 @@
 # 更新历史 
 
 
+### [17.22.3](https://github.com/ylw1997/touchFish/compare/v17.22.2...v17.22.3) (2026-11-13)
+
+
+### 🐰 Bug Fixes | Bug 修复
+
+* **xiaoyuzhou:** 按 MP4 时间表计算时长和跳转位置 ([d34df6b](https://github.com/ylw1997/touchFish/commit/d34df6b40117588ec13e47487a43fb469c84ff89))
+
 ### [17.22.2](https://github.com/ylw1997/touchFish/compare/v17.22.1...v17.22.2) (2026-11-12)
 
 
