@@ -2,6 +2,7 @@ import { decoder } from "@audio/decode-mp4";
 import { generateUUID } from "../../../types/utils";
 import { vscode } from "../utils/vscode";
 import { messageHandler } from "../utils/messageHandler";
+import { readMp4AudioTiming } from "./mp4AudioTiming";
 
 export type AudioEventCallback = (event: Event) => void;
 
@@ -64,6 +65,7 @@ export class SoftAudioPlayer {
   private currentSource: AudioBufferSourceNode | null = null;
 
   private dec: any = null;
+  private timing: ReturnType<typeof readMp4AudioTiming>;
   private url: string = "";
   private loadId = 0;
 
@@ -154,6 +156,7 @@ export class SoftAudioPlayer {
     this.isBuffering = false;
     this.dec?.free();
     this.dec = null;
+    this.timing = undefined;
   }
 
   /** 通过 Extension Host 安全拉取指定范围的音频切片，不受浏览器 CORS 限制 */
@@ -199,8 +202,10 @@ export class SoftAudioPlayer {
 
       if (this.dec.st) {
         this.pcmSampleRate = decoded.sampleRate || 44100;
-        const totalSamples = this.dec.st.sizes.length * 1024;
-        this.duration = totalSamples / this.pcmSampleRate;
+        const sampleCount = this.dec.st.sizes.length;
+        // MP4 sample durations are independent of the decoder's PCM sample rate.
+        this.timing = readMp4AudioTiming(headChunk, sampleCount);
+        this.duration = this.timing?.duration ?? (sampleCount * 1024) / this.pcmSampleRate;
         console.log(`[SoftAudioPlayer] Metadata ready: duration=${this.duration.toFixed(1)}s, sampleRate=${this.pcmSampleRate}`);
       }
 
@@ -343,8 +348,9 @@ export class SoftAudioPlayer {
   }
 
   public async seek(targetSec: number): Promise<void> {
+    targetSec = Math.max(0, Math.min(targetSec, this.duration));
     console.log(`[SoftAudioPlayer] seek to ${targetSec.toFixed(2)}s`);
-    this._currentTime = Math.max(0, Math.min(targetSec, this.duration));
+    this._currentTime = targetSec;
     this.dispatchEvent("timeupdate");
     this.dispatchEvent("seeked");
 
@@ -375,7 +381,8 @@ export class SoftAudioPlayer {
 
     try {
       this.isBuffering = true;
-      const targetSampleIdx = Math.floor(
+      const sample = this.timing?.locate(targetSec);
+      const targetSampleIdx = sample?.index ?? Math.floor(
         (targetSec * this.pcmSampleRate) / 1024
       );
       if (targetSampleIdx >= dec.st.sizes.length) {
@@ -400,7 +407,7 @@ export class SoftAudioPlayer {
 
       if (decoded.channelData?.length && decoded.channelData[0]?.length) {
         this.pcmChannels = decoded.channelData;
-        this.pcmStartSec = (targetSampleIdx * 1024) / this.pcmSampleRate;
+        this.pcmStartSec = sample?.startSec ?? (targetSampleIdx * 1024) / this.pcmSampleRate;
         this.pcmDurationSec = decoded.channelData[0].length / this.pcmSampleRate;
 
         if (!this.paused) {
